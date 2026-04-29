@@ -45,6 +45,9 @@ Thumbs.db
 .tmp/
 tmp/
 
+# Estado interno do agente (não versionar)
+.claude/
+
 # Screenshots de sprint capturados via adb (mantemos só os de checkpoint)
 docs/sprints/*-screenshots/_raw/
 
