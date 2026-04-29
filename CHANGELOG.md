@@ -6,6 +6,11 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- `.npmrc` com `legacy-peer-deps=true` para destravar peer deps do
+  `@gluestack-ui/themed` (legado) com React 19.
+- VALIDATOR_BRIEF Armadilhas A8/A9/A10/A11 documentando achados de
+  M01.1 (Reanimated 4, ESLint flat config, gluestack legacy, peer deps
+  do SDK 54).
 - Sprint M01.1: bootstrap Expo SDK 54 em-place preservando docs.
   Stack confirmada: Expo Router, NativeWind 4, Reanimated 4,
   Moti, gluestack-ui, @gorhom/bottom-sheet, JetBrains Mono via
