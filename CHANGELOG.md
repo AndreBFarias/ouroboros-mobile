@@ -5,7 +5,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+- **Regra de capitalização da UI revogada e substituída** durante
+  checkpoint visual M01.5 (2026-04-28). `BRIEFING.md` §1 e §2.4
+  prescreviam "lowercase intencional" em toda a UI. Decisão do dono
+  do projeto: strings de UI passam a usar **Sentence case com
+  acentuação completa PT-BR**. `accessibilityLabel` continua sem
+  acento; comentários em código continuam sem acento. `VALIDATOR_BRIEF.md`
+  §1.4 e `CLAUDE.md` (regra de linguagem) atualizados.
+- Line-height de body subiu de 1,5 para 1,6.
+
 ### Added
+- Sprint M01.5: checkpoint visual M01 no celular real (Redmi Note 13
+  5G Pro via Expo Go LAN). 4 screenshots commitadas em
+  `docs/sprints/M01.5-screenshots/`. Estética aprovada com 4
+  ressalvas a tratar em Sprint M01.6 (capitalização, acentos
+  faltantes, densidade visual alta, warning SafeAreaView). Documento
+  completo em `docs/sprints/M01.5-checkpoint-visual.md`.
 - Sprint M01.4: 5 componentes UI complexos em `src/components/ui/`
   (Slider, Toast + ToastProvider + useToast, BottomSheet, FAB,
   FABRadial). FABRadial implementa o menu radial da Tela 14 com 6
