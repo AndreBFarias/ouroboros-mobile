@@ -6,6 +6,20 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- Sprint M01.3: 10 componentes UI premium estáticos em
+  `src/components/ui/` (Screen, Header, Button, Card, Input, Textarea,
+  Chip + ChipGroup, Toggle, PersonAvatar, EmptyState) + barrel
+  `index.ts`. Cada componente nasce com springs (`@/lib/motion`),
+  haptics (`@/lib/haptics`), scale 0.97 ao pressionar, classes
+  Tailwind da paleta Dracula, strings de UI em lowercase intencional e
+  `accessibilityRole` + `accessibilityLabel`. Storybook caseiro em
+  `app/_components.tsx` mostrando todos os componentes em isolamento.
+- 27 testes novos (13 suítes, 49 testes ao total) cobrindo render,
+  press handlers, haptics e variantes via
+  `@testing-library/react-native@^13.3.3` (peer
+  `react-test-renderer@19.1.0`).
+- `jest.setup.cjs` para silenciar transformações do nativewind/babel
+  no setup global do jest (Armadilha A12 — registrar no BRIEF).
 - Sprint M01.2: fundação da camada de bibliotecas internas em `src/`.
   Tokens visuais (`src/theme/tokens.ts`) com cores Dracula, spacing 4dp,
   radius por superfície e tipografia (pesos 400/500, line-height ≥ 1,5).
