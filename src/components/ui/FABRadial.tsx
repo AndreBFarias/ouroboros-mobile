@@ -207,38 +207,56 @@ export function FABRadial({
                 height: ACTION_SIZE,
               }}
             >
-              {/* Label num container com largura ampla (160dp) alinhado
-                   ao final, garantindo que o texto cabe sem truncar e o
-                   pill de fundo ajusta ao texto via alignSelf flex-end. */}
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  right: ACTION_SIZE + LABEL_GAP,
-                  top: (ACTION_SIZE - 28) / 2,
-                  width: 160,
-                  height: 28,
-                  alignItems: 'flex-end',
-                  justifyContent: 'center',
-                  opacity: open ? 1 : 0,
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.fg,
-                    fontFamily: 'JetBrainsMono_500Medium',
-                    fontSize: 14,
-                    lineHeight: 20,
-                    backgroundColor: colors.bgElev,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {action.label}
-                </Text>
-              </View>
+              {/* Label posicionado em duas estrategias:
+                   - Itens "laterais" (angleDeg < 240): label a esquerda
+                     do circulo, alinhado ao final do container 160dp.
+                   - Itens "superiores" (angleDeg >= 240, ou seja
+                     Exercicios, Conquista, Crise): label ACIMA do
+                     circulo, centralizado, evitando colisao entre
+                     labels proximos do extremo vertical (270 graus). */}
+              {(() => {
+                const labelAcima = action.angleDeg >= 240;
+                const containerStyle = labelAcima
+                  ? ({
+                      position: 'absolute' as const,
+                      bottom: ACTION_SIZE + 6,
+                      left: (ACTION_SIZE - 160) / 2,
+                      width: 160,
+                      height: 28,
+                      alignItems: 'center' as const,
+                      justifyContent: 'center' as const,
+                      opacity: open ? 1 : 0,
+                    })
+                  : ({
+                      position: 'absolute' as const,
+                      right: ACTION_SIZE + LABEL_GAP,
+                      top: (ACTION_SIZE - 28) / 2,
+                      width: 160,
+                      height: 28,
+                      alignItems: 'flex-end' as const,
+                      justifyContent: 'center' as const,
+                      opacity: open ? 1 : 0,
+                    });
+                return (
+                  <View pointerEvents="none" style={containerStyle}>
+                    <Text
+                      style={{
+                        color: colors.fg,
+                        fontFamily: 'JetBrainsMono_500Medium',
+                        fontSize: 14,
+                        lineHeight: 20,
+                        backgroundColor: colors.bgElev,
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {action.label}
+                    </Text>
+                  </View>
+                );
+              })()}
               <Pressable
                 onPress={() => handleSelect(action.key)}
                 accessibilityRole="button"
