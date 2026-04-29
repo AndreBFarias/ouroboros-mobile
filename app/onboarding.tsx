@@ -8,9 +8,9 @@
 // de UI. accessibilityLabel sem acento. Comentarios sem acento
 // (convencao shell).
 import { useState, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MotiView, AnimatePresence } from 'moti';
+import { MotiView } from 'moti';
 import { Check, Folder } from 'lucide-react-native';
 import {
   AvatarPicker,
@@ -122,70 +122,73 @@ export default function Onboarding() {
     avancar();
   };
 
+  // Renderiza apenas o frame ativo. O conteudo de cada frame entra
+  // com translate da direita; nao usamos AnimatePresence/exit para
+  // evitar tela em branco enquanto o exit do frame anterior anima.
+  // ScrollView envolve o conteudo para caber forms longos (Frame 1
+  // com avatar do parceiro; Frame 2 com URI longa).
   return (
     <Screen>
       <View style={{ flex: 1, paddingTop: spacing.xl }}>
         <Indicador frameAtivo={frame} />
-        <View style={{ flex: 1, justifyContent: 'flex-start', paddingTop: spacing.xl }}>
-          <AnimatePresence exitBeforeEnter>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingTop: spacing.xl,
+            paddingBottom: spacing.xxl,
+          }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <FrameAnim frameKey={frame}>
             {frame === 0 && (
-              <FrameAnim key="f0">
-                <Frame0
-                  nome={nomeInput}
-                  onChange={setNomeInput}
-                  onContinue={handleFrame0}
-                />
-              </FrameAnim>
+              <Frame0
+                nome={nomeInput}
+                onChange={setNomeInput}
+                onContinue={handleFrame0}
+              />
             )}
             {frame === 1 && (
-              <FrameAnim key="f1">
-                <Frame1
-                  duo={duo}
-                  setDuo={setDuo}
-                  tipoCompanhia={tipoCompanhia}
-                  setTipo={(t) => {
-                    setTipoCompanhia(t);
-                    setTipoSelecionado(true);
-                  }}
-                  nomeB={nomeBInput}
-                  setNomeB={setNomeBInput}
-                  onContinue={handleFrame1}
-                />
-              </FrameAnim>
+              <Frame1
+                duo={duo}
+                setDuo={setDuo}
+                tipoCompanhia={tipoCompanhia}
+                setTipo={(t) => {
+                  setTipoCompanhia(t);
+                  setTipoSelecionado(true);
+                }}
+                nomeB={nomeBInput}
+                setNomeB={setNomeBInput}
+                onContinue={handleFrame1}
+              />
             )}
             {frame === 2 && (
-              <FrameAnim key="f2">
-                <Frame2
-                  vaultRoot={vaultRoot}
-                  pedindo={pedindoPasta}
-                  onEscolher={handleEscolherPasta}
-                  onContinue={handleFrame2}
-                />
-              </FrameAnim>
+              <Frame2
+                vaultRoot={vaultRoot}
+                pedindo={pedindoPasta}
+                onEscolher={handleEscolherPasta}
+                onContinue={handleFrame2}
+              />
             )}
             {frame === 3 && (
-              <FrameAnim key="f3">
-                <Frame3
-                  sync={syncMethod}
-                  setSync={(s) => {
-                    setSync(s);
-                    setSyncSelecionado(true);
-                  }}
-                  onContinue={handleFrame3}
-                />
-              </FrameAnim>
+              <Frame3
+                sync={syncMethod}
+                setSync={(s) => {
+                  setSync(s);
+                  setSyncSelecionado(true);
+                }}
+                onContinue={handleFrame3}
+              />
             )}
             {frame === 4 && (
-              <FrameAnim key="f4">
-                <Frame4
-                  nomeA={nomeA}
-                  nomeB={duo ? nomeB : null}
-                  onConcluir={concluir}
-                />
-              </FrameAnim>
+              <Frame4
+                nomeA={nomeA}
+                nomeB={duo ? nomeB : null}
+                onConcluir={concluir}
+              />
             )}
-          </AnimatePresence>
-        </View>
+          </FrameAnim>
+        </ScrollView>
       </View>
     </Screen>
   );
@@ -215,14 +218,22 @@ function Indicador({ frameAtivo }: { frameAtivo: FrameId }) {
   );
 }
 
-function FrameAnim({ children }: { children: ReactNode }) {
+// Anima cada troca de frame: o `frameKey` na key forca remontagem,
+// e o MotiView entra de translateX 60 + opacity 0 para 0 / 1 com
+// spring. Sem exit para evitar janela branca.
+function FrameAnim({
+  frameKey,
+  children,
+}: {
+  frameKey: FrameId;
+  children: ReactNode;
+}) {
   return (
     <MotiView
-      from={{ translateX: 80, opacity: 0 }}
+      key={frameKey}
+      from={{ translateX: 60, opacity: 0 }}
       animate={{ translateX: 0, opacity: 1 }}
-      exit={{ translateX: -80, opacity: 0 }}
       transition={springs.default}
-      style={{ flex: 1 }}
     >
       {children}
     </MotiView>

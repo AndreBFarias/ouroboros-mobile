@@ -65,8 +65,6 @@ export function Chip({
     >
       <MotiView
         animate={{
-          backgroundColor: selected ? accentHex : 'transparent',
-          borderColor: selected ? accentHex : colors.mutedDecor,
           scale: pressed ? 0.97 : 1,
         }}
         transition={springs.subtle}
@@ -76,11 +74,17 @@ export function Chip({
           paddingVertical: 8,
           paddingHorizontal: 14,
           opacity: disabled ? 0.4 : 1,
+          // Background e borda como style direto (nao via Moti animate
+          // porque o RN tem bug com transitar 'transparent' -> hex
+          // sem `from` correspondente, deixando o chip selecionado sem
+          // fundo preenchido e o texto colors.bg invisivel).
+          backgroundColor: selected ? accentHex : 'transparent',
+          borderColor: selected ? accentHex : colors.mutedDecor,
         }}
       >
         <Text
           className="font-mono text-sm"
-          style={{ color: selected ? colors.bg : colors.muted }}
+          style={{ color: selected ? colors.bg : colors.fg }}
         >
           {label}
         </Text>

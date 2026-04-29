@@ -87,6 +87,7 @@ interface ConteudoProps {
 
 function TelaHojeConteudo({ onFabPress, onAvatarPress, onComponentsPress }: ConteudoProps) {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  const fotoAtiva = usePessoa((s) => s.fotos[s.pessoaAtiva]);
   const { humor, diarios, eventos, loading, error } = useHoje();
 
   return (
@@ -94,7 +95,12 @@ function TelaHojeConteudo({ onFabPress, onAvatarPress, onComponentsPress }: Cont
       <Header
         title="Hoje"
         right={
-          <PersonAvatar pessoa={pessoaAtiva} size="md" onPress={onAvatarPress} />
+          <PersonAvatar
+            pessoa={pessoaAtiva}
+            size="md"
+            onPress={onAvatarPress}
+            photoUri={fotoAtiva}
+          />
         }
       />
 
@@ -151,6 +157,15 @@ function BannerErro({ mensagem }: BannerErroProps) {
   );
 }
 
+// Converte slug snake_case do YAML em rotulo legivel:
+//   'trabalho_pesado' -> 'Trabalho pesado'
+//   'boa_conversa'    -> 'Boa conversa'
+function formatTag(slug: string): string {
+  const limpo = slug.replace(/_/g, ' ').trim();
+  if (limpo.length === 0) return slug;
+  return limpo.charAt(0).toUpperCase() + limpo.slice(1);
+}
+
 interface SecaoHumorProps {
   humor: ReturnType<typeof useHoje>['humor'];
   loading: boolean;
@@ -203,7 +218,11 @@ function SecaoHumor({ humor, loading }: SecaoHumorProps) {
                 mode="multi"
                 value={humor.tags}
                 onChange={() => undefined}
-                options={humor.tags.map((t) => ({ value: t, label: t, accent: 'cyan' }))}
+                options={humor.tags.map((t) => ({
+                  value: t,
+                  label: formatTag(t),
+                  accent: 'cyan',
+                }))}
                 disabled
               />
             ) : null}
