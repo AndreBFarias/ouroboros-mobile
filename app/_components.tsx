@@ -4,6 +4,7 @@
 // Strings visiveis em sentence case + acentuacao PT-BR; a11y sem acento.
 import { ReactNode, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Heart } from 'lucide-react-native';
 import {
   BottomSheet,
@@ -26,6 +27,9 @@ import {
   useOptionalToast,
   type ChipOption,
 } from '@/components/ui';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { usePessoa } from '@/lib/stores/pessoa';
+import { useVault } from '@/lib/stores/vault';
 
 interface SectionProps {
   title: string;
@@ -62,6 +66,7 @@ const TAGS_OPCOES: ChipOption[] = [
 ];
 
 export default function ComponentsStory() {
+  const router = useRouter();
   const [texto, setTexto] = useState('');
   const [longo, setLongo] = useState('');
   const [humor, setHumor] = useState<string | null>('serenidade');
@@ -74,6 +79,14 @@ export default function ComponentsStory() {
   const sheetRef = useRef<BottomSheetRef>(null);
   const toast = useOptionalToast();
 
+  const resetarOnboarding = () => {
+    useOnboarding.getState().resetar();
+    usePessoa.getState().resetar();
+    useVault.getState().clearVaultRoot();
+    toast?.show('Onboarding resetado. Voltando para o início.', 'info');
+    setTimeout(() => router.replace('/'), 300);
+  };
+
   return (
     <Screen>
       <Header title="Storybook M01" />
@@ -82,6 +95,22 @@ export default function ComponentsStory() {
         contentContainerStyle={{ paddingTop: 24, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
+        <Section title="Reset (dev)">
+          <Button
+            label="Resetar onboarding"
+            variant="destructive"
+            onPress={resetarOnboarding}
+          />
+          <Text
+            className="font-mono text-muted text-xs"
+            style={{ lineHeight: 18 }}
+          >
+            Limpa nome, foto, vault e flag de onboarding. O app
+            redireciona para o fluxo de boas-vindas. Usado em
+            desenvolvimento.
+          </Text>
+        </Section>
+
         <Section title="Botões">
           <Button label="Ação primária" onPress={() => undefined} />
           <Button

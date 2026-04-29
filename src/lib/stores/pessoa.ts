@@ -21,6 +21,10 @@ interface PessoaStore {
   setFiltroPessoa: (p: PessoaId) => void;
   setNome: (p: PessoaAutor, nome: string) => void;
   setFoto: (p: PessoaAutor, uri: string | null) => void;
+  // Volta nomes e fotos aos defaults. Util para reset de onboarding
+  // em ambiente de desenvolvimento ou para botao "limpar dados" em
+  // settings.
+  resetar: () => void;
 }
 
 export const usePessoa = create<PessoaStore>()(
@@ -42,6 +46,16 @@ export const usePessoa = create<PessoaStore>()(
         set((s) => ({ nomes: { ...s.nomes, [p]: nome } })),
       setFoto: (p, uri) =>
         set((s) => ({ fotos: { ...s.fotos, [p]: uri } })),
+      resetar: () =>
+        set({
+          pessoaAtiva: 'pessoa_a',
+          filtroPessoa: 'pessoa_a',
+          nomes: {
+            pessoa_a: PESSOAS_CONFIG.pessoa_a.nome,
+            pessoa_b: PESSOAS_CONFIG.pessoa_b.nome,
+          },
+          fotos: { pessoa_a: null, pessoa_b: null },
+        }),
     }),
     {
       name: 'ouroboros.pessoa.v1',
