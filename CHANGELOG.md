@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- Sprint M03.2 — foto de perfil. `<AvatarPicker pessoa={...}>` em
+  `src/components/ui/AvatarPicker.tsx` abre galeria via
+  `expo-image-picker`, copia a foto escolhida para
+  `documentDirectory/avatars/<pessoa>.jpg` (URI estável entre
+  sessões) e persiste em `usePessoa.fotos`. Placeholder dashed em
+  borda da cor da pessoa quando vazio. `<PersonAvatar>` ganha prop
+  opcional `photoUri` que sobrepõe a inicial colorida com a imagem
+  real. Frame 0 do onboarding mostra o picker acima do input de
+  nome; Frame 1 (se duo) mostra o picker da segunda pessoa abaixo
+  do input. `app.json` ganha plugin `expo-image-picker` com
+  permissions strings PT-BR.
+- `expo-image-picker@~17.0.11` instalado via `npx expo install`.
+
+### Fixed
+- Sprint M03.1 — flicker de redirect resolvido. Stores zustand-persist
+  hidratam de forma assíncrona do SecureStore. Adicionado hook
+  `useHasHydrated(useStore)` em `src/lib/stores/hydrated.ts` que
+  observa `persist.onFinishHydration`. `app/index.tsx` agora aguarda
+  as 3 stores (onboarding, vault, pessoa) hidratarem antes de
+  qualquer `<Redirect>`. Durante a janela de hidratação mostra
+  `<Screen>` vazio (bg-page) — sem flicker.
+- Sprint M03.1 — labels micro-laranja do onboarding com Sentence
+  case + acentuação completa: `"Antes de começar"`, `"Companhia"`,
+  `"Vault"`, `"Sincronização"`. Removido `textTransform: 'lowercase'`
+  do helper `MicroOrange`.
+- Sprint M03.1 — gap entre cards do Frame 3 (Sincronização) subiu
+  para `spacing.xl` (24dp), reforçando a separação visual entre
+  Syncthing / Obsidian Sync / Não uso ainda.
+
 ### Changed
 - Vault físico do Mobile passa a ser **`~/Protocolo-Ouroboros/`**
   (decisão de 2026-04-29). Pasta dedicada sincronizada via Syncthing

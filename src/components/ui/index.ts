@@ -21,6 +21,7 @@ export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 export { PersonAvatar } from './PersonAvatar';
 export type { AvatarSize } from './PersonAvatar';
+export { AvatarPicker } from './AvatarPicker';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateIcon } from './EmptyState';
 export { Slider } from './Slider';

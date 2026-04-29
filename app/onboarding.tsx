@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { MotiView, AnimatePresence } from 'moti';
 import { Check, Folder } from 'lucide-react-native';
 import {
+  AvatarPicker,
   Button,
   Card,
   ChipGroup,
@@ -289,9 +290,12 @@ function Frame0({ nome, onChange, onContinue }: Frame0Props) {
       <MicroOrange>Antes de começar</MicroOrange>
       <Heading>Como você se chama?</Heading>
       <Sub>
-        Esse nome aparece nos seus registros e no cabeçalho da tela
-        inicial. Você pode trocar depois nos ajustes.
+        Esse nome e a foto aparecem nos seus registros e no cabeçalho
+        da tela inicial. Você pode trocar depois nos ajustes.
       </Sub>
+      <View style={{ alignItems: 'center', marginBottom: spacing.md }}>
+        <AvatarPicker pessoa="pessoa_a" size={96} />
+      </View>
       <Input
         value={nome}
         onChangeText={onChange}
@@ -384,6 +388,9 @@ function Frame1({
             placeholder="Como ela ou ele se chama?"
             accessibilityLabel="campo nome segunda pessoa"
           />
+          <View style={{ alignItems: 'center', marginTop: spacing.md }}>
+            <AvatarPicker pessoa="pessoa_b" size={96} />
+          </View>
         </MotiView>
       ) : null}
 

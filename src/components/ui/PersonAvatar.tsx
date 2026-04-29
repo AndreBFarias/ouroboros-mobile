@@ -1,9 +1,10 @@
 // Avatar circular tipado por PessoaId. Cor e inicial vem de
 // pessoas.config (corDe, inicialDe). Sizes sm 28 / md 32 / lg 56.
 // Quando onPress fornecido, comporta-se como botao com scale 0.96 e
-// haptic selection.
+// haptic selection. Quando photoUri fornecido, renderiza Image
+// cobrindo o circulo (override do fallback colorido).
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Image, Pressable, Text } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
@@ -16,6 +17,9 @@ interface PersonAvatarProps {
   pessoa: PessoaId;
   onPress?: () => void;
   size?: AvatarSize;
+  // URI local de foto persistida. Se presente, sobrepoe a inicial
+  // colorida com a imagem do usuario.
+  photoUri?: string | null;
 }
 
 const SIZE_PX: Record<AvatarSize, number> = { sm: 28, md: 32, lg: 56 };
@@ -29,6 +33,7 @@ export function PersonAvatar({
   pessoa,
   onPress,
   size = 'md',
+  photoUri,
 }: PersonAvatarProps) {
   const [pressed, setPressed] = useState(false);
   const px = SIZE_PX[size];
@@ -38,6 +43,8 @@ export function PersonAvatar({
     haptics.selection();
     onPress();
   };
+
+  const hasPhoto = typeof photoUri === 'string' && photoUri.length > 0;
 
   return (
     <Pressable
@@ -58,11 +65,20 @@ export function PersonAvatar({
           backgroundColor: corDe(pessoa),
           alignItems: 'center',
           justifyContent: 'center',
+          overflow: 'hidden',
         }}
       >
-        <Text className={`${SIZE_TEXT[size]} font-mono-medium text-bg`}>
-          {inicialDe(pessoa)}
-        </Text>
+        {hasPhoto ? (
+          <Image
+            source={{ uri: photoUri as string }}
+            style={{ width: px, height: px }}
+            resizeMode="cover"
+          />
+        ) : (
+          <Text className={`${SIZE_TEXT[size]} font-mono-medium text-bg`}>
+            {inicialDe(pessoa)}
+          </Text>
+        )}
       </MotiView>
     </Pressable>
   );

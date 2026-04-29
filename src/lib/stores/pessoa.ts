@@ -14,9 +14,13 @@ interface PessoaStore {
   pessoaAtiva: PessoaAutor;
   filtroPessoa: PessoaId;
   nomes: Record<PessoaAutor, string>;
+  // URI local da foto de perfil (apos copiar para documentDirectory).
+  // null = sem foto, fallback para inicial em fundo colorido.
+  fotos: Record<PessoaAutor, string | null>;
   setPessoaAtiva: (p: PessoaAutor) => void;
   setFiltroPessoa: (p: PessoaId) => void;
   setNome: (p: PessoaAutor, nome: string) => void;
+  setFoto: (p: PessoaAutor, uri: string | null) => void;
 }
 
 export const usePessoa = create<PessoaStore>()(
@@ -28,10 +32,16 @@ export const usePessoa = create<PessoaStore>()(
         pessoa_a: PESSOAS_CONFIG.pessoa_a.nome,
         pessoa_b: PESSOAS_CONFIG.pessoa_b.nome,
       },
+      fotos: {
+        pessoa_a: null,
+        pessoa_b: null,
+      },
       setPessoaAtiva: (pessoaAtiva) => set({ pessoaAtiva }),
       setFiltroPessoa: (filtroPessoa) => set({ filtroPessoa }),
       setNome: (p, nome) =>
         set((s) => ({ nomes: { ...s.nomes, [p]: nome } })),
+      setFoto: (p, uri) =>
+        set((s) => ({ fotos: { ...s.fotos, [p]: uri } })),
     }),
     {
       name: 'ouroboros.pessoa.v1',
