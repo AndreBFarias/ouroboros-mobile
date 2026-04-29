@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 
 export type FABRadialKey =
   | 'humor'
@@ -44,9 +44,11 @@ interface ActionDescriptor {
   angleDeg: number;
 }
 
-const ARC_RADIUS = 110;
-const FAB_SIZE = 56;
-const ACTION_SIZE = 48;
+const ARC_RADIUS = 150;
+const FAB_SIZE = 72;
+const ACTION_SIZE = 64;
+const LABEL_WIDTH = 140;
+const LABEL_GAP = 12;
 
 // Ordem visual: humor mais a esquerda, trigger mais perto do FAB.
 // Strings visiveis em sentence case + acentuacao PT-BR; labels de a11y
@@ -201,6 +203,37 @@ export function FABRadial({
                 height: ACTION_SIZE,
               }}
             >
+              {/* Label a esquerda do circulo, com fundo solido para contraste. */}
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  right: ACTION_SIZE + LABEL_GAP,
+                  top: (ACTION_SIZE - 32) / 2,
+                  width: LABEL_WIDTH,
+                  height: 32,
+                  alignItems: 'flex-end',
+                  justifyContent: 'center',
+                  opacity: open ? 1 : 0,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.fg,
+                    fontFamily: 'JetBrainsMono_500Medium',
+                    fontSize: 14,
+                    lineHeight: 20,
+                    backgroundColor: colors.bgElev,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                  }}
+                  numberOfLines={1}
+                >
+                  {action.label}
+                </Text>
+              </View>
               <Pressable
                 onPress={() => handleSelect(action.key)}
                 accessibilityRole="button"
@@ -214,29 +247,13 @@ export function FABRadial({
                   justifyContent: 'center',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 8,
-                  elevation: 6,
+                  shadowOpacity: 0.3,
+                  shadowRadius: 10,
+                  elevation: 8,
                 }}
               >
-                <action.Icon size={20} color={colors.bg} strokeWidth={2} />
+                <action.Icon size={28} color={colors.bg} strokeWidth={2.2} />
               </Pressable>
-              <Text
-                style={{
-                  position: 'absolute',
-                  top: ACTION_SIZE + 2,
-                  left: -8,
-                  width: ACTION_SIZE + 16,
-                  textAlign: 'center',
-                  color: colors.fg,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 10,
-                  opacity: open ? 1 : 0,
-                }}
-                numberOfLines={1}
-              >
-                {action.label}
-              </Text>
             </MotiView>
           );
         })}
@@ -259,7 +276,7 @@ export function FABRadial({
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            borderRadius: radius.fab,
+            borderRadius: FAB_SIZE / 2,
             backgroundColor: colors.purple,
             alignItems: 'center',
             justifyContent: 'center',
@@ -270,7 +287,7 @@ export function FABRadial({
             elevation: 8,
           }}
         >
-          <Plus size={24} color={colors.bg} strokeWidth={2} />
+          <Plus size={32} color={colors.bg} strokeWidth={2.4} />
         </MotiView>
       </Pressable>
     </View>
