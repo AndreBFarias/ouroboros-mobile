@@ -6,12 +6,18 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider } from '@/components/ui';
 import '../global.css';
 
 // Mantem a splash visivel ate as fontes carregarem.
 SplashScreen.preventAutoHideAsync();
+
+// Suprime warning de SafeAreaView vindo de dependencia transitiva.
+// Migracao para react-native-safe-area-context ja foi feita no codigo
+// proprio (ver Screen.tsx). Warning persiste por terceiros.
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 export default function RootLayout() {
   const [loaded] = useFonts({

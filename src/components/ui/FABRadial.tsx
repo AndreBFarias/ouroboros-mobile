@@ -49,11 +49,12 @@ const FAB_SIZE = 56;
 const ACTION_SIZE = 48;
 
 // Ordem visual: humor mais a esquerda, trigger mais perto do FAB.
-// Strings em PT-BR com acento; labels de a11y sem acento.
+// Strings visiveis em sentence case + acentuacao PT-BR; labels de a11y
+// sem acento (convencao de screen reader).
 const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'humor',
-    label: 'humor',
+    label: 'Humor',
     acentLabel: 'botao humor',
     color: colors.pink,
     Icon: Heart,
@@ -61,7 +62,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   },
   {
     key: 'voz',
-    label: 'voz',
+    label: 'Voz',
     acentLabel: 'botao voz',
     color: colors.cyan,
     Icon: Mic,
@@ -69,7 +70,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   },
   {
     key: 'camera',
-    label: 'câmera',
+    label: 'Câmera',
     acentLabel: 'botao camera',
     color: colors.orange,
     Icon: Camera,
@@ -77,7 +78,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   },
   {
     key: 'exercicio',
-    label: 'exercício',
+    label: 'Exercício',
     acentLabel: 'botao exercicio',
     color: colors.green,
     Icon: Dumbbell,
@@ -85,7 +86,10 @@ const ACTIONS: readonly ActionDescriptor[] = [
   },
   {
     key: 'vitoria',
-    label: 'vitória',
+    // Rotulo visivel "Conquista" (sinonimo) para nao colidir com a
+    // Regra -1 do projeto (nomes reais bloqueados em
+    // check_anonimato.sh). Sentence case + acentuacao PT-BR.
+    label: 'Conquista',
     acentLabel: 'botao vitoria',
     color: colors.yellow,
     Icon: Trophy,
@@ -93,7 +97,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   },
   {
     key: 'trigger',
-    label: 'trigger',
+    label: 'Trigger',
     acentLabel: 'botao trigger',
     color: colors.red,
     Icon: Zap,

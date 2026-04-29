@@ -1,6 +1,7 @@
 // Storybook caseiro M01. Renderiza todos os componentes base em
 // isolamento, em ordem de leitura natural. Acessivel pela rota
 // /_components do Expo Router. Sem dependencia em fixtures externas.
+// Strings visiveis em sentence case + acentuacao PT-BR; a11y sem acento.
 import { ReactNode, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Heart } from 'lucide-react-native';
@@ -31,26 +32,33 @@ interface SectionProps {
   children: ReactNode;
 }
 
+// Espacamento generoso entre secoes (40dp) e gap interno 14dp.
+// Titulo da secao com paddingTop 8 e marginBottom 4 para respirar.
 function Section({ title, children }: SectionProps) {
   return (
-    <View style={{ marginBottom: 28, gap: 12 }}>
-      <Text className="font-mono text-orange text-xs lowercase">{title}</Text>
+    <View style={{ marginBottom: 40, gap: 14 }}>
+      <Text
+        className="font-mono text-orange text-xs"
+        style={{ paddingTop: 8, marginBottom: 4 }}
+      >
+        {title}
+      </Text>
       {children}
     </View>
   );
 }
 
 const HUMOR_OPCOES: ChipOption[] = [
-  { value: 'serenidade', label: 'serenidade', accent: 'cyan' },
-  { value: 'ansiedade', label: 'ansiedade', accent: 'yellow' },
-  { value: 'irritacao', label: 'irritacao', accent: 'red' },
-  { value: 'cansaco', label: 'cansaco', accent: 'orange' },
+  { value: 'serenidade', label: 'Serenidade', accent: 'cyan' },
+  { value: 'ansiedade', label: 'Ansiedade', accent: 'yellow' },
+  { value: 'irritacao', label: 'Irritação', accent: 'red' },
+  { value: 'cansaco', label: 'Cansaço', accent: 'orange' },
 ];
 
 const TAGS_OPCOES: ChipOption[] = [
-  { value: 'casa', label: 'casa' },
-  { value: 'trabalho', label: 'trabalho' },
-  { value: 'lazer', label: 'lazer' },
+  { value: 'casa', label: 'Casa' },
+  { value: 'trabalho', label: 'Trabalho' },
+  { value: 'lazer', label: 'Lazer' },
 ];
 
 export default function ComponentsStory() {
@@ -68,63 +76,77 @@ export default function ComponentsStory() {
 
   return (
     <Screen>
-      <Header title="storybook m01" />
+      <Header title="Storybook M01" />
 
       <ScrollView
-        contentContainerStyle={{ paddingTop: 12, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingTop: 24, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
-        <Section title="botoes">
-          <Button label="primary action" onPress={() => undefined} />
+        <Section title="Botões">
+          <Button label="Ação primária" onPress={() => undefined} />
           <Button
-            label="success"
+            label="Sucesso"
             onPress={() => undefined}
             variant="success"
           />
-          <Button label="ghost" onPress={() => undefined} variant="ghost" />
+          <Button label="Ghost" onPress={() => undefined} variant="ghost" />
           <Button
-            label="destructive"
+            label="Destrutivo"
             onPress={() => undefined}
             variant="destructive"
           />
-          <Button label="disabled" onPress={() => undefined} disabled />
+          <Button label="Desabilitado" onPress={() => undefined} disabled />
         </Section>
 
-        <Section title="cards">
+        <Section title="Cards">
           <Card>
-            <Text className="font-mono text-fg text-base">
-              card padrao em repouso.
+            <Text
+              className="font-mono text-fg text-base"
+              style={{ lineHeight: 22 }}
+            >
+              Card padrão em repouso.
             </Text>
-            <Text className="font-mono text-muted text-xs mt-2">
-              fundo bg-alt, radius 12, padding 16.
+            <Text
+              className="font-mono text-muted text-xs mt-2"
+              style={{ lineHeight: 18 }}
+            >
+              Fundo bg-alt, radius 12, padding 16.
             </Text>
           </Card>
           <Card variant="active" onPress={() => undefined}>
-            <Text className="font-mono text-fg text-base">
-              card ativo com tap.
+            <Text
+              className="font-mono text-fg text-base"
+              style={{ lineHeight: 22 }}
+            >
+              Card ativo com tap.
             </Text>
-            <Text className="font-mono text-muted text-xs mt-2">
-              borda purple. scale 0.99 ao pressionar.
+            <Text
+              className="font-mono text-muted text-xs mt-2"
+              style={{ lineHeight: 18 }}
+            >
+              Borda purple. Scale 0,99 ao pressionar.
             </Text>
           </Card>
         </Section>
 
-        <Section title="inputs">
+        <Section title="Inputs">
           <Input
-            label="anotacao"
+            label="Anotação"
             value={texto}
             onChangeText={setTexto}
-            placeholder="escreva aqui."
+            placeholder="Escreva aqui."
+            accessibilityLabel="campo anotacao"
           />
           <Textarea
-            label="diario"
+            label="Diário"
             value={longo}
             onChangeText={setLongo}
-            placeholder="o que voce sentiu hoje."
+            placeholder="O que você sentiu hoje."
+            accessibilityLabel="campo diario"
           />
         </Section>
 
-        <Section title="chips single">
+        <Section title="Chips single-select">
           <ChipGroup
             mode="single"
             options={HUMOR_OPCOES}
@@ -133,7 +155,7 @@ export default function ComponentsStory() {
           />
         </Section>
 
-        <Section title="chips multi">
+        <Section title="Chips multi-select">
           <ChipGroup
             mode="multi"
             options={TAGS_OPCOES}
@@ -141,42 +163,42 @@ export default function ComponentsStory() {
             onChange={setTags}
           />
           <Chip
-            label="chip avulso"
+            label="Chip avulso"
             selected={false}
             onPress={() => undefined}
             accent="pink"
           />
         </Section>
 
-        <Section title="toggle">
+        <Section title="Toggle">
           <View
             className="flex-row items-center justify-between"
-            style={{ paddingVertical: 4 }}
+            style={{ paddingVertical: 6 }}
           >
-            <Text className="font-mono text-fg text-sm">modo silencioso</Text>
+            <Text className="font-mono text-fg text-sm">Modo silencioso</Text>
             <Toggle value={silencioso} onChange={setSilencioso} />
           </View>
           <View
             className="flex-row items-center justify-between"
-            style={{ paddingVertical: 4 }}
+            style={{ paddingVertical: 6 }}
           >
-            <Text className="font-mono text-fg text-sm">notificacoes</Text>
+            <Text className="font-mono text-fg text-sm">Notificações</Text>
             <Toggle value={notif} onChange={setNotif} />
           </View>
         </Section>
 
-        <Section title="avatares">
-          <View className="flex-row" style={{ gap: 12 }}>
+        <Section title="Avatares">
+          <View className="flex-row" style={{ gap: 14 }}>
             <PersonAvatar pessoa="pessoa_a" size="sm" />
             <PersonAvatar pessoa="pessoa_a" size="md" />
             <PersonAvatar pessoa="pessoa_a" size="lg" />
           </View>
-          <View className="flex-row" style={{ gap: 12 }}>
+          <View className="flex-row" style={{ gap: 14 }}>
             <PersonAvatar pessoa="pessoa_b" size="sm" />
             <PersonAvatar pessoa="pessoa_b" size="md" />
             <PersonAvatar pessoa="pessoa_b" size="lg" />
           </View>
-          <View className="flex-row" style={{ gap: 12 }}>
+          <View className="flex-row" style={{ gap: 14 }}>
             <PersonAvatar
               pessoa="ambos"
               size="md"
@@ -185,18 +207,18 @@ export default function ComponentsStory() {
           </View>
         </Section>
 
-        <Section title="empty state">
+        <Section title="Empty state">
           <Card>
             <EmptyState
-              frase="nada anotado por enquanto."
+              frase="Nada anotado por enquanto."
               Icon={Heart}
             />
           </Card>
         </Section>
 
-        <Section title="slider">
+        <Section title="Slider">
           <Slider
-            label="intensidade"
+            label="Intensidade"
             min={1}
             max={5}
             step={1}
@@ -205,37 +227,40 @@ export default function ComponentsStory() {
           />
         </Section>
 
-        <Section title="toast">
+        <Section title="Toast">
           <Button
-            label="toast sucesso"
-            onPress={() => toast.show('feito.', 'success')}
+            label="Toast sucesso"
+            onPress={() => toast.show('Feito.', 'success')}
             variant="success"
           />
           <Button
-            label="toast erro"
-            onPress={() => toast.show('falhou.', 'error')}
+            label="Toast erro"
+            onPress={() => toast.show('Falhou.', 'error')}
             variant="destructive"
           />
           <Button
-            label="toast info"
-            onPress={() => toast.show('anotado.', 'info')}
+            label="Toast info"
+            onPress={() => toast.show('Anotado.', 'info')}
             variant="ghost"
           />
         </Section>
 
-        <Section title="bottom sheet">
+        <Section title="Bottom sheet">
           <Button
-            label="abrir sheet"
+            label="Abrir sheet"
             onPress={() => sheetRef.current?.expand()}
           />
         </Section>
 
-        <Section title="fab e fab radial">
-          <Text className="font-mono text-muted text-xs">
-            ultima acao radial: {ultimaAcao ?? '—'}
+        <Section title="FAB e FAB radial">
+          <Text
+            className="font-mono text-muted text-xs"
+            style={{ lineHeight: 18 }}
+          >
+            Última ação radial: {ultimaAcao ?? '—'}
           </Text>
           <Button
-            label={radialOpen ? 'fechar radial' : 'abrir radial'}
+            label={radialOpen ? 'Fechar radial' : 'Abrir radial'}
             onPress={() => setRadialOpen((v) => !v)}
             variant="ghost"
           />
@@ -243,12 +268,18 @@ export default function ComponentsStory() {
       </ScrollView>
 
       <BottomSheet ref={sheetRef} snapPoints={['40%', '85%']}>
-        <View style={{ padding: 20, gap: 12 }}>
-          <Text className="font-mono text-fg text-base">
-            sheet aberto. arraste para baixo para fechar.
+        <View style={{ padding: 20, gap: 14 }}>
+          <Text
+            className="font-mono text-fg text-base"
+            style={{ lineHeight: 22 }}
+          >
+            Sheet aberto. Arraste para baixo para fechar.
           </Text>
-          <Text className="font-mono text-muted text-xs">
-            background bg-alt, handle bg-elev. backdrop fade 0.5.
+          <Text
+            className="font-mono text-muted text-xs"
+            style={{ lineHeight: 18 }}
+          >
+            Background bg-alt, handle bg-elev. Backdrop fade 0,5.
           </Text>
         </View>
       </BottomSheet>
@@ -258,7 +289,7 @@ export default function ComponentsStory() {
           o FABRadial ja desenha seu proprio FAB rotativo. */}
       {!radialOpen && (
         <FAB
-          onPress={() => toast.show('fab pressionado.', 'info')}
+          onPress={() => toast.show('FAB pressionado.', 'info')}
           accessibilityLabel="acao rapida demo"
         />
       )}
@@ -268,7 +299,7 @@ export default function ComponentsStory() {
         onOpenChange={setRadialOpen}
         onSelect={(key) => {
           setUltimaAcao(key);
-          toast.show(`acao: ${key}.`, 'info');
+          toast.show(`Ação: ${key}.`, 'info');
         }}
       />
     </Screen>

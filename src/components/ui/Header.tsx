@@ -1,5 +1,5 @@
 // Barra de topo 56dp. Esquerda chevron de voltar (opcional), centro
-// titulo orange mono lowercase, direita slot livre (avatar, acao).
+// titulo orange mono em sentence case, direita slot livre (avatar, acao).
 import { ReactNode, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';

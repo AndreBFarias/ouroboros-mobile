@@ -35,7 +35,7 @@ export function Textarea({
   return (
     <View>
       {label ? (
-        <Text className="font-mono text-muted text-xs mb-2 lowercase">
+        <Text className="font-mono text-muted text-xs mb-2">
           {label}
         </Text>
       ) : null}

@@ -18,7 +18,7 @@ export function Screen({ children, padded = true }: ScreenProps) {
     >
       <StatusBar barStyle="light-content" backgroundColor="#14151a" />
       <View
-        className={`flex-1 ${padded ? 'px-5' : ''}`}
+        className={`flex-1 ${padded ? 'px-5 pt-6' : ''}`}
         accessibilityRole="none"
       >
         {children}
