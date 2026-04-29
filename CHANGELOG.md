@@ -6,6 +6,17 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- Sprint M01.1: bootstrap Expo SDK 54 em-place preservando docs.
+  Stack confirmada: Expo Router, NativeWind 4, Reanimated 4,
+  Moti, gluestack-ui, @gorhom/bottom-sheet, JetBrains Mono via
+  `@expo-google-fonts/jetbrains-mono`, zustand, zod, yaml.
+  Configs: `tailwind.config.js` com paleta Dracula completa,
+  `babel.config.js` com `nativewind/babel` antes e
+  `react-native-reanimated/plugin` por último (Armadilha A1),
+  `metro.config.js` com `withNativeWind`, `tsconfig.json` strict
+  + paths `@/*`, `app.json` com tema dark e package
+  `com.ouroboros.mobile`. Telas placeholder em `app/_layout.tsx`
+  e `app/index.tsx` com classes Tailwind.
 - Bootstrap do repositório git (Fase 0).
 - Layout canônico `docs/` com `BRIEFING.md`, `CONTEXTO.md`,
   `PLANO_TECNICO_APK.md`, `Ouroboros_22_telas-standalone.html` e
