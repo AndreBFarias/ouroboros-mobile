@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Popula o Vault fisico (~/Controle de Bordo/) com 3 .md de exemplo
+# Popula o Vault fisico (~/Protocolo-Ouroboros/) com 3 .md de exemplo
 # para o checkpoint visual da Tela 01 da sprint M02. Idempotente:
 # nao sobrescreve arquivos ja existentes.
 #
@@ -8,11 +8,13 @@
 #   eventos/2026-04-29-cafe.md
 #   inbox/mente/diario/2026-04-29-1430-vit.md
 #
-# Pastas humanas do usuario (Diario/, Inbox/, Pessoal/) nao sao
-# tocadas. ext4 e case-sensitive: 'daily' e 'Diario' coexistem.
+# Decisao de 2026-04-29: Vault Mobile separado do Vault humano do
+# Obsidian (~/Controle de Bordo). Pasta dedicada ~/Protocolo-Ouroboros
+# eh sincronizada via Syncthing entre desktop e Note13-Andre. Backend
+# desktop apontara para essa pasta em sprint MOB-bridge.
 set -euo pipefail
 
-VAULT="${VAULT_DIR:-$HOME/Controle de Bordo}"
+VAULT="${VAULT_DIR:-$HOME/Protocolo-Ouroboros}"
 
 if [[ ! -d "$VAULT" ]]; then
   echo "ERRO: Vault nao encontrado em $VAULT"

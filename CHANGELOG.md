@@ -5,6 +5,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+- Vault físico do Mobile passa a ser **`~/Protocolo-Ouroboros/`**
+  (decisão de 2026-04-29). Pasta dedicada sincronizada via Syncthing
+  entre desktop Pop!_OS e celular Note13-Andre, **separada do Vault
+  humano do Obsidian** em `~/Controle de Bordo/`. Reduz risco de
+  conflito com arquivos pessoais e simplifica o contrato com o
+  backend desktop. `VALIDATOR_BRIEF.md` e `scripts/seed_vault_demo.sh`
+  atualizados; o script agora cria pastas `daily/`, `eventos/`,
+  `inbox/mente/diario/` na pasta nova.
+
+### Fixed
+- Sprint M02.1 — corrigido loop infinito em `useHoje` causado por
+  `now: Date = new Date()` no parâmetro default do hook (criava nova
+  referência a cada render, disparando o useEffect em loop). Hook
+  agora aceita `ymdOverride?: string` opcional e calcula a data
+  dentro do effect. Sintoma: tela "Hoje" piscava entre Carregando e
+  Empty State.
+- Sprint M02.1 — labels do FAB radial ajustados: Trigger → Crise,
+  Exercício → Exercícios, Vitória → Conquista (evita confusão com
+  nome próprio "Vitória" e termo técnico "Trigger").
+  ARC_RADIUS 175→210 e ângulos voltaram para range matemático
+  180–270°. Teste de a11y atualizado para os novos labels.
+- Sprint M02.2 — labels do FAB radial sem largura fixa: o `width:
+  140` invadia o ícone do botão adjacente ao centralizar o texto.
+  Agora o `<Text>` ajusta ao tamanho do conteúdo. Sintoma corrigido:
+  rótulos sobrepondo ícones (visível no checkpoint 70717).
+
 ### Added
 - Sprint M02 — Vault Bridge + Tela 01 (hoje). Primeira sprint que
   conecta o app a dados reais. `src/lib/vault/` com paths canônicos
