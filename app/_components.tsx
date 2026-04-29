@@ -1,21 +1,28 @@
-// Storybook caseiro do M01.3. Renderiza todos os 9 componentes base
-// em isolamento, em ordem de leitura natural. Acessivel pela rota
+// Storybook caseiro M01. Renderiza todos os componentes base em
+// isolamento, em ordem de leitura natural. Acessivel pela rota
 // /_components do Expo Router. Sem dependencia em fixtures externas.
-import { ReactNode, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import {
+  BottomSheet,
+  type BottomSheetRef,
   Button,
   Card,
   Chip,
   ChipGroup,
   EmptyState,
+  FAB,
+  FABRadial,
+  type FABRadialKey,
   Header,
   Input,
   PersonAvatar,
   Screen,
+  Slider,
   Textarea,
   Toggle,
+  useOptionalToast,
   type ChipOption,
 } from '@/components/ui';
 
@@ -53,10 +60,15 @@ export default function ComponentsStory() {
   const [tags, setTags] = useState<string[]>(['casa']);
   const [silencioso, setSilencioso] = useState(false);
   const [notif, setNotif] = useState(true);
+  const [intensidade, setIntensidade] = useState(3);
+  const [radialOpen, setRadialOpen] = useState(false);
+  const [ultimaAcao, setUltimaAcao] = useState<FABRadialKey | null>(null);
+  const sheetRef = useRef<BottomSheetRef>(null);
+  const toast = useOptionalToast();
 
   return (
     <Screen>
-      <Header title="storybook m01.3" />
+      <Header title="storybook m01" />
 
       <ScrollView
         contentContainerStyle={{ paddingTop: 12, paddingBottom: 48 }}
@@ -181,7 +193,84 @@ export default function ComponentsStory() {
             />
           </Card>
         </Section>
+
+        <Section title="slider">
+          <Slider
+            label="intensidade"
+            min={1}
+            max={5}
+            step={1}
+            value={intensidade}
+            onChange={setIntensidade}
+          />
+        </Section>
+
+        <Section title="toast">
+          <Button
+            label="toast sucesso"
+            onPress={() => toast.show('feito.', 'success')}
+            variant="success"
+          />
+          <Button
+            label="toast erro"
+            onPress={() => toast.show('falhou.', 'error')}
+            variant="destructive"
+          />
+          <Button
+            label="toast info"
+            onPress={() => toast.show('anotado.', 'info')}
+            variant="ghost"
+          />
+        </Section>
+
+        <Section title="bottom sheet">
+          <Button
+            label="abrir sheet"
+            onPress={() => sheetRef.current?.expand()}
+          />
+        </Section>
+
+        <Section title="fab e fab radial">
+          <Text className="font-mono text-muted text-xs">
+            ultima acao radial: {ultimaAcao ?? '—'}
+          </Text>
+          <Button
+            label={radialOpen ? 'fechar radial' : 'abrir radial'}
+            onPress={() => setRadialOpen((v) => !v)}
+            variant="ghost"
+          />
+        </Section>
       </ScrollView>
+
+      <BottomSheet ref={sheetRef} snapPoints={['40%', '85%']}>
+        <View style={{ padding: 20, gap: 12 }}>
+          <Text className="font-mono text-fg text-base">
+            sheet aberto. arraste para baixo para fechar.
+          </Text>
+          <Text className="font-mono text-muted text-xs">
+            background bg-alt, handle bg-elev. backdrop fade 0.5.
+          </Text>
+        </View>
+      </BottomSheet>
+
+      {/* FAB simples nao convive bem com FABRadial no mesmo canto:
+          quando radial estiver fechado, mostramos FAB; quando aberto,
+          o FABRadial ja desenha seu proprio FAB rotativo. */}
+      {!radialOpen && (
+        <FAB
+          onPress={() => toast.show('fab pressionado.', 'info')}
+          accessibilityLabel="acao rapida demo"
+        />
+      )}
+
+      <FABRadial
+        open={radialOpen}
+        onOpenChange={setRadialOpen}
+        onSelect={(key) => {
+          setUltimaAcao(key);
+          toast.show(`acao: ${key}.`, 'info');
+        }}
+      />
     </Screen>
   );
 }

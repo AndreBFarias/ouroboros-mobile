@@ -101,3 +101,85 @@ jest.mock('lucide-react-native', () => {
     }
   );
 });
+
+// Slider nativo: substitui por View neutra que expoe value/min/max
+// e dispara onValueChange via prop testID. Mantem assinatura.
+jest.mock('@react-native-community/slider', () => {
+  const React = require('react');
+  const RN = require('react-native');
+  const Slider = (props) => {
+    const {
+      onValueChange: _ovc,
+      value,
+      minimumValue,
+      maximumValue,
+      step,
+      ...rest
+    } = props || {};
+    return React.createElement(RN.View, {
+      ...rest,
+      accessibilityRole: 'adjustable',
+      accessibilityValue: { min: minimumValue, max: maximumValue, now: value },
+      'data-step': step,
+    });
+  };
+  Slider.displayName = 'MockRNSlider';
+  return { __esModule: true, default: Slider };
+});
+
+// gorhom/bottom-sheet: substitui o componente principal por View com
+// ref que expoe `expand`, `close`, `snapToIndex`, `collapse`. Backdrop
+// e BottomSheetView viram View. Suficiente para smoke render.
+jest.mock('@gorhom/bottom-sheet', () => {
+  const React = require('react');
+  const RN = require('react-native');
+  const BottomSheet = React.forwardRef((props, ref) => {
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        expand: () => undefined,
+        close: () => undefined,
+        snapToIndex: () => undefined,
+        snapToPosition: () => undefined,
+        collapse: () => undefined,
+        forceClose: () => undefined,
+      }),
+      []
+    );
+    return React.createElement(
+      RN.View,
+      { accessibilityLabel: 'bottom-sheet-mock' },
+      props.children
+    );
+  });
+  BottomSheet.displayName = 'MockBottomSheet';
+  const BottomSheetBackdrop = (props) =>
+    React.createElement(RN.View, props);
+  const BottomSheetView = ({ children, ...rest }) =>
+    React.createElement(RN.View, rest, children);
+  return {
+    __esModule: true,
+    default: BottomSheet,
+    BottomSheetBackdrop,
+    BottomSheetView,
+  };
+});
+
+// gesture-handler: minimal stub. RootView vira View, gestos no-op.
+jest.mock('react-native-gesture-handler', () => {
+  const React = require('react');
+  const RN = require('react-native');
+  return {
+    GestureHandlerRootView: ({ children, ...rest }) =>
+      React.createElement(RN.View, rest, children),
+    Directions: {},
+    State: {},
+    PanGestureHandler: ({ children }) => children,
+    TapGestureHandler: ({ children }) => children,
+    GestureDetector: ({ children }) => children,
+    Gesture: {
+      Pan: () => ({ onUpdate: () => ({}), onEnd: () => ({}) }),
+      Tap: () => ({ onEnd: () => ({}) }),
+    },
+  };
+});
