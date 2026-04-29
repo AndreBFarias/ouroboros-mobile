@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Ouroboros — 18 telas mobile (print)</title>
+<meta name="viewport" content="width=1600" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="theme.css" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  /* ─── shell on screen: stacked pages with breathing room ─── */
+  .page {
+    width: 1500px;
+    min-height: 1050px;
+    margin: 24px auto;
+    padding: 60px 50px 40px;
+    background: var(--bg);
+    box-sizing: border-box;
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+  }
+  .page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  /* ─── page chrome ─── */
+  .page-tag {
+    position: absolute;
+    top: 22px;
+    left: 50px;
+    font-size: 11px;
+    color: var(--muted-decor);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .page-num {
+    position: absolute;
+    top: 22px;
+    right: 50px;
+    font-size: 11px;
+    color: var(--muted-decor);
+    letter-spacing: 0.06em;
+  }
+  .page-title {
+    color: var(--orange);
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0 0 4px;
+  }
+  .page-sub {
+    color: var(--muted);
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 20px;
+  }
+  .page-body {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* ─── cover page ─── */
+  .cover {
+    justify-content: center;
+    align-items: stretch;
+    text-align: left;
+    padding-top: 180px;
+  }
+  .cover h1 {
+    font-size: 56px;
+    color: var(--orange);
+    font-weight: 500;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .cover .lead {
+    color: var(--fg);
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  .cover .meta {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+  .cover .stamp {
+    margin-top: auto;
+    color: var(--muted-decor);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    border-top: 1px solid var(--bg-elev);
+    padding-top: 16px;
+  }
+  .toc {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 28px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .toc .grp {
+    color: var(--orange);
+    margin-top: 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    grid-column: 1 / -1;
+  }
+  .toc .row {
+    display: flex; justify-content: space-between;
+    border-bottom: 1px dotted var(--bg-elev);
+    padding: 4px 0;
+  }
+
+  /* ─── section divider page ─── */
+  .divider-page {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .divider-page .marker {
+    color: var(--muted-decor);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    margin-bottom: 16px;
+  }
+  .divider-page .name {
+    color: var(--orange);
+    font-size: 48px;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .divider-page .desc {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 540px;
+    line-height: 1.7;
+  }
+
+  /* ─── flow page (horizontal) ─── */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    overflow: visible;
+  }
+
+  /* print rules */
+  @page {
+    size: 1600px 1100px;
+    margin: 0;
+  }
+  @media print {
+    html, body { background: var(--bg) !important; }
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .page {
+      margin: 0;
+      box-shadow: none;
+      page-break-after: always;
+      break-after: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+  }
+
+  /* primitives.jsx-driven Annot uses absolute positioning — we keep page-body
+     as the positioning context and rely on the same x/y the artboards used.
+     But we replicate the artboard inner padding so labels sit in the same
+     spot relative to phone frames as on screen. */
+  .artboard-host {
+    position: relative;
+    width: 1100px;
+    height: 1020px;
+  }
+  .artboard-host.wide {
+    width: 1500px;
+  }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- shim DCSection / DCArtboard so the existing screen files render in our paged layout instead of the canvas -->
+<script type="text/babel">
+  // collect all artboards into a flat list keyed by section.
+  // each <DCArtboard> renders its children inside a .artboard-host, and we
+  // capture its label/width to build the paged layout outside.
+  window.__pages = [];
+  window.__currentSection = null;
+
+  const DCSection = ({ id, title, children }) => {
+    window.__pages.push({ kind: 'divider', id, title });
+    window.__currentSection = title;
+    return <>{children}</>;
+  };
+  const DCArtboard = ({ id, label, width = 1100, height = 1020, children }) => {
+    window.__pages.push({
+      kind: 'artboard', id, label,
+      width, height,
+      section: window.__currentSection,
+      content: children,
+    });
+    return null;
+  };
+  Object.assign(window, { DCSection, DCArtboard });
+</script>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="secao-c.jsx"></script>
+<script type="text/babel" src="secao-b.jsx"></script>
+<script type="text/babel" src="secao-a.jsx"></script>
+<script type="text/babel" src="secao-d.jsx"></script>
+<script type="text/babel" src="flows.jsx"></script>
+
+<script type="text/babel">
+  // Register all sections (this populates window.__pages via the shimmed
+  // DCSection / DCArtboard above).
+  // We render them once into a hidden container so the registration runs.
+  const Register = () => (
+    <div style={{ display: 'none' }}>
+      <Flows />
+      <SecaoA />
+      <SecaoB />
+      <SecaoC />
+      <SecaoD />
+    </div>
+  );
+
+  const tmp = document.createElement('div');
+  document.body.appendChild(tmp);
+  ReactDOM.createRoot(tmp).render(<Register />);
+
+  // After registration finishes (microtask), build the paged document.
+  setTimeout(() => {
+    document.body.removeChild(tmp);
+
+    const pages = window.__pages;
+    const artboards = pages.filter(p => p.kind === 'artboard');
+
+    // count artboards per section for TOC
+    const bySection = {};
+    pages.forEach(p => {
+      if (p.kind === 'artboard') {
+        bySection[p.section] = bySection[p.section] || [];
+        bySection[p.section].push(p);
+      }
+    });
+
+    const total = 1 + Object.keys(bySection).length + artboards.length; // cover + dividers + artboards
+
+    let pageCounter = 1;
+
+    const Cover = () => (
+      <div className="page cover">
+        <span className="page-tag">ouroboros · life os</span>
+        <span className="page-num">{pageCounter}/{total}</span>
+        <h1>18 telas mobile</h1>
+        <div className="lead">redmi note 13 5G pro · 412 × 915 dp</div>
+        <div className="meta">
+          expansao das 6 telas existentes (01–06).<br/>
+          paleta dracula · jetbrains mono · vault local-first.<br/>
+          cada artboard mostra estado vazio + estado preenchido lado a lado.
+        </div>
+
+        <div className="toc">
+          {Object.entries(bySection).map(([sec, list]) => (
+            <React.Fragment key={sec}>
+              <div className="grp">{sec}</div>
+              {list.map(a => (
+                <div key={a.id} className="row">
+                  <span>{a.label}</span>
+                  <span className="mut" style={{ color: 'var(--muted-decor)' }}>{a.id}</span>
+                </div>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div className="stamp">28 abril 2026 · andre + vitoria · sprint mobile · v0.1</div>
+      </div>
+    );
+
+    const DividerPage = ({ title }) => {
+      const n = pageCounter++;
+      const desc = {
+        'user flows · 4 jornadas criticas': 'as 4 jornadas que validam o sistema. share intent · captura emocional · evento positivo · scanner alta resolucao.',
+        'secao A — movimento e memorias': '7 telas de exercicios, treinos, heatmap e medidas corporais. da galeria isolada ao comparativo evolutivo.',
+        'secao B — estado interno': '4 telas de captura emocional. humor rapido, diario com contexto, duas colunas do dia, evento com lugar.',
+        'secao C — captura ativa': '3 telas que mantem a fricao zero. fab radial, scanner com ocr, share intent com path .md visivel.',
+        'secao D — sistema e visualizacao': '4 telas de manutencao do sistema. heatmap de humor, financas readonly, ajustes com path do sync, onboarding em 3 frames.',
+      }[title] || '';
+      return (
+        <div className="page divider-page">
+          <span className="page-tag">{title.split('—')[0].trim()}</span>
+          <span className="page-num">{n}/{total}</span>
+          <div className="marker">— · — · —</div>
+          <div className="name">{title.includes('—') ? title.split('—')[1].trim() : title}</div>
+          <div className="desc">{desc}</div>
+        </div>
+      );
+    };
+
+    const ArtboardPage = ({ p }) => {
+      const n = pageCounter++;
+      const wide = p.width >= 1300;
+      return (
+        <div className="page">
+          <span className="page-tag">{p.section}</span>
+          <span className="page-num">{n}/{total}</span>
+          <div className="page-title">{p.label}</div>
+          <div className="page-sub">estado vazio · estado preenchido · anotacoes em muted-decor</div>
+          <div className="page-body">
+            <div className={'artboard-host' + (wide ? ' wide' : '')} style={{ height: p.height }}>
+              {p.content}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Print = () => {
+      const els = [];
+      els.push(<Cover key="cover" />);
+      pageCounter = 2;
+      for (const p of pages) {
+        if (p.kind === 'divider') {
+          els.push(<DividerPage key={p.id} title={p.title} />);
+        } else {
+          els.push(<ArtboardPage key={p.id} p={p} />);
+        }
+      }
+      return <>{els}</>;
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Print />);
+
+    // wait for fonts + a beat, then trigger print
+    Promise.all([document.fonts ? document.fonts.ready : Promise.resolve()])
+      .then(() => setTimeout(() => window.print(), 800));
+  }, 0);
+</script>
+
+</body>
+</html>

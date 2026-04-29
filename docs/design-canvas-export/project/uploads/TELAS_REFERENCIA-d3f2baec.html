@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ouroboros Mobile - 6 Telas de Referencia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page:    #14151a;
+  --bg:         #282a36;
+  --bg-alt:     #1e1f29;
+  --bg-elev:    #44475a;
+  --fg:         #f8f8f2;
+  --muted:      #6272a4;
+  --pink:       #ff79c6;
+  --purple:     #bd93f9;
+  --cyan:       #8be9fd;
+  --green:      #50fa7b;
+  --yellow:     #f1fa8c;
+  --orange:     #ffb86c;
+  --red:        #ff5555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-page);
+  color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
+  padding: 32px 16px;
+  min-height: 100vh;
+}
+
+.page-header {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  text-align: center;
+}
+
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--orange);
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.legend {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  background: var(--bg-alt);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.mock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ph {
+  background: #0d0e13;
+  border-radius: 32px;
+  padding: 6px;
+  width: 100%;
+  max-width: 320px;
+  border: 1px solid var(--bg-elev);
+}
+
+.scr {
+  background: var(--bg);
+  border-radius: 26px;
+  overflow: hidden;
+  height: 620px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sb {
+  padding: 12px 18px 4px;
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.battery {
+  display: inline-block;
+  width: 18px;
+  height: 8px;
+  border: 1px solid var(--muted);
+  border-radius: 1px;
+  position: relative;
+}
+
+.battery::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  width: 2px;
+  height: 4px;
+  background: var(--muted);
+  border-radius: 0 1px 1px 0;
+}
+
+.hd {
+  padding: 6px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--bg-elev);
+}
+
+.bk {
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.ti {
+  font-size: 12px;
+  color: var(--orange);
+  font-weight: 500;
+}
+
+.rt {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.bd {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tb {
+  display: flex;
+  border-top: 1px solid var(--bg-elev);
+  padding: 10px 4px;
+  justify-content: space-around;
+  background: var(--bg-alt);
+}
+
+.tab {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  flex: 1;
+}
+
+.tab.on {
+  color: var(--purple);
+  font-weight: 500;
+}
+
+.lb {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 500;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  margin: 6px 0;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-pri {
+  background: var(--purple);
+  color: var(--bg);
+}
+
+.btn-grn {
+  background: var(--green);
+  color: var(--bg);
+}
+
+.chip {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 12px;
+  font-size: 11px;
+  border: 1px solid var(--bg-elev);
+  color: var(--muted);
+  margin: 2px;
+}
+
+.chip.on {
+  background: var(--purple);
+  color: var(--bg);
+  border-color: var(--purple);
+  font-weight: 500;
+}
+
+.minicard {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 11px;
+  margin-bottom: 8px;
+}
+
+.cap {
+  font-size: 11px;
+  color: var(--orange);
+  margin-bottom: 3px;
+}
+
+.val {
+  font-size: 15px;
+  color: var(--cyan);
+  font-weight: 500;
+}
+
+.mut {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.cb {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--muted);
+  border-radius: 3px;
+  vertical-align: middle;
+  position: relative;
+  margin-right: 8px;
+}
+
+.cb.on {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.cb.on::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 3px;
+  height: 7px;
+  border: solid var(--bg);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.gif-placeholder {
+  background: var(--bg-elev);
+  border-radius: 6px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 28px 0;
+  margin: 6px 0;
+}
+
+.gif-up {
+  border: 1.5px dashed var(--muted);
+  background: transparent;
+  padding: 28px 8px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.input {
+  background: var(--bg-alt);
+  border: 1px solid var(--bg-elev);
+  border-radius: 6px;
+  padding: 9px;
+  color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.wv {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 36px;
+  margin: 12px 0;
+}
+
+.wv span {
+  display: inline-block;
+  width: 3px;
+  background: var(--purple);
+  border-radius: 2px;
+}
+
+.recbtn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--red);
+  margin: 10px auto 0;
+}
+
+.cluebtn {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.tab-plus {
+  color: var(--purple) !important;
+  font-size: 16px;
+  font-weight: 500;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>ouroboros mobile - telas de referencia</h1>
+  <p>seis telas-chave em paleta dracula, jetbrains mono, viewport 412x915 dp.<br>
+  use como ancora visual para gerar as 18 telas restantes.</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch" style="background:#282a36"></div><span>--bg #282a36</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#1e1f29"></div><span>--bg-alt #1e1f29</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#44475a"></div><span>--bg-elev #44475a</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#f8f8f2"></div><span>--fg #f8f8f2</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#6272a4"></div><span>--muted #6272a4</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#bd93f9"></div><span>--purple #bd93f9</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#ffb86c"></div><span>--orange #ffb86c</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#8be9fd"></div><span>--cyan #8be9fd</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#50fa7b"></div><span>--green #50fa7b</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#ff79c6"></div><span>--pink #ff79c6</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#f1fa8c"></div><span>--yellow #f1fa8c</span></div>
+  <div class="legend-item"><div class="swatch" style="background:#ff5555"></div><span>--red #ff5555</span></div>
+</div>
+
+<div class="mock-grid">
+
+<div class="pw"><div class="ph"><div class="scr">
+<div class="sb"><span>22:14</span><span class="battery"></span></div>
+<div class="hd"><span style="font-size:11px;color:var(--muted)">terca, 28 abril</span></div>
+<div class="bd">
+<div style="font-size:20px;color:var(--orange);font-weight:500">rotina a</div>
+<div style="font-size:12px;color:var(--cyan);margin-bottom:12px">6 atividades · ~30 min</div>
+<button class="btn btn-pri">iniciar rotina</button>
+<div class="mut" style="margin:10px 0 14px">voltou hoje. bom te ver.</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+<div class="minicard"><div class="cap">humor</div><div class="val">4 / 5</div><div class="mut">ontem</div></div>
+<div class="minicard"><div class="cap">gasto</div><div class="val">R$ 234</div><div class="mut">semana</div></div>
+</div>
+<div class="minicard">
+  <div class="cap">ultimo diario</div>
+  <div style="color:var(--fg);font-size:12px">"hoje fomos nadar..."</div>
+  <div class="mut">ha 2 dias</div>
+</div>
+</div>
+<div class="tb">
+  <div class="tab on">hoje</div>
+  <div class="tab">rotinas</div>
+  <div class="tab">diario</div>
+  <div class="tab">memoria</div>
+  <div class="tab tab-plus">+</div>
+</div>
+</div></div><div class="lb">tela 01 — hoje</div></div>
+
+<div class="pw"><div class="ph"><div class="scr">
+<div class="sb"><span>22:14</span><span class="battery"></span></div>
+<div class="hd"><span class="bk">‹</span><span class="ti">novo exercicio</span></div>
+<div class="bd">
+<div class="gif-up">
+  <div style="font-size:20px;color:var(--purple)">+</div>
+  <div>toque pra anexar gif</div>
+  <div class="mut" style="margin-top:2px">do vault ou camera</div>
+</div>
+<div class="cap">nome</div>
+<input class="input" value="supino com halteres" />
+<div class="cap" style="margin-top:12px">grupo muscular</div>
+<div style="margin-top:4px"><span class="chip on">peito</span><span class="chip">costas</span><span class="chip on">triceps</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<div><div class="cap">series</div><input class="input" value="3" /></div>
+<div><div class="cap">reps</div><input class="input" value="8" /></div>
+</div>
+<button class="btn btn-grn" style="margin-top:auto">salvar</button>
+</div>
+<div class="tb">
+  <div class="tab">hoje</div>
+  <div class="tab on">rotinas</div>
+  <div class="tab">diario</div>
+  <div class="tab">memoria</div>
+  <div class="tab tab-plus">+</div>
+</div>
+</div></div><div class="lb">tela 02 — cadastro de exercicio</div></div>
+
+<div class="pw"><div class="ph"><div class="scr">
+<div class="sb"><span>22:14</span><span class="battery"></span></div>
+<div class="hd"><span class="bk">‹</span><span class="ti">rotina a</span><span class="rt">12:34</span></div>
+<div class="bd">
+<div class="minicard" style="background:var(--bg);border:1px solid var(--purple);padding:12px">
+  <div style="font-size:14px;color:var(--orange);font-weight:500">supino com halteres</div>
+  <div style="font-size:11px;color:var(--cyan);margin-bottom:8px">3 series · 8 reps</div>
+  <div class="gif-placeholder">[ gif demo ]</div>
+  <div style="display:flex;gap:14px;margin:10px 0;font-size:12px">
+    <div><div class="cap">series</div><div style="color:var(--fg)">2 / 3 [+]</div></div>
+    <div><div class="cap">peso</div><div style="color:var(--fg)">4 kg</div></div>
+  </div>
+  <div style="display:flex;align-items:center;color:var(--green);font-size:12px">
+    <span class="cb on"></span>concluido
+  </div>
+</div>
+<div class="minicard" style="opacity:0.55">
+  <div style="font-size:13px;color:var(--orange)">remada curvada</div>
+  <div class="mut">3 · 8 — pendente</div>
+</div>
+<div class="minicard" style="opacity:0.55">
+  <div style="font-size:13px;color:var(--orange)">desenvolvimento ombros</div>
+  <div class="mut">3 · 8 — pendente</div>
+</div>
+<button class="btn btn-grn" style="margin-top:auto">concluir rotina</button>
+</div>
+<div class="tb">
+  <div class="tab">hoje</div>
+  <div class="tab on">rotinas</div>
+  <div class="tab">diario</div>
+  <div class="tab">memoria</div>
+  <div class="tab tab-plus">+</div>
+</div>
+</div></div><div class="lb">tela 03 — sessao em andamento</div></div>
+
+<div class="pw"><div class="ph"><div class="scr">
+<div class="sb"><span>22:14</span><span class="battery"></span></div>
+<div class="hd"><span class="bk">‹</span><span class="ti">diario por voz</span></div>
+<div class="bd" style="align-items:center;text-align:center">
+<div style="font-size:36px;color:var(--fg);font-weight:500;margin-top:6px">00:23</div>
+<div class="mut">gravando</div>
+<div class="wv">
+  <span style="height:8px"></span><span style="height:18px"></span><span style="height:30px"></span>
+  <span style="height:14px"></span><span style="height:24px"></span><span style="height:34px"></span>
+  <span style="height:20px"></span><span style="height:10px"></span><span style="height:28px"></span>
+  <span style="height:16px"></span><span style="height:30px"></span><span style="height:12px"></span>
+</div>
+<div style="background:var(--bg-alt);border-radius:8px;padding:12px;width:100%;font-size:12px;line-height:1.6;text-align:left">
+  <span style="color:var(--cyan)">transcrevendo...</span><br>
+  <span style="color:var(--fg)">hoje fomos nadar com a vitoria depois de quatro meses sem ir. cansei rapido mas voltei animado. ela tambem...</span>
+</div>
+<div class="recbtn"></div>
+<div class="mut" style="margin-top:8px">tocar pra parar</div>
+</div>
+<div class="tb">
+  <div class="tab">hoje</div>
+  <div class="tab">rotinas</div>
+  <div class="tab on">diario</div>
+  <div class="tab">memoria</div>
+  <div class="tab tab-plus">+</div>
+</div>
+</div></div><div class="lb">tela 04 — diario por voz</div></div>
+
+<div class="pw"><div class="ph"><div class="scr">
+<div class="sb"><span>22:14</span><span class="battery"></span></div>
+<div class="hd"><span class="ti">padroes</span></div>
+<div class="bd">
+<div class="mut" style="margin-bottom:12px">descobertas dos ultimos 90 dias</div>
+<div class="minicard">
+  <div style="display:flex;gap:8px">
+    <span class="cluebtn" style="background:var(--green);color:var(--bg)">+</span>
+    <div>
+      <div style="color:var(--fg);font-size:13px">dias com exercicio</div>
+      <div style="color:var(--cyan);font-size:11px">humor +1.2 pts em media</div>
+      <div class="mut">20 dias analisados</div>
+    </div>
+  </div>
+</div>
+<div class="minicard">
+  <div style="display:flex;gap:8px">
+    <span class="cluebtn" style="background:var(--red);color:#fff">!</span>
+    <div>
+      <div style="color:var(--fg);font-size:13px">sono abaixo de 6h</div>
+      <div style="color:var(--pink);font-size:11px">ansiedade sobe na sequencia</div>
+      <div class="mut">8 ocorrencias</div>
+    </div>
+  </div>
+</div>
+<div class="minicard">
+  <div style="display:flex;gap:8px">
+    <span class="cluebtn" style="background:var(--yellow);color:var(--bg)">·</span>
+    <div>
+      <div style="color:var(--fg);font-size:13px">sextas custam mais</div>
+      <div style="color:var(--cyan);font-size:11px">+R$ 80 vs media semanal</div>
+      <div class="mut">12 sextas</div>
+    </div>
+  </div>
+</div>
+<div class="minicard">
+  <div style="display:flex;gap:8px">
+    <span class="cluebtn" style="background:var(--green);color:var(--bg)">+</span>
+    <div>
+      <div style="color:var(--fg);font-size:13px">eventos com vitoria</div>
+      <div style="color:var(--cyan);font-size:11px">humor sobe nos dois</div>
+      <div class="mut">14 registros</div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="tb">
+  <div class="tab">hoje</div>
+  <div class="tab">rotinas</div>
+  <div class="tab">diario</div>
+  <div class="tab on">memoria</div>
+  <div class="tab tab-plus">+</div>
+</div>
+</div></div><div class="lb">tela 05 — padroes</div></div>
+
+<div class="pw"><div class="ph"><div class="scr">
+<div class="sb"><span>22:14</span><span class="battery"></span></div>
+<div class="hd"><span class="bk">‹</span><span class="ti">dossie medico</span></div>
+<div class="bd">
+<div class="mut" style="margin-bottom:12px">pra levar na consulta</div>
+<div class="cap">periodo</div>
+<div style="margin:6px 0 14px"><span class="chip">30 dias</span><span class="chip on">90 dias</span><span class="chip">tudo</span></div>
+<div class="cap">pessoa</div>
+<div style="margin:6px 0 14px"><span class="chip on">andre</span><span class="chip">vitoria</span></div>
+<div class="cap" style="margin-bottom:6px">incluir</div>
+<div style="font-size:12px;line-height:2">
+  <div><span class="cb on"></span>humor diario</div>
+  <div><span class="cb on"></span>sono e energia</div>
+  <div><span class="cb on"></span>exercicio</div>
+  <div><span class="cb on"></span>medicacao</div>
+  <div><span class="cb on"></span>eventos relevantes</div>
+  <div><span class="cb"></span>financeiro</div>
+</div>
+<button class="btn btn-pri" style="margin-top:auto">gerar pdf</button>
+<div class="mut" style="text-align:center">ultimo: 15 abril</div>
+</div>
+<div class="tb">
+  <div class="tab">hoje</div>
+  <div class="tab">rotinas</div>
+  <div class="tab">diario</div>
+  <div class="tab">memoria</div>
+  <div class="tab on tab-plus">+</div>
+</div>
+</div></div><div class="lb">tela 06 — dossie medico</div></div>
+
+</div>
+
+<div style="max-width:800px;margin:48px auto 24px;padding:24px;background:var(--bg-alt);border-radius:12px">
+<h2 style="color:var(--orange);font-size:14px;margin-bottom:12px;font-weight:500">notas de uso</h2>
+<ul style="color:var(--muted);font-size:13px;line-height:1.8;list-style:none">
+<li>· <span style="color:var(--fg)">tipografia:</span> jetbrains mono, pesos 400 e 500 apenas</li>
+<li>· <span style="color:var(--fg)">tamanhos:</span> heading-1 24px, heading-2 18px, body 15px, caption 13px, micro 11px</li>
+<li>· <span style="color:var(--fg)">touch targets:</span> minimo 44x44dp, botoes principais 56dp+</li>
+<li>· <span style="color:var(--fg)">cantos:</span> inputs 8px, cards 12px, modais 16px</li>
+<li>· <span style="color:var(--fg)">linguagem:</span> sentence case lowercase, sem exclamacao, sem emoji</li>
+<li>· <span style="color:var(--fg)">animacoes:</span> 200ms ease-out, sem confetti, sem celebracao longa</li>
+<li>· <span style="color:var(--fg)">filtro pessoa:</span> "a" em circulo --purple, "v" em circulo --pink, sem foto</li>
+</ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Builds nativos (gerados por prebuild quando necessário)
+ios/
+android/
+*.ipa
+*.apk
+*.aab
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Identidade pessoal em runtime — única exceção autorizada para nomes reais
+src/config/pessoas.config.runtime.json
+
+# Logs e caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+coverage/
+.nyc_output/
+
+# IDE / editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Saídas de build temporárias
+*.tsbuildinfo
+.tmp/
+tmp/
+
+# Screenshots de sprint capturados via adb (mantemos só os de checkpoint)
+docs/sprints/*-screenshots/_raw/
