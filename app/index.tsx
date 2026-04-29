@@ -1,15 +1,15 @@
 // Tela 01 (hoje) — entrada do app. Le do Vault os registros do dia
 // (humor / diarios emocionais / eventos) e renderiza em sentence
-// case com acentuacao PT-BR completa. Sem permissao de Vault, mostra
-// modal de onboarding com botao para conceder via SAF.
+// case com acentuacao PT-BR completa. Se o onboarding nao foi
+// concluido, redireciona para /onboarding (substituiu o
+// PermissaoVaultModal da M02 a partir da M03).
 //
 // Fonte de verdade visual: docs/Ouroboros_22_telas-standalone.html
 // artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
-// docs/BRIEFING.md secao 7. Esta tela substitui o re-export do
-// storybook que vivia aqui na M01.5.
-import { useEffect, useMemo, useState } from 'react';
+// docs/BRIEFING.md secao 7.
+import { useEffect, useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import {
   Card,
   EmptyState,
@@ -25,7 +25,8 @@ import {
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { requestVaultPermission, loadVaultRoot } from '@/lib/vault';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { loadVaultRoot } from '@/lib/vault';
 import { useHoje } from '@/lib/hooks/useHoje';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
@@ -37,6 +38,7 @@ export default function TelaHoje() {
   const setVaultRoot = useVault((s) => s.setVaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const setPessoaAtiva = usePessoa((s) => s.setPessoaAtiva);
+  const onboardingDone = useOnboarding((s) => s.done);
 
   // Restaura URI do SecureStore na primeira montagem (caso o
   // middleware persist ainda nao tenha hidratado).
@@ -51,65 +53,13 @@ export default function TelaHoje() {
     };
   }, [vaultRoot, setVaultRoot]);
 
-  if (!vaultRoot) {
-    return <PermissaoVaultModal onGrant={setVaultRoot} />;
+  // Gate de onboarding: se nao concluiu ou se nao tem vaultRoot,
+  // redireciona para o fluxo de boas-vindas.
+  if (!onboardingDone || !vaultRoot) {
+    return <Redirect href="/onboarding" />;
   }
 
   return <TelaHojeConteudo onFabPress={() => toast.show('FAB radial chega na M04', 'info')} onAvatarPress={() => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a')} onComponentsPress={() => router.push('/_components')} />;
-}
-
-interface PermissaoVaultModalProps {
-  onGrant: (uri: string) => void;
-}
-
-function PermissaoVaultModal({ onGrant }: PermissaoVaultModalProps) {
-  const [pedindo, setPedindo] = useState(false);
-
-  const pedir = async () => {
-    setPedindo(true);
-    try {
-      const uri = await requestVaultPermission();
-      if (uri) onGrant(uri);
-    } finally {
-      setPedindo(false);
-    }
-  };
-
-  return (
-    <Screen>
-      <View style={{ flex: 1, justifyContent: 'center', gap: spacing.xl }}>
-        <Text
-          style={{
-            color: colors.orange,
-            fontFamily: 'JetBrainsMono_500Medium',
-            fontSize: 20,
-            textAlign: 'center',
-          }}
-        >
-          Bem-vindo
-        </Text>
-        <Text
-          style={{
-            color: colors.muted,
-            fontFamily: 'JetBrainsMono_400Regular',
-            fontSize: 14,
-            lineHeight: 22,
-            textAlign: 'center',
-          }}
-        >
-          O Ouroboros precisa do acesso à pasta do seu Vault para ler e
-          escrever os arquivos diários. Os dados ficam apenas no seu
-          dispositivo.
-        </Text>
-        <Button
-          variant="primary"
-          onPress={pedir}
-          disabled={pedindo}
-          label={pedindo ? 'Aguardando...' : 'Permitir acesso ao Vault'}
-        />
-      </View>
-    </Screen>
-  );
 }
 
 interface ConteudoProps {
