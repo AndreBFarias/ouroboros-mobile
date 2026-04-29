@@ -6,6 +6,22 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- Sprint M01.4: 5 componentes UI complexos em `src/components/ui/`
+  (Slider, Toast + ToastProvider + useToast, BottomSheet, FAB,
+  FABRadial). FABRadial implementa o menu radial da Tela 14 com 6
+  botões em arco semicircular (humor pink, voz cyan, câmera orange,
+  exercício green, vitória yellow, trigger red), surgindo em sequência
+  com 60ms de delay (`springs.bouncy`). Toast sobe a 80dp do bottom em
+  `springs.default`, fade out em 180ms, swipe horizontal para
+  dispensar. `app/_layout.tsx` envolto em `<GestureHandlerRootView>` +
+  `<ToastProvider>` (única alteração mínima autorizada de arquivo
+  fechado).
+- 16 testes novos (3 Slider + 4 Toast + 2 BottomSheet + 3 FAB + 4
+  FABRadial) — total 65 testes em 18 suítes.
+- `@react-native-community/slider@5.0.1` instalado via `npx expo
+  install` (Armadilha A11).
+- `jest.setup.cjs` ampliado com mocks de slider, gorhom/bottom-sheet e
+  gesture-handler.
 - Sprint M01.3: 10 componentes UI premium estáticos em
   `src/components/ui/` (Screen, Header, Button, Card, Input, Textarea,
   Chip + ChipGroup, Toggle, PersonAvatar, EmptyState) + barrel
