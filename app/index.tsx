@@ -76,12 +76,21 @@ export default function TelaHoje() {
     return <Redirect href="/onboarding" />;
   }
 
-  return <TelaHojeConteudo onFabPress={() => toast.show('FAB radial chega na M04', 'info')} onAvatarPress={() => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a')} onComponentsPress={() => router.push('/_components')} />;
+  // Toggle de pessoa so faz sentido se ha companhia configurada.
+  // Quando sozinho, avatar fica fixo na pessoa_a sem onPress.
+  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  const ehSozinho = tipoCompanhia === 'sozinho';
+  const handleAvatarPress = ehSozinho
+    ? undefined
+    : () => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a');
+
+  return <TelaHojeConteudo onFabPress={() => toast.show('FAB radial chega na M04', 'info')} onAvatarPress={handleAvatarPress} onComponentsPress={() => router.push('/_components')} />;
 }
 
 interface ConteudoProps {
   onFabPress: () => void;
-  onAvatarPress: () => void;
+  // undefined quando sozinho: avatar nao tem toggle.
+  onAvatarPress: (() => void) | undefined;
   onComponentsPress: () => void;
 }
 
