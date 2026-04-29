@@ -1,14 +1,15 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { FABRadial, type FABRadialKey } from '@/components/ui';
 
-const TODAS_ACOES: FABRadialKey[] = [
-  'humor',
-  'voz',
-  'camera',
-  'exercicio',
-  'vitoria',
-  'trigger',
-];
+// Mapa key -> a11y label (espelha src/components/ui/FABRadial.tsx).
+const A11Y_LABELS: Record<FABRadialKey, string> = {
+  humor: 'botao humor',
+  voz: 'botao voz',
+  camera: 'botao camera',
+  exercicio: 'botao exercicios',
+  vitoria: 'botao conquista',
+  trigger: 'botao crise',
+};
 
 describe('FABRadial', () => {
   it('renderiza FAB principal com label de abrir quando fechado', () => {
@@ -22,8 +23,8 @@ describe('FABRadial', () => {
     const { getByLabelText } = render(
       <FABRadial onSelect={() => undefined} open />
     );
-    for (const key of TODAS_ACOES) {
-      expect(getByLabelText(`botao ${key}`)).toBeTruthy();
+    for (const key of Object.keys(A11Y_LABELS) as FABRadialKey[]) {
+      expect(getByLabelText(A11Y_LABELS[key])).toBeTruthy();
     }
     expect(getByLabelText('fechar acoes')).toBeTruthy();
   });

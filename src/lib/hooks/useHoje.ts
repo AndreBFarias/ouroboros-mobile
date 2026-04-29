@@ -77,8 +77,12 @@ async function listFolderByName(
   return matches;
 }
 
-// Hook principal. Reage a mudancas de pessoaAtiva e vaultRoot.
-export function useHoje(now: Date = new Date()): HojeData {
+// Hook principal. Reage a mudancas de pessoaAtiva e vaultRoot. O ymd
+// (data alvo) eh calculado UMA VEZ por render do hook, NAO via prop
+// 'now: Date' que criaria nova referencia a cada render e quebraria
+// o useEffect com loop infinito (re-fetch perpetuo). Caller que quiser
+// data customizada passa string YYYY-MM-DD via parametro 'ymdOverride'.
+export function useHoje(ymdOverride?: string): HojeData {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const filtro = usePessoa((s) => s.filtroPessoa);
@@ -101,7 +105,9 @@ export function useHoje(now: Date = new Date()): HojeData {
     setLoading(true);
     setError(null);
 
-    const ymd = formatYmdLocal(now);
+    // Calcula ymd dentro do effect: estavel entre re-renders, so muda
+    // quando reload() forca nova execucao via tick.
+    const ymd = ymdOverride ?? formatYmdLocal(new Date());
 
     (async () => {
       try {
@@ -162,7 +168,7 @@ export function useHoje(now: Date = new Date()): HojeData {
     return () => {
       cancelled = true;
     };
-  }, [vaultRoot, pessoaAtiva, filtro, now, tick]);
+  }, [vaultRoot, pessoaAtiva, filtro, ymdOverride, tick]);
 
   return { humor, diarios, eventos, loading, error, reload };
 }

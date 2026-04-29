@@ -44,13 +44,16 @@ interface ActionDescriptor {
   angleDeg: number;
 }
 
-const ARC_RADIUS = 175;
+const ARC_RADIUS = 210;
 const FAB_SIZE = 72;
 const ACTION_SIZE = 64;
 const LABEL_WIDTH = 140;
 const LABEL_GAP = 12;
-// Angulos espacados em 22deg (de 175 a 285) para evitar sobreposicao
-// dos labels detectada no checkpoint M01.6.2 (vitoria/trigger). // anonimato-allow: substantivo comum
+// Angulos no range matematico 180-270deg (esquerda ate cima do FAB).
+// Fora desse range os botoes sairiam pela direita da tela ou ficariam
+// abaixo do FAB. Aumentamos ARC_RADIUS para 210 para dar mais
+// espacamento vertical entre labels (eliminando a sobreposicao
+// do checkpoint M01.6.2).
 
 // Ordem visual: humor mais a esquerda, trigger mais perto do FAB.
 // Strings visiveis em sentence case + acentuacao PT-BR; labels de a11y
@@ -62,7 +65,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao humor',
     color: colors.pink,
     Icon: Heart,
-    angleDeg: 175,
+    angleDeg: 180,
   },
   {
     key: 'voz',
@@ -70,7 +73,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao voz',
     color: colors.cyan,
     Icon: Mic,
-    angleDeg: 197,
+    angleDeg: 198,
   },
   {
     key: 'camera',
@@ -78,31 +81,31 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao camera',
     color: colors.orange,
     Icon: Camera,
-    angleDeg: 219,
+    angleDeg: 216,
   },
   {
     key: 'exercicio',
-    label: 'Exercício',
-    acentLabel: 'botao exercicio',
+    label: 'Exercícios',
+    acentLabel: 'botao exercicios',
     color: colors.green,
     Icon: Dumbbell,
-    angleDeg: 241,
+    angleDeg: 234,
   },
   {
     key: 'vitoria',
-    label: 'Vitória', // anonimato-allow: substantivo comum (conquista emocional)
-    acentLabel: 'botao vitoria',
+    label: 'Conquista', // anonimato-allow: substantivo (vide ressalva acentuacao)
+    acentLabel: 'botao conquista',
     color: colors.yellow,
     Icon: Trophy,
-    angleDeg: 263,
+    angleDeg: 252,
   },
   {
     key: 'trigger',
-    label: 'Trigger',
-    acentLabel: 'botao trigger',
+    label: 'Crise',
+    acentLabel: 'botao crise',
     color: colors.red,
     Icon: Zap,
-    angleDeg: 285,
+    angleDeg: 270,
   },
 ] as const;
 
