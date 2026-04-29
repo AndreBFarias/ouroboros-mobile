@@ -35,8 +35,9 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) return;
+      // SDK 54+ usa array de MediaType ao inves de MediaTypeOptions.
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -44,8 +45,6 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
       if (result.canceled || result.assets.length === 0) return;
       const origem = result.assets[0].uri;
 
-      // Copia para documentDirectory para que a URI seja estavel
-      // entre sessoes (URIs do picker sao temporarias).
       const destinoDir = `${FileSystem.documentDirectory ?? ''}avatars/`;
       try {
         await FileSystem.makeDirectoryAsync(destinoDir, {
@@ -54,14 +53,26 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
       } catch {
         // Ja existe, ok.
       }
-      const destinoPath = `${destinoDir}${pessoa}.jpg`;
+
+      // Cada nova foto recebe um nome com timestamp para invalidar
+      // o cache de Image do RN (que indexa por URI). Apagamos o
+      // arquivo antigo se houver, evitando lixo acumulado em
+      // documentDirectory.
+      if (fotoAtual) {
+        try {
+          await FileSystem.deleteAsync(fotoAtual, { idempotent: true });
+        } catch {
+          // Sem foto anterior em disco, ok.
+        }
+      }
+      const destinoPath = `${destinoDir}${pessoa}-${Date.now()}.jpg`;
       await FileSystem.copyAsync({ from: origem, to: destinoPath });
       setFoto(pessoa, destinoPath);
       haptics.success();
     } finally {
       setCarregando(false);
     }
-  }, [pessoa, setFoto]);
+  }, [pessoa, setFoto, fotoAtual]);
 
   return (
     <View style={{ alignItems: 'center', gap: 8 }}>
