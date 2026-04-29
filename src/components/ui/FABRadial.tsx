@@ -44,11 +44,13 @@ interface ActionDescriptor {
   angleDeg: number;
 }
 
-const ARC_RADIUS = 150;
+const ARC_RADIUS = 175;
 const FAB_SIZE = 72;
 const ACTION_SIZE = 64;
 const LABEL_WIDTH = 140;
 const LABEL_GAP = 12;
+// Angulos espacados em 22deg (de 175 a 285) para evitar sobreposicao
+// dos labels detectada no checkpoint M01.6.2 (vitoria/trigger). // anonimato-allow: substantivo comum
 
 // Ordem visual: humor mais a esquerda, trigger mais perto do FAB.
 // Strings visiveis em sentence case + acentuacao PT-BR; labels de a11y
@@ -60,7 +62,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao humor',
     color: colors.pink,
     Icon: Heart,
-    angleDeg: 180,
+    angleDeg: 175,
   },
   {
     key: 'voz',
@@ -68,7 +70,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao voz',
     color: colors.cyan,
     Icon: Mic,
-    angleDeg: 198,
+    angleDeg: 197,
   },
   {
     key: 'camera',
@@ -76,7 +78,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao camera',
     color: colors.orange,
     Icon: Camera,
-    angleDeg: 216,
+    angleDeg: 219,
   },
   {
     key: 'exercicio',
@@ -84,7 +86,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao exercicio',
     color: colors.green,
     Icon: Dumbbell,
-    angleDeg: 234,
+    angleDeg: 241,
   },
   {
     key: 'vitoria',
@@ -92,7 +94,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao vitoria',
     color: colors.yellow,
     Icon: Trophy,
-    angleDeg: 252,
+    angleDeg: 263,
   },
   {
     key: 'trigger',
@@ -100,7 +102,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao trigger',
     color: colors.red,
     Icon: Zap,
-    angleDeg: 270,
+    angleDeg: 285,
   },
 ] as const;
 

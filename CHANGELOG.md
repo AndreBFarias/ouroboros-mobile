@@ -5,6 +5,19 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- Sprint M01.6.2: FAB radial repensado pós-feedback usuário. FAB
+  principal 56→72dp, botões de ação 48→64dp, ícones aumentados,
+  labels reposicionadas à esquerda do círculo com fundo sólido
+  `bgElev` e fonte 14 weight medium.
+- Sprint M01.6.3: ajuste angular para evitar sobreposição
+  Vitória/Trigger detectada no checkpoint visual. Espaçamento
+  18°→22° entre itens, ARC_RADIUS 150→175, ângulos redistribuídos
+  175-285°.
+- Sprint M01 finalizada — endorso visual do usuário no celular real:
+  "as animações do mais e o menu radial é muito foda".
+  Tag `v0.1.0-m01` marca a Fundação Estética concluída.
+
 ### Changed
 - **Regra de capitalização da UI revogada e substituída** durante
   checkpoint visual M01.5 (2026-04-28). `BRIEFING.md` §1 e §2.4
