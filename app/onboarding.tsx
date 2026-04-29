@@ -268,7 +268,6 @@ function MicroOrange({ children }: { children: ReactNode }) {
         fontFamily: 'JetBrainsMono_500Medium',
         fontSize: 12,
         lineHeight: 18,
-        textTransform: 'lowercase',
         letterSpacing: 0.4,
         marginBottom: spacing.sm,
       }}
@@ -287,7 +286,7 @@ interface Frame0Props {
 function Frame0({ nome, onChange, onContinue }: Frame0Props) {
   return (
     <View style={{ gap: spacing.lg }}>
-      <MicroOrange>antes de comecar</MicroOrange>
+      <MicroOrange>Antes de começar</MicroOrange>
       <Heading>Como você se chama?</Heading>
       <Sub>
         Esse nome aparece nos seus registros e no cabeçalho da tela
@@ -326,7 +325,7 @@ function Frame1({
 }: Frame1Props) {
   return (
     <View style={{ gap: spacing.lg }}>
-      <MicroOrange>companhia</MicroOrange>
+      <MicroOrange>Companhia</MicroOrange>
       <Heading>Mais alguém usa este Vault com você?</Heading>
       <Sub>
         Você pode usar sozinho. Se for compartilhar, tudo o que vocês
@@ -429,7 +428,7 @@ interface Frame2Props {
 function Frame2({ vaultRoot, pedindo, onEscolher, onContinue }: Frame2Props) {
   return (
     <View style={{ gap: spacing.lg }}>
-      <MicroOrange>vault</MicroOrange>
+      <MicroOrange>Vault</MicroOrange>
       <Heading>Onde fica seu Vault?</Heading>
       <Sub>
         Aponte uma pasta no seu celular onde os arquivos .md vão
@@ -492,31 +491,33 @@ interface Frame3Props {
 function Frame3({ sync, setSync, onContinue }: Frame3Props) {
   return (
     <View style={{ gap: spacing.lg }}>
-      <MicroOrange>sincronizacao</MicroOrange>
+      <MicroOrange>Sincronização</MicroOrange>
       <Heading>Como você sincroniza entre dispositivos?</Heading>
       <Sub>
         O Ouroboros não gerencia sincronização. Ele só lê e escreve
         arquivos na pasta. Se você usa um serviço de sync, basta
         apontar para a mesma pasta nos outros dispositivos.
       </Sub>
-      <CardSync
-        ativo={sync === 'syncthing'}
-        titulo="Syncthing"
-        descricao="Sincronização P2P entre dispositivos. Recomendado se você já tem o Syncthing rodando."
-        onPress={() => setSync('syncthing')}
-      />
-      <CardSync
-        ativo={sync === 'obsidian_sync'}
-        titulo="Obsidian Sync"
-        descricao="Serviço pago do Obsidian. Sincroniza pelo servidor da Obsidian Inc."
-        onPress={() => setSync('obsidian_sync')}
-      />
-      <CardSync
-        ativo={sync === 'nenhum'}
-        titulo="Não uso ainda"
-        descricao="Sem problema. Você pode escolher depois nos ajustes."
-        onPress={() => setSync('nenhum')}
-      />
+      <View style={{ gap: spacing.xl }}>
+        <CardSync
+          ativo={sync === 'syncthing'}
+          titulo="Syncthing"
+          descricao="Sincronização P2P entre dispositivos. Recomendado se você já tem o Syncthing rodando."
+          onPress={() => setSync('syncthing')}
+        />
+        <CardSync
+          ativo={sync === 'obsidian_sync'}
+          titulo="Obsidian Sync"
+          descricao="Serviço pago do Obsidian. Sincroniza pelo servidor da Obsidian Inc."
+          onPress={() => setSync('obsidian_sync')}
+        />
+        <CardSync
+          ativo={sync === 'nenhum'}
+          titulo="Não uso ainda"
+          descricao="Sem problema. Você pode escolher depois nos ajustes."
+          onPress={() => setSync('nenhum')}
+        />
+      </View>
       <View style={{ height: spacing.md }} />
       <Button label="Continuar" onPress={onContinue} />
     </View>

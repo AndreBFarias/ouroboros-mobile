@@ -26,6 +26,7 @@ import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useOnboarding } from '@/lib/stores/onboarding';
+import { useHasHydrated } from '@/lib/stores/hydrated';
 import { loadVaultRoot } from '@/lib/vault';
 import { useHoje } from '@/lib/hooks/useHoje';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
@@ -40,6 +41,15 @@ export default function TelaHoje() {
   const setPessoaAtiva = usePessoa((s) => s.setPessoaAtiva);
   const onboardingDone = useOnboarding((s) => s.done);
 
+  // Espera as 3 stores hidratarem do SecureStore antes de qualquer
+  // decisao de redirect, senao o gate dispara com defaults (done=false,
+  // vaultRoot=null) e causa flicker indo/voltando da tela de
+  // onboarding ate o persist terminar.
+  const onbHidratado = useHasHydrated(useOnboarding);
+  const vaultHidratado = useHasHydrated(useVault);
+  const pessoaHidratada = useHasHydrated(usePessoa);
+  const tudoHidratado = onbHidratado && vaultHidratado && pessoaHidratada;
+
   // Restaura URI do SecureStore na primeira montagem (caso o
   // middleware persist ainda nao tenha hidratado).
   useEffect(() => {
@@ -52,6 +62,13 @@ export default function TelaHoje() {
       cancelled = true;
     };
   }, [vaultRoot, setVaultRoot]);
+
+  // Splash silencioso enquanto persist carrega: tela de fundo bg-page
+  // sem texto, evitando que o usuario veja conteudo errado por uma
+  // fracao de segundo.
+  if (!tudoHidratado) {
+    return <Screen padded={false}><View style={{ flex: 1 }} /></Screen>;
+  }
 
   // Gate de onboarding: se nao concluiu ou se nao tem vaultRoot,
   // redireciona para o fluxo de boas-vindas.
