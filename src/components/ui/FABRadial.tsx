@@ -47,7 +47,6 @@ interface ActionDescriptor {
 const ARC_RADIUS = 210;
 const FAB_SIZE = 72;
 const ACTION_SIZE = 64;
-const LABEL_WIDTH = 140;
 const LABEL_GAP = 12;
 // Angulos no range matematico 180-270deg (esquerda ate cima do FAB).
 // Fora desse range os botoes sairiam pela direita da tela ou ficariam
@@ -208,37 +207,29 @@ export function FABRadial({
                 height: ACTION_SIZE,
               }}
             >
-              {/* Label a esquerda do circulo, com fundo solido para contraste. */}
-              <View
-                pointerEvents="none"
+              {/* Label a esquerda do circulo, fundo solido bgElev. Sem
+                   largura fixa: ajusta ao texto e nao invade o icone do
+                   botao adjacente (bug detectado no checkpoint 70717). */}
+              <Text
                 style={{
                   position: 'absolute',
                   right: ACTION_SIZE + LABEL_GAP,
-                  top: (ACTION_SIZE - 32) / 2,
-                  width: LABEL_WIDTH,
-                  height: 32,
-                  alignItems: 'flex-end',
-                  justifyContent: 'center',
+                  top: (ACTION_SIZE - 28) / 2,
+                  color: colors.fg,
+                  fontFamily: 'JetBrainsMono_500Medium',
+                  fontSize: 14,
+                  lineHeight: 20,
+                  backgroundColor: colors.bgElev,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                  overflow: 'hidden',
                   opacity: open ? 1 : 0,
                 }}
+                numberOfLines={1}
               >
-                <Text
-                  style={{
-                    color: colors.fg,
-                    fontFamily: 'JetBrainsMono_500Medium',
-                    fontSize: 14,
-                    lineHeight: 20,
-                    backgroundColor: colors.bgElev,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                  }}
-                  numberOfLines={1}
-                >
-                  {action.label}
-                </Text>
-              </View>
+                {action.label}
+              </Text>
               <Pressable
                 onPress={() => handleSelect(action.key)}
                 accessibilityRole="button"
