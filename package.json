@@ -25,7 +25,8 @@
       "node_modules/(?!(jest-)?@?react-native|@react-native-community|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|moti|react-clone-referenced-element|@react-native-picker|@react-navigation|nativewind|react-native-css-interop|lucide-react-native)"
     ],
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "^yaml$": "<rootDir>/node_modules/yaml/dist/index.js"
     }
   },
   "dependencies": {

@@ -6,6 +6,22 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- Sprint M02 — Vault Bridge + Tela 01 (hoje). Primeira sprint que
+  conecta o app a dados reais. `src/lib/vault/` com paths canônicos
+  (`daily/`, `eventos/`, `inbox/mente/diario/`), parser de YAML
+  frontmatter, reader/writer/permissions sobre SAF do Android via
+  `expo-file-system/legacy`. Schemas zod para `humor`,
+  `diario_emocional` e `evento` espelhando `BRIEFING.md` §7. Store
+  global `useVault` com URI raiz persistido em SecureStore. Hook
+  `useHoje` lê os três tipos em paralelo, filtra pela pessoa ativa,
+  retorna estado uniforme para a UI. `app/index.tsx` substitui o
+  re-export do storybook por Tela 01 real (modal de permissão
+  full-screen quando Vault não foi concedido; cards de humor com
+  sliders readonly, lista de diários e eventos com borda colorida
+  por modo, FAB que mostra toast informando que radial chega na
+  M04). `scripts/seed_vault_demo.sh` popula o Vault físico com 3
+  arquivos de exemplo (`pessoa_a`) idempotente. Total de 105 testes
+  (40 novos: paths, frontmatter, três schemas).
 - Sprint M01.6.2: FAB radial repensado pós-feedback usuário. FAB
   principal 56→72dp, botões de ação 48→64dp, ícones aumentados,
   labels reposicionadas à esquerda do círculo com fundo sólido
