@@ -19,11 +19,12 @@ if [[ -n "$VIOLACOES_IA" ]]; then
 fi
 
 # Nomes reais: codigo + testes, exceto pessoas.config (seed) e
-# pessoas.config.example (template). Tambem exclui docs/design-canvas-export/
-# (legado obsoleto) e docs/sprints/ (historico).
+# pessoas.config.example (template). Tambem exclui linhas com marker
+# 'anonimato-allow:' (palavras comuns como 'Vitoria' = sucesso, conquista).
 VIOLACOES_NOMES=$(grep -rE "$NOMES_REAIS" src/ app/ tests/ 2>/dev/null \
   --include='*.ts' --include='*.tsx' --include='*.md' \
-  | grep -v 'pessoas.config' || true)
+  | grep -v 'pessoas.config' \
+  | grep -v 'anonimato-allow' || true)
 
 if [[ -n "$VIOLACOES_NOMES" ]]; then
   echo "ERRO: nome real hardcoded fora de pessoas.config:"

@@ -86,10 +86,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   },
   {
     key: 'vitoria',
-    // Rotulo visivel "Conquista" (sinonimo) para nao colidir com a
-    // Regra -1 do projeto (nomes reais bloqueados em
-    // check_anonimato.sh). Sentence case + acentuacao PT-BR.
-    label: 'Conquista',
+    label: 'Vitória', // anonimato-allow: substantivo comum (conquista emocional)
     acentLabel: 'botao vitoria',
     color: colors.yellow,
     Icon: Trophy,
