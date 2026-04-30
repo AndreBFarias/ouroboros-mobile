@@ -1,0 +1,85 @@
+// Persiste um registro de humor (Tela 15) em daily/YYYY-MM-DD.md no
+// Vault. Funcao pura: recebe meta validado e vaultRoot, devolve URI
+// final e flag de conflito A5.
+//
+// A5 (Armadilha do BRIEF secao 4): Syncthing entre 2 celulares pode
+// gerar colisao quando ambos registram humor no mesmo dia. Estrategia:
+// se ja existe arquivo no path canonico escrito por outra pessoa,
+// gravamos em daily/YYYY-MM-DD-<pessoa>.md.
+//
+// Importante: esta funcao nao decide o que mostrar na UI quando ha
+// conflito; apenas grava na variante segura e devolve o flag para o
+// caller logar/avisar se desejar.
+import { dailyPath, readVaultFile, writeVaultFile } from '@/lib/vault';
+import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
+
+export interface SaveHumorResult {
+  uri: string;
+  conflito: boolean;
+}
+
+// Concatena root SAF e path relativo. Detalhe: o root pode terminar
+// ou nao com '/', e o path e sempre 'daily/...'. Normalizamos para
+// um unico '/'.
+function joinUri(root: string, rel: string): string {
+  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
+  return `${trimmedRoot}/${rel}`;
+}
+
+// Aplica sufixo de pessoa no nome do arquivo .md:
+//   'daily/2026-04-29.md' + 'pessoa_a' -> 'daily/2026-04-29-pessoa_a.md'
+function applyPessoaSuffix(rel: string, autor: HumorMeta['autor']): string {
+  const dotIdx = rel.lastIndexOf('.');
+  if (dotIdx === -1) return `${rel}-${autor}`;
+  return `${rel.slice(0, dotIdx)}-${autor}${rel.slice(dotIdx)}`;
+}
+
+// Monta o corpo .md a partir do meta. Hoje colocamos a frase apenas
+// no frontmatter (decisao M05 spec secao 9 item 1), entao o corpo
+// fica vazio. Mantemos a funcao isolada para sprint futura migrar a
+// frase para o corpo se ficar mais idiomatico no Obsidian.
+function buildBody(_meta: HumorMeta): string {
+  return '';
+}
+
+// Decide qual path usar: canonico ou com sufixo de pessoa.
+async function resolvePath(
+  vaultRoot: string,
+  relCanonico: string,
+  autor: HumorMeta['autor']
+): Promise<{ rel: string; conflito: boolean }> {
+  const uriCanonico = joinUri(vaultRoot, relCanonico);
+  const existente = await readVaultFile<HumorMeta>(uriCanonico, HumorSchema);
+  if (!existente) {
+    return { rel: relCanonico, conflito: false };
+  }
+  if (existente.meta.autor === autor) {
+    // Mesmo autor regravando o dia: sobrescreve no canonico.
+    return { rel: relCanonico, conflito: false };
+  }
+  // Outra pessoa ja escreveu: usamos sufixo para evitar colisao.
+  return { rel: applyPessoaSuffix(relCanonico, autor), conflito: true };
+}
+
+export async function saveHumor(
+  meta: HumorMeta,
+  vaultRoot: string
+): Promise<SaveHumorResult> {
+  // Defensivo: revalida o meta antes de tocar em I/O. Quem chama
+  // tipicamente ja parseou, mas testes podem injetar payload bruto.
+  const parsed = HumorSchema.safeParse(meta);
+  if (!parsed.success) {
+    throw new Error(`humor invalido: ${parsed.error.message}`);
+  }
+
+  const relCanonico = dailyPath(new Date());
+  const { rel, conflito } = await resolvePath(
+    vaultRoot,
+    relCanonico,
+    parsed.data.autor
+  );
+  const uri = joinUri(vaultRoot, rel);
+  const body = buildBody(parsed.data);
+  await writeVaultFile<HumorMeta>(uri, parsed.data, body);
+  return { uri, conflito };
+}

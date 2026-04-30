@@ -19,14 +19,26 @@ describe('HumorSchema', () => {
   it('aceita campos opcionais e tags', () => {
     const out = HumorSchema.parse({
       ...baseHumor,
-      medicacao: true,
+      medicacao: 'Fluoxetina 20mg',
       horas_sono: 7,
       tags: ['exercicio', 'boa_conversa'],
       frase: 'dia denso mas terminei tranquilo.',
     });
     expect(out.tags).toEqual(['exercicio', 'boa_conversa']);
-    expect(out.medicacao).toBe(true);
+    expect(out.medicacao).toBe('Fluoxetina 20mg');
     expect(out.horas_sono).toBe(7);
+  });
+
+  it('rejeita medicacao como boolean (campo agora eh texto)', () => {
+    expect(() =>
+      HumorSchema.parse({ ...baseHumor, medicacao: true })
+    ).toThrow();
+  });
+
+  it('rejeita medicacao string vazia (use undefined para omitir)', () => {
+    expect(() =>
+      HumorSchema.parse({ ...baseHumor, medicacao: '' })
+    ).toThrow();
   });
 
   it('rejeita autor ambos (so autor escreve)', () => {

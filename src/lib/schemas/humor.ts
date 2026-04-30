@@ -1,7 +1,8 @@
 // Schema do arquivo daily/YYYY-MM-DD.md (humor do dia).
 // Modelado em docs/BRIEFING.md secao 7. Quatro sliders 1-5
-// (humor/energia/ansiedade/foco), tags livres, frase opcional,
-// metadata de medicacao e horas de sono.
+// (humor/energia/ansiedade/foco), tags fechadas (lista de 8 slugs
+// em src/lib/humor/tagsRapidas.ts), frase opcional, medicacao como
+// texto livre opcional (decisao M05), horas de sono opcional.
 import { z } from 'zod';
 import { PessoaAutorSchema } from '@/lib/schemas/pessoa';
 
@@ -15,7 +16,7 @@ export const HumorSchema = z.object({
   energia: Slider1a5,
   ansiedade: Slider1a5,
   foco: Slider1a5,
-  medicacao: z.boolean().optional(),
+  medicacao: z.string().min(1).optional(),
   horas_sono: z.number().min(0).max(24).optional(),
   tags: z.array(z.string()).default([]),
   frase: z.string().optional(),

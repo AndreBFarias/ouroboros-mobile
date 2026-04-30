@@ -71,10 +71,11 @@ tap no botão Humor do FAB Radial até o toast `"Salvo."` em menos de
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/ui/Slider.tsx`
   — quatro instâncias para humor, energia, ansiedade, foco. Cada uma
   já dispara `haptics.selection()` por step (M01.3).
-- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/ui/Toggle.tsx`
-  — toggle "Tomei medicação".
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/ui/Input.tsx`
-  — input numérico para `horas_sono` com `keyboardType="numeric"`.
+  — duas instâncias:
+  1. `label="Medicação tomada"` com `autoCapitalize="sentences"`,
+     placeholder `"Ex.: Fluoxetina 20mg (opcional)"`. Texto livre.
+  2. `label="Horas de sono ontem"` com `keyboardType="numeric"`.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/ui/Chip.tsx`
   — `<ChipGroup mode="multi" options={TAGS_RAPIDAS} />`.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/ui/Textarea.tsx`
@@ -125,7 +126,12 @@ tap no botão Humor do FAB Radial até o toast `"Salvo."` em menos de
 - **Não tocar** em `src/components/ui/*` (M01) — usar como estão. Se
   faltar API, reportar como achado.
 - **Não tocar** em `src/lib/motion.ts`, `src/lib/haptics.ts`,
-  `src/lib/schemas/humor.ts`, `src/config/pessoas.config.ts`.
+  `src/config/pessoas.config.ts`.
+- `src/lib/schemas/humor.ts` **já foi atualizado** pelo orquestrador
+  antes desta sprint (decisão 3 da §9): `medicacao` agora é
+  `z.string().min(1).optional()` (texto livre opcional, não mais
+  boolean). O executor não precisa tocar nesse arquivo, apenas
+  consumir o tipo `HumorMeta` atualizado.
 - Conflito A5 (`VALIDATOR_BRIEF.md` §4): se duo (`pessoa_b` configurada),
   resolver colisão de `daily/YYYY-MM-DD.md` com sufixo
   `-pessoa_a`/`-pessoa_b` antes de escrever.
@@ -144,7 +150,7 @@ tap no botão Humor do FAB Radial até o toast `"Salvo."` em menos de
 3. Implementar `app/humor-rapido.tsx`:
    - `useEffect` no mount: abre o `<BottomSheet ref>` no snap 70%.
    - 4 `<Slider value min=1 max=5 step=1 onChange>` + label da grandeza.
-   - `<Toggle label="Tomei medicação" />`.
+   - `<Input label="Medicação tomada" placeholder="Ex.: Fluoxetina 20mg (opcional)" autoCapitalize="sentences" />` — texto livre opcional. Vazio é equivalente a omitido (não envia campo no frontmatter).
    - `<Input label="Horas de sono ontem" keyboardType="numeric" />`.
    - `<ChipGroup mode="multi" options={TAGS_RAPIDAS.map(({slug,label})
      => ({ id: slug, label }))} />`.
@@ -217,15 +223,19 @@ artboard "tela 15 — humor rapido" de
 
 ## 9. Dúvidas em aberto
 
-- A frase opcional de uma linha vai para o **corpo** do `.md` (após
-  `---`) ou para o frontmatter como `frase: "..."` (que já existe no
-  `HumorSchema`)? Decisão atual da spec: campo `frase` no
-  frontmatter (já modelado em `humor.ts`); corpo do `.md` fica vazio.
-  Confirmar com humano se prefere migrar para corpo (mais adequado a
-  futuro export Obsidian).
-- Lista `TAGS_RAPIDAS` é fechada (8 slugs) ou usuário pode digitar
-  tag livre? Spec atual = fechada. Tag livre exigiria input texto e
-  validação adicional; deixar para sprint futura se demanda surgir.
-- Toggle "Tomei medicação" assume contexto único (não diferencia
-  qual medicação). Decisão registrada em BRIEFING §7 (`medicacao:
-  boolean`); manter assim.
+Resolvidas em 2026-04-30 com o humano (orquestrador registrou aqui
+antes de disparar o executor):
+
+1. **Frase opcional**: vai no **frontmatter** como `frase: "..."`
+   (já modelado no `HumorSchema`). Corpo do `.md` fica vazio. Decisão
+   (a). Sprint futura pode migrar para corpo se ficar mais idiomático
+   no Obsidian.
+2. **Tags rápidas**: lista **fechada** com 8 slugs. Decisão (a). Tag
+   livre pode entrar como sprint futura se demanda surgir.
+3. **Medicação**: vira **campo de texto livre opcional**. O schema
+   `humor.ts` foi atualizado pelo orquestrador antes da sprint
+   (`medicacao: z.string().min(1).optional()`). O componente passa a
+   ser `<Input label="Medicação tomada" />`, não mais `<Toggle>`.
+   Vazio = campo omitido no frontmatter.
+
+Nenhuma dúvida pendente; executar.

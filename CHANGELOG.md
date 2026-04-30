@@ -6,6 +6,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M05 — Humor rápido (Tela 15).** Substitui o stub da
+  rota `/humor-rapido` criado na M04 pela primeira tela de captura
+  real do app, com persistência em `daily/YYYY-MM-DD.md` no Vault.
+  - `app/humor-rapido.tsx` — bottom sheet 70% que abre ao montar.
+    Quatro sliders 1-5 (humor, energia, ansiedade, foco) com
+    default 3, input de medicação (texto livre opcional, decisão
+    da §9), input de horas de sono (numérico), `<ChipGroup
+    mode="multi">` com 8 tags rápidas fechadas, textarea de uma
+    frase opcional e botão Salvar verde. Após salvar dispara
+    `haptics.success()`, toast `"Salvo."` e `router.back()`.
+  - `src/lib/humor/saveHumor.ts` — função pura que resolve
+    `dailyPath(new Date())`, detecta colisão de pessoa A5
+    (`pessoa_a` × `pessoa_b` no mesmo dia via Syncthing) lendo o
+    arquivo canônico antes de escrever, aplica sufixo
+    `-pessoa_<x>.md` quando outro autor já escreveu, e chama
+    `writeVaultFile<HumorMeta>` com corpo vazio (frase fica no
+    frontmatter, decisão M05).
+  - `src/lib/humor/tagsRapidas.ts` — lista fechada de 8 slugs
+    canônicos (`trabalho_pesado`, `boa_conversa`, `cansaco`,
+    `exercicio`, `foco_dificil`, `dormi_mal`, `treino_bom`,
+    `dia_leve`) + helper `formatTag` que converte snake_case em
+    Sentence case para exibição.
+  - `tests/app/humor-rapido.test.tsx` (10 testes), 
+    `tests/lib/humor/saveHumor.test.ts` (5 testes), 
+    `tests/lib/humor/tagsRapidas.test.ts` (8 testes). Total de 
+    testes salta de 120 para 143.
+
 - **Sprint M04 — FAB Radial integrado em capturas.** Commit
   `4e10f25` (15 arquivos, 285 inserções, 7 remoções).
   - `src/lib/navigation/captureRoutes.ts` — módulo novo que mapeia
