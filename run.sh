@@ -35,6 +35,21 @@ fi
 # Argumentos extras que o usuario passou (--clear, --tunnel, etc)
 EXTRA_ARGS=("$@")
 
+# Modo web: roda no Chrome do desktop sem conflito com celular fisico.
+# Util para o Claude Code validar fluxos JS via claude-in-chrome MCP
+# enquanto o usuario continua usando o celular para outras coisas.
+if [[ " ${EXTRA_ARGS[*]} " =~ " --web " ]]; then
+  echo ""
+  echo "=================================================="
+  echo "MODO WEB - sem conflito com celular fisico"
+  echo "=================================================="
+  echo "Acesse:    http://localhost:8081"
+  echo "Web URL:   http://localhost:19006 (apos abrir o web)"
+  echo "=================================================="
+  npx expo start --web "${EXTRA_ARGS[@]}"
+  exit 0
+fi
+
 # Limpa cache do .expo se --clear foi passado
 if [[ " ${EXTRA_ARGS[*]} " =~ " --clear " ]]; then
   echo ">> limpando cache local (.expo, node_modules/.cache)"
