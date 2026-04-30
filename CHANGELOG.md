@@ -6,6 +6,62 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M06 — Diário emocional (Tela 18).** Substitui o stub da
+  rota `/diario-emocional` criado na M04 pela tela de captura
+  emocional rica em contexto, com persistência em
+  `inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md` no Vault.
+  - `app/diario-emocional.tsx` — bottom sheet 90% que abre ao
+    montar. Toggle inicial trigger ↔ vitória renderizado como dois
+    chips (red / green) que mudam a borda esquerda animada do form
+    via `MotiView` com spring subtle. Grid de chips de emoção
+    multi-select (6 negativos em modo trigger, 6 positivos em modo
+    vitória) com acentuação completa PT-BR via dicionário de
+    labels. Slider 1-5 de intensidade. Textarea livre obrigatória
+    (mínimo 1 caractere; bloqueia save com toast warn se vazia).
+    `<ChipGroup mode="multi">` "Com quem" com 4 opções fixas
+    (`pessoa_a`, `pessoa_b`, `amigos`, `sozinho`). Bloco
+    condicional em modo trigger com textarea Estratégia + Toggle
+    Funcionou. Botão final variant `destructive` (trigger) ou
+    `success` (vitória). Microcopy de rodapé `"Salvo localmente.
+    Ninguém vê além de vocês dois."` em muted-decor. Modo `audio`
+    inicializa em vitória e marca flag interna `audioRequested`
+    para a M06.5 acoplar a UI de gravação. Sem haptic no save em
+    modo trigger (momento delicado, BRIEFING §2.5); em modo
+    vitória dispara `haptics.success()` leve.
+  - `src/components/diario/EmocaoChips.tsx` — wrapper sobre
+    `<ChipGroup mode="multi">` com prop `modo` que troca o
+    conjunto de opções. `MotiView` com `key` re-mountável dispara
+    spring subtle no opacity ao trocar de modo (hop visual sem
+    jump-cut).
+  - `src/lib/diario/emocoes.ts` — listas fixas
+    `EMOCOES_NEGATIVAS = ['tristeza','raiva','ansiedade','frustracao','medo','solidao']`
+    e `EMOCOES_POSITIVAS = ['alegria','alivio','gratidao','conexao','paz','orgulho']`
+    em snake_case ASCII no frontmatter. Helper `formatEmocao(slug)`
+    com dicionário de labels acentuados (frustração, alívio,
+    gratidão, conexão, solidão) e fallback mecânico para slugs
+    desconhecidos. Sets `EMOCOES_NEGATIVAS_OPTIONS` (accent red) e
+    `EMOCOES_POSITIVAS_OPTIONS` (accent green) prontos para o
+    ChipGroup.
+  - `src/lib/diario/saveDiario.ts` — função pura que resolve
+    `diarioEmocionalPath(new Date(), slug)` (slug derivado da
+    primeira emoção ou `'registro'`), valida via
+    `DiarioEmocionalSchema.safeParse`, aplica sufixo numérico
+    crescente em colisão improvável de mesmo arquivo no mesmo
+    minuto e chama `writeVaultFile<DiarioEmocionalMeta>`.
+  - `tests/app/diario-emocional.test.tsx` (15 testes),
+    `tests/components/diario/EmocaoChips.test.tsx` (6 testes),
+    `tests/lib/diario/saveDiario.test.ts` (8 testes),
+    `tests/lib/diario/emocoes.test.ts` (12 testes). Total de
+    testes salta de 147 para 188 (+41).
+  - **Achado registrado para sprint nova**: o
+    `DiarioEmocionalSchema` v1 só aceita `PessoaId` em `com`,
+    bloqueando os flags `amigos` e `sozinho` exigidos pela UI.
+    Solução provisória nesta sprint: persistir em `meta.com`
+    apenas os PessoaIds válidos e anotar contexto extra no corpo
+    livre do `.md` em prosa ("Com: Amigos, Sozinho."). Nova
+    sprint M06.X deve estender o schema com campo
+    `contexto_social: ('amigos'|'sozinho')[]`.
+
 - **Sprint M05.2 — Estender `<Input>` com `autoCapitalize` e
   `keyboardType`.** O componente passa a expor essas duas props
   opcionais (defaults `'sentences'` e `'default'`), repassadas

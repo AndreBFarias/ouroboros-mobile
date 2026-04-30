@@ -256,17 +256,19 @@ artboard "tela 18 — diario emocional" de
 
 ## 9. Dúvidas em aberto
 
-- A spec assume que o ChipGroup "com quem" oferece 4 opções fixas
-  (`pessoa_a`, `pessoa_b`, `amigos`, `sozinho`). BRIEFING §6 (Tela
-  18) lista apenas chips genéricos sem detalhar o conjunto.
-  Confirmar com humano se a lista pode ser expandida (terapeuta,
-  familia) em sprint futura.
-- Texto livre é obrigatório nesta sprint (mínimo 1 caractere). Se o
-  usuário sentir fricção, podemos relaxar para opcional. Decisão
-  atual: obrigatório, em linha com a função terapêutica do diário.
-- O parâmetro `modo=audio` (vindo do botão Voz do FAB Radial) é
-  aceito mas inicializa em `vitoria` por default. O bloco de
-  gravação chega só na M06.5 — esta sprint **não** abre o
-  microfone, apenas marca a flag interna. Confirmar se o
-  comportamento provisório (silencioso, sem botão de gravação) é
-  aceitável até M06.5.
+Resolvidas em 2026-04-30 com o humano (orquestrador registrou aqui
+antes de disparar o executor):
+
+1. **ChipGroup "com quem"**: lista fixa de 4 opções
+   (`pessoa_a`, `pessoa_b`, `amigos`, `sozinho`). **Sem expandir
+   nesta sprint** — terapeuta/família ficam para sprint futura se
+   demanda surgir.
+2. **Texto livre**: **obrigatório** (mínimo 1 caractere). Função
+   terapêutica do diário pesa mais que fricção pontual em momento
+   de crise.
+3. **Parâmetro `modo=audio`** (botão Voz do FAB Radial): inicializa
+   em `vitoria` por default. **Comportamento provisório aceito**:
+   esta sprint não abre microfone, apenas marca a flag interna
+   `audioRequested`. Bloco de gravação chega na M06.5 (F-14).
+
+Nenhuma dúvida pendente; executar.
