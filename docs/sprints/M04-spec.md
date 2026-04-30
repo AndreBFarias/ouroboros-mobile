@@ -213,16 +213,17 @@ Salvar capturas em
 
 ## 9. Dúvidas em aberto
 
-- A rota `/diario-emocional` recebe `modo=audio` (do botão Voz),
-  `modo=vitoria` (do botão Conquista) e `modo=trigger` (do botão
-  Crise). M06.5 implementa o ramo `audio`; M06 implementa
-  `vitoria`/`trigger`. Esta sprint só **documenta** o contrato
-  via `params` — confirmar com humano se prefere rotas separadas
-  (`/diario-emocional/audio`, etc.) antes da M06.5 abrir o
-  microfone. A spec atual assume params, alinhada a Expo Router
-  v3 idiomático.
-- A ação `exercicio` aponta para `/em-breve` ate a sprint M13
-  cobrir Galeria + Detalhe Exercício (Telas 07, 08). Confirmar se
-  o usuário prefere texto explícito "Em breve" ou redirecionar
-  silenciosamente para uma futura `/treino/novo` quando ela existir.
-  Decisão atual: stub explícito.
+**Resolvidas pelo humano em 2026-04-29 (antes do dispatch do executor):**
+
+1. **Rotas com params (decisão fechada):** `/diario-emocional` recebe
+   `modo=audio|vitoria|trigger` via query string. Idiomático em Expo
+   Router v3. M06 implementa o ramo `vitoria`/`trigger`; M06.5
+   adiciona `audio`. Esta sprint só documenta o contrato.
+
+2. **Stub explícito "Em breve" para Exercício (decisão fechada):**
+   `exercicio` aponta para rota `/em-breve` que renderiza
+   `<EmptyState>` com mensagem "Galeria de exercícios chega na M13.".
+   Transparência > ilusão de pronto. Quando M13 implementar, a rota
+   real substitui o stub.
+
+Sem dúvidas em aberto restantes. Pode executar.
