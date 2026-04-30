@@ -27,8 +27,8 @@ LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 //   CSS gerado pelo NativeWind aplicar as variantes dark:.
 // Em Web o Appearance pode nao expor setColorScheme; usamos try/catch.
 try {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (StyleSheet as any).setFlag?.('darkMode', 'class');
+  (StyleSheet as unknown as { setFlag?: (k: string, v: string) => void })
+    .setFlag?.('darkMode', 'class');
   Appearance.setColorScheme?.('dark');
 } catch {
   // Plataforma nao suporta uma das duas APIs (web).
