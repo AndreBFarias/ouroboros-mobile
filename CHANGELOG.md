@@ -6,6 +6,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- `install-dev.sh` reescrito como instalador único: pede sudo uma
+  vez no início e mantém cacheado, configura `~/.zshrc` com
+  `ANDROID_HOME` e PATH automaticamente, detecta hardware (cores
+  lógicos, RAM total) e cria AVD `ouroboros-test` com config
+  otimizada (`hw.cpu.ncore`, `hw.ramSize`, `vm.heapSize`, GPU host,
+  KVM). Cold boot inicial com snapshot `default_boot` para boots
+  seguintes em menos de 10s.
+- `scripts/start-emulator.sh` — inicia emulador com flags de
+  performance (`-gpu host`, `-accel auto`, `-no-boot-anim`, snapshot)
+  e aguarda `sys.boot_completed=1`. Aceita `--headless` e `--cold`.
+- `scripts/mirror-device.sh` — abre janela `scrcpy` espelhando o
+  device ADB ativo (celular físico ou emulador) com latência <50ms.
+- `run.sh` ganhou flags `--emulator` (sobe AVD antes do Metro) e
+  `--mirror` (abre `scrcpy` em paralelo). `--web` continua sem
+  conflito com celular físico.
+
+### Added
 - Sprint M03.2 — foto de perfil. `<AvatarPicker pessoa={...}>` em
   `src/components/ui/AvatarPicker.tsx` abre galeria via
   `expo-image-picker`, copia a foto escolhida para
