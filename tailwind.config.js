@@ -1,6 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
+  // darkMode 'class' permite controlar dark via classe (.dark no html
+  // ou StyleSheet.setFlag('darkMode','class') no RN). Sem isso, o
+  // NativeWind 4 default usa media query (prefers-color-scheme), o
+  // que conflita no web e impede a paleta Dracula de ser aplicada.
+  darkMode: 'class',
   presets: [require("nativewind/preset")],
   theme: {
     extend: {

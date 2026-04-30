@@ -6,7 +6,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { LogBox } from 'react-native';
+import { Appearance, LogBox, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider } from '@/components/ui';
 import '../global.css';
@@ -18,6 +18,24 @@ SplashScreen.preventAutoHideAsync();
 // Migracao para react-native-safe-area-context ja foi feita no codigo
 // proprio (ver Screen.tsx). Warning persiste por terceiros.
 LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
+
+// ADR-008: Dracula e identidade, nao tema selecionavel. Forcamos dark
+// sempre em todas as plataformas.
+// - tailwind.config.js darkMode='class' alinhado com setFlag.
+// - Em RN nativo (Android/iOS), Appearance.setColorScheme('dark').
+// - No Web, adicionamos a classe 'dark' no documentElement para o
+//   CSS gerado pelo NativeWind aplicar as variantes dark:.
+// Em Web o Appearance pode nao expor setColorScheme; usamos try/catch.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (StyleSheet as any).setFlag?.('darkMode', 'class');
+  Appearance.setColorScheme?.('dark');
+} catch {
+  // Plataforma nao suporta uma das duas APIs (web).
+}
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.add('dark');
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
