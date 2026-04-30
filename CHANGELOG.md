@@ -6,6 +6,24 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M04 — FAB Radial integrado em capturas.** Commit
+  `4e10f25` (15 arquivos, 285 inserções, 7 remoções).
+  - `src/lib/navigation/captureRoutes.ts` — módulo novo que mapeia
+    cada `FABRadialKey` para `Href` literal do Expo Router. Rotas
+    com params (`?modo=trigger|vitoria|audio`) já preparadas para
+    M06 e M06.5.
+  - `app/index.tsx` — `<FABRadial>` agora chama `router.push()` via
+    `routeForCapture()`, substituindo o toast antigo "FAB radial
+    chega na M04".
+  - 5 stubs novos em `app/`: `em-breve.tsx`, `humor-rapido.tsx`,
+    `diario-emocional.tsx`, `eventos.tsx`, `scanner.tsx`. Cada um
+    usa `<EmptyState>` informando em qual sprint a tela chega.
+  - `tests/lib/navigation/captureRoutes.test.ts` — 8 testes novos
+    cobrindo as 6 chaves do FAB. Total: 118/118 passando.
+  - 7 screenshots Nível A (Chrome web) em
+    `docs/sprints/M04-screenshots/` capturados via playwright MCP.
+  - Bundle Hermes Android estável em 7,46 MB.
+
 - **Sprint M00.docs — Orquestração Mestre.** 47 arquivos
   novos/atualizados em 5 commits.
   - 3 docs raiz: `ROADMAP.md` (mapa das 22+ sprints),
