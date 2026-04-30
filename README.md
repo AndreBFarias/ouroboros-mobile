@@ -6,6 +6,10 @@ entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
 processa. Construído com Expo + React Native, sem rede de saída,
 estética premium nativa desde o dia um.
 
+> **Para retomar o projeto em uma sessão fresh**: leia
+> [`STATE.md`](STATE.md) → [`ROADMAP.md`](ROADMAP.md) →
+> [`HOW_TO_RESUME.md`](HOW_TO_RESUME.md) (5 passos).
+
 ## Stack
 
 Expo SDK 54 · React Native 0.81 · TypeScript strict · NativeWind 4 ·

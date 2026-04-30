@@ -6,6 +6,51 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M00.docs — Orquestração Mestre.** 47 arquivos
+  novos/atualizados em 5 commits.
+  - 3 docs raiz: `ROADMAP.md` (mapa das 22+ sprints),
+    `STATE.md` (estado vivo), `HOW_TO_RESUME.md` (guia de retomada
+    em 5 passos). Pensados para qualquer Opus retomar fresh sem
+    histórico.
+  - Template fixo: `docs/sprints/_template-spec.md` com 9 seções
+    obrigatórias para toda spec futura.
+  - **15 ADRs em `docs/ADRs/`**: 11 históricos formalizados
+    (0001-0011) a partir do `PLANO_TECNICO_APK.md` §4 + 4 novos
+    (0012 cache mobile readonly, 0013 capitalização revogada,
+    0014 vault dedicado, 0015 pessoas runtime com foto). Índice
+    em `docs/ADRs/INDEX.md`.
+  - **18 specs Mobile detalhadas** em `docs/sprints/M04-spec.md`
+    a `docs/sprints/M18-spec.md`, incluindo M06.5 (microfone),
+    M07.x (mídia obrigatória em conquistas), M11.5 (calendário
+    visual de conquistas) e M14.5 (acompanhador de ciclo
+    menstrual, opt-in, tom sóbrio).
+  - **2 specs Backend** em `docs/sprints/backend/`: MOB-bridge-1
+    (refactor pessoa_a/b no Python) e MOB-bridge-2 (caches
+    `humor-heatmap.json` e `financas-cache.json`).
+  - Consolidação histórica em
+    `docs/sprints/M03.x-fixes-consolidados.md` (M03.1 a M03.7).
+  - Decisões: F-15/16/17 promovidas a v1 como M16/M17/M18 (opt-in
+    via Settings da M15). Ciclo menstrual entra como M14.5
+    (opt-in, sem gamificação). Calendário visual entra como M11.5.
+
+### Changed
+- `VALIDATOR_BRIEF.md`: nova seção 6 (Roadmap canônico) apontando
+  para `ROADMAP.md`. Nova seção 7 (Estado atual) apontando para
+  `STATE.md`. Nova seção 8 (Como retomar) apontando para
+  `HOW_TO_RESUME.md`. Stack header atualizada (Expo SDK 54,
+  Reanimated 4, NativeWind 4).
+- `CLAUDE.md`: adicionada seção "Como retomar em sessão fresh"
+  apontando para `HOW_TO_RESUME.md`.
+- `README.md`: aviso destacado no topo apontando para
+  `STATE.md`/`ROADMAP.md`/`HOW_TO_RESUME.md`.
+- `docs/BRIEFING.md`: marcação de obsolescência na regra "lowercase
+  intencional" (§1) com aviso apontando para ADR-0013.
+- `docs/CONTEXTO.md`: §4 ganha aviso sobre mudança do path do Vault
+  para `~/Protocolo-Ouroboros/` (ADR-0014).
+- `docs/PLANO_TECNICO_APK.md`: §4 ganha aviso de que ADRs canônicos
+  agora vivem em `docs/ADRs/`. Texto em prosa fica como referência
+  histórica.
+
 - `install-dev.sh` reescrito como instalador único: pede sudo uma
   vez no início e mantém cacheado, configura `~/.zshrc` com
   `ANDROID_HOME` e PATH automaticamente, detecta hardware (cores

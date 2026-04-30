@@ -201,6 +201,13 @@ O "contrato" entre Mobile e desktop é o **Vault**. Não há API HTTP, não
 há banco compartilhado, não há mensageria. Há uma pasta sincronizada e
 schemas YAML.
 
+> **AVISO — Vault físico mudou.** A partir de 2026-04-29, o Vault
+> Mobile vive em **`~/Protocolo-Ouroboros/`** (separado do Vault
+> humano de Obsidian em `~/Controle de Bordo/`). Sincronizado via
+> Syncthing entre desktop e Android. Decisão formalizada em
+> ADR-0014. As subpastas abaixo continuam canônicas; só o caminho
+> raiz mudou.
+
 ### O que o Mobile Escreve
 
 Mobile escreve em pastas determinadas do Vault:

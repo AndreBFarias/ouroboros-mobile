@@ -806,6 +806,14 @@ adb exec-out screencap -p > screenshots/MNN-tela.png
 
 ## 4. ADRs — Architecture Decision Records
 
+> **AVISO — Os ADRs canônicos vivem agora em `docs/ADRs/`** como
+> arquivos individuais formalizados durante a Sprint M00.docs em
+> 2026-04-29 (commits `83c27f5`, `4951f6f`). 15 ADRs no total
+> (0001-0011 originais + 0012-0015 novos). Esta seção mantém o
+> resumo em prosa apenas para referência histórica. Sempre consulte
+> os arquivos em `docs/ADRs/` (índice rápido em
+> `docs/ADRs/INDEX.md`) para a versão atual.
+
 Cada ADR vai em `docs/ADRs/NNNN-titulo-curto.md` e é imutável após
 merged. Mudanças viram ADR nova com referência "supersedes ADR-NNNN".
 

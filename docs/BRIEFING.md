@@ -59,6 +59,13 @@ competir com Obsidian — tenta deixar o Vault rodando no bolso sem fricção.
 Sóbrio, focado, silencioso. Companheiro de quem já trabalha demais. Não
 precisa animar ninguém. Precisa estar ali, registrar, sair do caminho.
 
+> **AVISO — Esta regra (lowercase intencional) foi REVOGADA pela
+> ADR-0013** durante o checkpoint visual da Sprint M01.5 em
+> 2026-04-28. A regra atual é **Sentence case com acentuação
+> completa PT-BR**. O texto abaixo é registro histórico. Ver
+> `docs/ADRs/0013-regra-capitalizacao-revogada.md` e
+> `VALIDATOR_BRIEF.md` §1.4.
+
 **Mensagens da UI** ficam em **lowercase intencional** (parte da
 identidade visual mono-font), terminadas em ponto, sem exclamação, sem
 emoji. Exemplos: "feito.", "anotado.", "voltou hoje.", "salvo."
