@@ -13,14 +13,14 @@ import { Redirect, useRouter } from 'expo-router';
 import {
   Card,
   EmptyState,
-  FAB,
+  FABRadial,
   Header,
   PersonAvatar,
   Screen,
   Slider,
   ChipGroup,
   Button,
-  useToast,
+  type FABRadialKey,
 } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
@@ -29,12 +29,12 @@ import { useOnboarding } from '@/lib/stores/onboarding';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { loadVaultRoot } from '@/lib/vault';
 import { useHoje } from '@/lib/hooks/useHoje';
+import { routeForCapture } from '@/lib/navigation/captureRoutes';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
 
 export default function TelaHoje() {
   const router = useRouter();
-  const toast = useToast();
   const vaultRoot = useVault((s) => s.vaultRoot);
   const setVaultRoot = useVault((s) => s.setVaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
@@ -84,17 +84,34 @@ export default function TelaHoje() {
     ? undefined
     : () => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a');
 
-  return <TelaHojeConteudo onFabPress={() => toast.show('FAB radial chega na M04', 'info')} onAvatarPress={handleAvatarPress} onComponentsPress={() => router.push('/_components')} />;
+  // captureRoutes resolve cada FABRadialKey para uma rota concreta;
+  // exercicio fica como stub ate a sprint M13 pintar a galeria real.
+  const onCapture = (key: FABRadialKey) => {
+    const route = routeForCapture(key);
+    router.push(route);
+  };
+
+  return (
+    <TelaHojeConteudo
+      onCapture={onCapture}
+      onAvatarPress={handleAvatarPress}
+      onComponentsPress={() => router.push('/_components')}
+    />
+  );
 }
 
 interface ConteudoProps {
-  onFabPress: () => void;
+  onCapture: (key: FABRadialKey) => void;
   // undefined quando sozinho: avatar nao tem toggle.
   onAvatarPress: (() => void) | undefined;
   onComponentsPress: () => void;
 }
 
-function TelaHojeConteudo({ onFabPress, onAvatarPress, onComponentsPress }: ConteudoProps) {
+function TelaHojeConteudo({
+  onCapture,
+  onAvatarPress,
+  onComponentsPress,
+}: ConteudoProps) {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const fotoAtiva = usePessoa((s) => s.fotos[s.pessoaAtiva]);
   const { humor, diarios, eventos, loading, error } = useHoje();
@@ -131,7 +148,7 @@ function TelaHojeConteudo({ onFabPress, onAvatarPress, onComponentsPress }: Cont
         />
       </ScrollView>
 
-      <FAB onPress={onFabPress} accessibilityLabel="acao rapida" />
+      <FABRadial onSelect={onCapture} />
     </Screen>
   );
 }
