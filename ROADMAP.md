@@ -36,7 +36,7 @@ fechamento de sprint.
 | `[ok]` | M02.1 | Fix loop infinito useHoje + labels FAB | 01, 14 | — | 1h | `3071c98`, `6f20df2` |
 | `[ok]` | M03 | Onboarding 4 frames + identidade dinâmica | 24 | — | 4h | `35aaa1d` |
 | `[ok]` | M03.x | Família de fixes (M03.1 → M03.7) | 24, 14 | — | 5h cumulativos | ver `docs/sprints/M03.x-fixes-consolidados.md` |
-| `[wip]` | M00.docs | Orquestração e documentação mestre | — | — | 4h | `<HEAD desta sprint>` |
+| `[ok]` | M00.docs | Orquestração e documentação mestre | — | — | 4h | `1ab70b7` |
 | `[todo]` | M04 | FAB Radial integrado | 14 | — | 2h | — |
 | `[todo]` | M05 | Humor Rápido (flow alvo <30s) | 15 | humor | 4h | — |
 | `[todo]` | M06 | Diário Emocional (modo trigger / vitória) | 18 | diario_emocional | 5h | — |

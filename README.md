@@ -52,9 +52,9 @@ Detalhe em `VALIDATOR_BRIEF.md` §1.9 e `CLAUDE.md`. Resumo:
 
 ## Documentação
 
-- [`ROADMAP.md`](ROADMAP.md) — mapa de todas as sprints (planejado pela Sprint M00.docs)
-- [`STATE.md`](STATE.md) — estado atual: commit, sprint em execução, próximo passo (planejado pela Sprint M00.docs)
-- [`HOW_TO_RESUME.md`](HOW_TO_RESUME.md) — guia em 5 passos para retomar do zero (planejado pela Sprint M00.docs)
+- [`ROADMAP.md`](ROADMAP.md) — mapa de todas as sprints
+- [`STATE.md`](STATE.md) — estado atual: commit, sprint em execução, próximo passo
+- [`HOW_TO_RESUME.md`](HOW_TO_RESUME.md) — guia em 5 passos para retomar do zero
 - [`CHANGELOG.md`](CHANGELOG.md) — histórico de sprints e mudanças
 - [`CLAUDE.md`](CLAUDE.md) — regras invioláveis na raiz para visibilidade automática
 - [`VALIDATOR_BRIEF.md`](VALIDATOR_BRIEF.md) — invariantes e contratos do projeto
