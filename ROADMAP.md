@@ -39,7 +39,9 @@ fechamento de sprint.
 | `[ok]` | M00.docs | Orquestração e documentação mestre | — | — | 4h | `1ab70b7` |
 | `[ok]` | M04 | FAB Radial integrado | 14 | — | 2h | `4e10f25` |
 | `[ok]` | M05 | Humor Rápido (flow alvo <30s) | 15 | humor | 4h | `7da843c` |
-| `[ok]` | M05.2 | Estender Input com autoCapitalize/keyboardType | — | — | 0,5h | (este commit) |
+| `[ok]` | M05.2 | Estender Input com autoCapitalize/keyboardType | — | — | 0,5h | `13b5659` |
+| `[ok]` | M06 | Diário Emocional (trigger / vitória) | 18 | diario_emocional | 5h | `9d63e1c` |
+| `[todo]` | M06.X | Estender DiarioEmocionalSchema com contexto_social | — | diario_emocional | 1h | — |
 | `[todo]` | M06 | Diário Emocional (modo trigger / vitória) | 18 | diario_emocional | 5h | — |
 | `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 4h | — |
 | `[todo]` | M07 | Eventos com lugar (flow <25s) | 20 | evento | 4h | — |
