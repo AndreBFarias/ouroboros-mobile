@@ -2,10 +2,19 @@
 // purple via spring_subtle no foco. Placeholder muted-decor. Aceita
 // label opcional acima do campo.
 import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { colors } from '@/theme/tokens';
+
+// Subset suportado de autoCapitalize. O TextInput nativo aceita os 4
+// valores; expomos os mesmos para refletir a API do React Native sem
+// alargar a superficie da abstracao.
+export type InputAutoCapitalize =
+  | 'none'
+  | 'sentences'
+  | 'words'
+  | 'characters';
 
 export interface InputProps {
   value: string;
@@ -16,6 +25,10 @@ export interface InputProps {
   // accessibilityLabel customizavel; quando ausente cai no label ou
   // placeholder. Convencao do projeto: PT-BR sem acento.
   accessibilityLabel?: string;
+  // Repassados ao TextInput interno. autoCapitalize default 'sentences'
+  // (idiomatico para textos PT-BR). keyboardType default 'default'.
+  autoCapitalize?: InputAutoCapitalize;
+  keyboardType?: KeyboardTypeOptions;
 }
 
 export function Input({
@@ -25,6 +38,8 @@ export function Input({
   label,
   secureTextEntry = false,
   accessibilityLabel,
+  autoCapitalize = 'sentences',
+  keyboardType = 'default',
 }: InputProps) {
   const [focused, setFocused] = useState(false);
   const a11y = accessibilityLabel ?? label ?? placeholder ?? 'campo de texto';
@@ -50,6 +65,8 @@ export function Input({
           placeholder={placeholder}
           placeholderTextColor={colors.mutedDecor}
           secureTextEntry={secureTextEntry}
+          autoCapitalize={autoCapitalize}
+          keyboardType={keyboardType}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className="font-mono text-fg text-base px-4"

@@ -29,4 +29,39 @@ describe('Input', () => {
     );
     expect(getByText('anotacao')).toBeTruthy();
   });
+
+  it('repassa autoCapitalize ao TextInput interno', () => {
+    const { getByPlaceholderText } = render(
+      <Input
+        value=""
+        onChangeText={() => undefined}
+        placeholder="medicacao"
+        autoCapitalize="sentences"
+      />
+    );
+    expect(getByPlaceholderText('medicacao').props.autoCapitalize).toBe(
+      'sentences'
+    );
+  });
+
+  it('repassa keyboardType ao TextInput interno', () => {
+    const { getByPlaceholderText } = render(
+      <Input
+        value=""
+        onChangeText={() => undefined}
+        placeholder="horas"
+        keyboardType="numeric"
+      />
+    );
+    expect(getByPlaceholderText('horas').props.keyboardType).toBe('numeric');
+  });
+
+  it('aplica defaults sentences/default quando props omitidas', () => {
+    const { getByPlaceholderText } = render(
+      <Input value="" onChangeText={() => undefined} placeholder="livre" />
+    );
+    const input = getByPlaceholderText('livre');
+    expect(input.props.autoCapitalize).toBe('sentences');
+    expect(input.props.keyboardType).toBe('default');
+  });
 });

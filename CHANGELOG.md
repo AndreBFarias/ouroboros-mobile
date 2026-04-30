@@ -6,6 +6,16 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M05.2 — Estender `<Input>` com `autoCapitalize` e
+  `keyboardType`.** O componente passa a expor essas duas props
+  opcionais (defaults `'sentences'` e `'default'`), repassadas
+  diretamente ao `TextInput` interno. Achado pelo executor da M05
+  ao não conseguir aplicar `autoCapitalize="sentences"` no campo
+  Medicação e `keyboardType="numeric"` no campo Horas de sono.
+  `app/humor-rapido.tsx` atualizado para usar as novas props.
+  4 testes novos em `tests/components/ui/Input.test.tsx` (total
+  144 → 147 testes, 28 suites).
+
 - **Sprint M05 — Humor rápido (Tela 15).** Substitui o stub da
   rota `/humor-rapido` criado na M04 pela primeira tela de captura
   real do app, com persistência em `daily/YYYY-MM-DD.md` no Vault.

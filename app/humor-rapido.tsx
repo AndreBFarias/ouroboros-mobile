@@ -196,6 +196,7 @@ export default function HumorRapido() {
             placeholder="Ex.: Fluoxetina 20mg (opcional)"
             value={medicacao}
             onChangeText={setMedicacao}
+            autoCapitalize="sentences"
             accessibilityLabel="campo medicacao"
           />
           <Input
@@ -203,6 +204,7 @@ export default function HumorRapido() {
             placeholder="0 a 24"
             value={horasSonoTexto}
             onChangeText={setHorasSonoTexto}
+            keyboardType="numeric"
             accessibilityLabel="campo horas de sono"
           />
         </View>
