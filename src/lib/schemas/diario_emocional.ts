@@ -20,6 +20,14 @@ const Iso8601 = z
     'data deve ser ISO 8601 com hora'
   );
 
+// Flags de contexto social: amigos / sozinho. Adicionado em M06.X
+// para suportar a UI da Tela 18 que oferece esses chips ao lado das
+// pessoas. Antes ficavam apenas em prosa no corpo do .md; agora sao
+// campo estruturado opcional. Arquivos antigos sem o campo seguem
+// validos (default = []).
+export const ContextoSocialSchema = z.enum(['amigos', 'sozinho']);
+export type ContextoSocial = z.infer<typeof ContextoSocialSchema>;
+
 export const DiarioEmocionalSchema = z
   .object({
     tipo: z.literal('diario_emocional'),
@@ -29,6 +37,7 @@ export const DiarioEmocionalSchema = z
     emocoes: z.array(z.string()).default([]),
     intensidade: z.number().int().min(1).max(5),
     com: z.array(PessoaIdSchema).default([]),
+    contexto_social: z.array(ContextoSocialSchema).default([]),
     texto: z.string(),
     estrategia: z.string().optional(),
     funcionou: z.boolean().optional(),

@@ -214,6 +214,12 @@ export default function DiarioEmocional() {
 
     const ehTrigger = modo === 'trigger';
     const comPessoaIds = com.filter(ehPessoaAutor);
+    // Contexto social: amigos / sozinho viram campo estruturado no
+    // frontmatter desde M06.X. O corpo livre do .md mantem a linha
+    // "Com:" para legibilidade no Obsidian (redundancia intencional).
+    const contextoSocial = com.filter(
+      (c): c is 'amigos' | 'sozinho' => c === 'amigos' || c === 'sozinho'
+    );
     const estrategiaTrim = estrategia.trim();
 
     const meta: DiarioEmocionalMeta = {
@@ -224,6 +230,7 @@ export default function DiarioEmocional() {
       emocoes,
       intensidade,
       com: comPessoaIds,
+      contexto_social: contextoSocial,
       texto: texto.trim(),
       ...(ehTrigger && estrategiaTrim.length > 0
         ? { estrategia: estrategiaTrim }

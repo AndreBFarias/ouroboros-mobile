@@ -31,6 +31,7 @@ const baseTrigger: DiarioEmocionalMeta = {
   emocoes: ['raiva', 'frustracao'],
   intensidade: 4,
   com: ['pessoa_b'],
+  contexto_social: [],
   texto: 'discussao sobre planejamento.',
   estrategia: 'respirei e sai do comodo.',
   funcionou: true,
@@ -45,6 +46,7 @@ const baseSucesso: DiarioEmocionalMeta = {
   emocoes: ['gratidao', 'alegria'],
   intensidade: 4,
   com: [],
+  contexto_social: ['sozinho'],
   texto: 'consegui terminar o que comecei hoje.',
   audio: null,
 };

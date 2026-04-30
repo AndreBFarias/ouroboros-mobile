@@ -6,6 +6,17 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M06.X — Estende `DiarioEmocionalSchema` com `contexto_social`.**
+  Fecha o achado da M06: o schema v1 só aceitava `PessoaId` em
+  `com`, deixando `amigos`/`sozinho` apenas em prosa no corpo do
+  `.md`. Agora o schema tem campo separado
+  `contexto_social: ('amigos'|'sozinho')[]` com default `[]` (compat
+  com arquivos antigos). `app/diario-emocional.tsx` divide o estado
+  da UI em `meta.com` (PessoaIds) + `meta.contexto_social` (flags).
+  O corpo livre do `.md` mantém a linha "Com:" para legibilidade no
+  Obsidian (redundância intencional). 6 testes novos em
+  `tests/schemas/diario_emocional.test.ts` (188 → 194 testes).
+
 - **Sprint M06 — Diário emocional (Tela 18).** Substitui o stub da
   rota `/diario-emocional` criado na M04 pela tela de captura
   emocional rica em contexto, com persistência em

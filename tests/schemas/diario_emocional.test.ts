@@ -82,3 +82,52 @@ describe('DiarioEmocionalSchema validacoes gerais', () => {
     ).not.toThrow();
   });
 });
+
+describe('DiarioEmocionalSchema contexto_social (M06.X)', () => {
+  it('default vazio quando campo omitido (compat com .md antigos)', () => {
+    const out = DiarioEmocionalSchema.parse(baseTrigger);
+    expect(out.contexto_social).toEqual([]);
+  });
+
+  it('aceita amigos', () => {
+    const out = DiarioEmocionalSchema.parse({
+      ...baseTrigger,
+      contexto_social: ['amigos'],
+    });
+    expect(out.contexto_social).toEqual(['amigos']);
+  });
+
+  it('aceita sozinho', () => {
+    const out = DiarioEmocionalSchema.parse({
+      ...baseTrigger,
+      contexto_social: ['sozinho'],
+    });
+    expect(out.contexto_social).toEqual(['sozinho']);
+  });
+
+  it('aceita amigos e sozinho juntos (cenario de pesquisa social)', () => {
+    const out = DiarioEmocionalSchema.parse({
+      ...baseTrigger,
+      contexto_social: ['amigos', 'sozinho'],
+    });
+    expect(out.contexto_social).toHaveLength(2);
+  });
+
+  it('rejeita valor fora do enum', () => {
+    expect(() =>
+      DiarioEmocionalSchema.parse({
+        ...baseTrigger,
+        contexto_social: ['familia'],
+      })
+    ).toThrow();
+  });
+
+  it('rejeita PessoaId em contexto_social (campo separado)', () => {
+    expect(() =>
+      DiarioEmocionalSchema.parse({
+        ...baseTrigger,
+        contexto_social: ['pessoa_a'],
+      })
+    ).toThrow();
+  });
+});
