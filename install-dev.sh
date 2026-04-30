@@ -87,12 +87,28 @@ else
 fi
 echo ""
 
-# -------- 2. cmdline-tools, system image, emulador --------
-SDK_DIR="$HOME/Android/Sdk"
-EMU_BIN="$SDK_DIR/emulator/emulator"
+# -------- 2. Detectar ou criar SDK Android (lowercase canonico) --------
+# Linux ext4 distingue caixa: ~/Android/sdk vs ~/Android/Sdk podem
+# coexistir e brigar. Usar SEMPRE 'sdk' (lowercase) e migrar 'Sdk'
+# se existir, para evitar avdmanager nao achar system-image.
+SDK_DIR="$HOME/Android/sdk"
+SDK_DIR_CAPITAL="$HOME/Android/Sdk"
 
-if confirma "emulator" "Instalar Android cmdline-tools + system image + emulator?"; then
-  if [[ ! -x "$EMU_BIN" ]]; then
+if [[ -d "$SDK_DIR_CAPITAL" && ! -d "$SDK_DIR" ]]; then
+  echo ">> migrando ~/Android/Sdk (capital) para ~/Android/sdk (lowercase)"
+  mv "$SDK_DIR_CAPITAL" "$SDK_DIR"
+elif [[ -d "$SDK_DIR_CAPITAL" && -d "$SDK_DIR" ]]; then
+  echo ">> ambos ~/Android/Sdk e ~/Android/sdk existem; usando lowercase, descartando capital"
+  rm -rf "$SDK_DIR_CAPITAL"
+fi
+
+EMU_BIN="$SDK_DIR/emulator/emulator"
+SDKMAN="$SDK_DIR/cmdline-tools/latest/bin/sdkmanager"
+AVDMAN="$SDK_DIR/cmdline-tools/latest/bin/avdmanager"
+
+if confirma "emulator" "Garantir Android cmdline-tools + system image + emulator?"; then
+  # cmdline-tools
+  if [[ ! -x "$SDKMAN" ]]; then
     echo ">> baixando Android cmdline-tools"
     mkdir -p "$SDK_DIR/cmdline-tools"
     cd /tmp
@@ -104,18 +120,33 @@ if confirma "emulator" "Instalar Android cmdline-tools + system image + emulator
     mv "$SDK_DIR/cmdline-tools/cmdline-tools" "$SDK_DIR/cmdline-tools/latest" 2>/dev/null || true
     rm -f cmdline-tools.zip
     cd "$ROOT"
+  else
+    echo ">> cmdline-tools ja instaladas em $SDK_DIR"
   fi
 
   export ANDROID_HOME="$SDK_DIR"
   export PATH="$PATH:$SDK_DIR/cmdline-tools/latest/bin:$SDK_DIR/platform-tools:$SDK_DIR/emulator"
 
   echo ">> aceitando licencas SDK"
-  yes | sdkmanager --licenses >/dev/null 2>&1 || true
+  yes | "$SDKMAN" --licenses >/dev/null 2>&1 || true
 
-  echo ">> instalando platform-tools, system-image (android-34 google_apis x86_64), emulator"
-  sdkmanager "platform-tools" "platforms;android-34" \
-             "system-images;android-34;google_apis;x86_64" "emulator" 2>&1 | \
-             grep -vE "^\[=*\s|^Loading" || true
+  # Verifica componentes ja instalados antes de baixar
+  INSTALLED=$("$SDKMAN" --list_installed 2>/dev/null || echo "")
+  TO_INSTALL=()
+  echo "$INSTALLED" | grep -q "^  platform-tools" || TO_INSTALL+=("platform-tools")
+  echo "$INSTALLED" | grep -q "^  platforms;android-34" || TO_INSTALL+=("platforms;android-34")
+  echo "$INSTALLED" | grep -q "^  system-images;android-34;google_apis;x86_64" \
+    || TO_INSTALL+=("system-images;android-34;google_apis;x86_64")
+  echo "$INSTALLED" | grep -q "^  emulator" || TO_INSTALL+=("emulator")
+
+  if (( ${#TO_INSTALL[@]} > 0 )); then
+    echo ">> instalando: ${TO_INSTALL[*]}"
+    # NAO suprimir output (silencia falha em modo set -e). Filtrar
+    # apenas linhas de progresso muito ruidosas.
+    "$SDKMAN" "${TO_INSTALL[@]}" 2>&1 | grep -vE "^\[=+\s+\]" || true
+  else
+    echo ">> SDK ja completo: platform-tools, platforms, system-image, emulator"
+  fi
 fi
 
 # -------- 3. AVD com config otimizada --------
@@ -124,15 +155,19 @@ if confirma "emulator" "Criar AVD ouroboros-test otimizado?"; then
 
   if [[ -d "$AVD_DIR" ]]; then
     echo ">> AVD ouroboros-test ja existe, removendo para recriar otimizado"
-    "$SDK_DIR/cmdline-tools/latest/bin/avdmanager" delete avd -n ouroboros-test 2>/dev/null || true
+    "$AVDMAN" delete avd -n ouroboros-test 2>/dev/null || true
     rm -rf "$AVD_DIR" "$HOME/.android/avd/ouroboros-test.ini"
   fi
 
   echo ">> criando AVD ouroboros-test (Pixel 6, Android 34, x86_64, otimizado)"
-  echo "no" | "$SDK_DIR/cmdline-tools/latest/bin/avdmanager" create avd \
+  if ! echo "no" | "$AVDMAN" create avd \
     -n ouroboros-test \
     -k "system-images;android-34;google_apis;x86_64" \
-    -d "pixel_6" >/dev/null
+    -d "pixel_6" 2>&1 | tee /tmp/avdcreate.log | grep -qE "Auto-selecting|created"; then
+    echo "ERRO: avdmanager falhou. Saida em /tmp/avdcreate.log"
+    cat /tmp/avdcreate.log | tail -10
+    exit 1
+  fi
 
   # Tunings de performance no config.ini do AVD
   CONFIG="$AVD_DIR/config.ini"
@@ -161,7 +196,7 @@ if [[ -f "$ZSHRC" ]] && ! grep -q "ANDROID_HOME" "$ZSHRC"; then
   cat >> "$ZSHRC" <<'EOZSH'
 
 # Ouroboros Mobile - Android SDK (instalado por install-dev.sh)
-export ANDROID_HOME="$HOME/Android/Sdk"
+export ANDROID_HOME="$HOME/Android/sdk"
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin"
 export PATH="$PATH:$ANDROID_HOME/platform-tools"
 export PATH="$PATH:$ANDROID_HOME/emulator"
