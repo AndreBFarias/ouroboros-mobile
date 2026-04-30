@@ -28,11 +28,21 @@ refresh em menos de 1 segundo, sem build de Android Studio.
 
 | Script | Função |
 |---|---|
-| `./install.sh` | Confere Node 20+, instala deps com `--legacy-peer-deps`, configura hooks, cria `pessoas.config.ts`, valida com smoke. |
-| `./run.sh` | Detecta IP da WiFi, define `REACT_NATIVE_PACKAGER_HOSTNAME`, inicia `expo start --lan`, imprime QR ASCII. Aceita `--clear` (cache do Metro) e `--tunnel`. |
+| `./install.sh` | Setup do projeto: confere Node 20+, instala deps com `--legacy-peer-deps`, configura hooks, cria `pessoas.config.ts`, valida com smoke. |
+| `./install-dev.sh` | Setup do desktop para visão em tempo real do app: instala ADB, scrcpy e emulador Android headless (~3 GB). Default sem flags instala os 3. Use `--adb` para só ADB+scrcpy. |
+| `./run.sh` | Detecta IP da WiFi, define `REACT_NATIVE_PACKAGER_HOSTNAME`, inicia `expo start --lan`, imprime QR ASCII. Aceita `--clear` (cache do Metro), `--tunnel` e `--web` (versão web no Chrome, sem conflito com celular físico). |
 | `./uninstall.sh` | Apaga `node_modules`, `.expo`, caches. Não toca em `.git`, código, `pessoas.config.ts` nem no Vault. |
 | `./scripts/smoke.sh` | Roda anonimato + dados de teste + typecheck + lint + tests. Usado pelo pre-push. |
 | `./scripts/check_anonimato.sh` | Valida Regra −1: zero IA, zero nomes reais hardcoded. Roda no pre-commit. |
+| `./scripts/adb-wireless.sh` | Habilita ADB sem cabo após pareamento USB inicial. Gerado pelo `install-dev.sh`. |
+
+## Política de validação visual (3 níveis)
+
+Detalhe em `VALIDATOR_BRIEF.md` §1.9 e `CLAUDE.md`. Resumo:
+
+- **Nível A** (default): `./run.sh --web` + Chrome no desktop. Cobre fluxos JS, sem conflito com seu celular.
+- **Nível B** (sob demanda): emulador Android no desktop (instalado pelo `install-dev.sh`). Cobre APIs nativas.
+- **Nível C** (precisa sua permissão): celular físico via ADB. Só para Syncthing real, share intent de outros apps e checkpoint visual de fim de sprint.
 
 ## Documentação
 

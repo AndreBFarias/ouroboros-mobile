@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
-# setup-dev-env.sh — instala ferramentas do desktop para dar visao
-# em tempo real ao Claude Code durante desenvolvimento.
+# install-dev.sh — instala ferramentas de visao em tempo real para o
+# Claude Code durante desenvolvimento.
 #
-# O que faz (interativo, pede confirmacao por etapa):
+# Por padrao (sem flags) instala os 3 sem perguntar:
 #   1. ADB (android-tools-adb) - controle do device por linha de comando
 #   2. scrcpy - espelha tela do celular no monitor (latencia <50ms)
-#   3. Android command-line tools - emulador headless sem Android Studio
-#   4. (opcional) AVD com system image pre-baixada
-#   5. Configura ADB wireless apos pareamento USB inicial
+#   3. Android command-line tools + emulador headless (~3GB)
 #
-# Tudo em pacotes apt do Pop!_OS / Ubuntu 22.04. Nada de snap (mais lento).
+# Tambem cria scripts/adb-wireless.sh para parear sem cabo apos USB.
+#
+# Tudo em pacotes apt do Pop!_OS / Ubuntu 22.04. Nada de snap.
 #
 # Uso:
-#   ./scripts/setup-dev-env.sh           # interativo
-#   ./scripts/setup-dev-env.sh --all     # instala tudo sem perguntar
-#   ./scripts/setup-dev-env.sh --adb     # so ADB + scrcpy (minimo)
-#   ./scripts/setup-dev-env.sh --emulator  # adiciona emulador Android
+#   ./install-dev.sh              # instala tudo (default)
+#   ./install-dev.sh --interactive  # pergunta a cada etapa
+#   ./install-dev.sh --adb        # so ADB + scrcpy (sem emulador)
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 
-MODE="interactive"
+MODE="all"
 for arg in "$@"; do
   case "$arg" in
+    --interactive) MODE="interactive" ;;
     --all) MODE="all" ;;
     --adb) MODE="adb" ;;
     --emulator) MODE="emulator" ;;
@@ -41,7 +41,13 @@ echo "emulador Android headless."
 echo ""
 
 confirma() {
-  if [[ "$MODE" == "all" || "$MODE" == "$1" ]]; then return 0; fi
+  # MODE 'all' aceita tudo (default sem flags).
+  # MODE 'adb' aceita so etapas marcadas como 'adb'.
+  # MODE 'emulator' aceita 'adb' e 'emulator'.
+  # MODE 'interactive' pergunta.
+  if [[ "$MODE" == "all" ]]; then return 0; fi
+  if [[ "$MODE" == "adb" && "$1" == "adb" ]]; then return 0; fi
+  if [[ "$MODE" == "emulator" && ( "$1" == "adb" || "$1" == "emulator" ) ]]; then return 0; fi
   if [[ "$MODE" != "interactive" ]]; then return 1; fi
   read -r -p "$2 [s/N] " resposta
   case "$resposta" in
