@@ -273,20 +273,21 @@ artboard "tela 20 — eventos" de
 
 ## 9. Dúvidas em aberto
 
-- Auto-seleção de `pessoa_b` no chip "com quem" depende do
-  `tipoCompanhia` definido no onboarding. Se o usuário escolheu
-  `casal` ou `amigos`, auto-seleciona; se `sozinho`, não auto-
-  seleciona. Confirmar com humano se `amigos` deve ter
-  comportamento diferente (ex. não auto-selecionar pessoa_b mas
-  mostrar chip "Amigos" pré-marcado).
-- Time picker: `@react-native-community/datetimepicker` no Android
-  abre como modal nativo. Comportamento web no Chrome cai em
-  `<input type="time">`. UX consistente é aceitável; flag para
-  futuro se houver desconforto.
-- Lista `EVENTO_CATEGORIAS` segue o BRIEFING (Tela 20) com adição
-  de `'exercicio'` para casar com a ação `exercicio` do FAB
-  (M04). Confirmar com humano se essa adição faz sentido ou se a
-  ação `exercicio` do FAB deve abrir uma tela própria de treino
-  (M13) sem chegar nesta categoria de evento.
-- Cap de 6 fotos por evento é arbitrário — ajustar depois com base
-  em uso real.
+Resolvidas em 2026-04-30 com o humano (orquestrador registrou aqui
+antes de disparar o executor):
+
+1. **Auto-seleção `pessoa_b`**: comportamento uniforme. Se
+   `tipoCompanhia === 'casal'` ou `'amigos'`, auto-marca
+   `pessoa_b`. Se `'sozinho'`, não auto-marca. Sem chip "Amigos"
+   pré-marcado nesta sprint — fica para sprint futura se a UX
+   pedir diferenciação.
+2. **Categoria `exercicio`**: **manter** na lista. Paralelo a M13
+   (Galeria e Detalhe Exercício, que cobre dados estruturados de
+   treino). Aqui em eventos é o registro casual ("fui na
+   academia") sem séries/peso.
+3. **Time picker**: Android nativo modal + fallback Web
+   `<input type="time">` (UX consistente aceitável).
+4. **Cap de 6 fotos**: aceito como arbitrário; ajusta-se depois com
+   base em uso real.
+
+Nenhuma dúvida pendente; executar.

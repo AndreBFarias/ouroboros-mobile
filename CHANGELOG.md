@@ -6,6 +6,71 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Sprint M07 — Eventos com lugar (Tela 20).** Substitui o stub
+  da rota `/eventos` criado na M04 pela tela de captura de evento
+  rica em contexto, com persistência em
+  `eventos/YYYY-MM-DD-<slug>.md` no Vault.
+  - `app/eventos.tsx` — bottom sheet 80% que abre ao montar.
+    Toggle Positivo/Negativo no header (verde/vermelho) com
+    borda esquerda animada, padrão idêntico ao da Tela 18.
+    Textarea "O que aconteceu?" obrigatória (mínimo 1 caractere).
+    Bloco "Onde" combinando input livre + botão "Usar localização
+    atual" (`expo-location`) + chip cyan opcional do bairro
+    detectado. Bloco "Quando" com chips single-select Agora /
+    Outro horário (este abre `<DateTimePicker mode="time">`).
+    `<ChipGroup mode="multi">` "Com quem" auto-selecionando
+    `pessoa_b` quando `tipoCompanhia` é `'casal'` ou `'amigos'`
+    (decisão M07 §9 item 1). `<ChipGroup mode="single">` de
+    Categoria com 8 slugs fechados. `<FotosBlock>` opcional via
+    `expo-image-picker` (cap interno de 6 fotos). Slider 1-5 de
+    intensidade. Botão Registrar variant `success` em modo
+    positivo / `destructive` em modo negativo. Sem haptic em modo
+    negativo (mesmo princípio M06).
+  - `src/components/eventos/LocalizacaoBlock.tsx`,
+    `src/components/eventos/QuandoBlock.tsx`,
+    `src/components/eventos/FotosBlock.tsx` — três blocos
+    auxiliares com estado controlado pelo container e API
+    pequena. FotosBlock mostra grid de thumbnails 80dp com botão
+    `X` red para remover; ao atingir o cap, o botão "Adicionar
+    foto" exibe o label `"Limite de 6 fotos atingido"` e fica
+    disabled.
+  - `src/lib/eventos/categorias.ts` — lista fechada
+    `EVENTO_CATEGORIAS_SLUGS = ['rolezinho','compras','consulta',
+    'trabalho','evento_social','rotina','exercicio','outro']` em
+    snake_case ASCII no frontmatter. Helper `formatCategoria`
+    com dicionário `EVENTO_CATEGORIAS_LABELS` acentuado em
+    Sentence case PT-BR (Exercício, Evento social) e fallback
+    mecânico para slugs desconhecidos. Decisão M07 §9 item 2:
+    `exercicio` mantido na lista como registro casual; treino
+    estruturado vai para a M13.
+  - `src/lib/eventos/slug.ts` — helper `slugifyEvento` em
+    cascata (bairro > texto > categoria > `'evento'`) gerando
+    kebab-case ASCII com cap de 24 chars sem cortar palavra.
+  - `src/lib/eventos/localizacao.ts` — wrapper `getBairroAtual`
+    sobre `expo-location` (request permission > current position
+    > reverse geocode). Extrai `district` com fallback em
+    `subregion`. Erros silenciosos (devolve `null`).
+  - `src/lib/eventos/saveEvento.ts` — função pura que valida
+    via `EventoSchema.safeParse`, copia cada foto para
+    `assets/<formatDateYmdHm>-evento-<idx>.jpg` via
+    `expo-file-system/legacy`, atualiza `meta.fotos` com paths
+    relativos ao Vault, resolve colisão de path com sufixo
+    numérico crescente e chama `writeVaultFile<EventoMeta>`.
+  - `tests/app/eventos.test.tsx` (16 testes),
+    `tests/lib/eventos/saveEvento.test.ts` (12 testes),
+    `tests/lib/eventos/categorias.test.ts` (16 testes),
+    `tests/lib/eventos/slug.test.ts` (15 testes),
+    `tests/lib/eventos/localizacao.test.ts` (10 testes).
+    Total de testes salta de 194 para 259 (+65).
+  - `app.json` ganha plugin `expo-location` com
+    `locationAlwaysAndWhenInUsePermission` e plugin
+    `@react-native-community/datetimepicker`.
+    `expo-location@~19.0.8` e
+    `@react-native-community/datetimepicker@8.4.4` instalados
+    via `npx expo install`. `expo-image-picker@~17.0.11` já
+    estava presente desde M03.2.
+  - Bundle Hermes Android: 7,46 MB → 7,55 MB.
+
 - **Sprint M06.X — Estende `DiarioEmocionalSchema` com `contexto_social`.**
   Fecha o achado da M06: o schema v1 só aceitava `PessoaId` em
   `com`, deixando `amigos`/`sozinho` apenas em prosa no corpo do

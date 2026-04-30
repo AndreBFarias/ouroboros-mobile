@@ -38,7 +38,14 @@
           "photosPermission": "O Ouroboros precisa acessar suas fotos para configurar seu avatar de perfil.",
           "cameraPermission": "O Ouroboros precisa da câmera para tirar uma foto de perfil."
         }
-      ]
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir detectar bairro para anotar onde foi."
+        }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
