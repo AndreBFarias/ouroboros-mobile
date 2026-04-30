@@ -56,3 +56,7 @@ docs/sprints/*-screenshots/_raw/
 
 expo-env.d.ts
 # @end expo-cli
+
+# Diretorio temporario do playwright MCP (screenshots vao para
+# docs/sprints/*-screenshots/ apos curadoria)
+.playwright-mcp/

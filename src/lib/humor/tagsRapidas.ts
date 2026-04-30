@@ -23,14 +23,33 @@ export const TAGS_RAPIDAS_SLUGS = [
 
 export type TagRapidaSlug = (typeof TAGS_RAPIDAS_SLUGS)[number];
 
-// Converte slug snake_case em rotulo legivel para UI:
-//   'trabalho_pesado' -> 'Trabalho pesado'
-//   'boa_conversa'    -> 'Boa conversa'
-//   'cansaco'         -> 'Cansaco' (sem acento porque slug e ASCII)
-// Nao acrescenta acentuacao porque o slug e o identificador puro;
-// labels apresentaveis com acento (se desejado) devem ser tabela
-// separada em sprint futura.
+// Mapa de slug -> label acentuado em PT-BR. Strings de UI seguem a
+// regra de Sentence case com acentuacao completa do projeto. O slug
+// e ASCII por convencao do Vault, mas a apresentacao precisa ter o
+// diacritico que o portugues exige (cansaco -> Cansaco com cedilha,
+// exercicio -> Exercicio com agudo). Slugs sem diacritico no original
+// (ex.: 'trabalho_pesado') caem no fallback mecanico.
+const TAGS_RAPIDAS_LABELS: Record<TagRapidaSlug, string> = {
+  trabalho_pesado: 'Trabalho pesado',
+  boa_conversa: 'Boa conversa',
+  cansaco: 'Cansaço',
+  exercicio: 'Exercício',
+  foco_dificil: 'Foco difícil',
+  dormi_mal: 'Dormi mal',
+  treino_bom: 'Treino bom',
+  dia_leve: 'Dia leve',
+};
+
+function isTagRapidaSlug(s: string): s is TagRapidaSlug {
+  return (TAGS_RAPIDAS_SLUGS as readonly string[]).includes(s);
+}
+
+// Converte slug em label de UI. Para slugs canonicos, usa o mapa
+// acentuado (TAGS_RAPIDAS_LABELS). Para slugs desconhecidos (caso
+// de teste ou tag livre futura), faz fallback mecanico
+// (underscore -> espaco, capitalizacao do primeiro caractere).
 export function formatTag(slug: string): string {
+  if (isTagRapidaSlug(slug)) return TAGS_RAPIDAS_LABELS[slug];
   const limpo = slug.replace(/_/g, ' ').trim();
   if (limpo.length === 0) return slug;
   return limpo.charAt(0).toUpperCase() + limpo.slice(1);

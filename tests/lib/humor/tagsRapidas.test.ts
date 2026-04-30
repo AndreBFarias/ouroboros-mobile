@@ -5,21 +5,27 @@ import {
 } from '@/lib/humor/tagsRapidas';
 
 describe('formatTag', () => {
-  it('converte snake_case em sentence case', () => {
+  it('converte slug canonico simples em label acentuado', () => {
     expect(formatTag('trabalho_pesado')).toBe('Trabalho pesado');
   });
 
-  it('cobre slugs de duas palavras', () => {
+  it('aplica acentuacao correta nos slugs canonicos', () => {
     expect(formatTag('boa_conversa')).toBe('Boa conversa');
-    expect(formatTag('foco_dificil')).toBe('Foco dificil');
+    expect(formatTag('foco_dificil')).toBe('Foco difícil');
     expect(formatTag('dormi_mal')).toBe('Dormi mal');
     expect(formatTag('treino_bom')).toBe('Treino bom');
     expect(formatTag('dia_leve')).toBe('Dia leve');
   });
 
-  it('mantem slug de uma palavra capitalizado', () => {
-    expect(formatTag('cansaco')).toBe('Cansaco');
-    expect(formatTag('exercicio')).toBe('Exercicio');
+  it('restaura diacriticos faltantes nos slugs canonicos', () => {
+    expect(formatTag('cansaco')).toBe('Cansaço');
+    expect(formatTag('exercicio')).toBe('Exercício');
+  });
+
+  it('faz fallback mecanico para slug desconhecido', () => {
+    // Slugs nao canonicos (ex.: tag livre futura) caem na regra
+    // mecanica de underscore -> espaco + capitalizacao.
+    expect(formatTag('alguma_outra')).toBe('Alguma outra');
   });
 
   it('preserva slug original quando vazio', () => {
