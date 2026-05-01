@@ -18,6 +18,12 @@
 //
 // Reativo: o useEffect re-dispara quando o toggle vira true em
 // runtime (settings -> ligar -> volta -> abre).
+//
+// Deep links do widget homescreen (M20): o expo-router empilha a
+// rota destino (ex: /humor-rapido?source=widget) antes do gate
+// montar; quando autenticado=true, children renderiza a rota
+// correta sem desvio extra. O gate trata o caso de forma
+// transparente -- nenhum bypass necessario.
 import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';

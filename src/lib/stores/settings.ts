@@ -51,6 +51,10 @@ export interface SettingsState {
     contadorDiasSem: boolean;
     calendarioConquistas: boolean;
     widgetHomescreen: boolean;
+    // M20: sub-toggle aninhado de privacidade do widget. Quando o
+    // usuario aceita explicitamente, o widget pode mostrar nome
+    // completo ao inves de apenas inicial. Default off.
+    widgetMostraNome: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -137,6 +141,7 @@ const DEFAULT_STATE: Omit<
     contadorDiasSem: false,
     calendarioConquistas: false,
     widgetHomescreen: false,
+    widgetMostraNome: false,
   },
   privacidade: {
     biometriaAbrir: false,

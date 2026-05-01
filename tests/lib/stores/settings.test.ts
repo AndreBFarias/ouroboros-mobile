@@ -46,6 +46,7 @@ describe('useSettings', () => {
       expect(s.featureToggles.contadorDiasSem).toBe(false);
       expect(s.featureToggles.calendarioConquistas).toBe(false);
       expect(s.featureToggles.widgetHomescreen).toBe(false);
+      expect(s.featureToggles.widgetMostraNome).toBe(false);
     });
 
     it('privacidade default tudo off', () => {
@@ -69,6 +70,13 @@ describe('useSettings', () => {
       // outros toggles seguem off
       expect(s.featureToggles.alarmePessoal).toBe(false);
       expect(s.featureToggles.todoLeve).toBe(false);
+    });
+
+    it('setFeatureToggle aceita widgetMostraNome (sub-toggle M20)', () => {
+      useSettings.getState().setFeatureToggle('widgetMostraNome', true);
+      expect(useSettings.getState().featureToggles.widgetMostraNome).toBe(true);
+      // toggle principal segue off por opt-in independente
+      expect(useSettings.getState().featureToggles.widgetHomescreen).toBe(false);
     });
 
     it('setSomVibracao trigger=true ligavel pelo usuario', () => {

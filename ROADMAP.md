@@ -54,9 +54,11 @@ fechamento de sprint.
 | `[ok]` | M14.5 | Ciclo Menstrual opt-in (calendário fases + tom sóbrio) | nova | ciclo_menstrual | 5-6h | `5a6e578` |
 | `[ok]` | M16 | Alarme Pessoal opt-in (snooze + sons CC0 + Android 12+) | nova | alarme | 5-6h | `739b993` |
 | `[ok]` | M17 | To-do leve opt-in (drag&drop + busca + lixeira soft) | nova | tarefa | 4-5h | `2c3fbf6` |
-| `[ok]` | M18 | Contador "Dias sem X" opt-in (histórico + sem celebração) | nova | contador | 4h | (a commitar) |
-| `[todo]` | M00.5.x | Fix FAB radial labels (achado colateral M00.6) | 14 | — | 2h | — |
+| `[ok]` | M18 | Contador "Dias sem X" opt-in (histórico + sem celebração) | nova | contador | 4h | `3989851` |
+| `[ok]` | M20 | Widget Homescreen Android (módulo Expo nativo + 2 layouts + bridge JS + helper TS + 10 testes) | 26 | — | 6-7h | (a commitar) |
+| `[todo]` | M00.5.x | Fix Rules of Hooks em `(tabs)/index.tsx:81` (achado colateral M00.5) | — | — | 2h | — |
 | `[todo]` | M19.x | Bundle HTML toolchain regenerar (achado colateral M00.6) | — | — | 3h | — |
+| `[todo]` | M20.x | Validação Nível B/C real do widget na home (após `npm run build:dev`) | 26 | — | 1-2h | — |
 | `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |
 | `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
 | `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | inbox_arquivo + financeiro | 4-5h | — |
@@ -73,7 +75,6 @@ fechamento de sprint.
 | `[todo]` | M17 | F-16 To-do leve opt-in (com drag&drop + busca) | nova | tarefa | 4-5h | — |
 | `[todo]` | M18 | F-17 Contador "dias sem X" opt-in (com histórico) | nova | contador | 4h | — |
 | `[todo]` | M19 | APK Release Hardening v1.0.0 (icon + splash + E2E + tag) | — | — | 6-8h | — |
-| `[todo]` | M20 | Widget Homescreen Android (Tela 26) | 26 | — | 6-7h | — |
 | `[done]` | — | **MVP v1 fechado** | — | — | — | tag `v1.0.0` |
 
 ## Backend paralelo (repo `protocolo-ouroboros`)

@@ -75,7 +75,8 @@
         {
           "faceIDPermission": "Permitir biometria para desbloquear o Ouroboros."
         }
-      ]
+      ],
+      "./modules/widget-homescreen/app.plugin.js"
     ],
     "experiments": {
       "typedRoutes": true

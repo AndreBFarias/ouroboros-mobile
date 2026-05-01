@@ -6,6 +6,19 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **M20 (a commitar) — Widget Homescreen Android.** Plugin nativo
+  Expo Module local em `modules/widget-homescreen/` com 2 layouts
+  (4x2 e 4x4), 2 receivers (`OuroborosWidgetProvider` e `Large`),
+  bridge JS via `requireOptionalNativeModule` (no-op silencioso em
+  ausência), helper TS `atualizarWidgetHomescreen` (event-driven
+  via `saveHumor` + boot hook idempotente; rate-limit 60s; fallback
+  heatmap vazio quando cache M10 ausente), sub-toggle
+  `widgetMostraNome` aninhado em Settings (privacidade reforçada
+  por default — só inicial). Paleta Dracula em colors.xml,
+  strings.xml PT-BR Sentence case com acentuação, deep links
+  `ouroboros://capturar/<atalho>?source=widget`. **889 testes
+  (+11) / 100 suites.** Bundle Hermes 8.47 MB. Ressalva Nível
+  B/C pendente (M20.x) para sessão dev-client EAS.
 - **Sessão maratona 2026-05-01 — 11 sprints fechadas em sequência.**
   Bloco 1 (infraestrutura M00.5/M00.6) + Bloco 2 (captura ativa
   M08/M13/M11/M12) + Bloco 5 (settings + opt-ins

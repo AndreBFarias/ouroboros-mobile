@@ -67,9 +67,21 @@ const limparLixeiraTarefasHook: BootHook = async () => {
   await limparLixeiraExpirada();
 };
 
+// M20 widget homescreen: ao abrir o app, refresca o widget com o
+// humor do dia mesmo se nao houve save novo. Idempotente: respeita
+// rate-limit interno (1 update por minuto). Toggle off curta cedo
+// chamando desativarWidget no provider nativo.
+const atualizarWidgetHomescreenHook: BootHook = async () => {
+  const { atualizarWidgetHomescreenBootHook } = await import(
+    '@/lib/widget/atualizarWidgetHomescreen'
+  );
+  await atualizarWidgetHomescreenBootHook();
+};
+
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
   reagendarAlarmesHook,
-  limparLixeiraTarefasHook
+  limparLixeiraTarefasHook,
+  atualizarWidgetHomescreenHook
 );

@@ -697,11 +697,20 @@ function SecaoFeatures() {
       />
       <ToggleRow
         label="Widget na tela inicial"
-        subtitulo="Ativação do widget chega na M20."
+        subtitulo="Mostra humor do dia e atalhos rápidos na home."
         valor={featureToggles.widgetHomescreen}
         onChange={(v) => setFeatureToggle('widgetHomescreen', v)}
         a11y="toggle widget homescreen"
       />
+      {featureToggles.widgetHomescreen ? (
+        <ToggleRow
+          label="Mostrar nome no widget"
+          subtitulo="Por padrão, o widget mostra apenas a inicial."
+          valor={featureToggles.widgetMostraNome}
+          onChange={(v) => setFeatureToggle('widgetMostraNome', v)}
+          a11y="toggle widget mostra nome"
+        />
+      ) : null}
     </SecaoLista>
   );
 }

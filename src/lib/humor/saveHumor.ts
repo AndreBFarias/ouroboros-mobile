@@ -12,6 +12,7 @@
 // caller logar/avisar se desejar.
 import { dailyPath, readVaultFile, writeVaultFile } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
+import { useSettings } from '@/lib/stores/settings';
 
 export interface SaveHumorResult {
   uri: string;
@@ -81,5 +82,21 @@ export async function saveHumor(
   const uri = joinUri(vaultRoot, rel);
   const body = buildBody(parsed.data);
   await writeVaultFile<HumorMeta>(uri, parsed.data, body);
+
+  // M20: widget homescreen event-driven. Refresh apos save bem
+  // sucedido. Toggle off ou erro do widget nunca propaga; import
+  // dinamico evita ciclo entre humor e widget e mantem o saveHumor
+  // resiliente em ambientes de teste sem bridge nativa.
+  try {
+    if (useSettings.getState().featureToggles.widgetHomescreen === true) {
+      const { atualizarWidgetHomescreen } = await import(
+        '@/lib/widget/atualizarWidgetHomescreen'
+      );
+      await atualizarWidgetHomescreen({ forcar: true });
+    }
+  } catch {
+    // Falha do widget nao bloqueia save do humor.
+  }
+
   return { uri, conflito };
 }
