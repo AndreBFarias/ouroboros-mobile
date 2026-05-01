@@ -41,6 +41,23 @@ export function formatDateYmdHm(date: Date): string {
   return `${y}-${m}-${d}-${hh}${mm}`;
 }
 
+// Formata um Date para YYYY-MM-DD-HHmmss no fuso de Sao Paulo.
+// Granularidade adicional para o share intent (M08): dois shares
+// dentro do mesmo minuto colidiriam se usassemos so HHmm. O
+// resolvedor de conflito ainda lida com colisao residual via
+// sufixos -1, -2, mas comecar com segundos reduz drasticamente a
+// frequencia.
+export function formatDateYmdHms(date: Date): string {
+  const local = toSaoPauloUtc(date);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(local.getUTCDate()).padStart(2, '0');
+  const hh = String(local.getUTCHours()).padStart(2, '0');
+  const mm = String(local.getUTCMinutes()).padStart(2, '0');
+  const ss = String(local.getUTCSeconds()).padStart(2, '0');
+  return `${y}-${m}-${d}-${hh}${mm}${ss}`;
+}
+
 // daily/YYYY-MM-DD.md (humor do dia).
 export function dailyPath(date: Date): string {
   return `daily/${formatDateYmd(date)}.md`;
@@ -61,14 +78,44 @@ export function assetsPath(filename: string): string {
   return `assets/${filename}`;
 }
 
+// inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
+// Helper para o share intent receiver (M08). Subtipo vem de
+// src/lib/share/categorias.ts (pix, extrato, nota); a extensao
+// inclui o ponto se nao vier vazia. Slug e opcional: quando ausente
+// o nome final fica somente com timestamp (ex: 2026-04-30-1530.pdf).
+export function inboxFinanceiroPath(
+  subtipo: 'pix' | 'extrato' | 'nota',
+  date: Date,
+  args: { ext: string; slug?: string }
+): string {
+  const ts = formatDateYmdHms(date);
+  const slug =
+    typeof args.slug === 'string' && args.slug.trim().length > 0
+      ? `-${args.slug}`
+      : '';
+  const ext = args.ext.length > 0 ? `.${args.ext}` : '';
+  return `inbox/financeiro/${subtipo}/${ts}${slug}${ext}`;
+}
+
 // Pasta-prefixos das pastas canonicas do mobile. Reader/lister deve
 // usar somente estes; nunca varrer raiz para nao tocar dados humanos.
+//
+// Pastas inbox/<area>/<subtipo> sao alimentadas pelo share intent
+// receiver (M08, Tela 17). Aqui ficam as 7 entradas adicionais alem
+// do inboxFinanceiroPix que ja existia desde a M02.
 export const VAULT_FOLDERS = {
   daily: 'daily',
   eventos: 'eventos',
   inboxMenteHumor: 'inbox/mente/humor',
   inboxMenteDiario: 'inbox/mente/diario',
   inboxFinanceiroPix: 'inbox/financeiro/pix',
+  inboxFinanceiroExtrato: 'inbox/financeiro/extrato',
+  inboxFinanceiroNota: 'inbox/financeiro/nota',
+  inboxSaudeExame: 'inbox/saude/exame',
+  inboxSaudeReceita: 'inbox/saude/receita',
+  inboxCasaGarantia: 'inbox/casa/garantia',
+  inboxCasaContrato: 'inbox/casa/contrato',
+  inboxOutros: 'inbox/outros',
   treinos: 'treinos',
   medidas: 'medidas',
   marcos: 'marcos',

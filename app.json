@@ -23,7 +23,17 @@
         "backgroundColor": "#282a36"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "SEND",
+          "category": ["DEFAULT"],
+          "data": [
+            { "mimeType": "image/*" },
+            { "mimeType": "application/pdf" }
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

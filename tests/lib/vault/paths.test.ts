@@ -1,10 +1,12 @@
 import {
   formatDateYmd,
   formatDateYmdHm,
+  formatDateYmdHms,
   dailyPath,
   eventosPath,
   diarioEmocionalPath,
   assetsPath,
+  inboxFinanceiroPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from '@/lib/vault/paths';
@@ -34,6 +36,43 @@ describe('formatDateYmdHm', () => {
     // 2026-04-29 17:30 UTC = 2026-04-29 14:30 em UTC-3
     const d = new Date('2026-04-29T17:30:00.000Z');
     expect(formatDateYmdHm(d)).toBe('2026-04-29-1430');
+  });
+});
+
+describe('formatDateYmdHms', () => {
+  it('formata YYYY-MM-DD-HHmmss em UTC-3', () => {
+    // 2026-04-30 12:30:45 UTC = 09:30:45 em UTC-3
+    const d = new Date('2026-04-30T12:30:45.000Z');
+    expect(formatDateYmdHms(d)).toBe('2026-04-30-093045');
+  });
+
+  it('preserva ordem lexicografica entre segundos', () => {
+    const a = formatDateYmdHms(new Date('2026-04-30T12:30:00.000Z'));
+    const b = formatDateYmdHms(new Date('2026-04-30T12:30:45.000Z'));
+    expect(a < b).toBe(true);
+  });
+});
+
+describe('inboxFinanceiroPath', () => {
+  it('gera inbox/financeiro/<sub>/<ts>.<ext>', () => {
+    const d = new Date('2026-04-30T12:30:45.000Z');
+    expect(inboxFinanceiroPath('pix', d, { ext: 'pdf' })).toBe(
+      'inbox/financeiro/pix/2026-04-30-093045.pdf'
+    );
+  });
+
+  it('inclui slug quando passado', () => {
+    const d = new Date('2026-04-30T12:30:45.000Z');
+    expect(
+      inboxFinanceiroPath('extrato', d, { ext: 'pdf', slug: 'banco' })
+    ).toBe('inbox/financeiro/extrato/2026-04-30-093045-banco.pdf');
+  });
+
+  it('aceita ext vazia (sem ponto)', () => {
+    const d = new Date('2026-04-30T12:30:45.000Z');
+    expect(inboxFinanceiroPath('nota', d, { ext: '' })).toBe(
+      'inbox/financeiro/nota/2026-04-30-093045'
+    );
   });
 });
 
@@ -85,5 +124,17 @@ describe('VAULT_FOLDERS', () => {
     expect(VAULT_FOLDERS.eventos).toBe('eventos');
     expect(VAULT_FOLDERS.inboxMenteDiario).toBe('inbox/mente/diario');
     expect(VAULT_FOLDERS.assets).toBe('assets');
+  });
+
+  it('expoe as 7 entradas inbox adicionadas pela M08', () => {
+    expect(VAULT_FOLDERS.inboxFinanceiroExtrato).toBe(
+      'inbox/financeiro/extrato'
+    );
+    expect(VAULT_FOLDERS.inboxFinanceiroNota).toBe('inbox/financeiro/nota');
+    expect(VAULT_FOLDERS.inboxSaudeExame).toBe('inbox/saude/exame');
+    expect(VAULT_FOLDERS.inboxSaudeReceita).toBe('inbox/saude/receita');
+    expect(VAULT_FOLDERS.inboxCasaGarantia).toBe('inbox/casa/garantia');
+    expect(VAULT_FOLDERS.inboxCasaContrato).toBe('inbox/casa/contrato');
+    expect(VAULT_FOLDERS.inboxOutros).toBe('inbox/outros');
   });
 });

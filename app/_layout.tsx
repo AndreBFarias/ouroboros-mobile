@@ -81,7 +81,19 @@ export default function RootLayout() {
               animation: 'slide_from_right',
               contentStyle: { backgroundColor: '#282a36' },
             }}
-          />
+          >
+            {/* Rota modal raiz para o share intent receiver (M08). A
+                activity de share abre direto aqui sem expor a Stack
+                principal; cancelar/salvar usam router.dismissAll()
+                para devolver foco ao app de origem. */}
+            <Stack.Screen
+              name="share-receive"
+              options={{
+                presentation: 'modal',
+                headerShown: false,
+              }}
+            />
+          </Stack>
         </ToastProvider>
       </BiometriaGate>
     </GestureHandlerRootView>

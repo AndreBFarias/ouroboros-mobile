@@ -23,3 +23,9 @@ export {
   type DiarioEmocionalModo,
   type ContextoSocial,
 } from './diario_emocional';
+export {
+  InboxArquivoSchema,
+  InboxArquivoSubtipoSchema,
+  type InboxArquivoMeta,
+  type InboxArquivoSubtipo,
+} from './inbox_arquivo';

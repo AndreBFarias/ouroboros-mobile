@@ -6,7 +6,11 @@
 // nao crasham. Mock de Linking.addEventListener devolve subscription
 // com remove identificavel.
 
-import { extractShareUri, handleSharedUrl } from '@/lib/boot/deepLink';
+import {
+  extractShareUri,
+  handleSharedUrl,
+  parseSharedUrl,
+} from '@/lib/boot/deepLink';
 
 jest.mock('expo-linking', () => {
   const actual = {
@@ -90,5 +94,58 @@ describe('handleSharedUrl', () => {
       throw new Error('rota nao existe');
     });
     expect(() => handleSharedUrl('ouroboros://share?uri=content://x')).not.toThrow();
+  });
+
+  it('encaminha mime + origem + nome quando presentes (M08)', () => {
+    const { router } = require('expo-router');
+    handleSharedUrl(
+      'ouroboros://share?uri=content://x/y&mime=application/pdf&nome=comprovante.pdf&origem=com.nu.production'
+    );
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/share-receive',
+      params: {
+        uri: 'content://x/y',
+        mime: 'application/pdf',
+        nome: 'comprovante.pdf',
+        origem: 'com.nu.production',
+      },
+    });
+  });
+
+  it('omite chaves opcionais quando ausentes', () => {
+    const { router } = require('expo-router');
+    handleSharedUrl('ouroboros://share?uri=content://x/y');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/share-receive',
+      params: { uri: 'content://x/y' },
+    });
+  });
+});
+
+describe('parseSharedUrl', () => {
+  it('devolve null sem uri', () => {
+    expect(parseSharedUrl('ouroboros://share')).toBeNull();
+  });
+
+  it('extrai todos os params quando presentes', () => {
+    const r = parseSharedUrl(
+      'ouroboros://share?uri=content://x&mime=image/png&nome=foto.png&origem=com.app'
+    );
+    expect(r).toEqual({
+      uri: 'content://x',
+      mime: 'image/png',
+      nome: 'foto.png',
+      origem: 'com.app',
+    });
+  });
+
+  it('campos opcionais ausentes viram null', () => {
+    const r = parseSharedUrl('ouroboros://share?uri=content://x');
+    expect(r).toEqual({
+      uri: 'content://x',
+      mime: null,
+      nome: null,
+      origem: null,
+    });
   });
 });

@@ -2,10 +2,12 @@
 export {
   formatDateYmd,
   formatDateYmdHm,
+  formatDateYmdHms,
   dailyPath,
   eventosPath,
   diarioEmocionalPath,
   assetsPath,
+  inboxFinanceiroPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
