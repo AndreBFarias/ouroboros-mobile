@@ -1,12 +1,12 @@
 // Limpa cache local: deleta exports antigos do exportarVault e
-// arquivos temporarios em <cacheDir>. Spec M15 secao 5.6: botao
-// "Limpar cache local" mostra toast "Cache limpo." apos sucesso.
+// arquivos temporarios em <cacheDir>. Spec M15 seção 5.6: botao
+// "Limpar cache local" mostra toast "Cache limpo." após sucesso.
 //
 // Estrategia conservadora:
-//   - So apaga `ouroboros-export-*.zip` em cacheDirectory (nao toca
+//   - So apaga `ouroboros-export-*.zip` em cacheDirectory (não toca
 //     em arquivos de outras libs no mesmo cache).
 //   - Idempotente: ausencia de arquivos retorna 0 sem erro.
-//   - Web: no-op (cacheDirectory nao se aplica).
+//   - Web: no-op (cacheDirectory não se aplica).
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -36,7 +36,7 @@ export async function limparCache(): Promise<LimparCacheResultado> {
         });
         arquivosRemovidos += 1;
       } catch {
-        // Falha individual nao aborta a limpeza.
+        // Falha individual não aborta a limpeza.
       }
     }
   } catch {

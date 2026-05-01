@@ -1,5 +1,5 @@
 // Tela 20 - Eventos com lugar. Bottom sheet 80% que abre ao montar.
-// Captura: textarea "O que aconteceu?" (obrigatorio), bloco "Onde"
+// Captura: textarea "O que aconteceu?" (obrigatório), bloco "Onde"
 // (input livre + botao "Usar localizacao atual" via expo-location +
 // chip cyan do bairro detectado), bloco "Quando" (chip "Agora"
 // default + chip "Outro horario" abrindo time picker), ChipGroup
@@ -12,16 +12,16 @@
 // em modo negativo. Persiste em eventos/YYYY-MM-DD-<slug>.md via
 // saveEvento.
 //
-// Decisoes M07 (spec secao 9):
+// Decisões M07 (spec seção 9):
 //  - Auto-selecao pessoa_b uniforme (casal ou amigos -> pre-marca
 //    o chip pessoa_b).
-//  - Categoria 'exercicio' incluida na lista (registro casual; M13
+//  - Categoria 'exercício' incluida na lista (registro casual; M13
 //    cobre dados estruturados de treino).
 //  - Time picker nativo Android com fallback Web do proprio
 //    componente.
 //  - Cap arbitrario de 6 fotos.
 //
-// Modo negativo nao dispara haptic no save (mesmo principio da M06).
+// Modo negativo não dispara haptic no save (mesmo principio da M06).
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
@@ -63,7 +63,7 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 const INTENSIDADE_DEFAULT = 4;
 const CATEGORIA_DEFAULT: EventoCategoria = 'rolezinho';
 
-// Formata data ISO 8601 com offset -03:00 (Sao Paulo, sem DST). O
+// Formata data ISO 8601 com offset -03:00 (São Paulo, sem DST). O
 // caller fornece o Date base (agora ou dataCustom).
 function toIsoSaoPaulo(date: Date): string {
   const TZ_OFFSET_MIN = -180;
@@ -96,7 +96,7 @@ export default function Eventos() {
   const [quando, setQuando] = useState<QuandoMode>('agora');
   const [dataCustom, setDataCustom] = useState<Date | null>(null);
   // Auto-selecao de pessoa_b quando tipoCompanhia indica duo. Casal
-  // ou amigos: comeca com pessoa_b ja marcado para reduzir tap-cost.
+  // ou amigos: comeca com pessoa_b já marcado para reduzir tap-cost.
   // Sozinho: sem pre-selecao.
   const [com, setCom] = useState<PessoaAutor[]>(() =>
     tipoCompanhia === 'sozinho' ? [] : ['pessoa_b']
@@ -108,7 +108,7 @@ export default function Eventos() {
   const [intensidade, setIntensidade] = useState<number>(INTENSIDADE_DEFAULT);
   const [salvando, setSalvando] = useState<boolean>(false);
 
-  // Abre o sheet apos a montagem (idempotente em re-mount via
+  // Abre o sheet após a montagem (idempotente em re-mount via
   // navegacao por aba/deeplink futuro).
   useEffect(() => {
     sheetRef.current?.expand();
@@ -198,7 +198,7 @@ export default function Eventos() {
 
     try {
       // O body do .md contem o texto livre. saveEvento usa esse
-      // texto tambem para derivar o slug do nome de arquivo
+      // texto também para derivar o slug do nome de arquivo
       // quando bairro estiver vazio.
       await saveEvento({
         meta: validacao.data,

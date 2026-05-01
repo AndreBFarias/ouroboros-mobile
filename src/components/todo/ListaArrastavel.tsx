@@ -1,5 +1,5 @@
 // Wrapper sobre react-native-draggable-flatlist para a lista de
-// pendentes (M17). Long-press inicia drag (haptic medium ja disparado
+// pendentes (M17). Long-press inicia drag (haptic medium já disparado
 // por ItemTarefa quando consumidor sobrescreve onLongPress); soltar
 // reordena. Persistencia da ordem custom fica por conta do caller
 // (recebe nova lista em onReorder e grava em SecureStore).
@@ -18,7 +18,7 @@ import type { TarefaListada } from '@/lib/vault/tarefas';
 
 export interface ListaArrastavelProps {
   data: TarefaListada[];
-  // Disparado apos o usuario soltar o drag em uma nova posicao. Caller
+  // Disparado após o usuario soltar o drag em uma nova posicao. Caller
   // persiste a ordem em SecureStore.
   onReorder: (nova: TarefaListada[]) => void;
   // Render do item: caller fornece um Pressable com onLongPress que

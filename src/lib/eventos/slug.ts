@@ -6,11 +6,11 @@
 // Estrategia de derivacao (em ordem):
 //  1. Se bairro foi detectado/preenchido, usa o bairro.
 //  2. Senao, usa as 3 primeiras palavras do texto.
-//  3. Senao, usa o slug da categoria (ja em snake_case).
+//  3. Senao, usa o slug da categoria (já em snake_case).
 //  4. Fallback final: 'evento'.
 //
-// Acentos sao removidos via NFD/diacriticos para preservar o slug
-// puramente ASCII. Espacos e nao-alfanumericos viram '-', multiplos
+// Acentos são removidos via NFD/diacriticos para preservar o slug
+// puramente ASCII. Espacos e não-alfanumericos viram '-', múltiplos
 // '-' colapsam em um.
 
 const MAX_LEN = 24;
@@ -23,7 +23,7 @@ function stripAccents(input: string): string {
 // Converte string livre em kebab-case ASCII com cap de comprimento.
 function toKebab(input: string, maxLen: number = MAX_LEN): string {
   const ascii = stripAccents(input).toLowerCase();
-  // Substitui qualquer caractere que nao seja [a-z 0-9] por hifen.
+  // Substitui qualquer caractere que não seja [a-z 0-9] por hifen.
   const compacted = ascii
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
@@ -43,7 +43,7 @@ export interface SlugifyEventoArgs {
 }
 
 // Deriva o slug final do nome de arquivo do evento. A prioridade
-// segue a ordem documentada acima. Sempre retorna string nao-vazia
+// segue a ordem documentada acima. Sempre retorna string não-vazia
 // (fallback 'evento').
 export function slugifyEvento(args: SlugifyEventoArgs): string {
   const { texto, bairro, categoria } = args;

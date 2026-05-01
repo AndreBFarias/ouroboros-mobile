@@ -9,9 +9,9 @@
 // onLongPress (haptic medium fica por conta do caller). Pressao
 // rapida com scale 0.97 + spring snappy (mesmo padrao de Button).
 //
-// Decisao M17 secao 11: tap simples = marcar feito. Sem modal de
+// Decisão M17 seção 11: tap simples = marcar feito. Sem modal de
 // confirmacao. Long-press abre menu Editar/Excluir (gerenciado pela
-// tela mae, nao por este componente).
+// tela mae, não por este componente).
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useState } from 'react';
@@ -91,7 +91,7 @@ export function ItemTarefa({
         }}
       >
         {/* Checkbox visual. Sem onPress proprio: o tap no item inteiro
-            ja alterna o estado (decisao M17). */}
+            já alterna o estado (decisão M17). */}
         <View
           style={{
             width: CHECKBOX,

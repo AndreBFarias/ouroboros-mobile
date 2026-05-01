@@ -1,5 +1,5 @@
 // Lista canonica de grupos musculares oferecidos como ChipGroup na
-// Tela 02 (cadastro). O schema do exercicio aceita qualquer string em
+// Tela 02 (cadastro). O schema do exercício aceita qualquer string em
 // grupo_muscular[]; esta lista e apenas atalho de UI para reduzir
 // digitacao. Slugs ASCII em snake_case para alinhar com convencao
 // dos demais slugs do projeto.

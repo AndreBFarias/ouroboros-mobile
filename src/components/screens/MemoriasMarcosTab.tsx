@@ -2,7 +2,7 @@
 // esquerda, dot 12dp green em cada item, card a direita com data
 // muted + descricao fg + tags (chips minimos). Mais recente primeiro.
 //
-// Sem hierarquia visual de niveis ou ranking (ADR-0005). Marcos auto-
+// Sem hierarquia visual de níveis ou ranking (ADR-0005). Marcos auto-
 // gerados marcam um indicador discreto "auto" muted.
 //
 // FAB + cria marco manual.

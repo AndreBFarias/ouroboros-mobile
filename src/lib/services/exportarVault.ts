@@ -2,7 +2,7 @@
 // gerar 1 ZIP com tudo, salvar em cacheDirectory, retornar URI para
 // Sharing.shareAsync. UI mostra toast "Exportando..." enquanto roda.
 //
-// Decisao M15 (spec secao 11): UI sem barra de progresso. Sucesso
+// Decisão M15 (spec seção 11): UI sem barra de progresso. Sucesso
 // abre share sheet; falha mostra toast vermelho.
 //
 // Estrategia:
@@ -52,7 +52,7 @@ function isBinario(nome: string): boolean {
 }
 
 // Lista recursivamente arquivos abaixo de `pasta`. Retorna paths
-// relativos ao `vaultRoot`. Se a pasta nao existe, devolve [].
+// relativos ao `vaultRoot`. Se a pasta não existe, devolve [].
 async function listarRecursivo(
   vaultRoot: string,
   rel: string

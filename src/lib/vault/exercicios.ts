@@ -1,12 +1,12 @@
-// Helpers de leitura, listagem, escrita e exclusao de exercicios no
-// Vault (M13). Cada exercicio vive em exercicios/<slug>.md com
+// Helpers de leitura, listagem, escrita e exclusao de exercícios no
+// Vault (M13). Cada exercício vive em exercicios/<slug>.md com
 // frontmatter validado pelo ExercicioSchema; o GIF associado fica em
 // assets/exercicios/<slug>.gif (path relativo).
 //
 // Exclusao usa lixeira soft: move o .md para
 // cacheDirectory/lixeira/exercicios/<timestamp>-<slug>.md. O GIF
-// permanece em assets/ porque outro exercicio pode referencia-lo.
-// Limpeza automatica acontece via boot hook (M00.5; cap de 30 dias).
+// permanece em assets/ porque outro exercício pode referência-lo.
+// Limpeza automática acontece via boot hook (M00.5; cap de 30 dias).
 //
 // listarExercicios aplica filtros sequencialmente (grupo -> pessoa ->
 // search) e devolve a lista ordenada por nome em ordem alfabetica.
@@ -14,7 +14,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-// Imports apontam diretamente para os modulos finais (nao para o
+// Imports apontam diretamente para os modulos finais (não para o
 // barrel @/lib/vault) para evitar ciclo de carregamento. O barrel
 // re-exporta este arquivo, e tests que fazem
 // jest.mock('@/lib/vault') com requireActual perderiam o helper sem
@@ -45,7 +45,7 @@ function norm(s: string): string {
     .toLowerCase();
 }
 
-// Le e parseia um exercicio pelo slug. Retorna null se ausente.
+// Le e parseia um exercício pelo slug. Retorna null se ausente.
 export async function lerExercicio(
   vaultRoot: string,
   slug: string
@@ -56,7 +56,7 @@ export async function lerExercicio(
   return result.meta;
 }
 
-// Lista todos os exercicios do Vault aplicando filtros opcionais.
+// Lista todos os exercícios do Vault aplicando filtros opcionais.
 // Pasta inexistente => [] silenciosamente.
 export async function listarExercicios(
   vaultRoot: string,
@@ -72,7 +72,7 @@ export async function listarExercicios(
       if (result) lidos.push(result.meta);
     } catch {
       // Arquivo .md presente mas com schema invalido. Ignora
-      // silenciosamente: a galeria nao pode quebrar por causa de
+      // silenciosamente: a galeria não pode quebrar por causa de
       // um arquivo manualmente editado.
     }
   }
@@ -95,7 +95,7 @@ export async function listarExercicios(
   return filtrados;
 }
 
-// Cria ou atualiza um exercicio. O caller fornece meta validado e
+// Cria ou atualiza um exercício. O caller fornece meta validado e
 // body livre. Path canonico vem do slug do meta.
 export async function escreverExercicio(
   vaultRoot: string,
@@ -112,9 +112,9 @@ export async function escreverExercicio(
   return { uri };
 }
 
-// Move um exercicio para a lixeira soft. Retorna o path final na
+// Move um exercício para a lixeira soft. Retorna o path final na
 // lixeira. GIF associado permanece em assets/ (pode ser referenciado
-// por outro exercicio futuro).
+// por outro exercício futuro).
 export async function excluirExercicio(
   vaultRoot: string,
   slug: string
@@ -122,21 +122,21 @@ export async function excluirExercicio(
   const origemUri = joinUri(vaultRoot, exerciciosPath(slug));
 
   // cacheDirectory pode ser null em ambientes web. Usamos prefixo
-  // mock para nao quebrar testes; o caller real (Tela 08 botao
+  // mock para não quebrar testes; o caller real (Tela 08 botao
   // Excluir) depende de ambiente nativo.
   const cacheBase = FileSystem.cacheDirectory ?? 'cache://';
   const lixeiraDir = `${cacheBase}lixeira/exercicios/`;
   try {
     await FileSystem.makeDirectoryAsync(lixeiraDir, { intermediates: true });
   } catch {
-    // Ja existe, ok.
+    // Já existe, ok.
   }
 
   const ts = formatTimestampLixeira(new Date());
   const lixeiraPath = `${lixeiraDir}${ts}-${slug}.md`;
 
   // Le o conteudo original via SAF e regrava em cache (filesystem
-  // local). Em seguida apaga o original. Nao usamos copyAsync direto
+  // local). Em seguida apaga o original. Não usamos copyAsync direto
   // porque SAF -> cacheDirectory pode falhar com URIs content://.
   let raw: string;
   try {
@@ -151,7 +151,7 @@ export async function excluirExercicio(
 }
 
 // Formata timestamp para nome de arquivo na lixeira: YYYYMMDD-HHmmss.
-// Sem separadores extras para nao colidir com o slug que ja contem
+// Sem separadores extras para não colidir com o slug que já contem
 // hifens.
 function formatTimestampLixeira(date: Date): string {
   const TZ_OFFSET_MIN = -180;

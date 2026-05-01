@@ -1,7 +1,7 @@
 // Wrapper sobre <ChipGroup mode="multi"> com a lista canonica de
 // sintomas do ciclo (8 itens; M14.5 spec). Tom sobrio: sem accent
 // negativo. Cada chip usa accent purple (cor primaria neutra) para
-// nao patologizar. Caller passa value/onChange e o estado vivo no
+// não patologizar. Caller passa value/onChange e o estado vivo no
 // form do registro.
 import { ChipGroup } from '@/components/ui';
 import {

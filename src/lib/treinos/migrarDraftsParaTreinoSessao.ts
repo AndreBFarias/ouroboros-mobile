@@ -2,15 +2,15 @@
 // (treinos/draft/<YYYY-MM-DD>-<slug>.md com tipo: treino_draft) para
 // sessoes formais TreinoSessaoSchema (treinos/<YYYY-MM-DD>-<slug>.md).
 //
-// Como cada draft contem apenas slugs de exercicio (sem series/reps/
+// Como cada draft contem apenas slugs de exercício (sem séries/reps/
 // carga), a migracao gera uma sessao "espelho" com:
 //  - rotina: "Treino livre"
 //  - duracao_min: 30 (estimativa neutra)
-//  - exercicios: cada slug do draft vira item com series=3, reps=10,
+//  - exercícios: cada slug do draft vira item com séries=3, reps=10,
 //    sem carga (caller pode editar depois pela Tela 10).
 //
 // Idempotente: usa marker .ouroboros/cache/migracao-drafts-m11.flag
-// para nao processar duas vezes. Falha silenciosa em ambiente sem
+// para não processar duas vezes. Falha silenciosa em ambiente sem
 // FileSystem (web mock).
 //
 // Plugado em BOOT_HOOKS pela M11 (uma vez na vida do app, depois
@@ -62,7 +62,7 @@ export async function migrarDraftsParaTreinoSessao(
   vaultRootArg?: string
 ): Promise<MigracaoDraftsResult> {
   // Caller pode passar root explicito (em testes); senao pega do
-  // store. Sem root nao ha o que migrar (Vault nao concedido).
+  // store. Sem root não ha o que migrar (Vault não concedido).
   const vaultRoot =
     typeof vaultRootArg === 'string' && vaultRootArg.length > 0
       ? vaultRootArg
@@ -125,7 +125,7 @@ export async function migrarDraftsParaTreinoSessao(
         parsed.data,
         'Sessao migrada automaticamente do draft criado em "Adicionar a treino livre".\n'
       );
-      // Tenta apagar o draft. Falha aqui nao reverte a migracao - o
+      // Tenta apagar o draft. Falha aqui não reverte a migracao - o
       // draft fica como artefato e o usuario pode limpar manualmente.
       try {
         await StorageAccessFramework.deleteAsync(draftUri);

@@ -1,13 +1,13 @@
 // Tela de listagem de Contadores (M18). Render:
 //   - Header "Contadores".
 //   - Empty state "Comece quando quiser." quando lista vazia.
-//   - Cards grandes (1 por linha, gap base) com numero gigante cyan,
+//   - Cards grandes (1 por linha, gap base) com número gigante cyan,
 //     titulo orange, recorde muted e botao Resetei red text.
 //   - FAB '+' canto inferior direito abre /contadores/novo.
 //   - Modal de confirmacao destrutivo no reset; pos-confirmacao
 //     atualiza a lista local e mostra toast "Reset registrado.".
 //
-// Toggle contadorDiasSem (ja em useSettings, M00.5) controla a
+// Toggle contadorDiasSem (já em useSettings, M00.5) controla a
 // presenca da aba na bottom bar via _layout dos tabs. Esta tela e
 // renderizada apenas quando o toggle esta on (deep link continua
 // caindo aqui, mas e fluxo opt-in consciente).

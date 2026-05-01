@@ -77,7 +77,7 @@ export async function excluirMarco(
   try {
     await FileSystem.makeDirectoryAsync(lixeiraDir, { intermediates: true });
   } catch {
-    // Ja existe.
+    // Já existe.
   }
 
   const ts = formatTimestampLixeira(new Date());

@@ -63,8 +63,8 @@ import { BarraBusca, normalizarBusca } from '@/components/todo/BarraBusca';
 import { ListaArrastavel } from '@/components/todo/ListaArrastavel';
 
 // Chave SecureStore para ordem custom dos pendentes (array de paths
-// relativos). Tarefas novas ou nao listadas caem para o topo
-// (mantendo ordem natural por data desc apos as conhecidas).
+// relativos). Tarefas novas ou não listadas caem para o topo
+// (mantendo ordem natural por data desc após as conhecidas).
 const KEY_ORDEM = 'ouroboros.todo.ordem.v1';
 
 async function lerOrdemSalva(): Promise<string[]> {
@@ -104,7 +104,7 @@ async function gravarOrdemSalva(rels: string[]): Promise<void> {
 }
 
 // Aplica ordem custom no array de pendentes. Tarefas em `salva` vem
-// primeiro na ordem que aparecem ali; tarefas nao listadas mantem
+// primeiro na ordem que aparecem ali; tarefas não listadas mantem
 // ordem natural depois.
 function aplicarOrdem(
   pendentes: TarefaListada[],

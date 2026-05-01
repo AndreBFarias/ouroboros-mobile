@@ -1,9 +1,9 @@
-// Card 1:1 da galeria de exercicios (Tela 07). Quadrado com GIF
+// Card 1:1 da galeria de exercícios (Tela 07). Quadrado com GIF
 // preview no topo (estatico em web; anima no nativo via expo-image
 // se estiver instalado, fallback para Image). Nome em laranja
 // abaixo da preview, em sentence case com acentuacao PT-BR completa.
 //
-// Quando o exercicio nao tem GIF, mostra placeholder Dumbbell
+// Quando o exercício não tem GIF, mostra placeholder Dumbbell
 // muted-decor 48dp + label "Sem mídia" em muted micro.
 //
 // Long-press abre menu rapido (Editar / Excluir). Tap navega para
@@ -22,8 +22,8 @@ import type { Exercicio } from '@/lib/schemas/exercicio';
 interface CardGaleriaProps {
   exercicio: Exercicio;
   // URI absoluto do GIF resolvido para SAF (vaultRoot + exercicio.gif)
-  // ou null quando nao ha GIF cadastrado. Caller resolve pra simplificar
-  // o componente (nao precisa conhecer vaultRoot).
+  // ou null quando não ha GIF cadastrado. Caller resolve pra simplificar
+  // o componente (não precisa conhecer vaultRoot).
   gifUri: string | null;
   onPress: () => void;
   onLongPress?: () => void;

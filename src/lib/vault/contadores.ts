@@ -5,13 +5,13 @@
 // novo cria arquivo novo.
 //
 // registrarReset coordena: ler contador atual -> calcular dias atuais
-// via diasEntre(inicio, agora) -> comparar com recorde -> atualizar
+// via diasEntre(início, agora) -> comparar com recorde -> atualizar
 // recorde se atual > recorde -> adicionar timestamp ao array resets
-// -> atualizar inicio = today() -> reescrever .md.
+// -> atualizar início = today() -> reescrever .md.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-// Imports apontam para modulos finais (nao para o barrel @/lib/vault)
+// Imports apontam para modulos finais (não para o barrel @/lib/vault)
 // para evitar ciclo de carregamento.
 import { contadoresPath, VAULT_FOLDERS, formatDateYmd } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
@@ -25,7 +25,7 @@ function joinUri(root: string, rel: string): string {
 }
 
 // Lista todos os contadores do Vault. Pasta inexistente => []. Retorna
-// asc por titulo (localeCompare PT-BR) para a tela de listagem nao
+// asc por titulo (localeCompare PT-BR) para a tela de listagem não
 // mostrar ordem aleatoria de filesystem.
 export async function listarContadores(
   vaultRoot: string
@@ -49,7 +49,7 @@ export async function listarContadores(
   return lidos;
 }
 
-// Le um contador especifico por slug. Retorna null se nao existir.
+// Le um contador específico por slug. Retorna null se não existir.
 export async function lerContador(
   vaultRoot: string,
   slug: string
@@ -60,9 +60,9 @@ export async function lerContador(
   return result ? result.meta : null;
 }
 
-// Persiste um contador. Caller fornece meta ja validado (revalidamos
+// Persiste um contador. Caller fornece meta já validado (revalidamos
 // defensivamente). Body opcional para anotacao livre (motivo opcional
-// em prosa, conforme spec secao 3).
+// em prosa, conforme spec seção 3).
 export async function escreverContador(
   vaultRoot: string,
   meta: Contador,
@@ -78,7 +78,7 @@ export async function escreverContador(
   return { uri, rel };
 }
 
-// Apaga arquivo de contador. Idempotente: nao falha se nao existe.
+// Apaga arquivo de contador. Idempotente: não falha se não existe.
 // SAF.deleteAsync no nativo; em Web cai em no-op silencioso.
 export async function excluirContador(
   vaultRoot: string,
@@ -95,10 +95,10 @@ export async function excluirContador(
 
 // Registra um reset no contador. Coordenacao:
 //  1. Le contador atual.
-//  2. Calcula dias atuais = diasEntre(inicio, agora).
-//  3. Compara com recorde; recorde nao diminui (Math.max).
+//  2. Calcula dias atuais = diasEntre(início, agora).
+//  3. Compara com recorde; recorde não diminui (Math.max).
 //  4. Adiciona timestamp ao array resets.
-//  5. Atualiza inicio = data de hoje (YYYY-MM-DD em UTC-3).
+//  5. Atualiza início = data de hoje (YYYY-MM-DD em UTC-3).
 //  6. Reescreve o .md preservando body.
 //
 // Retorna o contador atualizado para o caller refletir na UI.

@@ -1,13 +1,13 @@
 // Persiste um registro de diario emocional (Tela 18) em
-// inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md no Vault. Funcao pura:
+// inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md no Vault. Função pura:
 // recebe meta validado, body livre e vaultRoot; devolve URI final.
 //
 // Slug do nome de arquivo: deriva da primeira emocao da lista (ou
 // 'registro' se vazia). Em colisao improvavel (mesmo arquivo no
 // mesmo minuto e mesmo slug), aplica sufixo numerico crescente.
 //
-// Diferenca para saveHumor: aqui nao ha A5 de Syncthing porque o
-// path ja contem hora e minuto, dificultando colisao real entre
+// Diferenca para saveHumor: aqui não ha A5 de Syncthing porque o
+// path já contem hora e minuto, dificultando colisao real entre
 // dois celulares. Mantemos a logica de sufixo defensiva mesmo
 // assim.
 import {
@@ -31,7 +31,7 @@ function joinUri(root: string, rel: string): string {
 }
 
 // Monta o slug do nome de arquivo a partir da primeira emocao do
-// meta. Slugs sao snake_case ASCII; o path canonico aceita
+// meta. Slugs são snake_case ASCII; o path canonico aceita
 // kebab-case mas o frontmatter usa snake. Mantemos snake aqui para
 // alinhar com os slugs e simplificar buscas futuras.
 function slugDe(meta: DiarioEmocionalMeta): string {
@@ -49,9 +49,9 @@ function applyConflictSuffix(rel: string, n: number): string {
   return `${rel.slice(0, dotIdx)}-${n}${rel.slice(dotIdx)}`;
 }
 
-// Tenta gravar no path canonico. Se ja existir um arquivo no mesmo
-// URI, incrementa sufixo ate encontrar slot livre. Limite defensivo
-// de 9 tentativas (mesmo minuto, mesmo slug, mesmo autor) para nao
+// Tenta gravar no path canonico. Se já existir um arquivo no mesmo
+// URI, incrementa sufixo até encontrar slot livre. Limite defensivo
+// de 9 tentativas (mesmo minuto, mesmo slug, mesmo autor) para não
 // entrar em loop infinito caso o reader minta sobre existencia.
 async function resolvePath(
   vaultRoot: string,
@@ -86,7 +86,7 @@ export async function saveDiario(
   }
 
   const slug = slugDe(parsed.data);
-  // O path canonico usa a hora local de Sao Paulo formatada por
+  // O path canonico usa a hora local de São Paulo formatada por
   // diarioEmocionalPath. Passamos `new Date()` para refletir o
   // momento real do save; meta.data fica em ISO 8601 dentro do
   // frontmatter para preservar fuso explicito.

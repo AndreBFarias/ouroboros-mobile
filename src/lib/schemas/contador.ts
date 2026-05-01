@@ -1,18 +1,18 @@
 // Schema do arquivo contadores/<slug>.md (contador "dias sem X" opt-in,
-// M18). Modelado em docs/sprints/M18-spec.md secao 3.
+// M18). Modelado em docs/sprints/M18-spec.md seção 3.
 //
-// Cada contador e uma sequencia pessoal de dias desde a ultima
+// Cada contador e uma sequência pessoal de dias desde a ultima
 // ocorrencia de algo que o usuario quer evitar. ADR-0005 proibe
-// celebracao visual: nao ha campo de "milestone", nao ha "achievement",
-// nao ha cor de destaque para sequencias longas.
+// celebracao visual: não ha campo de "milestone", não ha "achievement",
+// não ha cor de destaque para sequências longas.
 //
 //  - tipo: literal 'contador' (discriminator do frontmatter).
-//  - slug: identificador estavel kebab-case ASCII; tambem e o nome do
+//  - slug: identificador estavel kebab-case ASCII; também e o nome do
 //    arquivo. Validamos formato para evitar colisao no filesystem.
 //  - titulo: string visivel (acentuacao completa PT-BR permitida).
-//  - inicio: YYYY-MM-DD da data atual de inicio. Atualiza em cada
-//    reset; o calculo de "dias atuais" e diasEntre(inicio, hoje).
-//  - recorde: int >=0, melhor sequencia ja alcancada em dias. Nunca
+//  - início: YYYY-MM-DD da data atual de início. Atualiza em cada
+//    reset; o calculo de "dias atuais" e diasEntre(início, hoje).
+//  - recorde: int >=0, melhor sequência já alcancada em dias. Nunca
 //    diminui (logica em registrarReset). Default 0 em criacao.
 //  - resets: array de ISO datetimes; cada entrada e um momento de
 //    reset registrado. Default [] (contador novo nunca foi resetado).
@@ -56,7 +56,7 @@ export const ContadorSchema = z.object({
   inicio: DataYmd,
   // Recorde em dias; >=0. Default 0 em contador novo.
   recorde: z.number().int().min(0).default(0),
-  // Historico de resets. Cada entrada e um ISO datetime do momento de
+  // Histórico de resets. Cada entrada e um ISO datetime do momento de
   // reset; o array cresce ao longo do tempo. Default [] em novo.
   resets: z.array(IsoDatetime).default([]),
   criado_em: IsoDatetime,
@@ -78,7 +78,7 @@ export function slugifyTitulo(titulo: string): string {
     .replace(/-+/g, '-')
     .slice(0, 64);
   // Evita slug vazio (titulo so com simbolos): retorna 'contador' como
-  // fallback. Caller deve adicionar sufixo random para nao colidir.
+  // fallback. Caller deve adicionar sufixo random para não colidir.
   return base.length > 0 ? base : 'contador';
 }
 

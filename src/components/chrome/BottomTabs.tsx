@@ -1,8 +1,8 @@
 // UI customizada da tab bar do <Tabs> do Expo Router. Usa paleta
-// Dracula (CONTRACT secao 1.2): fundo bg, indicador 2dp purple na
+// Dracula (CONTRACT seção 1.2): fundo bg, indicador 2dp purple na
 // aba ativa, icones lucide 24dp, labels em mono micro caption.
 //
-// Decisao M00.5: o Expo Router nem sempre respeita `href: null` em
+// Decisão M00.5: o Expo Router nem sempre respeita `href: null` em
 // `<Tabs.Screen>` quando o tabBar e customizado. Para garantir que
 // as abas opt-in fiquem fora da bottom bar enquanto o toggle esta
 // off, filtramos AQUI por nome de rota, consultando useSettings
@@ -42,8 +42,8 @@ interface TabMeta {
   a11yLabel: string;
 }
 
-// Mapa explicito de rota -> metadata. Tudo que nao esta neste mapa
-// e tratado como rota interna (em-construcao etc) e nao aparece na
+// Mapa explicito de rota -> metadata. Tudo que não esta neste mapa
+// e tratado como rota interna (em-construcao etc) e não aparece na
 // bottom bar.
 const TAB_META: Record<string, TabMeta> = {
   index: { Icon: Home, label: 'Hoje', a11yLabel: 'aba hoje' },
@@ -66,7 +66,7 @@ const TAB_META: Record<string, TabMeta> = {
   },
 };
 
-// Ordem visivel canonica (CONTRACT secao 1.1). Fixas vem primeiro,
+// Ordem visivel canonica (CONTRACT seção 1.1). Fixas vem primeiro,
 // opt-in depois (so se toggle on).
 const FIXED_ORDER = ['index', 'memoria', 'humor', 'financas', 'settings'];
 const OPTIONAL_ORDER = [

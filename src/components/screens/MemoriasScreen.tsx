@@ -1,12 +1,12 @@
-// Container da aba Memorias. Renderiza 3 tabs internas (Treinos /
+// Container da aba Memórias. Renderiza 3 tabs internas (Treinos /
 // Fotos / Marcos) via pager custom: barra de tabs no topo + view
 // condicional. Spring suave ao trocar via tap (sem swipe horizontal
 // para reduzir conflito com o gesto de fechar BottomSheet em sub-
 // componentes).
 //
 // Pager custom evita adicionar react-native-tab-view + pager-view
-// como dependencias novas (a spec da abertura para essa decisao na
-// secao 5).
+// como dependencias novas (a spec da abertura para essa decisão na
+// seção 5).
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useState, type ReactNode } from 'react';

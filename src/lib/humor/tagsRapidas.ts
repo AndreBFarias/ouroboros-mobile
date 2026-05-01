@@ -2,13 +2,13 @@
 // slugs em snake_case. Slug fica no frontmatter; UI exibe formatado
 // em Sentence case via formatTag.
 //
-// Decisao M05 (spec secao 9, item 2): lista fixa para evitar derivas
+// Decisão M05 (spec seção 9, item 2): lista fixa para evitar derivas
 // e simplificar comparacao agregada futura. Tag livre fica como
 // candidata a sprint posterior se demanda surgir.
 import type { ChipOption } from '@/components/ui';
 
-// Slugs canonicos. NAO mudar a ordem nem renomear sem migracao de
-// dados: estes valores aparecem literais em arquivos .md ja gravados
+// Slugs canonicos. NÃO mudar a ordem nem renomear sem migracao de
+// dados: estes valores aparecem literais em arquivos .md já gravados
 // no Vault.
 export const TAGS_RAPIDAS_SLUGS = [
   'trabalho_pesado',
@@ -27,7 +27,7 @@ export type TagRapidaSlug = (typeof TAGS_RAPIDAS_SLUGS)[number];
 // regra de Sentence case com acentuacao completa do projeto. O slug
 // e ASCII por convencao do Vault, mas a apresentacao precisa ter o
 // diacritico que o portugues exige (cansaco -> Cansaco com cedilha,
-// exercicio -> Exercicio com agudo). Slugs sem diacritico no original
+// exercício -> Exercício com agudo). Slugs sem diacritico no original
 // (ex.: 'trabalho_pesado') caem no fallback mecanico.
 const TAGS_RAPIDAS_LABELS: Record<TagRapidaSlug, string> = {
   trabalho_pesado: 'Trabalho pesado',

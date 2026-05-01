@@ -17,7 +17,7 @@ function joinUri(root: string, rel: string): string {
 
 // Lista todos os alarmes do Vault. Pasta inexistente => []. Retorna
 // asc por horario (HH:MM lex), depois por titulo, para a tela de
-// listagem nao mostrar ordem aleatoria de filesystem.
+// listagem não mostrar ordem aleatoria de filesystem.
 export async function listarAlarmes(vaultRoot: string): Promise<Alarme[]> {
   const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.alarmes);
   const arquivos = await listVaultFolder(folderUri, '.md');
@@ -41,7 +41,7 @@ export async function listarAlarmes(vaultRoot: string): Promise<Alarme[]> {
   return lidos;
 }
 
-// Le um alarme especifico por slug. Retorna null se nao existir.
+// Le um alarme específico por slug. Retorna null se não existir.
 export async function lerAlarme(
   vaultRoot: string,
   slug: string
@@ -52,7 +52,7 @@ export async function lerAlarme(
   return result ? result.meta : null;
 }
 
-// Persiste um alarme. Caller fornece meta ja validado (revalidamos
+// Persiste um alarme. Caller fornece meta já validado (revalidamos
 // defensivamente). Escreve em alarmes/<slug>.md derivando o nome do
 // slug. Body opcional para anotacao livre (tipicamente vazio).
 export async function escreverAlarme(
@@ -70,10 +70,10 @@ export async function escreverAlarme(
   return { uri, rel };
 }
 
-// Apaga arquivo de alarme. Idempotente: nao falha se nao existe.
-// SAF.deleteAsync no nativo; em Web cai em no-op silencioso (nao ha
-// vault real). Caller responsavel por cancelar schedules antes (caso
-// contrario as notificacoes persistem orfas).
+// Apaga arquivo de alarme. Idempotente: não falha se não existe.
+// SAF.deleteAsync no nativo; em Web cai em no-op silencioso (não ha
+// vault real). Caller responsável por cancelar schedules antes (caso
+// contrario as notificações persistem orfas).
 export async function excluirAlarme(
   vaultRoot: string,
   slug: string

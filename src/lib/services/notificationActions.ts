@@ -1,17 +1,17 @@
-// Registro de categorias e canal de notificacao para alarmes (M16).
+// Registro de categorias e canal de notificação para alarmes (M16).
 // Uma categoria 'alarme' com 2 botoes (Soneca/Desligar) + 1 canal
 // Android dedicado para isolar do canal default dos lembretes.
 // Plugado em app/_layout.tsx no boot; idempotente, seguro rodar
 // varias vezes.
 //
 // Observacoes:
-//   - expo-notifications mantem categorias em memoria do SO; chamar
+//   - expo-notifications mantem categorias em memória do SO; chamar
 //     setNotificationCategoryAsync com mesmo ID sobrescreve.
 //   - O canal Android (importance HIGH) e criado uma vez por instalacao;
 //     setNotificationChannelAsync e idempotente.
-//   - Web nao suporta categorias nem canais; cai em no-op.
+//   - Web não suporta categorias nem canais; cai em no-op.
 //   - O handler dos botoes (clique no usuario) chega via
-//     addNotificationResponseReceivedListener no boot. Esta funcao
+//     addNotificationResponseReceivedListener no boot. Esta função
 //     so REGISTRA a categoria; o listener vai numa sprint futura.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -34,7 +34,7 @@ export async function registrarCategoriasAlarme(): Promise<void> {
         identifier: SONECA_ACTION_ID,
         buttonTitle: 'Soneca 5 min',
         options: {
-          // Nao abre o app; o servico processa o snooze em background.
+          // Não abre o app; o servico processa o snooze em background.
           opensAppToForeground: false,
         },
       },
@@ -50,7 +50,7 @@ export async function registrarCategoriasAlarme(): Promise<void> {
     if (Platform.OS === 'android') {
       // Canal Android dedicado: importance HIGH para alarme aparecer
       // como heads-up. Vibracao on, badge off, sound default ativado
-      // (a string especifica do som vai no content de cada schedule).
+      // (a string específica do som vai no content de cada schedule).
       await Notifications.setNotificationChannelAsync(ALARME_CHANNEL_ID, {
         name: 'Alarmes',
         importance: Notifications.AndroidImportance.HIGH,

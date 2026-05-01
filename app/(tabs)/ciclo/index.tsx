@@ -6,8 +6,8 @@
 //   - CalendarioFases 28-35 dias adaptativo.
 //   - Botao primario "Registrar hoje" no rodape.
 //
-// Empty state quando nao ha registros: frase canonica
-// "Pode registrar o inicio do primeiro ciclo quando quiser." e
+// Empty state quando não ha registros: frase canonica
+// "Pode registrar o início do primeiro ciclo quando quiser." e
 // botao "Registrar hoje" continua visivel para que o usuario
 // possa criar o primeiro registro.
 //

@@ -51,7 +51,7 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
           intermediates: true,
         });
       } catch {
-        // Ja existe, ok.
+        // Já existe, ok.
       }
 
       // Cada nova foto recebe um nome com timestamp para invalidar

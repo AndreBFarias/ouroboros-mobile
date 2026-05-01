@@ -1,9 +1,9 @@
 // Sheet para criacao manual de marco. Abre em snap 70%. Form:
-//  - Textarea descricao (obrigatoria, min 1 char).
+//  - Textarea descricao (obrigatória, min 1 char).
 //  - ChipGroup multi de tags (sugestoes pre-definidas + livre).
 //  - Botao Salvar verde.
 //
-// Decisao M11 §10 - sem ranking, badge ou pontuacao. Marco e
+// Decisão M11 §10 - sem ranking, badge ou pontuacao. Marco e
 // descritivo neutro.
 //
 // Comentarios sem acento (convencao shell/CI).

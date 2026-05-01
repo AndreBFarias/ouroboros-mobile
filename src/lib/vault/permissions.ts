@@ -9,8 +9,8 @@
 // O API legacy do expo-file-system continua sendo o canal
 // suportado para SAF na SDK 54 (entry point: 'expo-file-system/legacy').
 //
-// No web (Chrome desktop, validacao via MCP de browser), SAF e
-// SecureStore nao existem. Usamos localStorage como fallback para
+// No web (Chrome desktop, validação via MCP de browser), SAF e
+// SecureStore não existem. Usamos localStorage como fallback para
 // permitir testar fluxos JS sem conflito com celular fisico.
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -47,7 +47,7 @@ async function deleteKey(name: string): Promise<void> {
 
 // Pede permissao SAF e retorna URI da pasta selecionada, ou null se
 // o usuario cancelar. Persiste o URI. No web devolve URI mock para
-// permitir validacao visual do app sem precisar de SAF.
+// permitir validação visual do app sem precisar de SAF.
 export async function requestVaultPermission(): Promise<string | null> {
   if (isWeb) {
     const mockUri = 'web://mock-vault/Protocolo-Ouroboros';

@@ -2,7 +2,7 @@
 // blur 16dp offset (0,4) opacity 30%. Icone Plus da lucide-react-native
 // por default, override via prop `icon`. Press dispara haptic medium e
 // scale 0.97 com spring snappy. Sem texto: acessibilidade via label
-// explicito ("acao rapida" ou override).
+// explicito ("ação rapida" ou override).
 import { useState, type ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { MotiView } from 'moti';

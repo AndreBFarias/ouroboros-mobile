@@ -74,7 +74,7 @@ export function Chip({
           paddingVertical: 8,
           paddingHorizontal: 14,
           opacity: disabled ? 0.4 : 1,
-          // Background e borda como style direto (nao via Moti animate
+          // Background e borda como style direto (não via Moti animate
           // porque o RN tem bug com transitar 'transparent' -> hex
           // sem `from` correspondente, deixando o chip selecionado sem
           // fundo preenchido e o texto colors.bg invisivel).

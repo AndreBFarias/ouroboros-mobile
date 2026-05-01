@@ -4,12 +4,12 @@
 // frontmatter; a UI exibe via formatEmocao em Sentence case com
 // acentuacao PT-BR.
 //
-// Decisao M06 (spec secao 9 item 1): listas fixas e fechadas para
+// Decisão M06 (spec seção 9 item 1): listas fixas e fechadas para
 // evitar derivas e simplificar agregacao futura. Ampliacao via
 // sprint nova se demanda surgir.
 //
 // O dicionario de labels acentuados existe pelo mesmo motivo do
-// tagsRapidas.ts pos M05.1: fallback mecanico nao restaura
+// tagsRapidas.ts pos M05.1: fallback mecanico não restaura
 // diacriticos exigidos pela ortografia PT-BR.
 import type { ChipOption } from '@/components/ui';
 

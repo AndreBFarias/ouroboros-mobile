@@ -1,6 +1,6 @@
-// Tela 02 reusada em modo edicao. Carrega o exercicio existente
+// Tela 02 reusada em modo edicao. Carrega o exercício existente
 // pelo slug e pre-preenche o ExercicioForm. Ao salvar, regrava o
-// .md mantendo slug e historico imutaveis. GIF novo substitui o
+// .md mantendo slug e histórico imutaveis. GIF novo substitui o
 // arquivo em assets/exercicios/<slug>.gif.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -53,7 +53,7 @@ export default function EditarExercicio() {
       }
       try {
         await saveExercicio({
-          // Slug e historico vem da meta original; o form so altera
+          // Slug e histórico vem da meta original; o form so altera
           // os campos editaveis e devolve.
           meta: {
             ...args.meta,

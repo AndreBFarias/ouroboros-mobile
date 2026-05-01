@@ -4,7 +4,7 @@
 //   3. eventos/YYYY-MM-DD-*.md     (eventos)
 //
 // Filtra automaticamente pela pessoa ativa (autor === pessoaAtiva)
-// quando filtro nao e 'ambos'. Devolve loading/error simples.
+// quando filtro não e 'ambos'. Devolve loading/error simples.
 //
 // Estrategia SAF: lista o conteudo da pasta-pai (vaultRoot) usando
 // readDirectoryAsync. Como SAF retorna URIs completos opacos, o que
@@ -46,16 +46,16 @@ function uriMatchesDatePrefix(uri: string, ymd: string): boolean {
 }
 
 // Resolve: dado o root SAF e um nome de pasta (ex: 'daily'),
-// devolve uma "lista plausivel" de URIs descendentes. SAF nao tem
+// devolve uma "lista plausivel" de URIs descendentes. SAF não tem
 // API simples de "abrir subpasta por nome"; o caminho mais robusto
 // e listar a raiz e filtrar pelos URIs que decodificados contenham
-// '/<folder>/'. Esta funcao retorna best-effort.
+// '/<folder>/'. Esta função retorna best-effort.
 async function listFolderByName(
   rootUri: string,
   folder: string,
   ext: string
 ): Promise<string[]> {
-  // 1. Tenta listar direto a raiz: SAF retorna entradas no nivel
+  // 1. Tenta listar direto a raiz: SAF retorna entradas no nível
   //    superior; subpastas aparecem como URIs de tree separadas.
   const rootEntries = await listVaultFolder(rootUri);
   const matches: string[] = [];
@@ -78,8 +78,8 @@ async function listFolderByName(
 }
 
 // Hook principal. Reage a mudancas de pessoaAtiva e vaultRoot. O ymd
-// (data alvo) eh calculado UMA VEZ por render do hook, NAO via prop
-// 'now: Date' que criaria nova referencia a cada render e quebraria
+// (data alvo) eh calculado UMA VEZ por render do hook, NÃO via prop
+// 'now: Date' que criaria nova referência a cada render e quebraria
 // o useEffect com loop infinito (re-fetch perpetuo). Caller que quiser
 // data customizada passa string YYYY-MM-DD via parametro 'ymdOverride'.
 export function useHoje(ymdOverride?: string): HojeData {
@@ -146,7 +146,7 @@ export function useHoje(ymdOverride?: string): HojeData {
 
         if (cancelled) return;
 
-        // Filtro de pessoa: 'ambos' nao filtra; autor especifico filtra.
+        // Filtro de pessoa: 'ambos' não filtra; autor específico filtra.
         const filtraPessoa = filtro !== 'ambos';
         const matchAutor = (autor: 'pessoa_a' | 'pessoa_b'): boolean =>
           filtraPessoa ? autor === pessoaAtiva : true;

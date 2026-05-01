@@ -6,12 +6,12 @@
 //
 // 5 criterios canonicos (spec M11 §10):
 //   1. 3 treinos em 7 dias    -> "Tres treinos nesta semana."
-//   2. Retorno apos hiato 5+d -> "Voltou apos N dias parados."
+//   2. Retorno após hiato 5+d -> "Voltou após N dias parados."
 //   3. 7 dias humor seguidos  -> "Sete dias acompanhando."
 //   4. 30 dias sem trigger    -> "Trinta dias sem trigger."
 //   5. Primeira vitoria semana-> "Primeira vitoria desta semana."
 //
-// Funcao roda 1x/dia via BOOT_HOOKS. Idempotente: sempre que rodar
+// Função roda 1x/dia via BOOT_HOOKS. Idempotente: sempre que rodar
 // sem mudanca de estado, retorna 0 marcos novos.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -78,7 +78,7 @@ function avaliarTresTreinosSemana(
   return null;
 }
 
-// Verifica criterio 2: retorno apos hiato 5+ dias entre o treino mais
+// Verifica criterio 2: retorno após hiato 5+ dias entre o treino mais
 // recente e o anterior.
 function avaliarRetornoAposHiato(
   treinos: Array<{ data: string; autor: PessoaAutor }>,
@@ -111,7 +111,7 @@ function avaliarSeteDiasConsecutivos(
     .sort();
   if (filtrados.length < 7) return null;
   // Verifica se os ultimos 7 entries cobrem 7 dias consecutivos
-  // ate hoje (ou ate ontem, contando ida ate hoje).
+  // até hoje (ou até ontem, contando ida até hoje).
   const ultimos = filtrados.slice(-7);
   const datas = new Set(ultimos);
   for (let i = 0; i < 7; i++) {
@@ -136,7 +136,7 @@ function avaliarTrintaDiasSemTrigger(
     .filter((d) => d.autor === autor && d.modo === 'trigger')
     .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
   if (triggers.length === 0) {
-    // Nunca houve trigger para este autor: nao podemos afirmar
+    // Nunca houve trigger para este autor: não podemos afirmar
     // "trinta dias sem" sem ponto de partida. Skip.
     return null;
   }
@@ -154,7 +154,7 @@ function avaliarTrintaDiasSemTrigger(
 }
 
 // Verifica criterio 5: primeira vitoria desta semana (segunda como
-// inicio de semana).
+// início de semana).
 function avaliarPrimeiraConquistaSemana(
   diarios: Array<DiarioEmocionalMeta>,
   autor: PessoaAutor,
@@ -219,7 +219,7 @@ export interface VerificarMarcosAutoResult {
   ignorados: number;
 }
 
-// Funcao principal. Plugada em BOOT_HOOKS pela M11.
+// Função principal. Plugada em BOOT_HOOKS pela M11.
 export async function verificarMarcosAuto(
   vaultRootArg?: string
 ): Promise<VerificarMarcosAutoResult> {
@@ -237,7 +237,7 @@ export async function verificarMarcosAuto(
   const { humores, diarios } = await lerSinaisDeAutor(vaultRoot);
   const marcosExistentes = await listarMarcos(vaultRoot, { autor });
 
-  // Conjunto de hashes ja gravados para dedupe.
+  // Conjunto de hashes já gravados para dedupe.
   const hashesExistentes = new Set(
     marcosExistentes
       .map((m) => m.hash)

@@ -1,6 +1,6 @@
 // Wrapper sobre expo-location para detectar o bairro atual a partir
 // das coordenadas GPS. Usado pela Tela 20 (registro de evento) no
-// botao "Usar localizacao atual". A funcao e silenciosa em qualquer
+// botao "Usar localizacao atual". A função e silenciosa em qualquer
 // erro: permission negada, GPS desligado, reverse geocode sem
 // resultado -> devolve null. Caller decide se mostra toast info.
 //
@@ -10,17 +10,17 @@
 //  3. reverseGeocodeAsync nas coords. Pega a primeira entrada e
 //     extrai 'district' (bairro/sub-bairro) com fallback em
 //     'subregion' (municipio/regiao). Cidade e estado ficam de fora
-//     porque o usuario costuma querer "Pinheiros", nao "Sao Paulo".
+//     porque o usuario costuma querer "Pinheiros", não "São Paulo".
 //  4. Se nada bate, devolve null.
 import * as Location from 'expo-location';
 
-// Resultado canonico: nome do bairro detectado ou null se nao foi
+// Resultado canonico: nome do bairro detectado ou null se não foi
 // possivel determinar com confianca.
 export type BairroResult = string | null;
 
 export async function getBairroAtual(): Promise<BairroResult> {
   // Permissao foreground basta: o app so detecta enquanto a tela
-  // esta aberta. locationAlways nao e necessario.
+  // esta aberta. locationAlways não e necessario.
   let perm: Location.LocationPermissionResponse;
   try {
     perm = await Location.requestForegroundPermissionsAsync();

@@ -6,11 +6,11 @@
 // medidas corporais).
 //
 // Privacidade reforcada (M14.5 spec, ADR-0007):
-//  - Dados ficam apenas no Vault local; nao ha cache backend.
+//  - Dados ficam apenas no Vault local; não ha cache backend.
 //  - Pasta dedicada inbox/saude/ciclo/ separa dos outros schemas
 //    mentais e financeiros.
 //
-// inferirFase e funcao pura sem I/O, totalmente testavel.
+// inferirFase e função pura sem I/O, totalmente testavel.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { cicloPath, VAULT_FOLDERS } from '@/lib/vault/paths';
@@ -22,13 +22,13 @@ import {
   type FaseCiclo,
 } from '@/lib/schemas/ciclo_menstrual';
 
-// Periodo de filtro suportado pelo calendario. '28d' = ciclo curto
+// Período de filtro suportado pelo calendario. '28d' = ciclo curto
 // canonico, '90d' = visualizacao trimestral, 'tudo' = sem corte.
 export type CicloPeriodo = '28d' | '90d' | 'tudo';
 
 export interface ListarRegistrosCicloFiltros {
   periodo?: CicloPeriodo;
-  // Data de referencia para calcular janela. Default new Date(). Util
+  // Data de referência para calcular janela. Default new Date(). Útil
   // para testes deterministicos.
   hoje?: Date;
 }
@@ -38,9 +38,9 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
-// Calcula data limite (ISO YYYY-MM-DD) baseado em periodo. Para 'tudo'
+// Calcula data limite (ISO YYYY-MM-DD) baseado em período. Para 'tudo'
 // retorna null (sem corte). Mesma logica de paths.formatDateYmd com
-// timezone UTC-3 fixo (Sao Paulo, sem DST).
+// timezone UTC-3 fixo (São Paulo, sem DST).
 function dataLimite(periodo: CicloPeriodo, hoje: Date): string | null {
   if (periodo === 'tudo') return null;
   const dias = periodo === '28d' ? 28 : 90;
@@ -55,7 +55,7 @@ function dataLimite(periodo: CicloPeriodo, hoje: Date): string | null {
 }
 
 // Calcula diferenca em dias entre duas datas YYYY-MM-DD. Retorna
-// numero de dias completos passados desde dataInicio ate dataAlvo.
+// número de dias completos passados desde dataInicio até dataAlvo.
 // Pode ser negativo se dataAlvo for anterior. Operacao puramente
 // aritmetica em UTC para evitar drift de timezone na borda da meia
 // noite.
@@ -66,7 +66,7 @@ function diferencaDias(dataInicio: string, dataAlvo: string): number {
   return Math.floor(diffMs / 86_400_000);
 }
 
-// Heuristica simples baseada em diferenca de dias desde o inicio do
+// Heuristica simples baseada em diferenca de dias desde o início do
 // ultimo ciclo. Ciclo padrao 28 dias:
 //   1-5    -> menstrual
 //   6-13   -> folicular
@@ -76,11 +76,11 @@ function diferencaDias(dataInicio: string, dataAlvo: string): number {
 // Quando dataInicioUltimoCiclo for null (antes do primeiro registro
 // real), a fase de fallback e 'menstrual' por convencao do spec.
 //
-// Quando a diferenca e negativa (dataAlvo antes do inicio conhecido)
-// caimos tambem em 'menstrual' como fallback estavel: o usuario nao
-// registrou ainda o inicio anterior, entao nao da pra inferir.
+// Quando a diferenca e negativa (dataAlvo antes do início conhecido)
+// caimos também em 'menstrual' como fallback estavel: o usuario não
+// registrou ainda o início anterior, entao não da pra inferir.
 //
-// Funcao pura, sem I/O. Totalmente testavel.
+// Função pura, sem I/O. Totalmente testavel.
 export function inferirFase(
   data: string,
   dataInicioUltimoCiclo: string | null
@@ -95,7 +95,7 @@ export function inferirFase(
 }
 
 // Lista todos os registros de ciclo do Vault aplicando filtro de
-// periodo opcional. Pasta inexistente => []. Sempre filtra por autor
+// período opcional. Pasta inexistente => []. Sempre filtra por autor
 // (privacidade visual entre as duas pessoas, M14.5 spec): caller
 // passa autor; lista so registros desse autor.
 export async function listarRegistrosCiclo(
@@ -130,7 +130,7 @@ export async function listarRegistrosCiclo(
   return filtradas;
 }
 
-// Le um registro especifico (por data). Retorna null se nao existir.
+// Le um registro específico (por data). Retorna null se não existir.
 export async function lerRegistroCiclo(
   vaultRoot: string,
   data: string
@@ -142,7 +142,7 @@ export async function lerRegistroCiclo(
   return result ? result.meta : null;
 }
 
-// Persiste um registro de ciclo. Caller fornece meta ja validado (ou
+// Persiste um registro de ciclo. Caller fornece meta já validado (ou
 // ao menos com shape correto); revalidamos defensivamente. Escreve em
 // inbox/saude/ciclo/YYYY-MM-DD.md derivando o nome da data do meta.
 export async function escreverRegistroCiclo(
@@ -165,7 +165,7 @@ export async function escreverRegistroCiclo(
 
 // Detecta duracao do ultimo ciclo registrado a partir da lista de
 // registros (asc por data). Procura dois 'data_inicio' distintos
-// consecutivos e retorna a diferenca em dias. Default 28 quando nao
+// consecutivos e retorna a diferenca em dias. Default 28 quando não
 // houver dois inicios registrados (calendario adapta para 35 quando
 // duracao > 28).
 export function duracaoCicloDetectada(
@@ -183,14 +183,14 @@ export function duracaoCicloDetectada(
   const ultimo2 = inicios[inicios.length - 1];
   const penultimo = inicios[inicios.length - 2];
   const diff = diferencaDias(penultimo, ultimo2);
-  // Limites defensivos: ciclos abaixo de 21 ou acima de 45 sao
+  // Limites defensivos: ciclos abaixo de 21 ou acima de 45 são
   // ignorados; cai em default 28.
   if (diff < 21 || diff > 45) return 28;
   return diff;
 }
 
 // Recupera o data_inicio do ultimo ciclo conhecido a partir da lista
-// asc por data. Util para inferirFase em dias sem registro de inicio
+// asc por data. Útil para inferirFase em dias sem registro de início
 // proprio (continua o ciclo vigente).
 export function ultimaDataInicio(
   registros: CicloMenstrualMeta[]

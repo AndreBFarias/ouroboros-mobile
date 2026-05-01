@@ -1,11 +1,11 @@
 // Calendario adaptativo 28-35 dias com celulas coloridas por fase.
-// Layout grid 7 colunas; numero de linhas = 4 (28 dias) ou 5 (35 dias)
+// Layout grid 7 colunas; número de linhas = 4 (28 dias) ou 5 (35 dias)
 // conforme duracao detectada do ultimo ciclo registrado.
 //
 // Cada celula tem fundo da cor da fase em 30% opacity e outline 1px
 // na cor da fase. Toque chama onSelectDay(data) para abrir o sheet
 // de registro. Dia sem registro (fase inferida apenas) renderiza com
-// fundo neutro bg-alt e outline muted-decor para nao parecer
+// fundo neutro bg-alt e outline muted-decor para não parecer
 // "alarmante" (regra do tom sobrio: pular dias sem culpa).
 //
 // Cores canonicas por fase (M14.5 spec, paleta Dracula):
@@ -14,7 +14,7 @@
 //   lutea      -> purple
 //   menstrual  -> red
 //
-// Numero do dia (1..28/35) renderiza no centro da celula em monoespaco
+// Número do dia (1..28/35) renderiza no centro da celula em monoespaco
 // pequeno; cor fg quando ha registro, muted quando inferido apenas.
 //
 // Comentarios sem acento.
@@ -52,7 +52,7 @@ function fillFromSolid(hex: string): string {
 export interface CalendarioFasesProps {
   // Lista de registros existentes (para pintar cor real).
   registros: CicloMenstrualMeta[];
-  // Data de inicio do ultimo ciclo (para inferir fases dos dias sem
+  // Data de início do ultimo ciclo (para inferir fases dos dias sem
   // registro). Pode ser null antes do primeiro registro.
   dataInicioUltimoCiclo: string | null;
   // Duracao detectada do ciclo (28 ou 35). Calendario adapta linhas.
@@ -94,7 +94,7 @@ export function CalendarioFases({
   // celulas inertes para manter shape testavel.
   const celulas = useMemo(() => {
     if (!dataInicioUltimoCiclo) {
-      // Sem inicio conhecido, geramos 28 celulas placeholder com
+      // Sem início conhecido, geramos 28 celulas placeholder com
       // fase 'menstrual' (fallback do inferirFase) sem registro real.
       return Array.from({ length: totalDias }).map((_, i) => ({
         index: i,

@@ -6,7 +6,7 @@
 // uma area abaixo dos chips quando dataCustom esta ativo, exibindo
 // a hora escolhida e permitindo reabrir o picker.
 //
-// Decisao M07 (spec secao 9, item 3): no Android usamos
+// Decisão M07 (spec seção 9, item 3): no Android usamos
 // DateTimePicker nativo; no Web cai em <input type="time"> via
 // fallback do proprio componente. UX consistente aceitavel para o
 // estado atual; refinar em sprint futura se necessario.
@@ -45,9 +45,9 @@ export function QuandoBlock({
   onChangeDataCustom,
   disabled = false,
 }: QuandoBlockProps) {
-  // No Android o DateTimePicker e modal e some apos onChange. No iOS
-  // ele e inline e fica visivel ate o usuario fechar. No Web
-  // tambem e inline. Esse flag controla a visibilidade local.
+  // No Android o DateTimePicker e modal e some após onChange. No iOS
+  // ele e inline e fica visivel até o usuario fechar. No Web
+  // também e inline. Esse flag controla a visibilidade local.
   const [pickerAberto, setPickerAberto] = useState(false);
 
   const abrirPicker = () => {
@@ -66,7 +66,7 @@ export function QuandoBlock({
       setPickerAberto(false);
     }
     if (event.type === 'dismissed') {
-      // Se cancelou e nao havia data antes, volta pra 'agora'.
+      // Se cancelou e não havia data antes, volta pra 'agora'.
       if (!dataCustom) {
         onChangeModo('agora');
       }

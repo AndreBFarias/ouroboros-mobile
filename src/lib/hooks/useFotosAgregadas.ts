@@ -2,14 +2,14 @@
 // arquivos:
 //   1. eventos/<...>.md  -> campo fotos: string[] (paths relativos)
 //   2. inbox/mente/diario/<...>.md  -> midia (futuro M06.5;
-//      atualmente schema diario_emocional nao tem 'midia', mas a
+//      atualmente schema diario_emocional não tem 'midia', mas a
 //      sprint M06 deixou aberto. Por ora ignoramos com guarda.)
 //   3. medidas/<...>.md  -> M12 entregou; le schema MedidasSchema e
 //      adiciona cada foto com origem 'medida'.
-//   4. marcos/<...>.md   -> body pode ter referencia futura (ignorado)
-//   5. assets/exercicios/  -> GIFs sao demonstrativos, NAO entram aqui
+//   4. marcos/<...>.md   -> body pode ter referência futura (ignorado)
+//   5. assets/exercicios/  -> GIFs são demonstrativos, NÃO entram aqui
 //
-// Decisao spec §10: aba Fotos so le, nao copia. Cada item carrega
+// Decisão spec §10: aba Fotos so le, não copia. Cada item carrega
 // origem para o caller saber em qual schema/Tela navegar quando o
 // usuario tocar "Abrir registro".
 //
@@ -31,7 +31,7 @@ export type FotoOrigem = 'evento' | 'medida' | 'diario';
 export interface FotoAgregada {
   // URI absoluto resolvido para <Image source={{ uri }} />.
   uri: string;
-  // ISO 8601 da entrada-mae (data do schema, nao mtime do arquivo).
+  // ISO 8601 da entrada-mae (data do schema, não mtime do arquivo).
   data: string;
   origem: FotoOrigem;
   // Path relativo do schema-mae (para "Abrir registro").
@@ -91,7 +91,7 @@ async function lerEventos(
 }
 
 // Le todas as fotos de medidas/<YYYY-MM-DD>.md. Slug aqui e a propria
-// data (medidas nao tem slug livre); origemSlug fica como YYYY-MM-DD
+// data (medidas não tem slug livre); origemSlug fica como YYYY-MM-DD
 // para que o caller possa exibir e abrir o registro futuramente.
 async function lerMedidas(
   vaultRoot: string,
@@ -153,7 +153,7 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     const autor = filtroPessoa === 'ambos' ? null : pessoaAtiva;
     try {
       // Eventos (M07) + medidas (M12). M06.5 adicionara midia em
-      // diario emocional. Estrutura do hook ja esta pronta para
+      // diario emocional. Estrutura do hook já esta pronta para
       // crescer sem consumer ter que mudar.
       const [eventos, medidas] = await Promise.all([
         lerEventos(vaultRoot, autor),

@@ -1,10 +1,10 @@
 // Onboarding inicial em 5 frames. Substitui o modal de permissao da
 // M02. Coleta nome do usuario primario, companhia (sozinho/duo +
-// nome do parceiro), pasta do Vault via SAF e metodo de sync. Ao
+// nome do parceiro), pasta do Vault via SAF e método de sync. Ao
 // concluir, marca useOnboarding.done=true e redireciona para a
 // Tela 01 (hoje).
 //
-// Decisao M03: Sentence case + acentuacao PT-BR completa nas strings
+// Decisão M03: Sentence case + acentuacao PT-BR completa nas strings
 // de UI. accessibilityLabel sem acento. Comentarios sem acento
 // (convencao shell).
 import { useState, type ReactNode } from 'react';
@@ -123,7 +123,7 @@ export default function Onboarding() {
   };
 
   // Renderiza apenas o frame ativo. O conteudo de cada frame entra
-  // com translate da direita; nao usamos AnimatePresence/exit para
+  // com translate da direita; não usamos AnimatePresence/exit para
   // evitar tela em branco enquanto o exit do frame anterior anima.
   // ScrollView envolve o conteudo para caber forms longos (Frame 1
   // com avatar do parceiro; Frame 2 com URI longa).

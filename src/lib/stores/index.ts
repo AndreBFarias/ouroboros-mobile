@@ -1,5 +1,5 @@
 // Barrel de stores zustand. Toda sprint que cria store novo adiciona
-// linha aqui (CONTRACT secao 1.4). Importar como
+// linha aqui (CONTRACT seção 1.4). Importar como
 // `import { usePessoa, useVault } from '@/lib/stores';`.
 export { usePessoa, nomeDe } from './pessoa';
 export { useVault } from './vault';

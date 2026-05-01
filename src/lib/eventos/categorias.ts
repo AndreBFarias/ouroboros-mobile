@@ -2,22 +2,22 @@
 // slugs em snake_case ASCII; o slug fica no frontmatter e a UI
 // exibe via formatCategoria em Sentence case com acentuacao PT-BR.
 //
-// Decisao M07 (spec secao 9, item 2): incluir 'exercicio' na lista
+// Decisão M07 (spec seção 9, item 2): incluir 'exercício' na lista
 // como registro casual de "fui na academia"; dados estruturados de
-// treino (series, peso) ficam para a M13 (Galeria/Detalhe Exercicio).
+// treino (séries, peso) ficam para a M13 (Galeria/Detalhe Exercício).
 //
 // O dicionario de labels acentuados existe pelo mesmo motivo de
-// tagsRapidas.ts e emocoes.ts pos M05.1: fallback mecanico nao
+// tagsRapidas.ts e emocoes.ts pos M05.1: fallback mecanico não
 // restaura diacriticos exigidos pela ortografia PT-BR. Slugs
-// canonicos com diacritico no original (exercicio -> Exercicio com
+// canonicos com diacritico no original (exercício -> Exercício com
 // agudo, evento_social -> Evento social) usam o mapa; slugs sem
 // diacritico (rolezinho, compras, consulta, trabalho, rotina,
 // outro) caem no fallback mecanico e ficam corretos por
 // coincidencia ortografica.
 import type { ChipOption } from '@/components/ui';
 
-// Slugs canonicos. NAO mudar a ordem nem renomear sem migracao de
-// dados: estes valores aparecem literais em arquivos .md ja
+// Slugs canonicos. NÃO mudar a ordem nem renomear sem migracao de
+// dados: estes valores aparecem literais em arquivos .md já
 // gravados no Vault.
 export const EVENTO_CATEGORIAS_SLUGS = [
   'rolezinho',
@@ -32,11 +32,11 @@ export const EVENTO_CATEGORIAS_SLUGS = [
 
 export type EventoCategoria = (typeof EVENTO_CATEGORIAS_SLUGS)[number];
 
-// Mapa slug -> label acentuado em PT-BR. Sentence case obrigatorio
+// Mapa slug -> label acentuado em PT-BR. Sentence case obrigatório
 // (ADR-0013). Cobre TODAS as 8 categorias mesmo as sem diacritico
 // no original, para que mudancas futuras de ortografia ou
-// expansoes do dicionario nao precisem refatorar a logica de
-// fallback. Acentuacao explicita: Exercicio -> Exercicio com
+// expansoes do dicionario não precisem refatorar a logica de
+// fallback. Acentuacao explicita: Exercício -> Exercício com
 // agudo (i mais acento agudo), Evento social fica composto.
 export const EVENTO_CATEGORIAS_LABELS: Record<EventoCategoria, string> = {
   rolezinho: 'Rolezinho',

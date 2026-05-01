@@ -5,7 +5,7 @@
 // a visao do usuario (jump-cut quebraria a regra de fisica natural,
 // ADR-010).
 //
-// Slugs guardados sao snake_case ASCII; renderizacao via formatEmocao
+// Slugs guardados são snake_case ASCII; renderizacao via formatEmocao
 // gera Sentence case com diacriticos PT-BR. Accent dos chips segue a
 // borda do form: red em modo trigger, green em modo vitoria.
 import { useEffect, useState } from 'react';

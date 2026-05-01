@@ -1,13 +1,13 @@
-// Polish CSS extra para a versao Web do app. NativeWind 4 nao
+// Polish CSS extra para a versao Web do app. NativeWind 4 não
 // emite consistentemente alguns tokens (cor de fundo do body,
 // color-scheme, scrollbar, placeholder), gerando uma sensacao de
 // Dracula desbotado no Chrome. Este modulo injeta um <style> no
-// <head> com os ajustes residuais. Idempotente: se ja foi
+// <head> com os ajustes residuais. Idempotente: se já foi
 // injetado, retorna sem refazer.
 //
 // Plataforma: chamado em app/_layout.tsx no mesmo bloco que
 // forca darkMode='class'. Em Android/iOS, Platform.OS !== 'web'
-// e a funcao retorna cedo. Em Web, document existe e o style e
+// e a função retorna cedo. Em Web, document existe e o style e
 // inserido uma unica vez.
 import { Platform } from 'react-native';
 
@@ -46,7 +46,7 @@ textarea::placeholder {
 
 /**
  * Aplica polish Dracula adicional na versao Web. Inerte em nativo.
- * Idempotente: chamadas subsequentes nao duplicam o <style>.
+ * Idempotente: chamadas subsequentes não duplicam o <style>.
  */
 export function applyDraculaWeb(): void {
   if (Platform.OS !== 'web') return;

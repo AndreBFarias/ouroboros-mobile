@@ -1,5 +1,5 @@
 // HeatmapBase - grid 13 colunas x 7 linhas (91 dias) renderizando
-// celulas com cor variavel por nivel. Componente abstrato com prop
+// celulas com cor variavel por nível. Componente abstrato com prop
 // `paleta` (intensidade -> hex) para que tabs especificas (treinos,
 // humor) injetem suas cores. Hoje destacado em outline purple 2px.
 //
@@ -14,7 +14,7 @@ import { springs } from '@/lib/motion';
 import { colors, spacing } from '@/theme/tokens';
 
 export interface HeatmapCell {
-  // ISO YYYY-MM-DD da celula. Util para tap callback.
+  // ISO YYYY-MM-DD da celula. Útil para tap callback.
   data: string;
   // Intensidade 0..3 (0 = vazio, 1 = baixo, 2 = medio, 3 = alto).
   // Caller agrega contagem por dia e mapeia.
@@ -49,7 +49,7 @@ const NUM_COLUNAS = 13;
 const NUM_LINHAS = 7;
 const TOTAL_CELULAS = NUM_COLUNAS * NUM_LINHAS; // 91
 
-// Stagger maximo total para nao demorar demais no boot da tela.
+// Stagger maximo total para não demorar demais no boot da tela.
 const STAGGER_MS = 50;
 const STAGGER_CAP_MS = 600;
 
@@ -158,7 +158,7 @@ export function HeatmapBase({
 }
 
 // Helper: dado um conjunto de datas YYYY-MM-DD com contagem, devolve
-// 91 celulas em ordem cronologica de hoje-90 ate hoje. Caller passa o
+// 91 celulas em ordem cronologica de hoje-90 até hoje. Caller passa o
 // mapa { 'YYYY-MM-DD': count } e o mapeamento count -> intensidade.
 //
 // Mapeamento default: 0 -> 0, 1 -> 1, 2 -> 2, 3+ -> 3.

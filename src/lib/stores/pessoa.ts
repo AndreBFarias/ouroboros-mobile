@@ -1,6 +1,6 @@
 // Store de identidade de pessoa. Mantem dois eixos:
 //   - pessoaAtiva: quem esta usando o app neste momento (autor de novos
-//     registros). Nao aceita 'ambos' porque novo registro tem autor unico.
+//     registros). Não aceita 'ambos' porque novo registro tem autor unico.
 //   - filtroPessoa: lente de visualizacao, aceita 'ambos' para listas
 //     combinadas.
 // Persist via SecureStore para preservar nomes reais entre sessoes.
@@ -14,14 +14,14 @@ interface PessoaStore {
   pessoaAtiva: PessoaAutor;
   filtroPessoa: PessoaId;
   nomes: Record<PessoaAutor, string>;
-  // URI local da foto de perfil (apos copiar para documentDirectory).
+  // URI local da foto de perfil (após copiar para documentDirectory).
   // null = sem foto, fallback para inicial em fundo colorido.
   fotos: Record<PessoaAutor, string | null>;
   setPessoaAtiva: (p: PessoaAutor) => void;
   setFiltroPessoa: (p: PessoaId) => void;
   setNome: (p: PessoaAutor, nome: string) => void;
   setFoto: (p: PessoaAutor, uri: string | null) => void;
-  // Volta nomes e fotos aos defaults. Util para reset de onboarding
+  // Volta nomes e fotos aos defaults. Útil para reset de onboarding
   // em ambiente de desenvolvimento ou para botao "limpar dados" em
   // settings.
   resetar: () => void;

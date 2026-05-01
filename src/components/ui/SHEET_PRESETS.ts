@@ -5,8 +5,8 @@
 // SHEET_DEFAULT mantem o par ['40%', '85%'] adotado em M01.4 quando
 // o BottomSheet ganhou seu fallback. Telas que abrem em snap unico
 // (humor rapido, eventos, diario) consomem os presets de altura
-// fixa abaixo. Nao trocar valores sem revisao explicita; varias
-// telas calibraram conteudo com altura especifica.
+// fixa abaixo. Não trocar valores sem revisao explicita; varias
+// telas calibraram conteudo com altura específica.
 export const SHEET_60: readonly string[] = ['60%'] as const;
 export const SHEET_70: readonly string[] = ['70%'] as const;
 export const SHEET_80: readonly string[] = ['80%'] as const;

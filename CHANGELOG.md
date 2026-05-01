@@ -5,6 +5,19 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Quality
+- **INFRA-acentuacao-comentarios (a commitar) — 145 arquivos.**
+  Varredura mecânica de comentários PT-BR sem acento em `app/`
+  e `src/`. Dicionário fechado de ~80 termos aplicado token-a-token
+  apenas em comentários (`//` e `/* */`); strings literais,
+  identifiers e JSX preservados. 715 substituições 1:1 (zero
+  código adicionado/removido). Volume residual 3 (todas
+  referências legítimas a paths/arquivos no filesystem que
+  permanecem sem acento), redução 99.3% (419 → 3). 889 testes,
+  100 suites, bundle Hermes 8.47 MB delta 0. Cumpre tabela de
+  linguagem do CLAUDE.md "Comentários no código PT-BR Sentence
+  case Sim, completa".
+
 ### Documentation
 - **M19.x (a commitar) — Inventário de mockups visuais.**
   Novo `docs/MOCKUPS-INVENTARIO.md` (151 linhas) mapeando cada

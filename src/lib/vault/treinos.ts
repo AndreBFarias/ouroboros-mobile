@@ -5,7 +5,7 @@
 //
 // Exclusao usa lixeira soft em
 // cacheDirectory/lixeira/treinos/<timestamp>-<slug>.md, mesmo padrao
-// adotado por exercicios na M13.
+// adotado por exercícios na M13.
 //
 // Listagem aplica filtro opcional por pessoa (via campo autor) e
 // devolve sessoes ordenadas por data desc.
@@ -44,10 +44,10 @@ export async function listarTreinos(
 
   const lidos: TreinoSessao[] = [];
   for (const arquivoUri of arquivos) {
-    // Pula drafts (treinos/draft/...). Drafts da M13 sao migrados em
+    // Pula drafts (treinos/draft/...). Drafts da M13 são migrados em
     // boot por migrarDraftsParaTreinoSessao; depois disso a pasta de
     // drafts fica vazia. Mesmo assim filtramos defensivamente para
-    // nao parsear estrutura antiga durante a janela de migracao.
+    // não parsear estrutura antiga durante a janela de migracao.
     const decoded = decodeURIComponent(arquivoUri);
     if (decoded.includes('/treinos/draft/')) continue;
 
@@ -65,13 +65,13 @@ export async function listarTreinos(
     filtradas = filtradas.filter((s) => s.autor === a);
   }
 
-  // Ordenacao desc por data ISO (lexicografica ja respeita ordem).
+  // Ordenacao desc por data ISO (lexicografica já respeita ordem).
   filtradas.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
   return filtradas;
 }
 
 // Cria ou atualiza uma sessao de treino. Caller fornece slug como
-// parte do path; dentro do meta nao ha slug. A combinacao data +
+// parte do path; dentro do meta não ha slug. A combinacao data +
 // slug forma o nome do arquivo.
 export async function escreverTreino(
   vaultRoot: string,
@@ -103,7 +103,7 @@ export async function excluirTreino(
   try {
     await FileSystem.makeDirectoryAsync(lixeiraDir, { intermediates: true });
   } catch {
-    // Ja existe.
+    // Já existe.
   }
 
   const ts = formatTimestampLixeira(new Date());

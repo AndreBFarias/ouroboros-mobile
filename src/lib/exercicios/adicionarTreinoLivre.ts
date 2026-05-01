@@ -2,19 +2,19 @@
 // "Adicionar a treino livre" no Detalhe (Tela 08). Sai em
 // treinos/draft/YYYY-MM-DD-<slug>.md com YAML minimo.
 //
-// Decisao M13 (spec secao 10): nao criar TreinoSessaoSchema agora.
+// Decisão M13 (spec seção 10): não criar TreinoSessaoSchema agora.
 // M11 migrara esses drafts para schema formal. Aqui usamos zod
 // inline com tipo treino_draft, autor, data e lista de slugs de
-// exercicios.
+// exercícios.
 //
-// Quando ja existe um draft do mesmo dia, o helper le o existente,
-// concatena o slug novo (se nao estiver presente) e regrava. Assim
-// o usuario pode adicionar varios exercicios ao mesmo treino livre
+// Quando já existe um draft do mesmo dia, o helper le o existente,
+// concatena o slug novo (se não estiver presente) e regrava. Assim
+// o usuario pode adicionar varios exercícios ao mesmo treino livre
 // numa unica sessao sem criar arquivos duplicados.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
-// Imports diretos aos modulos finais (nao ao barrel @/lib/vault)
+// Imports diretos aos modulos finais (não ao barrel @/lib/vault)
 // para evitar ciclo de carregamento durante jest.requireActual nos
 // testes que mockam o barrel.
 import { treinosDraftPath, formatDateYmd } from '@/lib/vault/paths';
@@ -66,7 +66,7 @@ export async function adicionarTreinoLivre(
   const rel = treinosDraftPath(agora, slugDraft);
   const uri = joinUri(vaultRoot, rel);
 
-  // Verifica se ja existe draft com o mesmo nome de arquivo. Se
+  // Verifica se já existe draft com o mesmo nome de arquivo. Se
   // houver, anexa o slug a lista (sem duplicar).
   const existente = await readVaultFile<TreinoDraft>(uri, TreinoDraftSchema);
   if (existente) {

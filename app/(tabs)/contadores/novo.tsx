@@ -1,7 +1,7 @@
 // Tela de criacao de Contador (M18). Form:
 //   - Input titulo.
 //   - Botao revelando DateTimePicker (mode date) com maximumDate=now
-//     para bloquear datas futuras (decisao spec secao 11).
+//     para bloquear datas futuras (decisão spec seção 11).
 //   - Botao Criar primary.
 //
 // Pos-Salvar: derivar slug -> resolver unicidade -> escrever no
@@ -43,7 +43,7 @@ function nowIso(): string {
 
 // Garante slug unico contra contadores existentes. Adiciona sufixo
 // random quando colide; loop limitado a 50 tentativas (probabilidade
-// de colisao apos 50 e desprezivel: 36^4 = 1.6M combinacoes).
+// de colisao após 50 e desprezivel: 36^4 = 1.6M combinacoes).
 async function resolverSlugUnico(
   vaultRoot: string,
   base: string
@@ -60,7 +60,7 @@ async function resolverSlugUnico(
 
 function formatDataLeitura(d: Date): string {
   // Formato "DD de mes de YYYY" para humanos. Sentence case PT-BR.
-  // Nao usamos toLocaleDateString para nao depender de Intl no web.
+  // Não usamos toLocaleDateString para não depender de Intl no web.
   const meses = [
     'janeiro',
     'fevereiro',

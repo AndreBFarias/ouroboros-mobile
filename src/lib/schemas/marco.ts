@@ -1,5 +1,5 @@
 // Schema do arquivo marcos/YYYY-MM-DD-slug.md (marco / conquista
-// pessoal). Modelado em docs/sprints/M11-spec.md secao 2.
+// pessoal). Modelado em docs/sprints/M11-spec.md seção 2.
 //
 // Marcos podem ser criados manualmente (Tela 11 botao +) ou
 // automaticamente por:
@@ -7,7 +7,7 @@
 //  - verificarMarcosAuto (cliente). Origem 'client'.
 //
 // Hash de conteudo evita duplicacao quando ambas as origens rodam.
-// Sentence case PT-BR + sem gamificacao: nao ha rank, badge ou
+// Sentence case PT-BR + sem gamificacao: não ha rank, badge ou
 // pontuacao no schema. Frase descritiva neutra.
 //
 // Comentarios sem acento (convencao shell/CI).

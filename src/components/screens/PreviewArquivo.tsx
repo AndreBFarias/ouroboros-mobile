@@ -6,7 +6,7 @@
 //     so trata pdf+image; texto fica como variant inerte para
 //     extensibilidade).
 //
-// Nao tenta carregar metadado pesado: tamanho em bytes vem do caller
+// Não tenta carregar metadado pesado: tamanho em bytes vem do caller
 // como prop; aqui so renderizamos o que recebemos.
 import { Image, Text, View } from 'react-native';
 import { FileText, ImageIcon } from 'lucide-react-native';
@@ -19,13 +19,13 @@ export interface PreviewArquivoProps {
   mimeType: string;
   // Nome amigavel para exibir (sem extensao).
   nome: string;
-  // Tamanho em bytes (quando disponivel) para exibir embaixo do nome.
-  // 0 = nao disponivel; nao renderiza linha.
+  // Tamanho em bytes (quando disponível) para exibir embaixo do nome.
+  // 0 = não disponível; não renderiza linha.
   tamanhoBytes?: number;
 }
 
 // Formata tamanho em bytes para humano (KB, MB). Resolucao curta
-// (sem decimais) para nao distrair do flow PIX.
+// (sem decimais) para não distrair do flow PIX.
 function formatTamanho(bytes: number): string {
   if (bytes <= 0) return '';
   if (bytes < 1024) return `${bytes} B`;

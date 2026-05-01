@@ -1,5 +1,5 @@
 // Schema do arquivo tarefas/YYYY-MM-DD-<slug>.md (To-do leve opt-in,
-// M17). Modelado em docs/sprints/M17-spec.md secao 3.
+// M17). Modelado em docs/sprints/M17-spec.md seção 3.
 //
 // Cada tarefa e uma linha plana global - sem subtarefas, sem projetos,
 // sem prioridade, sem due-date complexo (ADR-0005, regra de baixa
@@ -7,7 +7,7 @@
 //
 //  - tipo: literal 'tarefa' (discriminator do frontmatter).
 //  - data: YYYY-MM-DD da criacao da tarefa (fuso UTC-3, formatDateYmd).
-//  - autor: pessoa_a | pessoa_b (do store usePessoa.pessoaAtiva). Nao
+//  - autor: pessoa_a | pessoa_b (do store usePessoa.pessoaAtiva). Não
 //    aceita 'ambos' porque toda tarefa tem dono unico.
 //  - titulo: string visivel (acentuacao completa PT-BR permitida).
 //  - feito: boolean. Tap simples na lista alterna.
@@ -17,7 +17,7 @@
 import { z } from 'zod';
 import { PessoaAutorSchema } from './pessoa';
 
-// YYYY-MM-DD. Aceita 1900..2099, MM 01-12, DD 01-31 (validacao real
+// YYYY-MM-DD. Aceita 1900..2099, MM 01-12, DD 01-31 (validação real
 // do calendario fica no caller; aqui so formato).
 const DataYmd = z
   .string()
@@ -52,7 +52,7 @@ export type Tarefa = z.infer<typeof TarefaSchema>;
 // estavel para o resto da vida da tarefa (path do arquivo).
 //
 // Sufixo random 4 chars depois do kebab evita colisao quando dois
-// titulos iguais sao criados no mesmo dia: 'comprar-pao' -> arquivo
+// titulos iguais são criados no mesmo dia: 'comprar-pao' -> arquivo
 // 'YYYY-MM-DD-comprar-pao.md'; segundo identico vira
 // 'YYYY-MM-DD-comprar-pao-7k2x.md'. Caller compoe esse sufixo.
 export function slugifyTitulo(titulo: string): string {
@@ -66,12 +66,12 @@ export function slugifyTitulo(titulo: string): string {
     .replace(/-+/g, '-')
     .slice(0, 64);
   // Evita slug vazio (titulo so com simbolos): retorna 'tarefa' como
-  // fallback. Caller deve adicionar sufixo random para nao colidir.
+  // fallback. Caller deve adicionar sufixo random para não colidir.
   return base.length > 0 ? base : 'tarefa';
 }
 
 // Sufixo random 4 chars [a-z0-9] para deduplicar nomes de arquivo
-// quando dois titulos iguais sao criados no mesmo dia. Deterministico
+// quando dois titulos iguais são criados no mesmo dia. Deterministico
 // em testes via Math.random; caller pode injetar seed.
 export function sufixoRandom(): string {
   const alfabeto = 'abcdefghijklmnopqrstuvwxyz0123456789';

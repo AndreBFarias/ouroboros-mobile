@@ -4,8 +4,8 @@
 //
 // O hash inclui apenas autor + descricao porque queremos que o mesmo
 // marco semantico (ex: "Tres treinos nesta semana." de pessoa_a no
-// dia D) deduplique entre origens. A data nao entra no hash porque o
-// criterio "tres treinos em 7 dias" pode disparar em dias proximos
+// dia D) deduplique entre origens. A data não entra no hash porque o
+// criterio "tres treinos em 7 dias" pode disparar em dias próximos
 // com a mesma frase: nesse caso, dedupe por descricao+autor e
 // suficiente, e o marco mais antigo prevalece.
 //
@@ -21,7 +21,7 @@ function byteToHex(b: number): string {
 
 // SHA-256 minimal puro JS. Adaptado do algoritmo padrao (RFC 6234).
 // Suficiente para 12 chars iniciais (usados como hash truncado);
-// nao e seguranca-critico, e dedupe.
+// não e seguranca-critico, e dedupe.
 function sha256(message: string): string {
   // Codifica string para Uint8Array UTF-8.
   const bytes: number[] = [];

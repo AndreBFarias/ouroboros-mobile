@@ -1,16 +1,16 @@
-// Heuristica de status de sync via mtime da pasta do Vault. Decisao
-// M15: independente do metodo (Syncthing, Obsidian Sync, sem sync),
+// Heuristica de status de sync via mtime da pasta do Vault. Decisão
+// M15: independente do método (Syncthing, Obsidian Sync, sem sync),
 // olhamos so a ultima modificacao para classificar.
 //
-// Cores (CONTRACT secao 1.5 + spec M15):
+// Cores (CONTRACT seção 1.5 + spec M15):
 //   - 'verde'    = mtime < 30min atras (atualizado).
 //   - 'amarelo'  = entre 30min e 6h.
-//   - 'vermelho' = > 6h, OU diretorio nao existe, OU conflito
+//   - 'vermelho' = > 6h, OU diretorio não existe, OU conflito
 //     detectado em <vault>/.stversions/ (Syncthing).
 //
-// Heuristica e local: nao chama API do Syncthing. Apenas inspeciona
+// Heuristica e local: não chama API do Syncthing. Apenas inspeciona
 // filesystem. Em web, retorna 'desconhecido' porque expo-file-system
-// nao acessa filesystem real do desktop.
+// não acessa filesystem real do desktop.
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -35,7 +35,7 @@ export function classificar(deltaMs: number): SyncCor {
 }
 
 // Le mtime do diretorio raiz do vault. URI vem do permission helper
-// (M02). Se a URI nao existe ou nao for legivel, retorna vermelho
+// (M02). Se a URI não existe ou não for legivel, retorna vermelho
 // com `ultimaModificacao: null`.
 export async function verificarSyncStatus(
   vaultUri: string | null

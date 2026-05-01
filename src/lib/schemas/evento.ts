@@ -1,5 +1,5 @@
 // Schema do arquivo eventos/YYYY-MM-DD-slug.md.
-// Modelado em docs/BRIEFING.md secao 7. Modo positivo/negativo,
+// Modelado em docs/BRIEFING.md seção 7. Modo positivo/negativo,
 // lugar e bairro livres, lista de pessoas envolvidas (PessoaId
 // permite 'ambos'), categoria livre, intensidade 1-5, anexos.
 import { z } from 'zod';

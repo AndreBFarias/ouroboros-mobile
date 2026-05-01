@@ -33,7 +33,7 @@ export function MemoriasFotosTab(): ReactNode {
     null
   );
 
-  // Tamanho de cada thumbnail. width disponivel - 2*padding lateral
+  // Tamanho de cada thumbnail. width disponível - 2*padding lateral
   // - 2*gaps internos.
   const thumbSize = useMemo(() => {
     const padding = spacing.lg * 2;
@@ -50,7 +50,7 @@ export function MemoriasFotosTab(): ReactNode {
     if (!fotoSelecionada) return;
     fotoRef.current?.close();
     // Navegacao por origem. Eventos abrem em /eventos com query
-    // (M07 nao tem rota detalhe ainda); por ora apenas dismiss.
+    // (M07 não tem rota detalhe ainda); por ora apenas dismiss.
     if (fotoSelecionada.origem === 'evento') {
       router.push('/eventos');
     }

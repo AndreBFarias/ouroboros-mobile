@@ -36,8 +36,8 @@ interface SectionProps {
   children: ReactNode;
 }
 
-// Espacamento generoso entre secoes (40dp) e gap interno 14dp.
-// Titulo da secao com paddingTop 8 e marginBottom 4 para respirar.
+// Espacamento generoso entre seções (40dp) e gap interno 14dp.
+// Titulo da seção com paddingTop 8 e marginBottom 4 para respirar.
 function Section({ title, children }: SectionProps) {
   return (
     <View style={{ marginBottom: 40, gap: 14 }}>
@@ -316,9 +316,9 @@ export default function ComponentsStory() {
         </View>
       </BottomSheet>
 
-      {/* FAB simples nao convive bem com FABRadial no mesmo canto:
+      {/* FAB simples não convive bem com FABRadial no mesmo canto:
           quando radial estiver fechado, mostramos FAB; quando aberto,
-          o FABRadial ja desenha seu proprio FAB rotativo. */}
+          o FABRadial já desenha seu proprio FAB rotativo. */}
       {!radialOpen && (
         <FAB
           onPress={() => toast.show('FAB pressionado.', 'info')}

@@ -1,5 +1,5 @@
 // Stub temporario para a aba opt-in Calendario (M11.5). Sem toggle
-// ativo a aba nao aparece na bottom bar; deep link manual
+// ativo a aba não aparece na bottom bar; deep link manual
 // renderiza este redirect.
 import { Redirect } from 'expo-router';
 

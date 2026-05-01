@@ -21,7 +21,7 @@ import { colors, spacing } from '@/theme/tokens';
 export interface CardComparativoProps {
   // Rotulo PT-BR completo (ex: "Peso", "Braço esquerdo").
   nome: string;
-  // Valor da medida mais recente. null quando nao ha medida valida
+  // Valor da medida mais recente. null quando não ha medida valida
   // para este campo na janela exibida.
   valorAtual: number | null;
   // Unidade ('kg' ou 'cm' tipicamente).
@@ -31,12 +31,12 @@ export interface CardComparativoProps {
   valorPrimeira: number | null;
   // Pontos para o sparkline (ordem cronologica asc).
   pontos: SparklineMedidaPoint[];
-  // Largura disponivel ao card (caller calcula com base em
+  // Largura disponível ao card (caller calcula com base em
   // useWindowDimensions).
   largura: number;
 }
 
-// Formata numero PT-BR com 1 casa decimal e separador virgula.
+// Formata número PT-BR com 1 casa decimal e separador virgula.
 function formatarNumero(n: number): string {
   // toFixed gera ponto; trocamos por virgula. Negativo preserva sinal.
   const fixed = n.toFixed(1);
@@ -71,7 +71,7 @@ export function CardComparativo({
   const valorMostrado =
     valorAtual === null ? '—' : formatarNumero(valorAtual);
 
-  // Largura util do sparkline: card tem padding 16 lateral.
+  // Largura útil do sparkline: card tem padding 16 lateral.
   const larguraSparkline = Math.max(0, largura - spacing.base * 2);
 
   return (

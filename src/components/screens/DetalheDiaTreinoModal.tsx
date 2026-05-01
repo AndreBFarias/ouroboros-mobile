@@ -1,7 +1,7 @@
 // Tela 10 - bottom sheet 60% com detalhe de uma sessao de treino
 // passada. Header laranja com data formatada PT-BR ("23 de abril,
 // terça"), subtitle cyan ("Rotina A - 28 min - <pessoa>"), lista
-// compacta de exercicios (check verde + nome + series x reps - carga),
+// compacta de exercícios (check verde + nome + séries x reps - carga),
 // observacoes em italico muted, e botoes Editar / Duplicar pra hoje /
 // Excluir.
 //
@@ -132,7 +132,7 @@ export function DetalheDiaTreinoModal({
     }
   }, [vaultRoot, sessao, toast, onFechar]);
 
-  // Formatar uma linha de exercicio: "<nome>  <series>x<reps> - <carga>kg"
+  // Formatar uma linha de exercício: "<nome>  <séries>x<reps> - <carga>kg"
   const formatLinhaExercicio = (
     ex: TreinoSessao['exercicios'][number]
   ): string => {

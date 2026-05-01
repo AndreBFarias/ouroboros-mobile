@@ -3,7 +3,7 @@
 // livre opcional de medicacao, horas de sono, tags rapidas (multi)
 // e uma frase opcional. Persiste em daily/YYYY-MM-DD.md no Vault.
 //
-// Decisoes M05 (spec secao 9):
+// Decisões M05 (spec seção 9):
 //  - Frase fica no frontmatter (corpo vazio).
 //  - Tags em lista fechada (8 slugs em src/lib/humor/tagsRapidas.ts).
 //  - Medicacao e texto livre opcional. Vazio = campo omitido.
@@ -54,7 +54,7 @@ export default function HumorRapido() {
   const [frase, setFrase] = useState<string>('');
   const [salvando, setSalvando] = useState<boolean>(false);
 
-  // Abre o sheet automaticamente apos a montagem. Index 0 = primeiro
+  // Abre o sheet automaticamente após a montagem. Index 0 = primeiro
   // snap point ('70%'). Usamos ref para controlar imperativamente, em
   // vez de prop index, porque queremos garantir abertura mesmo se a
   // rota for re-montada (caso comum em navegacao via FAB Radial).
@@ -62,7 +62,7 @@ export default function HumorRapido() {
     sheetRef.current?.expand();
   }, []);
 
-  // Caso de borda: rota acessada sem onboarding concluido. M03 ja
+  // Caso de borda: rota acessada sem onboarding concluido. M03 já
   // protege a Tela 01, mas se chegou aqui via deep link sem vault,
   // redirecionamos para o fluxo correto.
   if (!vaultRoot) {
@@ -74,7 +74,7 @@ export default function HumorRapido() {
     setSalvando(true);
 
     // Monta o meta a partir do estado local. Campos opcionais so
-    // entram no payload quando preenchidos para nao poluir o YAML.
+    // entram no payload quando preenchidos para não poluir o YAML.
     const horasSono = horasSonoTexto.trim();
     const medicacaoTrim = medicacao.trim();
     const fraseTrim = frase.trim();
@@ -126,7 +126,7 @@ export default function HumorRapido() {
       onChange={(idx) => {
         if (idx === -1) {
           // Sheet foi fechado (gesto ou imperativo). Volta para a
-          // tela anterior. router.back e idempotente quando ja saiu.
+          // tela anterior. router.back e idempotente quando já saiu.
           router.back();
         }
       }}

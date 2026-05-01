@@ -1,7 +1,7 @@
-// Tela 07 - Galeria de exercicios. Grid 2 colunas de cards 1:1 com
+// Tela 07 - Galeria de exercícios. Grid 2 colunas de cards 1:1 com
 // GIF preview + nome em laranja. ChipGroup multi de filtro por
 // grupo muscular, input search por nome, FAB "+ novo" abre a Tela
-// 02 (cadastro). Empty state quando ainda nao ha exercicios.
+// 02 (cadastro). Empty state quando ainda não ha exercícios.
 //
 // Carrega lista do Vault via listarExercicios(vaultRoot, filtros).
 // Cada filtro re-dispara a leitura. Lista ordenada por nome
@@ -42,7 +42,7 @@ export default function GaleriaExercicios() {
   const [carregando, setCarregando] = useState(true);
 
   // Recarrega a lista quando vault, grupo ou search mudarem.
-  // Tambem recarrega ao voltar para a tela (focus) para refletir
+  // Também recarrega ao voltar para a tela (focus) para refletir
   // edicoes e exclusoes feitas em outras rotas.
   const carregar = useCallback(async () => {
     if (!vaultRoot) {
@@ -108,7 +108,7 @@ export default function GaleriaExercicios() {
 
   // Layout em pares: divide a lista em linhas de 2 elementos para
   // renderizar grid 2 colunas com View flex-row + flex-1. Evita
-  // depender de FlatList numColumns que nao recalcula bem em web.
+  // depender de FlatList numColumns que não recalcula bem em web.
   const linhas = useMemo(() => {
     const out: Exercicio[][] = [];
     for (let i = 0; i < exercicios.length; i += 2) {
@@ -189,7 +189,7 @@ export default function GaleriaExercicios() {
               />
             ))}
             {/* Quando linha tem 1 elemento, ocupa metade com spacer
-                vazio para nao esticar o card sozinho. */}
+                vazio para não esticar o card sozinho. */}
             {linha.length === 1 ? <View style={{ flex: 1 }} /> : null}
           </View>
         ))}

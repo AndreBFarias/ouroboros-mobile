@@ -1,5 +1,5 @@
 // Barrel de schemas zod. Toda sprint que cria schema novo adiciona
-// linha aqui (CONTRACT secao 1.3). Importar como
+// linha aqui (CONTRACT seção 1.3). Importar como
 // `import { HumorSchema, type HumorMeta } from '@/lib/schemas';`.
 export {
   PessoaIdSchema,

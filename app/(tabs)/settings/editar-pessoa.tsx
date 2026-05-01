@@ -1,6 +1,6 @@
 // Sub-tela: edicao de nomes e fotos das pessoas. Reusa <AvatarPicker>
 // e <Input> do M03. Salva via usePessoa.setNome (foto e tratada
-// dentro do AvatarPicker que ja persiste em fotos[pessoa]).
+// dentro do AvatarPicker que já persiste em fotos[pessoa]).
 // Mostra pessoa B somente quando tipoCompanhia === 'duo'.
 import { useState, useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';

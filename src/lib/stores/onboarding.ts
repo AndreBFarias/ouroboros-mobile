@@ -1,5 +1,5 @@
 // Store de onboarding. Marca conclusao do fluxo de 4 frames e
-// guarda escolhas informativas (tipo de companhia, metodo de sync).
+// guarda escolhas informativas (tipo de companhia, método de sync).
 // Persiste em SecureStore via secureStorage adapter.
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';

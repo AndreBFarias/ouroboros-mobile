@@ -1,7 +1,7 @@
 // Sparkline de evolucao de carga (kg) ao longo do tempo. Recebe
 // array de HistoricoExecucao (max 12 pontos exibidos) e renderiza
 // linha cyan com pontos. Tap em um ponto exibe pill cyan acima com
-// "<DD/MM>: <carga> kg, <series>x<reps>". Pill some apos 2s.
+// "<DD/MM>: <carga> kg, <séries>x<reps>". Pill some após 2s.
 //
 // Caller fornece largura em pixels (rolar com a tela). Altura fixa
 // 56dp para alinhar com cards padroes do projeto.
@@ -33,7 +33,7 @@ const PADDING_Y = 8;
 
 // Formata data ISO em DD/MM (curto para tooltip pill).
 function formatDM(iso: string): string {
-  // Pula validacao defensiva: caller passa string valida do schema.
+  // Pula validação defensiva: caller passa string valida do schema.
   // Captura YYYY-MM-DD prefixo.
   const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return iso;
@@ -48,7 +48,7 @@ export function HistoricoSparkline({
 }: HistoricoSparklineProps) {
   const [tooltipIdx, setTooltipIdx] = useState<number | null>(null);
 
-  // Esconde tooltip apos 2s. Reset a cada novo tap.
+  // Esconde tooltip após 2s. Reset a cada novo tap.
   useEffect(() => {
     if (tooltipIdx === null) return;
     const t = setTimeout(() => setTooltipIdx(null), 2000);
@@ -92,7 +92,7 @@ export function HistoricoSparkline({
   const max = Math.max(...valores);
   const range = max - min === 0 ? 1 : max - min;
 
-  // Largura util (descontando padding lateral).
+  // Largura útil (descontando padding lateral).
   const w = Math.max(0, largura - PADDING_X * 2);
   const h = Math.max(0, altura - PADDING_Y * 2);
 
@@ -111,7 +111,7 @@ export function HistoricoSparkline({
       ? `${formatDM(dados[tooltipIdx].data)}: ${dados[tooltipIdx].carga} kg, ${dados[tooltipIdx].series}x${dados[tooltipIdx].reps}`
       : '';
 
-  // Posicao do tooltip: tenta centralizar no ponto. Garante que nao
+  // Posicao do tooltip: tenta centralizar no ponto. Garante que não
   // estoure os limites laterais.
   const tooltipX =
     tooltipIdx !== null
@@ -157,7 +157,7 @@ export function HistoricoSparkline({
       {/* Sparkline */}
       <View style={{ marginTop: 22 }}>
         <Svg width={largura} height={altura}>
-          {/* Linha de base muted-decor para referencia. */}
+          {/* Linha de base muted-decor para referência. */}
           <Line
             x1={PADDING_X}
             x2={largura - PADDING_X}
@@ -184,7 +184,7 @@ export function HistoricoSparkline({
           ))}
         </Svg>
         {/* Pontos toucaveis em camada superior. Usa View porque
-            React Native Svg nao expoe onPress de forma confiavel
+            React Native Svg não expoe onPress de forma confiavel
             cross-platform. */}
         <View
           style={{

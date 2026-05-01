@@ -1,14 +1,14 @@
 // Tela de detalhe do Contador (M18). Conteudo:
 //   - Header "<titulo>" laranja, com chevron de voltar.
-//   - Sumario: numero gigante + label dia/dias + recorde muted.
+//   - Sumario: número gigante + label dia/dias + recorde muted.
 //   - Botoes: Editar titulo (abre Modal de input), Resetei
 //     (abre ModalConfirmaReset), Excluir (destructive, com modal de
 //     confirmacao).
 //   - Timeline vertical de resets em ordem cronologica decrescente
 //     (mais recente no topo). Linha --bg-elev, dots --muted-decor
-//     8dp, data formatada e duracao da sequencia ao lado.
+//     8dp, data formatada e duracao da sequência ao lado.
 //
-// Sem celebracao visual (ADR-0005). Sem cor especial em sequencias
+// Sem celebracao visual (ADR-0005). Sem cor especial em sequências
 // longas. Sem icones de trofeu, chama, badge.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -42,9 +42,9 @@ import { diasEntre } from '@/lib/util/diasEntre';
 import type { Contador } from '@/lib/schemas/contador';
 
 // Formata ISO datetime para "DD/MM/YYYY HH:MM" (UTC-3 implicito; o
-// ISO ja vem com offset).
+// ISO já vem com offset).
 function formatResetData(iso: string): string {
-  // Cria Date e usa metodos locais para extrair (browser/RN aplicam
+  // Cria Date e usa métodos locais para extrair (browser/RN aplicam
   // timezone do device automaticamente).
   const d = new Date(iso);
   const dia = String(d.getDate()).padStart(2, '0');
@@ -55,8 +55,8 @@ function formatResetData(iso: string): string {
   return `${dia}/${mes}/${ano} ${hh}:${mm}`;
 }
 
-// Computa a duracao da sequencia que terminou neste reset, em dias.
-// Usa o reset anterior (ou criado_em do contador) como inicio.
+// Computa a duracao da sequência que terminou neste reset, em dias.
+// Usa o reset anterior (ou criado_em do contador) como início.
 function calcDuracaoSequencia(
   resets: string[],
   indiceReset: number,
@@ -275,7 +275,7 @@ export default function ContadorDetalhe() {
           </Text>
         </View>
 
-        {/* Acoes */}
+        {/* Ações */}
         <View style={{ gap: spacing.sm }}>
           <Button
             label="Resetei"

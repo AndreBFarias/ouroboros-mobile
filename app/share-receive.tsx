@@ -45,7 +45,7 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
-// Formata data ISO 8601 com offset -03:00 (Sao Paulo, sem DST).
+// Formata data ISO 8601 com offset -03:00 (São Paulo, sem DST).
 // Mesmo helper usado em app/eventos.tsx.
 function toIsoSaoPaulo(date: Date): string {
   const TZ_OFFSET_MIN = -180;
@@ -59,9 +59,9 @@ function toIsoSaoPaulo(date: Date): string {
   return `${y}-${m}-${d}T${hh}:${mm}:${ss}-03:00`;
 }
 
-// Verifica se um path ja existe via SAF.getInfoAsync. Em caso de
-// erro (URI invalida, sem permissao), trata como "nao existe" para
-// nao bloquear o flow. O caller usa o retorno para decidir entre
+// Verifica se um path já existe via SAF.getInfoAsync. Em caso de
+// erro (URI invalida, sem permissao), trata como "não existe" para
+// não bloquear o flow. O caller usa o retorno para decidir entre
 // path canonico ou fallback com sufixo.
 async function pathExiste(uri: string): Promise<boolean> {
   try {
@@ -102,7 +102,7 @@ export default function ShareReceiveRoute() {
   );
 
   // Estado degenerado: rota acessada sem uri. Mostra mensagem curta
-  // e sai. Nao redirecionamos para nada porque a activity de share
+  // e sai. Não redirecionamos para nada porque a activity de share
   // raramente entra aqui sem uri; melhor falhar suave.
   if (!intent || !vaultRoot) {
     return (
@@ -135,16 +135,16 @@ export default function ShareReceiveRoute() {
 
   const nomeBase = nomeAmigavel(intent);
 
-  // Apos o early-return acima, vaultRoot e intent estao garantidos
-  // como nao-nulos. TS nao narrowa para closures aninhadas; usamos
-  // aliases locais para preservar a tipagem nao-nullable.
+  // Após o early-return acima, vaultRoot e intent estao garantidos
+  // como não-nulos. TS não narrowa para closures aninhadas; usamos
+  // aliases locais para preservar a tipagem não-nullable.
   const vaultRootSafe: string = vaultRoot;
   const intentSafe: SharedIntentInput = intent;
 
   // Path canonico recalculado em todo render quando subtipo muda.
   // Como a hora vai variar entre cliques, usamos um snapshot fixo
-  // por sessao para que o path display nao "mexa" sozinho. Isso
-  // tambem garante que o save use o mesmo path do display.
+  // por sessao para que o path display não "mexa" sozinho. Isso
+  // também garante que o save use o mesmo path do display.
   const agora = useMemo(() => new Date(), []);
   const pathCanonico = useMemo(
     () =>
@@ -192,7 +192,7 @@ export default function ShareReceiveRoute() {
   }
 
   // Tenta medir tamanho via SAF.getInfoAsync. Em erro, devolve 0
-  // (schema permite). Nao queremos bloquear save por isso.
+  // (schema permite). Não queremos bloquear save por isso.
   async function medirTamanho(): Promise<number> {
     try {
       const info = await FileSystem.getInfoAsync(intentSafe.uri);
@@ -205,7 +205,7 @@ export default function ShareReceiveRoute() {
     return 0;
   }
 
-  // Loop de busca de slot livre quando ja existe o canonico. Limite
+  // Loop de busca de slot livre quando já existe o canonico. Limite
   // defensivo de 9 tentativas com sufixos -1 a -9 antes de cair em
   // timestamp.
   async function acharSlotLivre(rel: string): Promise<string> {
@@ -221,7 +221,7 @@ export default function ShareReceiveRoute() {
   }
 
   // Resolucao do conflito: o usuario clicou em uma das 3 opcoes do
-  // banner. Cancelar fecha tudo; renomear automatico aplica sufixo
+  // banner. Cancelar fecha tudo; renomear automático aplica sufixo
   // e salva; substituir grava por cima.
   async function handleResolverConflito(acao: ConflitoAcao): Promise<void> {
     if (acao === 'cancelar') {
@@ -285,7 +285,7 @@ export default function ShareReceiveRoute() {
       subtipo={subtipo}
       onChangeSubtipo={(s) => {
         setSubtipo(s);
-        // Subtipo trocou: o conflito anterior provavelmente nao se
+        // Subtipo trocou: o conflito anterior provavelmente não se
         // aplica mais (path muda). Limpa o banner.
         if (conflito) setConflito(null);
       }}

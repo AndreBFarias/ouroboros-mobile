@@ -1,4 +1,4 @@
-// Limpeza automatica da lixeira soft de tarefas (M17). Roda no boot
+// Limpeza automática da lixeira soft de tarefas (M17). Roda no boot
 // do app (BOOT_HOOKS) uma vez por dia: verifica timestamp da ultima
 // limpeza em SecureStore (chave 'ouroboros.lixeira.ultimaLimpeza'),
 // e se passou >= 24h, varre cacheDirectory/lixeira/tarefas/ removendo
@@ -7,7 +7,7 @@
 // Os nomes de arquivos seguem o padrao YYYYMMDD-HHmmss-<basename>.md
 // gerado por excluirTarefa em src/lib/vault/tarefas.ts. A limpeza
 // extrai o YYYYMMDD do prefixo, compara com a data atual em UTC-3.
-// Arquivos sem prefixo reconhecivel sao ignorados (defensivo).
+// Arquivos sem prefixo reconhecivel são ignorados (defensivo).
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
@@ -47,7 +47,7 @@ async function gravarUltimaLimpeza(iso: string): Promise<void> {
 }
 
 // Extrai data YYYYMMDD do prefixo do nome de arquivo. Retorna null
-// quando o nome nao bate com o padrao esperado.
+// quando o nome não bate com o padrao esperado.
 function extrairDataPrefixo(nome: string): Date | null {
   const m = nome.match(/^(\d{4})(\d{2})(\d{2})-/);
   if (!m) return null;
@@ -71,8 +71,8 @@ export interface ResultadoLimpeza {
   motivo?: string;
 }
 
-// Funcao publica registrada em BOOT_HOOKS (M00.5). Idempotente:
-// chamar duas vezes seguidas no mesmo dia nao varre duas vezes.
+// Função publica registrada em BOOT_HOOKS (M00.5). Idempotente:
+// chamar duas vezes seguidas no mesmo dia não varre duas vezes.
 export async function limparLixeiraExpirada(
   agora: Date = new Date()
 ): Promise<ResultadoLimpeza> {
@@ -91,7 +91,7 @@ export async function limparLixeiraExpirada(
 
   const cacheBase = FileSystem.cacheDirectory;
   if (!cacheBase) {
-    // Web ou ambiente sem cacheDirectory; marcamos timestamp para nao
+    // Web ou ambiente sem cacheDirectory; marcamos timestamp para não
     // ficar varrendo a cada boot.
     await gravarUltimaLimpeza(agora.toISOString());
     return {
@@ -103,7 +103,7 @@ export async function limparLixeiraExpirada(
 
   const lixeiraDir = `${cacheBase}lixeira/tarefas/`;
 
-  // Pasta pode nao existir ainda (nenhuma exclusao feita). Tratamos
+  // Pasta pode não existir ainda (nenhuma exclusao feita). Tratamos
   // como zero arquivos.
   let entradas: string[];
   try {
@@ -128,7 +128,7 @@ export async function limparLixeiraExpirada(
         await FileSystem.deleteAsync(path, { idempotent: true });
         removidos += 1;
       } catch {
-        // Ignora falhas pontuais; proxima execucao tenta de novo.
+        // Ignora falhas pontuais; próxima execucao tenta de novo.
       }
     }
   }

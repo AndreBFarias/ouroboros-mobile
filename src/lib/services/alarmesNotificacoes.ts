@@ -1,6 +1,6 @@
 // Wrapper sobre expo-notifications para alarmes pessoais (M16).
 // Diferente do notificacoesLembretes (3 chaves diarias do Settings),
-// alarmes sao individuais, recorrentes por dia da semana e expoem
+// alarmes são individuais, recorrentes por dia da semana e expoem
 // snooze/desligar via category com action buttons.
 //
 // Convencoes de identifier:
@@ -11,9 +11,9 @@
 //
 // reagendarAlarmes() le todos os alarmes do Vault e re-cria schedules
 // para os ativos. Idempotente: cancela schedules antigos do prefixo
-// antes para evitar drift apos boot.
+// antes para evitar drift após boot.
 //
-// Em Web cai em no-op silencioso (Platform.OS === 'web') para nao
+// Em Web cai em no-op silencioso (Platform.OS === 'web') para não
 // quebrar smoke do Chrome.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -55,7 +55,7 @@ export function nomeArquivoSom(som: AlarmeSom): string {
   return SOM_FILE[som];
 }
 
-// Pede permissao se ainda nao tiver. Em Web retorna false silenciosamente.
+// Pede permissao se ainda não tiver. Em Web retorna false silenciosamente.
 export async function pedirPermissao(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   const status = await Notifications.getPermissionsAsync();
@@ -66,7 +66,7 @@ export async function pedirPermissao(): Promise<boolean> {
 }
 
 // Conta quantos schedules dessa feature estao ativos. Usado para
-// respeitar o cap de 64 (decisao do spec, secao 11).
+// respeitar o cap de 64 (decisão do spec, seção 11).
 export async function contarSchedulesAlarmes(): Promise<number> {
   if (Platform.OS === 'web') return 0;
   const lista = await Notifications.getAllScheduledNotificationsAsync();
@@ -97,7 +97,7 @@ export function parseHorario(
 // Agenda um alarme: 1 schedule por dia da semana presente em
 // alarme.dias_semana. Cancela schedules previos do mesmo slug antes
 // para evitar duplicidade. Retorna array de identifiers (vazio se
-// agendamento nao foi possivel) e flag estourou=true quando o cap
+// agendamento não foi possivel) e flag estourou=true quando o cap
 // global de 64 foi atingido.
 //
 // Em Web vira no-op (ids=[], estourou=false).
@@ -131,11 +131,11 @@ export async function agendarAlarme(
       identifier,
       content: {
         title: parsed.data.titulo,
-        // Body vazio: notificacao simples (decisao do spec, secao 5).
+        // Body vazio: notificação simples (decisão do spec, seção 5).
         body: '',
         sound: nomeArquivoSom(parsed.data.som),
         categoryIdentifier: ALARME_CATEGORY_ID,
-        // Payload util para o handler de action button identificar o
+        // Payload útil para o handler de action button identificar o
         // slug do alarme afetado.
         data: { slug: parsed.data.slug, dia },
       },
@@ -170,7 +170,7 @@ export async function cancelarAlarme(slug: string): Promise<void> {
 }
 
 // Agenda snooze one-shot daqui a N minutos. Cancela snooze previo do
-// mesmo slug antes para nao acumular. Retorna identifier do snooze
+// mesmo slug antes para não acumular. Retorna identifier do snooze
 // agendado, ou null em falha (web, sem permissao).
 export async function agendarSnooze(
   slug: string,
@@ -187,7 +187,7 @@ export async function agendarSnooze(
   await Notifications.scheduleNotificationAsync({
     identifier,
     content: {
-      // Titulo padrao do snooze; a UI nao mostra outra string aqui.
+      // Titulo padrao do snooze; a UI não mostra outra string aqui.
       title: 'Soneca',
       body: '',
       // Sem som no snooze: e re-disparo, deve ser menos invasivo.
@@ -198,7 +198,7 @@ export async function agendarSnooze(
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
       seconds: minutos * 60,
-      // One-shot: nao repete.
+      // One-shot: não repete.
       repeats: false,
       channelId: ALARME_CHANNEL_ID,
     },
@@ -270,7 +270,7 @@ export async function reagendarAlarmes(
   // Reagenda apenas ativos.
   for (const alarme of alarmes) {
     if (alarme.ativo) {
-      // Erros de agendamento individual nao quebram o boot.
+      // Erros de agendamento individual não quebram o boot.
       try {
         await agendarAlarme(alarme);
       } catch {

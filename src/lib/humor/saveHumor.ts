@@ -1,13 +1,13 @@
 // Persiste um registro de humor (Tela 15) em daily/YYYY-MM-DD.md no
-// Vault. Funcao pura: recebe meta validado e vaultRoot, devolve URI
+// Vault. Função pura: recebe meta validado e vaultRoot, devolve URI
 // final e flag de conflito A5.
 //
-// A5 (Armadilha do BRIEF secao 4): Syncthing entre 2 celulares pode
+// A5 (Armadilha do BRIEF seção 4): Syncthing entre 2 celulares pode
 // gerar colisao quando ambos registram humor no mesmo dia. Estrategia:
-// se ja existe arquivo no path canonico escrito por outra pessoa,
+// se já existe arquivo no path canonico escrito por outra pessoa,
 // gravamos em daily/YYYY-MM-DD-<pessoa>.md.
 //
-// Importante: esta funcao nao decide o que mostrar na UI quando ha
+// Importante: esta função não decide o que mostrar na UI quando ha
 // conflito; apenas grava na variante segura e devolve o flag para o
 // caller logar/avisar se desejar.
 import { dailyPath, readVaultFile, writeVaultFile } from '@/lib/vault';
@@ -20,7 +20,7 @@ export interface SaveHumorResult {
 }
 
 // Concatena root SAF e path relativo. Detalhe: o root pode terminar
-// ou nao com '/', e o path e sempre 'daily/...'. Normalizamos para
+// ou não com '/', e o path e sempre 'daily/...'. Normalizamos para
 // um unico '/'.
 function joinUri(root: string, rel: string): string {
   const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
@@ -36,8 +36,8 @@ function applyPessoaSuffix(rel: string, autor: HumorMeta['autor']): string {
 }
 
 // Monta o corpo .md a partir do meta. Hoje colocamos a frase apenas
-// no frontmatter (decisao M05 spec secao 9 item 1), entao o corpo
-// fica vazio. Mantemos a funcao isolada para sprint futura migrar a
+// no frontmatter (decisão M05 spec seção 9 item 1), entao o corpo
+// fica vazio. Mantemos a função isolada para sprint futura migrar a
 // frase para o corpo se ficar mais idiomatico no Obsidian.
 function buildBody(_meta: HumorMeta): string {
   return '';
@@ -58,7 +58,7 @@ async function resolvePath(
     // Mesmo autor regravando o dia: sobrescreve no canonico.
     return { rel: relCanonico, conflito: false };
   }
-  // Outra pessoa ja escreveu: usamos sufixo para evitar colisao.
+  // Outra pessoa já escreveu: usamos sufixo para evitar colisao.
   return { rel: applyPessoaSuffix(relCanonico, autor), conflito: true };
 }
 
@@ -67,7 +67,7 @@ export async function saveHumor(
   vaultRoot: string
 ): Promise<SaveHumorResult> {
   // Defensivo: revalida o meta antes de tocar em I/O. Quem chama
-  // tipicamente ja parseou, mas testes podem injetar payload bruto.
+  // tipicamente já parseou, mas testes podem injetar payload bruto.
   const parsed = HumorSchema.safeParse(meta);
   if (!parsed.success) {
     throw new Error(`humor invalido: ${parsed.error.message}`);
@@ -83,7 +83,7 @@ export async function saveHumor(
   const body = buildBody(parsed.data);
   await writeVaultFile<HumorMeta>(uri, parsed.data, body);
 
-  // M20: widget homescreen event-driven. Refresh apos save bem
+  // M20: widget homescreen event-driven. Refresh após save bem
   // sucedido. Toggle off ou erro do widget nunca propaga; import
   // dinamico evita ciclo entre humor e widget e mantem o saveHumor
   // resiliente em ambientes de teste sem bridge nativa.
@@ -95,7 +95,7 @@ export async function saveHumor(
       await atualizarWidgetHomescreen({ forcar: true });
     }
   } catch {
-    // Falha do widget nao bloqueia save do humor.
+    // Falha do widget não bloqueia save do humor.
   }
 
   return { uri, conflito };

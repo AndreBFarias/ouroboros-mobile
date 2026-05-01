@@ -1,6 +1,6 @@
 // Card colorido para o bloco "Sync" da Tela 23. Cor de borda lateral
 // + ponto indicador correspondem ao status retornado por
-// services/syncStatus.ts. Apenas leitura; nao tem onPress.
+// services/syncStatus.ts. Apenas leitura; não tem onPress.
 //
 // Uso:
 //   <CardStatus cor="verde" titulo="Sincronizado" subtitulo="Vault: ~/Protocolo-Ouroboros/" />

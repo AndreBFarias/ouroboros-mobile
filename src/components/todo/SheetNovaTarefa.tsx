@@ -5,13 +5,13 @@
 // Caller cuida de abrir/fechar o sheet (ref.expand/close); este
 // componente apenas renderiza o conteudo interno e dispara onSalvar
 // com o titulo. Estado interno do input persiste entre abrir/fechar
-// se caller nao desmontar.
+// se caller não desmontar.
 //
 // Armadilha A17 (BRIEF): BottomSheetTextInput com autoFocus em RN Web
 // dispara erro 'RNTextInput.default.State.currentlyFocusedInput is
 // not a function'. Em nativo (Android/iOS) funciona normalmente.
 // Mantemos autoFocus condicional para preservar UX em mobile e
-// permitir validacao Nivel A em web.
+// permitir validação Nível A em web.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useState, type ReactNode } from 'react';

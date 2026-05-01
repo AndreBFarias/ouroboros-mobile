@@ -4,7 +4,7 @@
 // botao 'X' overlay para remover. Cap interno de 6 fotos: ao
 // atingir, o botao fica disabled.
 //
-// O componente nao copia a foto pra documentDirectory aqui; isso
+// O componente não copia a foto pra documentDirectory aqui; isso
 // acontece em saveEvento ao gravar, alinhando os arquivos de assets
 // com o ciclo do .md (rollback simples se o save falhar). O estado
 // fica como lista de URIs locais (file://... ou content://...).

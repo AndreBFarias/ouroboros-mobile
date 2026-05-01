@@ -1,12 +1,12 @@
-// Tela 08 - Detalhe de exercicio. Mostra GIF full-width 16:9 (ou
+// Tela 08 - Detalhe de exercício. Mostra GIF full-width 16:9 (ou
 // placeholder), nome em laranja, chips cyan dos grupos musculares,
-// linha de meta-info (nivel - equipamento - carga recente),
+// linha de meta-info (nível - equipamento - carga recente),
 // BlocoInstrucao, lista de dicas em bullet, HistoricoSparkline
 // (com tooltip ao tap), linha "Última vez: ..." e os 3 botoes
 // Editar / Adicionar a treino livre / Excluir. Excluir abre modal
 // destrutivo.
 //
-// Carrega via lerExercicio(vaultRoot, slug). Se nao encontrar,
+// Carrega via lerExercicio(vaultRoot, slug). Se não encontrar,
 // mostra empty state e oferece voltar.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -256,7 +256,7 @@ export default function DetalheExercicio() {
           ))}
         </View>
 
-        {/* Linha meta-info: nivel - equipamento - carga */}
+        {/* Linha meta-info: nível - equipamento - carga */}
         <Text
           style={{
             color: colors.muted,
@@ -355,7 +355,7 @@ export default function DetalheExercicio() {
           ) : null}
         </View>
 
-        {/* Botoes acao */}
+        {/* Botoes ação */}
         <View style={{ gap: spacing.sm, marginTop: spacing.base }}>
           <Button label="Editar" onPress={irParaEdicao} variant="ghost" />
           <Button

@@ -1,6 +1,6 @@
-// Funcao pura que calcula a diferenca de dias inteiros entre duas
+// Função pura que calcula a diferenca de dias inteiros entre duas
 // datas, em UTC, sem horas. Usada pelo modulo de contadores (M18) para
-// derivar "dias atuais" a partir de inicio + agora.
+// derivar "dias atuais" a partir de início + agora.
 //
 // Convencao:
 //  - O calculo ignora horas, minutos, segundos e timezone do Date
@@ -8,7 +8,7 @@
 //    diferenca em milissegundos / 86_400_000.
 //  - Reset registrado as 23:59 conta como dia 0; novo dia comeca a
 //    meia-noite UTC (proxy razoavel para meia-noite local em UTC-3
-//    quando comparamos a data string YYYY-MM-DD que ja foi gerada
+//    quando comparamos a data string YYYY-MM-DD que já foi gerada
 //    com fuso aplicado).
 //  - O resultado e int >= 0 quando b >= a; pode ser negativo quando
 //    a > b (caller decide como tratar).
@@ -18,7 +18,7 @@
 const MS_POR_DIA = 86_400_000;
 
 // Truncamento de Date para meia-noite UTC. Garante que duas datas
-// sejam comparadas pelo seu YYYY-MM-DD (UTC) e nao pelo timestamp
+// sejam comparadas pelo seu YYYY-MM-DD (UTC) e não pelo timestamp
 // completo. Isso evita off-by-one por DST ou fuso (problema comum
 // quando se subtrai timestamps puros).
 function truncarUtcDia(d: Date): number {

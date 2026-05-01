@@ -3,7 +3,7 @@
 // 0.". Botoes: "Sim, resetei" red text (destructive variante), e
 // "Cancelar" muted (ghost variante).
 //
-// Sem celebracao visual: nao ha animacao de saida triunfal. Usa a
+// Sem celebracao visual: não ha animacao de saida triunfal. Usa a
 // transicao padrao de fade do RN Modal. Pos-confirmacao, o caller
 // dispara haptic medium + toast "Reset registrado." (textos sem
 // julgamento, conforme ADR-0005).

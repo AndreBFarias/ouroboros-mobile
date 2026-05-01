@@ -2,9 +2,9 @@
 // Storage de runtime sensivel: nomes que o usuario digitou no onboarding.
 // Em mobile (Android/iOS), SecureStore criptografa em hardware-backed
 // keystore (Android EncryptedSharedPreferences, iOS Keychain) evitando
-// vazamento por backup automatico. No web, expo-secure-store nao tem
+// vazamento por backup automático. No web, expo-secure-store não tem
 // implementacao nativa, entao caimos em localStorage (apenas em dev,
-// para permitir validacao no Chrome desktop sem conflito com celular).
+// para permitir validação no Chrome desktop sem conflito com celular).
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { StateStorage } from 'zustand/middleware';

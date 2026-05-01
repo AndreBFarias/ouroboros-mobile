@@ -154,13 +154,13 @@ export function useOptionalToast(): ToastApi {
   );
 }
 
-// Spring usado no movimento de entrada (referencia para testes que
+// Spring usado no movimento de entrada (referência para testes que
 // queiram inspecionar a animacao). Mantido aqui para evitar import
 // circular do Toast pelos testes.
 export const TOAST_SPRING = springs.default;
 
 // Re-export interno para componentes que queiram um Toast standalone
-// sem provider. Util em fixtures de teste.
+// sem provider. Útil em fixtures de teste.
 export const __TOAST_INTERNALS__ = {
   borderColorFor,
   TOAST_DURATION_MS,

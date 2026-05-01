@@ -1,7 +1,7 @@
 // Tela 12 - Form de medidas corporais. Grid 2 colunas com 9 inputs
 // numericos (peso, cintura, peito, bracos esq/dir, coxas esq/dir,
 // barriga, quadril). Cada input mostra placeholder muted-decor com
-// a ultima medida (sugestao) ou apenas a unidade quando nao ha
+// a ultima medida (sugestao) ou apenas a unidade quando não ha
 // sugestao.
 //
 // Bloco fotos com 3 botoes 100x100dp (frente / costas / lado), cada
@@ -13,7 +13,7 @@
 // observacoes); o caller concatena com separador "---" ao serializar
 // para o campo unico do schema.
 //
-// Botao "Salvar" verde full width. Apos salvar: toast 'Medidas
+// Botao "Salvar" verde full width. Após salvar: toast 'Medidas
 // salvas.' + navega de volta para Tela 13.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -51,8 +51,8 @@ import {
   type MedidaCampo,
 } from '@/lib/schemas/medidas';
 
-// Estado interno: cada campo tem string (vazio = nao informado).
-// Conversao para numero acontece no submit.
+// Estado interno: cada campo tem string (vazio = não informado).
+// Conversao para número acontece no submit.
 type CamposState = Record<MedidaCampo, string>;
 
 function camposVazios(): CamposState {
@@ -70,7 +70,7 @@ function camposVazios(): CamposState {
 }
 
 // Aceita virgula ou ponto. Converte para number ou null se invalido
-// ou vazio. Numeros negativos viram null para o schema rejeitar com
+// ou vazio. Números negativos viram null para o schema rejeitar com
 // mensagem mais clara.
 function parseNumeroBR(s: string): number | null {
   const trimmed = s.trim();

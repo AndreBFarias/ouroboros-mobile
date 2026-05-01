@@ -1,11 +1,11 @@
 // Menu modal contextual disparado por long-press em ItemTarefa (M17).
 // Modal transparente (RN nativo) cobre a tela com backdrop escuro
-// 85%; centro inferior tem um cartao com 2 acoes empilhadas:
+// 85%; centro inferior tem um cartao com 2 ações empilhadas:
 //  - Editar (text fg)
 //  - Excluir (text red)
-// Tap no backdrop fecha sem acao.
+// Tap no backdrop fecha sem ação.
 //
-// Caller controla visibilidade via prop `visible`. Este componente nao
+// Caller controla visibilidade via prop `visible`. Este componente não
 // guarda estado.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -46,7 +46,7 @@ export function MenuLongPress({
         accessibilityRole="button"
         accessibilityLabel="fechar menu"
       >
-        {/* Pressable interno bloqueia propagacao para nao fechar quando
+        {/* Pressable interno bloqueia propagacao para não fechar quando
             o usuario tocar dentro do cartao. */}
         <Pressable
           onPress={() => undefined}

@@ -2,7 +2,7 @@
 // Recebe array de pontos {data: 'YYYY-MM-DD', valor: number} (max 12
 // pontos exibidos) e renderiza polyline cyan com fill 30% abaixo
 // para dar peso visual leve. Sem cores positivo/negativo (ADR-0005):
-// a tonalidade nao muda quando o valor sobe ou cai.
+// a tonalidade não muda quando o valor sobe ou cai.
 //
 // Caller fornece largura em pixels. Altura padrao 48dp para caber
 // dentro de um Card 2 colunas. Quando ha menos de 2 pontos, mostra
@@ -39,7 +39,7 @@ export function SparklineMedida({
 }: SparklineMedidaProps) {
   const dados = pontos.slice(-maxPontos);
 
-  // Empty state - menos de 2 pontos nao forma sparkline util.
+  // Empty state - menos de 2 pontos não forma sparkline útil.
   if (dados.length < 2) {
     return (
       <View

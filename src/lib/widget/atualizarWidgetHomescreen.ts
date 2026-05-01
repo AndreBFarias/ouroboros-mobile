@@ -1,9 +1,9 @@
 // Helper canonico do widget homescreen (M20). Plugado em dois pontos:
 //   1. saveHumor (event-driven): humor salvo -> widget atualiza.
 //   2. BOOT_HOOKS (boot): app aberto sem novo humor mostra valor do
-//      dia. Idempotente: rate-limit em memoria (1 update por minuto).
+//      dia. Idempotente: rate-limit em memória (1 update por minuto).
 //
-// Estrategia de privacidade (CONTRACT 1.5 + spec M20 secao 4):
+// Estrategia de privacidade (CONTRACT 1.5 + spec M20 seção 4):
 //   - widgetHomescreen toggle off  -> chama desativarWidget(), sai.
 //   - toggle on, widgetMostraNome off (default) -> avatarLetra = inicial.
 //   - toggle on, widgetMostraNome on            -> avatarLetra = inicial,
@@ -34,7 +34,7 @@ const _state: RateState = {
   lastUpdateTimestamp: null,
 };
 
-// Reset util para testes. Nao deve ser chamado em runtime.
+// Reset útil para testes. Não deve ser chamado em runtime.
 export function _resetRateLimit(): void {
   _state.lastUpdateTimestamp = null;
 }
@@ -71,7 +71,7 @@ async function lerHumorDoDia(
 
 async function lerHeatmapCache(): Promise<number[]> {
   // Cache opcional escrito por M10 (heatmap home). Antes de M10 rodar,
-  // o arquivo nao existe e devolvemos []. O provider Kotlin trata []
+  // o arquivo não existe e devolvemos []. O provider Kotlin trata []
   // como blocos neutros.
   const cacheDir = FileSystem.cacheDirectory;
   if (!cacheDir) return [];
@@ -117,9 +117,9 @@ interface AtualizarOptions {
   forcar?: boolean;
 }
 
-// Funcao publica. Le settings + pessoa + humor + heatmap, monta o
+// Função publica. Le settings + pessoa + humor + heatmap, monta o
 // payload e chama o bridge nativo. Resiliente: erros internos viram
-// no-op para nao quebrar saveHumor ou boot.
+// no-op para não quebrar saveHumor ou boot.
 export async function atualizarWidgetHomescreen(
   options: AtualizarOptions = {}
 ): Promise<void> {

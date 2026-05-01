@@ -1,6 +1,6 @@
 // Orquestrador de hooks de boot. Cada sprint que precisa de tarefa
-// idempotente no inicio do app faz `BOOT_HOOKS.push(suaFuncao)` em
-// seu proprio modulo (CONTRACT secoes 1.7 e 5.4).
+// idempotente no início do app faz `BOOT_HOOKS.push(suaFuncao)` em
+// seu proprio modulo (CONTRACT seções 1.7 e 5.4).
 //
 // Lista canonica esperada (a ser plugada por sprints futuras):
 //   - M16 reagendarAlarmes (sempre, idempotente)
@@ -9,7 +9,7 @@
 //   - M20 atualizarWidgetHomescreen (quando humor e salvo)
 //
 // Em M00.5 a lista comeca vazia. O orquestrador roda cada hook em
-// sequencia, isolando erros: falha de um nao trava os demais.
+// sequência, isolando erros: falha de um não trava os demais.
 
 export type BootHook = () => Promise<void>;
 
@@ -23,7 +23,7 @@ export async function reagendarTodosBootHooks(): Promise<void> {
     try {
       await hook();
     } catch {
-      // Isola falha: hook quebrado nao impede demais.
+      // Isola falha: hook quebrado não impede demais.
     }
   }
 }
@@ -33,7 +33,7 @@ export async function reagendarTodosBootHooks(): Promise<void> {
 // verificacao de marcos auto avalia o estado consolidado.
 //
 // Import dinamico (lazy require) evita ciclo entre @/lib/boot/* e
-// @/lib/treinos|marcos/*. Funcoes wrapper encapsulam o require.
+// @/lib/treinos|marcos/*. Funções wrapper encapsulam o require.
 const migrarDraftsHook: BootHook = async () => {
   const { migrarDraftsParaTreinoSessao } = await import(
     '@/lib/treinos/migrarDraftsParaTreinoSessao'
@@ -48,7 +48,7 @@ const marcosAutoHook: BootHook = async () => {
 
 // M16 alarmes pessoais: reagenda todos os alarmes ativos no boot.
 // Idempotente (cancela tudo do prefixo antes de re-criar). Necessario
-// porque expo-notifications nao persiste schedules entre reboots ou
+// porque expo-notifications não persiste schedules entre reboots ou
 // updates do app no Android.
 const reagendarAlarmesHook: BootHook = async () => {
   const { reagendarAlarmes } = await import(
@@ -68,7 +68,7 @@ const limparLixeiraTarefasHook: BootHook = async () => {
 };
 
 // M20 widget homescreen: ao abrir o app, refresca o widget com o
-// humor do dia mesmo se nao houve save novo. Idempotente: respeita
+// humor do dia mesmo se não houve save novo. Idempotente: respeita
 // rate-limit interno (1 update por minuto). Toggle off curta cedo
 // chamando desativarWidget no provider nativo.
 const atualizarWidgetHomescreenHook: BootHook = async () => {

@@ -1,31 +1,31 @@
 // Schema do arquivo alarmes/<slug>.md (alarme pessoal opt-in, M16).
-// Modelado em docs/sprints/M16-spec.md secao 3.
+// Modelado em docs/sprints/M16-spec.md seção 3.
 //
 // Cada arquivo representa um alarme recorrente individual:
-//  - slug: identificador estavel kebab-case ASCII; tambem e o nome do
+//  - slug: identificador estavel kebab-case ASCII; também e o nome do
 //    arquivo. Validamos formato para evitar colisao no filesystem.
 //  - titulo: string visivel (acentuacao completa PT-BR permitida).
 //  - horario: HH:MM 24h, sem segundos.
 //  - dias_semana: array de 0-6 (0=domingo, ..., 6=sabado). Pelo menos 1.
-//  - tag: medicacao | treino | outro. Categoria conceitual; nao altera
+//  - tag: medicacao | treino | outro. Categoria conceitual; não altera
 //    comportamento, so e exibida em contextos de listagem futuros.
 //  - som: gentle | normal | forte. Mapeia para arquivo .wav empacotado
-//    em assets/sounds/alarmes/ (resolvido no wrapper de notificacoes).
+//    em assets/sounds/alarmes/ (resolvido no wrapper de notificações).
 //  - ativo: toggle global do alarme. Quando false, notification_ids
-//    fica vazio e nao ha schedule no sistema.
-//  - snooze_minutos: 1-60. Default 5 (decisao do spec, secao 11).
+//    fica vazio e não ha schedule no sistema.
+//  - snooze_minutos: 1-60. Default 5 (decisão do spec, seção 11).
 //  - criado_em: ISO datetime da criacao do alarme.
 //  - ultimo_disparo: ISO datetime do ultimo Desligar; null inicialmente.
 //  - notification_ids: array de identifiers retornados por
 //    expo-notifications.scheduleNotificationAsync (1 por dia da semana).
 //    Gerenciado pelo wrapper alarmesNotificacoes.
-//  - snooze_id: identifier do snooze ativo (one-shot); null quando nao
+//  - snooze_id: identifier do snooze ativo (one-shot); null quando não
 //    ha snooze pendente.
 //
 // Convencoes do projeto:
-//  - Sem campo de "autor": alarme pertence ao dispositivo, nao ha
-//    distincao pessoa_a/pessoa_b para esta feature (CONTRACT secao 1.1).
-//  - Sem gamificacao (ADR-0005): nao ha campo de "alarmes cumpridos".
+//  - Sem campo de "autor": alarme pertence ao dispositivo, não ha
+//    distincao pessoa_a/pessoa_b para esta feature (CONTRACT seção 1.1).
+//  - Sem gamificacao (ADR-0005): não ha campo de "alarmes cumpridos".
 //  - Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 
@@ -73,13 +73,13 @@ export const AlarmeSchema = z.object({
   slug: SlugSchema,
   titulo: z.string().min(1).max(80),
   horario: HorarioSchema,
-  // Pelo menos 1 dia, no maximo 7 (sem repetidos faz sentido mas nao
+  // Pelo menos 1 dia, no maximo 7 (sem repetidos faz sentido mas não
   // forcamos uniqueness no schema; UI cuida disso).
   dias_semana: z.array(DiaSemanaSchema).min(1).max(7),
   tag: AlarmeTagSchema,
   som: AlarmeSomSchema,
   ativo: z.boolean(),
-  // 1 a 60 minutos. Default 5 conforme decisao do spec.
+  // 1 a 60 minutos. Default 5 conforme decisão do spec.
   snooze_minutos: z.number().int().min(1).max(60).default(5),
   criado_em: IsoDatetime,
   // Null antes do primeiro Desligar.
@@ -87,7 +87,7 @@ export const AlarmeSchema = z.object({
   // Array de identifiers do expo-notifications. Pode ser vazio quando
   // alarme inativo.
   notification_ids: z.array(z.string()).default([]),
-  // Identifier de snooze pendente; null quando nao ha snooze ativo.
+  // Identifier de snooze pendente; null quando não ha snooze ativo.
   snooze_id: z.string().nullable(),
 });
 
@@ -133,8 +133,8 @@ export const DIAS_SEMANA_LABELS: readonly string[] = [
   'S',
 ];
 
-// Labels longos para acessibilidade e leitura nao redundante. Sem acento
-// (a11y label nao acentua, convencao do projeto).
+// Labels longos para acessibilidade e leitura não redundante. Sem acento
+// (a11y label não acentua, convencao do projeto).
 export const DIAS_SEMANA_NOMES: readonly string[] = [
   'domingo',
   'segunda',
@@ -145,14 +145,14 @@ export const DIAS_SEMANA_NOMES: readonly string[] = [
   'sabado',
 ];
 
-// Limite hard do Android para schedules ativos. expo-notifications nao
+// Limite hard do Android para schedules ativos. expo-notifications não
 // expoe esse cap diretamente; o sistema rejeita silenciosamente alem
-// do limite. Toast informativo no 65o (decisao do spec, secao 11).
+// do limite. Toast informativo no 65o (decisão do spec, seção 11).
 export const LIMITE_SCHEDULES = 64;
 
 // Helper para gerar slug a partir de titulo. Lower, troca acentos por
 // equivalentes ASCII, espacos por '-', remove caracteres invalidos.
-// Util na criacao do alarme; usuario pode ajustar manualmente depois.
+// Útil na criacao do alarme; usuario pode ajustar manualmente depois.
 export function slugifyTitulo(titulo: string): string {
   return titulo
     .toLowerCase()

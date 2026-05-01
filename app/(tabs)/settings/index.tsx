@@ -1,8 +1,8 @@
-// Tela 23 — Settings. Lista vertical de 7 secoes:
+// Tela 23 — Settings. Lista vertical de 7 seções:
 //   1. Som e vibracao (4 toggles)
 //   2. Lembretes (3 linhas com toggle + time picker)
 //   3. Pessoa (radio + Vault compartilhado + sub-rotas)
-//   4. Sync (CardStatus + Forcar sync + selector metodo + qualidade scanner)
+//   4. Sync (CardStatus + Forcar sync + selector método + qualidade scanner)
 //   5. Features opcionais (6 toggles: ciclo, alarme, todo, contador,
 //      calendario, widget)
 //   6. Privacidade (biometria + ocultar transcricoes + export + limpar cache)
@@ -11,7 +11,7 @@
 // Toda a UI e reativa ao useSettings (zustand). Persistencia via
 // SecureStore (web cai em localStorage). Toggles default off:
 // ativacao explicita pelo usuario; ao ligar uma feature, a tab/menu
-// correspondente aparece imediatamente em <BottomTabs> (que ja le
+// correspondente aparece imediatamente em <BottomTabs> (que já le
 // useSettings.featureToggles).
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -107,7 +107,7 @@ export default function SettingsTela() {
   );
 }
 
-// === Secao 1: Som e vibracao ===
+// === Seção 1: Som e vibracao ===
 
 function SecaoSomVibracao() {
   const somVibracao = useSettings((s) => s.somVibracao);
@@ -143,7 +143,7 @@ function SecaoSomVibracao() {
   );
 }
 
-// === Secao 2: Lembretes ===
+// === Seção 2: Lembretes ===
 
 function SecaoLembretes() {
   const lembretes = useSettings((s) => s.lembretes);
@@ -303,7 +303,7 @@ function LembreteRow({
   );
 }
 
-// === Secao 3: Pessoa ===
+// === Seção 3: Pessoa ===
 
 function SecaoPessoa() {
   const router = useRouter();
@@ -448,7 +448,7 @@ function RadioPessoa({ label, ativa, onPress, cor }: RadioPessoaProps) {
   );
 }
 
-// === Secao 4: Sync ===
+// === Seção 4: Sync ===
 
 function SecaoSync() {
   const sync = useSettings((s) => s.sync);
@@ -654,7 +654,7 @@ function SelectorQualidade({ valor, onChange }: SelectorQualidadeProps) {
   );
 }
 
-// === Secao 5: Features opcionais ===
+// === Seção 5: Features opcionais ===
 
 function SecaoFeatures() {
   const featureToggles = useSettings((s) => s.featureToggles);
@@ -715,7 +715,7 @@ function SecaoFeatures() {
   );
 }
 
-// === Secao 6: Privacidade ===
+// === Seção 6: Privacidade ===
 
 function SecaoPrivacidade() {
   const privacidade = useSettings((s) => s.privacidade);
@@ -784,7 +784,7 @@ function SecaoPrivacidade() {
   );
 }
 
-// === Secao 7: Sobre ===
+// === Seção 7: Sobre ===
 
 function SecaoSobre() {
   const versao =
@@ -874,7 +874,7 @@ interface ToggleRowProps {
 }
 
 function ToggleRow({ label, valor, onChange, subtitulo, a11y }: ToggleRowProps) {
-  // a11y do container e do toggle nao devem coincidir (testing-library
+  // a11y do container e do toggle não devem coincidir (testing-library
   // falha em getByLabelText quando duas Views compartilham o mesmo
   // label). Container ganha "linha <a11y>" e o Toggle herda o a11y
   // canonico (que os testes usam diretamente).

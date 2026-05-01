@@ -1,8 +1,8 @@
 // Schema do arquivo medidas/YYYY-MM-DD.md (medidas corporais semanais).
-// Modelado em docs/BRIEFING.md secao 7 e docs/sprints/M12-spec.md.
+// Modelado em docs/BRIEFING.md seção 7 e docs/sprints/M12-spec.md.
 //
 // Cada arquivo representa um snapshot de medidas em uma data; as 9
-// medidas sao todas opcionais (usuario pode pular campos sem dado),
+// medidas são todas opcionais (usuario pode pular campos sem dado),
 // mas precisa haver pelo menos uma medida ou foto para o registro
 // fazer sentido. Fotos como array de paths relativos ao Vault (3
 // posicoes canonicas: frente, costas, lado) - estrutura aberta para
@@ -16,16 +16,16 @@
 import { z } from 'zod';
 import { PessoaAutorSchema } from '@/lib/schemas/pessoa';
 
-// Data YYYY-MM-DD (sem hora; medidas sao um snapshot diario, nao um
+// Data YYYY-MM-DD (sem hora; medidas são um snapshot diario, não um
 // evento timestamp). Mesmo padrao usado por daily/<...>.md (humor).
 const DataYmd = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve estar em YYYY-MM-DD');
 
-// Medida individual em centimetros ou kg. Numero positivo finito.
+// Medida individual em centimetros ou kg. Número positivo finito.
 // Limite superior defensivo (peso 500kg / 500cm) para detectar erros
 // de digitacao tipo "780" ao inves de "78,0". Limite inferior 0
-// permite registros parciais (zero apenas em campos onde caller nao
+// permite registros parciais (zero apenas em campos onde caller não
 // preencheu, mas o schema deixa o campo opcional - quem quiser
 // "zero literal" precisa fazer escolha explicita).
 const MedidaNumerica = z.number().positive().finite().max(500);
@@ -34,7 +34,7 @@ export const MedidasSchema = z.object({
   tipo: z.literal('medidas'),
   data: DataYmd,
   autor: PessoaAutorSchema,
-  // Nove medidas canonicas conforme docs/BRIEFING.md secao 7.
+  // Nove medidas canonicas conforme docs/BRIEFING.md seção 7.
   // Todas opcionais: usuario registra so o que quer naquela semana.
   peso: MedidaNumerica.optional(),
   cintura: MedidaNumerica.optional(),
@@ -46,7 +46,7 @@ export const MedidasSchema = z.object({
   barriga: MedidaNumerica.optional(),
   quadril: MedidaNumerica.optional(),
   // Paths relativos ao Vault (ex: 'assets/m-2026-04-28-frente.jpg').
-  // Default vazio para permitir registro so com numeros (ou so foto).
+  // Default vazio para permitir registro so com números (ou so foto).
   fotos: z.array(z.string()).default([]),
   // Texto livre opcional. Tela 12 expoe 3 textareas (sentindo,
   // objetivos, observacoes) que o caller pode concatenar em um unico
@@ -74,7 +74,7 @@ export const MEDIDAS_CAMPOS = [
 export type MedidaCampo = (typeof MEDIDAS_CAMPOS)[number];
 
 // Metadata de exibicao por campo: rotulo PT-BR, unidade. Mantida
-// proxima do schema para evitar drift entre tela e modelo.
+// próxima do schema para evitar drift entre tela e modelo.
 export const MEDIDAS_LABELS: Record<MedidaCampo, { label: string; unidade: 'kg' | 'cm' }> = {
   peso: { label: 'Peso', unidade: 'kg' },
   cintura: { label: 'Cintura', unidade: 'cm' },

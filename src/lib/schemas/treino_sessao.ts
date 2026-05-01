@@ -1,5 +1,5 @@
 // Schema do arquivo treinos/YYYY-MM-DD-slug.md (sessao formal de
-// treino). Modelado em docs/sprints/M11-spec.md secao 2.
+// treino). Modelado em docs/sprints/M11-spec.md seção 2.
 //
 // Sessao formal nasce em duas frentes:
 //  1. CRUD direto na Tela 11 / Tela 10 via SheetNovoTreino.
@@ -8,7 +8,7 @@
 //     src/lib/treinos/migrarDraftsParaTreinoSessao.ts).
 //
 // Cada sessao tem rotina (nome livre, ex: "rotina A"), duracao em
-// minutos (1-240), array de exercicios com series/reps/carga e
+// minutos (1-240), array de exercícios com séries/reps/carga e
 // observacoes opcionais.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -23,8 +23,8 @@ const Iso8601 = z
     'data deve ser ISO 8601 com hora'
   );
 
-// Item da lista de exercicios da sessao. Carga em kg opcional (ex:
-// peso corporal). Observacao livre por exercicio.
+// Item da lista de exercícios da sessao. Carga em kg opcional (ex:
+// peso corporal). Observacao livre por exercício.
 export const ExercicioSessaoSchema = z.object({
   nome: z.string().min(1),
   series: z.number().int().min(1).max(20),

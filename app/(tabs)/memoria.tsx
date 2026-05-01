@@ -1,4 +1,4 @@
-// Aba Memorias - rota canonica registrada em
+// Aba Memórias - rota canonica registrada em
 // app/(tabs)/_layout.tsx. M11 substituiu o stub redirect (anterior
 // apontava para em-construcao?sprint=M11) pelo container real.
 //

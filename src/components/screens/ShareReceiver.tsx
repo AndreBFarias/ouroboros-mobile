@@ -1,6 +1,6 @@
 // Componente da Tela 17 (M08): Share Intent Receiver. Recebe o
 // arquivo via share sheet do Android, deixa o usuario classificar e
-// salva no Vault inbox. Padrao de tela completa (nao bottom sheet)
+// salva no Vault inbox. Padrao de tela completa (não bottom sheet)
 // porque a activity de share abre como modal transparente raiz.
 //
 // Estrutura visual:
@@ -9,10 +9,10 @@
 //   3. ChipGroup categoria (8 subtipos, mode='single').
 //   4. Path display em cyan mono caption (atualiza dinamico).
 //   5. ChipGroup pessoa (default na pessoaAtiva).
-//   6. Banner de conflito amarelo (3 acoes) quando aplicavel.
+//   6. Banner de conflito amarelo (3 ações) quando aplicavel.
 //   7. Botoes Salvar (success/disabled) e Cancelar (ghost).
 //
-// Estados externos sao geridos pelo container (app/share-receive.tsx).
+// Estados externos são geridos pelo container (app/share-receive.tsx).
 // Esta tela so recebe props e dispara callbacks.
 import { ScrollView, Text, View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
@@ -26,7 +26,7 @@ import {
 import type { InboxArquivoSubtipo } from '@/lib/schemas/inbox_arquivo';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
-// Acoes disponiveis quando ja existe arquivo no path canonico.
+// Ações disponiveis quando já existe arquivo no path canonico.
 export type ConflitoAcao = 'renomear' | 'substituir' | 'cancelar';
 
 export interface ShareReceiverProps {
@@ -49,12 +49,12 @@ export interface ShareReceiverProps {
 
   // Estados de salvamento.
   salvando: boolean;
-  // null quando nao ha conflito; objeto com path quando o canonico
-  // ja existe e o usuario precisa decidir.
+  // null quando não ha conflito; objeto com path quando o canonico
+  // já existe e o usuario precisa decidir.
   conflito: { pathExistente: string } | null;
   onResolverConflito: (acao: ConflitoAcao) => void;
 
-  // Acoes principais.
+  // Ações principais.
   onSalvar: () => void;
   onCancelar: () => void;
 
@@ -65,7 +65,7 @@ export interface ShareReceiverProps {
   nomePessoaB?: string;
 }
 
-// Helper interno para renderizar titulo de secao com estilo padrao.
+// Helper interno para renderizar titulo de seção com estilo padrao.
 function tituloSecao(texto: string) {
   return (
     <Text

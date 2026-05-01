@@ -1,5 +1,5 @@
-// Tokens visuais e de spacing. Fonte da verdade no codigo.
-// Espelha tailwind.config.js e docs/BRIEFING.md secao 3.
+// Tokens visuais e de spacing. Fonte da verdade no código.
+// Espelha tailwind.config.js e docs/BRIEFING.md seção 3.
 
 export const colors = {
   bgPage: '#14151a',

@@ -7,8 +7,8 @@
 //     data.
 //
 // Default: lado esquerdo recebe a primeira data; lado direito a
-// ultima. Quando ha so 1 data disponivel, o dropdown direito repete
-// a esquerda. Quando nao ha fotos, mostra empty muted-decor.
+// ultima. Quando ha so 1 data disponível, o dropdown direito repete
+// a esquerda. Quando não ha fotos, mostra empty muted-decor.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -34,7 +34,7 @@ export interface SliderFotosProps {
   // todas as medidas e passa em ordem cronologica asc (mais antiga
   // primeiro).
   fotos: FotoMedida[];
-  // Largura disponivel total. Cada lado fica com (largura -
+  // Largura disponível total. Cada lado fica com (largura -
   // gap)/2.
   largura: number;
 }
@@ -191,7 +191,7 @@ function LadoComparativo({
   largura,
 }: LadoComparativoProps): ReactNode {
   // Foto correspondente a data selecionada (primeira que casa). Se
-  // nao houver, mostra placeholder.
+  // não houver, mostra placeholder.
   const fotoSelecionada =
     dataSelecionada !== null
       ? fotos.find((f) => f.data === dataSelecionada) ?? null
@@ -308,9 +308,9 @@ export function SliderFotos({ fotos, largura }: SliderFotosProps) {
   const [dir, setDir] = useState<string | null>(ultima);
 
   // Quando o conjunto de datas muda (caller recarregou), reposiciona
-  // selecao se o valor atual nao existe mais. Usa useEffect para
+  // selecao se o valor atual não existe mais. Usa useEffect para
   // evitar setState durante render. Dependencia em primeira/ultima
-  // garante reset apos hot reload.
+  // garante reset após hot reload.
   useEffect(() => {
     if (datas.length === 0) {
       setEsq(null);
@@ -351,7 +351,7 @@ export function SliderFotos({ fotos, largura }: SliderFotosProps) {
     );
   }
 
-  // Largura util de cada lado: total - gap entre eles.
+  // Largura útil de cada lado: total - gap entre eles.
   const ladoLargura = Math.max(
     0,
     Math.floor((largura - spacing.sm) / 2)

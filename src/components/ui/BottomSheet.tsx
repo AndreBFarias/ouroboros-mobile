@@ -1,7 +1,7 @@
 // Wrapper sobre @gorhom/bottom-sheet com tema Dracula aplicado.
-// Background bg-alt, handle indicator bg-elev, backdrop fade ate
+// Background bg-alt, handle indicator bg-elev, backdrop fade até
 // opacity 0.5. Snap points configuraveis. Gesture nativo de fechar
-// arrastando para baixo ja esta embutido na lib. Accept ref via
+// arrastando para baixo já esta embutido na lib. Accept ref via
 // forwardRef para o consumidor chamar `.expand()` ou `.close()`.
 import {
   forwardRef,
@@ -30,7 +30,7 @@ export interface BottomSheetProps {
 
 export type BottomSheetRef = GorhomBottomSheet;
 
-// Fallback do snap quando consumidor nao passa snapPoints. Vem do
+// Fallback do snap quando consumidor não passa snapPoints. Vem do
 // preset compartilhado SHEET_DEFAULT (['40%', '85%'], M01.4).
 const DEFAULT_SNAP_POINTS: Array<string | number> = [...SHEET_DEFAULT];
 
@@ -47,7 +47,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
   ) {
     // Copia para array mutavel: gorhom espera (string | number)[]
     // e ler a ref readonly diretamente quebra typing. spread ainda
-    // mantem performance (memoizado por mudanca de referencia).
+    // mantem performance (memoizado por mudanca de referência).
     const points = useMemo<Array<string | number>>(
       () => [...(snapPoints ?? DEFAULT_SNAP_POINTS)],
       [snapPoints]

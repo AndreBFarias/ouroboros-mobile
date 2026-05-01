@@ -1,5 +1,5 @@
 // Identidade generica de pessoa. Nunca usar nomes reais (Regra -1).
-// Em codigo sempre 'pessoa_a' / 'pessoa_b' / 'ambos'. Nomes de exibicao
+// Em código sempre 'pessoa_a' / 'pessoa_b' / 'ambos'. Nomes de exibicao
 // vem do store em runtime, preenchidos no onboarding.
 import { z } from 'zod';
 

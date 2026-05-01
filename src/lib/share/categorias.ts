@@ -14,7 +14,7 @@ import type { InboxArquivoSubtipo } from '@/lib/schemas/inbox_arquivo';
 export type InboxArea = 'financeiro' | 'saude' | 'casa' | 'outros';
 
 // Mapa estatico subtipo -> area + chave de pasta em VAULT_FOLDERS.
-// O `folderKey` referencia diretamente as entradas adicionadas em
+// O `folderKey` referência diretamente as entradas adicionadas em
 // src/lib/vault/paths.ts (M08). Usar string literal aqui evitaria
 // a importacao circular com paths.ts.
 interface SubtipoMeta {
@@ -79,7 +79,7 @@ export const INBOX_SUBTIPOS: Record<InboxArquivoSubtipo, SubtipoMeta> = {
 };
 
 // Ordem visual canonica para o ChipGroup. Financeiro primeiro
-// (suporta o flow PIX), saude e casa em sequencia, 'outro' como
+// (suporta o flow PIX), saude e casa em sequência, 'outro' como
 // fallback no fim.
 export const INBOX_SUBTIPOS_ORDEM: readonly InboxArquivoSubtipo[] = [
   'pix',
@@ -102,7 +102,7 @@ export const INBOX_SUBTIPO_OPTIONS: readonly ChipOption[] =
 
 // Helper: devolve o folder canonico (path relativo ao Vault) para um
 // subtipo. Lanca quando recebe valor desconhecido em vez de retornar
-// fallback silencioso, para nao mascarar bug.
+// fallback silencioso, para não mascarar bug.
 export function pastaParaSubtipo(subtipo: InboxArquivoSubtipo): string {
   const meta = INBOX_SUBTIPOS[subtipo];
   if (!meta) {
@@ -115,7 +115,7 @@ export function pastaParaSubtipo(subtipo: InboxArquivoSubtipo): string {
 // Quando o intent traz application/pdf, comecamos em 'extrato'
 // (caso PIX o usuario re-seleciona). Imagens entram em 'nota' por
 // default (foto de comprovante e o caso mais comum). Esses defaults
-// sao apenas pre-selecao do chip; o usuario pode trocar antes de
+// são apenas pre-selecao do chip; o usuario pode trocar antes de
 // salvar.
 export function subtipoDefault(mimeType: string): InboxArquivoSubtipo {
   if (mimeType.startsWith('image/')) return 'nota';

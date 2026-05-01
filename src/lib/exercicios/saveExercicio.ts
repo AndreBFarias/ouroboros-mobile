@@ -1,13 +1,13 @@
-// Salva um exercicio no Vault (criacao ou edicao). Quando o caller
+// Salva um exercício no Vault (criacao ou edicao). Quando o caller
 // fornece um URI temporario de GIF (do expo-document-picker), copia
 // o arquivo para assets/exercicios/<slug>.gif e atualiza meta.gif
-// com o path relativo. Em edicao, se o usuario nao trocou o GIF, o
+// com o path relativo. Em edicao, se o usuario não trocou o GIF, o
 // caller passa gifTemporario=null e o meta.gif preserva o valor
 // anterior.
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
-// Imports diretos aos modulos finais (nao ao barrel @/lib/vault)
+// Imports diretos aos modulos finais (não ao barrel @/lib/vault)
 // para evitar ciclo de carregamento durante jest.requireActual nos
 // testes que mockam o barrel.
 import { exerciciosGifPath } from '@/lib/vault/paths';
@@ -37,12 +37,12 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
-// Limit de 5MB para o GIF (decisao do spec). Caller mostra toast de
+// Limit de 5MB para o GIF (decisão do spec). Caller mostra toast de
 // erro se exceder.
 export const GIF_MAX_BYTES = 5 * 1024 * 1024;
 
 // Valida tamanho do GIF lendo getInfoAsync. Em ambiente sem
-// FileSystem.getInfoAsync (web mock), pula validacao.
+// FileSystem.getInfoAsync (web mock), pula validação.
 async function validarGif(gifTemporario: string): Promise<void> {
   try {
     const info = await FileSystem.getInfoAsync(gifTemporario);

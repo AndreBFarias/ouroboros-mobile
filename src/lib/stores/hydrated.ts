@@ -1,5 +1,5 @@
 // Hook utilitario para reagir a hidratacao do zustand-persist. O
-// middleware persist e assincrono (le SecureStore); decisoes de
+// middleware persist e assincrono (le SecureStore); decisões de
 // gate baseadas no estado precisam esperar a hidratacao para evitar
 // flicker entre default e estado real.
 //

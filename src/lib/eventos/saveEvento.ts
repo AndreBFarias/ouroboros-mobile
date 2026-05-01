@@ -1,5 +1,5 @@
 // Persiste um registro de evento (Tela 20) em
-// eventos/YYYY-MM-DD-<slug>.md no Vault. Funcao pura: recebe meta
+// eventos/YYYY-MM-DD-<slug>.md no Vault. Função pura: recebe meta
 // validado, body livre, vaultRoot e lista de URIs locais de fotos;
 // devolve URI final. Antes de chamar writeVaultFile, copia cada foto
 // de URI temporario para assets/<formatDateYmdHm>-evento-<idx>.jpg
@@ -25,14 +25,14 @@ export interface SaveEventoArgs {
   body: string;
   vaultRoot: string;
   // URIs locais ou content:// das fotos escolhidas no picker.
-  // Caller passa array vazio quando nao ha fotos.
+  // Caller passa array vazio quando não ha fotos.
   fotos: string[];
 }
 
 export interface SaveEventoResult {
   uri: string;
   // Paths relativos ao Vault que foram efetivamente escritos em
-  // assets/. Util para o caller logar ou exibir.
+  // assets/. Útil para o caller logar ou exibir.
   fotosGravadas: string[];
 }
 
@@ -49,9 +49,9 @@ function applyConflictSuffix(rel: string, n: number): string {
   return `${rel.slice(0, dotIdx)}-${n}${rel.slice(dotIdx)}`;
 }
 
-// Tenta gravar no path canonico. Se ja existir, incrementa sufixo
-// ate encontrar slot livre. Limite defensivo de 9 tentativas para
-// nao entrar em loop infinito caso o reader minta sobre existencia.
+// Tenta gravar no path canonico. Se já existir, incrementa sufixo
+// até encontrar slot livre. Limite defensivo de 9 tentativas para
+// não entrar em loop infinito caso o reader minta sobre existencia.
 async function resolvePath(
   vaultRoot: string,
   relCanonico: string
@@ -96,7 +96,7 @@ export async function saveEvento(
   const { meta, body, vaultRoot, fotos } = args;
 
   // Defensivo: revalida o meta antes de tocar em I/O. Quem chama
-  // tipicamente ja parseou via safeParse, mas testes podem injetar
+  // tipicamente já parseou via safeParse, mas testes podem injetar
   // payload bruto.
   const parsed = EventoSchema.safeParse(meta);
   if (!parsed.success) {
@@ -105,8 +105,8 @@ export async function saveEvento(
 
   const agora = new Date();
 
-  // Copia as fotos primeiro: se a copia falhar, nao chegamos a
-  // gravar o .md com referencias quebradas. Em caso de erro, a
+  // Copia as fotos primeiro: se a copia falhar, não chegamos a
+  // gravar o .md com referências quebradas. Em caso de erro, a
   // promise rejeita e o caller mostra toast de falha.
   const prefixo = formatDateYmdHm(agora);
   const fotosGravadas = await copiarFotos(vaultRoot, prefixo, fotos);
@@ -120,7 +120,7 @@ export async function saveEvento(
 
   // Slug deriva do bairro / texto / categoria (nessa ordem).
   // Texto livre vem do body (o caller pode passar string vazia se
-  // nao quiser corpo no .md).
+  // não quiser corpo no .md).
   const slug = slugifyEvento({
     texto: body,
     bairro: metaComFotos.bairro ?? null,

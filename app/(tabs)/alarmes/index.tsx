@@ -86,7 +86,7 @@ export default function AlarmesIndex() {
           ...alarme,
           ativo: next,
           notification_ids: notificationIds,
-          // Cancelar tambem zera snooze pendente.
+          // Cancelar também zera snooze pendente.
           snooze_id: next ? alarme.snooze_id : null,
         };
         await escreverAlarme(vaultRoot, atualizado);

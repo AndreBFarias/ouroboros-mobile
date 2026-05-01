@@ -3,18 +3,18 @@
 // origem (package do app emissor), todos passados como query params
 // para a rota /share-receive.
 //
-// Decisao: nao usamos expo-intent-launcher para "ler" o intent
+// Decisão: não usamos expo-intent-launcher para "ler" o intent
 // programaticamente. A activity e configurada como singleTask em
 // app.json e o RootLayout passa a URL inicial pelo
 // useDeepLinkListener (M00.5), que estende a M08 reconhecendo
 // action.SEND. O resultado e que /share-receive recebe os campos
 // como query string normalizada.
 //
-// Funcoes puras (sem side effect) para facilitar teste unitario.
+// Funções puras (sem side effect) para facilitar teste unitario.
 
 // Resultado canonico extraido do intent. Mime type usa default
 // 'application/octet-stream' quando ausente; isso satisfaz o schema
-// (string nao vazia) e nao precisa de ramos extras na UI.
+// (string não vazia) e não precisa de ramos extras na UI.
 export interface SharedIntentInput {
   readonly uri: string;
   readonly mimeType: string;
@@ -23,7 +23,7 @@ export interface SharedIntentInput {
 }
 
 // Mime types que o app aceita oficialmente (alinhado com
-// android.intentFilters em app.json). Outros mime types sao aceitos
+// android.intentFilters em app.json). Outros mime types são aceitos
 // pelo helper mas o caller deve degradar para 'outro' na UI.
 const MIME_PERMITIDOS: ReadonlyArray<string> = [
   'application/pdf',
@@ -32,7 +32,7 @@ const MIME_PERMITIDOS: ReadonlyArray<string> = [
 const MIME_PREFIXOS_PERMITIDOS: ReadonlyArray<string> = ['image/'];
 
 // Decide se o mime type recebido bate com o intent filter declarado.
-// Util para a tela mostrar warning quando algum app envia formato
+// Útil para a tela mostrar warning quando algum app envia formato
 // fora do contrato (ex: text/plain).
 export function mimeAceito(mimeType: string): boolean {
   if (MIME_PERMITIDOS.includes(mimeType)) return true;
@@ -40,7 +40,7 @@ export function mimeAceito(mimeType: string): boolean {
 }
 
 // Extrai a extensao do nome de arquivo informado, ou deduz pelo mime
-// type. Sem ponto inicial. Devolve string vazia quando nao consegue
+// type. Sem ponto inicial. Devolve string vazia quando não consegue
 // deduzir.
 export function extensaoDe(mimeType: string, nome?: string | null): string {
   if (nome && nome.includes('.')) {
@@ -58,7 +58,7 @@ export function extensaoDe(mimeType: string, nome?: string | null): string {
 }
 
 // Normaliza os parametros recebidos pelo router. Garante mime type
-// nao vazio e devolve null em uri ausente. Caller pode descartar
+// não vazio e devolve null em uri ausente. Caller pode descartar
 // silenciosamente quando uri esta null (rota acessada sem intent
 // real, ex: deep link manual).
 export interface RawIntentParams {

@@ -85,13 +85,13 @@ function formatHora(d: Date): string {
 function nowIso(): string {
   // Formato com offset; alinha com IsoDatetime do AlarmeSchema. Usamos
   // toISOString (Z) e convertemos para -03:00 simbolicamente: o schema
-  // aceita Z tambem, entao basta retornar toISOString.
+  // aceita Z também, entao basta retornar toISOString.
   return new Date().toISOString().replace('Z', '+00:00');
 }
 
-// Garante que slug nao colida com outro alarme existente. Se ja existe,
-// adiciona sufixo numerico ('-2', '-3', ...) ate disponivel. Retorna
-// null se nao foi possivel resolver (improvavel; loop limitado a 50).
+// Garante que slug não colida com outro alarme existente. Se já existe,
+// adiciona sufixo numerico ('-2', '-3', ...) até disponível. Retorna
+// null se não foi possivel resolver (improvavel; loop limitado a 50).
 async function resolverSlugUnico(
   vaultRoot: string,
   base: string,
@@ -130,7 +130,7 @@ export default function AlarmesNovoOuEditar() {
   const [carregando, setCarregando] = useState(editando);
 
   // Original carregado em edicao (usado para preservar criado_em e
-  // notification_ids pre-existentes ate re-agendar).
+  // notification_ids pre-existentes até re-agendar).
   const [original, setOriginal] = useState<Alarme | null>(null);
 
   // Carregamento inicial em edicao.
@@ -198,7 +198,7 @@ export default function AlarmesNovoOuEditar() {
         return;
       }
 
-      // Cancela schedules antigos (edicao). Novo alarme nao tem nada
+      // Cancela schedules antigos (edicao). Novo alarme não tem nada
       // a cancelar mas o helper e idempotente.
       await cancelarAlarme(slug);
 

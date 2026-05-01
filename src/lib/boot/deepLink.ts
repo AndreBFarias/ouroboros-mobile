@@ -6,7 +6,7 @@
 //   - Escuta `Linking.addEventListener('url', handler)`.
 //   - Se a URL contem `?uri=...`, encaminha para `/share-receive`
 //     com uri + mime + origem + nome (todos opcionais alem de uri).
-//   - URL malformada nao quebra (try/catch envolve o parse).
+//   - URL malformada não quebra (try/catch envolve o parse).
 //
 // Em Android nativo, a activity de share (configurada como
 // singleTask em app.json) recebe o intent action.SEND e o
@@ -29,7 +29,7 @@ export interface SharedIntentParams {
   readonly origem: string | null;
 }
 
-// Util interno: pega primeiro valor string de queryParam que pode
+// Útil interno: pega primeiro valor string de queryParam que pode
 // vir string ou string[] do Linking.parse.
 function pickStringParam(
   value: string | string[] | undefined
@@ -42,7 +42,7 @@ function pickStringParam(
 }
 
 // Extrai o param `uri` de um deep link arbitrario. Devolve null
-// quando a URL nao tem o param ou e malformada. Mantida para
+// quando a URL não tem o param ou e malformada. Mantida para
 // preservar compat com tests da M00.5.
 export function extractShareUri(url: string): string | null {
   try {
@@ -54,7 +54,7 @@ export function extractShareUri(url: string): string | null {
 }
 
 // Extrai todos os params relevantes do share intent. uri e
-// obrigatorio; mime, nome e origem sao opcionais. Retorna null
+// obrigatório; mime, nome e origem são opcionais. Retorna null
 // quando uri ausente.
 export function parseSharedUrl(url: string): SharedIntentParams | null {
   try {
@@ -80,7 +80,7 @@ export function handleSharedUrl(url: string): void {
   const params = parseSharedUrl(url);
   if (!params) return;
   try {
-    // Constroi objeto de params somente com chaves nao nulas para
+    // Constroi objeto de params somente com chaves não nulas para
     // que a query gerada pelo router fique limpa quando o intent
     // emissor omitir campos opcionais.
     const out: Record<string, string> = { uri: params.uri };
@@ -92,8 +92,8 @@ export function handleSharedUrl(url: string): void {
       params: out,
     });
   } catch {
-    // Falha de roteamento (rota nao registrada em ambiente de teste,
-    // por exemplo) e silenciada para nao crashar boot.
+    // Falha de roteamento (rota não registrada em ambiente de teste,
+    // por exemplo) e silenciada para não crashar boot.
   }
 }
 

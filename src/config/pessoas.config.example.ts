@@ -1,5 +1,5 @@
 // Template estavel de pessoas.config.ts. Mantem o mesmo conteudo
-// generico do arquivo versionado e serve como referencia caso alguem
+// generico do arquivo versionado e serve como referência caso alguem
 // precise regenerar o config (por engano apagado, conflito de merge,
 // etc.). Nomes reais nunca devem entrar aqui.
 import type { PessoaId } from '@/lib/schemas/pessoa';

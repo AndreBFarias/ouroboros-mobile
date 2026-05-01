@@ -2,8 +2,8 @@
 // snap 90%. Form:
 //  - Input rotina (texto livre).
 //  - Slider duracao_min 1-240.
-//  - ChipGroup exercicios (do exercicios/) - usuario seleciona quais
-//    exercicios usou; cada selecao gera entrada na lista com series/
+//  - ChipGroup exercícios (do exercícios/) - usuario seleciona quais
+//    exercícios usou; cada selecao gera entrada na lista com séries/
 //    reps/carga editaveis.
 //  - Textarea observacoes.
 //  - Botao Salvar verde.
@@ -72,7 +72,7 @@ export function SheetNovoTreino({
     Exercicio[]
   >([]);
 
-  // Carrega lista de exercicios da biblioteca para popular o ChipGroup.
+  // Carrega lista de exercícios da biblioteca para popular o ChipGroup.
   useEffect(() => {
     if (!vaultRoot) return;
     void (async () => {
@@ -81,7 +81,7 @@ export function SheetNovoTreino({
         setExerciciosBiblioteca(lista);
       } catch {
         // Silencioso - sheet pode operar com lista vazia (usuario
-        // adiciona via input livre ou cria exercicio antes).
+        // adiciona via input livre ou cria exercício antes).
       }
     })();
   }, [vaultRoot]);

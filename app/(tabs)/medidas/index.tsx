@@ -1,11 +1,11 @@
-// Tela 13 - Comparativo de Medidas. Filtro periodo (chips 30d / 90d /
+// Tela 13 - Comparativo de Medidas. Filtro período (chips 30d / 90d /
 // tudo), grid 2 colunas de cards (um por campo de medida) com
 // sparkline 12 pontos + delta vs primeira em muted. Bloco fotos no
 // fim com SliderFotos para comparativo lado a lado.
 //
-// Empty state quando nao ha registros. FAB '+' navega para Tela 12.
+// Empty state quando não ha registros. FAB '+' navega para Tela 12.
 //
-// Carrega lista do Vault via listarMedidas(periodo). Recarrega ao
+// Carrega lista do Vault via listarMedidas(período). Recarrega ao
 // focar (para refletir saves recentes).
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -53,7 +53,7 @@ function resolveUri(vaultRoot: string | null, rel: string): string {
   return `${trimmed}/${rel}`;
 }
 
-// Extrai pontos para sparkline de uma medida especifica. Ordena
+// Extrai pontos para sparkline de uma medida específica. Ordena
 // asc por data (sparkline le esquerda -> direita).
 function pontosDoCampo(
   lista: Medida[],
@@ -79,7 +79,7 @@ function inferirLado(rel: string): 'frente' | 'costas' | 'lado' {
 }
 
 // Monta lista de FotoMedida agregando todas as fotos de todas as
-// medidas do periodo, ordenada asc por data (caller SliderFotos
+// medidas do período, ordenada asc por data (caller SliderFotos
 // espera asc).
 function montarFotos(
   lista: Medida[],
@@ -133,7 +133,7 @@ export default function ComparativoMedidas() {
     }, [carregar])
   );
 
-  // Largura disponivel para cada card (grid 2 cols com gap, padding
+  // Largura disponível para cada card (grid 2 cols com gap, padding
   // lateral 20dp da Screen, gap interno 8dp).
   const larguraCard = useMemo(() => {
     const padding = spacing.lg * 2;
@@ -162,7 +162,7 @@ export default function ComparativoMedidas() {
     }
   }, []);
 
-  // Empty state quando nao ha medida nenhuma carregada.
+  // Empty state quando não ha medida nenhuma carregada.
   const semDados = !carregando && lista.length === 0;
 
   // Layout em pares para grid 2 cols.
@@ -187,7 +187,7 @@ export default function ComparativoMedidas() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Filtro periodo */}
+        {/* Filtro período */}
         <View style={{ gap: spacing.sm }}>
           <Text
             style={{

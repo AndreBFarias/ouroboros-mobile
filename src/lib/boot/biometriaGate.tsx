@@ -1,6 +1,6 @@
 // Gate de biometria real (M15). Quando
 // useSettings.privacidade.biometriaAbrir === true, intercepta a
-// renderizacao da arvore e mostra tela de bloqueio ate
+// renderizacao da arvore e mostra tela de bloqueio até
 // LocalAuthentication.authenticateAsync resolver com sucesso.
 //
 // Comportamento canonico:
@@ -12,9 +12,9 @@
 //       3. Sucesso -> renderiza children.
 //       4. Falha -> permanece na tela com mensagem em red e botao
 //          "Tentar novamente".
-//   - Web: gate desligado (LocalAuthentication nao tem implementacao
-//     web util); renderiza children. Comportamento documentado em
-//     `STATE.md` -> Nivel A nao cobre biometria.
+//   - Web: gate desligado (LocalAuthentication não tem implementacao
+//     web útil); renderiza children. Comportamento documentado em
+//     `STATE.md` -> Nível A não cobre biometria.
 //
 // Reativo: o useEffect re-dispara quando o toggle vira true em
 // runtime (settings -> ligar -> volta -> abre).
@@ -50,7 +50,7 @@ export function BiometriaGate({ children }: BiometriaGateProps) {
       return;
     }
     if (Platform.OS === 'web') {
-      // Web nao suporta LocalAuthentication util; libera para nao
+      // Web não suporta LocalAuthentication útil; libera para não
       // bloquear o smoke do Chrome.
       setAutenticado(true);
       return;
@@ -62,7 +62,7 @@ export function BiometriaGate({ children }: BiometriaGateProps) {
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       if (!supported || !enrolled) {
         // Sem hardware ou sem cadastro: libera com aviso silencioso.
-        // Spec: nao prender o usuario por falta de hardware.
+        // Spec: não prender o usuario por falta de hardware.
         setAutenticado(true);
         return;
       }

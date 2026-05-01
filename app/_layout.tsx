@@ -16,27 +16,27 @@ import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import '../global.css';
 
-// Mantem a splash visivel ate as fontes carregarem.
+// Mantem a splash visivel até as fontes carregarem.
 SplashScreen.preventAutoHideAsync();
 
 // Suprime warning de SafeAreaView vindo de dependencia transitiva.
-// Migracao para react-native-safe-area-context ja foi feita no codigo
+// Migracao para react-native-safe-area-context já foi feita no código
 // proprio (ver Screen.tsx). Warning persiste por terceiros.
 LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
-// ADR-008: Dracula e identidade, nao tema selecionavel. Forcamos dark
+// ADR-008: Dracula e identidade, não tema selecionavel. Forcamos dark
 // sempre em todas as plataformas.
 // - tailwind.config.js darkMode='class' alinhado com setFlag.
 // - Em RN nativo (Android/iOS), Appearance.setColorScheme('dark').
 // - No Web, adicionamos a classe 'dark' no documentElement para o
 //   CSS gerado pelo NativeWind aplicar as variantes dark:.
-// Em Web o Appearance pode nao expor setColorScheme; usamos try/catch.
+// Em Web o Appearance pode não expor setColorScheme; usamos try/catch.
 try {
   (StyleSheet as unknown as { setFlag?: (k: string, v: string) => void })
     .setFlag?.('darkMode', 'class');
   Appearance.setColorScheme?.('dark');
 } catch {
-  // Plataforma nao suporta uma das duas APIs (web).
+  // Plataforma não suporta uma das duas APIs (web).
 }
 if (typeof document !== 'undefined') {
   document.documentElement.classList.add('dark');
@@ -68,7 +68,7 @@ export default function RootLayout() {
     void reagendarTodosBootHooks();
   }, []);
 
-  // M16 categorias de notificacao com action buttons (Soneca/Desligar).
+  // M16 categorias de notificação com action buttons (Soneca/Desligar).
   // Idempotente: chamar de novo sobrescreve a categoria com mesmo ID.
   // Roda uma vez no mount; em Web vira no-op.
   useEffect(() => {

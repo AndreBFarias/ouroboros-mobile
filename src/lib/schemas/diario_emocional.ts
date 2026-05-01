@@ -1,8 +1,8 @@
 // Schema do arquivo inbox/mente/diario/YYYY-MM-DD-HHmm-slug.md
-// (diario emocional). Modelado em docs/BRIEFING.md secao 7.
+// (diario emocional). Modelado em docs/BRIEFING.md seção 7.
 //
 // Modos:
-// - 'trigger' = momento dificil. Estrategia + funcionou opcionais.
+// - 'trigger' = momento difícil. Estrategia + funcionou opcionais.
 // - 'vitoria' = anonimato-allow: superacao, sucesso. So texto e emocoes.
 //
 // 'funcionou' so faz sentido em modo trigger (estrategia foi
@@ -22,7 +22,7 @@ const Iso8601 = z
 
 // Flags de contexto social: amigos / sozinho. Adicionado em M06.X
 // para suportar a UI da Tela 18 que oferece esses chips ao lado das
-// pessoas. Antes ficavam apenas em prosa no corpo do .md; agora sao
+// pessoas. Antes ficavam apenas em prosa no corpo do .md; agora são
 // campo estruturado opcional. Arquivos antigos sem o campo seguem
 // validos (default = []).
 export const ContextoSocialSchema = z.enum(['amigos', 'sozinho']);

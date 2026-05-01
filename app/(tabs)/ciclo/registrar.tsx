@@ -3,7 +3,7 @@
 // `data` (YYYY-MM-DD); quando ausente, usa hoje.
 //
 // Estrutura do form:
-//   - Toggle "Inicio do ciclo" no topo (uma vez por ciclo). Quando
+//   - Toggle "Início do ciclo" no topo (uma vez por ciclo). Quando
 //     ligado, recalcula a fase usando essa data como nova
 //     dataInicioUltimoCiclo.
 //   - ChipGroup single para override manual da fase (folicular,
@@ -137,7 +137,7 @@ export default function CicloRegistrar() {
         humor_associado: humor,
         texto: texto.trim().length > 0 ? texto.trim() : null,
       };
-      // Validacao defensiva.
+      // Validação defensiva.
       const parsed = CicloMenstrualSchema.safeParse(meta);
       if (!parsed.success) {
         toast.show('Não foi possível salvar.', 'error');

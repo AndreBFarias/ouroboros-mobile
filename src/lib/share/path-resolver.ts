@@ -1,5 +1,5 @@
 // Resolvedor de path canonico para arquivos recebidos via share
-// intent (M08). A funcao principal `resolverDestino` toma a categoria
+// intent (M08). A função principal `resolverDestino` toma a categoria
 // (subtipo) escolhida pelo usuario, o mime type e a hora atual, e
 // devolve o path relativo ao Vault root.
 //
@@ -10,8 +10,8 @@
 //   - slug opcional vem do nome amigavel do intent.
 //   - <ext>: deduzida do mime type ou do nome de arquivo.
 //
-// O caller que ja tem vaultRoot autorizado concatena com o resultado
-// para obter o URI completo da copia. Conflitos sao resolvidos pelo
+// O caller que já tem vaultRoot autorizado concatena com o resultado
+// para obter o URI completo da copia. Conflitos são resolvidos pelo
 // helper `aplicarSufixoNumerico` em camada acima (caller faz lookup
 // via SAF.getInfoAsync; este modulo so monta nomes canonicos).
 import { formatDateYmdHms } from '@/lib/vault/paths';
@@ -25,16 +25,16 @@ export interface ResolverDestinoArgs {
   readonly agora: Date;
   // Slug opcional para anexar ao timestamp (ex: 'comprovante').
   // Fica em kebab-case ASCII; o resolver aplica saneamento minimo
-  // mas nao remove acentos (espera-se que ja venha pronto).
+  // mas não remove acentos (espera-se que já venha pronto).
   readonly slug?: string;
   // Nome amigavel do arquivo, usado para deduzir extensao quando o
   // mime type vem generico (ex: 'application/octet-stream').
   readonly nome?: string | null;
 }
 
-// Saneamento basico: lowercase + remove caracteres nao [a-z0-9-]. Nao
-// faz NFD/diacriticos: o caller geralmente passa kebab-case ja
-// pronto. Cap em 24 para nao explodir nomes de arquivo.
+// Saneamento básico: lowercase + remove caracteres não [a-z0-9-]. Não
+// faz NFD/diacriticos: o caller geralmente passa kebab-case já
+// pronto. Cap em 24 para não explodir nomes de arquivo.
 function sanitizarSlug(slug: string): string {
   const base = slug.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
   const trim = base.replace(/^-+|-+$/g, '');
@@ -43,7 +43,7 @@ function sanitizarSlug(slug: string): string {
 }
 
 // Devolve o path relativo (sem vaultRoot) do destino do arquivo.
-// Nao toca em I/O: e funcao pura.
+// Não toca em I/O: e função pura.
 export function resolverDestino(args: ResolverDestinoArgs): string {
   const { subtipo, mimeType, agora, slug, nome } = args;
   const pasta = pastaParaSubtipo(subtipo);
@@ -59,8 +59,8 @@ export function resolverDestino(args: ResolverDestinoArgs): string {
 }
 
 // Aplica sufixo numerico ao path para resolver conflito (-1, -2, ...).
-// O caller passa o path canonico (sem sufixo) e o numero da tentativa.
-// Pura: nao verifica existencia.
+// O caller passa o path canonico (sem sufixo) e o número da tentativa.
+// Pura: não verifica existencia.
 export function aplicarSufixoNumerico(rel: string, n: number): string {
   if (n <= 0) return rel;
   const dotIdx = rel.lastIndexOf('.');

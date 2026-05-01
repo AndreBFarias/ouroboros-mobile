@@ -1,11 +1,11 @@
 // Helpers de leitura, listagem, escrita e exclusao de tarefas no
 // Vault (M17). Cada tarefa vive em tarefas/YYYY-MM-DD-<slug>.md com
 // frontmatter validado pelo TarefaSchema. Path inclui data de criacao
-// (estavel por toda a vida da tarefa, mesmo apos marcar feito).
+// (estavel por toda a vida da tarefa, mesmo após marcar feito).
 //
 // Exclusao usa lixeira soft: move o .md para
 // cacheDirectory/lixeira/tarefas/<timestamp>-<basename>.md. Limpeza
-// automatica via boot hook limparLixeiraExpirada (cap de 30 dias).
+// automática via boot hook limparLixeiraExpirada (cap de 30 dias).
 //
 // listarTarefas devolve a lista ordenada com pendentes (data desc) e
 // feitas (feito_em desc) intercaladas; o caller separa em grupos.
@@ -13,7 +13,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-// Imports apontam diretamente para os modulos finais (nao para o
+// Imports apontam diretamente para os modulos finais (não para o
 // barrel @/lib/vault) para evitar ciclo de carregamento.
 import { tarefasPath, VAULT_FOLDERS } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
@@ -119,7 +119,7 @@ export async function escreverTarefa(
 }
 
 // Helper para criar uma tarefa nova: deriva path canonico
-// tarefas/YYYY-MM-DD-<slug>.md a partir do meta. Caller responsavel
+// tarefas/YYYY-MM-DD-<slug>.md a partir do meta. Caller responsável
 // por garantir que slug e unico (sufixo random recomendado).
 export async function criarTarefa(
   vaultRoot: string,
@@ -157,7 +157,7 @@ export async function marcarFeito(
 // Move uma tarefa para a lixeira soft. Retorna o path final na
 // lixeira. cacheDirectory/lixeira/tarefas/<timestamp>-<basename>.md.
 // Em ambiente web FileSystem.cacheDirectory pode ser null; usamos
-// prefixo mock para nao quebrar testes; caller real depende de
+// prefixo mock para não quebrar testes; caller real depende de
 // ambiente nativo.
 export async function excluirTarefa(
   vaultRoot: string,
@@ -169,7 +169,7 @@ export async function excluirTarefa(
   try {
     await FileSystem.makeDirectoryAsync(lixeiraDir, { intermediates: true });
   } catch {
-    // Ja existe.
+    // Já existe.
   }
 
   const ts = formatTimestampLixeira(new Date());

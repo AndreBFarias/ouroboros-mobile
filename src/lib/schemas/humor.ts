@@ -1,8 +1,8 @@
 // Schema do arquivo daily/YYYY-MM-DD.md (humor do dia).
-// Modelado em docs/BRIEFING.md secao 7. Quatro sliders 1-5
+// Modelado em docs/BRIEFING.md seção 7. Quatro sliders 1-5
 // (humor/energia/ansiedade/foco), tags fechadas (lista de 8 slugs
 // em src/lib/humor/tagsRapidas.ts), frase opcional, medicacao como
-// texto livre opcional (decisao M05), horas de sono opcional.
+// texto livre opcional (decisão M05), horas de sono opcional.
 import { z } from 'zod';
 import { PessoaAutorSchema } from '@/lib/schemas/pessoa';
 

@@ -3,11 +3,11 @@
 //   - Campo com fundo bg-alt, borda bg-elev (purple ao focar).
 //   - Placeholder em muted-decor mostrando a SUGESTAO (ultima medida)
 //     ou apenas a unidade "kg" / "cm" quando sem sugestao. Cor
-//     muted-decor diferencia visualmente que e sugestao, nao valor
+//     muted-decor diferencia visualmente que e sugestao, não valor
 //     real - quando o usuario digita, o texto vira fg normal.
 //   - keyboardType decimal-pad para teclado numerico.
 //
-// Caller fornece string (estado) e handler. Conversao para numero
+// Caller fornece string (estado) e handler. Conversao para número
 // fica no submit (Tela 12). Aceita virgula ou ponto como separador
 // decimal; Tela 12 normaliza ao salvar.
 //
@@ -38,7 +38,7 @@ function semAcento(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// Formata numero PT-BR com 1 casa decimal (separador virgula).
+// Formata número PT-BR com 1 casa decimal (separador virgula).
 function formatarNumero(n: number): string {
   return n.toFixed(1).replace('.', ',');
 }

@@ -1,18 +1,18 @@
-// Tela 02 - Form de cadastro/edicao de exercicio. Encapsula toda a
+// Tela 02 - Form de cadastro/edicao de exercício. Encapsula toda a
 // logica de campos para que /exercicios/novo.tsx e
 // /exercicios/[slug]/editar.tsx compartilhem a mesma UI.
 //
 // Campos:
 //  - Nome (Input)
 //  - Grupo muscular (ChipGroup multi)
-//  - Nivel (ChipGroup single)
+//  - Nível (ChipGroup single)
 //  - Equipamento (Input)
 //  - Instrucao (Textarea)
 //  - Dicas (lista dinamica de inputs com botao + e -)
 //  - GIF (botao "Escolher GIF" via expo-document-picker)
 //
-// Mode 'novo' bloqueia edicao do slug; 'editar' tambem (slug e
-// imutavel apos criacao). Botao Salvar dispara onSalvar com meta
+// Mode 'novo' bloqueia edicao do slug; 'editar' também (slug e
+// imutavel após criacao). Botao Salvar dispara onSalvar com meta
 // pronto para escrita.
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -51,7 +51,7 @@ export interface ExercicioFormProps {
   // Modo informa ao caller se deve criar arquivo ou atualizar.
   modo: 'novo' | 'editar';
   // Callback de salvar. Recebe meta validado e URI temporario do
-  // GIF (null se usuario nao escolheu novo).
+  // GIF (null se usuario não escolheu novo).
   onSalvar: (args: {
     meta: Exercicio;
     gifTemporario: string | null;
@@ -120,8 +120,8 @@ export function ExercicioForm({
       if (result.canceled) return;
       const asset = result.assets?.[0];
       if (!asset) return;
-      // Validacao de mime quando informado pelo picker. Em alguns
-      // providers vem null; aceitamos nesse caso e a validacao real
+      // Validação de mime quando informado pelo picker. Em alguns
+      // providers vem null; aceitamos nesse caso e a validação real
       // de tamanho fica para saveExercicio.
       if (asset.mimeType && !asset.mimeType.includes('gif')) {
         haptics.error();

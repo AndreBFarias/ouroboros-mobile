@@ -1,6 +1,6 @@
 // Store global de configuracoes. Ponto unico onde toggles de feature,
 // lembretes, biometria, sync e qualidade do scanner vivem. M00.5 cria
-// o shape completo (CONTRACT secao 1.5) com defaults conservadores;
+// o shape completo (CONTRACT seção 1.5) com defaults conservadores;
 // a UI de Settings sera implementada em M15 e sprints opt-in
 // (M14.5/M16/M17/M18/M11.5/M20) consumirao toggles existentes.
 //
@@ -97,7 +97,7 @@ export interface SettingsState {
   resetar: () => void;
 }
 
-// Defaults conservadores (CONTRACT secao 1.5):
+// Defaults conservadores (CONTRACT seção 1.5):
 // - Toggles de feature comecam desligados (opt-in explicito).
 // - Trigger som off por padrao (momento delicado).
 // - Cap de midia em 4 itens por registro.

@@ -1,12 +1,12 @@
 // Tela 01 (hoje) — entrada do app. Le do Vault os registros do dia
 // (humor / diarios emocionais / eventos) e renderiza em sentence
-// case com acentuacao PT-BR completa. Se o onboarding nao foi
+// case com acentuacao PT-BR completa. Se o onboarding não foi
 // concluido, redireciona para /onboarding (substituiu o
 // PermissaoVaultModal da M02 a partir da M03).
 //
 // Fonte de verdade visual: docs/Ouroboros_22_telas-standalone.html
 // artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
-// docs/BRIEFING.md secao 7.
+// docs/BRIEFING.md seção 7.
 import { useEffect, useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
@@ -43,16 +43,16 @@ export default function TelaHoje() {
   const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
 
   // Espera as 3 stores hidratarem do SecureStore antes de qualquer
-  // decisao de redirect, senao o gate dispara com defaults (done=false,
+  // decisão de redirect, senao o gate dispara com defaults (done=false,
   // vaultRoot=null) e causa flicker indo/voltando da tela de
-  // onboarding ate o persist terminar.
+  // onboarding até o persist terminar.
   const onbHidratado = useHasHydrated(useOnboarding);
   const vaultHidratado = useHasHydrated(useVault);
   const pessoaHidratada = useHasHydrated(usePessoa);
   const tudoHidratado = onbHidratado && vaultHidratado && pessoaHidratada;
 
   // Restaura URI do SecureStore na primeira montagem (caso o
-  // middleware persist ainda nao tenha hidratado).
+  // middleware persist ainda não tenha hidratado).
   useEffect(() => {
     if (vaultRoot) return;
     let cancelled = false;
@@ -66,12 +66,12 @@ export default function TelaHoje() {
 
   // Splash silencioso enquanto persist carrega: tela de fundo bg-page
   // sem texto, evitando que o usuario veja conteudo errado por uma
-  // fracao de segundo.
+  // fração de segundo.
   if (!tudoHidratado) {
     return <Screen padded={false}><View style={{ flex: 1 }} /></Screen>;
   }
 
-  // Gate de onboarding: se nao concluiu ou se nao tem vaultRoot,
+  // Gate de onboarding: se não concluiu ou se não tem vaultRoot,
   // redireciona para o fluxo de boas-vindas.
   if (!onboardingDone || !vaultRoot) {
     return <Redirect href="/onboarding" />;
@@ -86,7 +86,7 @@ export default function TelaHoje() {
     : () => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a');
 
   // captureRoutes resolve cada FABRadialKey para uma rota concreta;
-  // exercicio fica como stub ate a sprint M13 pintar a galeria real.
+  // exercício fica como stub até a sprint M13 pintar a galeria real.
   const onCapture = (key: FABRadialKey) => {
     const route = routeForCapture(key);
     router.push(route);
@@ -103,7 +103,7 @@ export default function TelaHoje() {
 
 interface ConteudoProps {
   onCapture: (key: FABRadialKey) => void;
-  // undefined quando sozinho: avatar nao tem toggle.
+  // undefined quando sozinho: avatar não tem toggle.
   onAvatarPress: (() => void) | undefined;
   onComponentsPress: () => void;
 }

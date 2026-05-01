@@ -1,9 +1,9 @@
 // Wrapper sobre expo-notifications para os 3 lembretes diarios da
-// tela de Settings (CONTRACT secao 1.5: lembretes.medicacao,
+// tela de Settings (CONTRACT seção 1.5: lembretes.medicacao,
 // lembretes.treino, lembretes.humor). API minima: schedule por chave
-// + cancel por chave. ID de notificacao = "ouroboros.lembrete.<chave>".
+// + cancel por chave. ID de notificação = "ouroboros.lembrete.<chave>".
 //
-// Comportamento canonico (Decisao M15 - secao 11 do spec):
+// Comportamento canonico (Decisão M15 - seção 11 do spec):
 //   - 1 schedule por lembrete com `repeats: true`. Diario simples,
 //     sem weekday-specific.
 //   - Permissao pedida just-in-time no toggle on. Falha ou recusa
@@ -14,9 +14,9 @@
 //
 // Plataforma:
 //   - Android nativo: usa channel `default` (registrado em app.json).
-//   - Web: expo-notifications nao tem implementacao Web util; cai em
-//     no-op silencioso para nao quebrar o smoke do Chrome.
-//   - iOS: nao alvo principal, mas a API e a mesma.
+//   - Web: expo-notifications não tem implementacao Web útil; cai em
+//     no-op silencioso para não quebrar o smoke do Chrome.
+//   - iOS: não alvo principal, mas a API e a mesma.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
@@ -25,7 +25,7 @@ export type LembreteChave = 'medicacao' | 'treino' | 'humor';
 const ID_PREFIX = 'ouroboros.lembrete.';
 
 // Titulos default (sentence case com acentuacao PT-BR completa).
-// Body opcional para nao virar empurrao com tom culpado.
+// Body opcional para não virar empurrao com tom culpado.
 const TITULOS: Record<LembreteChave, string> = {
   medicacao: 'Medicação',
   treino: 'Treino',
@@ -54,7 +54,7 @@ export function parseHorario(
   return { hour, minute };
 }
 
-// Pede permissao se ainda nao tiver. Retorna true se concedida.
+// Pede permissao se ainda não tiver. Retorna true se concedida.
 // No web (sem implementacao nativa), retorna false silenciosamente.
 export async function pedirPermissao(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
@@ -95,7 +95,7 @@ export async function agendarLembrete(
   return true;
 }
 
-// Cancela schedule da chave (idempotente: nao falha se nao existe).
+// Cancela schedule da chave (idempotente: não falha se não existe).
 export async function cancelarLembrete(chave: LembreteChave): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
@@ -107,7 +107,7 @@ export async function cancelarLembrete(chave: LembreteChave): Promise<void> {
   }
 }
 
-// Util para debug/Settings: lista todos os lembretes agendados.
+// Útil para debug/Settings: lista todos os lembretes agendados.
 // Retorna so os identifiers que comecam com nosso prefixo (ignora
 // agendas de outras features futuras).
 export async function listarAgendados(): Promise<string[]> {
@@ -118,7 +118,7 @@ export async function listarAgendados(): Promise<string[]> {
     .map((n) => n.identifier);
 }
 
-// Cancela tudo (util em testes e em "limpar dados" futuro).
+// Cancela tudo (útil em testes e em "limpar dados" futuro).
 export async function cancelarTudo(): Promise<void> {
   if (Platform.OS === 'web') return;
   for (const chave of ['medicacao', 'treino', 'humor'] as LembreteChave[]) {

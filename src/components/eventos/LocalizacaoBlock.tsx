@@ -7,10 +7,10 @@
 // Estados:
 //  - lugar: string controlado pelo container.
 //  - bairro: string | null controlado pelo container. Quando null,
-//    chip nao aparece. Quando string, exibe chip cyan ao lado do
+//    chip não aparece. Quando string, exibe chip cyan ao lado do
 //    botao.
 //
-// Erros de detec cao sao silenciosos: o container chama
+// Erros de detec cao são silenciosos: o container chama
 // getBairroAtual e mostra toast info se devolver null.
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -35,7 +35,7 @@ export function LocalizacaoBlock({
   disabled = false,
 }: LocalizacaoBlockProps) {
   // Permite que o container controle 'detectando' externamente, ou
-  // gerencie internamente quando a prop nao chega.
+  // gerencie internamente quando a prop não chega.
   const [detectandoLocal, setDetectandoLocal] = useState(false);
   const detectando = detectandoProp ?? detectandoLocal;
 

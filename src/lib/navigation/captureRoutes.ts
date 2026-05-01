@@ -2,17 +2,17 @@
 // Centraliza o roteamento para que telas futuras (M05/M06/M07/M06.5/
 // M09) consumam o mesmo contrato sem reimplementar a logica.
 //
-// Decisoes registradas em docs/sprints/M04-spec.md secao 9 e
-// docs/sprints/M13-spec.md secao 10:
+// Decisões registradas em docs/sprints/M04-spec.md seção 9 e
+// docs/sprints/M13-spec.md seção 10:
 //   1. /diario-emocional recebe modo via query string
 //      (audio | vitoria | trigger).
-//   2. exercicio aponta para /(tabs)/exercicios/novo (M13 substituiu
+//   2. exercício aponta para /(tabs)/exercicios/novo (M13 substituiu
 //      o stub /em-breve criado em M04).
 //
-// Comentarios em codigo sem acentuacao (convencao shell/CI).
+// Comentarios em código sem acentuacao (convencao shell/CI).
 import type { FABRadialKey } from '@/components/ui';
 
-// Pathnames suportados pelas 6 acoes de captura. Mantemos como union
+// Pathnames suportados pelas 6 ações de captura. Mantemos como union
 // literal para que o expo-router (`router.push`) aceite o descriptor
 // sem cast e o TS detecte erro caso alguma sprint futura redefina
 // uma rota fora desta lista.
@@ -27,7 +27,7 @@ export interface RouteDescriptor {
   params?: Record<string, string>;
 }
 
-// Mapa imutavel de cada acao para a rota destino. Mantem `as const`
+// Mapa imutavel de cada ação para a rota destino. Mantem `as const`
 // para que o TypeScript preserve os literais (necessario para o
 // typed routing do expo-router).
 const CAPTURE_ROUTES = {
@@ -40,7 +40,7 @@ const CAPTURE_ROUTES = {
 } as const satisfies Readonly<Record<FABRadialKey, RouteDescriptor>>;
 
 // Devolve uma copia rasa e segura da rota associada a `key`. Copia
-// tambem o `params` (quando existe) para evitar que callers mutem
+// também o `params` (quando existe) para evitar que callers mutem
 // o mapa interno por engano.
 export function routeForCapture(key: FABRadialKey): RouteDescriptor {
   const route = CAPTURE_ROUTES[key];

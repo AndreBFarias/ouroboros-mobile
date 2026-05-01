@@ -15,7 +15,7 @@ export interface SaveTreinoArgs {
   body?: string;
   vaultRoot: string;
   // Override opcional do slug. Quando ausente, deriva da rotina.
-  // Util em edicao para preservar o slug original.
+  // Útil em edicao para preservar o slug original.
   slugOverride?: string;
 }
 

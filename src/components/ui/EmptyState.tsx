@@ -1,6 +1,6 @@
 // Estado vazio sereno. Icone 48dp na cor muted-decor (lucide), frase
 // muted body, espaco generoso (terco superior). Sem CTA grande, sem
-// ilustracao colorida. A frase chega via prop; se nao houver icone
+// ilustracao colorida. A frase chega via prop; se não houver icone
 // custom, cai num icone neutro (Inbox).
 import { ComponentType } from 'react';
 import { Text, View } from 'react-native';

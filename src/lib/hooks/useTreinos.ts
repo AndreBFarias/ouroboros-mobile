@@ -35,7 +35,7 @@ export function useTreinos(): UseTreinosResult {
     setLoading(true);
     setError(null);
     try {
-      // Quando filtro = 'ambos', nao filtra; senao filtra pelo autor
+      // Quando filtro = 'ambos', não filtra; senao filtra pelo autor
       // ativo. Mesmo padrao usado em useHoje.
       const autor =
         filtroPessoa === 'ambos' ? null : pessoaAtiva;

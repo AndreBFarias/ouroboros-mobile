@@ -2,22 +2,22 @@
 // trigger <-> vitoria que muda a borda esquerda do form (red 2px /
 // green 2px). Grid de chips de emocao multi-select (negativas em
 // trigger, positivas em vitoria). Slider de intensidade 1-5.
-// Textarea livre obrigatoria. ChipGroup multi "com quem" com 4
+// Textarea livre obrigatória. ChipGroup multi "com quem" com 4
 // opcoes fixas. Bloco condicional em modo trigger: textarea
 // estrategia + toggle "Funcionou?". Botao final destructive
 // (trigger) ou success (vitoria). Persiste em
 // inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md via saveDiario.
 //
-// Decisoes M06 (spec secao 9):
-//  - Texto livre obrigatorio (minimo 1 caractere).
+// Decisões M06 (spec seção 9):
+//  - Texto livre obrigatório (minimo 1 caractere).
 //  - Listas de emocoes e "com quem" fechadas; expansao em sprint
 //    futura se demanda surgir.
 //  - modo=audio inicializa como vitoria e marca audioRequested
-//    interno; gravacao real chega na M06.5.
+//    interno; gravação real chega na M06.5.
 //
 // Restricao do schema (achado registrado para sprint nova): o
 // schema diario_emocional v1 aceita apenas PessoaId em `com`, mas
-// a UI desta tela tambem oferece amigos/sozinho. Persistimos no
+// a UI desta tela também oferece amigos/sozinho. Persistimos no
 // frontmatter so os PessoaId validos e marcamos contexto extra no
 // corpo livre do .md como linha "Com: <quem>." legivel pelo humano.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -55,8 +55,8 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 type ModoParam = DiarioEmocionalModo | 'audio';
 
 // "Com quem" inclui PessoaIds validos no schema (pessoa_a, pessoa_b)
-// e dois flags de contexto social (amigos, sozinho). Os flags nao
-// passam no PessoaIdSchema; sao anotados no corpo do .md.
+// e dois flags de contexto social (amigos, sozinho). Os flags não
+// passam no PessoaIdSchema; são anotados no corpo do .md.
 type ComQuem = PessoaAutor | 'amigos' | 'sozinho';
 const COM_QUEM_FLAGS: readonly ComQuem[] = [
   'pessoa_a',
@@ -88,7 +88,7 @@ function isModoParam(value: unknown): value is ModoParam {
 
 const INTENSIDADE_DEFAULT = 3;
 
-// Formata data ISO 8601 com offset -03:00 (Sao Paulo, sem DST).
+// Formata data ISO 8601 com offset -03:00 (São Paulo, sem DST).
 // Modelo: '2026-04-29T10:15:00-03:00'.
 function nowIsoSaoPaulo(): string {
   const TZ_OFFSET_MIN = -180;
@@ -103,9 +103,9 @@ function nowIsoSaoPaulo(): string {
 }
 
 // Monta o corpo do .md a partir dos campos do registro. O frontmatter
-// ja guarda os campos estruturados; o corpo replica em prosa para
+// já guarda os campos estruturados; o corpo replica em prosa para
 // leitura humana no Obsidian e absorve o contexto social que o
-// schema atual nao serializa.
+// schema atual não serializa.
 function buildBody(args: {
   texto: string;
   estrategia?: string;
@@ -141,7 +141,7 @@ export default function DiarioEmocional() {
   const modoParam: ModoParam = isModoParam(modoBruto) ? modoBruto : 'vitoria';
 
   // Modo inicial: 'audio' inicializa como 'vitoria' por default. A
-  // gravacao real chega na M06.5; por enquanto so marcamos a flag
+  // gravação real chega na M06.5; por enquanto so marcamos a flag
   // interna audioRequested para a sprint futura acoplar.
   const modoInicial: DiarioEmocionalModo =
     modoParam === 'audio' ? 'vitoria' : modoParam;
@@ -159,18 +159,18 @@ export default function DiarioEmocional() {
   const [funcionou, setFuncionou] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
 
-  // Reset das emocoes ao trocar de modo: lista negativa nao bate
+  // Reset das emocoes ao trocar de modo: lista negativa não bate
   // com positiva, preservar slug seria payload invalido.
   useEffect(() => {
     setEmocoes([]);
   }, [modo]);
 
-  // Abre o sheet apos a montagem (idempotente em re-mount via FAB).
+  // Abre o sheet após a montagem (idempotente em re-mount via FAB).
   useEffect(() => {
     sheetRef.current?.expand();
   }, []);
 
-  // Memoizado antes do early return para nao quebrar regra dos hooks.
+  // Memoizado antes do early return para não quebrar regra dos hooks.
   const opcoesComQuem = useMemo<ChipOption[]>(
     () =>
       COM_QUEM_FLAGS.map((c) => ({
@@ -444,8 +444,8 @@ export default function DiarioEmocional() {
           disabled={salvando}
         />
 
-        {/* audioRequested fica disponivel para a M06.5 acoplar a UI
-            de gravacao. Esta sprint apenas marca a flag interna. */}
+        {/* audioRequested fica disponível para a M06.5 acoplar a UI
+            de gravação. Esta sprint apenas marca a flag interna. */}
         {audioRequested ? (
           <Text
             style={{

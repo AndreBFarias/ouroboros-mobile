@@ -1,4 +1,4 @@
-// Tela 02 - Cadastro de novo exercicio. Reusa ExercicioForm em modo
+// Tela 02 - Cadastro de novo exercício. Reusa ExercicioForm em modo
 // 'novo'. Ao salvar, chama saveExercicio que copia o GIF (se houver)
 // para assets/exercicios/<slug>.gif e grava o .md.
 //

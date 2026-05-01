@@ -1,7 +1,7 @@
-// FAB Radial: 6 acoes em arco semicircular subindo do FAB principal.
+// FAB Radial: 6 ações em arco semicircular subindo do FAB principal.
 // Overlay escuro 50% sobre tela atual. FAB rotaciona 45deg (vira X) ao
-// abrir. Cada botao surge em sequencia com 60ms delay (springs.bouncy).
-// Tap fora fecha. Acoes: humor, voz, camera, exercicio, vitoria, trigger.
+// abrir. Cada botao surge em sequência com 60ms delay (springs.bouncy).
+// Tap fora fecha. Ações: humor, voz, camera, exercício, vitoria, trigger.
 // onSelect recebe a key escolhida e o componente fecha automaticamente.
 import { useState, type ComponentType } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -48,7 +48,7 @@ const ARC_RADIUS = 210;
 const FAB_SIZE = 72;
 const ACTION_SIZE = 64;
 const LABEL_GAP = 12;
-// Angulos no range matematico 180-270deg (esquerda ate cima do FAB).
+// Angulos no range matematico 180-270deg (esquerda até cima do FAB).
 // Fora desse range os botoes sairiam pela direita da tela ou ficariam
 // abaixo do FAB. Aumentamos ARC_RADIUS para 210 para dar mais
 // espacamento vertical entre labels (eliminando a sobreposicao
@@ -175,7 +175,7 @@ export function FABRadial({
         />
       </MotiView>
 
-      {/* acoes em arco */}
+      {/* ações em arco */}
       <View
         pointerEvents="box-none"
         style={{
@@ -211,9 +211,9 @@ export function FABRadial({
                    - Itens "laterais" (angleDeg < 240): label a esquerda
                      do circulo, alinhado ao final do container 160dp.
                    - Itens "superiores" (angleDeg >= 240, ou seja
-                     Exercicios, Conquista, Crise): label ACIMA do
+                     Exercícios, Conquista, Crise): label ACIMA do
                      circulo, centralizado, evitando colisao entre
-                     labels proximos do extremo vertical (270 graus). */}
+                     labels próximos do extremo vertical (270 graus). */}
               {(() => {
                 const labelAcima = action.angleDeg >= 240;
                 const containerStyle = labelAcima

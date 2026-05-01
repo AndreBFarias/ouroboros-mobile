@@ -1,10 +1,10 @@
-// Wrappers tipados sobre expo-haptics. Async para nao bloquear a UI thread.
+// Wrappers tipados sobre expo-haptics. Async para não bloquear a UI thread.
 // Convencao de uso:
 //   await haptics.light();      // botao primario, toggle leve
-//   await haptics.medium();     // confirmacao de acao destrutiva
+//   await haptics.medium();     // confirmacao de ação destrutiva
 //   await haptics.selection();  // tick por step em slider/picker
 //   await haptics.success();    // dossie gerado, vitoria registrada
-//   await haptics.error();      // falha de validacao, tentativa invalida
+//   await haptics.error();      // falha de validação, tentativa invalida
 import * as ExpoHaptics from 'expo-haptics';
 
 export const haptics = {

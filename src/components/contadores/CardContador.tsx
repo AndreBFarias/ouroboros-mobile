@@ -1,14 +1,14 @@
 // Card visual de um contador na lista (M18). Conteudo, conforme spec
-// secao 6 e secao 11:
-//   - Linha 1: numero de dias em --cyan heading-1 (48dp) + label
+// seção 6 e seção 11:
+//   - Linha 1: número de dias em --cyan heading-1 (48dp) + label
 //     "dia" / "dias" pequena ao lado (--muted, 14dp). Hierarquia
-//     mantida sem competir com o numero gigante.
+//     mantida sem competir com o número gigante.
 //   - Linha 2: titulo em --orange heading-3.
 //   - Linha 3: "Recorde: N dias" em --muted micro caption.
 //   - Linha 4: botao "Resetei" red text alinhado a direita.
 //
 // ADR-0005 reforcado: sem fogo, sem badge, sem milestone, sem cor
-// especial em sequencias longas. Numero sempre cyan, igual qualquer
+// especial em sequências longas. Número sempre cyan, igual qualquer
 // outro. Sem som, sem confete. Animacao unica: fade-in sutil no valor
 // pos-reset (controlado pelo container).
 //
@@ -47,7 +47,7 @@ export function CardContador({
       accessibilityLabel={`contador ${contador.titulo} ${dias} ${labelDias}`}
     >
       <View style={{ gap: spacing.sm }}>
-        {/* Linha 1: numero gigante + label dia/dias */}
+        {/* Linha 1: número gigante + label dia/dias */}
         <View
           style={{
             flexDirection: 'row',
