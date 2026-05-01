@@ -59,7 +59,7 @@ fechamento de sprint.
 | `[ok]` | M20.1 | Fix gitignore — recuperar módulo Android excluído por `android/` genérico | — | — | 0,2h | `40efd06` |
 | `[ok]` | M00.5.x | Fix Rules of Hooks em `(tabs)/index.tsx:81` — hook movido para topo antes dos early returns; ESLint exit 0 prova fix | — | — | 0,3h | `1f7ac8a` |
 | `[todo]` | INFRA-acentuacao-comentarios | Varrer `app/` e `src/` corrigindo comentários PT-BR sem acento (CLAUDE.md exige acentuação completa em comentários; débito histórico) | — | — | 2-3h | — |
-| `[ok]` | M19.x | Inventário de mockups + stub build-mockups + seção CONTEXTO §7.1 (fechada parcialmente; toolchain JSX→HTML completa fica para M19 final) | — | — | 1,5h | (a commitar) |
+| `[ok]` | M19.x | Inventário de mockups + stub build-mockups + seção CONTEXTO §7.1 (fechada parcialmente; toolchain JSX→HTML completa fica para M19 final) | — | — | 1,5h | `ce0b187` |
 | `[todo]` | M20.x | Validação Nível B/C real do widget na home (após `npm run build:dev`) | 26 | — | 1-2h | — |
 | `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |
 | `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
