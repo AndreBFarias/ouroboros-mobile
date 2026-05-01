@@ -29,3 +29,11 @@ export {
   type InboxArquivoMeta,
   type InboxArquivoSubtipo,
 } from './inbox_arquivo';
+export {
+  ExercicioSchema,
+  NivelExercicioSchema,
+  HistoricoExecucaoSchema,
+  type Exercicio,
+  type NivelExercicio,
+  type HistoricoExecucao,
+} from './exercicio';

@@ -52,6 +52,14 @@ export default function TabsLayout() {
         options={{ href: null, title: 'Em construcao' }}
       />
 
+      {/* Sub-rota exercicios (M13). E registrada como grupo via
+          _layout interno; expoe-se aqui apenas para esconder da
+          bottom bar (acesso fica pelo FAB radial e por deep link). */}
+      <Tabs.Screen
+        name="exercicios"
+        options={{ href: null, title: 'Exercicios' }}
+      />
+
       {/* Abas condicionais: aparecem apenas quando o toggle esta on
           em Settings. Default off; CONTRACT secao 1.1 lista as 5. */}
       <Tabs.Screen

@@ -2,11 +2,12 @@
 // Centraliza o roteamento para que telas futuras (M05/M06/M07/M06.5/
 // M09) consumam o mesmo contrato sem reimplementar a logica.
 //
-// Decisoes registradas em docs/sprints/M04-spec.md secao 9:
+// Decisoes registradas em docs/sprints/M04-spec.md secao 9 e
+// docs/sprints/M13-spec.md secao 10:
 //   1. /diario-emocional recebe modo via query string
 //      (audio | vitoria | trigger).
-//   2. exercicio aponta para /em-breve enquanto a galeria de
-//      exercicios nao chegar (M13).
+//   2. exercicio aponta para /(tabs)/exercicios/novo (M13 substituiu
+//      o stub /em-breve criado em M04).
 //
 // Comentarios em codigo sem acentuacao (convencao shell/CI).
 import type { FABRadialKey } from '@/components/ui';
@@ -19,7 +20,7 @@ export type CaptureRoutePath =
   | '/humor-rapido'
   | '/diario-emocional'
   | '/scanner'
-  | '/em-breve';
+  | '/(tabs)/exercicios/novo';
 
 export interface RouteDescriptor {
   pathname: CaptureRoutePath;
@@ -33,7 +34,7 @@ const CAPTURE_ROUTES = {
   humor: { pathname: '/humor-rapido' },
   voz: { pathname: '/diario-emocional', params: { modo: 'audio' } },
   camera: { pathname: '/scanner' },
-  exercicio: { pathname: '/em-breve' },
+  exercicio: { pathname: '/(tabs)/exercicios/novo' },
   vitoria: { pathname: '/diario-emocional', params: { modo: 'vitoria' } },
   trigger: { pathname: '/diario-emocional', params: { modo: 'trigger' } },
 } as const satisfies Readonly<Record<FABRadialKey, RouteDescriptor>>;

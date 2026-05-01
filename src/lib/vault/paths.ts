@@ -78,6 +78,27 @@ export function assetsPath(filename: string): string {
   return `assets/${filename}`;
 }
 
+// exercicios/<slug>.md (biblioteca de exercicios da M13). Caller
+// fornece slug ja em kebab-case ASCII (ver slugifyExercicio em
+// src/lib/exercicios/slug.ts).
+export function exerciciosPath(slug: string): string {
+  return `exercicios/${slug}.md`;
+}
+
+// assets/exercicios/<slug>.gif. GIFs ficam fora de assets/<filename>
+// para nao misturar com fotos de eventos. Caller fornece slug igual
+// ao do .md companion.
+export function exerciciosGifPath(slug: string): string {
+  return `assets/exercicios/${slug}.gif`;
+}
+
+// treinos/draft/YYYY-MM-DD-<slug>.md (M13 cria sessao rapida quando
+// usuario toca "Adicionar a treino livre" no detalhe do exercicio).
+// Migrado para schema TreinoSessao formal quando M11 chegar.
+export function treinosDraftPath(date: Date, slug: string): string {
+  return `treinos/draft/${formatDateYmd(date)}-${slug}.md`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao
@@ -117,9 +138,12 @@ export const VAULT_FOLDERS = {
   inboxCasaContrato: 'inbox/casa/contrato',
   inboxOutros: 'inbox/outros',
   treinos: 'treinos',
+  treinosDraft: 'treinos/draft',
   medidas: 'medidas',
   marcos: 'marcos',
+  exercicios: 'exercicios',
   assets: 'assets',
+  assetsExercicios: 'assets/exercicios',
   cache: '.ouroboros/cache',
 } as const;
 

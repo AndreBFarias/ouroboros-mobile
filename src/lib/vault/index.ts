@@ -8,6 +8,9 @@ export {
   diarioEmocionalPath,
   assetsPath,
   inboxFinanceiroPath,
+  exerciciosPath,
+  exerciciosGifPath,
+  treinosDraftPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -25,3 +28,11 @@ export {
   clearVaultRootStorage,
   VAULT_ROOT_STORAGE_KEY,
 } from './permissions';
+
+export {
+  listarExercicios,
+  lerExercicio,
+  escreverExercicio,
+  excluirExercicio,
+} from './exercicios';
+export type { ListarExerciciosFiltros } from './exercicios';

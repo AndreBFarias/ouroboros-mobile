@@ -80,6 +80,36 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+// react-native-svg: substitui primitivas SVG por View para isolamento
+// no test runner. Polyline/Circle/Line/Svg viram <View> simples para
+// que componentes como HistoricoSparkline renderizem sem erro nos
+// testes de unidade.
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const RN = require('react-native');
+  const stub = (name) => {
+    const C = (props) =>
+      React.createElement(RN.View, { ...props, accessibilityLabel: name });
+    C.displayName = `SvgMock(${name})`;
+    return C;
+  };
+  return {
+    __esModule: true,
+    default: stub('Svg'),
+    Svg: stub('Svg'),
+    Circle: stub('Circle'),
+    Polyline: stub('Polyline'),
+    Line: stub('Line'),
+    Path: stub('Path'),
+    Rect: stub('Rect'),
+    G: stub('G'),
+    Text: stub('SvgText'),
+    Defs: stub('Defs'),
+    LinearGradient: stub('LinearGradient'),
+    Stop: stub('Stop'),
+  };
+});
+
 // lucide-react-native: substitui icones por View vazia para nao puxar
 // react-native-svg no test runner.
 jest.mock('lucide-react-native', () => {
