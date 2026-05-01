@@ -201,9 +201,28 @@ jest.mock('@gorhom/bottom-sheet', () => {
 // testes sem tocar API nativa.
 jest.mock('expo-notifications', () => {
   const memory = new Map();
+  const categorias = new Map();
+  const canais = new Map();
   return {
     __esModule: true,
-    SchedulableTriggerInputTypes: { DAILY: 'daily' },
+    SchedulableTriggerInputTypes: {
+      DAILY: 'daily',
+      WEEKLY: 'weekly',
+      TIME_INTERVAL: 'timeInterval',
+    },
+    AndroidImportance: {
+      MIN: 1,
+      LOW: 2,
+      DEFAULT: 3,
+      HIGH: 4,
+      MAX: 5,
+    },
+    AndroidNotificationVisibility: {
+      UNKNOWN: 0,
+      PUBLIC: 1,
+      PRIVATE: 2,
+      SECRET: -1,
+    },
     getPermissionsAsync: jest.fn(() =>
       Promise.resolve({ granted: true, canAskAgain: true })
     ),
@@ -221,7 +240,17 @@ jest.mock('expo-notifications', () => {
     getAllScheduledNotificationsAsync: jest.fn(() =>
       Promise.resolve(Array.from(memory.values()))
     ),
+    setNotificationCategoryAsync: jest.fn((id, actions) => {
+      categorias.set(id, actions);
+      return Promise.resolve();
+    }),
+    setNotificationChannelAsync: jest.fn((id, channel) => {
+      canais.set(id, channel);
+      return Promise.resolve();
+    }),
     __memory: memory,
+    __categorias: categorias,
+    __canais: canais,
   };
 });
 

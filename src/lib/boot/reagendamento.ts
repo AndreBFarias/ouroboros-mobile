@@ -46,4 +46,15 @@ const marcosAutoHook: BootHook = async () => {
   await verificarMarcosAuto();
 };
 
-BOOT_HOOKS.push(migrarDraftsHook, marcosAutoHook);
+// M16 alarmes pessoais: reagenda todos os alarmes ativos no boot.
+// Idempotente (cancela tudo do prefixo antes de re-criar). Necessario
+// porque expo-notifications nao persiste schedules entre reboots ou
+// updates do app no Android.
+const reagendarAlarmesHook: BootHook = async () => {
+  const { reagendarAlarmes } = await import(
+    '@/lib/services/alarmesNotificacoes'
+  );
+  await reagendarAlarmes();
+};
+
+BOOT_HOOKS.push(migrarDraftsHook, marcosAutoHook, reagendarAlarmesHook);

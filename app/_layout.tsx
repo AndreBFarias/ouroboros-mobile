@@ -12,6 +12,7 @@ import { ToastProvider } from '@/components/ui';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
+import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import '../global.css';
 
@@ -65,6 +66,13 @@ export default function RootLayout() {
   // no proprio modulo.
   useEffect(() => {
     void reagendarTodosBootHooks();
+  }, []);
+
+  // M16 categorias de notificacao com action buttons (Soneca/Desligar).
+  // Idempotente: chamar de novo sobrescreve a categoria com mesmo ID.
+  // Roda uma vez no mount; em Web vira no-op.
+  useEffect(() => {
+    void registrarCategoriasAlarme();
   }, []);
 
   if (!loaded) {

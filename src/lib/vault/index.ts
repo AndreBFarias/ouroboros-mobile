@@ -16,6 +16,7 @@ export {
   medidasPath,
   medidasFotoPath,
   cicloPath,
+  alarmesPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -72,3 +73,10 @@ export {
   ultimaDataInicio,
 } from './ciclo';
 export type { ListarRegistrosCicloFiltros, CicloPeriodo } from './ciclo';
+
+export {
+  listarAlarmes,
+  lerAlarme,
+  escreverAlarme,
+  excluirAlarme,
+} from './alarmes';

@@ -139,6 +139,14 @@ export function cicloPath(date: Date): string {
   return `inbox/saude/ciclo/${formatDateYmd(date)}.md`;
 }
 
+// alarmes/<slug>.md (alarme pessoal opt-in - M16). Slug em kebab-case
+// ASCII fornecido pelo usuario (titulo slugificado). Sem datas no path:
+// alarme e recorrente; o frontmatter guarda horario, dias_semana e
+// notification_ids. Pasta dedicada simplifica listagem e backup.
+export function alarmesPath(slug: string): string {
+  return `alarmes/${slug}.md`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao
@@ -183,6 +191,7 @@ export const VAULT_FOLDERS = {
   medidas: 'medidas',
   marcos: 'marcos',
   exercicios: 'exercicios',
+  alarmes: 'alarmes',
   assets: 'assets',
   assetsExercicios: 'assets/exercicios',
   cache: '.ouroboros/cache',
