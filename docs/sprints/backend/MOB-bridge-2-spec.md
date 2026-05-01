@@ -361,31 +361,43 @@ desta sprint estar fechada. Documentar em ambas as specs Mobile que
 elas só podem completar checkpoint visual com dados reais após
 MOB-bridge-2.
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- O leitor de XLSX consolidado existe em `src/load/`? Confirmar
-  path exato antes de começar; se não existe, criar uma camada fina
-  de leitura que reaproveita parsing já feito pelo pipeline.
-- A semana ISO de referência default deve ser a corrente ou a
-  anterior? Decisão proposta: corrente (semana em que o usuário
-  está). Mas se o pipeline rodar segunda de manhã antes de qualquer
-  transação da semana, `gasto_semana = 0` e `delta_textual` pode
-  ficar estranho. Considerar fallback: se `gasto_semana == 0`,
-  usar referência semana anterior.
-- O cálculo de média 12 semanas em `delta_textual` precisa filtrar
-  outliers (semanas com 0 gasto, ex: férias)? Decisão proposta:
-  ignorar semanas com 0 ou menos que 10% da mediana, para não
-  enviesar a média.
-- Rodar o gerador é parte de `--full-cycle`, mas e quando o usuário
-  roda apenas `--inbox` ou `--mes`? Decisão proposta: gerar caches
-  em todas essas rotas também, com um flag `--no-mobile-cache` para
-  desativar quando o usuário não quer atualizar Mobile.
-- A pasta `~/Protocolo-Ouroboros/.ouroboros/cache/` precisa ser
-  criada manualmente ou o gerador cria? Decisão: o
-  `write_json_atomic` cria via `path.parent.mkdir(parents=True,
-  exist_ok=True)`. Mobile assume que o caminho existe quando o
-  cache existe; quando não existe, mostra empty state.
-- Quanto tempo o gerador leva em escala real (1 ano de dailies,
-  XLSX com 5000 transações)? Se for mais que 5s, considerar
-  cacheamento incremental. Sub-sprint MOB-bridge-2.1 caso seja
-  necessário.
+- [ ] Pacote `src/protocolo_ouroboros/mobile_cache/` exporta
+      `gerar_todos`.
+- [ ] `humor_heatmap.py` cobre 90 dias; estatísticas validadas em
+      fixture pequeno.
+- [ ] `financas_cache.py` cobre semana ISO atual + delta textual
+      + top 5 categorias + 20 últimas transações.
+- [ ] `atomic.py` garante atomic write via `os.replace`.
+- [ ] `make sync` gera ambos os JSONs.
+- [ ] `--mobile-cache` flag standalone funcional.
+- [ ] `--no-mobile-cache` flag desativa quando aplicável.
+- [ ] Caches presentes nos paths canônicos com `schema_version: 1`.
+- [ ] Idempotência: rodar 2x produz JSON idêntico (exceto
+      `gerado_em`).
+- [ ] Atomic write robusto sob 5 invocações simultâneas.
+- [ ] 12-15 testes novos passando; nenhum legado regrediu.
+
+## 10. Decisões tomadas
+
+- **XLSX loader em `src/load/`:** confirmar path exato no início;
+  criar camada fina se não existir.
+- **Semana ISO referência default:** corrente. Se
+  `gasto_semana == 0`, fallback automático para semana anterior
+  (decisão da §10 anterior).
+- **Outliers da média 12 semanas:** ignorar semanas com 0 ou
+  < 10% da mediana (férias, hiatos).
+- **Geração em todas as rotas:** `--full-cycle`, `--inbox`,
+  `--mes` invocam o gerador. Flag `--no-mobile-cache` desativa
+  pontualmente.
+- **Pasta cache criada pelo gerador:** `write_json_atomic` faz
+  `path.parent.mkdir(parents=True, exist_ok=True)`. Mobile mostra
+  empty state quando ausente.
+- **Performance (escala real):** sprint cobre o caminho simples
+  (sempre regravar). Cacheamento incremental via comparação de
+  payload **entrega na MOB-bridge-2.1 sob demanda**, não nesta
+  passada — entra como sub-sprint apenas se medirmos > 5s em
+  produção. Não é "v2": é critério de evolução baseada em medição.
+
+Sprint pronta para execução sem perguntas pendentes.

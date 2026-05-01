@@ -1,9 +1,12 @@
 # Sprint M15 — Settings
 
 ```
-DEPENDE:    M03 (onboarding com identidade dinâmica) + M02 (Vault Bridge)
-BLOQUEIA:   M14.5, M16, M17, M18 (todos dependem do toggle de feature em Settings)
-ESTIMATIVA: 6-7h
+DEPENDE:    M00.5 fechada (useSettings shape + biometriaGate placeholder)
+            + M03 (onboarding com identidade dinâmica) + M02 (Vault Bridge)
+BLOQUEIA:   nenhuma sprint diretamente (toggles default false já
+            disponíveis desde M00.5; M14.5/M16/M17/M18 podem
+            executar antes de M15 estar pronta com UI).
+ESTIMATIVA: 7-8h
 ```
 
 ## 1. Objetivo
@@ -36,8 +39,10 @@ aparecem no menu lateral quando ativadas aqui. Toggles default
   Sync.
 - `src/components/settings/LinkSubTela.tsx` — linha clicável que
   navega para sub-tela com chevron à direita.
-- `src/lib/stores/settings.ts` — Zustand store persistido em
-  SecureStore com toda a configuração editável. Esquema:
+- `src/lib/stores/settings.ts` — **shape já criado em M00.5**.
+  Esta sprint estende com actions (toggle individual, set horário,
+  reset). Não modifica shape. Esquema canônico em
+  `INTEGRATION-CONTRACT.md` §1.5:
 
 ```ts
 interface SettingsState {
@@ -115,6 +120,29 @@ interface SettingsState {
 - `expo-local-authentication` — biometria.
 - `expo-sharing` — para o botão Exportar.
 - `expo-file-system` — `cacheDirectory`, `documentDirectory`.
+- `src/lib/boot/biometriaGate.tsx` — implementar `LocalAuthentication`
+  real (placeholder criado em M00.5). Quando
+  `privacidade.biometriaAbrir === true`, chamar
+  `authenticateAsync({ promptMessage: 'Desbloqueie para continuar' })`.
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** ativa aba fixa `/(tabs)/settings` registrada como
+  redirect-stub em M00.5; agora aponta para
+  `app/(tabs)/settings/index.tsx` real. Sub-rotas
+  `/settings/{editar-pessoa,adicionar-segunda-pessoa}`.
+- **Schema:** sem schemas novos (settings é store, não schema YAML).
+- **Store:** `useSettings` ganha actions completas (sem mudar
+  shape).
+- **app.json:** plugin `expo-notifications` + plugin
+  `expo-local-authentication` + plugin `expo-sharing`.
+- **Boot hook:** `<BiometriaGate>` da M00.5 ganha implementação
+  real. Sem mudança no `app/_layout.tsx`.
+- **FAB:** sem mudança.
+- **Settings é o consumidor maior:** todas as outras opt-ins
+  ligam aqui.
 
 ## 4. Restrições
 
@@ -276,16 +304,34 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
 Capturar screenshots em `docs/sprints/M15-screenshots/`. Comparar com
 artboard `Tela 23` do `docs/Ouroboros_22_telas-standalone.html`.
 
-## 10. Dúvidas em aberto
+## 10. Definição de Pronto
 
-- A heurística de status do Sync (verde/amarelo/vermelho) baseia-se
-  em mtime da pasta `~/Protocolo-Ouroboros/`. Funciona se Syncthing
-  está rodando no celular. Para Obsidian Sync, mesma heurística é
-  aplicável? Sugestão: sim, usa mtime independente do método.
-- Lembretes recorrentes: usar `weekday` ou disparar diariamente em
-  HH:MM? Sugestão: diário recorrente para simplicidade; cada lembrete
-  cria 1 schedule.
-- Exportar ZIP do Vault inteiro pode ser pesado (gigabytes em
-  uso intenso). Adicionar progress feedback? Sugestão: toast
-  `"Exportando..."` durante geração; ao concluir, abrir share sheet.
-  Sem barra de progresso (mantém UI simples).
+- [ ] Aba `/(tabs)/settings` ativa com 7 seções renderizadas.
+- [ ] Toggles funcionais com persistência imediata em SecureStore.
+- [ ] Sub-rotas Editar/Adicionar pessoa funcionais.
+- [ ] CardStatus do Sync com cores por mtime.
+- [ ] Lembretes funcionando via `expo-notifications` (3 schedules).
+- [ ] Biometria gate real ativo quando toggle on.
+- [ ] Exportar Vault em ZIP via `expo-sharing`.
+- [ ] Limpar cache funcional.
+- [ ] Toggles de feature opt-in (`cicloMenstrual`, `alarmePessoal`,
+      `todoLeve`, `contadorDiasSem`, `calendarioConquistas`,
+      `widgetHomescreen`) refletem na UI imediatamente.
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 11. Decisões tomadas
+
+- **Status sync via mtime:** independente do método (Syncthing,
+  Obsidian Sync, sem sync). Verde < 30min, amarelo 30min-6h,
+  vermelho > 6h ou conflito em `.stversions/`.
+- **Lembretes diários recorrentes:** cada lembrete cria 1
+  `scheduleNotificationAsync` com `repeats: true`. Simplicidade
+  sobre weekday-specific.
+- **Export ZIP com toast `"Exportando..."`:** sem barra de
+  progresso. Ao concluir, abre `Sharing.shareAsync`. UI simples.
+- **Biometria gate real na M15:** placeholder da M00.5 ganha
+  `LocalAuthentication`. Falha → tela de bloqueio com retry.
+- **Widget toggle (`widgetHomescreen`):** já presente no shape da
+  M00.5; M20 implementa o widget nativo.
+
+Sprint pronta para execução sem perguntas pendentes.

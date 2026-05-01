@@ -1,7 +1,8 @@
 # Sprint M10 — Mini Humor (Tela 21)
 
 ```
-DEPENDE:    M02 (Vault Bridge) + M05 (Humor Rápido grava daily/) +
+DEPENDE:    M00.5 fechada (tabs layout existe, schema barrel existe)
+            + M02 (Vault Bridge) + M05 (Humor Rápido grava daily/) +
             MOB-bridge-2 (cache humor-heatmap.json gerado pelo backend)
 BLOQUEIA:   M11.5 (calendário compartilha estética de heatmap)
 ESTIMATIVA: 4-5h
@@ -66,10 +67,11 @@ educa o usuário a rodar o pipeline no desktop.
   — Adicionar `humorHeatmapCachePath()` que devolve
   `.ouroboros/cache/humor-heatmap.json`. Usar
   `VAULT_FOLDERS.cache` já existente.
-- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/chrome/BottomTabs.tsx`
-  — Garantir que o tab "humor" aparece no navigator (caso ainda não
-  esteja). Ícone `lucide-react-native` `BarChart` com cor purple
-  ativo.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/schemas/index.ts`
+  — Re-exportar `HumorHeatmapCacheSchema`.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/app/(tabs)/_layout.tsx`
+  — Substituir o redirect `/(tabs)/humor → /em-construcao` da M00.5
+  por aba real apontando para `app/(tabs)/humor.tsx`.
 
 ## 3. APIs reutilizáveis
 
@@ -98,6 +100,23 @@ educa o usuário a rodar o pipeline no desktop.
 | humor 3       | `yellow`       | 60%       |
 | humor 4       | `cyan`         | 70%       |
 | humor 5       | `green`        | 100%      |
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** ativa a aba fixa `/(tabs)/humor` registrada como
+  redirect-stub em M00.5; agora aponta para `app/(tabs)/humor.tsx`
+  real. Ícone `BarChart3` da lucide.
+- **Schema:** `HumorHeatmapCacheSchema` exportado via barrel.
+- **Store:** consome `usePessoa` e `useVault`. Não cria store novo.
+- **app.json:** sem mudança.
+- **Boot hook:** nenhum.
+- **FAB:** sem mudança; botão "Registrar humor agora" no topo
+  navega para `/humor-rapido` (rota M05).
+- **Settings:** sem dependência.
+- **Backend:** consome `~/Protocolo-Ouroboros/.ouroboros/cache/humor-heatmap.json`
+  gerado por MOB-bridge-2.
 
 ## 4. Restrições
 
@@ -188,16 +207,32 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
   Capturar `docs/sprints/M10-screenshots/` lado a lado com mockup
   `docs/Ouroboros_22_telas-standalone.html` artboard "tela 21".
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- O modo sobreposto deve mostrar tooltip indicando qual quadrado é
-  de qual pessoa quando o tap acontece sobre área compartilhada?
-  Hoje a spec assume que o tap abre o modal listando ambos os
-  registros do dia.
-- Estatística "Média 30d" considera apenas dias com registro ou
-  inclui zeros para dias sem? Decisão influencia o número exibido.
-  Default proposto: só dias com registro.
-- Cache stale: indicador visual quando `gerado_em` é mais antigo
-  que 24h? Pode ser banner muted no rodapé.
-- Cor do quadrado de hoje no heatmap: outline `purple` 2px (igual
-  ao `Tela 09` Heatmap de Treinos) é o padrão?
+- [ ] Aba `/(tabs)/humor` ativa com tela real.
+- [ ] Heatmap 13x7 renderizado com cores por nível.
+- [ ] Stats "Média 30d" e "Registros: N / 30" cyan/muted.
+- [ ] Modo sobreposto pessoa_a + pessoa_b com 50% opacity cada.
+- [ ] Tap em quadrado em modo sobreposto abre modal listando
+      **ambos** os registros do dia.
+- [ ] Botão "Registrar humor agora" navega para `/humor-rapido`.
+- [ ] Empty state quando cache ausente:
+      `"Rode o pipeline no desktop pra carregar dados."`.
+- [ ] Banner muted rodapé "Atualizado em <data>" quando
+      `gerado_em` < 24h; em vermelho se > 7 dias.
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 10. Decisões tomadas
+
+- **Tooltip modo sobreposto:** tap abre modal com ambos os
+  registros do dia (pessoa_a + pessoa_b empilhados); single tap em
+  modo individual abre modal do dia da pessoa filtrada.
+- **Média 30d só dias com registro:** evita penalizar por hiatos.
+  Documentado em micro caption muted ao lado do número.
+- **Cache stale banner:** rodapé muted "Atualizado em <data>"
+  sempre visível; vira `--red` quando `gerado_em` > 7 dias para
+  alertar que pipeline não rodou recentemente.
+- **Outline hoje:** `purple` 2px (mesmo padrão do heatmap de
+  treinos da M11 — consistência visual).
+
+Sprint pronta para execução sem perguntas pendentes.

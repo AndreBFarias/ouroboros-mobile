@@ -308,25 +308,35 @@ refactor: pessoa_a_b mapeamento via mappings/pessoas.yaml
 
 Não aplicável. Sprint backend de refactor puro, sem UI.
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- A ADR-23 deve mesmo ser numerada como 23 ou continuar sequência
-  diferente? O backend já tem ADRs até 22 com sufixo descritivo
-  (`ADR-22-navegacao-clusters.md`). Numerar 23 mantém ordem mas
-  cria assimetria com a ADR-0011 do Mobile, que é a contraparte.
-  Decisão proposta: manter 23 no backend (ordem local) e citar
-  cruzamento explícito no header da ADR.
-- A renomeação `andre` → `pessoa_a` e `vitoria` → `pessoa_b` em
-  `mappings/pessoas.yaml` afeta o `pessoa_detector.py` e o
-  `controle_bordo.py`? Auditar antes de commitar para garantir que
-  não há código que depende literalmente das chaves antigas.
-- O hook `check_anonymity.py` (Python) e o `check_anonimato.sh`
-  (shell) devem rodar ambos no pre-commit, ou o shell substitui o
-  Python? Decisão proposta: rodar ambos. O Python cobre vazamento
-  de IA com regex mais sofisticada; o shell cobre nomes reais com
-  regra mais estrita (sem heurística).
-- Em `src/extractors/itau_pdf.py` há comentário sobre cidade
-  "Vitória-ES". Substituir o comentário ou manter com marker
-  `# anonimato-allow: cidade Vitoria-ES`? Decisão proposta:
-  reescrever o comentário sem citar a cidade pelo nome
-  (ex: `# evita falso-positivo com toponimo`).
+- [ ] `src/utils/pessoas.py` exporta 4 funções públicas; testes
+      cobrem 6 cases.
+- [ ] `mappings/pessoas.yaml` chaves topo renomeadas para
+      `pessoa_a`/`pessoa_b` com `display_name` por pessoa.
+- [ ] Todos extratores em `src/extractors/` retornam genéricos.
+- [ ] `pipeline.py`, `controle_bordo.py` sem nomes reais nem em
+      comentários.
+- [ ] `scripts/check_anonimato.sh` no backend ativo no pre-commit.
+- [ ] ADR-23 do backend formalizada citando cruzamento com ADR-0011
+      do Mobile.
+- [ ] `make test` 131+ testes passando (sem regressão); +6 testes
+      novos do `test_pessoas_resolver.py`.
+- [ ] `make lint` + `make smoke` + `make anti-migue` exit 0.
+- [ ] `grep` por nomes reais em `src/` e `tests/` retorna vazio.
+
+## 10. Decisões tomadas
+
+- **ADR-23 mantida:** numeração local do backend; cruzamento com
+  ADR-0011 Mobile citado explicitamente no header.
+- **Renomeação `andre`/`vitoria` → `pessoa_a`/`pessoa_b` no yaml:**
+  feita com auditoria prévia em `pessoa_detector.py` e
+  `controle_bordo.py` antes de commitar.
+- **Pre-commit roda ambos os hooks:** Python (`check_anonymity.py`
+  para IA com regex sofisticada) e shell (`check_anonimato.sh`
+  para nomes reais com regra estrita).
+- **Comentário Itaú "Vitória-ES":** reescrever sem citar
+  toponimo (ex: `# evita falso-positivo com nome de cidade`).
+  Manter limpeza absoluta.
+
+Sprint pronta para execução sem perguntas pendentes.

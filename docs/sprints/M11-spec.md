@@ -1,20 +1,25 @@
 # Sprint M11 — Memórias e Marcos (Telas 09, 10, 11)
 
 ```
-DEPENDE:    M02 (Vault Bridge) + M05 (humor) + M06 (diário emocional)
+DEPENDE:    M00.5 fechada (tabs layout, schemas barrel)
+            + M02 (Vault Bridge) + M05 (humor) + M06 (diário emocional)
+            + M07 (eventos)
 BLOQUEIA:   M11.5 (calendário visual de conquistas reusa schemas)
-ESTIMATIVA: 6-8h
+            + MOB-bridge-3 (marcos auto-gerados pelo backend)
+ESTIMATIVA: 8-10h
 ```
 
 ## 1. Objetivo
 
 Entregar a aba "Memórias" do app: heatmap de treinos com 91 dias de
 histórico (Tela 09), modal de detalhe de dia passado (Tela 10) e
-timeline gentil de marcos (Tela 11). A sprint **cria dois schemas
-novos** no Vault: `treino_sessao` (em `treinos/YYYY-MM-DD-slug.md`)
-e `marco` (em `marcos/YYYY-MM-DD-slug.md`). A sprint não escreve
-nesses schemas a partir do app (CRUD é trabalho de sprint futura);
-apenas lê. Marcos não têm ranking, níveis, badges ou pontos.
+timeline gentil de marcos (Tela 11), **com CRUD completo** de
+sessões de treino e marcos manuais. A aba "Fotos" é concretizada
+como **galeria agregada** que varre todas as fotos referenciadas em
+schemas existentes (`medidas/`, `eventos/`, `inbox/mente/diario/`,
+`marcos/`, `assets/`) e exibe em grid cronológico. A sprint **cria
+dois schemas novos** no Vault: `treino_sessao` e `marco`. Marcos
+não têm ranking, níveis, badges ou pontos.
 
 ## 2. Entregáveis
 
@@ -32,9 +37,43 @@ apenas lê. Marcos não têm ranking, níveis, badges ou pontos.
   cyan + legenda `"Menos [|||||] Mais"` muted. Reutiliza
   `<HeatmapBase>` extraído com prop de paleta (verde 30/60/100%).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/MemoriasFotosTab.tsx`
-  — Tela placeholder por ora. Empty state: `"Em breve."`. Reaproveita
-  schema de medidas/fotos numa sprint futura M12. Não fica vazio sem
-  contexto: explica que a aba virá com M12.
+  — Galeria agregada. `useFotosAgregadas()` varre 5 fontes do Vault
+  (`medidas/`, `eventos/`, `inbox/mente/diario/` se mídia, `marcos/`,
+  `assets/`) e devolve lista cronológica desc com origem (de qual
+  schema veio) e thumbnail. Grid 3 colunas; tap abre `<FotoDetalhe>`
+  em bottom sheet 70% mostrando metadata + botão `"Abrir registro"`
+  navegando para o schema de origem (ex: `/(tabs)/medidas/<data>`).
+  Empty state quando zero fotos: `"Suas fotos vão aparecer aqui
+  conforme você registrar."`.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/hooks/useFotosAgregadas.ts`
+  — Hook que faz a varredura cruzada e devolve
+  `{ fotos: FotoAgregada[], loading, error, recarregar }`.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/SheetNovoTreino.tsx`
+  — Bottom sheet 90% para CRUD de sessão de treino. Form com:
+  rotina (input livre), duração min (Slider 1-240), array dinâmico
+  de exercícios (cada item: `<ChipGroup>` exercício do `exercicios/`
+  da M13 + Slider series/reps/carga), textarea observações, botão
+  Salvar verde. Toast `"Treino salvo."` + haptic light.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/SheetNovoMarco.tsx`
+  — Bottom sheet 70%. Form: textarea descrição (obrigatória),
+  ChipGroup multi tags, botão Salvar verde. Toast
+  `"Marco anotado."` + haptic success.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/treinos/saveTreino.ts`
+  — Função pura: valida + escreve em `treinos/YYYY-MM-DD-<slug>.md`
+  via Vault Bridge.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/marcos/saveMarco.ts`
+  — Função pura: valida + escreve em `marcos/YYYY-MM-DD-<slug>.md`.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/marcos/marcosAuto.ts`
+  — `verificarMarcosAuto()`: heurística client-side complementar à
+  MOB-bridge-3 (backend gera quando rodando; client gera localmente
+  para garantir disponibilidade offline). Critérios:
+  - 3 treinos em 7 dias → marco auto `"Tres treinos nesta semana."`
+  - Retorno após hiato 5+ dias → marco auto `"Voltou apos N dias parados."`
+  - 7 dias consecutivos com humor registrado → marco auto.
+  Idempotente via hash do conteúdo (não duplica). Plugado em
+  `BOOT_HOOKS` da M00.5.
+- Botão flutuante FAB secundário no topo direito da Tela 11
+  (Marcos) e Tela 09 (Treinos) com `+` para abrir os sheets.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/MemoriasMarcosTab.tsx`
   — Tela 11: timeline vertical com linha `bg-elev` à esquerda, dots
   green 12dp e cards à direita. Cada card mostra data muted + frase
@@ -44,9 +83,10 @@ apenas lê. Marcos não têm ranking, níveis, badges ou pontos.
   (`"23 de abril, terça"`), subtitle cyan
   (`"Rotina B - 28 min - pessoa_a"` formatado via `formatPessoa()`),
   lista compacta de exercícios (check verde + nome + `"3x8 - 4 kg"`),
-  bloco observações em itálico muted, botões Editar / Duplicar pra
-  hoje (esta sprint só dispara toast `"Em breve."`; CRUD em sprint
-  futura).
+  bloco observações em itálico muted, botões **Editar** (abre
+  `<SheetNovoTreino>` pré-preenchido), **Duplicar pra hoje** (cria
+  nova sessão hoje copiando exercícios), **Excluir** (modal de
+  confirmação destrutivo, move .md para `cacheDirectory/lixeira/`).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/data/HeatmapBase.tsx`
   — Componente abstrato 13x7 que recebe `celulas: HeatmapCell[]` e
   `paleta: HeatmapPaleta`. Usado por treinos (verde 30/60/100%) e,
@@ -156,6 +196,26 @@ Regras zod:
   — `spring_default` para entrada do heatmap, `spring_subtle` para
   cards de timeline.
 
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** ativa aba fixa `/(tabs)/memoria` registrada na M00.5.
+  Sub-rota `/(tabs)/memoria` com tabs internas via
+  `react-native-tab-view` (Treinos / Fotos / Marcos).
+- **Schema:** `TreinoSessaoSchema`, `MarcoSchema` e tipos exportados
+  via `src/lib/schemas/index.ts`.
+- **Store:** consome `usePessoa`. Não cria store novo.
+- **app.json:** sem mudança.
+- **Boot hook:** registra `verificarMarcosAuto` em `BOOT_HOOKS`
+  (M00.5) — roda 1x/dia.
+- **FAB:** sem mudança no FAB radial principal. Cada sub-tab
+  (Treinos, Marcos) tem seu próprio botão `+` no canto superior
+  direito que abre os sheets.
+- **Settings:** sem dependência direta.
+- **Backend:** consome marcos auto-gerados de MOB-bridge-3 quando
+  presentes; senão usa heurística client.
+
 ## 4. Restrições
 
 - **Regra −1** (Anonimato): zero referência a IA, zero nomes reais.
@@ -175,10 +235,14 @@ Regras zod:
 - Mensagens de commit sem acento.
 - TypeScript strict — sem `any`.
 - Imports via alias `@/*`.
-- A sprint **só lê** schemas treino_sessao e marco; não escreve.
-  CRUD vem em sprints futuras de exercício e marcos manuais.
+- A sprint entrega **CRUD completo** de treinos e marcos manuais.
+  Galeria de fotos é leitura agregada de schemas existentes (não
+  duplica fotos no Vault).
 - Hoje destacado no heatmap usa outline `purple` 2px (igual ao
   Tela 21 padrão).
+- Marcos auto-gerados pelo client são **idempotentes** — hash do
+  conteúdo evita duplicatas quando MOB-bridge-3 também roda no
+  backend.
 
 ## 5. Procedimento sugerido
 
@@ -241,14 +305,42 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
   `docs/Ouroboros_22_telas-standalone.html` artboards "tela 09",
   "tela 10" e "tela 11".
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- Aba Fotos: deixar realmente como placeholder ou remover do
-  navigator até M12 chegar?
-- Lista de exercícios na Tela 10 mostra "carga_kg" diferente em
-  cada série (drop set, pirâmide) ou só a carga média?
-- Marcos podem ser auto-gerados pelo backend (após N treinos numa
-  semana, p.ex.), ou são sempre manuais? Hoje a spec assume só
-  manuais (CRUD futuro).
-- Critério de quando criar marco automático após M11: 3 treinos em
-  7 dias, retorno após hiato de 5+ dias?
+- [ ] Aba `/(tabs)/memoria` ativa com 3 tabs internas (Treinos /
+      Fotos / Marcos).
+- [ ] Heatmap 13x7 de treinos renderizado.
+- [ ] Tap em quadrado abre `<DetalheDiaTreinoModal>` com Editar /
+      Duplicar / Excluir funcionais.
+- [ ] Aba Fotos com galeria agregada de 5 fontes, grid 3 cols,
+      tap abre detalhe + atalho para registro origem.
+- [ ] Aba Marcos com timeline + botão `+` para criar manual.
+- [ ] CRUD de treinos completo (criar, editar, duplicar, excluir).
+- [ ] CRUD de marcos completo.
+- [ ] Marcos auto-gerados pelo client (idempotentes) rodando uma
+      vez por dia via boot hook.
+- [ ] Marcos auto do backend (MOB-bridge-3) reconhecidos sem
+      duplicação.
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 10. Decisões tomadas
+
+- **Aba Fotos concretizada como galeria agregada:** varre
+  `medidas/`, `eventos/`, `inbox/mente/diario/`, `marcos/`,
+  `assets/`. Sem duplicação de arquivos.
+- **CRUD treinos e marcos entrega na M11:** sheets de criação,
+  Editar/Duplicar/Excluir nos modais de detalhe. Lixeira soft em
+  `cacheDirectory/lixeira/<tipo>/<timestamp>-<slug>.md`.
+- **Carga drop set:** Tela 10 mostra cargas separadas por série
+  quando há variação (formato `"4 kg → 6 kg → 4 kg, 3x8"`); senão,
+  carga única.
+- **Marcos auto-gerados (3 critérios):**
+  - 3 treinos em 7 dias → `"Tres treinos nesta semana."`
+  - Retorno após hiato 5+ dias → `"Voltou apos N dias parados."`
+  - 7 dias consecutivos com humor → `"Sete dias acompanhando."`
+  Critérios fixos; revisão sob demanda.
+- **Origem dos marcos auto:** tanto MOB-bridge-3 (backend) quanto
+  `verificarMarcosAuto` (client) podem gerar. Hash do conteúdo
+  evita duplicação cruzada.
+
+Sprint pronta para execução sem perguntas pendentes.

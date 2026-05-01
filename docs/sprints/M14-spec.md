@@ -1,7 +1,8 @@
 # Sprint M14 — Mini Financeiro (Somente Leitura)
 
 ```
-DEPENDE:    M02 (Vault Bridge + Tela 01) + MOB-bridge-2 (cache backend)
+DEPENDE:    M00.5 fechada (tabs, schemas barrel)
+            + M02 (Vault Bridge + Tela 01) + MOB-bridge-2 (cache backend)
 BLOQUEIA:   nenhuma sprint Mobile direta
 ESTIMATIVA: 4-5h
 ```
@@ -65,6 +66,22 @@ existe.
 - `src/lib/motion.ts` — `spring_subtle` para entrada das barras
   horizontais (animação one-shot ao montar).
 - `src/lib/haptics.ts` — não há haptic nesta tela (não tem ação).
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** ativa aba fixa `/(tabs)/financas` registrada como
+  redirect-stub em M00.5; agora aponta para
+  `app/(tabs)/financas.tsx` real. Ícone `Wallet` da lucide.
+- **Schema:** `FinancasCacheSchema` exportado via barrel.
+- **Store:** consome `usePessoa`. Não cria store novo.
+- **app.json:** sem mudança.
+- **Boot hook:** nenhum.
+- **FAB:** sem mudança.
+- **Settings:** sem dependência direta.
+- **Backend:** consome `~/Protocolo-Ouroboros/.ouroboros/cache/financas-cache.json`
+  gerado por MOB-bridge-2.
 
 ## 4. Restrições
 
@@ -166,15 +183,27 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
 Capturar screenshots em `docs/sprints/M14-screenshots/`. Comparar com
 artboard `Tela 22` do `docs/Ouroboros_22_telas-standalone.html`.
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- A tela deve mostrar o `gerado_em` do cache em algum lugar (ex.:
-  micro caption muted no banner, `"Atualizado em <data>"`)?
-  Sugestão: sim, junto do banner para deixar claro a defasagem
-  possível.
-- Lista das últimas 20 transações: virtualizar com `FlatList` ou
-  manter scrollview simples? Sugestão: `FlatList` com
-  `initialNumToRender={20}` para não regredir performance.
-- Quando crédito aparece (raro no escopo atual), badge ou cor
-  apenas? Sugestão: cor `--green` no valor, sem badge, mantendo
+- [ ] Aba `/(tabs)/financas` ativa.
+- [ ] BannerLeitura com texto `"Modo leitura. Edição no desktop."`
+      + micro caption "Atualizado em <data>".
+- [ ] CardHero com gasto da semana + delta textual em muted.
+- [ ] CardTopCategorias com 5 itens + barras horizontais cyan.
+- [ ] ListaTransacoes virtualizada (FlatList) com 20 últimos.
+- [ ] Despesa em cyan, crédito em green.
+- [ ] Empty state quando cache ausente.
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 10. Decisões tomadas
+
+- **`gerado_em` exibido:** micro caption muted no banner `"Atualizado
+  em <data>"`. Vira `--red` quando > 7 dias.
+- **FlatList virtualizada:** `initialNumToRender=20`,
+  `windowSize=5`. Mantém perf mesmo com lista futura grande.
+- **Crédito (raro):** cor `--green` no valor; sem badge. Mantém
   uniformidade visual.
+- **Banner sempre visível:** pin no topo da tela; reforço de
+  read-only.
+
+Sprint pronta para execução sem perguntas pendentes.

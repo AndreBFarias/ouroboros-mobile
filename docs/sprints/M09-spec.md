@@ -1,9 +1,10 @@
 # Sprint M09 — Scanner OCR Alta Resolução (Tela 16)
 
 ```
-DEPENDE:    M02 (Vault Bridge) + M04 (FAB Radial integrado, rota Câmera)
+DEPENDE:    M00.5 fechada (eas.json existe)
+            + M02 (Vault Bridge) + M04 (FAB Radial integrado, rota Câmera)
 BLOQUEIA:   Flow 4 (Scanner alta resolução em <20s) e captura de notas
-ESTIMATIVA: 6-8h (inclui build dev-client em ~25 min)
+ESTIMATIVA: 7-9h (inclui modo contínuo + localização auto + dev-client)
 ```
 
 ## 1. Objetivo
@@ -60,24 +61,31 @@ Expo Go.
   `28/04/2026`, categoria `mercado`).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/tests/lib/schemas/financeiro_nota.test.ts`
   — Testes do schema zod.
-- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/eas.json`
-  — Configuração de profile `development` (se ainda não existir),
-  `preview` e `production`. Profile `development` com
-  `developmentClient: true` e `distribution: internal`.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/ScannerMultiPage.tsx`
+  — Tela de modo contínuo: viewfinder com contador de páginas
+  capturadas no canto superior direito e botão `"Concluir"` que
+  consolida páginas em **PDF único** via
+  `expo-print` (`printToFileAsync` com array de imagens). Salva o
+  PDF em `assets/<formatDateYmdHm>-nota-multipagina.pdf` e cria 1
+  `.md` companion único referenciando o PDF.
 
 ### Arquivos modificados
 
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/app.json`
   — Adicionar plugins `expo-camera`, `expo-image-manipulator`,
   `@react-native-ml-kit/text-recognition`,
-  `@react-native-ml-kit/document-scanner` e
-  `expo-dev-client`. Permissões `CAMERA` e `READ_EXTERNAL_STORAGE`
-  no bloco `android.permissions`.
+  `@react-native-ml-kit/document-scanner` e `expo-print`.
+  Permissões `CAMERA` e `READ_EXTERNAL_STORAGE` no bloco
+  `android.permissions`. Plugin `expo-dev-client` já registrado
+  pela M00.5.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/package.json`
   — Adicionar deps: `expo-camera`, `expo-image-manipulator`,
   `@react-native-ml-kit/text-recognition`,
-  `@react-native-ml-kit/document-scanner`, `expo-dev-client`.
-  Tudo via `npx expo install` para versão alinhada ao SDK 54.
+  `@react-native-ml-kit/document-scanner`, `expo-print`. Tudo via
+  `npx expo install` para versão alinhada ao SDK 54.
+  `eas.json` já existe (M00.5).
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/schemas/index.ts`
+  — Re-exportar `FinanceiroNotaSchema` e `FinanceiroNotaMeta`.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/vault/paths.ts`
   — Adicionar `inboxFinanceiroNota` em `VAULT_FOLDERS` (também usado
   por M08).
@@ -96,8 +104,30 @@ Expo Go.
   — `medium` no botão captura, `light` no Salvar.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/stores/pessoa.ts`
   — `usePessoa()` para auto-preencher o ChipGroup pessoa.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/eventos/localizacao.ts`
+  — `getBairroAtual()` da M07 reaproveitado para auto-preencher
+  bairro do recibo (cross-feature limpo).
 
-## 4. Restrições
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** rota modal raiz `/scanner` substitui o stub
+  da M04. Sub-rota `/scanner/preview` para o form pós-captura.
+  Sub-rota `/scanner/multi` para modo contínuo. Todas registradas
+  em `app/_layout.tsx` como modal full-screen (`presentation:
+  'modal'`).
+- **Schema:** `FinanceiroNotaSchema` exportado via barrel.
+- **Store:** consome `usePessoa` (autor default) e
+  `useSettings.sync.qualidadeScanner` (8mp / 12mp / máxima) que
+  vai a `expo-camera` `quality`. Não cria store novo.
+- **app.json:** plugins ML Kit + camera + manipulator + print +
+  permissões.
+- **Boot hook:** nenhum.
+- **FAB:** atalho `camera` em `captureRoutes.ts` permanece
+  `/scanner`; o stub da M04 deixa de existir.
+- **Settings:** consome `useSettings.sync.qualidadeScanner`
+  (criado em M00.5).
 
 - **Regra −1** (Anonimato): zero referência a IA, zero nomes reais.
   Detalhes em `CLAUDE.md` e `VALIDATOR_BRIEF.md` §1.1.
@@ -115,13 +145,16 @@ Expo Go.
 - TypeScript strict — sem `any`.
 - Imports via alias `@/*`.
 - **Requer dev-client**: o profile Expo Go puro não inclui
-  `@react-native-ml-kit/*`. Documento de teste manual indica que o
-  usuário precisa instalar APK gerado por
-  `eas build --profile development --platform android` antes de
-  testar no celular.
-- Modo contínuo (2 toques captura múltiplas páginas) está fora do
-  escopo desta sprint; deixar prop pronta mas desabilitada por
-  default.
+  `@react-native-ml-kit/*`. `npm run build:dev` (script da M00.5)
+  gera APK; instalar antes do checkpoint.
+- **Modo contínuo entrega nesta sprint**: 2 toques no botão
+  captura abre `<ScannerMultiPage>` que coleta páginas até o
+  usuário tap "Concluir"; gera 1 PDF único via `expo-print`.
+- **Localização auto entrega nesta sprint**: ao salvar nota
+  fiscal, oferecer chip cyan opcional `<bairro detectado>` via
+  `getBairroAtual` (cross-feature M07).
+- **Threshold OCR fixo**: `revisar: true` quando
+  `confianca < 0.8`. Banner amarelo no preview avisando.
 
 ## 5. Procedimento sugerido
 
@@ -205,15 +238,38 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
   Capturar `docs/sprints/M09-screenshots/` lado a lado com mockup
   `docs/Ouroboros_22_telas-standalone.html` artboard "tela 16".
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- Modo contínuo (2 toques capturam múltiplas páginas) entra em M09
-  ou em sprint sucessora? Hoje a spec deixa a prop preparada mas
-  desabilitada.
-- Threshold de confiança OCR para auto-marcar `revisar: true`:
-  começar em 0,8 e ajustar após uso real?
-- Tipo de mídia padrão para `inbox/financeiro/nota/`: `.jpg`
-  (compressão) ou `.png` (lossless)? `.jpg` quality 0,9 parece bom
-  trade-off.
-- Permissão de localização para auto-preencher bairro do recibo:
-  fora de escopo desta sprint, mas pensar num M07-like cruzado.
+- [ ] FAB `camera` abre `/scanner` real (stub M04 substituído).
+- [ ] Viewfinder mostra cantos cyan + indicador "Documento detectado".
+- [ ] Captura simples → preview → form de validação → save.
+- [ ] Modo contínuo (2 toques) → `<ScannerMultiPage>` → PDF único.
+- [ ] Auto-deskew aplicado pre-OCR.
+- [ ] OCR preview cyan; campos extraídos preenchidos.
+- [ ] `confianca < 0.8` marca `revisar: true` + banner amarelo.
+- [ ] Bairro detectado oferecido como chip cyan opcional.
+- [ ] Quality respeita `useSettings.sync.qualidadeScanner`.
+- [ ] Smoke + tests + tsc + expo export OK.
+- [ ] Tempo total tap-câmera → toast "Salvo": < 20 s no celular.
+- [ ] APK dev-client com plugins ML Kit instalado e validado.
+
+## 10. Decisões tomadas
+
+- **Modo contínuo entrega na M09:** 2 toques no botão captura
+  abre `<ScannerMultiPage>`; "Concluir" gera 1 PDF via
+  `expo-print` salvando em `assets/<timestamp>-nota-multipagina.pdf`.
+- **Threshold OCR 0.8:** `revisar: true` automático abaixo
+  disso; usuário pode override manualmente no form.
+- **Mídia `.jpg` quality 0,9:** trade-off compressão vs
+  qualidade. `.png` rejeitado por tamanho. PDF multi-página é
+  separado.
+- **Localização auto entrega na M09:** chip cyan do bairro
+  detectado oferecido opcionalmente via `getBairroAtual` (M07).
+  Cross-feature limpo.
+- **Tooltip OCR no preview:** tap em palavra OCR realça campo
+  no form para correção (afetar UX positivamente sem complexidade
+  alta). Implementação simples via `<Pressable>` em cada token.
+- **`useSettings.sync.qualidadeScanner`:** consumido para
+  parametrizar `expo-camera`. Default `12mp` da M00.5.
+
+Sprint pronta para execução sem perguntas pendentes.

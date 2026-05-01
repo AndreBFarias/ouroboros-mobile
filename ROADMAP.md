@@ -44,55 +44,100 @@ fechamento de sprint.
 | `[ok]` | M06.X | Estender DiarioEmocionalSchema com contexto_social | — | diario_emocional | 0,5h | `7bbb8b3` |
 | `[todo]` | M06.5 | F-14 Microfone (bloqueado por dev-client EAS) | 18 | diario_emocional + audio | 5-7h | — |
 | `[ok]` | M07 | Eventos com lugar (Tela 20) | 20 | evento | 5h | `9deb590` |
-| `[todo]` | M06 | Diário Emocional (modo trigger / vitória) | 18 | diario_emocional | 5h | — |
-| `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 4h | — |
-| `[todo]` | M07 | Eventos com lugar (flow <25s) | 20 | evento | 4h | — |
-| `[todo]` | M07.x | Conquistas com mídia obrigatória | 18, 20 | diario_emocional, evento | 5h | — |
-| `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | financeiro | 4h | — |
-| `[todo]` | M09 | Scanner OCR (ML Kit on-device) | 16 | financeiro | 6h | — |
-| `[todo]` | M10 | Mini Humor (heatmap 90 dias) | 21 | humor + cache | 4h | — |
-| `[todo]` | M11 | Memórias e Marcos | 09, 10, 11 | treino_sessao, marco | 5h | — |
-| `[todo]` | M11.5 | Calendário visual de conquistas | 25 (nova) | evento, diario_emocional + media | 5h | — |
-| `[todo]` | M12 | Medidas (form + comparativo) | 12, 13 | medidas | 4h | — |
-| `[todo]` | M13 | Galeria e Detalhe Exercício | 07, 08 | exercicio | 4h | — |
-| `[todo]` | M14 | Mini Financeiro (read-only) | 22 | financeiro + cache | 3h | — |
-| `[todo]` | M14.5 | Acompanhador de Ciclo Menstrual (opt-in) | 26 (nova) | ciclo_menstrual | 4h | — |
-| `[todo]` | M15 | Settings | 23 | (vários) | 5h | — |
-| `[todo]` | M16 | F-15 Alarme pessoal (opt-in) | nova | alarme | 4h | — |
-| `[todo]` | M17 | F-16 To-do leve (opt-in) | nova | tarefa | 3h | — |
-| `[todo]` | M18 | F-17 Contador "dias sem X" (opt-in) | nova | contador | 3h | — |
-| `[done]` | — | **MVP v1 fechado** | — | — | — | — |
-| `[v2]` | v2 | Widgets de homescreen, Obsidian Sync nativo, etc. | — | — | — | — |
+| `[ok]` | M00.5 | Infraestrutura: tabs, barrels, EAS, boot hooks | — | — | 4-5h | (a commitar) |
+| `[todo]` | M00.6 | Polish web Dracula + snap presets + mockup HTML 24 telas | — | — | 3-4h | — |
+| `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |
+| `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
+| `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | inbox_arquivo + financeiro | 4-5h | — |
+| `[todo]` | M09 | Scanner OCR + multipágina + bairro auto | 16 | financeiro_nota | 7-9h | — |
+| `[todo]` | M10 | Mini Humor (heatmap 90 dias + tooltip + stale banner) | 21 | humor_heatmap_cache | 4-5h | — |
+| `[todo]` | M11 | Memórias e Marcos (CRUD completo + galeria fotos agregada) | 09, 10, 11 | treino_sessao, marco | 8-10h | — |
+| `[todo]` | M11.5 | Calendário visual de conquistas (oEmbed + filtros) | 25 | evento, diario_emocional + media | 5-7h | — |
+| `[todo]` | M12 | Medidas (form + comparativo) | 12, 13 | medidas | 5-6h | — |
+| `[todo]` | M13 | Galeria + Detalhe + Cadastro Exercícios (CRUD) | 07, 08, 02 | exercicio | 8-10h | — |
+| `[todo]` | M14 | Mini Financeiro (read-only) | 22 | financas_cache | 4-5h | — |
+| `[todo]` | M14.5 | Acompanhador de Ciclo Menstrual (opt-in) | nova | ciclo_menstrual | 5-6h | — |
+| `[todo]` | M15 | Settings (7 grupos + biometria + export) | 23 | (vários) | 7-8h | — |
+| `[todo]` | M16 | F-15 Alarme pessoal opt-in (com snooze + actions) | nova | alarme | 5-6h | — |
+| `[todo]` | M17 | F-16 To-do leve opt-in (com drag&drop + busca) | nova | tarefa | 4-5h | — |
+| `[todo]` | M18 | F-17 Contador "dias sem X" opt-in (com histórico) | nova | contador | 4h | — |
+| `[todo]` | M19 | APK Release Hardening v1.0.0 (icon + splash + E2E + tag) | — | — | 6-8h | — |
+| `[todo]` | M20 | Widget Homescreen Android (Tela 26) | 26 | — | 6-7h | — |
+| `[done]` | — | **MVP v1 fechado** | — | — | — | tag `v1.0.0` |
 
 ## Backend paralelo (repo `protocolo-ouroboros`)
 
 | Status | Sprint | Título | Bloqueia |
 |---|---|---|---|
-| `[para]` `[todo]` | MOB-bridge-1 | Refactor `pessoa_a`/`pessoa_b` no Python | nada (paralelo) |
+| `[para]` `[todo]` | MOB-bridge-1 | Refactor `pessoa_a`/`pessoa_b` no Python | MOB-bridge-2, MOB-bridge-3 |
 | `[para]` `[todo]` | MOB-bridge-2 | Caches `humor-heatmap.json` e `financas-cache.json` | M10, M14 |
+| `[para]` `[todo]` | MOB-bridge-3 | Marcos auto-gerados via heurísticas (5 tipos) | M11 (cooperativo, fallback client) |
 
 Specs em `docs/sprints/backend/`.
 
-## Dependências críticas
+## Dependências críticas e ordem de execução
+
+### Caminho linear recomendado
 
 ```
-M01 -> M02 -> M03 -> M00.docs -> M04 -> M05 -> M06 -> M07
-                                              |     |
-                                              +-> M06.5 (paralelo a M07)
-                                              |
-                                              +-> M07.x (transversal)
-                                                    |
-                                                    +-> M11.5
-
-M02 -> M08 (independente)
-M02 -> M09 (precisa dev-client)
-MOB-bridge-2 -> M10
-MOB-bridge-2 -> M14
-M11 -> M11.5
-M03 -> M15 (Settings precisa do onboarding feito)
-M15 -> M14.5 (ativação opt-in via Settings)
-M15 -> M16, M17, M18 (idem)
+1. M00.5 (infra: tabs/barrels/eas/boot)
+2. M00.6 (polish web + snap presets + mockup HTML)
+   |
+   +---> [BACKEND PARALELO em outro repo]
+   |     MOB-bridge-1 -> MOB-bridge-2 -> MOB-bridge-3
+   |
+3. M08 (share intent — sem dev-client)
+4. M13 (exercícios CRUD + Tela 02; REMOVE app/em-breve.tsx)
+5. M11 (memórias usa ChipGroup de exercícios da M13)
+6. M12 (medidas)
+7. M10 (mini humor — precisa MOB-bridge-2)
+8. M14 (mini financeiro — precisa MOB-bridge-2)
+9. M15 (settings: hub central + biometria + export ZIP)
+10. M14.5 (ciclo opt-in)
+11. M16 (alarme opt-in com snooze)
+12. M17 (todo opt-in com drag&drop)
+13. M18 (contador opt-in com histórico)
+14. M06.5 (microfone — primeira a usar dev-client)
+15. M07.x (mídia obrigatória — depende M06.5)
+16. M11.5 (calendário conquistas — depende M07.x e M11)
+17. M09 (scanner — dev-client; pode rodar paralelo a M06.5)
+18. M20 (widget homescreen — depende M15 toggle)
+19. M19 (APK Release v1.0.0; tag git)
 ```
+
+### Grafo de dependências por bloco
+
+```
+M01 -> M02 -> M03 -> M00.docs -> M04 -> M05 -> M06 -> M07 (já feitos)
+
+[Bloco 1 — Infraestrutura]
+M00.5 -> M00.6
+
+[Bloco 2 — Captura ativa sem dev-client]
+M00.5 -> M08
+M00.5 -> M13 -> M11
+M00.5 -> M12
+
+[Bloco 3 — Backend (paralelo, repo protocolo-ouroboros)]
+MOB-bridge-1 -> MOB-bridge-2 -> {M10, M14}
+MOB-bridge-1 -> MOB-bridge-3 -> M11 (cooperativo, fallback client)
+
+[Bloco 4 — Cache readers]
+MOB-bridge-2 -> M10 -> M14
+
+[Bloco 5 — Settings + opt-ins]
+M00.5 (shape) + M02 + M03 -> M15
+M15 -> {M14.5, M16, M17, M18}
+
+[Bloco 6 — Dev-client features]
+M06 + dev-client -> M06.5 -> M07.x -> M11.5
+M00.5 (eas.json) + dev-client -> M09
+
+[Bloco 7 — Release final]
+M00.6 (Tela 26) + M15 (toggle) -> M20
+TUDO acima -> M19 (tag v1.0.0)
+```
+
 
 ## Funções F-14 a F-17 (Seção E do BRIEFING)
 
@@ -105,12 +150,16 @@ M15 -> M16, M17, M18 (idem)
 
 Originalmente o BRIEFING marcava as 4 como v2. Decisão durante M00.docs:
 todas entram em v1 como sprints opt-in (toggle em Settings da M15).
+Em 2026-04-30 também foram promovidas a v1: widget homescreen (M20),
+calendário visual (M11.5), CRUD completo de exercícios e treinos
+(M11+M13), histórico de resets (M18), drag&drop e busca de tarefas
+(M17), snooze de alarme (M16). Nada permanece como v2.
 
 ## Tags Git
 
 - `v0.1.0-m01` — Fundação Estética concluída (M01 fim).
 - `v0.2.0-m00-docs` (planejada) — Orquestração mestre concluída (M00.docs fim).
-- `v1.0.0` (planejada) — MVP v1 fechado (M18 fim).
+- `v1.0.0` (planejada) — MVP v1 fechado (M19 fim).
 
 ## Onde está cada coisa
 

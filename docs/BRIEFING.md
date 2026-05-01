@@ -927,7 +927,6 @@ Lista consolidada do que **não** construir:
 - IA generativa para "sugerir como você se sente"
 - Light mode ou tema selecionável — só Dracula, é a identidade
 - Tour interativo, tooltips persistentes, coach marks
-- Widget de homescreen no v1 (talvez v2)
 - Backup automático na nuvem do App — Syncthing já cobre
 - Multi-idioma — só pt-BR
 - Splash screen com logo gigante — abertura direta para tela 01

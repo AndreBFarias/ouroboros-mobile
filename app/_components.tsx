@@ -84,7 +84,10 @@ export default function ComponentsStory() {
     usePessoa.getState().resetar();
     useVault.getState().clearVaultRoot();
     toast?.show('Onboarding resetado. Voltando para o início.', 'info');
-    setTimeout(() => router.replace('/'), 300);
+    // M00.5: Tela 01 agora mora em /(tabs)/index. O grupo de rotas
+    // (tabs) e transparente para o usuario, mas o router.replace
+    // precisa apontar explicitamente para a rota dentro do grupo.
+    setTimeout(() => router.replace('/(tabs)'), 300);
   };
 
   return (

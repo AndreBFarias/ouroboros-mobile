@@ -1,8 +1,9 @@
 # Sprint M12 — Medidas Corporais e Comparativo
 
 ```
-DEPENDE:    M02 (Vault Bridge + Tela 01) + M03 (onboarding com identidade dinâmica)
-BLOQUEIA:   M11.5 (calendário) só de forma indireta (usa pasta `medidas/` para timeline futura, mas não bloqueia)
+DEPENDE:    M00.5 fechada (tabs, schemas barrel)
+            + M02 (Vault Bridge + Tela 01) + M03 (onboarding com identidade dinâmica)
+BLOQUEIA:   M11 (galeria de fotos agregada lê pasta medidas/)
 ESTIMATIVA: 5-6h
 ```
 
@@ -75,6 +76,22 @@ em visualização longitudinal sem competitividade. Pré-preenchimento da
   `autor` no frontmatter.
 - `expo-image-picker` — já instalado (vide M03.2). Usado para os 3
   botões de foto (frente / costas / lado).
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** sub-rotas dentro do tab `mais` ou tab dedicado
+  (decidir em M00.5 placement); rotas `/(tabs)/medidas/index` e
+  `/(tabs)/medidas/novo` registradas em
+  `app/(tabs)/_layout.tsx`.
+- **Schema:** `MedidasSchema` exportado via barrel.
+- **Store:** consome `usePessoa`. Não cria store novo.
+- **app.json:** sem mudança.
+- **Boot hook:** nenhum.
+- **FAB:** sem mudança no FAB radial principal. Botão dedicado
+  `<FAB>` na Tela 13 navega para `/medidas/novo`.
+- **Settings:** sem dependência direta.
 
 ## 4. Restrições
 
@@ -171,15 +188,31 @@ Capturar screenshots em `docs/sprints/M12-screenshots/`. Comparar com
 artboards `Tela 12` e `Tela 13` do
 `docs/Ouroboros_22_telas-standalone.html`.
 
-## 9. Dúvidas em aberto
+## 9. Definição de Pronto
 
-- A unidade dos campos (kg, cm) deve aparecer no label ou só como
-  placeholder? Sugestão atual: label `"Peso"` + placeholder `"kg"` em
-  muted dentro do input. Confirmar antes de codar.
-- O slider de fotos da Tela 13 deve permitir selecionar **datas
-  arbitrárias** ou só "primeira vs última"? O BRIEFING fala em
-  "slider entre 2 datas" sem detalhar. Sugestão: dropdown de datas
-  para os 2 lados, default primeira/última.
-- O delta vs primeira medida deve mostrar valor absoluto ou
-  percentual? Sugestão: absoluto com unidade (`"-2,3 kg vs primeira"`,
-  em muted), sem cor.
+- [ ] Sub-rotas `/medidas/{index,novo}` ativas.
+- [ ] Form Tela 12 com 9 inputs numéricos + pré-preenchimento
+      em muted-decor.
+- [ ] 3 botões de foto (frente/costas/lado) funcionais via
+      `expo-image-picker`.
+- [ ] 3 textareas de reflexão.
+- [ ] Tela 13 com filtro período (chips) + grid 2 cols de cards.
+- [ ] `<SparklineMedida>` 12 pontos por medida.
+- [ ] Slider de fotos com dropdown de datas selecionáveis.
+- [ ] Delta vs primeira medida em muted, sem cor.
+- [ ] Empty state quando zero registros.
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 10. Decisões tomadas
+
+- **Unidades:** label `"Peso"` + placeholder `"kg"` em muted-decor
+  dentro do input. Centímetros em chamadas similares (`"Cintura"`
+  + `"cm"`).
+- **Slider de fotos com dropdown:** dropdown de datas selecionáveis
+  para os 2 lados; default primeira/última.
+- **Delta absoluto sem cor:** `"-2,3 kg vs primeira"` em muted
+  (ADR-0005, sem positivo/negativo cromático).
+- **Pré-preenchimento em `--muted-decor`:** placeholder visual
+  diferenciando sugestão (última medida) de valor real.
+
+Sprint pronta para execução sem perguntas pendentes.

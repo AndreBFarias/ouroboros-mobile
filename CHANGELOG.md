@@ -5,6 +5,67 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+- **Meta-sprint 2026-04-30 — Contrato de integração e zero v2.**
+  Reescrita das 17 specs pendentes para garantir que cada sprint
+  futura entregue feature **integrada ao projeto final**, sem
+  código solto, e que **todas as features antes adiadas para v2**
+  entrem no MVP v1.
+  - Novo documento mestre `docs/sprints/INTEGRATION-CONTRACT.md`
+    formaliza pontos canônicos de plug (tabs layout, schemas
+    barrel, stores barrel, settings store, captureRoutes, boot
+    hooks, app.json, eas.json, package scripts) e o checklist
+    obrigatório por sprint.
+  - 5 sprints novas adicionadas:
+    - **M00.5 — Infraestrutura:** cria `app/(tabs)/_layout.tsx`,
+      `BottomTabs.tsx`, barrels de schemas/stores, `useSettings`
+      shape completo, `eas.json`, helpers de boot
+      (`deepLink.ts`, `biometriaGate.tsx`, `reagendamento.ts`).
+    - **M00.6 — Polish:** Dracula no Web, snap presets nomeados,
+      mockup HTML standalone com Tela 25 (calendário) e Tela 26
+      (widget).
+    - **M19 — APK Release Hardening v1.0.0:** ícone, splash,
+      versão, keystore, smoke E2E Maestro dos 4 flows críticos,
+      tag.
+    - **M20 — Widget Homescreen Android (Tela 26):** plugin
+      nativo Expo Module com layouts 4x2 e 4x4, atalho radial,
+      humor médio do dia.
+    - **MOB-bridge-3 — Marcos auto-gerados pelo backend:** 5
+      heurísticas (3 treinos em 7d, retorno após hiato, humor
+      consecutivo, 30d sem trigger, primeira vitória da semana)
+      com idempotência via hash.
+  - 17 specs reescritas (M06.5, M07.x, M08, M09, M10, M11,
+    M11.5, M12, M13, M14, M14.5, M15, M16, M17, M18,
+    MOB-bridge-1, MOB-bridge-2):
+    - Cada uma ganha §3.5 "Integração ao projeto" referenciando
+      o CONTRACT.
+    - § "Dúvidas em aberto" substituída por § "Decisões tomadas"
+      com decisões explícitas e justificadas.
+    - § "Definição de Pronto" adicionada com checklist de
+      integração + qualidade.
+    - Itens antes marcados "fora de escopo / v2 / sprint futura"
+      absorvidos: CRUD completo treinos+marcos+exercícios,
+      galeria de fotos agregada, modo contínuo do scanner,
+      auto-bairro do scanner, snooze do alarme, drag&drop+busca
+      do todo, histórico de resets do contador, mídia
+      obrigatória nas 4 abas (Spotify oEmbed sem auth + YouTube
+      thumb + foto + áudio), filtros adicionais do calendário
+      (intensidade + bairro), tooltip do sparkline, fase
+      manual+auto do ciclo, abas separadas por pessoa do ciclo,
+      cache stale banner do Mini Humor, bairro auto cross-feature
+      no scanner, atomic write robusto do MOB-bridge-2.
+  - `VALIDATOR_BRIEF.md` §5 reescrita com 5 grupos de checks
+    (estrutural, qualidade, visual, doc, integração).
+  - `BRIEFING.md` §9 (anti-features) deixa de listar widget de
+    homescreen — entra como sprint M20.
+  - `ROADMAP.md` ganha 5 sprints novas, grafo de dependências
+    atualizado e nota explícita "Nada permanece como v2".
+  - `STATE.md` aponta M00.5 como próxima.
+  - Ordem de execução recomendada: M00.5 → M00.6 → M08 →
+    M11/M12/M13 → backend (MOB-bridge-1/2/3) → M10/M14 → M15 →
+    M14.5/M16/M17/M18 → M06.5 → M07.x → M11.5 → M09 → M20 →
+    M19 (release v1.0.0).
+
 ### Added
 - **Sprint M07 — Eventos com lugar (Tela 20).** Substitui o stub
   da rota `/eventos` criado na M04 pela tela de captura de evento

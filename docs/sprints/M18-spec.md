@@ -1,9 +1,11 @@
-# Sprint M18 — F-17 Contador "Dias Sem X"
+# Sprint M18 — F-17 Contador "Dias Sem X" (com Histórico)
 
 ```
-DEPENDE:    M02 (Vault Bridge) + M03 (identidade dinâmica) + M15 (toggle de ativação)
+DEPENDE:    M00.5 fechada (toggle contadorDiasSem)
+            + M02 (Vault Bridge) + M03 (identidade dinâmica)
+            + M15 (UI do toggle em Settings)
 BLOQUEIA:   nenhuma sprint Mobile direta
-ESTIMATIVA: 3h
+ESTIMATIVA: 4h
 ```
 
 ## 1. Objetivo
@@ -26,6 +28,10 @@ fogo, sem badge** (ADR-0005). Empty state:
   FAB `+` que abre `/contadores/novo`.
 - `app/(tabs)/contadores/novo.tsx` — Form simples com input
   título + date picker início + botão Criar.
+- `app/(tabs)/contadores/[slug].tsx` — Sub-tela de detalhe com
+  histórico de resets em timeline vertical (linha `--bg-elev`,
+  dots `--muted-decor` 8dp, data e duração da sequência ao lado).
+  Botões Editar (alterar título), Resetei e Excluir.
 - `src/lib/schemas/contador.ts` — Schema zod para
   `contadores/<slug>.md`.
 - `src/lib/vault/contadores.ts` — Helpers:
@@ -48,9 +54,10 @@ fogo, sem badge** (ADR-0005). Empty state:
 
 ### Arquivos modificados
 
-- `src/lib/schemas/index.ts` — exportar `ContadorSchema`.
+- `src/lib/schemas/index.ts` — exportar `ContadorSchema` e tipo
+  `Contador`.
 - `app/(tabs)/_layout.tsx` — registrar rota `contadores`
-  condicional ao toggle.
+  condicional ao toggle `useSettings.featureToggles.contadorDiasSem`.
 
 ## 3. Schema YAML completo
 
@@ -94,6 +101,21 @@ no detalhe (futuro).
   futuro).
 - `@react-native-community/datetimepicker` — date picker no form de
   criação.
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** aba condicional `/(tabs)/contadores` (consome
+  `useSettings.featureToggles.contadorDiasSem`). Sub-rotas
+  `/contadores/{novo,[slug]}`.
+- **Schema:** `ContadorSchema` exportado via barrel.
+- **Store:** consome `usePessoa`. Não cria store novo.
+- **app.json:** sem mudança.
+- **Boot hook:** nenhum.
+- **FAB:** sem mudança no FAB radial. Sprint usa FAB dedicado `+`
+  na lista.
+- **Settings:** consome toggle existente.
 
 ## 5. Restrições
 
@@ -198,14 +220,27 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
 
 Capturar screenshots em `docs/sprints/M18-screenshots/`.
 
-## 10. Dúvidas em aberto
+## 10. Definição de Pronto
 
-- O label `"dia"`/`"dias"` deve aparecer ao lado do número
-  gigante ou abaixo? Sugestão: ao lado em micro muted, mantendo
-  hierarquia visual.
-- Histórico de resets é visível em algum lugar nesta sprint?
-  Sugestão: **não**. Lista só mostra dias atuais. Histórico fica
-  para sprint futura (M18.x).
-- Quando o usuário cria um contador com data de início no futuro,
-  o que mostrar? Sugestão: bloquear no form (date picker
-  `maximumDate={now}`).
+- [ ] Aba `/(tabs)/contadores` aparece com toggle on; some com off.
+- [ ] CRUD completo (criar, editar título, excluir).
+- [ ] Botão "Resetei" com modal de confirmação destrutivo.
+- [ ] Recorde nunca diminui (lógica em `registrarReset`).
+- [ ] Sub-tela `/contadores/[slug]` mostra histórico de resets
+      em timeline vertical.
+- [ ] Date picker no form de criação bloqueado em `maximumDate=now`.
+- [ ] Sem celebração visual (sem fogo, badge, milestones, sons).
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 11. Decisões tomadas
+
+- **Label `dia`/`dias` ao lado do número:** em micro muted (14dp).
+  Mantém hierarquia visual sem competir com o número gigante.
+- **Histórico de resets entrega na M18:** sub-tela
+  `/contadores/[slug]` com timeline vertical. Lista só mostra
+  duração da sequência (data início → data reset = N dias).
+- **Bloqueio de data futura:** datepicker `maximumDate={now}`.
+- **Recorde nunca diminui:** lógica em `registrarReset` compara
+  e mantém recorde anterior se atual > new.
+
+Sprint pronta para execução sem perguntas pendentes.

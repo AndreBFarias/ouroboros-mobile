@@ -1,9 +1,11 @@
-# Sprint M16 — F-15 Alarme Pessoal
+# Sprint M16 — F-15 Alarme Pessoal (com Snooze)
 
 ```
-DEPENDE:    M02 (Vault Bridge) + M03 (identidade dinâmica) + M15 (toggle de ativação)
+DEPENDE:    M00.5 fechada (toggle alarmePessoal + reagendamento boot)
+            + M02 (Vault Bridge) + M03 (identidade dinâmica)
+            + M15 (UI do toggle em Settings)
 BLOQUEIA:   nenhuma sprint Mobile direta
-ESTIMATIVA: 4-5h
+ESTIMATIVA: 5-6h
 ```
 
 ## 1. Objetivo
@@ -40,8 +42,20 @@ Settings (M15).
     array de notification IDs (1 por dia da semana).
   - `cancelarAlarme(slug: string): Promise<void>` — cancela todos
     os IDs salvos para o slug.
-  - `reagendarTodos(): Promise<void>` — chamado no boot do app
-    para reidratar agendamentos.
+  - `reagendarAlarmes(): Promise<void>` — exportada e adicionada
+    a `BOOT_HOOKS` (M00.5) para reidratar agendamentos.
+  - `agendarSnooze(slug: string, minutos: number): Promise<string>`
+    — agenda uma notificação one-shot daqui a N minutos para
+    snooze.
+  - `cancelarSnooze(slug: string): Promise<void>` — cancela
+    snooze ativo.
+- `src/lib/services/notificationActions.ts` — registra **categorias
+  com action buttons** via `Notifications.setNotificationCategoryAsync`.
+  Categoria `alarme` tem 2 botões:
+  - `"Soneca 5 min"` → handler chama `agendarSnooze(slug, 5)`.
+  - `"Desligar"` → handler chama `cancelarSnooze(slug)` e marca
+    `alarme.ultimo_disparo = now()`.
+  Plugado em `app/_layout.tsx` no boot (idempotente).
 - `src/components/alarmes/CardAlarme.tsx` — Card com título +
   horário + dias + toggle inline.
 - `src/components/alarmes/SeletorDias.tsx` — ChipGroup multi de
@@ -52,11 +66,12 @@ Settings (M15).
 
 ### Arquivos modificados
 
-- `src/lib/schemas/index.ts` — exportar `AlarmeSchema`.
+- `src/lib/schemas/index.ts` — exportar `AlarmeSchema` e tipo
+  `Alarme`.
 - `app/(tabs)/_layout.tsx` — registrar rota `alarmes` condicional
-  ao toggle.
-- `app/_layout.tsx` — chamar `reagendarTodos()` no mount inicial
-  para garantir alarmes ativos após reboot do dispositivo.
+  ao toggle `useSettings.featureToggles.alarmePessoal`.
+- `src/lib/boot/reagendamento.ts` — adicionar `reagendarAlarmes`
+  ao array `BOOT_HOOKS` (M00.5).
 
 ## 3. Schema YAML completo
 
@@ -72,8 +87,11 @@ dias_semana: [1, 2, 3, 4, 5]   # 0=domingo, 1=segunda, ..., 6=sabado
 tag: medicacao                 # medicacao | treino | outro
 som: gentle                    # gentle | normal | forte
 ativo: true
+snooze_minutos: 5              # padrao do botao Soneca
 criado_em: 2026-04-29T10:00:00-03:00
+ultimo_disparo: null           # ISO timestamp; atualizado via Desligar
 notification_ids: [abc123, def456, ...]   # gerenciado pelo wrapper
+snooze_id: null                # id ativo de snooze, se houver
 ---
 ```
 
@@ -90,8 +108,28 @@ notification_ids: [abc123, def456, ...]   # gerenciado pelo wrapper
   Bridge.
 - `src/lib/haptics.ts` — `selection` em chips, `light` no Salvar.
 - `src/lib/motion.ts` — `spring_subtle` no toggle inline do card.
-- `expo-notifications` — para agendamento.
+- `expo-notifications` — para agendamento + categorias de ação
+  (snooze).
 - `@react-native-community/datetimepicker` — para horário.
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** aba condicional `/(tabs)/alarmes` (consome
+  `useSettings.featureToggles.alarmePessoal`). Sub-rotas
+  `/alarmes/{novo,[slug]}`.
+- **Schema:** `AlarmeSchema` exportado via barrel.
+- **Store:** consome `useSettings`. Não cria store novo.
+- **app.json:** plugin `expo-notifications` com canal `alarmes`
+  + ícone notificação + permissão `SCHEDULE_EXACT_ALARM` para
+  Android 12+.
+- **Boot hook:** `reagendarAlarmes` adicionado a `BOOT_HOOKS`.
+  Categoria `alarme` com action buttons registrada uma vez no
+  boot.
+- **FAB:** sem mudança no FAB radial principal. FAB dedicado `+`
+  na lista navega para `/alarmes/novo`.
+- **Settings:** consome toggle existente; M15 implementa UI.
 
 ## 5. Restrições
 
@@ -109,11 +147,12 @@ notification_ids: [abc123, def456, ...]   # gerenciado pelo wrapper
   cumpridos consecutivos".
 - **Notificação simples**: título do alarme como `title`, vazio em
   `body`. Sem call-to-action, sem botões na notificação.
-- **Limitação documentada**: `expo-notifications` no Expo Go não
-  garante alarme exato em Android (quando processo morto). Para
-  alarme exato robusto, requer `expo-dev-client` + plugin
-  customizado (similar a M06.5). Esta sprint cobre o caso básico
-  (recorrente diário) e documenta limitação na seção 9.
+- **Alarme exato em Android 12+:** `expo-notifications` requer
+  permissão `SCHEDULE_EXACT_ALARM` para garantir disparo no
+  horário; o plugin é declarado no `app.json` e o usuário precisa
+  conceder via dialog system. Sem essa permissão, agendamentos
+  ficam aproximados (±15 min). Documentar no `app.json` strings
+  PT-BR pedindo permissão.
 - **Sons predefinidos**: `gentle`, `normal`, `forte`. Empacotar 3
   arquivos `.wav` em `assets/sounds/alarmes/` (curtos, <2s).
   Direitos autorais: usar sons CC0 ou gerados.
@@ -186,15 +225,32 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
 
 Capturar screenshots em `docs/sprints/M16-screenshots/`.
 
-## 10. Dúvidas em aberto
+## 10. Definição de Pronto
 
-- Os sons `gentle/normal/forte` precisam ser distribuídos com o
-  app (3 arquivos em `assets/sounds/alarmes/`). Quem produz?
-  Sugestão: usar `freesound.org` com licença CC0; documentar
-  origem em `assets/sounds/CREDITS.md`.
-- Limite de alarmes simultâneos: `expo-notifications` aceita até
-  64 schedules por app. Documentar limite no UI (toast quando
-  usuário tenta criar o 65º)?
-- Snooze: nesta sprint não há snooze. Próxima sprint pode
-  adicionar como botão na notificação (requer custom intent
-  handler — fora do escopo).
+- [ ] Aba `/(tabs)/alarmes` aparece com toggle on; some com off.
+- [ ] CRUD completo de alarmes (criar, editar, ativar/desativar,
+      excluir).
+- [ ] Notificação dispara no horário com som correto.
+- [ ] Categoria `alarme` com botões `Soneca 5 min` e `Desligar`
+      registrada e funcional.
+- [ ] Snooze re-agenda one-shot no horário escolhido.
+- [ ] `reagendarAlarmes` no boot reidrata todos os schedules.
+- [ ] 3 sons em `assets/sounds/alarmes/` com `CREDITS.md`.
+- [ ] Limite 64 schedules respeitado com toast informativo.
+- [ ] Permissão `SCHEDULE_EXACT_ALARM` solicitada se Android 12+.
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 11. Decisões tomadas
+
+- **Sons CC0 do freesound.org:** 3 arquivos `.wav` (gentle/normal/
+  forte) <2s cada em `assets/sounds/alarmes/`. Documentar origem
+  em `assets/sounds/CREDITS.md`.
+- **Limite 64 schedules:** `expo-notifications` cap nativo do
+  Android. Toast `"Limite de 64 alarmes atingido. Desative algum
+  antes de criar."` quando usuário tenta o 65º.
+- **Snooze entrega na M16:** botões na notificação via category
+  com action buttons. Padrão 5 min (configurável por alarme).
+- **Permissão exact alarm Android 12+:** declarada no `app.json`;
+  usuário concede via dialog system na primeira criação de alarme.
+
+Sprint pronta para execução sem perguntas pendentes.

@@ -1,9 +1,11 @@
-# Sprint M17 — F-16 To-do Leve
+# Sprint M17 — F-16 To-do Leve (com Drag & Drop)
 
 ```
-DEPENDE:    M02 (Vault Bridge) + M03 (identidade dinâmica) + M15 (toggle de ativação)
+DEPENDE:    M00.5 fechada (toggle todoLeve)
+            + M02 (Vault Bridge) + M03 (identidade dinâmica)
+            + M15 (UI do toggle em Settings)
 BLOQUEIA:   nenhuma sprint Mobile direta
-ESTIMATIVA: 3-4h
+ESTIMATIVA: 4-5h
 ```
 
 ## 1. Objetivo
@@ -36,15 +38,24 @@ quando `featureToggles.todoLeve === true`.
   input + botão Salvar.
 - `src/components/todo/MenuLongPress.tsx` — Menu contextual com
   Editar / Excluir.
+- `src/components/todo/ListaArrastavel.tsx` — Wrapper sobre
+  `react-native-draggable-flatlist` que suporta drag & drop com
+  haptic medium ao iniciar. Reordenação persiste em SecureStore
+  (chave `ouroboros.todo.ordem.v1`) como array de paths em ordem
+  custom; quando vazio, volta para ordem por data desc.
 - `tests/schemas/tarefa.test.ts`
 - `tests/lib/vault/tarefas.test.ts`
 - `tests/components/todo/ItemTarefa.test.tsx`
 
 ### Arquivos modificados
 
-- `src/lib/schemas/index.ts` — exportar `TarefaSchema`.
+- `src/lib/schemas/index.ts` — exportar `TarefaSchema` e tipo `Tarefa`.
 - `app/(tabs)/_layout.tsx` — registrar rota `todo` condicional ao
-  toggle.
+  toggle `useSettings.featureToggles.todoLeve`.
+- `src/lib/boot/reagendamento.ts` — adicionar
+  `limparLixeiraExpirada` ao `BOOT_HOOKS` (idempotente).
+- `package.json` — adicionar `react-native-draggable-flatlist`
+  via `npx expo install`.
 
 ## 3. Schema YAML completo
 
@@ -79,6 +90,21 @@ futura pode adicionar prosa livre.
 - `src/lib/motion.ts` — `spring_default` na transição entre
   Pendente e Feita (item desliza para baixo, fade 60%).
 - `src/lib/stores/pessoa.ts` — `pessoaAtiva` define o `autor`.
+- `react-native-draggable-flatlist` — drag & drop nativo.
+
+## 3.5 Integração ao projeto
+
+Conforme `docs/sprints/INTEGRATION-CONTRACT.md`, esta sprint pluga:
+
+- **Tab/Rota:** aba condicional `/(tabs)/todo` (consome
+  `useSettings.featureToggles.todoLeve`).
+- **Schema:** `TarefaSchema` exportado via barrel.
+- **Store:** consome `usePessoa` e `useSettings`. Não cria store
+  novo; ordem custom persiste em chave separada do SecureStore.
+- **app.json:** sem mudança.
+- **Boot hook:** `limparLixeiraExpirada` adicionado a `BOOT_HOOKS`.
+- **FAB:** sem mudança no FAB radial. Sprint usa FAB dedicado `+`.
+- **Settings:** consome toggle existente.
 
 ## 5. Restrições
 
@@ -98,8 +124,12 @@ futura pode adicionar prosa livre.
   Sem hora, sem prazo, sem prioridade. Quem precisar de mais que
   isso usa um app dedicado.
 - **Sem subtarefas e sem projetos**. Lista plana global.
-- **Sem busca textual** nesta sprint. Lista cresce até virar
-  problema; otimização vira sprint futura.
+- **Busca textual entrega na M17:** input no header filtra
+  por substring no título (case-insensitive, sem acento).
+- **Drag & drop entrega na M17:** long-press inicia drag (haptic
+  medium); soltar reordena. Ordem persiste em SecureStore (chave
+  separada). "Reordenar" botão na header limpa ordem custom e
+  volta ao default.
 - **Tap simples = marcar feito** (sem modal de confirmação). Long
   press = menu. Toque na área do título sem checkbox = abre edição
   inline (input expandido).
@@ -175,12 +205,27 @@ Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
 
 Capturar screenshots em `docs/sprints/M17-screenshots/`.
 
-## 10. Dúvidas em aberto
+## 10. Definição de Pronto
 
-- O "header" de Pendentes precisa existir? Sugestão: não, lista
-  começa direto. Header só para Feitas (collapse).
-- A edição inline no título (tap fora do checkbox) ou via menu
-  long-press? Sugestão: long-press → Editar abre o sheet com
-  título preenchido (mais previsível que edição inline).
-- Reordenação manual (drag and drop) está fora do escopo.
-  Confirmar.
+- [ ] Aba `/(tabs)/todo` aparece com toggle on; some com off.
+- [ ] FAB `+` abre sheet de criação.
+- [ ] Tap em pendente marca feito (anima slide para Feitas).
+- [ ] Long-press abre menu Editar / Excluir.
+- [ ] Drag & drop reordena pendentes (haptic medium ao iniciar).
+- [ ] Busca textual filtra por título.
+- [ ] Excluir move para lixeira soft (`cacheDirectory/lixeira/tarefas/`).
+- [ ] `limparLixeiraExpirada` roda 1x/dia (30 dias retenção).
+- [ ] Smoke + tests + tsc + expo export OK.
+
+## 11. Decisões tomadas
+
+- **Sem header de Pendentes:** lista começa direto. Header só
+  aparece para Feitas (collapse com chevron + contagem).
+- **Edição via long-press → Editar:** abre sheet com título
+  preenchido. Mais previsível que edição inline.
+- **Drag & drop entrega na M17:** via
+  `react-native-draggable-flatlist`. Long-press inicia drag.
+- **Busca textual entrega na M17:** input no header filtra por
+  substring sem acento, case-insensitive.
+
+Sprint pronta para execução sem perguntas pendentes.

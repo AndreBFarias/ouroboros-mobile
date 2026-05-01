@@ -9,6 +9,9 @@ import { useEffect } from 'react';
 import { Appearance, LogBox, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider } from '@/components/ui';
+import { useDeepLinkListener } from '@/lib/boot/deepLink';
+import { BiometriaGate } from '@/lib/boot/biometriaGate';
+import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 import '../global.css';
 
 // Mantem a splash visivel ate as fontes carregarem.
@@ -43,11 +46,22 @@ export default function RootLayout() {
     JetBrainsMono_500Medium,
   });
 
+  // Boot hook: registra listener de share intent (M00.5; M08 plugara
+  // o fluxo real). Hook idempotente ao desmontar.
+  useDeepLinkListener();
+
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Boot hook: reagenda alarmes/limpeza/marcos auto/widget. M00.5
+  // cria o orquestrador vazio; cada sprint dona faz BOOT_HOOKS.push
+  // no proprio modulo.
+  useEffect(() => {
+    void reagendarTodosBootHooks();
+  }, []);
 
   if (!loaded) {
     return null;
@@ -55,15 +69,17 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ToastProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            contentStyle: { backgroundColor: '#282a36' },
-          }}
-        />
-      </ToastProvider>
+      <BiometriaGate>
+        <ToastProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              contentStyle: { backgroundColor: '#282a36' },
+            }}
+          />
+        </ToastProvider>
+      </BiometriaGate>
     </GestureHandlerRootView>
   );
 }
