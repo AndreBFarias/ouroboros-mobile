@@ -44,8 +44,10 @@ fechamento de sprint.
 | `[ok]` | M06.X | Estender DiarioEmocionalSchema com contexto_social | — | diario_emocional | 0,5h | `7bbb8b3` |
 | `[todo]` | M06.5 | F-14 Microfone (bloqueado por dev-client EAS) | 18 | diario_emocional + audio | 5-7h | — |
 | `[ok]` | M07 | Eventos com lugar (Tela 20) | 20 | evento | 5h | `9deb590` |
-| `[ok]` | M00.5 | Infraestrutura: tabs, barrels, EAS, boot hooks | — | — | 4-5h | (a commitar) |
-| `[todo]` | M00.6 | Polish web Dracula + snap presets + mockup HTML 24 telas | — | — | 3-4h | — |
+| `[ok]` | M00.5 | Infraestrutura: tabs, barrels, EAS, boot hooks | — | — | 4-5h | `9c3e28c` |
+| `[ok]` | M00.6 | Polish web Dracula + snap presets + mockup HTML 24 telas | — | — | 3-4h | (a commitar) |
+| `[todo]` | M00.5.x | Fix FAB radial labels (achado colateral M00.6) | 14 | — | 2h | — |
+| `[todo]` | M19.x | Bundle HTML toolchain regenerar (achado colateral M00.6) | — | — | 3h | — |
 | `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |
 | `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
 | `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | inbox_arquivo + financeiro | 4-5h | — |

@@ -15,9 +15,13 @@ import GorhomBottomSheet, {
   type BottomSheetProps as GorhomProps,
 } from '@gorhom/bottom-sheet';
 import { colors, radius } from '@/theme/tokens';
+import { SHEET_DEFAULT } from './SHEET_PRESETS';
 
 export interface BottomSheetProps {
-  snapPoints?: Array<string | number>;
+  // Aceita readonly (presets de SHEET_PRESETS) e mutable (literais
+  // ad-hoc em testes). O wrapper interno copia para um array novo
+  // antes de repassar a Gorhom para evitar mutacao involuntaria.
+  snapPoints?: ReadonlyArray<string | number>;
   index?: number;
   onChange?: (index: number) => void;
   children: ReactNode;
@@ -26,7 +30,9 @@ export interface BottomSheetProps {
 
 export type BottomSheetRef = GorhomBottomSheet;
 
-const DEFAULT_SNAP_POINTS: Array<string | number> = ['40%', '85%'];
+// Fallback do snap quando consumidor nao passa snapPoints. Vem do
+// preset compartilhado SHEET_DEFAULT (['40%', '85%'], M01.4).
+const DEFAULT_SNAP_POINTS: Array<string | number> = [...SHEET_DEFAULT];
 
 export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
   function BottomSheet(
@@ -39,8 +45,11 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     },
     ref
   ) {
+    // Copia para array mutavel: gorhom espera (string | number)[]
+    // e ler a ref readonly diretamente quebra typing. spread ainda
+    // mantem performance (memoizado por mudanca de referencia).
     const points = useMemo<Array<string | number>>(
-      () => snapPoints ?? DEFAULT_SNAP_POINTS,
+      () => [...(snapPoints ?? DEFAULT_SNAP_POINTS)],
       [snapPoints]
     );
 

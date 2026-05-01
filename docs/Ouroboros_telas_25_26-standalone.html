@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Ouroboros - telas 25 e 26 (extensao do mockup)</title>
+  <meta name="viewport" content="width=1600">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /*
+     * Extensao do mockup principal (Ouroboros_22_telas-standalone.html).
+     * Em vez de regenerar o bundle React/Babel daquele arquivo, este
+     * standalone autocontido exibe somente as duas telas adicionadas
+     * pela M00.6: Tela 25 (Calendario de conquistas) e Tela 26
+     * (Widget homescreen).
+     *
+     * Mesma DNA visual do bundle principal (paleta Dracula,
+     * JetBrains Mono, viewport 412 x 915 dp do Redmi Note 13 5G Pro).
+     * O rename para "Ouroboros 24 telas-standalone.html" entra na
+     * M19 junto com bump de versao do mockup.
+     *
+     * Sem emojis e sem glifos simbolicos: o app real (e portanto a
+     * fidelidade visual) usa ASCII puro e tipografia mono. Letras
+     * iniciais (A/V) marcam pessoas; tracos / barras representam
+     * waveform; setas usam <, >, +, "play".
+     */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-page:    #0a0b0f;
+      --bg-canvas:  #14151a;
+      --bg:         #282a36;
+      --bg-alt:     #1e1f29;
+      --bg-elev:    #44475a;
+      --fg:         #f8f8f2;
+      --muted:      #c9c9cc;
+      --muted-decor:#6272a4;
+      --pink:       #ff79c6;
+      --purple:     #bd93f9;
+      --cyan:       #8be9fd;
+      --green:      #50fa7b;
+      --yellow:     #f1fa8c;
+      --orange:     #ffb86c;
+      --red:        #ff5555;
+      --bezel:      #0d0e13;
+    }
+
+    html, body {
+      background: var(--bg-page);
+      color: var(--fg);
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      min-height: 100vh;
+    }
+
+    .canvas {
+      padding: 56px 56px 80px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .canvas-header {
+      margin-bottom: 48px;
+    }
+    .canvas-header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+      margin-bottom: 8px;
+    }
+    .canvas-header p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .section {
+      margin-bottom: 64px;
+      padding: 28px;
+      background: var(--bg-canvas);
+      border: 1px solid var(--bg-elev);
+      border-radius: 12px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      color: var(--fg);
+    }
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .artboards {
+      display: flex;
+      gap: 48px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .artboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .artboard-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* Phone shell (412 x 915 dp, escala 1:1) */
+    .ph {
+      background: var(--bezel);
+      border-radius: 38px;
+      padding: 7px;
+      width: 412px;
+      border: 1px solid var(--bg-elev);
+    }
+    .scr {
+      background: var(--bg);
+      border-radius: 32px;
+      overflow: hidden;
+      height: 901px;
+      display: flex;
+      flex-direction: column;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      color: var(--fg);
+      font-size: 14px;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    /* Status bar Android */
+    .sb {
+      padding: 14px 22px 4px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .battery {
+      display: inline-block; width: 20px; height: 9px;
+      border: 1px solid var(--muted); border-radius: 1.5px; position: relative;
+    }
+    .battery::after {
+      content: ""; position: absolute; right: -3.5px; top: 2px;
+      width: 2.5px; height: 4px; background: var(--muted); border-radius: 0 1px 1px 0;
+    }
+    .battery::before {
+      content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 70%;
+      background: var(--muted); border-radius: 0.5px;
+    }
+
+    /* Header */
+    .hd {
+      padding: 8px 18px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--bg-elev);
+    }
+    .bk { color: var(--muted); font-size: 18px; cursor: pointer; }
+    .ti { font-size: 13px; color: var(--orange); font-weight: 500; }
+    .rt { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+    /* Body + tab bar */
+    .bd {
+      flex: 1;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .tb {
+      display: flex;
+      border-top: 1px solid var(--bg-elev);
+      padding: 12px 4px 14px;
+      justify-content: space-around;
+      background: var(--bg-alt);
+    }
+    .tab { font-size: 12px; color: var(--muted); text-align: center; flex: 1; }
+    .tab.on { color: var(--purple); font-weight: 500; }
+
+    /* Avatares */
+    .av {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .av-a { background: var(--purple); color: var(--bg); }
+    .av-v { background: var(--pink); color: var(--bg); }
+    .av-sm { width: 28px; height: 28px; font-size: 12px; }
+
+    .pf-chip {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .pf-chip.a { background: var(--purple); color: var(--bg); }
+
+    /* Chips */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      border: 1px solid var(--bg-elev);
+      color: var(--muted);
+      margin: 3px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .chip.on { background: var(--purple); color: var(--bg); border-color: var(--purple); font-weight: 500; }
+    .chip.on-cyan { background: var(--cyan); color: var(--bg); border-color: var(--cyan); font-weight: 500; }
+    .chip.on-org { background: var(--orange); color: var(--bg); border-color: var(--orange); font-weight: 500; }
+
+    /* Filtros header */
+    .filtros {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--bg-elev);
+      margin-bottom: 14px;
+    }
+    .filtro-grupo {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-right: 4px;
+    }
+
+    /* Calendario - cards horizontais */
+    .cal-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 8px 0 16px;
+    }
+    .conquista-card {
+      flex-shrink: 0;
+      width: 160px;
+      height: 200px;
+      background: var(--bg-alt);
+      border: 1px solid var(--bg-elev);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    .conquista-cover {
+      width: 100%;
+      height: 120px;
+      background: var(--bg-elev);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .conquista-cover.foto {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%);
+      color: rgba(0,0,0,0.5);
+    }
+    .conquista-cover.youtube {
+      background: linear-gradient(180deg, #281013 0%, #14151a 100%);
+      color: var(--red);
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .conquista-cover.spotify {
+      background: rgba(80, 250, 123, 0.2);
+      color: var(--green);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+    .conquista-cover.audio {
+      background: var(--bg-alt);
+      display: flex;
+      gap: 1.5px;
+      padding: 0 14px;
+      align-items: center;
+    }
+    .conquista-cover.audio .bar {
+      flex: 1;
+      background: var(--cyan);
+      border-radius: 1px;
+      opacity: 0.7;
+    }
+    .conquista-cover .midia-tag {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      font-size: 9px;
+      padding: 2px 6px;
+      background: rgba(20,21,26,0.85);
+      color: var(--cyan);
+      border-radius: 3px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .conquista-meta {
+      padding: 8px 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .conquista-data {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .conquista-frase {
+      font-size: 11px;
+      color: var(--fg);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Widget homescreen mock */
+    .home-shell {
+      background: linear-gradient(180deg, #1a1c20 0%, #0a0b0f 100%);
+      padding: 38px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+    }
+    .home-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .home-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--bg-elev);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .home-icon.app {
+      background: var(--purple);
+      color: var(--bg);
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .widget-4x2 {
+      width: 100%;
+      height: 116px;
+      border-radius: 16px;
+      background: var(--bg-alt);
+      border: 1px solid var(--bg-elev);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .widget-4x2 .av {
+      width: 44px;
+      height: 44px;
+      font-size: 16px;
+    }
+    .widget-4x2 .info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .widget-4x2 .info .nome {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .widget-4x2 .info .humor-num {
+      font-size: 36px;
+      color: var(--cyan);
+      font-weight: 600;
+      line-height: 1;
+    }
+    .widget-4x2 .info .humor-lab {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .widget-4x2 .fab-mini {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--purple);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .widget-4x4 {
+      width: 100%;
+      height: 240px;
+      border-radius: 18px;
+      background: var(--bg-alt);
+      border: 1px solid var(--bg-elev);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .widget-4x4 .header-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .widget-4x4 .header-line .nome {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .widget-4x4 .humor-num {
+      font-size: 56px;
+      color: var(--cyan);
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      margin: 4px 0;
+    }
+    .widget-4x4 .humor-lab {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+    .widget-4x4 .radial-row {
+      display: flex;
+      justify-content: space-around;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid var(--bg-elev);
+    }
+    .radial-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    .radial-btn.humor { background: var(--purple); color: var(--bg); }
+    .radial-btn.voz { background: var(--cyan); color: var(--bg); }
+    .radial-btn.cam { background: var(--orange); color: var(--bg); }
+    .radial-btn.vit { background: var(--green); color: var(--bg); }
+
+    .home-clock {
+      font-size: 56px;
+      color: var(--fg);
+      font-weight: 500;
+      letter-spacing: -1px;
+      text-align: center;
+      margin-bottom: -4px;
+    }
+    .home-date {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="canvas">
+
+  <header class="canvas-header">
+    <h1>Ouroboros - Telas 25 e 26</h1>
+    <p>
+      Extensao do mockup principal com as duas novas artboards adicionadas pela
+      Sprint M00.6. Mesma DNA visual do bundle <code>Ouroboros_22_telas-standalone.html</code>
+      (paleta Dracula, JetBrains Mono, viewport 412 x 915 dp). O bundle principal
+      sera regenerado na M19 com toolchain do Design Canvas; ate la este
+      arquivo serve de referencia para as sprints M11.5 (Calendario) e M20
+      (Widget).
+    </p>
+  </header>
+
+  <!-- TELA 25 - CALENDARIO DE CONQUISTAS -->
+  <section class="section">
+    <h2 class="section-title">25 - Calendario de conquistas</h2>
+    <p class="section-subtitle">
+      Header laranja "Calendario", ChipGroup pessoa no canto direito, filtros
+      mes / midia / intensidade / bairro. FlatList horizontal de cards 160 x 200 dp
+      com cover de midia. Tap no card abre detalhe (rota dinamica em M11.5).
+    </p>
+
+    <div class="artboards">
+      <div class="artboard">
+        <div class="ph">
+          <div class="scr">
+            <div class="sb">
+              <span>11:42</span>
+              <span class="battery"></span>
+            </div>
+
+            <div class="hd">
+              <span class="bk">&lt;</span>
+              <span class="ti">Calendario</span>
+              <span class="pf-chip a">A</span>
+            </div>
+
+            <div class="bd">
+              <div class="filtros">
+                <span class="filtro-grupo">Mes</span>
+                <button class="chip on">Abr</button>
+                <button class="chip">Mar</button>
+                <button class="chip">Fev</button>
+              </div>
+
+              <div class="filtros">
+                <span class="filtro-grupo">Midia</span>
+                <button class="chip on-cyan">Todas</button>
+                <button class="chip">Foto</button>
+                <button class="chip">Audio</button>
+                <button class="chip">YT</button>
+              </div>
+
+              <div style="font-size: 11px; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.04em;">
+                Abril - 6 conquistas
+              </div>
+
+              <div class="cal-scroll">
+                <div class="conquista-card">
+                  <div class="conquista-cover foto">
+                    <span class="midia-tag">foto</span>
+                  </div>
+                  <div class="conquista-meta">
+                    <span class="conquista-data">28 abr - 19:14</span>
+                    <span class="conquista-frase">Voltou a correr depois de tres semanas. Sol no Parque do Povo.</span>
+                  </div>
+                </div>
+
+                <div class="conquista-card">
+                  <div class="conquista-cover youtube">
+                    play
+                    <span class="midia-tag">youtube</span>
+                  </div>
+                  <div class="conquista-meta">
+                    <span class="conquista-data">25 abr - 22:08</span>
+                    <span class="conquista-frase">Show da banda no Tom Brasil.</span>
+                  </div>
+                </div>
+
+                <div class="conquista-card">
+                  <div class="conquista-cover spotify">
+                    nota
+                    <span class="midia-tag">spotify</span>
+                  </div>
+                  <div class="conquista-meta">
+                    <span class="conquista-data">22 abr - 14:30</span>
+                    <span class="conquista-frase">Tocou a musica nova no violao sem errar.</span>
+                  </div>
+                </div>
+
+                <div class="conquista-card">
+                  <div class="conquista-cover audio">
+                    <div class="bar" style="height: 12px;"></div>
+                    <div class="bar" style="height: 28px;"></div>
+                    <div class="bar" style="height: 18px;"></div>
+                    <div class="bar" style="height: 42px;"></div>
+                    <div class="bar" style="height: 32px;"></div>
+                    <div class="bar" style="height: 22px;"></div>
+                    <div class="bar" style="height: 38px;"></div>
+                    <div class="bar" style="height: 14px;"></div>
+                    <div class="bar" style="height: 24px;"></div>
+                    <div class="bar" style="height: 36px;"></div>
+                    <div class="bar" style="height: 20px;"></div>
+                    <div class="bar" style="height: 30px;"></div>
+                    <span class="midia-tag" style="position: absolute; bottom: 6px; left: 6px;">audio</span>
+                  </div>
+                  <div class="conquista-meta">
+                    <span class="conquista-data">19 abr - 08:15</span>
+                    <span class="conquista-frase">Audio: voltei ao mar.</span>
+                  </div>
+                </div>
+
+                <div class="conquista-card">
+                  <div class="conquista-cover foto" style="background: linear-gradient(135deg, var(--orange) 0%, var(--pink) 100%);">
+                    <span class="midia-tag">foto</span>
+                  </div>
+                  <div class="conquista-meta">
+                    <span class="conquista-data">15 abr - 20:42</span>
+                    <span class="conquista-frase">Festa de aniversario com os amigos no Itaim.</span>
+                  </div>
+                </div>
+
+                <div class="conquista-card">
+                  <div class="conquista-cover foto" style="background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);">
+                    <span class="midia-tag">foto</span>
+                  </div>
+                  <div class="conquista-meta">
+                    <span class="conquista-data">10 abr - 11:00</span>
+                    <span class="conquista-frase">Caminhada longa na praia. Maresia e silencio.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="font-size: 11px; color: var(--muted-decor); margin-top: auto; padding: 12px 0; text-align: center; line-height: 1.6;">
+                Toque um card para ver a conquista por inteiro.
+              </div>
+            </div>
+
+            <div class="tb">
+              <div class="tab">Hoje</div>
+              <div class="tab">Mente</div>
+              <div class="tab">Treino</div>
+              <div class="tab on">Calendario</div>
+              <div class="tab">Ajustes</div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard-label">25 - Lista cheia: 6 conquistas no mes</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TELA 26 - WIDGET HOMESCREEN -->
+  <section class="section">
+    <h2 class="section-title">26 - Widget homescreen Android</h2>
+    <p class="section-subtitle">
+      Preview do widget 4x2 (compacto) e 4x4 (expandido) na tela inicial do
+      Android. Mostra a inicial da pessoa ativa em fundo <code>--purple</code>,
+      o humor medio do dia em <code>--cyan</code>, e atalho FAB radial com
+      4 acoes (humor / voz / camera / vitoria). Tap em qualquer atalho abre
+      o app diretamente na captura correspondente.
+    </p>
+
+    <div class="artboards">
+      <!-- Widget 4x2 -->
+      <div class="artboard">
+        <div class="ph">
+          <div class="scr">
+            <div class="sb">
+              <span>11:42</span>
+              <span class="battery"></span>
+            </div>
+
+            <div class="home-shell">
+              <div class="home-clock">11:42</div>
+              <div class="home-date">Quarta - 30 de abril</div>
+
+              <div class="home-row" style="margin-top: 12px;">
+                <div class="home-icon app">O</div>
+                <div class="home-icon">M</div>
+                <div class="home-icon">S</div>
+                <div class="home-icon">G</div>
+              </div>
+
+              <div class="widget-4x2">
+                <span class="av av-a">A</span>
+                <div class="info">
+                  <span class="nome">Pessoa A</span>
+                  <span class="humor-num">4,2</span>
+                  <span class="humor-lab">Humor medio - hoje</span>
+                </div>
+                <span class="fab-mini">+</span>
+              </div>
+
+              <div class="home-row">
+                <div class="home-icon">F</div>
+                <div class="home-icon">W</div>
+                <div class="home-icon">C</div>
+                <div class="home-icon">N</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard-label">26a - Widget 4x2 (compacto)</div>
+      </div>
+
+      <!-- Widget 4x4 -->
+      <div class="artboard">
+        <div class="ph">
+          <div class="scr">
+            <div class="sb">
+              <span>11:42</span>
+              <span class="battery"></span>
+            </div>
+
+            <div class="home-shell">
+              <div class="home-clock">11:42</div>
+              <div class="home-date">Quarta - 30 de abril</div>
+
+              <div class="widget-4x4" style="margin-top: 12px;">
+                <div class="header-line">
+                  <span class="av av-a av-sm">A</span>
+                  <span class="nome">Pessoa A - hoje</span>
+                </div>
+                <div class="humor-num">4,2</div>
+                <div class="humor-lab">Humor medio</div>
+
+                <div class="radial-row">
+                  <span class="radial-btn humor" title="humor">hum</span>
+                  <span class="radial-btn voz" title="voz">voz</span>
+                  <span class="radial-btn cam" title="camera">cam</span>
+                  <span class="radial-btn vit" title="vitoria">vit</span>
+                </div>
+              </div>
+
+              <div class="home-row">
+                <div class="home-icon">F</div>
+                <div class="home-icon">W</div>
+                <div class="home-icon">C</div>
+                <div class="home-icon">N</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard-label">26b - Widget 4x4 (expandido com FAB radial)</div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="font-size: 12px; color: var(--muted-decor); text-align: center; padding: 32px 0; line-height: 1.8;">
+    Mockup standalone autocontido. Paleta e tipografia identicas ao bundle
+    principal. M19 fara o merge regenerando o HTML completo.
+  </footer>
+
+</div>
+
+</body>
+</html>

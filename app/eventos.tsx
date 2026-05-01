@@ -31,6 +31,7 @@ import {
   Button,
   Chip,
   ChipGroup,
+  SHEET_80,
   Slider,
   Textarea,
   useToast,
@@ -222,7 +223,7 @@ export default function Eventos() {
   return (
     <BottomSheet
       ref={sheetRef}
-      snapPoints={['80%']}
+      snapPoints={SHEET_80}
       index={-1}
       enablePanDownToClose
       onChange={(idx) => {

@@ -35,6 +35,13 @@ export {
 export type { ToastApi, ToastType } from './Toast';
 export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetRef } from './BottomSheet';
+export {
+  SHEET_60,
+  SHEET_70,
+  SHEET_80,
+  SHEET_90,
+  SHEET_DEFAULT,
+} from './SHEET_PRESETS';
 export { FAB } from './FAB';
 export type { FABProps } from './FAB';
 export { FABRadial } from './FABRadial';

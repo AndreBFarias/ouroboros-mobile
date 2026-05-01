@@ -12,6 +12,7 @@ import { ToastProvider } from '@/components/ui';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
+import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import '../global.css';
 
 // Mantem a splash visivel ate as fontes carregarem.
@@ -39,6 +40,9 @@ try {
 if (typeof document !== 'undefined') {
   document.documentElement.classList.add('dark');
 }
+// Polish CSS adicional para Web (M00.6). Inerte em nativo. Roda
+// uma unica vez na carga do bundle; applyDraculaWeb e idempotente.
+applyDraculaWeb();
 
 export default function RootLayout() {
   const [loaded] = useFonts({

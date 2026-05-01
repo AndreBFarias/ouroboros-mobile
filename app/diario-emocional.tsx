@@ -29,6 +29,7 @@ import {
   Button,
   Chip,
   ChipGroup,
+  SHEET_90,
   Slider,
   Textarea,
   Toggle,
@@ -273,7 +274,7 @@ export default function DiarioEmocional() {
   return (
     <BottomSheet
       ref={sheetRef}
-      snapPoints={['90%']}
+      snapPoints={SHEET_90}
       index={-1}
       enablePanDownToClose
       onChange={(idx) => {

@@ -19,6 +19,7 @@ import {
   Button,
   ChipGroup,
   Input,
+  SHEET_70,
   Slider,
   Textarea,
   useToast,
@@ -119,7 +120,7 @@ export default function HumorRapido() {
   return (
     <BottomSheet
       ref={sheetRef}
-      snapPoints={['70%']}
+      snapPoints={SHEET_70}
       index={-1}
       enablePanDownToClose
       onChange={(idx) => {

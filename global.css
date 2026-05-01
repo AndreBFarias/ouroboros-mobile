@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Variaveis CSS da paleta Dracula (M00.6). NativeWind 4 emite as
+ * classes utilitarias em hex, mas o polish web (applyDraculaWeb)
+ * referencia tokens via var(--*) para que body, scrollbar e
+ * placeholders fiquem consistentes mesmo quando o utilitario
+ * nao chega ao elemento. Hex codes espelham src/theme/tokens.ts.
+ */
+:root.dark {
+  --bg-page: #14151a;
+  --bg: #282a36;
+  --bg-alt: #1e1f29;
+  --bg-elev: #44475a;
+  --fg: #f8f8f2;
+  --muted: #c9c9cc;
+  --muted-decor: #6272a4;
+  --purple: #bd93f9;
+  --pink: #ff79c6;
+  --cyan: #8be9fd;
+  --green: #50fa7b;
+  --yellow: #f1fa8c;
+  --orange: #ffb86c;
+  --red: #ff5555;
+}
