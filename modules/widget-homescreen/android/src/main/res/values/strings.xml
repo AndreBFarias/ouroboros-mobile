@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="widget_label">Ouroboros</string>
+  <string name="widget_label_large">Ouroboros 4x4</string>
+  <string name="widget_titulo_humor">Humor de hoje</string>
+  <string name="widget_sem_registro">Sem registro hoje</string>
+  <string name="widget_atalho_humor">Humor</string>
+  <string name="widget_atalho_voz">Voz</string>
+  <string name="widget_atalho_camera">Câmera</string>
+  <string name="widget_atalho_vitoria">Conquista</string>
+  <string name="widget_heatmap_titulo">Últimos 7 dias</string>
+  <string name="widget_desativado_titulo">Widget desativado</string>
+  <string name="widget_desativado_sub">Ative em Configurações para voltar a ver o resumo do dia.</string>
+  <string name="widget_frase_default">Pequenos passos contam.</string>
+</resources>

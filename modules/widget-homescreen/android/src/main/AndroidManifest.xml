@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application>
+    <receiver
+      android:name=".OuroborosWidgetProvider"
+      android:exported="true"
+      android:label="@string/widget_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="expo.modules.widgethomescreen.ACTION_REFRESH" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_info_4x2" />
+    </receiver>
+
+    <receiver
+      android:name=".OuroborosWidgetProviderLarge"
+      android:exported="true"
+      android:label="@string/widget_label_large">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="expo.modules.widgethomescreen.ACTION_REFRESH" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_info_4x4" />
+    </receiver>
+  </application>
+</manifest>

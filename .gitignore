@@ -15,6 +15,12 @@ android/
 *.apk
 *.aab
 
+# Excecao: modulos Expo locais com codigo nativo versionado
+!modules/*/android/
+!modules/*/android/**
+!modules/*/ios/
+!modules/*/ios/**
+
 # Variáveis de ambiente
 .env
 .env.local
