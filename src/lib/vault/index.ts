@@ -17,6 +17,7 @@ export {
   medidasFotoPath,
   cicloPath,
   alarmesPath,
+  contadoresPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -80,3 +81,11 @@ export {
   escreverAlarme,
   excluirAlarme,
 } from './alarmes';
+
+export {
+  listarContadores,
+  lerContador,
+  escreverContador,
+  excluirContador,
+  registrarReset,
+} from './contadores';

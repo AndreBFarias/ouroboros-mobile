@@ -1,0 +1,7 @@
+Screenshots A-01 a A-06 capturados via claude-in-chrome MCP durante validação V cruzada.
+Os ss_* IDs ficam em runtime do MCP browser plugin; visualização via mensagens da sessão.
+Cobertura visual:
+- A-01 toggle off: 5 abas fixas, sem aba Contadores
+- A-02 toggle on: header laranja "Contadores", icone Sigma muted-decor 48dp, frase "Comece quando quiser." em sentence case + ponto, bottom bar 6 abas com Contadores ativa em purple, FAB roxo
+- A-03 cadastro novo: header "Novo contador" + chevron back, label TITULO + input placeholder "Ex.: Sem cigarro", label INICIO + trigger de data "01 de maio de 2026", botao Criar
+- A-04, A-05, A-06: requerem persistencia SAF (Nivel B/C real)

@@ -91,3 +91,9 @@ export {
   sufixoRandom,
   type Tarefa,
 } from './tarefa';
+export {
+  ContadorSchema,
+  slugifyTitulo as slugifyContador,
+  sufixoRandom as sufixoRandomContador,
+  type Contador,
+} from './contador';

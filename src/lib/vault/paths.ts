@@ -156,6 +156,15 @@ export function tarefasPath(date: Date, slug: string): string {
   return `tarefas/${formatDateYmd(date)}-${slug}.md`;
 }
 
+// contadores/<slug>.md (contador "dias sem X" opt-in - M18). Slug em
+// kebab-case ASCII fornecido pelo caller. Sem datas no path: o
+// contador e persistente; o frontmatter guarda inicio (data atual de
+// inicio que muda em cada reset), recorde e historico de resets.
+// Pasta dedicada simplifica listagem e backup.
+export function contadoresPath(slug: string): string {
+  return `contadores/${slug}.md`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao
@@ -202,6 +211,7 @@ export const VAULT_FOLDERS = {
   exercicios: 'exercicios',
   alarmes: 'alarmes',
   tarefas: 'tarefas',
+  contadores: 'contadores',
   assets: 'assets',
   assetsExercicios: 'assets/exercicios',
   cache: '.ouroboros/cache',
