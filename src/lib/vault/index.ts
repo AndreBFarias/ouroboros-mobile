@@ -13,6 +13,8 @@ export {
   treinosDraftPath,
   treinosPath,
   marcosPath,
+  medidasPath,
+  medidasFotoPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -52,3 +54,10 @@ export {
   excluirMarco,
 } from './marcos';
 export type { ListarMarcosFiltros } from './marcos';
+
+export {
+  listarMedidas,
+  lerUltimaMedida,
+  escreverMedida,
+} from './medidas';
+export type { ListarMedidasFiltros, MedidasPeriodo } from './medidas';

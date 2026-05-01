@@ -4,7 +4,8 @@
 //   2. inbox/mente/diario/<...>.md  -> midia (futuro M06.5;
 //      atualmente schema diario_emocional nao tem 'midia', mas a
 //      sprint M06 deixou aberto. Por ora ignoramos com guarda.)
-//   3. medidas/<...>.md  -> M12 (ainda nao existe; varredura tolerante)
+//   3. medidas/<...>.md  -> M12 entregou; le schema MedidasSchema e
+//      adiciona cada foto com origem 'medida'.
 //   4. marcos/<...>.md   -> body pode ter referencia futura (ignorado)
 //   5. assets/exercicios/  -> GIFs sao demonstrativos, NAO entram aqui
 //
@@ -20,6 +21,7 @@ import { VAULT_FOLDERS } from '@/lib/vault/paths';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
+import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
 
 // Origens declaradas. Em sprints futuras, novas pastas (medidas,
 // inbox/mente/diario com midia, etc) entram nesta enum sem mexer
@@ -88,6 +90,42 @@ async function lerEventos(
   return out;
 }
 
+// Le todas as fotos de medidas/<YYYY-MM-DD>.md. Slug aqui e a propria
+// data (medidas nao tem slug livre); origemSlug fica como YYYY-MM-DD
+// para que o caller possa exibir e abrir o registro futuramente.
+async function lerMedidas(
+  vaultRoot: string,
+  autor: string | null
+): Promise<FotoAgregada[]> {
+  const folder = joinUri(vaultRoot, VAULT_FOLDERS.medidas);
+  const arquivos = await listVaultFolder(folder, '.md');
+  const out: FotoAgregada[] = [];
+
+  for (const uri of arquivos) {
+    let parsed: { meta: Medida; body: string } | null = null;
+    try {
+      parsed = await readVaultFile(uri, MedidasSchema);
+    } catch {
+      continue;
+    }
+    if (!parsed) continue;
+    if (autor && parsed.meta.autor !== autor) continue;
+
+    const dataYmd = parsed.meta.data;
+    for (const fotoRel of parsed.meta.fotos ?? []) {
+      const absUri = joinUri(vaultRoot, fotoRel);
+      out.push({
+        uri: absUri,
+        data: dataYmd,
+        origem: 'medida',
+        origemPath: `medidas/${dataYmd}.md`,
+        origemSlug: dataYmd,
+      });
+    }
+  }
+  return out;
+}
+
 export interface UseFotosAgregadasResult {
   fotos: FotoAgregada[];
   loading: boolean;
@@ -114,12 +152,14 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     setError(null);
     const autor = filtroPessoa === 'ambos' ? null : pessoaAtiva;
     try {
-      // Por enquanto so eventos (M07 entregou schema com fotos: []).
-      // M06.5 adicionara midia em diario; M12 adicionara medidas.
-      // Estrutura do hook ja esta pronta para crescer sem consumer
-      // ter que mudar.
-      const eventos = await lerEventos(vaultRoot, autor);
-      const todas = [...eventos];
+      // Eventos (M07) + medidas (M12). M06.5 adicionara midia em
+      // diario emocional. Estrutura do hook ja esta pronta para
+      // crescer sem consumer ter que mudar.
+      const [eventos, medidas] = await Promise.all([
+        lerEventos(vaultRoot, autor),
+        lerMedidas(vaultRoot, autor),
+      ]);
+      const todas = [...eventos, ...medidas];
       // Mais recentes primeiro.
       todas.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
       setFotos(todas);

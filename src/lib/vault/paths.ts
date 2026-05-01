@@ -111,6 +111,25 @@ export function marcosPath(date: Date, slug: string): string {
   return `marcos/${formatDateYmd(date)}-${slug}.md`;
 }
 
+// medidas/YYYY-MM-DD.md (snapshot diario de medidas corporais - M12).
+// Sem slug porque o registro e unico por dia (sobrescreve o anterior
+// se o usuario salvar duas vezes no mesmo dia, comportamento
+// intencional do form Tela 12).
+export function medidasPath(date: Date): string {
+  return `medidas/${formatDateYmd(date)}.md`;
+}
+
+// assets/m-YYYY-MM-DD-<lado>.jpg (foto de medida corporal). Lado e
+// uma das tres posicoes canonicas (frente, costas, lado). Caller
+// fornece lado em snake_case ASCII para nao colidir com encoding
+// nem misturar acentos no filesystem (convencao do projeto).
+export function medidasFotoPath(
+  date: Date,
+  lado: 'frente' | 'costas' | 'lado'
+): string {
+  return `assets/m-${formatDateYmd(date)}-${lado}.jpg`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao

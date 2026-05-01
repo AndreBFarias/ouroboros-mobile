@@ -99,6 +99,7 @@ jest.mock('react-native-svg', () => {
     Svg: stub('Svg'),
     Circle: stub('Circle'),
     Polyline: stub('Polyline'),
+    Polygon: stub('Polygon'),
     Line: stub('Line'),
     Path: stub('Path'),
     Rect: stub('Rect'),

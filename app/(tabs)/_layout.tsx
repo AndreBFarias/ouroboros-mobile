@@ -60,6 +60,15 @@ export default function TabsLayout() {
         options={{ href: null, title: 'Exercicios' }}
       />
 
+      {/* Sub-rota medidas (M12). Mesmo padrao da sub-rota exercicios:
+          stack interno (index = Tela 13, novo = Tela 12), sem aba
+          fixa na bottom bar; acesso por deep link, FAB radial futuro
+          ou navegacao a partir de Memorias / Settings. */}
+      <Tabs.Screen
+        name="medidas"
+        options={{ href: null, title: 'Medidas' }}
+      />
+
       {/* Abas condicionais: aparecem apenas quando o toggle esta on
           em Settings. Default off; CONTRACT secao 1.1 lista as 5. */}
       <Tabs.Screen

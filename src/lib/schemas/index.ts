@@ -49,3 +49,10 @@ export {
   type Marco,
   type MarcoOrigem,
 } from './marco';
+export {
+  MedidasSchema,
+  MEDIDAS_CAMPOS,
+  MEDIDAS_LABELS,
+  type Medida,
+  type MedidaCampo,
+} from './medidas';
