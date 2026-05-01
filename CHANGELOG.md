@@ -5,6 +5,18 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Documentation
+- **M19.x (a commitar) — Inventário de mockups visuais.**
+  Novo `docs/MOCKUPS-INVENTARIO.md` (151 linhas) mapeando cada
+  Tela NN ↔ bundle HTML / JSX-fonte / sprint dona, com nota
+  explícita sobre conflito de numeração (Tela 25/26 ambíguas:
+  M11.5/M20 vs M06.5/M16). Stub `scripts/build-mockups.mjs`
+  documenta o desafio da toolchain JSX→HTML para M19 final.
+  Nova seção §7.1 em `docs/CONTEXTO.md` formaliza o sistema
+  (bundle 22 telas frozen, Ouroboros_telas_25_26 editável,
+  screenshots por sprint = fonte canônica). 889 testes
+  mantidos; toolchain completa fica para M19 final.
+
 ### Fixed
 - **M00.5.x (a commitar) — Rules of Hooks em `app/(tabs)/index.tsx:81`.**
   Hook `useOnboarding((s) => s.tipoCompanhia)` foi movido para o topo

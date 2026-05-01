@@ -1,5 +1,27 @@
 # CODING AGENTS: READ THIS FIRST
 
+> **Nota de estado (Sprint M19.x, 2026-05-01)**
+>
+> Esta pasta contém o JSX-fonte original que gerou o bundle
+> `docs/Ouroboros_22_telas-standalone.html`. O bundle está **frozen**:
+> não há toolchain local para regenerá-lo a partir destes JSX, porque
+> os arquivos usam globais proprietários da ferramenta externa que os
+> exportou (`PhoneFrame`, `BackHeader`, `DCSection`, `DCArtboard` etc.).
+>
+> Para Telas adicionadas após o bundle original (Tela 25 = Calendário
+> de conquistas e Tela 26 = Widget homescreen, ambas no namespace
+> M00.6), a edição é feita à mão em
+> `docs/Ouroboros_telas_25_26-standalone.html` (HTML/CSS legível).
+>
+> Para Telas do bundle original (01–28 namespace JSX), referência
+> primária é o JSX-fonte aqui mais o screenshot da sprint dona. Não
+> tentar reabrir o bundle frozen para edição.
+>
+> Inventário canônico: [`docs/MOCKUPS-INVENTARIO.md`](../MOCKUPS-INVENTARIO.md).
+> Toolchain de regeneração: stub em
+> [`scripts/build-mockups.mjs`](../../scripts/build-mockups.mjs); build
+> real fica para a Sprint M19 final.
+
 This is a **handoff bundle** from Claude Design (claude.ai/design).
 
 A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.

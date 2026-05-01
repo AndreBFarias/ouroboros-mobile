@@ -445,6 +445,46 @@ zoomável com:
 A paleta CSS variables já está no `<style>` do HTML — converter para
 `src/theme/tokens.ts` no começo do projeto.
 
+### 7.1 Mockups Visuais — Estado Formalizado em M19.x
+
+Em 2026-05-01 a Sprint M19.x formalizou o sistema de mockups visuais
+após constatar, durante a Sprint M00.6, que regenerar o bundle de 22
+telas exige reverse-engineering da ferramenta externa que o exportou
+(identificação preservada em `docs/design-canvas-export/README.md`).
+Estado canônico:
+
+- `docs/Ouroboros_22_telas-standalone.html` (1,4 MB) — bundle frozen
+  de Telas 01 a 28 (namespace JSX). Não modificar. Regeneração
+  pendente — Sprint M19 final.
+- `docs/Ouroboros_telas_25_26-standalone.html` (23 KB) — bundle
+  editável criado em M00.6 para hospedar Tela 25 (Calendário de
+  conquistas) e Tela 26 (Widget homescreen) no namespace M00.6.
+  HTML/CSS escrito à mão; edição manual permitida.
+- `docs/design-canvas-export/project/secao-{a..e}.jsx` +
+  `primitives.jsx` + `theme.css` — JSX-fonte que originou o bundle
+  frozen. Mantidos como referência; **não reprocessáveis localmente**.
+- `scripts/build-mockups.mjs` — stub Node.js que documenta os três
+  caminhos candidatos para construir a toolchain de regeneração.
+  Roda apenas como mensagem informativa até a M19 final substituir.
+
+**Conflito de numeração Tela 25/26:** existem dois namespaces.
+Namespace JSX (bundle frozen) usa Tela 25 = Microfone e Tela 26 =
+Alarme. Namespace M00.6 (bundle de 2 telas) usa Tela 25 = Calendário
+de conquistas e Tela 26 = Widget homescreen. Os bundles não
+compartilham saída, então em runtime visual nunca colidem. Sprints
+novas que referenciem essas Telas devem citar o namespace
+explicitamente. Renomeação coordenada fica como item da M19 final.
+
+**Fonte canônica do estado real do app:** screenshots por sprint em
+`docs/sprints/MNN-screenshots/`. Os bundles HTML representam design
+intent; os screenshots representam o que de fato existe rodando.
+Divergências aceitas são documentadas em
+`docs/sprints/MNN-checkpoint-visual.md`.
+
+Inventário detalhado, mapa Tela → arquivo, e histórico das decisões
+ficam em [`MOCKUPS-INVENTARIO.md`](MOCKUPS-INVENTARIO.md) (raiz de
+`docs/`).
+
 ---
 
 ## 8. Ordem de Leitura Recomendada
