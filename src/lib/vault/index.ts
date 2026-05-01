@@ -11,6 +11,8 @@ export {
   exerciciosPath,
   exerciciosGifPath,
   treinosDraftPath,
+  treinosPath,
+  marcosPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -36,3 +38,17 @@ export {
   excluirExercicio,
 } from './exercicios';
 export type { ListarExerciciosFiltros } from './exercicios';
+
+export {
+  listarTreinos,
+  escreverTreino,
+  excluirTreino,
+} from './treinos';
+export type { ListarTreinosFiltros } from './treinos';
+
+export {
+  listarMarcos,
+  escreverMarco,
+  excluirMarco,
+} from './marcos';
+export type { ListarMarcosFiltros } from './marcos';

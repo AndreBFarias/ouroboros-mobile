@@ -37,3 +37,15 @@ export {
   type NivelExercicio,
   type HistoricoExecucao,
 } from './exercicio';
+export {
+  TreinoSessaoSchema,
+  ExercicioSessaoSchema,
+  type TreinoSessao,
+  type ExercicioSessao,
+} from './treino_sessao';
+export {
+  MarcoSchema,
+  MarcoOrigemSchema,
+  type Marco,
+  type MarcoOrigem,
+} from './marco';

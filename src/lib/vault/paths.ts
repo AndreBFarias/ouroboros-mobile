@@ -99,6 +99,18 @@ export function treinosDraftPath(date: Date, slug: string): string {
   return `treinos/draft/${formatDateYmd(date)}-${slug}.md`;
 }
 
+// treinos/YYYY-MM-DD-<slug>.md (sessao formal de treino - M11).
+// Caller fornece slug ja em kebab-case ASCII.
+export function treinosPath(date: Date, slug: string): string {
+  return `treinos/${formatDateYmd(date)}-${slug}.md`;
+}
+
+// marcos/YYYY-MM-DD-<slug>.md (marco / conquista - M11). Slug em
+// kebab-case ASCII (helper slugifyMarco).
+export function marcosPath(date: Date, slug: string): string {
+  return `marcos/${formatDateYmd(date)}-${slug}.md`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao

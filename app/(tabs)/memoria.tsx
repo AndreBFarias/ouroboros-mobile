@@ -1,12 +1,11 @@
-// Stub temporario para a aba Memorias. Redireciona para
-// /(tabs)/em-construcao com sprint=M11. M11 substituira o conteudo
-// deste arquivo pela tela real (ver INTEGRATION-CONTRACT secao 1.1).
-import { Redirect } from 'expo-router';
+// Aba Memorias - rota canonica registrada em
+// app/(tabs)/_layout.tsx. M11 substituiu o stub redirect (anterior
+// apontava para em-construcao?sprint=M11) pelo container real.
+//
+// Container <MemoriasScreen> renderiza 3 tabs internas: Treinos
+// (Tela 09 + 10), Fotos (galeria agregada), Marcos (Tela 11).
+import { MemoriasScreen } from '@/components/screens/MemoriasScreen';
 
-export default function MemoriaStub() {
-  return (
-    <Redirect
-      href={{ pathname: '/(tabs)/em-construcao', params: { sprint: 'M11' } }}
-    />
-  );
+export default function MemoriaTab() {
+  return <MemoriasScreen />;
 }

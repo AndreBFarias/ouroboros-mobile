@@ -27,3 +27,23 @@ export async function reagendarTodosBootHooks(): Promise<void> {
     }
   }
 }
+
+// Side-effect: M11 pluga seus dois hooks de boot diretamente. A
+// migracao roda primeiro (consolida drafts antigos) e depois a
+// verificacao de marcos auto avalia o estado consolidado.
+//
+// Import dinamico (lazy require) evita ciclo entre @/lib/boot/* e
+// @/lib/treinos|marcos/*. Funcoes wrapper encapsulam o require.
+const migrarDraftsHook: BootHook = async () => {
+  const { migrarDraftsParaTreinoSessao } = await import(
+    '@/lib/treinos/migrarDraftsParaTreinoSessao'
+  );
+  await migrarDraftsParaTreinoSessao();
+};
+
+const marcosAutoHook: BootHook = async () => {
+  const { verificarMarcosAuto } = await import('@/lib/marcos/marcosAuto');
+  await verificarMarcosAuto();
+};
+
+BOOT_HOOKS.push(migrarDraftsHook, marcosAutoHook);
