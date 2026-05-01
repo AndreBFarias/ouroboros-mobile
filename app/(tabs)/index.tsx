@@ -40,6 +40,7 @@ export default function TelaHoje() {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const setPessoaAtiva = usePessoa((s) => s.setPessoaAtiva);
   const onboardingDone = useOnboarding((s) => s.done);
+  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
 
   // Espera as 3 stores hidratarem do SecureStore antes de qualquer
   // decisao de redirect, senao o gate dispara com defaults (done=false,
@@ -78,7 +79,7 @@ export default function TelaHoje() {
 
   // Toggle de pessoa so faz sentido se ha companhia configurada.
   // Quando sozinho, avatar fica fixo na pessoa_a sem onPress.
-  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  // tipoCompanhia e lido no topo do componente (Rules of Hooks).
   const ehSozinho = tipoCompanhia === 'sozinho';
   const handleAvatarPress = ehSozinho
     ? undefined

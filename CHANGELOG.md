@@ -5,6 +5,15 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+- **M00.5.x (a commitar) — Rules of Hooks em `app/(tabs)/index.tsx:81`.**
+  Hook `useOnboarding((s) => s.tipoCompanhia)` foi movido para o topo
+  do componente (linha 43, junto aos outros `useOnboarding`) antes
+  dos early returns das linhas 70 e 76. ESLint passa limpo agora
+  (`npx eslint "app/(tabs)/index.tsx"` exit 0). 889 testes mantidos.
+  Achado novo registrado: `INFRA-acentuacao-comentarios` (comentários
+  sem acento conflitam com CLAUDE.md — débito histórico amplo).
+
 ### Added
 - **M20 (a commitar) — Widget Homescreen Android.** Plugin nativo
   Expo Module local em `modules/widget-homescreen/` com 2 layouts
