@@ -15,6 +15,7 @@ export {
   marcosPath,
   medidasPath,
   medidasFotoPath,
+  cicloPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -61,3 +62,13 @@ export {
   escreverMedida,
 } from './medidas';
 export type { ListarMedidasFiltros, MedidasPeriodo } from './medidas';
+
+export {
+  listarRegistrosCiclo,
+  lerRegistroCiclo,
+  escreverRegistroCiclo,
+  inferirFase,
+  duracaoCicloDetectada,
+  ultimaDataInicio,
+} from './ciclo';
+export type { ListarRegistrosCicloFiltros, CicloPeriodo } from './ciclo';

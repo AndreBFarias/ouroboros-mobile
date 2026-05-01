@@ -130,6 +130,15 @@ export function medidasFotoPath(
   return `assets/m-${formatDateYmd(date)}-${lado}.jpg`;
 }
 
+// inbox/saude/ciclo/YYYY-MM-DD.md (acompanhamento de ciclo menstrual,
+// M14.5). Sem slug porque o registro e unico por dia: registrar duas
+// vezes no mesmo dia sobrescreve o anterior. Pasta dedicada para
+// isolar dos outros schemas mentais e financeiros (privacidade
+// reforcada, ADR-0007).
+export function cicloPath(date: Date): string {
+  return `inbox/saude/ciclo/${formatDateYmd(date)}.md`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao
@@ -165,6 +174,7 @@ export const VAULT_FOLDERS = {
   inboxFinanceiroNota: 'inbox/financeiro/nota',
   inboxSaudeExame: 'inbox/saude/exame',
   inboxSaudeReceita: 'inbox/saude/receita',
+  inboxSaudeCiclo: 'inbox/saude/ciclo',
   inboxCasaGarantia: 'inbox/casa/garantia',
   inboxCasaContrato: 'inbox/casa/contrato',
   inboxOutros: 'inbox/outros',
