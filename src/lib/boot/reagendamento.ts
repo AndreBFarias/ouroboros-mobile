@@ -57,4 +57,19 @@ const reagendarAlarmesHook: BootHook = async () => {
   await reagendarAlarmes();
 };
 
-BOOT_HOOKS.push(migrarDraftsHook, marcosAutoHook, reagendarAlarmesHook);
+// M17 to-do leve: limpa lixeira soft de tarefas com retencao de 30
+// dias. Idempotente: roda uma vez por dia, controlado por timestamp
+// em SecureStore.
+const limparLixeiraTarefasHook: BootHook = async () => {
+  const { limparLixeiraExpirada } = await import(
+    '@/lib/tarefas/limparLixeiraExpirada'
+  );
+  await limparLixeiraExpirada();
+};
+
+BOOT_HOOKS.push(
+  migrarDraftsHook,
+  marcosAutoHook,
+  reagendarAlarmesHook,
+  limparLixeiraTarefasHook
+);

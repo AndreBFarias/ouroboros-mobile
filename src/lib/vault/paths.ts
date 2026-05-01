@@ -147,6 +147,15 @@ export function alarmesPath(slug: string): string {
   return `alarmes/${slug}.md`;
 }
 
+// tarefas/YYYY-MM-DD-<slug>.md (to-do leve opt-in - M17). Slug em
+// kebab-case ASCII derivado do titulo + sufixo random para deduplicar.
+// Data e a de criacao (nao se altera mesmo apos marcar feito); o
+// frontmatter guarda feito + feito_em separadamente. Pasta dedicada
+// simplifica listagem e backup.
+export function tarefasPath(date: Date, slug: string): string {
+  return `tarefas/${formatDateYmd(date)}-${slug}.md`;
+}
+
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
 // Helper para o share intent receiver (M08). Subtipo vem de
 // src/lib/share/categorias.ts (pix, extrato, nota); a extensao
@@ -192,6 +201,7 @@ export const VAULT_FOLDERS = {
   marcos: 'marcos',
   exercicios: 'exercicios',
   alarmes: 'alarmes',
+  tarefas: 'tarefas',
   assets: 'assets',
   assetsExercicios: 'assets/exercicios',
   cache: '.ouroboros/cache',

@@ -85,3 +85,9 @@ export {
   type AlarmeTag,
   type AlarmeSom,
 } from './alarme';
+export {
+  TarefaSchema,
+  slugifyTitulo as slugifyTarefa,
+  sufixoRandom,
+  type Tarefa,
+} from './tarefa';

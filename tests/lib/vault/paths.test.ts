@@ -8,6 +8,7 @@ import {
   assetsPath,
   inboxFinanceiroPath,
   fileMatchesDate,
+  tarefasPath,
   VAULT_FOLDERS,
 } from '@/lib/vault/paths';
 
@@ -118,12 +119,28 @@ describe('fileMatchesDate', () => {
   });
 });
 
+describe('tarefasPath', () => {
+  it('gera tarefas/YYYY-MM-DD-<slug>.md', () => {
+    const d = new Date('2026-04-29T15:00:00.000Z');
+    expect(tarefasPath(d, 'comprar-pao-7k2x')).toBe(
+      'tarefas/2026-04-29-comprar-pao-7k2x.md'
+    );
+  });
+
+  it('respeita virada de dia em UTC-3', () => {
+    // 02:30 UTC = 23:30 do dia anterior em UTC-3.
+    const d = new Date('2026-04-29T02:30:00.000Z');
+    expect(tarefasPath(d, 's')).toBe('tarefas/2026-04-28-s.md');
+  });
+});
+
 describe('VAULT_FOLDERS', () => {
   it('expoe pastas canonicas mobile', () => {
     expect(VAULT_FOLDERS.daily).toBe('daily');
     expect(VAULT_FOLDERS.eventos).toBe('eventos');
     expect(VAULT_FOLDERS.inboxMenteDiario).toBe('inbox/mente/diario');
     expect(VAULT_FOLDERS.assets).toBe('assets');
+    expect(VAULT_FOLDERS.tarefas).toBe('tarefas');
   });
 
   it('expoe as 7 entradas inbox adicionadas pela M08', () => {
