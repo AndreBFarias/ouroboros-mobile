@@ -5,6 +5,86 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **Sessão maratona 2026-05-01 — 11 sprints fechadas em sequência.**
+  Bloco 1 (infraestrutura M00.5/M00.6) + Bloco 2 (captura ativa
+  M08/M13/M11/M12) + Bloco 5 (settings + opt-ins
+  M15/M14.5/M16/M17/M18) entregues. Detalhes em
+  `docs/SESSION-2026-05-01-log.md`.
+  - **M00.5** (`9c3e28c`) — `app/(tabs)/_layout.tsx` com 5 abas
+    fixas + 5 condicionais; `BottomTabs.tsx` chrome custom;
+    barrels de schemas/stores; `useSettings` shape completo;
+    `eas.json` 3 profiles; helpers boot
+    (`deepLink`/`biometriaGate` placeholder/`reagendamento`).
+    Move `app/index.tsx` → `app/(tabs)/index.tsx`. **288
+    testes (+29).** Achado M00.5.x registrado (Rules of Hooks
+    em `(tabs)/index.tsx:81`).
+  - **M00.6** (`ae16a40`) — `SHEET_PRESETS` (60/70/80/90/DEFAULT);
+    `draculaPolish.ts` injection web; mockup HTML novo
+    `Ouroboros_telas_25_26-standalone.html` para Tela 25
+    (calendário) e Tela 26 (widget). **295 testes (+7).**
+    Achado M19.x registrado (bundle HTML toolchain).
+  - **M08** (`9202273`) — Share Intent Receiver Tela 17 com 8
+    subtipos (`pix`/`extrato`/`nota`/`exame`/`receita`/`garantia`/
+    `contrato`/`outro`); `InboxArquivoSchema`; estende
+    `deepLink.ts` para `action.SEND`; intent filters em
+    `app.json`. Cópia foreground com indicador. **376 testes
+    (+81).**
+  - **M13** (`82cc519`) — CRUD completo de Exercícios (Telas
+    02/07/08): galeria com filtros, detalhe com sparkline +
+    tooltip cyan, cadastro com `expo-document-picker`. Substitui
+    `/em-breve` no `captureRoutes.ts` e **deleta**
+    `app/em-breve.tsx`. "Adicionar a treino livre" cria draft.
+    **437 testes (+61).**
+  - **M11** (`ca77ed3`) — Memórias com 3 sub-tabs
+    (Treinos/Fotos/Marcos); schemas `treino_sessao` + `marco`;
+    galeria agregada de 5 fontes; CRUD completo;
+    `migrarDraftsParaTreinoSessao` em `BOOT_HOOKS`; 5 heurísticas
+    de marcos auto com dedup hash SHA-256. **517 testes (+80).**
+  - **M12** (`d6a2b43`) — Medidas (Telas 12/13) com sparkline
+    cyan polygon fill + delta absoluto sem cor (ADR-0005).
+    Integração cruzada com M11: `useFotosAgregadas` cresceu para
+    ler `medidas/`. **568 testes (+51).**
+  - **M15** (`27f6bbd`) — Settings 7 grupos com biometria gate
+    real (`LocalAuthentication`); lembretes via
+    `expo-notifications`; export ZIP via `jszip` +
+    `expo-sharing`; toggles reativos confirmados. **618 testes
+    (+50).**
+  - **M14.5** (`5a6e578`) — Ciclo menstrual opt-in com tom
+    sóbrio absoluto; calendário 28/35 dias adaptativo; fase
+    inferida + override; abas separadas por pessoa; pasta
+    dedicada `inbox/saude/ciclo/`. **663 testes (+45).**
+  - **M16** (`739b993`) — Alarme com Snooze via category com
+    action buttons; `SCHEDULE_EXACT_ALARM` Android 12+; sons
+    CC0 gerados via ffmpeg sine wave. **740 testes (+77).**
+  - **M17** (`2c3fbf6`) — To-do com drag&drop via
+    `react-native-draggable-flatlist`; busca textual sem
+    acento; lixeira soft 30 dias em `BOOT_HOOKS`. A17
+    reincidiu, resolvido inline. **813 testes (+73).**
+  - **M18** (`3989851`) — Contador "Dias sem X" com histórico
+    timeline; sem celebração visual absoluta (ADR-0005);
+    `diasEntre` UTC sem horas; recorde nunca diminui. Stream
+    timeout do agente no final, fechamento manual. **878
+    testes (+65).**
+- **`docs/ORCHESTRATOR_PLAYBOOK.md`** — playbook mestre de
+  orquestração para próximas sessões (filosofia, ciclo,
+  template de prompt do executor, padrão de validação Chrome
+  MCP, padrões aprendidos, erros e recuperação, mapa de
+  blocos).
+- **`docs/SESSION-2026-05-01-log.md`** — log narrativo das 11
+  sprints com decisões arquiteturais e métricas finais.
+- **`HOW_TO_RESUME.md` Passo 0** — orientação para identificar
+  papel (orquestrador/executor/usuário humano) antes dos demais
+  passos.
+
+### Changed
+- **Política de validação visual descontinuada para dual
+  obrigatório.** Após M00.5, validação Chrome MCP pelo
+  orquestrador substitui o checkpoint Expo Go por sprint. Expo
+  Go vira gate exclusivo da M19 (release final) e sprints com
+  APIs nativas pesadas. `INTEGRATION-CONTRACT.md` §2.3
+  atualizado.
+
 ### Changed
 - **Meta-sprint 2026-04-30 — Contrato de integração e zero v2.**
   Reescrita das 17 specs pendentes para garantir que cada sprint

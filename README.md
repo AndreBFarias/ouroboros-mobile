@@ -52,16 +52,25 @@ Detalhe em `VALIDATOR_BRIEF.md` §1.9 e `CLAUDE.md`. Resumo:
 
 ## Documentação
 
-- [`ROADMAP.md`](ROADMAP.md) — mapa de todas as sprints
+### Para próxima sessão (leitura obrigatória PRIMEIRO)
+
+- [`docs/ORCHESTRATOR_PLAYBOOK.md`](docs/ORCHESTRATOR_PLAYBOOK.md) — playbook mestre de orquestração (filosofia, ciclo de sprint em 10 passos, template de prompt do executor, workflow Chrome MCP, padrões aprendidos, erros e recuperação)
+- [`docs/SESSION-2026-05-01-log.md`](docs/SESSION-2026-05-01-log.md) — log narrativo das 11 sprints fechadas em sequência (M00.5 → M18)
 - [`STATE.md`](STATE.md) — estado atual: commit, sprint em execução, próximo passo
-- [`HOW_TO_RESUME.md`](HOW_TO_RESUME.md) — guia em 5 passos para retomar do zero
+- [`HOW_TO_RESUME.md`](HOW_TO_RESUME.md) — guia em 7 passos para retomar do zero (Passo 0 identifica papel)
+
+### Mapa do projeto
+
+- [`ROADMAP.md`](ROADMAP.md) — mapa de todas as sprints
+- [`docs/sprints/INTEGRATION-CONTRACT.md`](docs/sprints/INTEGRATION-CONTRACT.md) — contrato mestre de integração (pontos canônicos onde toda sprint pluga)
 - [`CHANGELOG.md`](CHANGELOG.md) — histórico de sprints e mudanças
 - [`CLAUDE.md`](CLAUDE.md) — regras invioláveis na raiz para visibilidade automática
 - [`VALIDATOR_BRIEF.md`](VALIDATOR_BRIEF.md) — invariantes e contratos do projeto
 - [`docs/BRIEFING.md`](docs/BRIEFING.md) — design system, princípios estéticos, telas, schemas
 - [`docs/CONTEXTO.md`](docs/CONTEXTO.md) — ecossistema, regras invioláveis, anonimato
 - [`docs/PLANO_TECNICO_APK.md`](docs/PLANO_TECNICO_APK.md) — playbook operacional, ADRs originais
-- [`docs/Ouroboros_22_telas-standalone.html`](docs/Ouroboros_22_telas-standalone.html) — fonte de verdade visual
+- [`docs/Ouroboros_22_telas-standalone.html`](docs/Ouroboros_22_telas-standalone.html) — fonte de verdade visual (22 telas core)
+- [`docs/Ouroboros_telas_25_26-standalone.html`](docs/Ouroboros_telas_25_26-standalone.html) — Telas 25 (calendário) e 26 (widget) adicionadas em M00.6
 - [`docs/ADRs/`](docs/ADRs/) — Architecture Decision Records (formalizados na M00.docs)
 - [`docs/sprints/`](docs/sprints/) — specs executáveis por sprint, screenshots e checkpoints
 
