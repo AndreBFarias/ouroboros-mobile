@@ -49,7 +49,8 @@ fechamento de sprint.
 | `[ok]` | M08 | Share Intent Receiver Tela 17 (8 subtipos + InboxArquivoSchema) | 17 | inbox_arquivo | 4-5h | `9202273` |
 | `[ok]` | M13 | Galeria + Detalhe + Cadastro Exercícios CRUD (Telas 02/07/08) | 02, 07, 08 | exercicio | 8-10h | `82cc519` |
 | `[ok]` | M11 | Memórias + CRUD treinos/marcos + galeria agregada + marcos auto | 09, 10, 11 | treino_sessao, marco | 8-10h | `ca77ed3` |
-| `[ok]` | M12 | Medidas Corporais Telas 12/13 + integração galeria M11 | 12, 13 | medidas | 5-6h | (a commitar) |
+| `[ok]` | M12 | Medidas Corporais Telas 12/13 + integração galeria M11 | 12, 13 | medidas | 5-6h | `d6a2b43` |
+| `[ok]` | M15 | Settings 7 grupos + biometria + export ZIP + toggles reativos | 23 | (vários) | 7-8h | (a commitar) |
 | `[todo]` | M00.5.x | Fix FAB radial labels (achado colateral M00.6) | 14 | — | 2h | — |
 | `[todo]` | M19.x | Bundle HTML toolchain regenerar (achado colateral M00.6) | — | — | 3h | — |
 | `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |

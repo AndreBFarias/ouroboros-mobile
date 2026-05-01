@@ -196,6 +196,54 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
+// expo-notifications: mock in-memory de schedule. Mantem identifiers
+// agendados num Map para que listarAgendados/cancelar funcionem nos
+// testes sem tocar API nativa.
+jest.mock('expo-notifications', () => {
+  const memory = new Map();
+  return {
+    __esModule: true,
+    SchedulableTriggerInputTypes: { DAILY: 'daily' },
+    getPermissionsAsync: jest.fn(() =>
+      Promise.resolve({ granted: true, canAskAgain: true })
+    ),
+    requestPermissionsAsync: jest.fn(() =>
+      Promise.resolve({ granted: true, canAskAgain: true })
+    ),
+    scheduleNotificationAsync: jest.fn(({ identifier, content, trigger }) => {
+      memory.set(identifier, { identifier, content, trigger });
+      return Promise.resolve(identifier);
+    }),
+    cancelScheduledNotificationAsync: jest.fn((identifier) => {
+      memory.delete(identifier);
+      return Promise.resolve();
+    }),
+    getAllScheduledNotificationsAsync: jest.fn(() =>
+      Promise.resolve(Array.from(memory.values()))
+    ),
+    __memory: memory,
+  };
+});
+
+// expo-local-authentication: mock controlavel. Default: hardware on,
+// enrolled, success em authenticate. Testes podem sobrescrever.
+jest.mock('expo-local-authentication', () => ({
+  __esModule: true,
+  hasHardwareAsync: jest.fn(() => Promise.resolve(true)),
+  isEnrolledAsync: jest.fn(() => Promise.resolve(true)),
+  authenticateAsync: jest.fn(() => Promise.resolve({ success: true })),
+}));
+
+// expo-sharing: mock em modo "disponivel" e shareAsync resolvendo.
+jest.mock('expo-sharing', () => ({
+  __esModule: true,
+  isAvailableAsync: jest.fn(() => Promise.resolve(true)),
+  shareAsync: jest.fn(() => Promise.resolve()),
+}));
+
+// jszip: usa o real (puro JS, sem nativo) para nao reimplementar a
+// API toda em mock. So precisa do path correto via moduleNameMapper.
+
 // gesture-handler: minimal stub. RootView vira View, gestos no-op.
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react');
