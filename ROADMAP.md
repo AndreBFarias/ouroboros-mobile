@@ -93,6 +93,12 @@ Specs em `docs/sprints/backend/`.
 
 ### Caminho linear recomendado
 
+> **Atualização 2026-05-01**: EAS dev-client build #1 finalizado (`15da107f`,
+> 20m51s, APK 207 MB). Bloco 6 destravado — M06.5/M09/M07.x/M11.5 podem
+> rodar quando a sessão correspondente abrir. Ver `STATE.md` § "EAS
+> dev-client — instruções de uso para sessão dev-client" para passos
+> de instalação e Metro bundler.
+
 ```
 1. M00.5 (infra: tabs/barrels/eas/boot)
 2. M00.6 (polish web + snap presets + mockup HTML)

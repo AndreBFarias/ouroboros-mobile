@@ -66,3 +66,7 @@ expo-env.d.ts
 # Diretorio temporario do playwright MCP (screenshots vao para
 # docs/sprints/*-screenshots/ apos curadoria)
 .playwright-mcp/
+
+# APKs locais baixados de EAS dev-client / preview / production builds.
+# Cada build sai com timestamp; baixar de novo via expo.dev se precisar.
+builds/
