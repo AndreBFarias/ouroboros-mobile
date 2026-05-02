@@ -6,6 +6,25 @@ entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
 processa. Construído com Expo + React Native, sem rede de saída,
 estética premium nativa desde o dia um.
 
+## Download v1.0.0 (MVP fechado)
+
+APK assinado disponível em
+[**Releases → v1.0.0**](https://github.com/AndreBFarias/Protocolo-Mob-Ouroboros/releases/tag/v1.0.0).
+
+Instalação manual via ADB ou abrindo o `.apk` direto no celular
+(ative "Instalar de fontes desconhecidas" para o gerenciador de
+arquivos):
+
+```bash
+adb install -r ouroboros-1.0.0.apk
+adb shell dumpsys package com.ouroboros.mobile | grep versionName
+# espera: versionName=1.0.0
+```
+
+Sem Play Store. Sem auto-update. Cada release é distribuição manual
+deliberada. Veja [`docs/RELEASE.md`](docs/RELEASE.md) para o pipeline
+completo (build EAS production → AAB → APK universal → tag git).
+
 > **Para retomar o projeto em uma sessão fresh**: leia
 > [`STATE.md`](STATE.md) → [`ROADMAP.md`](ROADMAP.md) →
 > [`HOW_TO_RESUME.md`](HOW_TO_RESUME.md) (5 passos).

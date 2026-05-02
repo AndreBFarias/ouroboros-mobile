@@ -5,6 +5,8 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [1.0.0] — 2026-05-02
 
+[**Download APK público** (156 MB, signed v2/v3+)](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0)
+
 ### Added
 - **M19 — APK Release Hardening v1.0.0.** Versão final do MVP.
   - `app.json`: `version: 1.0.0`, `runtimeVersion: 1.0.0`,
