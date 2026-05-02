@@ -184,6 +184,13 @@ export function inboxFinanceiroPath(
   return `inbox/financeiro/${subtipo}/${ts}${slug}${ext}`;
 }
 
+// .ouroboros/cache/humor-heatmap.json (M10). Cache readonly gerado
+// pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012 fixa que
+// pipelines de agregacao rodam no desktop.
+export function humorHeatmapCachePath(): string {
+  return '.ouroboros/cache/humor-heatmap.json';
+}
+
 // Pasta-prefixos das pastas canonicas do mobile. Reader/lister deve
 // usar somente estes; nunca varrer raiz para não tocar dados humanos.
 //

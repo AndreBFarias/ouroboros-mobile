@@ -97,3 +97,11 @@ export {
   sufixoRandom as sufixoRandomContador,
   type Contador,
 } from './contador';
+export {
+  HumorHeatmapCacheSchema,
+  HumorHeatmapCellSchema,
+  HumorHeatmapEstatisticaSchema,
+  type HumorHeatmapCache,
+  type HumorHeatmapCell,
+  type HumorHeatmapEstatistica,
+} from './humor_heatmap_cache';

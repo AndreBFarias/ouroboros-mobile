@@ -12,3 +12,17 @@ export type {
   SparklineMedidaPoint,
   SparklineMedidaProps,
 } from './SparklineMedida';
+export {
+  HumorHeatmap,
+  HumorHeatmapSobreposto,
+  HUMOR_COLOR_MAP,
+  montarCelulasHumor91Dias,
+} from './HumorHeatmap';
+export type {
+  HumorHeatmapProps,
+  HumorHeatmapSobrepostoProps,
+  HumorCelulaVisual,
+  NivelHumor,
+} from './HumorHeatmap';
+export { HumorHeatmapStats } from './HumorHeatmapStats';
+export type { HumorHeatmapStatsProps } from './HumorHeatmapStats';
