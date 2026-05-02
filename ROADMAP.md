@@ -83,9 +83,9 @@ fechamento de sprint.
 
 | Status | Sprint | Título | Bloqueia |
 |---|---|---|---|
-| `[para]` `[todo]` | MOB-bridge-1 | Refactor `pessoa_a`/`pessoa_b` no Python | MOB-bridge-2, MOB-bridge-3 |
-| `[para]` `[todo]` | MOB-bridge-2 | Caches `humor-heatmap.json` e `financas-cache.json` | M10, M14 |
-| `[para]` `[todo]` | MOB-bridge-3 | Marcos auto-gerados via heurísticas (5 tipos) | M11 (cooperativo, fallback client) |
+| `[para]` `[ok]` | MOB-bridge-1 | Refactor `pessoa_a`/`pessoa_b` no Python (escopo expandido: schema XLSX migrado, dashboard via `nome_de()`, ADRs 23+24) — Python `afcc240` | MOB-bridge-2, MOB-bridge-3 |
+| `[para]` `[ok]` | MOB-bridge-2 | Caches `humor-heatmap.json` e `financas-cache.json` (atomic write, idempotência, schema_version=1, pacote em `src/mobile_cache/`) — Python `5be23a7` | M10, M14 |
+| `[para]` `[ok]` | MOB-bridge-3 | Marcos auto-gerados via heurísticas (5 tipos) com dedup `sha256(tipo+data+descricao)[:12]` simétrico com M11 — Python `ef20366` | M11 (cooperativo, fallback client) |
 
 Specs em `docs/sprints/backend/`.
 
