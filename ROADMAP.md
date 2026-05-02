@@ -65,7 +65,8 @@ fechamento de sprint.
 | `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
 | `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | inbox_arquivo + financeiro | 4-5h | — |
 | `[todo]` | M09 | Scanner OCR + multipágina + bairro auto | 16 | financeiro_nota | 7-9h | — |
-| `[todo]` | M10 | Mini Humor (heatmap 90 dias + tooltip + stale banner) | 21 | humor_heatmap_cache | 4-5h | — |
+| `[ok]` | M10 | Mini Humor Tela 21 — heatmap 13x7 (91 dias), modo sobreposto pessoa_a+pessoa_b 50% opacity, stats 30d, modal detalhe dia, empty state. Cache readonly via SAF (ADR-0012). +23 testes (889→912 / 100→103 suites). Validacao Nivel A capturou empty state (SAF Android-only); render colorido fica para M10-checkpoint-visual em Nivel B/C | 21 | humor_heatmap_cache | 4-5h | `b98458e` |
+| `[todo]` | M10-checkpoint-visual | Capturar 4 screenshots em Nivel B/C (emulador ouroboros-test ou APK celular fisico carsvg7du8kfnrlj) com cache real sincronizado: heatmap pessoa_a, heatmap pessoa_b, modo sobreposto, DiaHumorModal aberto. Origem: ponto-cego do validador M10 (render real nao evidenciado em runtime Android) | 21 | — | 0,5-1h | — |
 | `[todo]` | M11 | Memórias e Marcos (CRUD completo + galeria fotos agregada) | 09, 10, 11 | treino_sessao, marco | 8-10h | — |
 | `[todo]` | M11.5 | Calendário visual de conquistas (oEmbed + filtros) | 25 | evento, diario_emocional + media | 5-7h | — |
 | `[todo]` | M12 | Medidas (form + comparativo) | 12, 13 | medidas | 5-6h | — |
