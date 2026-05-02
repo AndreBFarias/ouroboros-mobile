@@ -11,6 +11,7 @@
 // Comentários em PT-BR com acentuação correta desde o primeiro commit.
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
+import { useVaultCompartilhado } from '@/lib/stores/filtroEfetivo';
 import { lerConquistas } from '@/lib/conquistas/loader';
 import {
   aplicarFiltros,
@@ -21,7 +22,7 @@ import {
   type FiltroIntensidade,
 } from '@/lib/conquistas/filtros';
 import { useVault } from '@/lib/stores/vault';
-import { usePessoa } from '@/lib/stores/pessoa';
+import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import type { Conquista } from '@/lib/conquistas/types';
 import type { PessoaId } from '@/lib/schemas/pessoa';
 
@@ -48,7 +49,13 @@ export function useConquistas(): UseConquistasResult {
   const vaultRoot = useVault((s) => s.vaultRoot);
   // Default do filtro "pessoa" segue a lente global do app (filtroPessoa
   // do store). O usuário pode trocar localmente sem afetar outras telas.
-  const filtroPessoaGlobal = usePessoa((s) => s.filtroPessoa);
+  // Filtro efetivo respeita pessoa.vaultCompartilhado: quando false,
+  // o default ja vem como pessoaAtiva (ignora 'ambos').
+  const filtroPessoaGlobal = useFiltroPessoaEfetivo();
+  // Quando vaultCompartilhado=false, o filtro de pessoa fica trancado
+  // em filtroPessoaGlobal (=pessoaAtiva). Mesmo se o estado local
+  // tivesse 'ambos' antes do toggle, a aplicacao usa o efetivo.
+  const vaultCompartilhado = useVaultCompartilhado();
 
   const [brutas, setBrutas] = useState<Conquista[]>([]);
   const [totaisPorOrigem, setTotaisPorOrigem] = useState<{
@@ -97,9 +104,20 @@ export function useConquistas(): UseConquistasResult {
     }, [carregar])
   );
 
+  // Quando vaultCompartilhado=false, sobrescreve pessoa do filtro
+  // local com o efetivo. Isolamento de privacidade no nivel do dado:
+  // mesmo que o estado local guarde 'ambos' (ex.: filtros foram
+  // salvos antes do toggle de privacidade), o aplicarFiltros recebe
+  // sempre a pessoa correta.
+  const filtrosEfetivos = useMemo(
+    () =>
+      vaultCompartilhado ? filtros : { ...filtros, pessoa: filtroPessoaGlobal },
+    [filtros, vaultCompartilhado, filtroPessoaGlobal]
+  );
+
   const conquistas = useMemo(
-    () => aplicarFiltros(brutas, filtros),
-    [brutas, filtros]
+    () => aplicarFiltros(brutas, filtrosEfetivos),
+    [brutas, filtrosEfetivos]
   );
 
   const setFiltroPessoa = useCallback(

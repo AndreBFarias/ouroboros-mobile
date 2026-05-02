@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Chip, ChipGroup, Input, Slider } from '@/components/ui';
+import { useVaultCompartilhado } from '@/lib/stores/filtroEfetivo';
 import { colors } from '@/theme/tokens';
 import type { PessoaId } from '@/lib/schemas/pessoa';
 import type {
@@ -46,10 +47,18 @@ const OPCOES_TIPO_MIDIA: { id: FiltroTipoMidia; label: string }[] = [
   { id: 'audio', label: 'Áudio' },
 ];
 
-const PESSOAS_OPTIONS = [
+const PESSOAS_OPTIONS_COMPARTILHADO = [
   { value: 'pessoa_a', label: 'A', accent: 'purple' as const },
   { value: 'pessoa_b', label: 'B', accent: 'pink' as const },
   { value: 'ambos', label: 'Ambos', accent: 'cyan' as const },
+];
+
+// Sem 'ambos' quando vaultCompartilhado=false. Cada pessoa so ve
+// suas proprias conquistas para preservar privacidade declarada
+// em Settings.
+const PESSOAS_OPTIONS_PRIVADO = [
+  { value: 'pessoa_a', label: 'A', accent: 'purple' as const },
+  { value: 'pessoa_b', label: 'B', accent: 'pink' as const },
 ];
 
 // Compara objeto FiltroMes via shape (string | { ano, mes }).
@@ -70,10 +79,22 @@ export function FiltrosBar({
   // re-filtrar a lista a cada caractere digitado.
   const [bairroLocal, setBairroLocal] = useState(filtros.bairro);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Lê privacidade do Vault para esconder opção 'Ambos' quando
+  // pessoa.vaultCompartilhado=false.
+  const vaultCompartilhado = useVaultCompartilhado();
 
   useEffect(() => {
     setBairroLocal(filtros.bairro);
   }, [filtros.bairro]);
+
+  // Cleanup do debounce: evita disparar onBairro depois que o
+  // componente desmontou (modal de filtros fechado durante
+  // janela de 300ms apos digitacao).
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const handleBairro = (texto: string) => {
     setBairroLocal(texto);
@@ -88,11 +109,18 @@ export function FiltrosBar({
       <Rotulo>Pessoa</Rotulo>
       <ChipGroup
         mode="single"
-        options={PESSOAS_OPTIONS}
+        options={
+          vaultCompartilhado
+            ? PESSOAS_OPTIONS_COMPARTILHADO
+            : PESSOAS_OPTIONS_PRIVADO
+        }
         value={filtros.pessoa}
         onChange={(next) => {
           if (next === null) {
-            onPessoa('ambos');
+            // Quando vaultCompartilhado=false e o store estava em
+            // 'ambos', cai para pessoa_a (default seguro). Quando
+            // true, mantém comportamento original.
+            onPessoa(vaultCompartilhado ? 'ambos' : 'pessoa_a');
             return;
           }
           onPessoa(next as PessoaId);

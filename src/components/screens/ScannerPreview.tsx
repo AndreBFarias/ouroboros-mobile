@@ -34,7 +34,7 @@ import {
   type CategoriaCanonica,
 } from '@/lib/scanner/parsing';
 import { consolidarPdf } from '@/lib/scanner/multipage-pdf';
-import { saveNota } from '@/lib/scanner/saveNota';
+import { saveNota, IMAGEM_PENDENTE } from '@/lib/scanner/saveNota';
 import { getBairroAtual } from '@/lib/eventos/localizacao';
 import type { FinanceiroNotaMeta } from '@/lib/schemas/financeiro_nota';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
@@ -159,7 +159,9 @@ export function ScannerPreview() {
         valor: valorNumero,
         descricao: descricao.trim(),
         categoria,
-        imagem: 'placeholder.jpg',
+        // Sentinela: saveNota copia o binario para assets/ e sobrescreve
+        // este campo com o path real antes de gravar o .md.
+        imagem: IMAGEM_PENDENTE,
         ocr_confianca: confianca,
         revisar: confianca < THRESHOLD_REVISAR,
         ...(bairroAceito && bairroDetectado !== null

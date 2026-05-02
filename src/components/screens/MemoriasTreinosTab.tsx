@@ -53,9 +53,9 @@ export function MemoriasTreinosTab(): ReactNode {
     for (const s of sessoes) {
       const ymd = s.data.slice(0, 10);
       contagens[ymd] = (contagens[ymd] ?? 0) + 1;
-      const arr = porDia[ymd] ?? [];
-      arr.push(s);
-      porDia[ymd] = arr;
+      // Imutavel: evita mutar acumulador entre renders se React
+      // reaproveitar o cache do useMemo em concorrente.
+      porDia[ymd] = [...(porDia[ymd] ?? []), s];
     }
     const cels = montarCelulasUltimos91Dias(contagens);
     return {

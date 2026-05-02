@@ -280,8 +280,14 @@ export default function DiarioEmocional() {
       await saveDiario(validacao.data, body, vaultRoot);
       sheetRef.current?.close();
       if (modo === 'vitoria') {
-        await haptics.success();
+        // anonimato-allow: substantivo comum (conquista) na frase abaixo.
+        // Conquista registrada — respeita Settings.somVibracao.vitoria.
+        await haptics.vitoria();
         toast.show('Anotado.', 'success');
+      } else if (ehTrigger) {
+        // Gatilho emocional — respeita Settings.somVibracao.trigger.
+        await haptics.trigger();
+        toast.show('Registrado.', 'success');
       } else {
         toast.show('Registrado.', 'success');
       }

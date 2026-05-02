@@ -9,7 +9,14 @@
 // exibe outro empty state alertando schema novo.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { CalendarRange } from 'lucide-react-native';
@@ -33,14 +40,25 @@ import {
 import { colors, spacing } from '@/theme/tokens';
 import { useHumorHeatmap } from '@/lib/hooks/useHumorHeatmap';
 import { usePessoa } from '@/lib/stores/pessoa';
+import {
+  useFiltroPessoaEfetivo,
+  useVaultCompartilhado,
+} from '@/lib/stores/filtroEfetivo';
 import { DiaHumorModal } from './DiaHumorModal';
 import type { HumorHeatmapCell } from '@/lib/schemas/humor_heatmap_cache';
 import type { ModoFiltroHumor } from '@/lib/hooks/useHumorHeatmap';
 
-const CHIP_OPTIONS: ChipOption[] = [
+const CHIP_OPTIONS_COMPARTILHADO: ChipOption[] = [
   { value: 'pessoa_a', label: 'Pessoa A', accent: 'purple' },
   { value: 'pessoa_b', label: 'Pessoa B', accent: 'pink' },
   { value: 'sobreposto', label: 'Sobreposto', accent: 'cyan' },
+];
+
+// Sem 'sobreposto': cada pessoa so ve seus proprios registros quando
+// vaultCompartilhado=false. UX honesta com o flag de privacidade.
+const CHIP_OPTIONS_PRIVADO: ChipOption[] = [
+  { value: 'pessoa_a', label: 'Pessoa A', accent: 'purple' },
+  { value: 'pessoa_b', label: 'Pessoa B', accent: 'pink' },
 ];
 
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -63,13 +81,25 @@ function formatarBannerData(geradoEm: string, agora: Date): {
 
 export function MiniHumorScreen(): ReactNode {
   const { cache, loading, error } = useHumorHeatmap();
-  const filtroPessoa = usePessoa((s) => s.filtroPessoa);
+  const filtroPessoa = useFiltroPessoaEfetivo();
+  const vaultCompartilhado = useVaultCompartilhado();
+  const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const [modo, setModo] = useState<ModoFiltroHumor>(() => {
     // Inicializa com a pessoa ativa do filtro global; 'ambos' do
-    // store mapeia para 'sobreposto' aqui.
+    // store mapeia para 'sobreposto' aqui (apenas se vault
+    // compartilhado).
     if (filtroPessoa === 'ambos') return 'sobreposto';
     return filtroPessoa;
   });
+
+  // Quando o usuario alterna vaultCompartilhado para false enquanto
+  // estava em modo 'sobreposto', cai para a pessoa ativa para nao
+  // exibir dados da outra pessoa.
+  useEffect(() => {
+    if (!vaultCompartilhado && modo === 'sobreposto') {
+      setModo(pessoaAtiva);
+    }
+  }, [vaultCompartilhado, modo, pessoaAtiva]);
 
   const modalRef = useRef<BottomSheetRef>(null);
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
@@ -150,7 +180,11 @@ export function MiniHumorScreen(): ReactNode {
 
         <ChipGroup
           mode="single"
-          options={CHIP_OPTIONS}
+          options={
+            vaultCompartilhado
+              ? CHIP_OPTIONS_COMPARTILHADO
+              : CHIP_OPTIONS_PRIVADO
+          }
           value={modo}
           onChange={handleModoChange}
         />

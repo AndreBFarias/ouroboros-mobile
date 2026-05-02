@@ -79,7 +79,8 @@ export function SheetNovoMarco({
       };
 
       await saveMarco({ meta, vaultRoot });
-      haptics.success();
+      // Marco anotado é vitória — respeita Settings.somVibracao.vitoria.
+      haptics.vitoria();
       toast.show('Marco anotado.', 'success');
       onSalvo();
     } catch (err) {

@@ -109,7 +109,9 @@ export default function HumorRapido() {
         conflito ? 'Salvo com sufixo de pessoa.' : 'Salvo.',
         'success'
       );
-      await haptics.success();
+      // Contextual: respeita Settings.somVibracao.humor. Registro de
+      // humor é a interação central da Tela 16, tem toggle dedicado.
+      await haptics.humor();
       router.back();
     } catch {
       toast.show('Falha ao salvar. Verifique a pasta do Vault.', 'error');

@@ -19,6 +19,7 @@ import {
 } from '@/lib/schemas/diario_emocional';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import { useVault } from '@/lib/stores/vault';
 
 export interface HojeData {
@@ -85,7 +86,8 @@ async function listFolderByName(
 export function useHoje(ymdOverride?: string): HojeData {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const filtro = usePessoa((s) => s.filtroPessoa);
+  // Filtro efetivo respeita pessoa.vaultCompartilhado.
+  const filtro = useFiltroPessoaEfetivo();
 
   const [humor, setHumor] = useState<HumorMeta | null>(null);
   const [diarios, setDiarios] = useState<DiarioEmocionalMeta[]>([]);

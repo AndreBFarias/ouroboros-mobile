@@ -7,6 +7,7 @@ import { useFocusEffect } from 'expo-router';
 import { listarMarcos } from '@/lib/vault/marcos';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import type { Marco } from '@/lib/schemas/marco';
 
 export interface UseMarcosResult {
@@ -19,7 +20,9 @@ export interface UseMarcosResult {
 export function useMarcos(): UseMarcosResult {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const filtroPessoa = usePessoa((s) => s.filtroPessoa);
+  // Filtro efetivo respeita pessoa.vaultCompartilhado: quando false,
+  // forca pessoaAtiva mesmo se o store guardar 'ambos'.
+  const filtroPessoa = useFiltroPessoaEfetivo();
 
   const [marcos, setMarcos] = useState<Marco[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

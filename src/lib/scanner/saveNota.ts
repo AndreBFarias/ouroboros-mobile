@@ -31,6 +31,12 @@ export interface SaveNotaArgs {
   isPdf: boolean;
 }
 
+// Sentinela usado pelo caller no campo `meta.imagem` para passar a
+// validacao do schema (min(1)). saveNota sobrescreve com o path
+// relativo real apos copiar o binario para assets/. Exportar esta
+// constante elimina a string magica espalhada e documenta o contrato.
+export const IMAGEM_PENDENTE = 'pendente-copia.jpg' as const;
+
 export interface SaveNotaResult {
   uri: string;
   imagemRelativa: string;

@@ -20,6 +20,7 @@ import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { VAULT_FOLDERS } from '@/lib/vault/paths';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
 
@@ -136,7 +137,8 @@ export interface UseFotosAgregadasResult {
 export function useFotosAgregadas(): UseFotosAgregadasResult {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const filtroPessoa = usePessoa((s) => s.filtroPessoa);
+  // Filtro efetivo respeita pessoa.vaultCompartilhado.
+  const filtroPessoa = useFiltroPessoaEfetivo();
 
   const [fotos, setFotos] = useState<FotoAgregada[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

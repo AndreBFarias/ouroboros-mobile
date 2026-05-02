@@ -33,7 +33,10 @@ export function FAB({
       onPressIn={() => {
         if (disabled) return;
         setPressed(true);
-        haptics.medium();
+        // Camada contextual: respeita Settings.somVibracao.fab. Quando
+        // o usuário desliga vibração do FAB em Settings, esta função
+        // cai em no-op silencioso.
+        haptics.fab();
       }}
       onPressOut={() => setPressed(false)}
       onPress={() => {

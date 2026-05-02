@@ -221,9 +221,13 @@ export default function Eventos() {
       });
       sheetRef.current?.close();
       if (modo === 'positivo') {
-        await haptics.success();
+        // Evento positivo é vitória — respeita Settings.somVibracao.vitoria.
+        await haptics.vitoria();
         toast.show('Anotado.', 'success');
       } else {
+        // Evento negativo é trigger emocional — respeita
+        // Settings.somVibracao.trigger.
+        await haptics.trigger();
         toast.show('Registrado.', 'success');
       }
       router.back();

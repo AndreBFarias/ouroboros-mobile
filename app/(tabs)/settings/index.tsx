@@ -491,20 +491,29 @@ function SecaoSync() {
     toast.show('Sync gerenciado pelo aplicativo externo.', 'info');
   };
 
+  // Quando o usuário declara 'nao-uso', o card de status e o botão
+  // "Forçar sync" não fazem sentido — o app não tem como sincronizar
+  // sem ferramenta externa. Esconder mantém a UI honesta com o flag.
+  const usaSync = sync.metodo !== 'nao-uso';
+
   return (
     <SecaoLista titulo="Sync" accessibilityLabel="secao sync">
-      <CardStatus
-        cor={cor}
-        titulo={titulo}
-        subtitulo={subtitulo}
-        accessibilityLabel={`status sync ${cor}`}
-      />
+      {usaSync ? (
+        <>
+          <CardStatus
+            cor={cor}
+            titulo={titulo}
+            subtitulo={subtitulo}
+            accessibilityLabel={`status sync ${cor}`}
+          />
 
-      <Button
-        label="Forçar sync"
-        variant="ghost"
-        onPress={forcar}
-      />
+          <Button
+            label="Forçar sync"
+            variant="ghost"
+            onPress={forcar}
+          />
+        </>
+      ) : null}
 
       <SelectorMetodo
         valor={sync.metodo}

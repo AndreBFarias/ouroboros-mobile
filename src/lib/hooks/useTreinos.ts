@@ -8,6 +8,7 @@ import { useFocusEffect } from 'expo-router';
 import { listarTreinos } from '@/lib/vault/treinos';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
 export interface UseTreinosResult {
@@ -20,7 +21,8 @@ export interface UseTreinosResult {
 export function useTreinos(): UseTreinosResult {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const filtroPessoa = usePessoa((s) => s.filtroPessoa);
+  // Filtro efetivo respeita pessoa.vaultCompartilhado.
+  const filtroPessoa = useFiltroPessoaEfetivo();
 
   const [sessoes, setSessoes] = useState<TreinoSessao[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

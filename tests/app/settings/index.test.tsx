@@ -140,6 +140,10 @@ describe('Tela 23 — Settings', () => {
   });
 
   it('forcar sync mostra toast informativo', async () => {
+    // Com sync.metodo='nao-uso' (default), o botao "Forçar sync" e o
+    // card de status ficam ocultos por design — não faz sentido sem
+    // ferramenta externa. Para exercitar o botao, ligamos um metodo.
+    useSettings.getState().setSync('metodo', 'syncthing');
     const tree = render(
       <ToastProvider>
         <SettingsTela />
