@@ -9,6 +9,7 @@
 // efetiva?). Quando modo === 'vitoria', funcionou deve ser undefined.
 import { z } from 'zod';
 import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
+import { MidiaSchema } from '@/lib/schemas/midia';
 
 export const DiarioEmocionalModoSchema = z.enum(['trigger', 'vitoria']);
 export type DiarioEmocionalModo = z.infer<typeof DiarioEmocionalModoSchema>;
@@ -42,10 +43,18 @@ export const DiarioEmocionalSchema = z
     estrategia: z.string().optional(),
     funcionou: z.boolean().optional(),
     audio: z.string().nullable().optional(),
+    // Midia anexada (M07.x). Array vazio default para arquivos
+    // legados sem o campo. Refine abaixo bloqueia save de vitoria
+    // sem ao menos uma midia (conquistas exigem peso emocional).
+    midia: z.array(MidiaSchema).default([]),
   })
   .refine(
     (v) => v.modo === 'trigger' || v.funcionou === undefined,
     { message: 'funcionou so pode ser definido em modo trigger', path: ['funcionou'] }
+  )
+  .refine(
+    (v) => v.modo !== 'vitoria' || v.midia.length > 0,
+    { message: 'vitoria exige pelo menos uma midia', path: ['midia'] }
   );
 
 export type DiarioEmocionalMeta = z.infer<typeof DiarioEmocionalSchema>;

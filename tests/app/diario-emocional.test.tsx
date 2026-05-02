@@ -51,6 +51,24 @@ function renderTela() {
   );
 }
 
+// Helper M07.x: adiciona uma midia youtube valida em modo vitoria
+// para satisfazer o refine de midia obrigatoria. Tests que validam
+// o caminho de save em modo vitoria precisam chamar antes do press
+// no botao Anotar.
+function adicionarMidiaYoutube(utils: {
+  getByText: (t: string) => unknown;
+  getByLabelText: (l: string) => unknown;
+}) {
+  // Chip 'YouTube' (label visivel) troca para a aba; depois cola
+  // link valido e pressiona Adicionar.
+  fireEvent.press(utils.getByText('YouTube') as never);
+  fireEvent.changeText(
+    utils.getByLabelText('campo link youtube') as never,
+    'https://youtu.be/dQw4w9WgXcQ'
+  );
+  fireEvent.press(utils.getByText('Adicionar') as never);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers();
@@ -155,12 +173,15 @@ describe('Tela 18 — validacao do save', () => {
   });
 
   it('save em modo vitoria chama saveDiario com payload valido', async () => {
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.press(getByLabelText('chip Gratidão'));
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'consegui fechar a tarefa.'
     );
+    // M07.x: vitoria exige midia. Helper adiciona youtube valido.
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
 
     await waitFor(() => expect(mockSaveDiario).toHaveBeenCalledTimes(1));
@@ -209,21 +230,25 @@ describe('Tela 18 — validacao do save', () => {
   });
 
   it('apos salvar com sucesso chama router.back', async () => {
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'foi um bom dia.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
     await waitFor(() => expect(mockBack).toHaveBeenCalled());
   });
 
   it('toast de sucesso "Anotado." em modo vitoria', async () => {
-    const { getByLabelText, queryByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText, queryByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'feliz hoje.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
     await waitFor(() =>
       expect(queryByLabelText('toast success')).toBeTruthy()
@@ -245,11 +270,13 @@ describe('Tela 18 — validacao do save', () => {
 
   it('toast de erro quando saveDiario rejeita', async () => {
     mockSaveDiario.mockRejectedValueOnce(new Error('SAF off'));
-    const { getByLabelText, queryByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText, queryByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'algo aconteceu.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
     await waitFor(() =>
       expect(queryByLabelText('toast error')).toBeTruthy()
@@ -260,13 +287,15 @@ describe('Tela 18 — validacao do save', () => {
 
 describe('Tela 18 — com quem', () => {
   it('flags amigos/sozinho nao entram em meta.com (filtrados)', async () => {
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'feliz com o time.'
     );
     fireEvent.press(getByLabelText('chip Amigos'));
     fireEvent.press(getByLabelText('chip Sozinho'));
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
     await waitFor(() => expect(mockSaveDiario).toHaveBeenCalled());
     const [meta] = mockSaveDiario.mock.calls[0];
@@ -276,13 +305,15 @@ describe('Tela 18 — com quem', () => {
   });
 
   it('PessoaIds em "com quem" entram no payload validado', async () => {
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'conversamos a noite toda.'
     );
     // O chip de pessoa_b usa nomeDe('pessoa_b'), default 'Nome_B'.
     fireEvent.press(getByLabelText('chip Nome_B'));
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
     await waitFor(() => expect(mockSaveDiario).toHaveBeenCalled());
     const [meta] = mockSaveDiario.mock.calls[0];

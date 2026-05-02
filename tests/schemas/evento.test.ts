@@ -6,6 +6,9 @@ const baseEvento = {
   autor: 'pessoa_a',
   modo: 'positivo',
   intensidade: 4,
+  // M07.x: positivo exige ao menos uma midia. Foto stub para passar
+  // o refine; testes especificos do refine ficam logo abaixo.
+  midia: [{ tipo: 'foto', path: 'assets/2026-04-29-1030-stub.jpg' }],
 };
 
 describe('EventoSchema', () => {
@@ -56,5 +59,21 @@ describe('EventoSchema', () => {
       com: ['pessoa_a', 'pessoa_b', 'ambos'],
     });
     expect(out.com).toHaveLength(3);
+  });
+
+  // M07.x: refine de midia obrigatoria em modo positivo.
+  it('rejeita positivo sem midia', () => {
+    expect(() =>
+      EventoSchema.parse({ ...baseEvento, midia: [] })
+    ).toThrow(/positivo exige pelo menos uma midia/);
+  });
+
+  it('aceita negativo sem midia', () => {
+    const out = EventoSchema.parse({
+      ...baseEvento,
+      modo: 'negativo',
+      midia: [],
+    });
+    expect(out.midia).toEqual([]);
   });
 });

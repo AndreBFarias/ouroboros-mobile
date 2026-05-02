@@ -92,6 +92,22 @@ function renderTela() {
   );
 }
 
+// Helper M07.x: adiciona uma midia youtube valida em modo positivo
+// para satisfazer o refine de midia obrigatoria. Tests que validam
+// o caminho de save em modo positivo precisam chamar antes do press
+// no botao Registrar.
+function adicionarMidiaYoutube(utils: {
+  getByText: (t: string) => unknown;
+  getByLabelText: (l: string) => unknown;
+}) {
+  fireEvent.press(utils.getByText('YouTube') as never);
+  fireEvent.changeText(
+    utils.getByLabelText('campo link youtube') as never,
+    'https://youtu.be/dQw4w9WgXcQ'
+  );
+  fireEvent.press(utils.getByText('Adicionar') as never);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers();
@@ -152,11 +168,13 @@ describe('Tela 20 - render', () => {
 describe('Tela 20 - auto-selecao de pessoa_b', () => {
   it('auto-marca pessoa_b quando tipoCompanhia eh casal', async () => {
     useOnboarding.getState().setTipoCompanhia('casal');
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'cafe da manha juntos.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() => expect(mockSaveEvento).toHaveBeenCalled());
     const args = mockSaveEvento.mock.calls[0][0] as {
@@ -167,11 +185,13 @@ describe('Tela 20 - auto-selecao de pessoa_b', () => {
 
   it('nao auto-marca quando tipoCompanhia eh sozinho', async () => {
     useOnboarding.getState().setTipoCompanhia('sozinho');
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'almoco sozinho hoje.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() => expect(mockSaveEvento).toHaveBeenCalled());
     const args = mockSaveEvento.mock.calls[0][0] as {
@@ -182,11 +202,13 @@ describe('Tela 20 - auto-selecao de pessoa_b', () => {
 
   it('auto-marca pessoa_b quando tipoCompanhia eh amigos', async () => {
     useOnboarding.getState().setTipoCompanhia('amigos');
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'rolezinho com a galera.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() => expect(mockSaveEvento).toHaveBeenCalled());
     const args = mockSaveEvento.mock.calls[0][0] as {
@@ -218,11 +240,13 @@ describe('Tela 20 - validacao do save', () => {
   });
 
   it('save em modo positivo chama saveEvento com payload valido', async () => {
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'cafe da manha gostoso na padaria.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() => expect(mockSaveEvento).toHaveBeenCalledTimes(1));
     const args = mockSaveEvento.mock.calls[0][0] as {
@@ -265,22 +289,26 @@ describe('Tela 20 - validacao do save', () => {
   });
 
   it('apos salvar chama router.back', async () => {
-    const { getByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'tudo certo hoje.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() => expect(mockBack).toHaveBeenCalled());
   });
 
   it('toast de erro quando saveEvento rejeita', async () => {
     mockSaveEvento.mockRejectedValueOnce(new Error('SAF off'));
-    const { getByLabelText, queryByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText, queryByLabelText } = utils;
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'algo aconteceu.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() =>
       expect(queryByLabelText('toast error')).toBeTruthy()
@@ -308,13 +336,15 @@ describe('Tela 20 - detectar bairro', () => {
 
   it('bairro detectado entra em meta.bairro do save', async () => {
     mockGetBairroAtual.mockResolvedValue('Pinheiros');
-    const { getByLabelText, findByLabelText } = renderTela();
+    const utils = renderTela();
+    const { getByLabelText, findByLabelText } = utils;
     fireEvent.press(getByLabelText('Usar localização atual'));
     await findByLabelText('chip Pinheiros');
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'rolezinho aqui.'
     );
+    adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
     await waitFor(() => expect(mockSaveEvento).toHaveBeenCalled());
     const args = mockSaveEvento.mock.calls[0][0] as {

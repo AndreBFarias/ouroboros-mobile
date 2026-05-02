@@ -43,6 +43,9 @@ const baseMeta: EventoMeta = {
   categoria: 'rolezinho',
   intensidade: 4,
   fotos: [],
+  // M07.x: positivo exige ao menos uma midia. Saveevento nao reaplica
+  // refine, mas mantemos populado para refletir o caminho real.
+  midia: [{ tipo: 'foto', path: 'assets/2026-04-29-1530-stub.jpg' }],
 };
 
 beforeEach(() => {

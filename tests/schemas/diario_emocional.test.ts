@@ -21,6 +21,10 @@ const baseSucesso = {
   intensidade: 4,
   com: [],
   texto: 'consegui terminar o que comecei.',
+  // M07.x: vitoria exige ao menos uma midia. Foto stub para passar
+  // o refine; testes especificos do refine moram em midia.test.ts e
+  // no bloco abaixo de modo vitoria.
+  midia: [{ tipo: 'foto', path: 'assets/2026-04-29-2000-stub.jpg' }],
 };
 
 describe('DiarioEmocionalSchema modo trigger', () => {
@@ -57,6 +61,21 @@ describe('DiarioEmocionalSchema modo vitoria', () => {
     expect(() =>
       DiarioEmocionalSchema.parse({ ...baseSucesso, funcionou: true })
     ).toThrow(/funcionou so pode ser definido em modo trigger/);
+  });
+
+  // M07.x: refine de midia obrigatoria.
+  it('rejeita vitoria sem midia', () => {
+    expect(() =>
+      DiarioEmocionalSchema.parse({ ...baseSucesso, midia: [] })
+    ).toThrow(/vitoria exige pelo menos uma midia/);
+  });
+
+  it('rejeita vitoria com campo midia ausente (default vazio dispara refine)', () => {
+    const semMidia = { ...baseSucesso };
+    delete (semMidia as { midia?: unknown }).midia;
+    expect(() => DiarioEmocionalSchema.parse(semMidia)).toThrow(
+      /vitoria exige pelo menos uma midia/
+    );
   });
 });
 

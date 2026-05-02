@@ -98,6 +98,18 @@ export {
   type Contador,
 } from './contador';
 export {
+  MidiaSchema,
+  MidiaSpotifySchema,
+  MidiaYoutubeSchema,
+  MidiaFotoSchema,
+  MidiaAudioSchema,
+  type Midia,
+  type MidiaSpotify,
+  type MidiaYoutube,
+  type MidiaFoto,
+  type MidiaAudio,
+} from './midia';
+export {
   HumorHeatmapCacheSchema,
   HumorHeatmapCellSchema,
   HumorHeatmapEstatisticaSchema,

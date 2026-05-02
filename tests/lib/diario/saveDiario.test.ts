@@ -36,6 +36,7 @@ const baseTrigger: DiarioEmocionalMeta = {
   estrategia: 'respirei e sai do comodo.',
   funcionou: true,
   audio: null,
+  midia: [],
 };
 
 const baseSucesso: DiarioEmocionalMeta = {
@@ -49,6 +50,11 @@ const baseSucesso: DiarioEmocionalMeta = {
   contexto_social: ['sozinho'],
   texto: 'consegui terminar o que comecei hoje.',
   audio: null,
+  // M07.x: vitoria exige midia, mas o teste deste modulo so checa
+  // o saveDiario (writeVaultFile + path canonico). Como o modulo
+  // recebe meta ja validado e nao reaplica refine, manter midia
+  // populada com um item reduz risco de mock futuro pegar refine.
+  midia: [{ tipo: 'foto', path: 'assets/2026-04-29-1945-stub.jpg' }],
 };
 
 beforeEach(() => {

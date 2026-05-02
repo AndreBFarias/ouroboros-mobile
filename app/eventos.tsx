@@ -41,6 +41,7 @@ import {
 import { LocalizacaoBlock } from '@/components/eventos/LocalizacaoBlock';
 import { QuandoBlock, type QuandoMode } from '@/components/eventos/QuandoBlock';
 import { FotosBlock } from '@/components/eventos/FotosBlock';
+import { MidiaPicker } from '@/components/midia/MidiaPicker';
 import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
@@ -58,6 +59,7 @@ import {
 } from '@/lib/eventos/categorias';
 import { getBairroAtual } from '@/lib/eventos/localizacao';
 import { saveEvento } from '@/lib/eventos/saveEvento';
+import type { Midia } from '@/lib/schemas/midia';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 const INTENSIDADE_DEFAULT = 4;
@@ -105,6 +107,10 @@ export default function Eventos() {
     CATEGORIA_DEFAULT
   );
   const [fotos, setFotos] = useState<string[]>([]);
+  // Midia anexada (M07.x). Obrigatoria em modo positivo via refine.
+  // FotosBlock continua existindo separado para fotos rapidas (legado
+  // M07); MidiaPicker e usado para conquistas com peso emocional.
+  const [midia, setMidia] = useState<Midia[]>([]);
   const [intensidade, setIntensidade] = useState<number>(INTENSIDADE_DEFAULT);
   const [salvando, setSalvando] = useState<boolean>(false);
 
@@ -166,6 +172,12 @@ export default function Eventos() {
       toast.show('Escreva pelo menos uma palavra antes de salvar.', 'warn');
       return;
     }
+    // Midia obrigatoria em modo positivo (M07.x). Bloqueio antecipado
+    // melhora UX em relacao ao refine do zod (que daria erro generico).
+    if (modo === 'positivo' && midia.length === 0) {
+      toast.show('Adicione pelo menos uma mídia para conquista.', 'warn');
+      return;
+    }
     setSalvando(true);
 
     const lugarTrim = lugar.trim();
@@ -187,6 +199,7 @@ export default function Eventos() {
       categoria,
       intensidade,
       fotos: [],
+      midia,
     };
 
     const validacao = EventoSchema.safeParse(meta);
@@ -335,6 +348,14 @@ export default function Eventos() {
           </View>
 
           <FotosBlock fotos={fotos} onChangeFotos={setFotos} />
+
+          {/* M07.x: midia obrigatoria em modo positivo; opcional em
+              modo negativo. Cap e toggle audio via useSettings. */}
+          <MidiaPicker
+            value={midia}
+            onChange={setMidia}
+            obrigatorio={modo === 'positivo'}
+          />
 
           <Slider
             label="Como foi?"

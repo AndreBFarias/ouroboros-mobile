@@ -74,6 +74,7 @@ function fakeDiario(
     com: [],
     contexto_social: [],
     texto: 'algo.',
+    midia: [],
   } as DiarioEmocionalMeta;
 }
 

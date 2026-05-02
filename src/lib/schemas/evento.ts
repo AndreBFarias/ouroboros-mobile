@@ -4,6 +4,7 @@
 // permite 'ambos'), categoria livre, intensidade 1-5, anexos.
 import { z } from 'zod';
 import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
+import { MidiaSchema } from '@/lib/schemas/midia';
 
 export const EventoModoSchema = z.enum(['positivo', 'negativo']);
 export type EventoModo = z.infer<typeof EventoModoSchema>;
@@ -15,17 +16,26 @@ const Iso8601 = z
     'data deve ser ISO 8601 com hora'
   );
 
-export const EventoSchema = z.object({
-  tipo: z.literal('evento'),
-  data: Iso8601,
-  autor: PessoaAutorSchema,
-  modo: EventoModoSchema,
-  lugar: z.string().optional(),
-  bairro: z.string().optional(),
-  com: z.array(PessoaIdSchema).default([]),
-  categoria: z.string().optional(),
-  intensidade: z.number().int().min(1).max(5),
-  fotos: z.array(z.string()).default([]),
-});
+export const EventoSchema = z
+  .object({
+    tipo: z.literal('evento'),
+    data: Iso8601,
+    autor: PessoaAutorSchema,
+    modo: EventoModoSchema,
+    lugar: z.string().optional(),
+    bairro: z.string().optional(),
+    com: z.array(PessoaIdSchema).default([]),
+    categoria: z.string().optional(),
+    intensidade: z.number().int().min(1).max(5),
+    fotos: z.array(z.string()).default([]),
+    // Midia anexada (M07.x). Array vazio default para arquivos
+    // legados sem o campo. Refine abaixo bloqueia save de positivo
+    // sem ao menos uma midia (conquistas exigem peso emocional).
+    midia: z.array(MidiaSchema).default([]),
+  })
+  .refine(
+    (v) => v.modo !== 'positivo' || v.midia.length > 0,
+    { message: 'positivo exige pelo menos uma midia', path: ['midia'] }
+  );
 
 export type EventoMeta = z.infer<typeof EventoSchema>;

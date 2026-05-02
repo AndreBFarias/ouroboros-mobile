@@ -39,6 +39,7 @@ import {
 } from '@/components/ui';
 import { EmocaoChips } from '@/components/diario/EmocaoChips';
 import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
+import { MidiaPicker } from '@/components/midia/MidiaPicker';
 import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
@@ -52,6 +53,7 @@ import {
 } from '@/lib/schemas/diario_emocional';
 import { saveDiario } from '@/lib/diario/saveDiario';
 import { formatEmocao } from '@/lib/diario/emocoes';
+import type { Midia } from '@/lib/schemas/midia';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 type ModoParam = DiarioEmocionalModo | 'audio';
@@ -167,6 +169,9 @@ export default function DiarioEmocional() {
   // Audio anexo: M06.5 cabea path relativo aqui quando o usuario
   // grava no MicrofoneButton. Frontmatter recebe via meta.audio.
   const [audioPath, setAudioPath] = useState<string | null>(null);
+  // Midia anexada (M07.x). Em modo vitoria, save bloqueia se array
+  // vazio (refine zod + check explicito antes do safeParse).
+  const [midia, setMidia] = useState<Midia[]>([]);
 
   // Reset das emocoes ao trocar de modo: lista negativa não bate
   // com positiva, preservar slug seria payload invalido.
@@ -220,6 +225,12 @@ export default function DiarioEmocional() {
       toast.show('Escreva pelo menos uma palavra antes de salvar.', 'warn');
       return;
     }
+    // Midia obrigatoria em modo vitoria (M07.x). Bloqueio antecipado
+    // melhora UX em relacao ao refine do zod (que daria erro generico).
+    if (modo === 'vitoria' && midia.length === 0) {
+      toast.show('Adicione pelo menos uma mídia para conquista.', 'warn');
+      return;
+    }
     setSalvando(true);
 
     const ehTrigger = modo === 'trigger';
@@ -247,6 +258,7 @@ export default function DiarioEmocional() {
         : {}),
       ...(ehTrigger ? { funcionou } : {}),
       audio: audioPath,
+      midia,
     };
 
     const validacao = DiarioEmocionalSchema.safeParse(meta);
@@ -402,6 +414,15 @@ export default function DiarioEmocional() {
             value={texto}
             onChangeText={setTexto}
             accessibilityLabel="campo o que aconteceu"
+          />
+
+          {/* M07.x: midia obrigatoria em modo vitoria; opcional em
+              modo trigger. MidiaPicker ja respeita o cap e o toggle
+              permitirAudio internamente. */}
+          <MidiaPicker
+            value={midia}
+            onChange={setMidia}
+            obrigatorio={modo === 'vitoria'}
           />
 
           <View style={{ gap: spacing.sm }}>
