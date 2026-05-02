@@ -1,5 +1,7 @@
 # Sprint MOB-bridge-3 — Marcos Auto-Gerados pelo Backend Python
 
+> **Status**: CONCLUÍDA em 2026-05-01 — Python SHA `ef20366` (ver [SESSION log](../../../../protocolo-ouroboros/docs/SESSION-2026-05-01-mob-bridge-log.md)). Mantida aqui como referência ativa do contrato Backend↔Mobile.
+
 ```
 REPO ALVO:  ~/Desenvolvimento/protocolo-ouroboros/
 DEPENDE:    MOB-bridge-1 (resolver pessoa_a/b ativo) +

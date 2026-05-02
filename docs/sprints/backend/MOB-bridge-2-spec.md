@@ -1,5 +1,7 @@
 # Sprint MOB-bridge-2 — Geração dos Caches Mobile (humor-heatmap e financas-cache)
 
+> **Status**: CONCLUÍDA em 2026-05-01 — Python SHA `5be23a7` (ver [SESSION log](../../../../protocolo-ouroboros/docs/SESSION-2026-05-01-mob-bridge-log.md)). Mantida aqui como referência ativa do contrato Backend↔Mobile.
+
 ```
 REPO ALVO:  ~/Desenvolvimento/protocolo-ouroboros/
 DEPENDE:    MOB-bridge-1 fechada (resolver pessoa_a/pessoa_b ativo)

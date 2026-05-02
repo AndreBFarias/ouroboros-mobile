@@ -1,5 +1,7 @@
 # Sprint MOB-bridge-1 — Refactor pessoa_a/pessoa_b no Backend Python
 
+> **Status**: CONCLUÍDA em 2026-05-01 — Python SHA `afcc240` (ver [SESSION log](../../../../protocolo-ouroboros/docs/SESSION-2026-05-01-mob-bridge-log.md)). Mantida aqui como referência ativa do contrato Backend↔Mobile.
+
 ```
 REPO ALVO:  ~/Desenvolvimento/protocolo-ouroboros/
 DEPENDE:    nada (pode rodar em paralelo às sprints Mobile)
