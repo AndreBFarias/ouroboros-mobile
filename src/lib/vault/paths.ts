@@ -191,6 +191,14 @@ export function humorHeatmapCachePath(): string {
   return '.ouroboros/cache/humor-heatmap.json';
 }
 
+// .ouroboros/cache/financas-cache.json (M14). Cache readonly gerado
+// pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012 fixa que
+// pipelines de agregacao rodam no desktop. Contem gasto da semana,
+// top categorias e ultimas 20 transacoes.
+export function financasCachePath(): string {
+  return '.ouroboros/cache/financas-cache.json';
+}
+
 // Pasta-prefixos das pastas canonicas do mobile. Reader/lister deve
 // usar somente estes; nunca varrer raiz para não tocar dados humanos.
 //

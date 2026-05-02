@@ -105,3 +105,13 @@ export {
   type HumorHeatmapCell,
   type HumorHeatmapEstatistica,
 } from './humor_heatmap_cache';
+export {
+  FinancasCacheSchema,
+  FinancasTransacaoSchema,
+  FinancasTopCategoriaSchema,
+  FinancasTipoSchema,
+  type FinancasCache,
+  type FinancasTransacao,
+  type FinancasTopCategoria,
+  type FinancasTipo,
+} from './financas-cache';
