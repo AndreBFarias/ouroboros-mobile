@@ -193,6 +193,16 @@ export function inboxFinanceiroPath(
   return `inbox/financeiro/${subtipo}/${ts}${slug}${ext}`;
 }
 
+// inbox/financeiro/nota/YYYY-MM-DD-HHmmss-<slug>.md
+// Helper especifico para o .md companion da nota fiscal capturada
+// pelo scanner (M09). Wrapper sobre inboxFinanceiroPath fixando o
+// subtipo 'nota' e a extensao 'md'. Caller fornece slug em
+// kebab-case ASCII (tipicamente derivado do estabelecimento ou
+// 'nota' generico quando nao da para inferir).
+export function inboxFinanceiroNotaPath(date: Date, slug: string): string {
+  return inboxFinanceiroPath('nota', date, { ext: 'md', slug });
+}
+
 // .ouroboros/cache/humor-heatmap.json (M10). Cache readonly gerado
 // pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012 fixa que
 // pipelines de agregacao rodam no desktop.

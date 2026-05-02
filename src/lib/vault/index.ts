@@ -8,6 +8,7 @@ export {
   diarioEmocionalPath,
   assetsPath,
   inboxFinanceiroPath,
+  inboxFinanceiroNotaPath,
   exerciciosPath,
   exerciciosGifPath,
   treinosDraftPath,

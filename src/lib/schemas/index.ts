@@ -115,3 +115,9 @@ export {
   type FinancasTopCategoria,
   type FinancasTipo,
 } from './financas-cache';
+export {
+  FinanceiroNotaSchema,
+  CategoriaNotaSchema,
+  type FinanceiroNotaMeta,
+  type CategoriaNota,
+} from './financeiro_nota';
