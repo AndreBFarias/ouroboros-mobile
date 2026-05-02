@@ -5,6 +5,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **M06.5 (a commitar) — Microfone com transcrição on-device + áudio anexo
+  (dev-client).** Novo `<MicrofoneButton>` press-and-hold inline no
+  diário emocional (Tela 18) acima do textarea. Press dispara
+  haptic medium + Audio.Recording (expo-av preset HIGH_QUALITY);
+  release encerra, salva `.m4a` em `assets/<YYYY-MM-DD-HHmm>-<rand>.m4a`
+  do Vault e dispara `transcribeStream` via @react-native-voice/voice
+  (PT-BR, on-device). Texto transcrito faz append no textarea (preserva
+  digitação). Limite hard 60s com toast. Gate em
+  `useSettings.midia.permitirAudio`. Permissão negada: 1ª vez toast,
+  2ª vez deep link Settings. Novo `<Waveform>` 24 barras animadas
+  com metering em dB. Novo helper `assetsAudioPath(date, suffix)` em
+  `paths.ts`. Novos módulos `src/lib/diario/{permissions,recordAudio,transcribe}.ts`.
+  Plugins `expo-av` e `@react-native-voice/voice` em `app.json` com
+  permissões PT-BR. NOVO BUILD EAS NECESSÁRIO PARA VALIDAÇÃO NÍVEL
+  C — APK atual (15da107f) não inclui módulos nativos.
+
 ### Quality
 - **INFRA-acentuacao-comentarios (a commitar) — 145 arquivos.**
   Varredura mecânica de comentários PT-BR sem acento em `app/`

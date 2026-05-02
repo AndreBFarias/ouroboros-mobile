@@ -78,6 +78,15 @@ export function assetsPath(filename: string): string {
   return `assets/${filename}`;
 }
 
+// assets/<formatDateYmdHm>-<suffix>.m4a (anexo de audio do diario
+// emocional - M06.5). Sufixo aleatorio curto evita colisao quando
+// duas gravacoes acontecem dentro do mesmo minuto. O caller fornece
+// o sufixo (tipicamente 4 chars hex de Math.random); paths.ts so
+// monta a string canonica para reuso por recordAudio e por testes.
+export function assetsAudioPath(date: Date, suffix: string): string {
+  return `assets/${formatDateYmdHm(date)}-${suffix}.m4a`;
+}
+
 // exercicios/<slug>.md (biblioteca de exercícios da M13). Caller
 // fornece slug já em kebab-case ASCII (ver slugifyExercicio em
 // src/lib/exercicios/slug.ts).

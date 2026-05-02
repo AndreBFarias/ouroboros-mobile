@@ -90,14 +90,14 @@ describe('Tela 18 — diario emocional render', () => {
     expect(queryByLabelText('chip Gratidão')).toBeNull();
   });
 
-  it('parametro modo=audio inicializa em vitoria por default', () => {
+  it('parametro modo=audio inicializa em vitoria e expoe MicrofoneButton', () => {
     mockSearchParams.modo = 'audio';
     const { getByLabelText } = renderTela();
-    // Modo audio cai em vitoria provisoriamente (M06.5 acopla a UI
-    // de gravacao). Por enquanto chips positivos aparecem.
+    // Modo audio cai em vitoria por default (chips positivos
+    // aparecem). M06.5 substituiu o aviso placeholder pelo
+    // MicrofoneButton inline acima do textarea.
     expect(getByLabelText('chip Gratidão')).toBeTruthy();
-    // E o aviso de "gravacao em breve" sinaliza a flag interna.
-    expect(getByLabelText('aviso audio pendente')).toBeTruthy();
+    expect(getByLabelText('botao gravar audio')).toBeTruthy();
   });
 
   it('redireciona para onboarding quando nao ha vaultRoot', () => {

@@ -38,11 +38,13 @@ import {
   type ChipOption,
 } from '@/components/ui';
 import { EmocaoChips } from '@/components/diario/EmocaoChips';
+import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
 import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
+import { useSettings } from '@/lib/stores/settings';
 import {
   DiarioEmocionalSchema,
   type DiarioEmocionalMeta,
@@ -141,14 +143,18 @@ export default function DiarioEmocional() {
   const modoParam: ModoParam = isModoParam(modoBruto) ? modoBruto : 'vitoria';
 
   // Modo inicial: 'audio' inicializa como 'vitoria' por default. A
-  // gravação real chega na M06.5; por enquanto so marcamos a flag
-  // interna audioRequested para a sprint futura acoplar.
+  // partir da M06.5 o MicrofoneButton fica sempre disponivel
+  // (gated em useSettings.midia.permitirAudio); modoParam === 'audio'
+  // do FAB so serve para escolher o tom inicial do form.
   const modoInicial: DiarioEmocionalModo =
     modoParam === 'audio' ? 'vitoria' : modoParam;
-  const [audioRequested] = useState<boolean>(modoParam === 'audio');
 
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  // Gate da gravacao de audio: usuario pode desligar em Settings
+  // (M15) sem afetar o resto do form. Se off, o MicrofoneButton
+  // some inteiro - nao basta desabilitar.
+  const permitirAudio = useSettings((s) => s.midia.permitirAudio);
 
   const [modo, setModo] = useState<DiarioEmocionalModo>(modoInicial);
   const [emocoes, setEmocoes] = useState<string[]>([]);
@@ -158,6 +164,9 @@ export default function DiarioEmocional() {
   const [estrategia, setEstrategia] = useState<string>('');
   const [funcionou, setFuncionou] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
+  // Audio anexo: M06.5 cabea path relativo aqui quando o usuario
+  // grava no MicrofoneButton. Frontmatter recebe via meta.audio.
+  const [audioPath, setAudioPath] = useState<string | null>(null);
 
   // Reset das emocoes ao trocar de modo: lista negativa não bate
   // com positiva, preservar slug seria payload invalido.
@@ -237,7 +246,7 @@ export default function DiarioEmocional() {
         ? { estrategia: estrategiaTrim }
         : {}),
       ...(ehTrigger ? { funcionou } : {}),
-      audio: null,
+      audio: audioPath,
     };
 
     const validacao = DiarioEmocionalSchema.safeParse(meta);
@@ -370,6 +379,23 @@ export default function DiarioEmocional() {
             accessibilityLabel="slider intensidade"
           />
 
+          {permitirAudio ? (
+            <MicrofoneButton
+              onTextoTranscrito={(transcrito) => {
+                // Append: preserva digitacao previa do usuario.
+                // Inclui espaco se ja havia texto, evitando colagem
+                // "tudoJunto". Quebra de linha em frase nova.
+                setTexto((prev) => {
+                  const limpo = transcrito.trim();
+                  if (limpo.length === 0) return prev;
+                  if (prev.length === 0) return limpo;
+                  return `${prev.trimEnd()} ${limpo}`;
+                });
+              }}
+              onAudioGravado={(relPath) => setAudioPath(relPath)}
+            />
+          ) : null}
+
           <Textarea
             label="O que aconteceu?"
             placeholder="Conte com suas palavras."
@@ -444,21 +470,8 @@ export default function DiarioEmocional() {
           disabled={salvando}
         />
 
-        {/* audioRequested fica disponível para a M06.5 acoplar a UI
-            de gravação. Esta sprint apenas marca a flag interna. */}
-        {audioRequested ? (
-          <Text
-            style={{
-              color: colors.mutedDecor,
-              fontFamily: 'JetBrainsMono_400Regular',
-              fontSize: 11,
-              textAlign: 'center',
-            }}
-            accessibilityLabel="aviso audio pendente"
-          >
-            Gravação de áudio chega em breve.
-          </Text>
-        ) : null}
+        {/* M06.5: gravacao de audio agora vive inline acima do
+            textarea via MicrofoneButton; placeholder antigo removido. */}
       </ScrollView>
     </BottomSheet>
   );

@@ -87,7 +87,20 @@
           "faceIDPermission": "Permitir biometria para desbloquear o Ouroboros."
         }
       ],
-      "./modules/widget-homescreen/app.plugin.js"
+      "./modules/widget-homescreen/app.plugin.js",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Permitir gravar áudio para transcrever na hora."
+        }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Permitir gravar áudio para transcrever na hora.",
+          "speechRecognitionPermission": "Permitir reconhecimento de voz para preencher o diário."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

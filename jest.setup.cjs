@@ -270,6 +270,46 @@ jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn(() => Promise.resolve()),
 }));
 
+// expo-av: mock minimo do Audio.Recording. Testes que precisam
+// inspecionar comportamento detalhado do recording sobrescrevem com
+// jest.mock local (ver MicrofoneButton.test.tsx).
+jest.mock('expo-av', () => ({
+  __esModule: true,
+  Audio: {
+    Recording: jest.fn().mockImplementation(() => ({
+      prepareToRecordAsync: jest.fn(() => Promise.resolve()),
+      startAsync: jest.fn(() => Promise.resolve()),
+      stopAndUnloadAsync: jest.fn(() => Promise.resolve()),
+      getURI: jest.fn(() => 'file:///cache/mock.m4a'),
+      getStatusAsync: jest.fn(() =>
+        Promise.resolve({ canRecord: false, durationMillis: 1000 })
+      ),
+      setOnRecordingStatusUpdate: jest.fn(),
+    })),
+    requestPermissionsAsync: jest.fn(() =>
+      Promise.resolve({ granted: true })
+    ),
+    setAudioModeAsync: jest.fn(() => Promise.resolve()),
+    RecordingOptionsPresets: { HIGH_QUALITY: {} },
+  },
+}));
+
+// @react-native-voice/voice: mock minimo. Testes que precisam
+// inspecionar listeners sobrescrevem com jest.mock local.
+jest.mock('@react-native-voice/voice', () => ({
+  __esModule: true,
+  default: {
+    start: jest.fn(() => Promise.resolve()),
+    stop: jest.fn(() => Promise.resolve()),
+    destroy: jest.fn(() => Promise.resolve()),
+    removeAllListeners: jest.fn(),
+    onSpeechResults: null,
+    onSpeechPartialResults: null,
+    onSpeechError: null,
+    onSpeechEnd: null,
+  },
+}));
+
 // jszip: usa o real (puro JS, sem nativo) para nao reimplementar a
 // API toda em mock. So precisa do path correto via moduleNameMapper.
 
