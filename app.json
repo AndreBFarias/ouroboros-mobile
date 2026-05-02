@@ -96,7 +96,7 @@
         }
       ],
       [
-        "@react-native-voice/voice",
+        "expo-speech-recognition",
         {
           "microphonePermission": "Permitir gravar áudio para transcrever na hora.",
           "speechRecognitionPermission": "Permitir reconhecimento de voz para preencher o diário."

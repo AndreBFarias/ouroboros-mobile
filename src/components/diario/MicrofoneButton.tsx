@@ -31,6 +31,7 @@ import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
+import { useSettings } from '@/lib/stores/settings';
 import {
   startRecording,
   stopRecording,
@@ -89,6 +90,9 @@ export function MicrofoneButton({
 }: MicrofoneButtonProps) {
   const toast = useToast();
   const vaultRoot = useVault((s) => s.vaultRoot);
+  const ocultarTranscricoes = useSettings(
+    (s) => s.privacidade.ocultarTranscricoes
+  );
 
   const [estado, setEstado] = useState<Estado>('idle');
   const [tempoMs, setTempoMs] = useState<number>(0);
@@ -195,7 +199,15 @@ export function MicrofoneButton({
         transcreverPromise,
       ]);
       onAudioGravado(relPath);
-      if (texto && texto.trim().length > 0) {
+      // Privacidade: quando ocultarTranscricoes está ativo, o áudio
+      // continua sendo salvo no Vault (anexo legítimo) mas o texto
+      // transcrito não polui o textarea -- usuário escreve o que
+      // quiser por cima sem ver a transcrição automática.
+      if (
+        !ocultarTranscricoes &&
+        texto &&
+        texto.trim().length > 0
+      ) {
         onTextoTranscrito(texto);
       }
     } catch (err) {

@@ -1,10 +1,14 @@
 // Testes do MicrofoneButton (M06.5). Mocka expo-av e
-// @react-native-voice/voice via jest.mock para isolar o componente
+// expo-speech-recognition via jest.mock para isolar o componente
 // do hardware. Verifica:
 //   - render no estado idle expoe label 'Gravar audio'
 //   - pressIn dispara startRecording quando permissao concedida
 //   - pressOut dispara stopRecording + saveRecordingToVault +
 //     transcribeStream e callbacks chegam ao caller
+// Migracao INTEGRACAO-M15: trocou @react-native-voice/voice
+// (deprecated, conflito de manifest no Gradle 8) por
+// expo-speech-recognition. Mock simula addListener('result',cb) para
+// disparar o evento isFinal=true logo apos start().
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { ToastProvider } from '@/components/ui';
 
@@ -42,48 +46,54 @@ jest.mock('expo-av', () => ({
   },
 }));
 
-// Mock do Voice: dispara onSpeechResults com texto fixo logo apos
-// start. Caller recebe via transcribeStream resolve.
-const voiceListeners: Record<string, ((e: unknown) => void) | null> = {
-  onSpeechResults: null,
-  onSpeechPartialResults: null,
-  onSpeechError: null,
-  onSpeechEnd: null,
+// Mock do expo-speech-recognition: addListener('result', cb)
+// captura callback e o teste o invoca após start() com texto fixo.
+// Mantém compatibilidade com mocks anteriores via voiceListeners
+// (renomeado para speechListeners).
+const speechListeners: Record<string, ((e: unknown) => void) | null> = {
+  result: null,
+  error: null,
+  end: null,
 };
 
-jest.mock('@react-native-voice/voice', () => ({
+jest.mock('expo-speech-recognition', () => ({
   __esModule: true,
-  default: {
+  ExpoSpeechRecognitionModule: {
     start: jest.fn(() => {
-      // Simula entrega assincrona do resultado em microtask.
+      // Simula entrega assíncrona do resultado em microtask, no
+      // formato do expo-speech-recognition (results[].transcript +
+      // isFinal=true). Logo após dispara 'end' para fechar a Promise.
       setTimeout(() => {
-        voiceListeners.onSpeechResults?.({
-          value: ['oi diario hoje foi bom'],
+        speechListeners.result?.({
+          isFinal: true,
+          results: [{ transcript: 'oi diario hoje foi bom' }],
         });
+        speechListeners.end?.(undefined);
       }, 0);
-      return Promise.resolve();
     }),
-    stop: jest.fn(() => Promise.resolve()),
-    destroy: jest.fn(() => Promise.resolve()),
+    stop: jest.fn(),
+    abort: jest.fn(),
+    requestPermissionsAsync: jest.fn(() =>
+      Promise.resolve({ granted: true })
+    ),
+    isRecognitionAvailable: jest.fn(() => true),
+    addListener: jest.fn(
+      (eventName: string, cb: (e: unknown) => void) => {
+        speechListeners[eventName] = cb;
+        return {
+          remove: () => {
+            speechListeners[eventName] = null;
+          },
+        };
+      }
+    ),
     removeAllListeners: jest.fn(() => {
-      voiceListeners.onSpeechResults = null;
-      voiceListeners.onSpeechPartialResults = null;
-      voiceListeners.onSpeechError = null;
-      voiceListeners.onSpeechEnd = null;
+      speechListeners.result = null;
+      speechListeners.error = null;
+      speechListeners.end = null;
     }),
-    set onSpeechResults(fn: (e: unknown) => void) {
-      voiceListeners.onSpeechResults = fn;
-    },
-    set onSpeechPartialResults(fn: (e: unknown) => void) {
-      voiceListeners.onSpeechPartialResults = fn;
-    },
-    set onSpeechError(fn: (e: unknown) => void) {
-      voiceListeners.onSpeechError = fn;
-    },
-    set onSpeechEnd(fn: () => void) {
-      voiceListeners.onSpeechEnd = fn;
-    },
   },
+  useSpeechRecognitionEvent: jest.fn(),
 }));
 
 // Mock do FileSystem para isolar o saveRecordingToVault. O teste
@@ -108,10 +118,9 @@ import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
 
 beforeEach(() => {
   jest.clearAllMocks();
-  voiceListeners.onSpeechResults = null;
-  voiceListeners.onSpeechPartialResults = null;
-  voiceListeners.onSpeechError = null;
-  voiceListeners.onSpeechEnd = null;
+  speechListeners.result = null;
+  speechListeners.error = null;
+  speechListeners.end = null;
 });
 
 function renderComProviders(

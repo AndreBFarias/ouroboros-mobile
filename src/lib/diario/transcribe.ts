@@ -1,34 +1,40 @@
-// Wrapper sobre @react-native-voice/voice para transcricao de fala
-// on-device em PT-BR (M06.5). Idioma fixo 'pt-BR'. Nao usa nuvem -
+// Wrapper sobre expo-speech-recognition para transcrição de fala
+// on-device em PT-BR (M06.5). Idioma fixo 'pt-BR'. Não usa nuvem --
 // se o reconhecedor nativo do Android cair em fallback de rede,
 // caller aborta e mostra toast (ADR-0007: zero rede).
 //
-// API minima: transcribeStream resolve com texto final no
-// onSpeechResults; rejeita com MicPermissionError se faltar
-// permissao. cancel limpa listeners e aborta a sessao em curso.
-import Voice, {
-  type SpeechErrorEvent,
-  type SpeechResultsEvent,
-} from '@react-native-voice/voice';
+// Substituiu @react-native-voice/voice (deprecated, usava
+// com.android.support legado e quebrava manifest merger no Gradle 8
+// por conflito com androidx.core). expo-speech-recognition usa
+// AndroidX nativamente e segue New Architecture do RN.
+//
+// API mínima: transcribeStream resolve com texto final no evento
+// 'result' isFinal=true; rejeita com MicPermissionError em
+// 'not-allowed'/'service-not-allowed'. cancel limpa listeners e
+// aborta a sessão em curso (idempotente).
+import {
+  ExpoSpeechRecognitionModule,
+  type ExpoSpeechRecognitionResultEvent,
+  type ExpoSpeechRecognitionErrorEvent,
+} from 'expo-speech-recognition';
 import { MicPermissionError } from '@/lib/diario/permissions';
 
 const IDIOMA = 'pt-BR';
 
-// Eventos de erro do Voice que indicam permissao negada ou hardware
-// indisponivel. Codigos sao strings curtas do SpeechRecognizer
-// nativo do Android; mantemos a lista no minimo para nao engessar
-// (qualquer codigo nao listado vira Error generico que o caller
-// exibe como 'microfone indisponivel' -- so codigos do Set acima
-// sao tratados como MicPermissionError).
+// Códigos de erro do expo-speech-recognition que indicam permissão
+// negada ou serviço bloqueado por policy. Códigos vêm da Web Speech
+// API spec; o módulo os mapeia para SpeechRecognizer Android. Lista
+// fechada -- qualquer código não listado vira Error genérico que o
+// caller exibe como 'microfone indisponível'.
 const ERROS_PERMISSAO = new Set([
-  '9', // ERROR_INSUFFICIENT_PERMISSIONS
-  'permissions',
+  'not-allowed',
+  'service-not-allowed',
 ]);
 
-// Inicia uma sessao de transcricao. Resolve com texto final quando
-// o reconhecedor encerra naturalmente (silencio detectado) ou
-// quando caller chama Voice.stop. onPartial recebe os snapshots
-// intermediarios para feedback ao vivo na UI.
+// Inicia uma sessão de transcrição. Resolve com texto final quando
+// o reconhecedor encerra (silêncio detectado, stop manual, ou
+// resultado final). onPartial recebe os snapshots intermediários
+// para feedback ao vivo na UI.
 export async function transcribeStream(
   onPartial: (texto: string) => void
 ): Promise<string> {
@@ -36,73 +42,109 @@ export async function transcribeStream(
     let textoFinal = '';
     let parcialMaisRecente = '';
 
+    // Subscriptions retornadas por addListener. Guardadas para
+    // cleanup determinístico (limpar() chamado em todos os caminhos
+    // de saída -- success, error, end).
+    const subs: { remove: () => void }[] = [];
+    let resolvido = false;
+
     const limpar = () => {
-      Voice.removeAllListeners();
+      subs.forEach((s) => {
+        try {
+          s.remove();
+        } catch {
+          // ignora se a subscription já foi removida
+        }
+      });
+      subs.length = 0;
     };
 
-    Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
-      if (e.value && e.value.length > 0) {
-        parcialMaisRecente = e.value[0];
-        onPartial(parcialMaisRecente);
-      }
-    };
-
-    Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-      if (e.value && e.value.length > 0) {
-        textoFinal = e.value[0];
-      }
+    const concluir = (texto: string) => {
+      if (resolvido) return;
+      resolvido = true;
       limpar();
-      // Fallback para o ultimo parcial caso o reconhecedor encerre
-      // sem disparar onSpeechResults com value preenchido (acontece
-      // em sessoes muito curtas no Android 12+).
-      resolve(textoFinal.length > 0 ? textoFinal : parcialMaisRecente);
+      resolve(texto);
     };
 
-    Voice.onSpeechError = (e: SpeechErrorEvent) => {
+    const falhar = (erro: Error) => {
+      if (resolvido) return;
+      resolvido = true;
       limpar();
-      const code = e?.error?.code ? String(e.error.code) : '';
-      if (ERROS_PERMISSAO.has(code)) {
-        reject(new MicPermissionError());
-        return;
-      }
-      reject(new Error(`erro de voz: ${code || 'desconhecido'}`));
+      reject(erro);
     };
 
-    Voice.onSpeechEnd = () => {
-      // Se chegou aqui sem onSpeechResults, resolve com o ultimo
-      // parcial (ou string vazia). Evita Promise pendurada quando
-      // o engine fecha sem texto definitivo.
-      if (textoFinal.length === 0 && parcialMaisRecente.length === 0) {
-        limpar();
-        resolve('');
-      }
-    };
+    subs.push(
+      ExpoSpeechRecognitionModule.addListener(
+        'result',
+        (e: ExpoSpeechRecognitionResultEvent) => {
+          if (!e.results || e.results.length === 0) return;
+          const transcript = e.results[0].transcript ?? '';
+          if (e.isFinal) {
+            textoFinal = transcript;
+          } else {
+            parcialMaisRecente = transcript;
+            onPartial(parcialMaisRecente);
+          }
+        }
+      )
+    );
 
-    Voice.start(IDIOMA).catch((err: unknown) => {
-      limpar();
+    subs.push(
+      ExpoSpeechRecognitionModule.addListener(
+        'error',
+        (e: ExpoSpeechRecognitionErrorEvent) => {
+          const code = e.error || '';
+          if (ERROS_PERMISSAO.has(code)) {
+            falhar(new MicPermissionError());
+            return;
+          }
+          falhar(new Error(`erro de voz: ${code || 'desconhecido'}`));
+        }
+      )
+    );
+
+    // 'end' dispara depois de stop()/abort() ou silêncio prolongado.
+    // Fallback para o último parcial caso o reconhecedor encerre sem
+    // 'result' final preenchido (sessões muito curtas no Android 12+).
+    subs.push(
+      ExpoSpeechRecognitionModule.addListener('end', () => {
+        concluir(textoFinal.length > 0 ? textoFinal : parcialMaisRecente);
+      })
+    );
+
+    try {
+      ExpoSpeechRecognitionModule.start({
+        lang: IDIOMA,
+        interimResults: true,
+        continuous: false,
+        // requiresOnDeviceRecognition true respeita ADR-0007
+        // (zero rede). Em devices sem suporte on-device, o módulo
+        // emite 'service-not-allowed' que cai no ERROS_PERMISSAO.
+        requiresOnDeviceRecognition: true,
+        addsPunctuation: true,
+      });
+    } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/permission/i.test(msg)) {
-        reject(new MicPermissionError(msg));
+      if (/permission/i.test(msg) || /not-allowed/i.test(msg)) {
+        falhar(new MicPermissionError(msg));
         return;
       }
-      reject(err instanceof Error ? err : new Error(msg));
-    });
+      falhar(err instanceof Error ? err : new Error(msg));
+    }
   });
 }
 
-// Aborta a sessao em curso e limpa listeners. Idempotente: chamar
-// duas vezes nao quebra. Caller usa quando componente desmonta no
-// meio de uma transcricao (ex.: usuario fecha sheet).
+// Aborta a sessão em curso e limpa listeners. Idempotente: chamar
+// duas vezes não quebra. Caller usa quando componente desmonta no
+// meio de uma transcrição (ex.: usuário fecha sheet).
 export async function cancel(): Promise<void> {
   try {
-    await Voice.stop();
+    ExpoSpeechRecognitionModule.abort();
   } catch {
-    // ignora: sessao pode ja ter encerrado
+    // ignora: sessão pode já ter encerrado
   }
-  try {
-    await Voice.destroy();
-  } catch {
-    // ignora
-  }
-  Voice.removeAllListeners();
 }
+
+// Alias retrocompatível para callers que importavam cancelTranscribe
+// (nome usado em MicrofoneButton.tsx). Mantém API estável.
+export const cancelTranscribe = cancel;

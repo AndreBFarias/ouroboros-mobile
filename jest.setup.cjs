@@ -294,20 +294,22 @@ jest.mock('expo-av', () => ({
   },
 }));
 
-// @react-native-voice/voice: mock minimo. Testes que precisam
-// inspecionar listeners sobrescrevem com jest.mock local.
-jest.mock('@react-native-voice/voice', () => ({
+// expo-speech-recognition: mock minimo. Substituiu @react-native-voice/voice
+// (deprecated, conflito de manifest no Gradle 8). Testes que precisam
+// disparar eventos sobrescrevem com jest.mock local capturando o callback
+// passado em addListener.
+jest.mock('expo-speech-recognition', () => ({
   __esModule: true,
-  default: {
-    start: jest.fn(() => Promise.resolve()),
-    stop: jest.fn(() => Promise.resolve()),
-    destroy: jest.fn(() => Promise.resolve()),
+  ExpoSpeechRecognitionModule: {
+    start: jest.fn(),
+    stop: jest.fn(),
+    abort: jest.fn(),
+    requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+    isRecognitionAvailable: jest.fn(() => true),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
     removeAllListeners: jest.fn(),
-    onSpeechResults: null,
-    onSpeechPartialResults: null,
-    onSpeechError: null,
-    onSpeechEnd: null,
   },
+  useSpeechRecognitionEvent: jest.fn(),
 }));
 
 // jszip: usa o real (puro JS, sem nativo) para nao reimplementar a

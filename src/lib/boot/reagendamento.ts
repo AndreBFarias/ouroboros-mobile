@@ -2,11 +2,13 @@
 // idempotente no início do app faz `BOOT_HOOKS.push(suaFuncao)` em
 // seu proprio modulo (CONTRACT seções 1.7 e 5.4).
 //
-// Lista canonica esperada (a ser plugada por sprints futuras):
+// Lista canonica plugada (5 hooks):
+//   - M11 migrarDraftsParaTreinoSessao (sempre, idempotente)
+//   - M11 verificarMarcosAuto (uma vez por dia)
 //   - M16 reagendarAlarmes (sempre, idempotente)
 //   - M17 limparLixeiraExpirada (uma vez por dia)
-//   - M11 verificarMarcosAuto (uma vez por dia)
-//   - M20 atualizarWidgetHomescreen (quando humor e salvo)
+//   - M20 atualizarWidgetHomescreen (sempre, com rate-limit interno)
+//   - M15 reagendarLembretes (sempre, idempotente)
 //
 // Em M00.5 a lista comeca vazia. O orquestrador roda cada hook em
 // sequência, isolando erros: falha de um não trava os demais.
@@ -78,10 +80,23 @@ const atualizarWidgetHomescreenHook: BootHook = async () => {
   await atualizarWidgetHomescreenBootHook();
 };
 
+// M15 lembretes diários (medicação/treino/humor): reagenda no boot
+// porque expo-notifications no Android não persiste schedules entre
+// reboots e updates do app. Mesmo padrão do M16. Lê estado atual de
+// useSettings.lembretes; cada chave ativa vira schedule, inativa
+// vira cancel idempotente.
+const reagendarLembretesHook: BootHook = async () => {
+  const { reagendarLembretes } = await import(
+    '@/lib/services/notificacoesLembretes'
+  );
+  await reagendarLembretes();
+};
+
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
   reagendarAlarmesHook,
   limparLixeiraTarefasHook,
-  atualizarWidgetHomescreenHook
+  atualizarWidgetHomescreenHook,
+  reagendarLembretesHook
 );

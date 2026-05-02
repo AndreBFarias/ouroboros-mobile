@@ -125,3 +125,30 @@ export async function cancelarTudo(): Promise<void> {
     await cancelarLembrete(chave);
   }
 }
+
+// Boot hook: lê o store de settings e reagenda todos os lembretes
+// ativos. Idempotente -- cancela schedule pré-existente antes de
+// agendar de novo (mesma garantia do agendarLembrete). Necessário
+// porque expo-notifications no Android não persiste schedules entre
+// reboots ou updates do app, mesmo padrão do reagendarAlarmes (M16).
+//
+// Lazy require do store evita ciclo entre @/lib/boot/* e
+// @/lib/stores/settings (que importa zustand + persist).
+//
+// Falha silenciosa: se permissão for negada ou o usuário ainda não
+// completou onboarding, o reagendar simplesmente não-opa por chave.
+// Toggle on subsequente em Settings dispara agendarLembrete() de
+// novo com a permissão pedida just-in-time.
+export async function reagendarLembretes(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  const { useSettings } = await import('@/lib/stores/settings');
+  const lembretes = useSettings.getState().lembretes;
+  for (const chave of ['medicacao', 'treino', 'humor'] as LembreteChave[]) {
+    const config = lembretes[chave];
+    if (config.ativo) {
+      await agendarLembrete(chave, config.horario);
+    } else {
+      await cancelarLembrete(chave);
+    }
+  }
+}
