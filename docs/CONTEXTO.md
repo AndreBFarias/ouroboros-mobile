@@ -453,7 +453,7 @@ telas exige reverse-engineering da ferramenta externa que o exportou
 (identificação preservada em `docs/design-canvas-export/README.md`).
 Estado canônico:
 
-- `docs/Ouroboros_22_telas-standalone.html` (1,4 MB) — bundle frozen
+- `docs/Ouroboros_24_telas-standalone.html` (1,4 MB) — bundle frozen
   de Telas 01 a 28 (namespace JSX). Não modificar. Regeneração
   pendente — Sprint M19 final.
 - `docs/Ouroboros_telas_25_26-standalone.html` (23 KB) — bundle

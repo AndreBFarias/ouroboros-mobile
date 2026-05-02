@@ -3,6 +3,45 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.0.0] — 2026-05-02
+
+### Added
+- **M19 — APK Release Hardening v1.0.0.** Versão final do MVP.
+  - `app.json`: `version: 1.0.0`, `runtimeVersion: 1.0.0`,
+    `android.versionCode: 1`. Adaptive icon e splash apontam para
+    novos PNGs polidos.
+  - `eas.json` production: `gradleCommand: :app:bundleRelease`,
+    `autoIncrement: versionCode`, `env.NODE_ENV: production`.
+  - Assets gráficos: `assets/icon.png` (1024×1024 com fundo
+    Dracula bg-page #14151a + anel Ouroboros purple→cyan + ponto
+    da cabeça da serpente), `assets/icon-foreground.png` (foreground
+    do adaptive icon Android, transparent), `assets/splash.png`
+    (2400×2400 com ícone centralizado).
+  - 5 fluxos Maestro em `tests/e2e/`: `onboarding-completo.yaml`,
+    `flow1-pix.yaml`, `flow2-trigger.yaml`, `flow3-evento.yaml`,
+    `flow4-scanner.yaml` (cobrem onboarding + 4 críticos do
+    BRIEFING §5).
+  - `scripts/release-apk.sh` — pipeline completo: anonimato +
+    typecheck + tests + smoke + expo export (limite Hermes
+    12 MB) + EAS build production + polling até FINISHED +
+    download do .aab.
+  - `docs/RELEASE.md` — processo canônico de release (pre-reqs,
+    pipeline, validação manual ponta-a-ponta, rollback, limites
+    hard, semver).
+  - `credentials/README.md` — instruções de geração de keystore
+    via `eas credentials`. `.gitignore` exclui `keystore.jks`
+    e `keystore.json`.
+  - HTML mockup renomeado de `Ouroboros_22_telas-standalone.html`
+    para `Ouroboros_24_telas-standalone.html` (refletindo as 24
+    telas do MVP). Refs atualizadas em README, ROADMAP,
+    HOW_TO_RESUME, VALIDATOR_BRIEF, CHANGELOG, CONTEXTO,
+    MOCKUPS-INVENTARIO e código fonte.
+  - Tag git `v1.0.0` marca o fechamento do MVP.
+
+### Changed
+- `package.json`: versão bumpada para 1.0.0; novos scripts
+  `test:e2e` e `release`.
+
 ## [Unreleased]
 
 ### Added
@@ -635,7 +674,7 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
   e `app/index.tsx` com classes Tailwind.
 - Bootstrap do repositório git (Fase 0).
 - Layout canônico `docs/` com `BRIEFING.md`, `CONTEXTO.md`,
-  `PLANO_TECNICO_APK.md`, `Ouroboros_22_telas-standalone.html` e
+  `PLANO_TECNICO_APK.md`, `Ouroboros_24_telas-standalone.html` e
   pastas `ADRs/`, `sprints/`, `design-canvas-export/`.
 - Scripts de validação: `check_anonimato.sh`, `check_test_data.sh`,
   `smoke.sh`, `sprint_iniciar.sh`.

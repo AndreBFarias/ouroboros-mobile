@@ -1,6 +1,6 @@
 {
   "name": "ouroboros-mobile",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "expo-router/entry",
   "private": true,
   "scripts": {
@@ -11,9 +11,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint app/ src/",
     "test": "jest --watchAll=false",
+    "test:e2e": "maestro test tests/e2e/",
     "build:dev": "eas build --profile development --platform android",
     "build:preview": "eas build --profile preview --platform android",
-    "build:prod": "eas build --profile production --platform android"
+    "build:prod": "eas build --profile production --platform android",
+    "release": "./scripts/release-apk.sh"
   },
   "jest": {
     "preset": "jest-expo",

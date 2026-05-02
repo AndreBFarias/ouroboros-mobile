@@ -69,7 +69,7 @@ Detalhe em `VALIDATOR_BRIEF.md` §1.9 e `CLAUDE.md`. Resumo:
 - [`docs/BRIEFING.md`](docs/BRIEFING.md) — design system, princípios estéticos, telas, schemas
 - [`docs/CONTEXTO.md`](docs/CONTEXTO.md) — ecossistema, regras invioláveis, anonimato
 - [`docs/PLANO_TECNICO_APK.md`](docs/PLANO_TECNICO_APK.md) — playbook operacional, ADRs originais
-- [`docs/Ouroboros_22_telas-standalone.html`](docs/Ouroboros_22_telas-standalone.html) — fonte de verdade visual (22 telas core)
+- [`docs/Ouroboros_24_telas-standalone.html`](docs/Ouroboros_24_telas-standalone.html) — fonte de verdade visual (22 telas core)
 - [`docs/Ouroboros_telas_25_26-standalone.html`](docs/Ouroboros_telas_25_26-standalone.html) — Telas 25 (calendário) e 26 (widget) adicionadas em M00.6
 - [`docs/ADRs/`](docs/ADRs/) — Architecture Decision Records (formalizados na M00.docs)
 - [`docs/sprints/`](docs/sprints/) — specs executáveis por sprint, screenshots e checkpoints

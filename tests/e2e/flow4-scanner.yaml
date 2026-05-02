@@ -1,0 +1,28 @@
+# Maestro flow 4 (BRIEFING §5): Scanner de nota fiscal.
+# Alvo: <20s do tap no item ate confirmacao "Salvo no Vault".
+# Pre-condicao: dev-client com expo-document-scanner ou camera lib
+# nativa que abra o scanner. Em modo Maestro, mockar via stub
+# pode ser necessario.
+appId: com.ouroboros.mobile
+---
+- launchApp
+- assertVisible: "Hoje"
+- tapOn:
+    id: "fab"
+- tapOn: "Scanner"
+- assertVisible: "Escanear nota fiscal"
+- # Scanner abre camera. Maestro nao automatiza camera --
+#   teste assume que a camera retorna automaticamente para o
+#   preview (dev mode tem fixture).
+- tapOn: "Capturar"
+- assertVisible: "Confirmar pagina"
+- tapOn: "Concluir"
+- assertVisible: "OCR processado"
+- # Editar valor capturado pelo OCR
+- tapOn: "Valor"
+- inputText: "45,90"
+- tapOn: "Categoria"
+- tapOn: "Mercado"
+- tapOn: "Salvar"
+- assertVisible: "Salvo no Vault"
+- takeScreenshot: "flow4-scanner-final"

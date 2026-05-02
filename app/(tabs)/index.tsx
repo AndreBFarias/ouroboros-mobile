@@ -4,7 +4,7 @@
 // concluido, redireciona para /onboarding (substituiu o
 // PermissaoVaultModal da M02 a partir da M03).
 //
-// Fonte de verdade visual: docs/Ouroboros_22_telas-standalone.html
+// Fonte de verdade visual: docs/Ouroboros_24_telas-standalone.html
 // artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
 // docs/BRIEFING.md seção 7.
 import { useEffect, useMemo } from 'react';

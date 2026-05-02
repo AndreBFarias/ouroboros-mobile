@@ -13,7 +13,7 @@ registro de fato do estado real do app.
 
 | Arquivo | Tamanho | Status | Origem | Editável? |
 |---------|---------|--------|--------|-----------|
-| `docs/Ouroboros_22_telas-standalone.html` | 1.4 MB | frozen | exportado por ferramenta externa de design em 2026-04-28 a partir do JSX-fonte em `docs/design-canvas-export/project/` (cabeçalho original preservado em `docs/design-canvas-export/README.md`) | Não — qualquer regeneração depende de toolchain ainda inexistente |
+| `docs/Ouroboros_24_telas-standalone.html` | 1.4 MB | frozen | exportado por ferramenta externa de design em 2026-04-28 a partir do JSX-fonte em `docs/design-canvas-export/project/` (cabeçalho original preservado em `docs/design-canvas-export/README.md`) | Não — qualquer regeneração depende de toolchain ainda inexistente |
 | `docs/Ouroboros_telas_25_26-standalone.html` | 23 KB | editável manual | criado em M00.6 (commit do checkpoint visual M00.6) como contorno temporário para evitar regenerar o bundle de 22 telas | Sim — HTML/CSS puro escrito à mão, sem build |
 
 A duplicidade é intencional: regenerar o bundle de 22 telas exigiria
@@ -46,29 +46,29 @@ Coluna "bundle" indica em qual HTML a Tela aparece renderizada. Coluna
 
 | Tela | Nome | Bundle | JSX-fonte | Sprint dona | Status sprint |
 |------|------|--------|-----------|-------------|---------------|
-| 01 | Hoje (timeline) | `Ouroboros_22_telas-standalone.html` | (no `secao-c.jsx` como background do FAB) | M03 | ok |
-| 07 | Galeria de exercícios | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
-| 08 | Detalhe de exercício | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
-| 09 | Heatmap de treinos | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
-| 10 | Modal detalhe de dia passado | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
-| 11 | Marcos (timeline gentil) | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M11.5 | ok |
-| 12 | Form de medidas corporais | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M07 | ok |
-| 13 | Comparativo de medidas | `Ouroboros_22_telas-standalone.html` | `secao-a.jsx` | M07 | ok |
-| 14 | FAB expandido (menu radial) | `Ouroboros_22_telas-standalone.html` | `secao-c.jsx` | M03 | ok |
-| 15 | Humor rápido | `Ouroboros_22_telas-standalone.html` | `secao-b.jsx` | M05 | ok |
-| 16 | Câmera scanner | `Ouroboros_22_telas-standalone.html` | `secao-c.jsx` | M06.5 | ok |
-| 17 | Share intent (path .md visível) | `Ouroboros_22_telas-standalone.html` | `secao-c.jsx` | M09 | ok |
-| 18 | Diário emocional (modo trigger) | `Ouroboros_22_telas-standalone.html` | `secao-b.jsx` | M08 | ok |
-| 19 | Duas colunas (positivos / negativos) | `Ouroboros_22_telas-standalone.html` | `secao-b.jsx` | M07 | ok |
-| 20 | Registro de evento com lugar | `Ouroboros_22_telas-standalone.html` | `secao-b.jsx` | M07 | ok |
-| 21 | Mini humor (heatmap página cheia) | `Ouroboros_22_telas-standalone.html` | `secao-d.jsx` | M04 | ok |
-| 22 | Finanças (modo leitura) | `Ouroboros_22_telas-standalone.html` | `secao-d.jsx` | M10 | ok |
-| 23 | Ajustes (path .md visível) | `Ouroboros_22_telas-standalone.html` | `secao-d.jsx` | M13 | ok |
-| 24 | Onboarding (3 frames) | `Ouroboros_22_telas-standalone.html` | `secao-d.jsx` | M15 | ok |
-| 25 (namespace JSX) | Microfone com transcrição | `Ouroboros_22_telas-standalone.html` | `secao-e.jsx` | M06.5 | ok |
-| 26 (namespace JSX) | Alarme / lembretes | `Ouroboros_22_telas-standalone.html` | `secao-e.jsx` | M16 | ok |
-| 27 (namespace JSX) | To-do com tags por categoria | `Ouroboros_22_telas-standalone.html` | `secao-e.jsx` | M17 | ok |
-| 28 (namespace JSX) | Contador "dias sem X" | `Ouroboros_22_telas-standalone.html` | `secao-e.jsx` | M18 | ok |
+| 01 | Hoje (timeline) | `Ouroboros_24_telas-standalone.html` | (no `secao-c.jsx` como background do FAB) | M03 | ok |
+| 07 | Galeria de exercícios | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
+| 08 | Detalhe de exercício | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
+| 09 | Heatmap de treinos | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
+| 10 | Modal detalhe de dia passado | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M11 | ok |
+| 11 | Marcos (timeline gentil) | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M11.5 | ok |
+| 12 | Form de medidas corporais | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M07 | ok |
+| 13 | Comparativo de medidas | `Ouroboros_24_telas-standalone.html` | `secao-a.jsx` | M07 | ok |
+| 14 | FAB expandido (menu radial) | `Ouroboros_24_telas-standalone.html` | `secao-c.jsx` | M03 | ok |
+| 15 | Humor rápido | `Ouroboros_24_telas-standalone.html` | `secao-b.jsx` | M05 | ok |
+| 16 | Câmera scanner | `Ouroboros_24_telas-standalone.html` | `secao-c.jsx` | M06.5 | ok |
+| 17 | Share intent (path .md visível) | `Ouroboros_24_telas-standalone.html` | `secao-c.jsx` | M09 | ok |
+| 18 | Diário emocional (modo trigger) | `Ouroboros_24_telas-standalone.html` | `secao-b.jsx` | M08 | ok |
+| 19 | Duas colunas (positivos / negativos) | `Ouroboros_24_telas-standalone.html` | `secao-b.jsx` | M07 | ok |
+| 20 | Registro de evento com lugar | `Ouroboros_24_telas-standalone.html` | `secao-b.jsx` | M07 | ok |
+| 21 | Mini humor (heatmap página cheia) | `Ouroboros_24_telas-standalone.html` | `secao-d.jsx` | M04 | ok |
+| 22 | Finanças (modo leitura) | `Ouroboros_24_telas-standalone.html` | `secao-d.jsx` | M10 | ok |
+| 23 | Ajustes (path .md visível) | `Ouroboros_24_telas-standalone.html` | `secao-d.jsx` | M13 | ok |
+| 24 | Onboarding (3 frames) | `Ouroboros_24_telas-standalone.html` | `secao-d.jsx` | M15 | ok |
+| 25 (namespace JSX) | Microfone com transcrição | `Ouroboros_24_telas-standalone.html` | `secao-e.jsx` | M06.5 | ok |
+| 26 (namespace JSX) | Alarme / lembretes | `Ouroboros_24_telas-standalone.html` | `secao-e.jsx` | M16 | ok |
+| 27 (namespace JSX) | To-do com tags por categoria | `Ouroboros_24_telas-standalone.html` | `secao-e.jsx` | M17 | ok |
+| 28 (namespace JSX) | Contador "dias sem X" | `Ouroboros_24_telas-standalone.html` | `secao-e.jsx` | M18 | ok |
 | 25 (namespace M00.6) | Calendário de conquistas | `Ouroboros_telas_25_26-standalone.html` | n/a (escrito à mão) | M11.5 | ok |
 | 26 (namespace M00.6) | Widget homescreen | `Ouroboros_telas_25_26-standalone.html` | n/a (escrito à mão) | M20 | ok |
 
@@ -136,7 +136,7 @@ Até lá, qualquer mudança visual nos mockups segue o protocolo:
 
 - 2026-04-28 — bundle de 22 telas exportado por ferramenta externa de
   design durante a configuração inicial. Arquivo em
-  `docs/Ouroboros_22_telas-standalone.html` é congelado a partir desse
+  `docs/Ouroboros_24_telas-standalone.html` é congelado a partir desse
   ponto. JSX-fonte preservado em `docs/design-canvas-export/project/`
   apenas como referência. Identificação da ferramenta original fica
   preservada em `docs/design-canvas-export/README.md`.

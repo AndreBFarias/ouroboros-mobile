@@ -70,3 +70,10 @@ expo-env.d.ts
 # APKs locais baixados de EAS dev-client / preview / production builds.
 # Cada build sai com timestamp; baixar de novo via expo.dev se precisar.
 builds/
+
+# Keystore Android para release v1.0.0+. Backup manual em local seguro
+# (USB criptografado fora do git). Caso a chave seja perdida, novas
+# releases precisam de novo identificador no Play Store -- por isso
+# o backup deve sobreviver ao computador.
+credentials/keystore.jks
+credentials/keystore.json

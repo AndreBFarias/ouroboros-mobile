@@ -21,7 +21,7 @@ fechamento de sprint.
     sprints (M07.x)
 
 - **Coluna "Telas"**: número da tela em
-  `docs/Ouroboros_22_telas-standalone.html` (mockup canônico).
+  `docs/Ouroboros_24_telas-standalone.html` (mockup canônico).
 
 - **Coluna "Schemas"**: schemas YAML do Vault tocados pela sprint
   (criados ou consumidos), conforme `docs/BRIEFING.md` §7.
@@ -80,7 +80,7 @@ fechamento de sprint.
 | `[todo]` | M16 | F-15 Alarme pessoal opt-in (com snooze + actions) | nova | alarme | 5-6h | — |
 | `[todo]` | M17 | F-16 To-do leve opt-in (com drag&drop + busca) | nova | tarefa | 4-5h | — |
 | `[todo]` | M18 | F-17 Contador "dias sem X" opt-in (com histórico) | nova | contador | 4h | — |
-| `[todo]` | M19 | APK Release Hardening v1.0.0 (icon + splash + E2E + tag) | — | — | 6-8h | — |
+| `[ok]` | M19 | APK Release Hardening v1.0.0 — ícone Ouroboros (anel purple→cyan + cabeça serpente em PNG 1024 + foreground 1024 + splash 2400 fundo Dracula bg-page #14151a), `app.json` versão 1.0.0 + runtimeVersion 1.0.0 + versionCode 1 + adaptive icon + splash, `eas.json` production com `gradleCommand: bundleRelease` + `autoIncrement: versionCode` + `env.NODE_ENV: production`, `credentials/README.md` (instruções keystore via eas credentials), 5 fluxos Maestro em `tests/e2e/` (onboarding + 4 críticos do BRIEFING §5), `scripts/release-apk.sh` (pipeline completo com checks + polling EAS + download .aab), `docs/RELEASE.md` (processo canônico + rollback + limites hard), HTML mockup renomeado 22→24 telas, `.gitignore` com keystore exclusion. 1057 testes / 121 suites verdes. Build production EAS disparado | — | — | 6-8h | tag `v1.0.0` |
 | `[done]` | — | **MVP v1 fechado** | — | — | — | tag `v1.0.0` |
 
 ## Backend paralelo (repo `protocolo-ouroboros`)
@@ -194,7 +194,7 @@ calendário visual (M11.5), CRUD completo de exercícios e treinos
 | Por que decidiram X? | `docs/ADRs/<NNNN>-<slug>.md` |
 | O que essa sprint entrega? | `docs/sprints/MNN-spec.md` |
 | Quais regras invioláveis? | `CLAUDE.md`, `VALIDATOR_BRIEF.md` |
-| Mockup visual de cada tela | `docs/Ouroboros_22_telas-standalone.html` |
+| Mockup visual de cada tela | `docs/Ouroboros_24_telas-standalone.html` |
 | Schemas YAML completos | `docs/BRIEFING.md` §7 |
 | Política de validação A/B/C | `VALIDATOR_BRIEF.md` §1.9 |
 | Histórico de fixes | `CHANGELOG.md` + `docs/sprints/M03.x-fixes-consolidados.md` |
