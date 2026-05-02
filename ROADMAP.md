@@ -71,7 +71,10 @@ fechamento de sprint.
 | `[todo]` | M11.5 | Calendário visual de conquistas (oEmbed + filtros) | 25 | evento, diario_emocional + media | 5-7h | — |
 | `[todo]` | M12 | Medidas (form + comparativo) | 12, 13 | medidas | 5-6h | — |
 | `[todo]` | M13 | Galeria + Detalhe + Cadastro Exercícios (CRUD) | 07, 08, 02 | exercicio | 8-10h | — |
-| `[todo]` | M14 | Mini Financeiro (read-only) | 22 | financas_cache | 4-5h | — |
+| `[ok]` | M14 | Mini Financeiro Tela 22 readonly — header laranja, banner modo leitura, CardHero (gasto semana cyan + delta), top 5 categorias com barras, lista virtualizada de 20 últimas transações (despesa cyan, crédito green), empty state, hook `useFinancasCache`, fixture web. +25 testes (912→937 / 103→108 suites). Reader em `src/lib/cache/` (uniformidade canônica com M10). Validação Nível A capturou render real via fixture | 22 | financas_cache | 4-5h | `29f0472` |
+| `[todo]` | M14-checkpoint-visual | Capturar 4 screenshots em Nível B/C com cache real do Vault sincronizado: hero com gasto semana real, top categorias preenchido, lista transações reais, empty state. Origem: ponto-cego do validador M14 (screenshot Nível A foi via fixture, não cache real) | 22 | — | 0,5-1h | — |
+| `[todo]` `[para]` | M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL | Backend Python (`MOB-bridge-2`/`mobile_cache.financas_cache`) gera `delta_textual` sem acentuação completa (ex.: `"abaixo da media"` em vez de `"abaixo da média"`). Mobile só renderiza string opaca (ADR-0005). Fix em `src/mobile_cache/financas_cache.py` no Python | 22 | financas_cache | 0,5h | — |
+| `[todo]` | M14.1 | Micro-fix: warning eslint `unused-disable` em `src/lib/hooks/useFinancasCache.ts:40` (disable do `no-require-imports` sem problema reportado). Remoção trivial. | — | — | 0,1h | — |
 | `[todo]` | M14.5 | Acompanhador de Ciclo Menstrual (opt-in) | nova | ciclo_menstrual | 5-6h | — |
 | `[todo]` | M15 | Settings (7 grupos + biometria + export) | 23 | (vários) | 7-8h | — |
 | `[todo]` | M16 | F-15 Alarme pessoal opt-in (com snooze + actions) | nova | alarme | 5-6h | — |
