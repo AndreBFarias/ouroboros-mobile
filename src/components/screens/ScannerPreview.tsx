@@ -8,7 +8,7 @@
 // pronto, popula campos via heurísticas regex; usuário revisa e
 // salva. Multi-page consolida em PDF único via expo-print antes de
 // gravar no Vault.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
@@ -25,7 +25,7 @@ import { springs } from '@/lib/motion';
 import { colors } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
-import { usePessoa } from '@/lib/stores/pessoa';
+import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
 import { extrairTexto } from '@/lib/scanner/text-recognition';
 import {
   extrairValor,
@@ -47,11 +47,8 @@ const CATEGORIAS: ReadonlyArray<{ value: CategoriaCanonica; label: string }> = [
   { value: 'outro', label: 'Outro' },
 ];
 
-const PESSOAS: ReadonlyArray<{ value: PessoaAutor; label: string }> = [
-  { value: 'pessoa_a', label: 'Pessoa A' },
-  { value: 'pessoa_b', label: 'Pessoa B' },
-];
-
+// Labels da lista de pessoas montadas em runtime (Regra -1: nenhum
+// nome real ou rotulo hardcoded). Ver useMemo dentro de ScannerPreview.
 const THRESHOLD_REVISAR = 0.8;
 
 export function ScannerPreview() {
@@ -60,6 +57,15 @@ export function ScannerPreview() {
   const toast = useToast();
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  const nomeA = useNomeDe('pessoa_a');
+  const nomeB = useNomeDe('pessoa_b');
+  const opcoesPessoa = useMemo<ReadonlyArray<{ value: PessoaAutor; label: string }>>(
+    () => [
+      { value: 'pessoa_a', label: nomeA },
+      { value: 'pessoa_b', label: nomeB },
+    ],
+    [nomeA, nomeB]
+  );
 
   const uris: string[] = typeof params.uris === 'string' && params.uris.length > 0
     ? params.uris.split('|')
@@ -317,7 +323,7 @@ export function ScannerPreview() {
           </Text>
           <ChipGroup
             mode="single"
-            options={PESSOAS.map((p) => ({
+            options={opcoesPessoa.map((p) => ({
               value: p.value,
               label: p.label,
               accent: 'purple',

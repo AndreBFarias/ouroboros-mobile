@@ -25,6 +25,7 @@ import {
 } from '@/lib/share/categorias';
 import type { InboxArquivoSubtipo } from '@/lib/schemas/inbox_arquivo';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+import { nomeDe } from '@/lib/stores/pessoa';
 
 // Ações disponiveis quando já existe arquivo no path canonico.
 export type ConflitoAcao = 'renomear' | 'substituir' | 'cancelar';
@@ -104,12 +105,12 @@ export function ShareReceiver(props: ShareReceiverProps) {
   const opcoesPessoa: ChipOption[] = [
     {
       value: 'pessoa_a',
-      label: nomePessoaA ?? 'Pessoa A',
+      label: nomePessoaA ?? nomeDe('pessoa_a'),
       accent: 'purple',
     },
     {
       value: 'pessoa_b',
-      label: nomePessoaB ?? 'Pessoa B',
+      label: nomePessoaB ?? nomeDe('pessoa_b'),
       accent: 'pink',
     },
   ];

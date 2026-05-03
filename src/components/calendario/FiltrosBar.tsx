@@ -1,5 +1,5 @@
 // Barra de filtros do calendário (M11.5). Cinco filtros (adendo A4):
-//   1. pessoa     — ChipGroup single ('A' / 'B' / 'Ambos').
+//   1. pessoa     — ChipGroup single (nome A / nome B / 'Casal').
 //   2. mês        — ChipGroup row ('Tudo', 'Este mês', 'Mês passado').
 //   3. tipo mídia — ChipGroup row ('Tudo', 'Foto', 'YouTube',
 //                  'Spotify', 'Áudio').
@@ -11,10 +11,11 @@
 //
 // Strings de UI em sentence case PT-BR com acentuação completa.
 // Comentários em PT-BR com acentuação correta.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Chip, ChipGroup, Input, Slider } from '@/components/ui';
 import { useVaultCompartilhado } from '@/lib/stores/filtroEfetivo';
+import { useNomeDe } from '@/lib/stores/pessoa';
 import { colors } from '@/theme/tokens';
 import type { PessoaId } from '@/lib/schemas/pessoa';
 import type {
@@ -47,20 +48,6 @@ const OPCOES_TIPO_MIDIA: { id: FiltroTipoMidia; label: string }[] = [
   { id: 'audio', label: 'Áudio' },
 ];
 
-const PESSOAS_OPTIONS_COMPARTILHADO = [
-  { value: 'pessoa_a', label: 'A', accent: 'purple' as const },
-  { value: 'pessoa_b', label: 'B', accent: 'pink' as const },
-  { value: 'ambos', label: 'Ambos', accent: 'cyan' as const },
-];
-
-// Sem 'ambos' quando vaultCompartilhado=false. Cada pessoa so ve
-// suas proprias conquistas para preservar privacidade declarada
-// em Settings.
-const PESSOAS_OPTIONS_PRIVADO = [
-  { value: 'pessoa_a', label: 'A', accent: 'purple' as const },
-  { value: 'pessoa_b', label: 'B', accent: 'pink' as const },
-];
-
 // Compara objeto FiltroMes via shape (string | { ano, mes }).
 function mesIgual(a: FiltroMes, b: FiltroMes): boolean {
   if (typeof a === 'string' || typeof b === 'string') return a === b;
@@ -79,9 +66,31 @@ export function FiltrosBar({
   // re-filtrar a lista a cada caractere digitado.
   const [bairroLocal, setBairroLocal] = useState(filtros.bairro);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Lê privacidade do Vault para esconder opção 'Ambos' quando
+  // Lê privacidade do Vault para esconder opção 'Casal' quando
   // pessoa.vaultCompartilhado=false.
   const vaultCompartilhado = useVaultCompartilhado();
+  const nomeA = useNomeDe('pessoa_a');
+  const nomeB = useNomeDe('pessoa_b');
+  const nomeAmbos = useNomeDe('ambos');
+
+  const pessoasOptionsCompartilhado = useMemo(
+    () => [
+      { value: 'pessoa_a', label: nomeA, accent: 'purple' as const },
+      { value: 'pessoa_b', label: nomeB, accent: 'pink' as const },
+      { value: 'ambos', label: nomeAmbos, accent: 'cyan' as const },
+    ],
+    [nomeA, nomeB, nomeAmbos]
+  );
+  // Sem 'ambos' quando vaultCompartilhado=false. Cada pessoa so ve
+  // suas proprias conquistas para preservar privacidade declarada
+  // em Settings.
+  const pessoasOptionsPrivado = useMemo(
+    () => [
+      { value: 'pessoa_a', label: nomeA, accent: 'purple' as const },
+      { value: 'pessoa_b', label: nomeB, accent: 'pink' as const },
+    ],
+    [nomeA, nomeB]
+  );
 
   useEffect(() => {
     setBairroLocal(filtros.bairro);
@@ -111,8 +120,8 @@ export function FiltrosBar({
         mode="single"
         options={
           vaultCompartilhado
-            ? PESSOAS_OPTIONS_COMPARTILHADO
-            : PESSOAS_OPTIONS_PRIVADO
+            ? pessoasOptionsCompartilhado
+            : pessoasOptionsPrivado
         }
         value={filtros.pessoa}
         onChange={(next) => {

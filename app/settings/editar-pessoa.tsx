@@ -13,7 +13,7 @@ import {
   Screen,
   useToast,
 } from '@/components/ui';
-import { usePessoa } from '@/lib/stores/pessoa';
+import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
 import { colors, spacing, typography } from '@/theme/tokens';
 
@@ -24,6 +24,8 @@ export default function EditarPessoa() {
   const setNome = usePessoa((s) => s.setNome);
   const tipoCompanhia = useSettings((s) => s.pessoa.tipoCompanhia);
   const ehDuo = tipoCompanhia === 'duo';
+  const tituloA = useNomeDe('pessoa_a');
+  const tituloB = useNomeDe('pessoa_b');
 
   const [nomeA, setNomeA] = useState(nomes.pessoa_a);
   const [nomeB, setNomeB] = useState(nomes.pessoa_b);
@@ -37,14 +39,14 @@ export default function EditarPessoa() {
   const salvar = () => {
     const a = nomeA.trim();
     if (a.length === 0) {
-      toast.show('Nome da pessoa A não pode ficar vazio.', 'warn');
+      toast.show('Nome da primeira pessoa não pode ficar vazio.', 'warn');
       return;
     }
     setNome('pessoa_a', a);
     if (ehDuo) {
       const b = nomeB.trim();
       if (b.length === 0) {
-        toast.show('Nome da pessoa B não pode ficar vazio.', 'warn');
+        toast.show('Nome da segunda pessoa não pode ficar vazio.', 'warn');
         return;
       }
       setNome('pessoa_b', b);
@@ -69,14 +71,14 @@ export default function EditarPessoa() {
         showsVerticalScrollIndicator={false}
       >
         <BlocoPessoa
-          titulo="Pessoa A"
+          titulo={tituloA}
           pessoa="pessoa_a"
           nome={nomeA}
           onChangeNome={setNomeA}
         />
         {ehDuo ? (
           <BlocoPessoa
-            titulo="Pessoa B"
+            titulo={tituloB}
             pessoa="pessoa_b"
             nome={nomeB}
             onChangeNome={setNomeB}
@@ -93,7 +95,7 @@ export default function EditarPessoa() {
               paddingHorizontal: spacing.lg,
             }}
           >
-            Ative segunda pessoa nas configurações para editar pessoa B.
+            Ative segunda pessoa nas configurações para editar a outra.
           </Text>
         )}
 

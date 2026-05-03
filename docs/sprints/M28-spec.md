@@ -152,4 +152,71 @@ refactor: m28 rotulo pessoa real em todas as ui substitui pessoa a b
   pessoa_a"` é técnico, não muda. Screen reader pronuncia o nome via
   conteúdo `<Text>` da própria label visível.
 
+## 10. Patches absorvidos do planejador (M28 patch-pass 1)
+
+### 10.1 Reusar `nomeDe()` existente — não criar `rotuloPessoa()` paralelo
+
+O planejador detectou que `nomeDe(pessoa: PessoaId)` em
+`src/lib/stores/pessoa.ts:69` já cobre `'ambos'` (retorna
+`PESSOAS_CONFIG.ambos.nome` = `'Ambos'`). Criar `rotuloPessoa` é
+duplicação. **Decisão revisada**:
+
+- **Alterar** `PESSOAS_CONFIG.ambos.nome` de `'Ambos'` para `'Casal'`
+  em `src/config/pessoas.config.ts` (e
+  `src/config/pessoas.config.example.ts` se houver).
+- **Adicionar apenas** `useNomeDe(pessoa)` hook reativo em
+  `src/lib/stores/pessoa.ts` (porque `nomeDe` é `getState()`,
+  não-reativo — UI precisa do hook).
+- **Não criar** `rotuloPessoa()` nem `useRotuloPessoa()`.
+- Substitua referências a `rotuloPessoa`/`useRotuloPessoa` em §2/§5/§9
+  da spec por `nomeDe`/`useNomeDe`.
+
+### 10.2 Call sites adicionais à varredura
+
+Spec §2 lista 5 paths. Grep canônico revela 3 ausentes:
+
+- `app/settings/editar-pessoa.tsx` (linhas 72/79: `titulo="Pessoa A"`/`"Pessoa B"`).
+- `src/components/screens/ShareReceiver.tsx` (linhas 107/112: fallback
+  `?? 'Pessoa A'`).
+- `src/components/screens/ScannerPreview.tsx` (linhas 51/52).
+
+Adicionar à lista de §2 e §5.
+
+### 10.3 `PessoaFilterBar.tsx` não existe — remover linha fantasma
+
+§2 lista `src/components/data/PessoaFilterBar.tsx` "se existir".
+Confirmado: não existe. Remover linha para reduzir ruído.
+
+### 10.4 "Sobreposto" é label de modo de visualização, não pessoa
+
+Em `MiniHumorScreen.tsx:54`, `'sobreposto'` é valor distinto (modo
+compartilhado de visualização). NÃO é equivalente a `'ambos'`.
+Decisão conservadora: **manter literal "Sobreposto" como label do
+modo** (não troca por nome de pessoa). Spec §2/§5/§9 deve refletir
+que apenas "Pessoa A", "Pessoa B" e "Ambos" (em contexto de pessoa)
+viram chamadas a `nomeDe()`. "Sobreposto" continua como rótulo de
+modo de comparação visual.
+
+### 10.5 Aritmética de proof-of-work
+
+- Baseline pós-M27: **1118 testes / 129 suites** (commit `02224fe`).
+- Sprint adiciona 1 suite nova
+  (`tests/lib/stores/pessoa.test.ts` ou similar) com testes de
+  `useNomeDe` reativo + cobertura de `'ambos'` → `'Casal'`. ~5 testes.
+- Suítes existentes ampliadas (humor/settings/calendario tests)
+  podem ganhar 1-2 casos cada — executor declara N exato.
+- Esperado: **+5 a +10 testes / +1 suite** → ~1123-1128 testes / 130 suites.
+- Bundle Hermes: ±0 KB (refactor cosmético + 1 hook).
+- Confirmar: `tests/lib/stores/pessoa.test.ts` **não existe hoje**
+  (fix preventivo de M26 — sem duplicata).
+
+### 10.6 Regra −1 nos screenshots
+
+§8 lista nomes reais "André / Vitória" no caminho de captura. Como
+o repositório não pode ter nomes reais hardcoded mesmo em docs,
+**substituir nomes reais por placeholders neutros** durante captura
+do AVD: usar "Nome_A" / "Nome_B" (defaults genéricos do
+`pessoas.config.ts`). Texto descritivo em §8 também deve usar
+placeholders neutros, não nomes reais.
+
 Sprint pronta para execução sem perguntas pendentes.

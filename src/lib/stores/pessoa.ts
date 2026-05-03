@@ -71,3 +71,13 @@ export function nomeDe(pessoa: PessoaId): string {
   const { nomes } = usePessoa.getState();
   return nomes[pessoa] ?? PESSOAS_CONFIG[pessoa].nome;
 }
+
+// Versao reativa de nomeDe(): usa o seletor zustand para que componentes
+// re-renderizem quando o nome muda (ex: usuario edita em Settings). Use
+// dentro de componentes; fora deles (logging, sort, util sincrono),
+// continue com nomeDe() puro.
+export function useNomeDe(pessoa: PessoaId): string {
+  const nomes = usePessoa((s) => s.nomes);
+  if (pessoa === 'ambos') return PESSOAS_CONFIG.ambos.nome;
+  return nomes[pessoa] ?? PESSOAS_CONFIG[pessoa].nome;
+}

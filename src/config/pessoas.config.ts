@@ -12,7 +12,7 @@ export interface PessoaConfig {
 export const PESSOAS_CONFIG: Record<PessoaId, PessoaConfig> = {
   pessoa_a: { nome: 'Nome_A', inicial: 'A', cor: '#bd93f9' },
   pessoa_b: { nome: 'Nome_B', inicial: 'B', cor: '#ff79c6' },
-  ambos: { nome: 'Ambos', inicial: 'AB', cor: '#bd93f9' },
+  ambos: { nome: 'Casal', inicial: 'AB', cor: '#bd93f9' },
 };
 
 export function inicialDe(pessoa: PessoaId): string {

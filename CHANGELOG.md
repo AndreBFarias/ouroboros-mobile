@@ -7,6 +7,57 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **M28 (2026-05-03)** — Varredura de identidade: nomes reais em
+  todas as UIs (substitui literais "Pessoa A"/"Pessoa B"/"Ambos").
+  - `src/lib/stores/pessoa.ts` ganha hook reativo
+    `useNomeDe(pessoa)`. `nomeDe()` síncrono mantido para usos
+    fora de componentes (logging, sort).
+  - `src/config/pessoas.config.ts` e `pessoas.config.example.ts`:
+    `PESSOAS_CONFIG.ambos.nome` muda de `'Ambos'` para `'Casal'`
+    — termo afetuoso e claro, "Ambos" era ambíguo em outros
+    contextos.
+  - `src/components/screens/MiniHumorScreen.tsx`: chips
+    `CHIP_OPTIONS_COMPARTILHADO` e `CHIP_OPTIONS_PRIVADO` viram
+    `useMemo` + `useNomeDe`. Literal `'Sobreposto'` preservado
+    (rótulo de modo de visualização compartilhada, não pessoa).
+  - `src/components/calendario/FiltrosBar.tsx`: chips de filtro
+    pessoa via `useMemo` + `useNomeDe`. Inclui "Casal" para
+    `'ambos'`.
+  - `app/settings/editar-pessoa.tsx`: títulos `"Pessoa A"`/`"Pessoa B"`
+    agora dinâmicos via `useNomeDe('pessoa_a')` / `'pessoa_b'`.
+  - `src/components/screens/ScannerPreview.tsx`: constante
+    estática `PESSOAS` substituída por `useMemo` + `useNomeDe`.
+  - `src/components/screens/ShareReceiver.tsx`: fallbacks
+    `?? 'Pessoa A'` substituídos por `?? nomeDe('pessoa_a')`
+    (versão síncrona, fora de componentes reativos).
+  - `src/components/data/HumorHeatmapStats.tsx`: constante
+    `NOMES_CURTOS` removida; rótulos sobreposto vêm de
+    `useNomeDe`.
+  - `tests/lib/stores/pessoa.test.ts` novo (7 testes): cobre
+    `nomeDe('ambos') → 'Casal'`, defaults `Nome_A`/`Nome_B`,
+    reatividade do hook quando `usePessoa.setNomes()` muda.
+  - `tests/config/pessoas.config.test.ts`: assert atualizado
+    para `'Casal'`.
+  - 2 screenshots Nível A em `docs/sprints/M28-screenshots/`:
+    `A-humor-chips-nomes-reais.png` (chips Nome_A/Nome_B/Sobreposto
+    com defaults genéricos respeitando Regra −1),
+    `A-settings-radio-nomes.png` (títulos uppercase NOME_A/NOME_B
+    via `useNomeDe`).
+  - **Achado colateral M28-COLAT-01** (não fixado inline,
+    proposto como sprint dedicada): rota `/calendario` não
+    estabiliza paint em web Nível A. `useConquistas` chama
+    `lerConquistas(vaultRoot)` que em web com `vaultRoot` mock
+    fica preso em `loading=true`. Combinado com aparente
+    oscilação `loaded` em `useFonts`, `OuroborosLoader` retorna
+    ao paint mesmo após app montar árvore. Validação visual de
+    `FiltrosBar` reservada para Nível B (emulador).
+  - Varredura final: `grep -rn "'Pessoa A'\|'Pessoa B'"
+    app/ src/ | grep -v accessibilityLabel | grep -v test`
+    retorna vazio. Único hit residual é `'Sobreposto'` em
+    `MiniHumorScreen.tsx:85` (intencional, label de modo).
+  - **Métricas**: 1118 → 1125 testes (+7), 129 → 130 suites (+1),
+    bundle Hermes 8.75 MB.
+
 - **M27 (2026-05-03)** — Refundação estrutural de navegação:
   MenuLateral substitui bottom tabs e FABRadial.
   - **Movimentação estrutural** (33 arquivos `git mv`): todo o group

@@ -27,8 +27,8 @@ describe('PESSOAS_CONFIG', () => {
     expect(PESSOAS_CONFIG.pessoa_b.cor).toBe('#ff79c6');
   });
 
-  it('default de ambos e Ambos com inicial AB', () => {
-    expect(PESSOAS_CONFIG.ambos.nome).toBe('Ambos');
+  it('default de ambos e Casal com inicial AB', () => {
+    expect(PESSOAS_CONFIG.ambos.nome).toBe('Casal');
     expect(PESSOAS_CONFIG.ambos.inicial).toBe('AB');
   });
 

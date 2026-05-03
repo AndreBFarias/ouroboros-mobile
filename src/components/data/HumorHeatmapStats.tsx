@@ -11,13 +11,9 @@
 import { type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { colors, spacing } from '@/theme/tokens';
+import { useNomeDe } from '@/lib/stores/pessoa';
 import type { HumorHeatmapEstatistica } from '@/lib/schemas/humor_heatmap_cache';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
-
-const NOMES_CURTOS: Record<PessoaAutor, string> = {
-  pessoa_a: 'A',
-  pessoa_b: 'B',
-};
 
 interface LinhaStatsProps {
   rotulo: string;
@@ -75,6 +71,8 @@ export function HumorHeatmapStats({
   pessoaB,
   modo,
 }: HumorHeatmapStatsProps): ReactNode {
+  const nomeA = useNomeDe('pessoa_a');
+  const nomeB = useNomeDe('pessoa_b');
   return (
     <View style={{ gap: spacing.sm }}>
       {modo === 'pessoa_a' && pessoaA ? (
@@ -85,8 +83,8 @@ export function HumorHeatmapStats({
       ) : null}
       {modo === 'sobreposto' && pessoaA && pessoaB ? (
         <>
-          <LinhaStats rotulo={`${NOMES_CURTOS.pessoa_a} · `} stats={pessoaA} />
-          <LinhaStats rotulo={`${NOMES_CURTOS.pessoa_b} · `} stats={pessoaB} />
+          <LinhaStats rotulo={`${nomeA} · `} stats={pessoaA} />
+          <LinhaStats rotulo={`${nomeB} · `} stats={pessoaB} />
         </>
       ) : null}
       <Text

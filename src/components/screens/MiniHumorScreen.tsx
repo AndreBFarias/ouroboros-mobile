@@ -39,7 +39,7 @@ import {
 } from '@/components/data';
 import { colors, spacing } from '@/theme/tokens';
 import { useHumorHeatmap } from '@/lib/hooks/useHumorHeatmap';
-import { usePessoa } from '@/lib/stores/pessoa';
+import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
 import {
   useFiltroPessoaEfetivo,
   useVaultCompartilhado,
@@ -48,19 +48,10 @@ import { DiaHumorModal } from './DiaHumorModal';
 import type { HumorHeatmapCell } from '@/lib/schemas/humor_heatmap_cache';
 import type { ModoFiltroHumor } from '@/lib/hooks/useHumorHeatmap';
 
-const CHIP_OPTIONS_COMPARTILHADO: ChipOption[] = [
-  { value: 'pessoa_a', label: 'Pessoa A', accent: 'purple' },
-  { value: 'pessoa_b', label: 'Pessoa B', accent: 'pink' },
-  { value: 'sobreposto', label: 'Sobreposto', accent: 'cyan' },
-];
-
-// Sem 'sobreposto': cada pessoa so ve seus proprios registros quando
-// vaultCompartilhado=false. UX honesta com o flag de privacidade.
-const CHIP_OPTIONS_PRIVADO: ChipOption[] = [
-  { value: 'pessoa_a', label: 'Pessoa A', accent: 'purple' },
-  { value: 'pessoa_b', label: 'Pessoa B', accent: 'pink' },
-];
-
+// Labels dos chips sao montadas em runtime via useNomeDe() para refletir
+// nomes reais que o usuario configurou no onboarding/Settings (Regra -1:
+// nenhum nome real hardcoded). 'sobreposto' permanece literal pois e
+// rotulo do modo de visualizacao, nao de pessoa.
 const DIA_MS = 24 * 60 * 60 * 1000;
 
 function formatarBannerData(geradoEm: string, agora: Date): {
@@ -84,6 +75,24 @@ export function MiniHumorScreen(): ReactNode {
   const filtroPessoa = useFiltroPessoaEfetivo();
   const vaultCompartilhado = useVaultCompartilhado();
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  const nomeA = useNomeDe('pessoa_a');
+  const nomeB = useNomeDe('pessoa_b');
+
+  const chipOptionsCompartilhado = useMemo<ChipOption[]>(
+    () => [
+      { value: 'pessoa_a', label: nomeA, accent: 'purple' },
+      { value: 'pessoa_b', label: nomeB, accent: 'pink' },
+      { value: 'sobreposto', label: 'Sobreposto', accent: 'cyan' },
+    ],
+    [nomeA, nomeB]
+  );
+  const chipOptionsPrivado = useMemo<ChipOption[]>(
+    () => [
+      { value: 'pessoa_a', label: nomeA, accent: 'purple' },
+      { value: 'pessoa_b', label: nomeB, accent: 'pink' },
+    ],
+    [nomeA, nomeB]
+  );
   const [modo, setModo] = useState<ModoFiltroHumor>(() => {
     // Inicializa com a pessoa ativa do filtro global; 'ambos' do
     // store mapeia para 'sobreposto' aqui (apenas se vault
@@ -182,8 +191,8 @@ export function MiniHumorScreen(): ReactNode {
           mode="single"
           options={
             vaultCompartilhado
-              ? CHIP_OPTIONS_COMPARTILHADO
-              : CHIP_OPTIONS_PRIVADO
+              ? chipOptionsCompartilhado
+              : chipOptionsPrivado
           }
           value={modo}
           onChange={handleModoChange}
