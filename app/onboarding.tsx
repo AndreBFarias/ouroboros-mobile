@@ -13,13 +13,14 @@
 //
 // Decisao M23: nao toca mais em useVault diretamente, nem em
 // requestVaultPermission. Quem cuida do vaultRoot e
-// inicializarVaultCanonico(). OuroborosLoader e dependencia soft de
-// M25; ate la usamos ActivityIndicator como placeholder.
+// inicializarVaultCanonico(). M25 substitui o placeholder
+// ActivityIndicator pelo OuroborosLoader compacto.
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MotiView } from 'moti';
 import { Check } from 'lucide-react-native';
+import { OuroborosLoader } from '@/components/brand';
 import {
   AvatarPicker,
   Button,
@@ -430,11 +431,7 @@ function Frame2({ nomeA, nomeB, iniciando, onConcluir }: Frame2Props) {
         }}
       >
         {iniciando ? (
-          <ActivityIndicator
-            size="large"
-            color={colors.purple}
-            accessibilityLabel="preparando vault"
-          />
+          <OuroborosLoader compacto />
         ) : (
           <Check size={48} color={colors.green} strokeWidth={2.4} />
         )}

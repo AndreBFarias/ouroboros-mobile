@@ -7,6 +7,61 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **M25 (2026-05-03)** — OuroborosLogo + OuroborosLoader (SVG nativo
+  animado).
+  - `src/components/brand/OuroborosLogo.tsx` novo (204 L): versão
+    estática do glifo. Replica fielmente o SVG de
+    `versão desktop/ouroboros-redesign-v1/index.html` linhas 110-194
+    em react-native-svg — viewBox 320x320, `<LinearGradient id="og1">`
+    purple→pink, `<RadialGradient id="og-glow">` purple 22%→0%, 4
+    grupos (ambient glow, outer dotted orbit, inner flow ring, main
+    snake com 4 arcos), cabeça com mandíbulas, olho, língua bífida,
+    wordmark "OUROBOROS"/"PROTOCOLO" via `<Text fontFamily="monospace">`
+    (fallback explícito porque JetBrains Mono ainda não carregou na
+    boot screen — spec §10.3). Props `tamanho` (default 320) e
+    `mostrarTexto` (default true).
+  - `src/components/brand/OuroborosLoader.tsx` novo (287 L): versão
+    animada com 4 shared values Reanimated 4 — gs1 (snake principal)
+    90s linear, gs2 (orbit dotted) 60s reverso, gs3 (inner flow ring)
+    30s linear, flow (stroke-dashoffset) 6s linear. Aplica
+    `useAnimatedProps` com `rotation`/`originX:160`/`originY:160`
+    (bug conhecido do `<G>` SVG não aceita `transform: [{ rotate }]`
+    via shared value — spec §10 patch 3). Cleanup com
+    `cancelAnimation` em todas 4 shared values. Props `tamanho`
+    (default 320) e `compacto` (default false → 96px sem texto).
+  - `src/components/brand/index.ts` novo: barrel.
+  - `tests/components/brand/OuroborosLogo.test.tsx` (3 testes):
+    snapshot estático, prop `mostrarTexto={false}` esconde wordmark,
+    prop `tamanho` ajusta SVG width/height.
+  - `tests/components/brand/OuroborosLoader.test.tsx` (6 testes):
+    render base, valor inicial das 4 shared values, cleanup
+    `cancelAnimation` no unmount.
+  - `app/_layout.tsx` substitui `if (!loaded) return null` por
+    `<View bg-page><OuroborosLoader /></View>` (boot screen UI
+    bloqueante, não BOOT_HOOK — CONTRACT §7.9). Loader fica dentro
+    do early return enquanto fontes carregam (~500ms-1s).
+  - `app/onboarding.tsx` Frame 2 "Tudo pronto" troca placeholder
+    `<ActivityIndicator>` por `<OuroborosLoader compacto />`.
+  - `jest.setup.cjs` ampliado: stubs `RadialGradient` e `Ellipse`
+    para o mock `react-native-svg` (CONTRACT §7.8 + spec §10.1) +
+    mock `react-native-worklets` ganha `createSerializable`,
+    `executeOnUIRuntimeSync`, `RuntimeKind`,
+    `serializableMappingCache`, `WorkletsModule`, `makeShareable`,
+    `isWorkletFunction`, `callMicrotasks` como no-ops. Necessário
+    porque `OuroborosLoader` é o primeiro arquivo em `src/` a
+    importar `react-native-reanimated` direto (M01-M24 só usavam
+    via `moti`, completamente mockado). **Armadilha A22 nova** —
+    registrada no `VALIDATOR_BRIEF.md` §6.
+  - 3 screenshots Nível A capturados via Playwright + system Chrome
+    `executablePath` em `docs/sprints/M25-screenshots/`:
+    `A-loader-boot.png`, `A-loader-compacto.png`, `A-logo-estatico.png`.
+  - **Métricas**: 1103 → 1112 testes (+9), 126 → 128 suites (+2),
+    bundle Hermes 8.74 MB.
+  - Veredito validador-sprint: APROVADO_COM_RESSALVAS — todas
+    ressalvas eram docs vivos (STATE/ROADMAP/CHANGELOG/BRIEF
+    desatualizados), aplicadas inline pelo orquestrador antes do
+    commit.
+
 - **M24 (2026-05-03)** — Resume state e auto-save de rascunhos.
   - `src/lib/stores/sessao.ts` novo: store zustand persist com
     `ultimaRota`, `rascunhos` (7 chaves: humorRapido, diarioEmocional,

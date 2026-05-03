@@ -124,9 +124,14 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
      return () => cancelAnimation(rotacaoG1);
    }, []);
 
+   // ATENCAO (Patch 3 do planejador): RN-SVG nao aceita
+   // `transform: [{ rotate: ... }]` em <G> via useAnimatedProps.
+   // Usar `rotation` numerico + `originX`/`originY` para girar
+   // em torno do centro do viewBox (160, 160 quando viewBox=320x320).
    const animatedPropsG1 = useAnimatedProps(() => ({
-     // SVG transform para <G>: rotate around center
-     transform: [{ rotate: `${rotacaoG1.value}deg` }],
+     rotation: rotacaoG1.value,
+     originX: 160,
+     originY: 160,
    }));
    ```
 6. Repetir para gs-2 (60s reverso → `withTiming(-360, ...)`), gs-3
@@ -184,5 +189,51 @@ Validar com `claude-in-chrome` MCP que a animação de fato roda
   loader.
 - **Animações em loop infinito**: `withRepeat(..., -1, false)` —
   velocidade constante, sem pause.
+
+## 10. Patches absorvidos do planejador (M25 patch-pass 1)
+
+### 10.1 Mock SVG do `jest.setup.cjs` (obrigatório, §7.8)
+
+O mock atual de `react-native-svg` em `jest.setup.cjs` linhas 87-112
+cobre `Svg/Circle/Path/G/Text/Defs/LinearGradient/Stop`, mas a spec
+usa `<RadialGradient>` (id `og-glow`) e `<Ellipse>` (head dome). Sem
+adicionar os stubs o snapshot quebra com `RadialGradient is not
+defined`. Conforme INTEGRATION-CONTRACT §7.8 a sprint dona adiciona
+o mock no mesmo commit:
+
+```js
+// dentro do return do jest.mock('react-native-svg', ...)
+RadialGradient: stub('RadialGradient'),
+Ellipse: stub('Ellipse'),
+```
+
+### 10.2 Decisão §7.9 — boot screen NÃO é BOOT_HOOK
+
+O gate de fontes já é `useEffect` direto em `app/_layout.tsx`
+(linhas 64-68). A boot screen substitui o `if (!loaded) return null;`
+por uma View com `<OuroborosLoader />` — UI bloqueante visível
+enquanto fontes carregam, não BOOT_HOOK (§7.9). O loader fica
+**dentro** do early return (renderiza UI no lugar do `null`), não
+substitui a montagem do Stack.
+
+### 10.3 Fonte do wordmark no SVG `<Text>`
+
+JetBrains Mono carrega via `expo-font` no mesmo `_layout.tsx` que
+mostra a boot screen — durante o boot a fonte ainda não está
+disponível. Decisão: o `<Text>` SVG do wordmark usa `fontFamily="monospace"`
+literal (fallback do sistema). Quando o loader aparece pós-boot
+(onboarding, telas pesadas), JetBrains Mono já está pronta — mas
+mantemos `monospace` no SVG para consistência. Wordmark "estilizado"
+fica reservado a `<Text>` RN nativo fora do SVG (não nesta sprint).
+
+### 10.4 Aritmética de proof-of-work
+
+- Baseline atual: **1103 testes / 126 suites** (commit 95d23dd).
+- Sprint adiciona **2 suites novas**:
+  - `OuroborosLogo.test.tsx` — snapshot 1 + props (mostrarTexto on/off, tamanho custom) 2 = **3 testes**.
+  - `OuroborosLoader.test.tsx` — render 1 + valor inicial das 4 shared values 4 + cleanup com `cancelAnimation` 1 = **6 testes**.
+- Esperado pós-sprint: **1112 testes / 128 suites** (+9 testes / +2 suites).
+- Arquivos novos: 5. Modificados: 3 (`_layout.tsx`, `onboarding.tsx`,
+  `jest.setup.cjs`). Linhas: ~450 (logo ~180 + loader ~220 + tests ~80).
 
 Sprint pronta para execução sem perguntas pendentes.

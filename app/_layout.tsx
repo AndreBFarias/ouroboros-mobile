@@ -6,9 +6,11 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
-import { Appearance, LogBox, StyleSheet } from 'react-native';
+import { Appearance, LogBox, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { OuroborosLoader } from '@/components/brand';
 import { ToastProvider, useToast } from '@/components/ui';
+import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
@@ -82,7 +84,22 @@ export default function RootLayout() {
   }, []);
 
   if (!loaded) {
-    return null;
+    // M25: enquanto JetBrainsMono carrega, mostra a marca animada em
+    // fundo bg-page (Dracula). Substitui o `return null` antigo que
+    // deixava a tela preta vazia. O loader vive dentro do early return
+    // (CONTRACT secao 7.9: nao e BOOT_HOOK, e UI bloqueante visivel).
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.bgPage,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <OuroborosLoader />
+      </View>
+    );
   }
 
   return (

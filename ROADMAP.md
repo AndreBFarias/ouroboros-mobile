@@ -91,9 +91,8 @@ fechamento de sprint.
 | `[ok]` | M22 | Vault auto-criado em /sdcard/Documents/Ouroboros sem SAF (probe + fallback SAF + 19 subpastas + useEffect direto + mocks Jest dual CJS+ESM). +14 testes (1057→1071). Bundle Hermes 8.72 MB. Pendência R1 (screenshot Nível B/C) | — | — | 5-6h | M22-spec.md (commit pós) |
 | `[ok]` | M23 | Onboarding 3 frames (remove Vault SAF e Sync). useOnboarding v2 sem syncMethod, indicador 3-segmentos, handleConcluir 3 caminhos (auto/saf-fallback/erro), 3 screenshots Nível A. +9 testes (1071→1080). Bundle Hermes 8.71 MB | 24 | — | 3-4h | M23-spec.md (commit pós) |
 | `[ok]` | M24 | Resume state e auto-save de rascunhos. `useSessao` store novo (7 rascunhos + 4 permissões + `ultimaRota`); `useAutoSaveRascunho` debounced 500ms; `SessaoBootGate` useEffect direto; A20 cap 2000 chars + canário 1500B. +23 testes (1080→1103, 126 suites). Bundle Hermes 8.73 MB | — | — | 5-6h | M24-spec.md (commit pós) |
-| `[wip]` | M25 | Componentes OuroborosLogo + OuroborosLoader SVG nativo | — | — | 4-5h | `M25-spec.md` |
-| `[todo]` | M24 | Resume state e auto-save de rascunhos | — | sessao | 5-6h | `M24-spec.md` |
-| `[todo]` | M26 | Refatorar 4 rotas modais com Screen opaco e index=0 | 15, 18, 20, 16 | — | 3h | `M26-spec.md` |
+| `[ok]` | M25 | OuroborosLogo + OuroborosLoader SVG nativo. 4 anéis Reanimated 4 com `useAnimatedProps` (gs1 90s, gs2 60s reverso, gs3 30s, flow 6s); pivot 160,160; cleanup `cancelAnimation` 4x; modo compacto 96px sem texto. Boot screen substitui `return null` por loader em `bg-page` (§7.9). Onboarding Frame 2 troca `ActivityIndicator` por loader compacto. Mock SVG ampliado (RadialGradient/Ellipse) e mock `react-native-worklets` ampliado (Armadilha A22). +9 testes (1103→1112, 126→128 suites). Bundle Hermes 8.74 MB | — | — | 4-5h | `M25-spec.md` |
+| `[wip]` | M26 | Refatorar 4 rotas modais com Screen opaco e index=0 | 15, 18, 20, 16 | — | 3h | `M26-spec.md` |
 | `[todo]` | M27 | MenuLateral substitui bottom tabs e FABRadial | — | navegacao | 6-7h | `M27-spec.md` |
 | `[todo]` | M28 | Nomes reais em todas as UIs (substitui Pessoa A/B/Sobreposto) | — | — | 3-4h | `M28-spec.md` |
 | `[todo]` | M29 | Settings v2: vibração simples + features default ON + sync removido | 23 | settings v2 | 4h | `M29-spec.md` |

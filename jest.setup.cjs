@@ -5,11 +5,30 @@
 // Reanimated: usa o mock oficial.
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 
-// Worklets: nada a fazer no ambiente de teste.
+// Worklets: nada a fazer no ambiente de teste. M25 ampliou o mock
+// para cobrir simbolos que o reanimated/index.ts usa em module-init
+// quando o arquivo de teste (ou source) importa diretamente
+// react-native-reanimated. Ate M25 todo uso passava por moti (que ja
+// esta mockado), entao runOnJS/runOnUI bastavam. Com OuroborosLoader
+// importando Animated.createAnimatedComponent direto, precisamos
+// expor createSerializable, executeOnUIRuntimeSync, RuntimeKind,
+// serializableMappingCache, WorkletsModule, makeShareable,
+// isWorkletFunction, callMicrotasks como no-ops.
 jest.mock('react-native-worklets', () => ({
   __esModule: true,
   runOnJS: (fn) => fn,
   runOnUI: (fn) => fn,
+  createSerializable: (value) => value,
+  makeShareable: (value) => value,
+  isWorkletFunction: () => false,
+  executeOnUIRuntimeSync: (fn) => fn,
+  callMicrotasks: () => undefined,
+  serializableMappingCache: {
+    set: () => undefined,
+    get: () => undefined,
+  },
+  RuntimeKind: { UI: 'UI', Worker: 'Worker', Default: 'Default' },
+  WorkletsModule: {},
 }));
 
 // Moti: substitui MotiView/Text/Image por View/Text/Image do RN para
@@ -107,6 +126,8 @@ jest.mock('react-native-svg', () => {
     Text: stub('SvgText'),
     Defs: stub('Defs'),
     LinearGradient: stub('LinearGradient'),
+    RadialGradient: stub('RadialGradient'),
+    Ellipse: stub('Ellipse'),
     Stop: stub('Stop'),
   };
 });
