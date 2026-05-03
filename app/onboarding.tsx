@@ -1,17 +1,25 @@
-// Onboarding inicial em 5 frames. Substitui o modal de permissao da
-// M02. Coleta nome do usuario primario, companhia (sozinho/duo +
-// nome do parceiro), pasta do Vault via SAF e método de sync. Ao
-// concluir, marca useOnboarding.done=true e redireciona para a
-// Tela 01 (hoje).
+// Onboarding inicial em 3 frames (M23). Substitui o fluxo de 5
+// frames anterior. Coleta nome do usuario primario e companhia
+// (sozinho/duo + nome do parceiro). Frame final dispara
+// inicializarVaultCanonico() (M22) que cuida sozinho de pedir
+// permissao de armazenamento, criar a estrutura de pastas e
+// persistir o vaultRoot. Em caso de OEM agressivo o helper cai em
+// SAF interativo (modo saf-fallback) e retorna sucesso; o usuario
+// recebe toast amarelo informando.
 //
-// Decisão M03: Sentence case + acentuacao PT-BR completa nas strings
+// Decisao M03: Sentence case + acentuacao PT-BR completa nas strings
 // de UI. accessibilityLabel sem acento. Comentarios sem acento
 // (convencao shell).
+//
+// Decisao M23: nao toca mais em useVault diretamente, nem em
+// requestVaultPermission. Quem cuida do vaultRoot e
+// inicializarVaultCanonico(). OuroborosLoader e dependencia soft de
+// M25; ate la usamos ActivityIndicator como placeholder.
 import { useState, type ReactNode } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MotiView } from 'moti';
-import { Check, Folder } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import {
   AvatarPicker,
   Button,
@@ -24,15 +32,13 @@ import {
 import { springs } from '@/lib/motion';
 import { colors, spacing } from '@/theme/tokens';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { useVault } from '@/lib/stores/vault';
 import {
   useOnboarding,
-  type SyncMethod,
   type TipoCompanhia,
 } from '@/lib/stores/onboarding';
-import { requestVaultPermission } from '@/lib/vault';
+import { inicializarVaultCanonico } from '@/lib/vault';
 
-type FrameId = 0 | 1 | 2 | 3 | 4;
+type FrameId = 0 | 1 | 2;
 
 export default function Onboarding() {
   const router = useRouter();
@@ -40,12 +46,8 @@ export default function Onboarding() {
   const setNome = usePessoa((s) => s.setNome);
   const nomeA = usePessoa((s) => s.nomes.pessoa_a);
   const nomeB = usePessoa((s) => s.nomes.pessoa_b);
-  const vaultRoot = useVault((s) => s.vaultRoot);
-  const setVaultRoot = useVault((s) => s.setVaultRoot);
   const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
   const setTipoCompanhia = useOnboarding((s) => s.setTipoCompanhia);
-  const syncMethod = useOnboarding((s) => s.syncMethod);
-  const setSync = useOnboarding((s) => s.setSync);
   const marcarConcluido = useOnboarding((s) => s.marcarConcluido);
 
   const [frame, setFrame] = useState<FrameId>(0);
@@ -53,16 +55,10 @@ export default function Onboarding() {
   const [duo, setDuo] = useState<boolean | null>(null);
   const [nomeBInput, setNomeBInput] = useState('');
   const [tipoSelecionado, setTipoSelecionado] = useState(false);
-  const [pedindoPasta, setPedindoPasta] = useState(false);
-  const [syncSelecionado, setSyncSelecionado] = useState(false);
+  const [iniciando, setIniciando] = useState(false);
 
   const avancar = () =>
-    setFrame((f) => (f >= 4 ? 4 : ((f + 1) as FrameId)));
-
-  const concluir = () => {
-    marcarConcluido();
-    router.replace('/');
-  };
+    setFrame((f) => (f >= 2 ? 2 : ((f + 1) as FrameId)));
 
   const handleFrame0 = () => {
     const nome = nomeInput.trim();
@@ -76,12 +72,12 @@ export default function Onboarding() {
 
   const handleFrame1 = () => {
     if (duo === null) {
-      toast.show('Escolha uma das opcoes.', 'error');
+      toast.show('Escolha uma das opções.', 'error');
       return;
     }
     if (duo) {
       if (!tipoSelecionado) {
-        toast.show('Voces sao casal ou amigos?', 'error');
+        toast.show('Vocês são casal ou amigos?', 'error');
         return;
       }
       const nome = nomeBInput.trim();
@@ -96,37 +92,31 @@ export default function Onboarding() {
     avancar();
   };
 
-  const handleEscolherPasta = async () => {
-    setPedindoPasta(true);
+  const handleConcluir = async () => {
+    if (iniciando) return;
+    setIniciando(true);
     try {
-      const uri = await requestVaultPermission();
-      if (uri) setVaultRoot(uri);
+      const res = await inicializarVaultCanonico();
+      if (res.modo === 'saf-fallback') {
+        toast.show('Pasta criada em local alternativo.', 'warn');
+      }
+      marcarConcluido();
+      router.replace('/');
+    } catch {
+      toast.show(
+        'Não foi possível criar a pasta. Tente novamente.',
+        'error'
+      );
     } finally {
-      setPedindoPasta(false);
+      setIniciando(false);
     }
-  };
-
-  const handleFrame2 = () => {
-    if (!vaultRoot) {
-      toast.show('Escolha uma pasta para o Vault.', 'error');
-      return;
-    }
-    avancar();
-  };
-
-  const handleFrame3 = () => {
-    if (!syncSelecionado) {
-      toast.show('Escolha como voce sincroniza.', 'error');
-      return;
-    }
-    avancar();
   };
 
   // Renderiza apenas o frame ativo. O conteudo de cada frame entra
-  // com translate da direita; não usamos AnimatePresence/exit para
+  // com translate da direita; nao usamos AnimatePresence/exit para
   // evitar tela em branco enquanto o exit do frame anterior anima.
   // ScrollView envolve o conteudo para caber forms longos (Frame 1
-  // com avatar do parceiro; Frame 2 com URI longa).
+  // com avatar do parceiro).
   return (
     <Screen>
       <View style={{ flex: 1, paddingTop: spacing.xl }}>
@@ -164,27 +154,10 @@ export default function Onboarding() {
             )}
             {frame === 2 && (
               <Frame2
-                vaultRoot={vaultRoot}
-                pedindo={pedindoPasta}
-                onEscolher={handleEscolherPasta}
-                onContinue={handleFrame2}
-              />
-            )}
-            {frame === 3 && (
-              <Frame3
-                sync={syncMethod}
-                setSync={(s) => {
-                  setSync(s);
-                  setSyncSelecionado(true);
-                }}
-                onContinue={handleFrame3}
-              />
-            )}
-            {frame === 4 && (
-              <Frame4
                 nomeA={nomeA}
                 nomeB={duo ? nomeB : null}
-                onConcluir={concluir}
+                iniciando={iniciando}
+                onConcluir={handleConcluir}
               />
             )}
           </FrameAnim>
@@ -203,7 +176,7 @@ function Indicador({ frameAtivo }: { frameAtivo: FrameId }) {
         alignSelf: 'center',
       }}
     >
-      {[0, 1, 2, 3, 4].map((i) => (
+      {[0, 1, 2].map((i) => (
         <View
           key={i}
           style={{
@@ -437,153 +410,13 @@ function CardEscolha({ ativo, label, onPress }: CardEscolhaProps) {
 }
 
 interface Frame2Props {
-  vaultRoot: string | null;
-  pedindo: boolean;
-  onEscolher: () => void;
-  onContinue: () => void;
-}
-
-function Frame2({ vaultRoot, pedindo, onEscolher, onContinue }: Frame2Props) {
-  return (
-    <View style={{ gap: spacing.lg }}>
-      <MicroOrange>Vault</MicroOrange>
-      <Heading>Onde fica seu Vault?</Heading>
-      <Sub>
-        Aponte uma pasta no seu celular onde os arquivos .md vão
-        ficar. Se você usa Obsidian ou Syncthing, escolha a mesma
-        pasta usada lá. Se não usa, qualquer pasta local serve.
-      </Sub>
-      <Card variant={vaultRoot ? 'active' : 'default'}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-          <Folder size={24} color={vaultRoot ? colors.cyan : colors.mutedDecor} strokeWidth={1.8} />
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                color: vaultRoot ? colors.fg : colors.mutedDecor,
-                fontFamily: vaultRoot
-                  ? 'JetBrainsMono_500Medium'
-                  : 'JetBrainsMono_400Regular',
-                fontSize: 13,
-                lineHeight: 20,
-              }}
-              numberOfLines={2}
-            >
-              {vaultRoot
-                ? decodeURIComponent(vaultRoot).replace(/^.*?:\/+/, '')
-                : 'Nenhuma pasta selecionada'}
-            </Text>
-          </View>
-        </View>
-      </Card>
-      <Button
-        label={vaultRoot ? 'Trocar pasta' : 'Escolher pasta'}
-        variant={vaultRoot ? 'ghost' : 'primary'}
-        onPress={onEscolher}
-        disabled={pedindo}
-      />
-      {vaultRoot ? (
-        <Text
-          style={{
-            color: colors.muted,
-            fontFamily: 'JetBrainsMono_400Regular',
-            fontSize: 12,
-            lineHeight: 18,
-          }}
-        >
-          As subpastas necessárias serão criadas automaticamente quando
-          você fizer o primeiro registro.
-        </Text>
-      ) : null}
-      <View style={{ height: spacing.md }} />
-      <Button label="Continuar" onPress={onContinue} disabled={!vaultRoot} />
-    </View>
-  );
-}
-
-interface Frame3Props {
-  sync: SyncMethod;
-  setSync: (s: SyncMethod) => void;
-  onContinue: () => void;
-}
-
-function Frame3({ sync, setSync, onContinue }: Frame3Props) {
-  return (
-    <View style={{ gap: spacing.lg }}>
-      <MicroOrange>Sincronização</MicroOrange>
-      <Heading>Como você sincroniza entre dispositivos?</Heading>
-      <Sub>
-        O Ouroboros não gerencia sincronização. Ele só lê e escreve
-        arquivos na pasta. Se você usa um serviço de sync, basta
-        apontar para a mesma pasta nos outros dispositivos.
-      </Sub>
-      <View style={{ gap: spacing.xl }}>
-        <CardSync
-          ativo={sync === 'syncthing'}
-          titulo="Syncthing"
-          descricao="Sincronização P2P entre dispositivos. Recomendado se você já tem o Syncthing rodando."
-          onPress={() => setSync('syncthing')}
-        />
-        <CardSync
-          ativo={sync === 'obsidian_sync'}
-          titulo="Obsidian Sync"
-          descricao="Serviço pago do Obsidian. Sincroniza pelo servidor da Obsidian Inc."
-          onPress={() => setSync('obsidian_sync')}
-        />
-        <CardSync
-          ativo={sync === 'nenhum'}
-          titulo="Não uso ainda"
-          descricao="Sem problema. Você pode escolher depois nos ajustes."
-          onPress={() => setSync('nenhum')}
-        />
-      </View>
-      <View style={{ height: spacing.md }} />
-      <Button label="Continuar" onPress={onContinue} />
-    </View>
-  );
-}
-
-interface CardSyncProps {
-  ativo: boolean;
-  titulo: string;
-  descricao: string;
-  onPress: () => void;
-}
-
-function CardSync({ ativo, titulo, descricao, onPress }: CardSyncProps) {
-  return (
-    <Card variant={ativo ? 'active' : 'default'} onPress={onPress} accessibilityLabel={`escolher ${titulo.toLowerCase()}`}>
-      <View style={{ gap: spacing.xs }}>
-        <Text
-          style={{
-            color: ativo ? colors.purple : colors.fg,
-            fontFamily: 'JetBrainsMono_500Medium',
-            fontSize: 14,
-          }}
-        >
-          {titulo}
-        </Text>
-        <Text
-          style={{
-            color: colors.muted,
-            fontFamily: 'JetBrainsMono_400Regular',
-            fontSize: 12,
-            lineHeight: 18,
-          }}
-        >
-          {descricao}
-        </Text>
-      </View>
-    </Card>
-  );
-}
-
-interface Frame4Props {
   nomeA: string;
   nomeB: string | null;
+  iniciando: boolean;
   onConcluir: () => void;
 }
 
-function Frame4({ nomeA, nomeB, onConcluir }: Frame4Props) {
+function Frame2({ nomeA, nomeB, iniciando, onConcluir }: Frame2Props) {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.lg }}>
       <View
@@ -596,7 +429,15 @@ function Frame4({ nomeA, nomeB, onConcluir }: Frame4Props) {
           justifyContent: 'center',
         }}
       >
-        <Check size={48} color={colors.green} strokeWidth={2.4} />
+        {iniciando ? (
+          <ActivityIndicator
+            size="large"
+            color={colors.purple}
+            accessibilityLabel="preparando vault"
+          />
+        ) : (
+          <Check size={48} color={colors.green} strokeWidth={2.4} />
+        )}
       </View>
       <Heading>Tudo pronto, {nomeA}.</Heading>
       <Text
@@ -614,7 +455,11 @@ function Frame4({ nomeA, nomeB, onConcluir }: Frame4Props) {
       </Text>
       <View style={{ height: spacing.lg }} />
       <View style={{ alignSelf: 'stretch' }}>
-        <Button label="Começar" onPress={onConcluir} />
+        <Button
+          label={iniciando ? 'Preparando…' : 'Começar'}
+          onPress={onConcluir}
+          disabled={iniciando}
+        />
       </View>
     </View>
   );

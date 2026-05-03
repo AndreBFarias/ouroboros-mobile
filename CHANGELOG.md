@@ -7,6 +7,35 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **M23 (2026-05-02)** — Onboarding 3 frames sem SAF/Sync.
+  - `app/onboarding.tsx` reduzido de 5 frames (621L) para 3 frames
+    (466L, -25%): boas-vindas+nome → companhia+nome parceiro →
+    "Tudo pronto" + botão "Começar".
+  - Botão "Começar" chama `inicializarVaultCanonico()` (M22) e
+    distingue 3 caminhos do retorno: `auto` (silencioso), `saf-fallback`
+    (toast warning amarelo "Pasta criada em local alternativo." sem
+    bloquear), exceção (toast erro vermelho "Não foi possível criar
+    a pasta. Tente novamente.").
+  - `useOnboarding` shape v2: removido `syncMethod`/`SyncMethod`/`setSync`,
+    bump persist key `ouroboros.onboarding.v1` → `v2` (usuários v1
+    refazem onboarding — aceitável na refundação).
+  - Indicador de progresso `[0,1,2,3,4].map` → `[0,1,2].map` (3 segmentos).
+  - Removidos imports legados `useVault`, `requestVaultPermission`,
+    `Folder`, `SyncMethod`, componentes `<Frame2Vault>` e `<Frame3Sync>`.
+  - Toasts pré-existentes corrigidos com acentuação PT-BR completa
+    (Regra BRIEF §1.4): "Escolha uma das opções.", "Vocês são casal
+    ou amigos?".
+  - 9 testes novos em `tests/app/onboarding.test.tsx` cobrindo 3
+    frames + caminho saf-fallback + caminho erro.
+  - 3 screenshots Nível A capturados via Playwright headless em
+    viewport mobile 412×915 @2x:
+    `docs/sprints/M23-screenshots/A-frame{0,1,2}-*.png`.
+  - **Métricas**: 1071 → 1080 testes (+9), 122 → 123 suites (+1),
+    bundle Hermes 8.71 MB.
+  - Veredito `validador-sprint`: APROVADO_COM_RESSALVAS. 14/14 checks
+    universais OK ou n/a. 4 ressalvas (3 toasts sem acento + TODO
+    enganoso em `permissions.ts`) fixadas inline antes do commit.
+
 - **M22 (2026-05-02)** — Vault canônico auto-criado em
   `/sdcard/Documents/Ouroboros/` sem prompt SAF interativo.
   - `src/lib/vault/permissions.ts` ganha `inicializarVaultCanonico()`,

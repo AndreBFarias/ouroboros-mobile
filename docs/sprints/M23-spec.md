@@ -29,8 +29,18 @@ Frames antigos de seleção de pasta SAF e de método de sync.
   - Mostrar `<OuroborosLoader compacto />` durante a chamada
     (M25 dependência — se ainda não existir, usar `<ActivityIndicator />`
     placeholder).
-  - Toast de erro "Não foi possível criar a pasta. Tente novamente."
+  - Toast de erro vermelho "Não foi possível criar a pasta. Tente novamente."
     se permissão negada.
+  - Toast informativo amarelo "Pasta criada em local alternativo."
+    se M22 retornar `modo: 'saf-fallback'` (probe falhou em OEM
+    agressivo, vide A19; usuário escolheu pasta manualmente via SAF).
+    Onboarding **prossegue** após o toast (não bloqueia).
+  - Indicador de progresso (linha ~206 hoje `[0,1,2,3,4].map`)
+    vira `[0,1,2].map`.
+  - **Remover imports legados**: `useVault`, `requestVaultPermission`,
+    `Folder`, `SyncMethod`, `<Frame2Vault>`, `<Frame3Sync>` (vault
+    não é mais tocado pelo onboarding — quem cuida do `vaultRoot` é
+    `inicializarVaultCanonico()`).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/stores/onboarding.ts`
   — remover campos `syncMethod` (não mais consumido). Manter
   `tipoCompanhia` (ainda usado para "sozinho" vs "casal/amigos").
@@ -83,11 +93,16 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
    - Bump persist key para v2 (migração one-shot ignora dados v1).
 2. Reescrever `app/onboarding.tsx`:
    - State: `frame: 0|1|2`.
-   - Função `handleConcluir`:
+   - Função `handleConcluir` distingue 3 caminhos do retorno de
+     `inicializarVaultCanonico()` (M22 retorna
+     `{ vaultRoot, criado, modo: 'auto'|'saf-fallback'|'web' }`):
      ```ts
      const handleConcluir = async () => {
        try {
-         await inicializarVaultCanonico();
+         const res = await inicializarVaultCanonico();
+         if (res.modo === 'saf-fallback') {
+           toast.show('Pasta criada em local alternativo.', 'warning');
+         }
          marcarConcluido();
          router.replace('/');
        } catch {
@@ -96,11 +111,18 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
      };
      ```
    - Frame 2 mostra `<OuroborosLoader />` enquanto async roda.
-   - Remover componentes `Frame2` (Vault) e `Frame3` (Sync) totalmente.
+   - Remover componentes `Frame2Vault` (SAF) e `Frame3Sync` totalmente.
    - Renomear `Frame4` → `Frame2` (tudo pronto).
+2.5. **Cleanup de imports e indicador**:
+   - Remover imports `useVault`, `requestVaultPermission`, `Folder`
+     (lucide-icon do antigo Frame Vault), `SyncMethod` (lucide-icon
+     do antigo Frame Sync).
+   - Atualizar `Indicador` de progresso: `[0, 1, 2, 3, 4].map`
+     vira `[0, 1, 2].map`.
 3. Atualizar testes:
    - `onboarding.test.ts`: shape v2 sem `syncMethod`.
-   - `onboarding.test.tsx`: cobrir os 3 frames + erro de permissão.
+   - `onboarding.test.tsx`: cobrir os 3 frames + erro de permissão
+     + caminho saf-fallback (toast warning visível).
 
 ## 6. Verificação runtime-real
 
@@ -148,6 +170,14 @@ Comparar com mockup `docs/Ouroboros_24_telas-standalone.html` Tela 24
 - **Erro de permissão tratado dentro do Frame 2**: usuário pode
   tentar de novo sem voltar frames. Se recusou no nível do SO,
   precisa ir em Settings do Android e habilitar manualmente.
+- **`saf-fallback` toast warning amarelo, não bloqueia onboarding**:
+  M22 retorna `modo: 'saf-fallback'` quando probe write+read+delete
+  falhou em OEM agressivo (vide A19) e usuário escolheu pasta
+  manualmente via SAF. Onboarding mostra toast informativo curto e
+  prossegue. Sem isso, usuário ficaria sem feedback do que aconteceu.
+- **`vaultRoot` não tocado pelo onboarding**: `useVault` removido
+  dos imports. Quem seta `vaultRoot` é `inicializarVaultCanonico()`
+  internamente. Onboarding só dispara o init e reage ao resultado.
 - **OuroborosLoader como dependência soft**: M25 ainda não rodou
   quando esta sprint executa em ordem; usar
   `<ActivityIndicator color={colors.purple} />` placeholder por

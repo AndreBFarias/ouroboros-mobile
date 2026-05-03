@@ -9,7 +9,6 @@ describe('useOnboarding', () => {
     const s = useOnboarding.getState();
     expect(s.done).toBe(false);
     expect(s.tipoCompanhia).toBe('sozinho');
-    expect(s.syncMethod).toBe('nenhum');
   });
 
   it('marcarConcluido vira a flag para true', () => {
@@ -24,23 +23,18 @@ describe('useOnboarding', () => {
     expect(useOnboarding.getState().tipoCompanhia).toBe('amigos');
   });
 
-  it('setSync aceita os tres metodos', () => {
-    useOnboarding.getState().setSync('syncthing');
-    expect(useOnboarding.getState().syncMethod).toBe('syncthing');
-    useOnboarding.getState().setSync('obsidian_sync');
-    expect(useOnboarding.getState().syncMethod).toBe('obsidian_sync');
-    useOnboarding.getState().setSync('nenhum');
-    expect(useOnboarding.getState().syncMethod).toBe('nenhum');
+  it('shape v2 nao expoe syncMethod nem setSync', () => {
+    const s = useOnboarding.getState() as unknown as Record<string, unknown>;
+    expect(s.syncMethod).toBeUndefined();
+    expect(s.setSync).toBeUndefined();
   });
 
   it('resetar volta tudo ao default', () => {
     useOnboarding.getState().marcarConcluido();
     useOnboarding.getState().setTipoCompanhia('casal');
-    useOnboarding.getState().setSync('syncthing');
     useOnboarding.getState().resetar();
     const s = useOnboarding.getState();
     expect(s.done).toBe(false);
     expect(s.tipoCompanhia).toBe('sozinho');
-    expect(s.syncMethod).toBe('nenhum');
   });
 });

@@ -207,7 +207,7 @@ export async function inicializarVaultCanonico(): Promise<ResultadoInicializacao
 // o usuario cancelar. Persiste o URI. No web devolve URI mock para
 // permitir validacao visual do app sem precisar de SAF.
 //
-// TODO M23 remove after onboarding (usado apenas como fallback SAF).
+// Mantida apos M23 como fallback SAF de inicializarVaultCanonico
 export async function requestVaultPermission(): Promise<string | null> {
   if (isWeb()) {
     const mockUri = 'web://mock-vault/Protocolo-Ouroboros';

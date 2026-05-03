@@ -6,7 +6,6 @@ export { useVault } from './vault';
 export {
   useOnboarding,
   type TipoCompanhia as OnboardingTipoCompanhia,
-  type SyncMethod as OnboardingSyncMethod,
 } from './onboarding';
 export { useHasHydrated } from './hydrated';
 export {

@@ -1,19 +1,21 @@
-// Store de onboarding. Marca conclusao do fluxo de 4 frames e
-// guarda escolhas informativas (tipo de companhia, método de sync).
-// Persiste em SecureStore via secureStorage adapter.
+// Store de onboarding. Marca conclusao do fluxo de 3 frames (M23) e
+// guarda escolha informativa de tipo de companhia (ainda usado para
+// esconder toggle pessoa quando sozinho na Tela 01 e no FAB).
+//
+// Persiste em SecureStore via secureStorage adapter. Bump de chave
+// para v2 em M23: usuarios v1 perdem o flag done (refazem onboarding
+// na refundacao da v1.0). syncMethod removido por completo - a
+// configuracao de sync vive em useSettings.sync.metodo (M15).
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
 
 export type TipoCompanhia = 'sozinho' | 'casal' | 'amigos';
-export type SyncMethod = 'syncthing' | 'obsidian_sync' | 'nenhum';
 
 interface OnboardingStore {
   done: boolean;
   tipoCompanhia: TipoCompanhia;
-  syncMethod: SyncMethod;
   setTipoCompanhia: (t: TipoCompanhia) => void;
-  setSync: (s: SyncMethod) => void;
   marcarConcluido: () => void;
   resetar: () => void;
 }
@@ -23,15 +25,13 @@ export const useOnboarding = create<OnboardingStore>()(
     (set) => ({
       done: false,
       tipoCompanhia: 'sozinho',
-      syncMethod: 'nenhum',
       setTipoCompanhia: (tipoCompanhia) => set({ tipoCompanhia }),
-      setSync: (syncMethod) => set({ syncMethod }),
       marcarConcluido: () => set({ done: true }),
       resetar: () =>
-        set({ done: false, tipoCompanhia: 'sozinho', syncMethod: 'nenhum' }),
+        set({ done: false, tipoCompanhia: 'sozinho' }),
     }),
     {
-      name: 'ouroboros.onboarding.v1',
+      name: 'ouroboros.onboarding.v2',
       storage: createJSONStorage(() => secureStorage),
     }
   )
