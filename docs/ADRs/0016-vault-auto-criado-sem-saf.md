@@ -145,7 +145,7 @@ reinstall.
 ```bash
 # No celular após onboarding
 adb shell ls /sdcard/Documents/Ouroboros/
-# espera ver as 12+ subpastas
+# espera ver as 19 subpastas canonicas (9 raiz + 3 inbox + 6 media + 1 cache)
 
 # No desktop após Syncthing pareado
 ls ~/Protocolo-Ouroboros/

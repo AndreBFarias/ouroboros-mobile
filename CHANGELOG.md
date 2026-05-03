@@ -5,6 +5,44 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Adicionado
+
+- **M22 (2026-05-02)** — Vault canônico auto-criado em
+  `/sdcard/Documents/Ouroboros/` sem prompt SAF interativo.
+  - `src/lib/vault/permissions.ts` ganha `inicializarVaultCanonico()`,
+    `garantirSubpastas()`, `pedirPermissaoStorage()`,
+    `probeVaultWritable()` e constante `SUBPASTAS_CANONICAS` com 19
+    paths leaf (9 raiz + 3 inbox + 6 media + 1 cache).
+  - **A19 implementada (BRIEF §4)**: probe write+read+delete num
+    arquivo `.ouroboros-probe` antes de marcar vault como válido. Se
+    probe falhar (MIUI/Xiaomi/OneUI restritivo), fallback automático
+    para `requestVaultPermission()` SAF legacy. Modo retornado:
+    `'auto' | 'saf-fallback' | 'web'`.
+  - `src/lib/vault/paths.ts` ganha 6 helpers `mediaXxxPath` e 6
+    entries em `VAULT_FOLDERS`.
+  - `app.json` adiciona 3 permissões Android: `WRITE_EXTERNAL_STORAGE`,
+    `READ_EXTERNAL_STORAGE`, `MANAGE_EXTERNAL_STORAGE`.
+  - `app/_layout.tsx` ganha `<VaultBootGate />` via `useEffect`
+    direto (NÃO `BOOT_HOOKS`, vide CONTRACT §7.9 — falha precisa
+    propagar à UI via toast).
+  - `jest.setup.cjs` ganha mocks dual CJS+ESM para
+    `PermissionsAndroid` e `expo-intent-launcher` (vide CONTRACT
+    §7.8).
+  - Nova dep direta `expo-intent-launcher@~13.0.8`.
+  - 14 testes novos em `tests/lib/vault/permissions-init.test.ts`
+    cobrindo Android <30, ≥30, web no-op, idempotência, probe
+    sucesso/falha, fallback SAF cancelado, contagem 19 subpastas.
+  - **Métricas**: 1057 → 1071 testes (+14), 121 → 122 suites,
+    bundle Hermes Android 8.72 MB.
+  - **Pendência R1**: screenshot Nível B/C
+    (`docs/sprints/M22-screenshots/A-permissao-pedida.png`) capturar
+    quando emulador `ouroboros-test` ou Redmi Note 13 do usuário
+    estiverem disponíveis (sprint sem UI direta — só infra de boot).
+  - Veredito `validador-sprint`: APROVADO_COM_RESSALVAS. 14/14
+    checks universais passaram (ou n/a). Ressalvas eram cosméticas
+    (contagem "18+/12+/17 leaves" desatualizada vs real 19) —
+    fixadas inline antes do commit.
+
 A `v1.0.0-rc1` foi retirada do GitHub Releases por bugs críticos
 descobertos no uso real (vault inacessível, captura "tela infinita
 preta", FAB radial sem callbacks ligados, alarmes mudos, identidade

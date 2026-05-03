@@ -19,6 +19,12 @@ export {
   cicloPath,
   alarmesPath,
   contadoresPath,
+  mediaFotosPath,
+  mediaAudiosPath,
+  mediaVideosPath,
+  mediaFrasesPath,
+  mediaAvataresPath,
+  mediaScannerPath,
   fileMatchesDate,
   VAULT_FOLDERS,
 } from './paths';
@@ -34,7 +40,17 @@ export {
   requestVaultPermission,
   loadVaultRoot,
   clearVaultRootStorage,
+  inicializarVaultCanonico,
+  garantirSubpastas,
+  pedirPermissaoStorage,
+  SUBPASTAS_CANONICAS,
   VAULT_ROOT_STORAGE_KEY,
+  VAULT_CANONICO_PATH,
+  VAULT_CANONICO_URI,
+} from './permissions';
+export type {
+  ModoInicializacao,
+  ResultadoInicializacao,
 } from './permissions';
 
 export {

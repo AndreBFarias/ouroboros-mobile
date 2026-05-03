@@ -218,6 +218,50 @@ export function financasCachePath(): string {
   return '.ouroboros/cache/financas-cache.json';
 }
 
+// media/fotos/YYYY-MM-DD-<rand>.jpg (M22 + M34). Pasta dedicada para
+// fotos capturadas via menu verde de captura. Caller fornece sufixo
+// random curto (4-6 chars) para deduplicar dentro do mesmo dia.
+export function mediaFotosPath(date: Date, rand: string): string {
+  return `media/fotos/${formatDateYmd(date)}-${rand}.jpg`;
+}
+
+// media/audios/YYYY-MM-DD-<rand>.m4a (M22 + M34). Idem fotos: pasta
+// dedicada para audio do diario emocional ou captura livre. M06.5 hoje
+// usa assets/<formatDateYmdHm>-<suffix>.m4a; migracao para media/audios
+// fica para M39 (assetsLegacy migrator).
+export function mediaAudiosPath(date: Date, rand: string): string {
+  return `media/audios/${formatDateYmd(date)}-${rand}.m4a`;
+}
+
+// media/videos/YYYY-MM-DD-<rand>.mp4 (M22 + M34). Pasta nova para
+// videos curtos capturados pelo menu verde.
+export function mediaVideosPath(date: Date, rand: string): string {
+  return `media/videos/${formatDateYmd(date)}-${rand}.mp4`;
+}
+
+// media/frases/YYYY-MM-DD-<slug>.md (M22 + M34). Frase capturada como
+// .md curto: caller fornece slug derivado das primeiras palavras.
+export function mediaFrasesPath(date: Date, slug: string): string {
+  return `media/frases/${formatDateYmd(date)}-${slug}.md`;
+}
+
+// media/avatares/<pessoa>-<ts>.jpg (M22 + M34). Avatares trocados ao
+// longo do tempo: o timestamp evita cache do <Image> (vide A6) e
+// preserva historico para o usuario voltar atras.
+export function mediaAvataresPath(
+  pessoa: 'pessoa_a' | 'pessoa_b',
+  ts: number
+): string {
+  return `media/avatares/${pessoa}-${ts}.jpg`;
+}
+
+// media/scanner/<slug>.jpg (M22 + M34). Documentos digitalizados
+// (notas, recibos) que ainda nao foram movidos para inbox/financeiro.
+// Caller fornece slug em kebab-case ASCII.
+export function mediaScannerPath(slug: string): string {
+  return `media/scanner/${slug}.jpg`;
+}
+
 // Pasta-prefixos das pastas canonicas do mobile. Reader/lister deve
 // usar somente estes; nunca varrer raiz para não tocar dados humanos.
 //
@@ -238,6 +282,7 @@ export const VAULT_FOLDERS = {
   inboxCasaGarantia: 'inbox/casa/garantia',
   inboxCasaContrato: 'inbox/casa/contrato',
   inboxOutros: 'inbox/outros',
+  inboxArquivos: 'inbox/arquivos',
   treinos: 'treinos',
   treinosDraft: 'treinos/draft',
   medidas: 'medidas',
@@ -248,6 +293,12 @@ export const VAULT_FOLDERS = {
   contadores: 'contadores',
   assets: 'assets',
   assetsExercicios: 'assets/exercicios',
+  mediaFotos: 'media/fotos',
+  mediaAudios: 'media/audios',
+  mediaVideos: 'media/videos',
+  mediaFrases: 'media/frases',
+  mediaAvatares: 'media/avatares',
+  mediaScanner: 'media/scanner',
   cache: '.ouroboros/cache',
 } as const;
 

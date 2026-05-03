@@ -22,11 +22,27 @@ if [[ ! -d "$VAULT" ]]; then
   exit 1
 fi
 
+# M22: estrutura canonica espelhando inicializarVaultCanonico() do
+# Android. mkdir -p e idempotente; nao falha se ja existir.
 mkdir -p "$VAULT/daily"
 mkdir -p "$VAULT/eventos"
-mkdir -p "$VAULT/inbox/mente/diario"
-mkdir -p "$VAULT/treinos"
 mkdir -p "$VAULT/marcos"
+mkdir -p "$VAULT/treinos"
+mkdir -p "$VAULT/exercicios"
+mkdir -p "$VAULT/medidas"
+mkdir -p "$VAULT/alarmes"
+mkdir -p "$VAULT/tarefas"
+mkdir -p "$VAULT/contadores"
+mkdir -p "$VAULT/inbox/mente/diario"
+mkdir -p "$VAULT/inbox/saude/ciclo"
+mkdir -p "$VAULT/inbox/arquivos"
+mkdir -p "$VAULT/media/fotos"
+mkdir -p "$VAULT/media/audios"
+mkdir -p "$VAULT/media/videos"
+mkdir -p "$VAULT/media/frases"
+mkdir -p "$VAULT/media/avatares"
+mkdir -p "$VAULT/media/scanner"
+mkdir -p "$VAULT/.ouroboros/cache"
 
 DAILY="$VAULT/daily/2026-04-29.md"
 EVENTO="$VAULT/eventos/2026-04-29-cafe.md"

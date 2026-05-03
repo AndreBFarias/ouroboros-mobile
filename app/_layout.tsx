@@ -8,12 +8,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { Appearance, LogBox, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { ToastProvider } from '@/components/ui';
+import { ToastProvider, useToast } from '@/components/ui';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { useVault } from '@/lib/stores/vault';
+import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import '../global.css';
 
 // Mantem a splash visivel até as fontes carregarem.
@@ -83,6 +86,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BiometriaGate>
         <ToastProvider>
+          <VaultBootGate />
           <Stack
             screenOptions={{
               headerShown: false,
@@ -106,4 +110,29 @@ export default function RootLayout() {
       </BiometriaGate>
     </GestureHandlerRootView>
   );
+}
+
+// M22: gate critico de Vault. Roda dentro do ToastProvider porque o
+// erro de permissao precisa propagar visualmente ao usuario (toast),
+// nao pode ser silenciado em BOOT_HOOKS (vide CONTRACT secao 7.9).
+// Reentra na inicializacao quando o usuario fecha o onboarding com
+// done=true mas o vaultRoot ainda esta null - cobre o caso de o
+// usuario apagar a pasta no file manager entre sessoes.
+function VaultBootGate() {
+  const toast = useToast();
+  useEffect(() => {
+    const onboardingDone = useOnboarding.getState().done;
+    const vaultRoot = useVault.getState().vaultRoot;
+    if (!onboardingDone || vaultRoot) return;
+    inicializarVaultCanonico().catch(() => {
+      toast.show(
+        'Não foi possível acessar a pasta do Vault. Verifique as permissões em Configurações.',
+        'error'
+      );
+    });
+    // toast trocaria identidade entre renders; usamos snapshot via
+    // useEffect uma unica vez na mount do gate. Plugin react-hooks
+    // nao habilitado no eslint config do projeto.
+  }, []);
+  return null;
 }

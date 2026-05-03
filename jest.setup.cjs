@@ -315,6 +315,96 @@ jest.mock('expo-speech-recognition', () => ({
 // jszip: usa o real (puro JS, sem nativo) para nao reimplementar a
 // API toda em mock. So precisa do path correto via moduleNameMapper.
 
+// M22: PermissionsAndroid e expo-intent-launcher mockados para que
+// inicializarVaultCanonico() rode em testes sem tocar APIs nativas.
+// Default: request resolve 'granted', Intent resolve resultCode -1
+// (ok vazio). Testes especificos sobrescrevem com mockResolvedValueOnce
+// para simular cenario de probe falhando (vide A19).
+//
+// O barrel 'react-native' resolve PermissionsAndroid via
+// require('./Libraries/.../PermissionsAndroid').default. Por isso o mock
+// precisa expor tanto .default (CommonJS) quanto as chaves (ESM).
+jest.mock(
+  'react-native/Libraries/PermissionsAndroid/PermissionsAndroid',
+  () => {
+    const stub = {
+      request: jest.fn().mockResolvedValue('granted'),
+      check: jest.fn().mockResolvedValue(true),
+      requestMultiple: jest.fn().mockResolvedValue({}),
+      PERMISSIONS: {
+        WRITE_EXTERNAL_STORAGE: 'android.permission.WRITE_EXTERNAL_STORAGE',
+        READ_EXTERNAL_STORAGE: 'android.permission.READ_EXTERNAL_STORAGE',
+      },
+      RESULTS: {
+        GRANTED: 'granted',
+        DENIED: 'denied',
+        NEVER_ASK_AGAIN: 'never_ask_again',
+      },
+    };
+    return { __esModule: true, default: stub, ...stub };
+  }
+);
+
+jest.mock('expo-intent-launcher', () => ({
+  __esModule: true,
+  startActivityAsync: jest.fn().mockResolvedValue({ resultCode: -1 }),
+  ActivityAction: {
+    APPLICATION_DETAILS_SETTINGS:
+      'android.settings.APPLICATION_DETAILS_SETTINGS',
+    MANAGE_APP_ALL_FILES_ACCESS_PERMISSION:
+      'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
+  },
+}));
+
+// expo-file-system/legacy: mock minimo para inicializarVaultCanonico
+// e tests de probe write+read+delete. memoria interna por arquivo;
+// makeDirectoryAsync no-op idempotente; StorageAccessFramework devolve
+// granted=true por default. Substituivel por jest.mock local quando o
+// teste precisa simular EACCES ou cancelamento de SAF.
+jest.mock('expo-file-system/legacy', () => {
+  const memory = new Map();
+  const dirs = new Set();
+  return {
+    __esModule: true,
+    documentDirectory: 'file:///mock/documents/',
+    cacheDirectory: 'file:///mock/cache/',
+    makeDirectoryAsync: jest.fn((uri) => {
+      dirs.add(uri);
+      return Promise.resolve();
+    }),
+    getInfoAsync: jest.fn((uri) =>
+      Promise.resolve({
+        exists: memory.has(uri) || dirs.has(uri),
+        isDirectory: dirs.has(uri),
+        uri,
+      })
+    ),
+    writeAsStringAsync: jest.fn((uri, content) => {
+      memory.set(uri, content);
+      return Promise.resolve();
+    }),
+    readAsStringAsync: jest.fn((uri) => {
+      if (!memory.has(uri)) {
+        return Promise.reject(new Error(`ENOENT: ${uri}`));
+      }
+      return Promise.resolve(memory.get(uri));
+    }),
+    deleteAsync: jest.fn((uri) => {
+      memory.delete(uri);
+      return Promise.resolve();
+    }),
+    StorageAccessFramework: {
+      requestDirectoryPermissionsAsync: jest.fn().mockResolvedValue({
+        granted: true,
+        directoryUri:
+          'content://com.android.externalstorage.documents/tree/primary%3ADocuments%2FOuroboros',
+      }),
+    },
+    __memory: memory,
+    __dirs: dirs,
+  };
+});
+
 // gesture-handler: minimal stub. RootView vira View, gestos no-op.
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react');

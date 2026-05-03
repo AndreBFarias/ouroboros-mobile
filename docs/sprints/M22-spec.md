@@ -11,7 +11,7 @@ ESTIMATIVA: 5-6h
 
 Substituir o pedido SAF interativo do onboarding por inicialização
 **automática** do Vault em `/sdcard/Documents/Ouroboros/` na primeira
-execução, criando recursivamente as 18+ subpastas canônicas. App pede
+execução, criando recursivamente as 19 subpastas canônicas (9 raiz + 3 inbox + 6 media + 1 cache). App pede
 permissão de armazenamento uma vez (via `WRITE_EXTERNAL_STORAGE` em
 Android <11 ou `MANAGE_EXTERNAL_STORAGE` em Android ≥11) e
 `useVault.vaultRoot` fica sempre setado após onboarding. Helper
