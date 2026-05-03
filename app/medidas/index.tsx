@@ -153,7 +153,7 @@ export default function ComparativoMedidas() {
   );
 
   const handleNovo = useCallback(() => {
-    router.push('/(tabs)/medidas/novo');
+    router.push('/medidas/novo');
   }, [router]);
 
   const handlePeriodoChange = useCallback((v: string | null) => {

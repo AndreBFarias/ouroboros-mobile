@@ -35,9 +35,9 @@ describe('captureRoutes', () => {
     expect(route.params).toBeUndefined();
   });
 
-  it('exercicio aponta para a Tela 02 de cadastro (M13)', () => {
+  it('exercicio aponta para a Tela 02 de cadastro (M13/M27)', () => {
     const route = routeForCapture('exercicio');
-    expect(route.pathname).toBe('/(tabs)/exercicios/novo');
+    expect(route.pathname).toBe('/exercicios/novo');
     expect(route.params).toBeUndefined();
   });
 

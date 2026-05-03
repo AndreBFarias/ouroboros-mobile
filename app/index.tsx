@@ -4,6 +4,10 @@
 // concluido, redireciona para /onboarding (substituiu o
 // PermissaoVaultModal da M02 a partir da M03).
 //
+// M27: a Tela Hoje deixou de hospedar FABRadial. O FAB principal
+// virou item global (FABMenu, canto inferior esquerdo) renderizado
+// no _layout raiz e o menu de captura migrou para o MenuLateral.
+//
 // Fonte de verdade visual: docs/Ouroboros_24_telas-standalone.html
 // artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
 // docs/BRIEFING.md seção 7.
@@ -13,14 +17,12 @@ import { Redirect, useRouter } from 'expo-router';
 import {
   Card,
   EmptyState,
-  FABRadial,
   Header,
   PersonAvatar,
   Screen,
   Slider,
   ChipGroup,
   Button,
-  type FABRadialKey,
 } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
@@ -29,7 +31,6 @@ import { useOnboarding } from '@/lib/stores/onboarding';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { loadVaultRoot } from '@/lib/vault';
 import { useHoje } from '@/lib/hooks/useHoje';
-import { routeForCapture } from '@/lib/navigation/captureRoutes';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
 
@@ -85,16 +86,8 @@ export default function TelaHoje() {
     ? undefined
     : () => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a');
 
-  // captureRoutes resolve cada FABRadialKey para uma rota concreta;
-  // exercício fica como stub até a sprint M13 pintar a galeria real.
-  const onCapture = (key: FABRadialKey) => {
-    const route = routeForCapture(key);
-    router.push(route);
-  };
-
   return (
     <TelaHojeConteudo
-      onCapture={onCapture}
       onAvatarPress={handleAvatarPress}
       onComponentsPress={() => router.push('/_components')}
     />
@@ -102,14 +95,12 @@ export default function TelaHoje() {
 }
 
 interface ConteudoProps {
-  onCapture: (key: FABRadialKey) => void;
   // undefined quando sozinho: avatar não tem toggle.
   onAvatarPress: (() => void) | undefined;
   onComponentsPress: () => void;
 }
 
 function TelaHojeConteudo({
-  onCapture,
   onAvatarPress,
   onComponentsPress,
 }: ConteudoProps) {
@@ -148,8 +139,6 @@ function TelaHojeConteudo({
           label="Ver storybook de componentes"
         />
       </ScrollView>
-
-      <FABRadial onSelect={onCapture} />
     </Screen>
   );
 }

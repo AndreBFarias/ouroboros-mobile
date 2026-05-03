@@ -1,5 +1,6 @@
-// Smoke da rota app/(tabs)/memoria.tsx. Verifica que MemoriasScreen
-// renderiza header, tabs e que a aba inicial e Treinos.
+// Smoke da rota app/memoria.tsx (M27 moveu de (tabs)/memoria para
+// raiz). Verifica que MemoriasScreen renderiza header, tabs e que
+// a aba inicial e Treinos.
 //
 // Mocka os hooks de dados para nao depender de SAF/file system real,
 // e mocka @gorhom/bottom-sheet usando require dentro do factory para
@@ -72,9 +73,9 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
-import MemoriaTab from '@/../app/(tabs)/memoria';
+import MemoriaTab from '@/../app/memoria';
 
-describe('app/(tabs)/memoria.tsx', () => {
+describe('app/memoria.tsx', () => {
   it('renderiza header Memorias e tabs Treinos/Fotos/Marcos', () => {
     const { getByText } = render(<MemoriaTab />);
     expect(getByText('Memórias')).toBeTruthy();

@@ -328,4 +328,97 @@ refactor: m27 menu lateral substitui bottom tabs e fab radial
 - **Bump CONTRACT v1.1**: registra mudança estrutural de
   navegação (já realizado na materialização).
 
+## 10. Patches absorvidos do planejador (M27 patch-pass 1)
+
+### 10.1 Migração de `useSessao.ultimaRota` persistido (CRÍTICO)
+
+Usuários pré-M27 têm `useSessao.ultimaRota` em SecureStore com prefixo
+`/(tabs)/...`. Após M27, qualquer boot com `ultimaRota` antiga tenta
+`router.replace` para rota inexistente — **regressão garantida**.
+
+**Fix obrigatório no executor:**
+
+- Em `src/lib/stores/sessao.ts`, no zustand persist, bumpar `version`
+  do persist e adicionar `migrate(persistedState, fromVersion)` que
+  normaliza `ultimaRota`:
+  ```ts
+  migrate: (state: any, version: number) => {
+    if (version < 2 && state?.ultimaRota?.startsWith?.('/(tabs)/')) {
+      state.ultimaRota = state.ultimaRota.replace('/(tabs)', '') || '/';
+    }
+    return state;
+  },
+  version: 2,
+  ```
+- Atualizar `tests/lib/stores/sessao.test.ts` (paths em linhas 57/59/186
+  passam a ser `/memoria` e similares — sem `(tabs)`).
+- Atualizar `tests/lib/hooks/useUltimaRota.test.tsx` (linhas 9-15) para
+  não usar mais `(tabs)/...` em fixtures.
+
+### 10.2 `app/_components.tsx` linha 90 quebra em runtime
+
+Há `router.replace('/(tabs)')` em `app/_components.tsx:90`. Após
+apagar `app/(tabs)/_layout.tsx`, vira rota inexistente.
+
+**Fix obrigatório:** trocar literal `'/(tabs)'` por `'/'` na linha 90.
+Adicionar `app/_components.tsx` à lista de arquivos modificados em §2.
+
+### 10.3 Lista de testes a atualizar — completar §5 passo 10
+
+Spec §5.10 cita 5 arquivos. Grep canônico encontra **6 hits extras
+não listados**:
+
+- `tests/lib/hooks/useUltimaRota.test.tsx` — fixtures `(tabs)/...`.
+- `tests/lib/stores/sessao.test.ts` — paths persistidos.
+- `app/_components.tsx` — linha 90 (cobre §10.2).
+- `app/(tabs)/calendario.tsx` — comentário menciona `(tabs)`.
+- `app/(tabs)/em-construcao.tsx` — comentário menciona `(tabs)`.
+- `src/lib/navigation/captureRoutes.ts` — linhas 9, 23, 37 (já no §5
+  passo 9, mas conferir).
+
+Estratégia: rodar `grep -rn "(tabs)" src/ app/ tests/` antes de
+executar e atualizar **todos** os hits, não só os listados.
+
+### 10.4 `/calendario` e `/calendario/[id]` mantêm FAB visível
+
+`ROTAS_SEM_FAB` cobre `/scanner` (com prefixo OK) mas **não inclui
+`/calendario`** propositalmente — calendar é tela de view, FAB deve
+aparecer. Apenas `/scanner/*` esconde por ser fluxo one-shot.
+
+Documentado aqui para evitar interpretação errada.
+
+### 10.5 Aritmética de proof-of-work
+
+- Baseline pós-M26: **1115 testes / 128 suites** (commit `6202681`).
+- Apaga: `tests/components/chrome/BottomTabs.test.tsx`. Executor lê
+  arquivo antes de apagar e registra `X` testes removidos.
+- Cria: `MenuLateral.test.tsx` (~6 testes) + `FABMenu.test.tsx`
+  (~3 testes) = **2 suítes novas, ~9 testes**.
+- Atualiza paths sem mudar contagem em ~6 arquivos.
+- Esperado pós-sprint:
+  - Suítes: **129 suites** (128 - 1 + 2).
+  - Testes: **1115 - X + 9** (executor declara X exato).
+  - Bundle Hermes: ≤ 8.85 MB.
+- FAIL_BEFORE = 0, FAIL_AFTER = 0 obrigatório.
+
+### 10.6 Checkpoint intermediário obrigatório (anti-regressão)
+
+Entre apagar `BottomTabs.tsx` (passo 5.3) e criar `MenuLateral`
+(passo 5.6), executor deve rodar:
+
+```bash
+npm test --silent
+npx tsc --noEmit
+```
+
+**Esperado**: testes do `(tabs)` apagados/atualizados, baseline
+reduzido temporariamente, **zero FAIL**. Se houver FAIL, parar e
+reportar — não prosseguir para criar componentes novos antes.
+
+### 10.7 Verificação preventiva — arquivos de teste declarados não existem
+
+Confirmado: nem `MenuLateral.test.tsx` nem `FABMenu.test.tsx` existem
+em `tests/components/chrome/` (só `BottomTabs.test.tsx`). Fix
+preventivo do achado de M26 cumprido — nenhuma duplicata será criada.
+
 Sprint pronta para execução sem perguntas pendentes.

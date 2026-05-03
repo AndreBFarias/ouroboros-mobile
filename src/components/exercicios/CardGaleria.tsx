@@ -7,7 +7,7 @@
 // muted-decor 48dp + label "Sem mídia" em muted micro.
 //
 // Long-press abre menu rapido (Editar / Excluir). Tap navega para
-// /(tabs)/exercicios/[slug].
+// /exercicios/[slug] (M27 moveu de (tabs)/exercicios para raiz).
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useState } from 'react';

@@ -101,13 +101,13 @@ export default function AlarmesIndex() {
   );
 
   const handleNovo = useCallback(() => {
-    router.push('/(tabs)/alarmes/novo');
+    router.push('/alarmes/novo');
   }, [router]);
 
   const handleEditar = useCallback(
     (slug: string) => {
       router.push({
-        pathname: '/(tabs)/alarmes/[slug]',
+        pathname: '/alarmes/[slug]',
         params: { slug },
       });
     },

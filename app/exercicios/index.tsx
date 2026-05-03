@@ -87,7 +87,7 @@ export default function GaleriaExercicios() {
 
   const irParaDetalhe = useCallback(
     (slug: string) => {
-      router.push({ pathname: '/(tabs)/exercicios/[slug]', params: { slug } });
+      router.push({ pathname: '/exercicios/[slug]', params: { slug } });
     },
     [router]
   );
@@ -95,7 +95,7 @@ export default function GaleriaExercicios() {
   const irParaEdicao = useCallback(
     (slug: string) => {
       router.push({
-        pathname: '/(tabs)/exercicios/[slug]/editar',
+        pathname: '/exercicios/[slug]/editar',
         params: { slug },
       });
     },
@@ -103,7 +103,7 @@ export default function GaleriaExercicios() {
   );
 
   const irParaNovo = useCallback(() => {
-    router.push('/(tabs)/exercicios/novo');
+    router.push('/exercicios/novo');
   }, [router]);
 
   // Layout em pares: divide a lista em linhas de 2 elementos para

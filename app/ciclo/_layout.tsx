@@ -1,4 +1,4 @@
-// Layout do Stack interno da sub-rota /(tabs)/ciclo (M14.5).
+// Layout do Stack interno da sub-rota /ciclo (M14.5; M27 moveu para raiz).
 // Mantemos a visualizacao (index) e o sheet de registro
 // (registrar.tsx) compartilhando providers e header transparente.
 // Cada tela monta seu proprio Header customizado.

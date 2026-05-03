@@ -113,7 +113,7 @@ export default function DetalheExercicio() {
   const irParaEdicao = useCallback(() => {
     if (!slug) return;
     router.push({
-      pathname: '/(tabs)/exercicios/[slug]/editar',
+      pathname: '/exercicios/[slug]/editar',
       params: { slug },
     });
   }, [router, slug]);

@@ -226,6 +226,24 @@ export const useSessao = create<SessaoState>()(
         permissoesPedidas: state.permissoesPedidas,
         atualizadoEm: state.atualizadoEm,
       }),
+      // M27: rotas migraram de /(tabs)/* para raiz. Usuarios pre-M27
+      // tem ultimaRota no SecureStore com prefixo /(tabs)/...; sem
+      // migrate, qualquer boot tenta router.replace para rota
+      // inexistente e quebra. Normalizamos no carregamento do
+      // persist removendo o prefixo (e.g. /(tabs)/memoria -> /memoria;
+      // /(tabs) -> /).
+      version: 2,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      migrate: (state: any, version: number) => {
+        if (version < 2 && state && typeof state.ultimaRota === 'string') {
+          if (state.ultimaRota.startsWith('/(tabs)/')) {
+            state.ultimaRota = state.ultimaRota.replace('/(tabs)', '') || '/';
+          } else if (state.ultimaRota === '/(tabs)') {
+            state.ultimaRota = '/';
+          }
+        }
+        return state;
+      },
     }
   )
 );

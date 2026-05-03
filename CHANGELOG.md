@@ -7,6 +7,79 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **M27 (2026-05-03)** — Refundação estrutural de navegação:
+  MenuLateral substitui bottom tabs e FABRadial.
+  - **Movimentação estrutural** (33 arquivos `git mv`): todo o group
+    `app/(tabs)/` migrou para a raiz de `app/`. Subgrupos
+    (`settings/`, `exercicios/`, `medidas/`, `alarmes/`,
+    `contadores/`, `ciclo/`) movidos com seus `_layout.tsx` internos
+    intactos. `app/(tabs)/_layout.tsx` apagado.
+  - `src/components/chrome/MenuLateral.tsx` novo: drawer custom
+    com `<MotiView>` (springs.default, translateX -300→0), backdrop
+    `<Pressable bg-black-50%>` tap-close, `<ScrollView>` interno.
+    Header com avatar pessoa ativa + chip alternar pessoa em duo.
+    3 seções (Ver/Registrar/Opcionais) com header micro-orange.
+    Rodapé fixo com link Configurações. 6 itens em Ver, 6 em
+    Registrar (cores diferenciadas: pink/cyan/orange/green/yellow/red),
+    até 4 em Opcionais (controlado por `featureToggles`).
+  - `src/components/chrome/FABMenu.tsx` novo: FAB redondo 72dp
+    purple `position: absolute, left: spacing.lg, bottom: spacing.xl`,
+    ícone `Menu` lucide. `onPress` aciona `useNavegacao.abrir()`.
+  - `src/lib/stores/navegacao.ts` novo: store zustand leve
+    (não-persistido) com `menuAberto`/`abrir`/`fechar`/`alternar`.
+  - `src/lib/navigation/rotasSemFAB.ts` novo: lista canônica
+    `ROTAS_SEM_FAB` + função `rotaEsconderFAB(pathname)`. Cobre
+    `/onboarding`, `/share-receive`, 4 modais de captura, `/recap`
+    (M36 cria a rota; FAB já some). `/calendario` mantém FAB
+    (tela de view, não modal).
+  - `app/_layout.tsx` ganha overlays globais
+    `<MenuLateral />` + `<FABMenu />` fora da `<Stack>`, com
+    z-index declarado (FABMenu 10, MenuLateral 20) conforme
+    CONTRACT §7.10. A18 preservada em todas as 4 rotas modais
+    (`presentation: 'transparentModal'` + `contentStyle.backgroundColor:
+    '#14151a'`).
+  - **Migração crítica do `useSessao.ultimaRota`**:
+    `src/lib/stores/sessao.ts` ganha `version: 2` no zustand persist
+    + função `migrate(state, version)` que normaliza
+    `/(tabs)/X` → `/X` para qualquer boot pré-M27. Sem isso,
+    usuários antigos com `ultimaRota` persistida em SecureStore
+    crashariam em runtime ao tentar `router.replace` para rota
+    inexistente.
+  - `app/_components.tsx:90` fixado de `router.replace('/(tabs)')`
+    para `router.replace('/')`. Storybook ganha seção "Menu lateral
+    (M27)" com botão programático para abrir o drawer (suporte a
+    captura visual em web headless).
+  - `app/index.tsx`: removido `<FABRadial>` + import órfão.
+    `FABRadial.tsx` em `src/components/ui/` preservado mas órfão
+    (pode ser removido em sprint futura).
+  - `src/lib/navigation/captureRoutes.ts`: paths sem `(tabs)`.
+  - Apaga: `src/components/chrome/BottomTabs.tsx` e
+    `tests/components/chrome/BottomTabs.test.tsx` (6 testes).
+  - Cria: `tests/components/chrome/MenuLateral.test.tsx` (6 testes —
+    3 seções renderizadas, items condicionais via `featureToggles`)
+    + `tests/components/chrome/FABMenu.test.tsx` (3 testes — render
+    à esquerda, abre menu ao tocar).
+  - Atualiza paths sem mudar contagem em
+    `tests/lib/navigation/captureRoutes.test.ts`,
+    `tests/lib/hooks/useUltimaRota.test.tsx`,
+    `tests/lib/stores/sessao.test.ts`,
+    `tests/app/memoria.test.tsx`,
+    `tests/app/settings/index.test.tsx`.
+  - 5 screenshots Nível A em `docs/sprints/M27-screenshots/`:
+    `A-fab-esquerda.png`, `A-menu-aberto.png`, `A-secao-ver.png`,
+    `A-secao-registrar.png`, `A-secao-opcionais.png`. Capturados
+    via Playwright headed Chromium na rota `/_components`
+    (storybook M01) + dispatch programático para contornar limite
+    de Moti em web sem Reanimated nativo.
+  - Hits residuais de `(tabs)`: 11/14 (varia conforme grep), todos
+    em comentários históricos ou no literal de migração de
+    `sessao.ts:235-246`. Nenhum em router/import/registro ativo.
+  - **Métricas**: 1115 → 1118 testes (−6 BottomTabs.test + 9 novos),
+    128 → 129 suites, bundle Hermes 8.75 MB.
+  - **Checkpoint intermediário** §10.6: 127 suites / 1109 testes /
+    0 fail após apagar BottomTabs e antes de criar MenuLateral.
+  - Veredito validador-sprint: APROVADO (sem ressalvas).
+
 - **M26 (2026-05-03)** — 4 rotas modais com `<Screen>` opaco +
   `index={0}` direto (resolve A17/A18 "tela infinita preta").
   - `app/humor-rapido.tsx`, `app/diario-emocional.tsx`,

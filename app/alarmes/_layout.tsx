@@ -1,4 +1,4 @@
-// Layout do Stack interno da sub-rota /(tabs)/alarmes (M16). Mantemos
+// Layout do Stack interno da sub-rota /alarmes (M16; M27 moveu para raiz). Mantemos
 // listagem (index), criacao (novo) e edicao ([slug]) compartilhando
 // providers e header transparente. Cada tela monta seu proprio
 // Header customizado.

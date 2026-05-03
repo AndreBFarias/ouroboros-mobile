@@ -1,4 +1,4 @@
-// Layout do Stack interno da sub-rota /(tabs)/contadores (M18).
+// Layout do Stack interno da sub-rota /contadores (M18; M27 moveu para raiz).
 // Mantemos listagem (index), criacao (novo) e detalhe ([slug])
 // compartilhando providers e header transparente. Cada tela monta
 // seu proprio Header customizado.

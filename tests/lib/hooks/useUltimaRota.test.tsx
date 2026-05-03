@@ -6,13 +6,15 @@ import { isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
 
 describe('isRotaRestauravel', () => {
   it('rota de visualizacao e restauravel', () => {
-    expect(isRotaRestauravel('/(tabs)/hoje')).toBe(true);
-    expect(isRotaRestauravel('/(tabs)/memorias')).toBe(true);
-    expect(isRotaRestauravel('/(tabs)/exercicios/lista')).toBe(true);
+    // M27: rotas migraram de /(tabs)/* para raiz; fixtures
+    // refletem o novo path canonico.
+    expect(isRotaRestauravel('/memoria')).toBe(true);
+    expect(isRotaRestauravel('/humor')).toBe(true);
+    expect(isRotaRestauravel('/exercicios/lista')).toBe(true);
   });
 
   it('home root e restauravel', () => {
-    expect(isRotaRestauravel('/(tabs)')).toBe(true);
+    expect(isRotaRestauravel('/')).toBe(true);
   });
 
   it('rotas modais nao sao restauraveis', () => {

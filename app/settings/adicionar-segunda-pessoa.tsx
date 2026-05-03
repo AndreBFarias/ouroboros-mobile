@@ -3,7 +3,7 @@
 // Ao salvar, atualiza setPessoa('tipoCompanhia', 'duo') e setNome de
 // pessoa B. Avisa o usuario que a pessoa A continua a mesma.
 //
-// Decisão M15: o link aparece em /(tabs)/settings/index apenas se
+// Decisão M15: o link aparece em /settings/index apenas se
 // tipoCompanhia === 'sozinho'. Após salvar aqui, vira 'duo' e o link
 // some automaticamente da Tela 23.
 import { useState } from 'react';

@@ -3,7 +3,7 @@
 // light. Uso:
 //   <LinkSubTela
 //     titulo="Editar nomes e fotos"
-//     onPress={() => router.push('/(tabs)/settings/editar-pessoa')}
+//     onPress={() => router.push('/settings/editar-pessoa')}
 //   />
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';

@@ -68,7 +68,7 @@ jest.mock('@/lib/services/limparCache', () => ({
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import SettingsTela from '@/../app/(tabs)/settings/index';
+import SettingsTela from '@/../app/settings/index';
 import { useSettings } from '@/lib/stores/settings';
 import { ToastProvider } from '@/components/ui/Toast';
 

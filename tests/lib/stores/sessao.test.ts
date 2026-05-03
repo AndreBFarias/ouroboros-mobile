@@ -53,10 +53,11 @@ describe('useSessao', () => {
 
   describe('setUltimaRota', () => {
     it('grava a rota e bumpa atualizadoEm', () => {
+      // M27: paths migraram de /(tabs)/* para raiz.
       const antes = useSessao.getState().atualizadoEm;
-      useSessao.getState().setUltimaRota('/(tabs)/hoje');
+      useSessao.getState().setUltimaRota('/memoria');
       const depois = useSessao.getState().ultimaRota;
-      expect(depois).toBe('/(tabs)/hoje');
+      expect(depois).toBe('/memoria');
       // atualizadoEm deve ser maior (epoch -> agora).
       expect(useSessao.getState().atualizadoEm > antes).toBe(true);
     });
@@ -183,7 +184,7 @@ describe('useSessao', () => {
 
   describe('resetar', () => {
     it('volta tudo ao default', () => {
-      useSessao.getState().setUltimaRota('/(tabs)/exercicios');
+      useSessao.getState().setUltimaRota('/exercicios');
       useSessao.getState().salvarRascunho('alarmesNovo', { titulo: 'X' });
       useSessao.getState().marcarPermissaoPedida('camera');
 

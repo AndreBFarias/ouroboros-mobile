@@ -1,5 +1,6 @@
 // Tela 20.5b - Registro de Ciclo (M14.5). Bottom sheet 80% que vem
-// pela rota /(tabs)/ciclo/registrar. Aceita parametro opcional
+// pela rota /ciclo/registrar (M27 moveu de (tabs)/ciclo/registrar
+// para raiz). Aceita parametro opcional
 // `data` (YYYY-MM-DD); quando ausente, usa hoje.
 //
 // Estrutura do form:

@@ -1,10 +1,9 @@
-// Stub default obrigatório para abas registradas pelo navigator mas
-// cuja sprint dona ainda não foi executada (CONTRACT seção 5.2:
-// rota orfa). Cada aba opt-in ou em fase de stub aponta para esta
-// rota com `?sprint=MNN`. Quando a sprint dona chega, ela substitui
-// o redirect em app/(tabs)/_layout.tsx por um destino real, mas
-// este arquivo permanece como fallback generico para deep link
-// manual a abas opt-in não ativadas.
+// Stub default obrigatório para rotas registradas mas cuja sprint
+// dona ainda não foi executada (CONTRACT seção 5.2: rota orfa).
+// Cada item opt-in ou em fase de stub aponta para esta rota com
+// `?sprint=MNN`. Quando a sprint dona chega, ela substitui o
+// redirect pelo destino real; este arquivo permanece como fallback
+// generico para deep link manual.
 //
 // Strings em sentence case com acentuacao PT-BR completa
 // (BRIEFING.md seção 1.4). Comentarios em código sem acento

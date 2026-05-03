@@ -10,6 +10,8 @@ import { Appearance, LogBox, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { OuroborosLoader } from '@/components/brand';
 import { ToastProvider, useToast } from '@/components/ui';
+import { MenuLateral } from '@/components/chrome/MenuLateral';
+import { FABMenu } from '@/components/chrome/FABMenu';
 import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
@@ -166,6 +168,14 @@ export default function RootLayout() {
               }}
             />
           </Stack>
+          {/* M27: overlays globais. Ordem de zIndex declarada em
+              CONTRACT secao 7.10 (Stack 0 -> FABMenu 10 ->
+              MenuLateral 20 -> BiometriaGate 30 -> Toast 40).
+              Renderizados FORA da Stack para sobrepor qualquer
+              rota; FABMenu se auto-esconde em rotas modais via
+              rotaEsconderFAB(usePathname()). */}
+          <FABMenu />
+          <MenuLateral />
         </ToastProvider>
       </BiometriaGate>
     </GestureHandlerRootView>

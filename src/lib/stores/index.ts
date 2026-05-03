@@ -16,6 +16,8 @@ export {
   type TipoCompanhia,
   type Lembrete,
 } from './settings';
+// adicionado por M27:
+export { useNavegacao, type NavegacaoState } from './navegacao';
 // adicionado por M24:
 export {
   useSessao,

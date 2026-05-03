@@ -30,6 +30,8 @@ import {
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
+import { useNavegacao } from '@/lib/stores/navegacao';
+import { useSettings } from '@/lib/stores/settings';
 
 interface SectionProps {
   title: string;
@@ -84,10 +86,9 @@ export default function ComponentsStory() {
     usePessoa.getState().resetar();
     useVault.getState().clearVaultRoot();
     toast?.show('Onboarding resetado. Voltando para o início.', 'info');
-    // M00.5: Tela 01 agora mora em /(tabs)/index. O grupo de rotas
-    // (tabs) e transparente para o usuario, mas o router.replace
-    // precisa apontar explicitamente para a rota dentro do grupo.
-    setTimeout(() => router.replace('/(tabs)'), 300);
+    // M27: rotas migraram de /(tabs)/* para raiz; Tela 01 mora em
+    // app/index.tsx. router.replace aponta direto para '/'.
+    setTimeout(() => router.replace('/'), 300);
   };
 
   return (
@@ -294,6 +295,31 @@ export default function ComponentsStory() {
           <Button
             label={radialOpen ? 'Fechar radial' : 'Abrir radial'}
             onPress={() => setRadialOpen((v) => !v)}
+            variant="ghost"
+          />
+        </Section>
+
+        <Section title="Menu lateral (M27)">
+          <Text
+            className="font-mono text-muted text-xs"
+            style={{ lineHeight: 18 }}
+          >
+            Abre o MenuLateral global diretamente via store useNavegacao
+            para inspecao das 3 secoes.
+          </Text>
+          <Button
+            label="Abrir menu lateral"
+            onPress={() => useNavegacao.getState().abrir()}
+            variant="ghost"
+          />
+          <Button
+            label="Ativar opcionais (todoLeve + ciclo)"
+            onPress={() => {
+              useSettings.getState().setFeatureToggle('todoLeve', true);
+              useSettings.getState().setFeatureToggle('cicloMenstrual', true);
+              useSettings.getState().setFeatureToggle('alarmePessoal', true);
+              useSettings.getState().setFeatureToggle('contadorDiasSem', true);
+            }}
             variant="ghost"
           />
         </Section>

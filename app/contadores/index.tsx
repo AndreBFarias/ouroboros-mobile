@@ -67,13 +67,13 @@ export default function ContadoresIndex() {
   );
 
   const handleNovo = useCallback(() => {
-    router.push('/(tabs)/contadores/novo');
+    router.push('/contadores/novo');
   }, [router]);
 
   const handleAbrirCard = useCallback(
     (slug: string) => {
       router.push({
-        pathname: '/(tabs)/contadores/[slug]',
+        pathname: '/contadores/[slug]',
         params: { slug },
       });
     },

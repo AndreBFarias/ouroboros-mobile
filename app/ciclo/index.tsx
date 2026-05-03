@@ -83,13 +83,13 @@ export default function CicloIndex() {
   const semDados = !carregando && registros.length === 0;
 
   const handleRegistrarHoje = useCallback(() => {
-    router.push('/(tabs)/ciclo/registrar');
+    router.push('/ciclo/registrar');
   }, [router]);
 
   const handleSelectDay = useCallback(
     (data: string) => {
       router.push({
-        pathname: '/(tabs)/ciclo/registrar',
+        pathname: '/ciclo/registrar',
         params: { data },
       });
     },
