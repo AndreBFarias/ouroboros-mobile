@@ -13,6 +13,15 @@ canônicas), `pessoa_destino` (mim/parceiro/casal/terceiro com nome) e
 `alarme` (vinculado a um alarme em `alarmes/`). UI da
 `SheetNovaTarefa` ganha esses campos como chips e toggle expansível.
 
+**Mudança comportamental crítica (decisão usuário 2026-05-03)**:
+ao marcar tarefa como feita, ela **NÃO some mais da UI**. Vai para
+uma seção/aba "Concluídas" abaixo das pendentes, preservada com
+`feito_em` (já no schema v1). O Recap (M36) puxa tarefas concluídas
+do período como parte de "Conquistas" / "Números". Long-press na
+tarefa concluída permite "Reabrir" (volta para pendentes) ou
+"Apagar definitivo" (remove do Vault). Schema já suporta esse
+comportamento — só a UI muda.
+
 ## 2. Entregáveis
 
 ### Arquivos modificados
@@ -75,11 +84,31 @@ canônicas), `pessoa_destino` (mim/parceiro/casal/terceiro com nome) e
   alarme correspondente em `alarmes/<slug-tarefa>-alarme.md` antes
   de salvar a tarefa.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/app/todo.tsx`
-  — `<ItemTarefa>` mostra ícone da categoria à esquerda; chip
-  pequeno do destino se não for "mim".
+  — reorganizar lista em 2 seções:
+  - **Pendentes** (default expandida): tarefas com `feito === false`,
+    ordenação atual preservada (drag&drop M17).
+  - **Concluídas** (collapsable, default colapsada se >5 itens):
+    tarefas com `feito === true`, ordenadas por `feito_em desc`.
+    Header da seção mostra contador "Concluídas (12)".
+    Tap-no-header alterna expansão.
+  - Cada `<ItemTarefa>` mostra ícone categoria + chip destino se ≠
+    "mim". Item concluído tem opacidade 60% + line-through no título.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/todo/ItemTarefa.tsx`
   — render categoria + destino visualmente (ícone 16dp + chip
-  micro).
+  micro). **Long-press em item concluído** abre `<MenuLongPress>`
+  (já existe) com 2 ações novas:
+  - "Reabrir" → set `feito: false` + `feito_em: null` + cancelar
+    delete-pendente do alarme se houver.
+  - "Apagar definitivo" → confirm + `removerTarefa()` (já existe).
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/todo/SecaoConcluidas.tsx`
+  — novo componente: header collapsable + lista de
+  `<ItemTarefa modo="concluida">`. Empty state silencioso
+  (não renderiza seção quando 0 concluídas).
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/lib/vault/tarefas.ts`
+  — adicionar `reabrirTarefa(vaultRoot, slug)`: set `feito: false`,
+  `feito_em: null`, persist. Cancela alarme `slug_vinculado` se
+  re-agendamento futuro for desejado (deixar como TODO inline; M30
+  cuida da semântica de re-agendamento).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/tests/lib/schemas/tarefa.test.ts`
   — cobertura dos campos novos + migração v1→v2 (tarefas v1 ganham
   defaults).
@@ -168,7 +197,14 @@ npx expo export --platform android --output-dir /tmp/m31-export && rm -rf /tmp/m
 # 1. Nova tarefa "Reunião de trabalho" categoria Trabalho, para Vitória,
 #    alarme amanhã 14:00 → cria tarefa + alarme vinculado
 # 2. Lista de tarefas: ícone Briefcase + chip "Para Vitória" no item
-# 3. Marcar feito: tarefa some, alarme cancelado automaticamente
+# 3. Marcar feito: tarefa MOVE para seção "Concluídas" (não some);
+#    alarme cancelado automaticamente; arquivo .md preservado com
+#    feito: true, feito_em: <timestamp>
+# 4. Long-press em concluída: menu mostra "Reabrir" e "Apagar definitivo"
+# 5. Reabrir: tarefa volta para Pendentes
+# 6. Apagar definitivo: arquivo .md sai do Vault (confirmar via adb shell ls)
+# 7. Próxima abertura do Recap (M36): seção "Conquistas" lista as
+#    tarefas concluídas no período
 ```
 
 ## 7. Commit
@@ -199,5 +235,17 @@ feat: m31 tarefa v2 categoria pessoa destino e alarme vinculado
   dados.
 - **`SeletorPessoaDestino` consciente do `tipoCompanhia`**: se
   sozinho, esconde "Para Vitória" e "Para o casal".
+- **Concluir não apaga (decisão usuário 2026-05-03)**: tarefa
+  feita vai para seção "Concluídas" abaixo das pendentes, ordenada
+  por `feito_em desc`. Schema v1 já preserva `feito_em`; só a UI
+  muda. Justificativa: usuário quer ver o que foi feito no Recap
+  (M36 puxa do mesmo arquivo `.md`). Long-press em concluída abre
+  menu "Reabrir" / "Apagar definitivo" — usuário escolhe se a
+  tarefa some ou volta para pendentes.
+- **Seção Concluídas collapsable se >5 itens**: evita poluir UI
+  de pendentes quando houver muito histórico. Default colapsada.
+- **`reabrirTarefa()` helper novo em `src/lib/vault/tarefas.ts`**:
+  espelha semântica de `marcarFeito` mas inverte. TODO inline para
+  re-agendamento de alarme cancelado (M30 decide convenção).
 
 Sprint pronta para execução sem perguntas pendentes.

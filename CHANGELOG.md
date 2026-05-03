@@ -5,6 +5,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Decisões de produto
+
+- **2026-05-03 — Histórico preservado, nunca apagado por padrão.**
+  Decisão do usuário: ao marcar tarefa como feita, o app **não
+  remove mais** o registro — move para uma seção "Concluídas" abaixo
+  das pendentes. Recap (M36) puxa essas tarefas concluídas no período
+  como parte de "Conquistas" + seção dedicada "Tarefas concluídas"
+  + card "Tarefas concluídas" em "Números". Long-press em concluída
+  abre menu "Reabrir" (volta para pendentes) ou "Apagar definitivo"
+  (com confirm). Justificativa: app é espelho do que aconteceu;
+  Recap em momento difícil mostra tudo que foi feito, não só o que
+  falta. Patches aplicados em:
+  - `docs/sprints/M31-spec.md` — UI com 2 seções (Pendentes /
+    Concluídas collapsable se >5 itens), `<SecaoConcluidas>`
+    componente novo, `reabrirTarefa()` helper em
+    `src/lib/vault/tarefas.ts`, opacidade 60% + line-through em
+    item concluído, long-press menu com 2 ações novas.
+  - `docs/sprints/M36-spec.md` — passa de 4 para 5 seções:
+    adiciona `<RecapSecaoTarefas>` (lista agrupada por categoria
+    com subtotais). `RecapData.numeros.tarefas_concluidas` novo.
+    `useRecap` consome `listarTarefas` filtrado por
+    `feito === true && feito_em in [de, ate]`. `RecapSecaoNumeros`
+    vira grid 2×3 com card "Tarefas concluídas".
+  - `VALIDATOR_BRIEF.md` §1.8 — regra transversal aplicável a M17
+    (tarefa), M18 (contador, decidido por M32 quando reset) e M11
+    (marco, naturalmente persistente).
+
 ### Adicionado
 
 - **M28 (2026-05-03)** — Varredura de identidade: nomes reais em

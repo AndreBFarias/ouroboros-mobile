@@ -11,12 +11,15 @@ ESTIMATIVA: 6-8h
 ## 1. Objetivo
 
 Criar a tela `/recap` que agrega todos os registros do Vault em um
-período (semana / mês / ano / personalizado) e mostra 4 seções:
-**Conquistas** (vitórias, marcos, contadores em sequência), **Crises**
-(triggers ordenados por intensidade), **Evoluções** (deltas humor +
-contadores em alta + treinos a mais) e **Números** (totais agregados).
-Usado como espelho otimista em momento de crise — usuário vê em números
-o que conquistou.
+período (semana / mês / ano / personalizado) e mostra 5 seções:
+**Conquistas** (vitórias, marcos, contadores em sequência, **tarefas
+concluídas agregadas**), **Crises** (triggers ordenados por
+intensidade), **Evoluções** (deltas humor + contadores em alta +
+treinos a mais), **Tarefas concluídas** (detalhe agrupado por
+categoria — decisão usuário 2026-05-03) e **Números** (totais
+agregados incluindo `tarefas_concluidas`). Usado como espelho
+otimista em momento de crise — usuário vê em números o que
+conquistou, incluindo tudo que tirou da lista de tarefas.
 
 ## 2. Entregáveis
 
@@ -36,16 +39,23 @@ o que conquistou.
   — hook que dado `{ de: Date, ate: Date }` lê do Vault tudo do
   período via helpers existentes (`listarHumor`, `listarDiarios`,
   `listarEventos`, `listarMarcos`, `listarContadores`,
-  `listarTreinos`) e agrega em `RecapData`:
+  `listarTreinos`, `listarTarefas`) e agrega em `RecapData`:
   ```ts
   interface RecapData {
-    conquistas: ConquistaItem[];
+    conquistas: ConquistaItem[];      // vitórias diário + marcos + contadores em sequência + tarefas concluídas
     crises: CriseItem[];
     evolucoes: EvolucaoItem[];
-    numeros: { registros: number; treinos: number; fotos: number;
-               eventos_positivos: number; eventos_negativos: number; };
+    tarefasConcluidas: TarefaConcluidaItem[];  // detalhe da seção Tarefas
+    numeros: {
+      registros: number; treinos: number; fotos: number;
+      eventos_positivos: number; eventos_negativos: number;
+      tarefas_concluidas: number;     // novo (decisão usuário 2026-05-03)
+    };
   }
   ```
+  Filtro de tarefas no período: `feito === true && feito_em >= de
+  && feito_em <= ate`. Ordenação por `feito_em desc`. Tarefas
+  pendentes são ignoradas no Recap (são "intenção", não conquista).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/RecapSecaoConquistas.tsx`
   — lista de cards verde-borda com ícone + frase ("Você teve 3
   conquistas esta semana", individual cada uma).
@@ -55,7 +65,14 @@ o que conquistou.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/RecapSecaoEvolucoes.tsx`
   — sparkline cyan + delta humor médio + contadores em alta.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/RecapSecaoNumeros.tsx`
-  — grid 2×2 de cards com número grande + label.
+  — grid 2×3 (era 2×2; adicionado card "Tarefas concluídas") de
+  cards com número grande + label.
+- `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/src/components/screens/RecapSecaoTarefas.tsx`
+  — nova seção: lista compacta de tarefas concluídas no período
+  com ícone categoria à esquerda, título centro, dia da conclusão
+  à direita ("seg 28/04"). Agrupa por categoria com subtotais
+  ("Trabalho — 5 concluídas", "Casa — 2 concluídas"). Empty state
+  silencioso (não renderiza seção quando 0).
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/tests/lib/hooks/useRecap.test.ts`
   — agregação por período.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/tests/components/screens/RecapScreen.test.tsx`
@@ -167,8 +184,17 @@ feat: m36 recap conquistas crises evolucoes numeros por periodo
 
 ## 9. Decisões tomadas
 
-- **4 seções fixas**: Conquistas / Crises / Evoluções / Números.
-  Cobrem o pedido do usuário ("ver em números o que conquistou").
+- **5 seções fixas**: Conquistas / Crises / Evoluções / Tarefas
+  concluídas / Números. Cobrem o pedido do usuário ("ver em números
+  o que conquistou", incluindo o trabalho operacional via tarefas).
+- **Tarefas concluídas no Recap (decisão usuário 2026-05-03)**:
+  M31 mudou comportamento — concluir tarefa não apaga, vai para
+  seção "Concluídas" da tela `/todo` preservando `feito_em`. M36
+  consome esse mesmo dado. Filtro: `feito === true && feito_em
+  in [de, ate]`. Aparece em 3 lugares no Recap: contador agregado
+  em "Conquistas" ("Você concluiu 17 tarefas esta semana"), seção
+  detalhada "Tarefas concluídas" (lista agrupada por categoria) e
+  card "Tarefas concluídas" em "Números".
 - **Tom esperançoso (não eufórico)**: respeita ADR-0005. Microcopy
   "Você passou por isso e está aqui" valida sem celebrar.
 - **`useRecap` lê tudo no momento da abertura**: sem cache. Vault
@@ -177,5 +203,8 @@ feat: m36 recap conquistas crises evolucoes numeros por periodo
 - **Personalizado opcional**: dois pickers de data lado a lado.
 - **Sem `Recap` como tab**: rota modal acionada por header da Home
   (M40) e item do menu lateral (M27 + M36).
+- **Tarefas pendentes ignoradas**: Recap é retrospectiva do que
+  aconteceu, não lista de afazeres. Pendentes ficam na tela
+  `/todo` (M31).
 
 Sprint pronta para execução sem perguntas pendentes.
