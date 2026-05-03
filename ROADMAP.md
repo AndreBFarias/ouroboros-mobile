@@ -85,6 +85,15 @@ fechamento de sprint.
 
 ## Refundação v1.0 (2026-05-02 → fechamento M41)
 
+### Infraestrutura de validação (bloqueia M29 em diante)
+
+| Status | Sprint | Título | Telas | Schemas | Estimativa | Spec |
+|---|---|---|---|---|---|---|
+| `[wip]` | M-GAUNTLET | Teste visual unificado em Chrome controlável. Rota `/_dev/gauntlet` com `window.__gauntlet` API JS determinística (`seed`, `reset`, `setNomes`, `abrir`, `abrirSheet`, `abrirMenu`); bypass de gates em modo `EXPO_PUBLIC_GAUNTLET=1`; rota `/_dev/showcase` com 24 telas; **frame mobile 412dp obrigatório em `/_dev/*`**; 8 E2E novos em `tests/e2e/playwright/`. Substitui Nível A puro como pipeline padrão de validação visual. Critica — projeto não pode seguir sem | — | — | 6-8h | `M-GAUNTLET-spec.md` |
+| `[todo]` | M-REVALIDACAO-M20-M28 | Re-valida 11 sprints concluídas (M20-M28) via Gauntlet com 1 E2E por sprint; gera relatório consolidado em `docs/validacao-gauntlet-2026-05-03/RELATORIO.md`. Bugs descobertos viram corretivas separadas. **Bloqueia M29 até zerar FAIL**. Depende de M-GAUNTLET fechada | — | — | 4-6h | `M-REVALIDACAO-M20-M28-spec.md` |
+
+### Linha principal
+
 | Status | Sprint | Título | Telas | Schemas | Estimativa | Spec |
 |---|---|---|---|---|---|---|
 | `[ok]` | M21 | Despublicar release v1.0.0 do GitHub e marcar como rc1. Estado já alcançado (release deletado em sessão anterior; APK preservado em `builds/ouroboros-1.0.0-rc1.apk`; CHANGELOG/STATE/README atualizados na materialização) | — | — | 0,3h | commit `3708190` (materialização) |

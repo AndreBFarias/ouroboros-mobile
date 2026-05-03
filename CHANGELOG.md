@@ -51,6 +51,36 @@ ciclo após smoke verde (1126 testes / 130 suítes / 0 erros tsc).
     em emulador/celular. Screenshot de validação do M25.1 em
     `docs/sprints/M25.1-screenshots/A-cobra-frame1.png`.
 
+### Decisões de infraestrutura (2026-05-03)
+
+- **Gauntlet de validação visual — substitui Nível A puro como
+  pipeline padrão.** Validação manual M22-M28 revelou 6 limitações
+  estruturais do Chrome web puro (BiometriaGate redirect; useFonts
+  SDK 54 oscilante; useConquistas travado em web; localStorage
+  seed incompatível com zustand persist; MouseEvent sintético não
+  dispara handlers RN-Web; `@gorhom/bottom-sheet` em web não
+  monta). 2 sprints novas materializadas para resolver:
+  - **M-GAUNTLET** (`docs/sprints/M-GAUNTLET-spec.md`, 6-8h,
+    crítica) — interface dev `/_dev/gauntlet` com
+    `window.__gauntlet` API JS determinística, bypass de gates
+    em `EXPO_PUBLIC_GAUNTLET=1`, frame mobile 412dp em `/_dev/*`,
+    8 E2E novos em `tests/e2e/playwright/`,
+    `docs/GAUNTLET.md` documentação. Substitui pipeline
+    3-tentativas.
+  - **M-REVALIDACAO-M20-M28**
+    (`docs/sprints/M-REVALIDACAO-M20-M28-spec.md`, 4-6h, alta) —
+    re-valida 11 sprints concluídas via Gauntlet com 1 E2E por
+    sprint. Bugs descobertos viram corretivas separadas. Bloqueia
+    M29 em diante até zerar FAIL.
+  Toda sprint nova que toca UI a partir de 2026-05-04 deve
+  incluir 1 E2E em `tests/e2e/playwright/m<NN>-*.e2e.ts`.
+  Documentação atualizada: `CLAUDE.md` (Regra de Validação
+  Visual ganha 4 níveis A/A+/B/C), `HOW_TO_RESUME.md` (política
+  de validação), `VALIDATOR_BRIEF.md` §1.9 (Nível A+ Gauntlet
+  detalhado), `STATE.md` + `ROADMAP.md` (sprints novas
+  destacadas como infraestrutura), `docs/PROMPT-CONTINUACAO-OPUS.md`
+  (próxima sessão começa por M-GAUNTLET).
+
 ### Decisões de produto
 
 - **2026-05-03 — Histórico preservado, nunca apagado por padrão.**

@@ -108,26 +108,47 @@ Pendências não-bloqueantes acumuladas:
 - 2 ESLint warnings menores em `src/lib/stores/sessao.ts:168,236`
   ("unused eslint-disable directive") — limpar quando passar perto.
 
-## Sprints corretivas pendentes (executar PRIMEIRO)
+## Sprints corretivas FECHADAS (referência)
 
-### M25.1 — Fix animação OuroborosLoader em web (30min)
+- **M14.1** — eslint-disable órfão removido em
+  `src/lib/hooks/useFinancasCache.ts`.
+- **M25.1** — `OuroborosLoader.tsx` usa `transform="rotate(N 160 160)"`
+  string em vez de `{rotation, originX, originY}` (rn-svg-web não
+  converte origin null; rotação saía do viewBox).
+- **M27.1 (caminhos A + C)** — `_layout.tsx` ganhou guard
+  `fontesPersistentementeCarregadas` via `useRef` contra `useFonts`
+  oscilante; `loader.ts` retorna lista vazia para `vaultRoot` com
+  prefixo `web://` (Promise nunca resolvia em web).
 
-Spec: `docs/sprints/M25.1-spec.md`. Validação manual confirmou que
-a cobra não gira em nenhum frame. Causa raiz documentada via DOM:
-`<G rotation={N} originX={160} originY={160}>` em rn-svg-web vira
-`<g transform="rotate(N)">` SEM cx/cy. Fix simples:
-`transform="rotate(N 160 160)"` string. Aritmética: ±0 testes.
+Tudo consolidado no commit `13e649f` em main.
 
-### M27.1 — Fix boot screen lento ~10s + sobreposto à Home (1-2h)
+## Sprints de infraestrutura PENDENTES (executar PRIMEIRO)
 
-Spec: `docs/sprints/M27.1-spec.md`. 4 caminhos a investigar
-(useFonts oscilante / BiometriaGate timing / useConquistas web /
-fade transition). Passo 0 obrigatório: log de timestamps em
-`_layout.tsx` para identificar raiz antes de fixar.
+### M-GAUNTLET — Teste visual unificado em Chrome (6-8h, crítica)
 
-Após M25.1 e M27.1, recomendado **revalidar manualmente em web**
-para confirmar que cobra anima E boot é rápido. Depois prosseguir
-M29-M41.
+Spec: `docs/sprints/M-GAUNTLET-spec.md`. Cria interface dev
+determinística:
+- Rota `/_dev/gauntlet` com banner amarelo + dashboard.
+- `window.__gauntlet` API JS com `seed`, `reset`, `setNomes`,
+  `abrir`, `abrirSheet`, `abrirMenu`, `estado`.
+- Bypass de gates (BiometriaGate prop `bypass`) em
+  `EXPO_PUBLIC_GAUNTLET=1`.
+- Frame mobile 412dp obrigatório em `/_dev/*` (sem esticar
+  desktop).
+- Rota `/_dev/showcase` com 24 telas em scroll vertical.
+- 8 testes E2E em `tests/e2e/playwright/`.
+- `docs/GAUNTLET.md` documentação.
+- VALIDATOR_BRIEF.md §1.9 ganha Nível A+.
+
+### M-REVALIDACAO-M20-M28 — Baseline visual via Gauntlet (4-6h)
+
+Spec: `docs/sprints/M-REVALIDACAO-M20-M28-spec.md`. Depende de
+M-GAUNTLET. Re-valida 11 sprints concluídas com 1 E2E cada:
+M20, M22, M23, M24, M25, M25.1, M26, M27, M27.1, M28. Gera
+relatório consolidado em
+`docs/validacao-gauntlet-2026-05-03/RELATORIO.md`. Bugs novos
+viram corretivas separadas (`M<NN>.<x>-spec.md`). **Bloqueia M29
+até FAIL=0**.
 
 ## Convenções invioláveis (reforço)
 
@@ -191,19 +212,35 @@ absoluto.
 
 ## Comece agora
 
-/sprint-ciclo M25.1
+/sprint-ciclo M-GAUNTLET
 
-E continue até M41. Pause em M37.1 (OAuth setup) e M41 (release).
-M27 (Nível C) JÁ FOI fechado — não precisa pausar para checkpoint
-físico (autorização durável do usuário substituiu Nível C por
-Nível A).
+(M14.1, M25.1 e M27.1 já fechados em commit `13e649f`. M-GAUNTLET
+e M-REVALIDACAO-M20-M28 são infraestrutura de validação criadas
+em 2026-05-03 que BLOQUEIAM M29 em diante até serem fechadas.)
 
-Sprints já fechadas em sessão anterior:
-M21 [ok] M22 [ok] M23 [ok] M24 [ok] M25 [ok] M26 [ok] M27 [ok] M28 [ok]
-Pendentes corretivas: M25.1 -> M27.1
-Pendentes restantes: M29 -> M30 -> M31 -> M32 -> M33 -> M34 ->
-M35 -> M36 -> M37.1 -> M37.2 -> M38 -> M39 -> M40 -> M41
+Ordem completa restante:
 
-Boa sorte. Mantém o ritmo, valida visualmente o que dá para validar
-em web, e respeita a Regra -1 sempre.
+1. **M-GAUNTLET** (6-8h, crítica) — interface dev
+   `/_dev/gauntlet` com `window.__gauntlet` API JS, bypass de
+   gates, frame mobile 412dp, 8 E2E novos.
+2. **M-REVALIDACAO-M20-M28** (4-6h, bloqueia M29) — re-valida 11
+   sprints (M20-M28) via Gauntlet, gera relatório consolidado,
+   bugs viram corretivas separadas.
+3. M29 -> M30 -> M31 -> M32 -> M33 -> M34 -> M35 -> M36 ->
+   M37.1 -> M37.2 -> M38 -> M39 -> M40 -> M41 (release final).
+
+Pause em M37.1 (OAuth setup manual) e M41 (release final).
+
+Sprints já fechadas:
+M21 M22 M23 M24 M25 M26 M27 M28 + M14.1 M25.1 M27.1 (corretivas)
+
+A partir de M-GAUNTLET fechada, **toda sprint nova que toca UI**:
+- Entrega 1 caso E2E em `tests/e2e/playwright/m<NN>-*.e2e.ts`.
+- Roda via Gauntlet (Nível A+) antes de declarar sprint pronta.
+- Captura screenshots em `docs/sprints/M<NN>-screenshots-gauntlet/`.
+
+VALIDATOR_BRIEF.md §1.9 enforça essa regra.
+
+Boa sorte. Mantém o ritmo, valida visualmente via Gauntlet, e
+respeita a Regra -1 sempre.
 ```
