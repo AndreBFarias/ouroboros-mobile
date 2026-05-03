@@ -87,8 +87,8 @@ fechamento de sprint.
 
 | Status | Sprint | Título | Telas | Schemas | Estimativa | Spec |
 |---|---|---|---|---|---|---|
-| `[wip]` | M21 | Despublicar release v1.0.0 do GitHub e marcar como rc1 | — | — | 0,3h | `docs/sprints/M21-spec.md` |
-| `[todo]` | M22 | Vault auto-criado em /sdcard/Documents/Ouroboros sem SAF | — | — | 5-6h | `M22-spec.md` |
+| `[ok]` | M21 | Despublicar release v1.0.0 do GitHub e marcar como rc1. Estado já alcançado (release deletado em sessão anterior; APK preservado em `builds/ouroboros-1.0.0-rc1.apk`; CHANGELOG/STATE/README atualizados na materialização) | — | — | 0,3h | commit `3708190` (materialização) |
+| `[wip]` | M22 | Vault auto-criado em /sdcard/Documents/Ouroboros sem SAF | — | — | 5-6h | `M22-spec.md` |
 | `[todo]` | M23 | Onboarding 3 frames (remove Vault SAF e Sync) | 24 | — | 3-4h | `M23-spec.md` |
 | `[todo]` | M24 | Resume state e auto-save de rascunhos | — | sessao | 5-6h | `M24-spec.md` |
 | `[todo]` | M25 | OuroborosLogo + OuroborosLoader (SVG nativo animado) | — | — | 4-5h | `M25-spec.md` |
