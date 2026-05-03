@@ -73,4 +73,25 @@ describe('OuroborosLoader', () => {
     expect(svFlow.value).toBe(490);
     cancelSpy.mockRestore();
   });
+
+  // M25.1: confirma que useAnimatedProps emite transform string SVG
+  // nativo ("rotate(angle cx cy)") em vez de rotation+originX+originY
+  // numericos. Esse formato sobrevive a conversao do react-native-svg
+  // em web (que ignora origin null e rodava em torno de 0,0).
+  it('emite transform string rotate(N 160 160) para os 3 grupos rotativos', () => {
+    const propsSpy = jest.spyOn(Reanimated, 'useAnimatedProps');
+    render(<OuroborosLoader />);
+    // Os 3 primeiros useAnimatedProps sao gs1, gs2, gs3 (rotativos).
+    // O quarto e o gs-flow (strokeDashoffset, sem rotate).
+    const cb1 = propsSpy.mock.calls[0][0] as () => { transform: string };
+    const cb2 = propsSpy.mock.calls[1][0] as () => { transform: string };
+    const cb3 = propsSpy.mock.calls[2][0] as () => { transform: string };
+    const out1 = cb1();
+    const out2 = cb2();
+    const out3 = cb3();
+    expect(out1.transform).toMatch(/^rotate\(360 160 160\)$/);
+    expect(out2.transform).toMatch(/^rotate\(-360 160 160\)$/);
+    expect(out3.transform).toMatch(/^rotate\(360 160 160\)$/);
+    propsSpy.mockRestore();
+  });
 });

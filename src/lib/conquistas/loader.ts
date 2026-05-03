@@ -157,6 +157,17 @@ export async function lerConquistas(
       totaisPorOrigem: { evento_positivo: 0, diario_vitoria: 0 },
     };
   }
+  // M28-COLAT-01 / M27.1 fix: vault mock em web (web://mock-vault/...)
+  // nao tem reader funcional. Promise nunca resolveria, deixando o
+  // hook preso em loading=true e bloqueando boot. Retorna lista vazia
+  // imediatamente: web e dev-only para layout, dados reais ficam em
+  // emulador/celular.
+  if (vaultRoot.startsWith('web://')) {
+    return {
+      conquistas: [],
+      totaisPorOrigem: { evento_positivo: 0, diario_vitoria: 0 },
+    };
+  }
 
   const [eventos, vitorias] = await Promise.all([
     lerEventosPositivos(vaultRoot),

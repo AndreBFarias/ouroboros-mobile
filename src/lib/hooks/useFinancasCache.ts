@@ -37,7 +37,6 @@ export interface UseFinancasCacheResult {
 // e o Metro nao inclui no bundle final mobile.
 function carregarFixtureWeb(): FinancasCache | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const data = require('../../../scripts/fixtures/financas-cache.json');
     const parsed = FinancasCacheSchema.safeParse(data);
     return parsed.success ? parsed.data : null;

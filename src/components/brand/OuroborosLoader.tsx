@@ -9,9 +9,13 @@
 //   .gs-flow{ animation: gs-flow    6s linear infinite; }
 //
 // Usa Reanimated 4 com useSharedValue + withRepeat + withTiming.
-// Decisao M25 §10 (patch 3): SVG <G> nao aceita transform array via
-// useAnimatedProps; em vez disso passamos rotation+originX+originY
-// numericos. O viewBox e 320x320, entao o centro fica em (160, 160).
+// Decisao M25.1 (revisao do M25 §10 patch 3): em web, react-native-svg
+// converte <G rotation={N} originX={160} originY={160}> para o atributo
+// transform="rotate(N)" SEM cx/cy, ignorando origin null no DOM. Isso
+// fazia a rotacao acontecer em torno de (0,0) e o conteudo "varria"
+// para fora do viewBox. Fix: passar transform como string SVG nativo
+// "rotate(angle cx cy)" via useAnimatedProps. Esse formato funciona
+// 1:1 em web (rn-svg-web nao toca) e em nativo (rn-svg parseia).
 //
 // Modo compacto (96px sem texto) para overlays e loaders inline.
 // Modo cheio (320px com texto) para boot e onboarding.
@@ -127,19 +131,13 @@ export function OuroborosLoader({
   }, [rotacaoG1, rotacaoG2, rotacaoG3, offsetFlow]);
 
   const propsG1 = useAnimatedProps(() => ({
-    rotation: rotacaoG1.value,
-    originX: PIVOT,
-    originY: PIVOT,
+    transform: `rotate(${rotacaoG1.value} ${PIVOT} ${PIVOT})`,
   }));
   const propsG2 = useAnimatedProps(() => ({
-    rotation: rotacaoG2.value,
-    originX: PIVOT,
-    originY: PIVOT,
+    transform: `rotate(${rotacaoG2.value} ${PIVOT} ${PIVOT})`,
   }));
   const propsG3 = useAnimatedProps(() => ({
-    rotation: rotacaoG3.value,
-    originX: PIVOT,
-    originY: PIVOT,
+    transform: `rotate(${rotacaoG3.value} ${PIVOT} ${PIVOT})`,
   }));
   const propsFlow = useAnimatedProps(() => ({
     strokeDashoffset: offsetFlow.value,

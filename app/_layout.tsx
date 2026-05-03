@@ -61,6 +61,20 @@ export default function RootLayout() {
     JetBrainsMono_500Medium,
   });
 
+  // M27.1: guard contra useFonts oscilante em SDK 54 web. Em web, o
+  // hook useFonts as vezes alterna loaded=true/false apos primeira
+  // hidratacao quando o documento.fonts re-emite eventos, fazendo o
+  // early-return abaixo re-montar o OuroborosLoader e causar piscar
+  // de boot screen sobre a Home. Uma vez true, fica true para a
+  // sessao toda (re-mount real do app passa pelo SplashScreen
+  // novamente, separado).
+  const fontesPersistentementeCarregadas = useRef(false);
+  if (loaded) {
+    fontesPersistentementeCarregadas.current = true;
+  }
+  const mostrarBootScreen =
+    !loaded && !fontesPersistentementeCarregadas.current;
+
   // Boot hook: registra listener de share intent (M00.5; M08 plugara
   // o fluxo real). Hook idempotente ao desmontar.
   useDeepLinkListener();
@@ -85,11 +99,13 @@ export default function RootLayout() {
     void registrarCategoriasAlarme();
   }, []);
 
-  if (!loaded) {
+  if (mostrarBootScreen) {
     // M25: enquanto JetBrainsMono carrega, mostra a marca animada em
     // fundo bg-page (Dracula). Substitui o `return null` antigo que
     // deixava a tela preta vazia. O loader vive dentro do early return
     // (CONTRACT secao 7.9: nao e BOOT_HOOK, e UI bloqueante visivel).
+    // M27.1: usa flag persistente para evitar oscilacao de useFonts
+    // em web (vide guard fontesPersistentementeCarregadas acima).
     return (
       <View
         style={{

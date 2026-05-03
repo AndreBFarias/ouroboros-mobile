@@ -5,6 +5,52 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprints corretivas fechadas (2026-05-03)
+
+Bloco consolidado de fixes de bugs descobertos durante a validação
+manual M22-M28 + execução paralela M25/M27/M28. Aplicados num único
+ciclo após smoke verde (1126 testes / 130 suítes / 0 erros tsc).
+
+- **M14.1 — eslint-disable órfão removido.**
+  `src/lib/hooks/useFinancasCache.ts:40` tinha
+  `// eslint-disable-next-line @typescript-eslint/no-require-imports`
+  acima de um `require()` que não acionava mais o warning. ESLint
+  reportava `unused-disable`. Linha removida; ESLint silencioso.
+
+- **M25.1 — animação OuroborosLoader gira em torno do centro em web.**
+  `react-native-svg-web` converte `<G rotation={N} originX={160}
+  originY={160}>` para `<g transform="rotate(N)">` sem `cx`/`cy`,
+  fazendo a rotação acontecer em torno de `(0,0)` (varredura para
+  fora do `viewBox`). Fix: `useAnimatedProps` agora retorna string
+  SVG nativa `transform="rotate(${valor} ${PIVOT} ${PIVOT})"` que
+  funciona 1:1 em web (rn-svg-web não toca) e em nativo (rn-svg
+  parseia). Teste novo confirma formato exato para os 3 grupos
+  rotativos (gs1/gs2/gs3); gs-flow continua usando
+  `strokeDashoffset`. +1 teste (1125 → 1126).
+
+- **M27.1 caminhos A + C — boot screen lento e overlay sobreposto.**
+  Dois fixes complementares aplicados no mesmo ciclo:
+  - **Caminho C** em `src/lib/conquistas/loader.ts`: quando
+    `vaultRoot` começa com `web://mock-vault/...`, o reader
+    `FileSystem` não tem implementação web e a Promise nunca
+    resolve, deixando `useConquistas` preso em `loading=true`
+    indefinidamente (FiltrosBar e Calendário não estabilizavam em
+    Nível A). Fix: early-return com `{ conquistas: [],
+    totaisPorOrigem: { evento_positivo: 0, diario_vitoria: 0 } }`.
+  - **Caminho A** em `app/_layout.tsx`: `useFonts` em SDK 54 web
+    oscila `loaded=true/false` quando `document.fonts` re-emite
+    eventos pós-hidratação, re-montando o early-return e fazendo
+    o `OuroborosLoader` piscar sobre a Home. Fix: flag
+    `fontesPersistentementeCarregadas` (`useRef`) que vira `true`
+    no primeiro `loaded=true` e segura o early-return mesmo se
+    `loaded` flicka depois. Re-mount real do app reentra pelo
+    SplashScreen via Reanimated/Expo, separado.
+  - Caminho D (fade transition) não foi necessário — caminhos A+C
+    juntos resolvem ambos os sintomas (~10s de boot no reload
+    Chrome + overlay residual). Web é dev-only; dados reais ficam
+    em emulador/celular. Screenshot de validação do M25.1 em
+    `docs/sprints/M25.1-screenshots/A-cobra-frame1.png`.
+
 ### Decisões de produto
 
 - **2026-05-03 — Histórico preservado, nunca apagado por padrão.**
