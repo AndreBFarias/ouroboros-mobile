@@ -132,6 +132,25 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
 - Permissão de notificação pedida apenas uma vez por instalação
   (controlada por `useSessao.permissoesPedidas.notif`).
 - Em Web (`Platform.OS === 'web'`), permissão e channel são no-op.
+- **`pedirPermissao()` no boot é hook crítico via `useEffect` direto
+  em `app/_layout.tsx`, NÃO `BOOT_HOOKS`** (vide CONTRACT §7.9):
+  falha precisa propagar à UI via toast "Permita notificações em
+  Configurações para receber alarmes."
+- **`migrarLembretesParaAlarmes` vai em `BOOT_HOOKS`** (idempotente,
+  swallow-erro tolerável).
+- **Mock de `expo-notifications` em `jest.setup.cjs`** (vide
+  CONTRACT §7.8): `setNotificationChannelAsync`,
+  `requestPermissionsAsync`, `scheduleNotificationAsync`,
+  `AndroidImportance`. Adicionar nesta sprint.
+- **Migração de canal antigo (v1 → v2)**: APK v1.0-rc1 já criou
+  channel sem `vibrationPattern`. Android **não permite editar
+  canal existente** — só recriar com ID diferente. Solução:
+  `ALARME_CHANNEL_ID = 'ouroboros-default-v2'` (nova string),
+  apagando o canal antigo `'default'` via
+  `Notifications.deleteNotificationChannelAsync('default')` em
+  boot único protegido por flag em `useSessao`. Sem isso,
+  vibração nunca aparece em devices que rodaram v1.0-rc1 antes
+  do uninstall.
 
 ## 5. Procedimento sugerido
 
@@ -194,5 +213,13 @@ capturar logcat enquanto alarme dispara e verificar
   (`gentle`, snooze 5min).
 - **`notificacoesLembretes.ts` fica como código morto**: removido
   em sprint futura para evitar regressão durante migração.
+- **Novo channel ID `ouroboros-default-v2`** (vs reusar `'default'`):
+  Android não permite editar canais existentes. Apagar `'default'`
+  em boot one-shot protegido por flag em `useSessao` (ex:
+  `useSessao.flags.canalV1Deletado === false`). Sem isso, devices
+  com v1.0-rc1 instalado nunca recebem vibração.
+- **Permissão de notificação no boot via `useEffect` direto**
+  (vide CONTRACT §7.9): falha precisa propagar à UI; `BOOT_HOOKS`
+  silenciaria.
 
 Sprint pronta para execução sem perguntas pendentes.

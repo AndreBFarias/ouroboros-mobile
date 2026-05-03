@@ -92,6 +92,20 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
   manter como deprecated com `// TODO M23 remove after onboarding`.
 - Web (`Platform.OS === 'web'`) deve cair em no-op silencioso
   (devolver path mock e `criado: false`).
+- **Armadilha A19 (BRIEF §4)**: scoped storage Android 11+ + OEMs
+  agressivos podem negar write em `/sdcard/Documents/Ouroboros/`
+  mesmo com `MANAGE_EXTERNAL_STORAGE` concedida. M22 **obriga
+  probe write+read+delete** num arquivo `.ouroboros-probe` antes
+  de marcar `vaultRoot` como válido. Se probe falhar, **fallback
+  para SAF interativo** via `requestVaultPermission()` legacy com
+  toast "Seu dispositivo exige seleção manual da pasta. Escolha
+  `/sdcard/Documents/Ouroboros/`."
+- **Detecção de `MANAGE_EXTERNAL_STORAGE`**: não usar
+  `Environment.isExternalStorageManager` (não existe em RN/Expo
+  como API JS direta). Usar **probe write+read+delete** como
+  fonte de verdade — se probe passa, permissão está OK
+  funcionalmente. A Intent `MANAGE_APP_ALL_FILES_ACCESS_PERMISSION`
+  é disparada apenas como fluxo de pedido, não como check.
 
 ## 5. Procedimento sugerido
 
@@ -99,56 +113,98 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
    `MANAGE_EXTERNAL_STORAGE` precisa Intent específico (não vai por
    `PermissionsAndroid.request`). Documentação:
    `Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION`.
-2. Criar `pedirPermissaoStorage()`:
+2. Criar helper `probeVaultWritable(vaultRoot)` (ÚNICA fonte de
+   verdade sobre permissão funcional):
    ```ts
-   async function pedirPermissaoStorage(): Promise<boolean> {
-     if (Platform.OS !== 'android') return true; // web/iOS no-op
-     if (Platform.Version >= 30) {
-       const granted = await Environment.isExternalStorageManager?.();
-       if (granted) return true;
-       // dispara Intent para o usuário aceitar manualmente
-       await IntentLauncher.startActivityAsync(
-         'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
-         { data: 'package:com.ouroboros.mobile' }
-       );
-       // aguarda usuario voltar; reverifica
-       return await Environment.isExternalStorageManager?.() ?? false;
+   async function probeVaultWritable(vaultRoot: string): Promise<boolean> {
+     const probe = `${vaultRoot}/.ouroboros-probe`;
+     try {
+       await FileSystem.writeAsStringAsync(probe, 'ok');
+       const back = await FileSystem.readAsStringAsync(probe);
+       await FileSystem.deleteAsync(probe, { idempotent: true });
+       return back === 'ok';
+     } catch {
+       return false;
      }
-     const res = await PermissionsAndroid.request(
-       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-     );
-     return res === PermissionsAndroid.RESULTS.GRANTED;
    }
    ```
-3. Criar `garantirSubpastas(vaultRoot)`: itera
+3. Criar `pedirPermissaoStorage()` — só **dispara fluxo de pedido**.
+   Nunca usa o resultado da Intent como fonte de verdade (vide A19):
+   ```ts
+   async function pedirPermissaoStorage(): Promise<void> {
+     if (Platform.OS !== 'android') return;
+     if (Platform.Version >= 30) {
+       try {
+         await IntentLauncher.startActivityAsync(
+           'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
+           { data: 'package:com.ouroboros.mobile' }
+         );
+       } catch {
+         // se Intent falhar, segue — probe vai detectar
+       }
+     } else {
+       await PermissionsAndroid.request(
+         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+       );
+     }
+   }
+   ```
+4. Criar `garantirSubpastas(vaultRoot)`: itera
    `SUBPASTAS_CANONICAS` (18 paths) e chama `makeDirectoryAsync(uri,
    { intermediates: true })` em cada. Catch silencioso para
    "diretorio já existe".
-4. Criar `inicializarVaultCanonico()`:
+5. Criar `inicializarVaultCanonico()` com **probe + fallback SAF**:
    ```ts
    const VAULT_PATH = '/sdcard/Documents/Ouroboros/';
-   export async function inicializarVaultCanonico() {
+   export async function inicializarVaultCanonico(): Promise<{
+     vaultRoot: string; criado: boolean; modo: 'auto' | 'saf-fallback' | 'web'
+   }> {
      if (Platform.OS === 'web') {
-       return { vaultRoot: 'web://mock-vault/', criado: false };
+       return { vaultRoot: 'web://mock-vault/', criado: false, modo: 'web' };
      }
-     const ok = await pedirPermissaoStorage();
-     if (!ok) throw new Error('storage permission denied');
      const uri = `file://${VAULT_PATH}`;
+     await pedirPermissaoStorage();
      await garantirSubpastas(uri);
+     const writable = await probeVaultWritable(uri);
+     if (!writable) {
+       // Armadilha A19: OEM/scoped storage bloqueou. Cair em SAF.
+       const safUri = await requestVaultPermission(); // legacy helper
+       if (!safUri) throw new Error('storage permission denied (saf fallback also denied)');
+       await garantirSubpastas(safUri);
+       useVault.getState().setVaultRoot(safUri);
+       return { vaultRoot: safUri, criado: true, modo: 'saf-fallback' };
+     }
      useVault.getState().setVaultRoot(uri);
-     return { vaultRoot: uri, criado: true };
+     return { vaultRoot: uri, criado: true, modo: 'auto' };
    }
    ```
-5. Atualizar `paths.ts` adicionando helpers:
+6. Atualizar `paths.ts` adicionando helpers:
    `mediaFotosPath(date, rand)`,
    `mediaAudiosPath(date, rand)`,
    `mediaVideosPath(date, rand)`,
    `mediaFrasesPath(date, slug)`,
    `mediaAvataresPath(pessoa, ts)`,
    `mediaScannerPath(slug)`.
-6. Adicionar permissões em `app.json`.
-7. Atualizar `scripts/seed_vault_demo.sh` espelhando subpastas.
-8. Testes: cobrir API <30 vs ≥30, sucesso, erro, idempotência.
+7. Adicionar permissões em `app.json`.
+8. Atualizar `scripts/seed_vault_demo.sh` espelhando subpastas.
+9. **Plug em `app/_layout.tsx` via `useEffect` direto** (NÃO em
+   `BOOT_HOOKS` — vide CONTRACT §7.9; falha precisa propagar para UI):
+   ```tsx
+   useEffect(() => {
+     if (useOnboarding.getState().done && !useVault.getState().vaultRoot) {
+       inicializarVaultCanonico().catch((err) => {
+         showToast({ tipo: 'error', texto: 'Não foi possível acessar a pasta do Vault. Verifique as permissões em Configurações.' });
+       });
+     }
+   }, []);
+   ```
+10. **Adicionar mocks no `jest.setup.cjs`** (vide CONTRACT §7.8):
+    `PermissionsAndroid` + `expo-intent-launcher` + mock de
+    `expo-file-system/legacy.writeAsStringAsync` retornando OK por
+    default e configurável por teste para simular A19.
+11. Testes: cobrir API <30 vs ≥30, sucesso, erro de permissão,
+    **probe falhando → fallback SAF**, idempotência de
+    `garantirSubpastas`.
 
 ## 6. Verificação runtime-real
 
@@ -161,12 +217,24 @@ npm test --silent
 ./scripts/smoke.sh
 npx expo export --platform android --output-dir /tmp/m22-export && rm -rf /tmp/m22-export
 
-# Verificação Android (manual ou em emulador):
+# Verificação Android (Nível B — emulador ouroboros-test):
 adb shell ls /sdcard/Documents/Ouroboros/
 # espera ver: daily, eventos, inbox, marcos, treinos, exercicios,
 #             medidas, alarmes, tarefas, contadores, media
 adb shell ls /sdcard/Documents/Ouroboros/media/
 # espera ver: fotos, audios, videos, frases, avatares, scanner
+
+# Confirma permissão MANAGE_EXTERNAL_STORAGE concedida:
+adb shell dumpsys package com.ouroboros.mobile | grep -i MANAGE_EXTERNAL
+# espera ver: granted=true
+
+# Confirma probe roda OK (sem leftover):
+adb shell ls -la /sdcard/Documents/Ouroboros/.ouroboros-probe 2>&1
+# espera ver: No such file or directory (probe sempre auto-deleta)
+
+# Validação A19 (Nível C — Redmi Note 13 do usuário com MIUI):
+# instalar APK + abrir + verificar que se modo='saf-fallback', o
+# toast aparece e SAF picker abre como fallback funcional.
 ```
 
 ## 7. Commit
@@ -195,11 +263,24 @@ mostrando o prompt de Storage no emulador.
 - **18 subpastas criadas de uma vez**: evita race condition em
   primeiro save. `garantirSubpastas` chamado também em cada save
   como auto-cura.
-- **Recovery no boot**: se usuário aceitar permissão e depois apagar
-  pasta manualmente, `app/_layout.tsx` chama
-  `inicializarVaultCanonico()` no boot quando detecta `vaultRoot`
-  inválido. Sem prompt; só recriar.
+- **Recovery no boot via `useEffect` direto, NÃO `BOOT_HOOKS`**
+  (vide CONTRACT §7.9): falha de permissão precisa propagar à UI
+  via toast. `BOOT_HOOKS` swallow erros silenciosamente.
 - **Web cai em no-op**: mock URI `web://mock-vault/`; nenhum write
   real (mantém comportamento da v1.0).
+- **Probe write+read+delete como fonte de verdade** (vide A19 no
+  BRIEF §4): `Environment.isExternalStorageManager()` não existe
+  em RN/Expo como API JS. Probe é a única forma de saber se write
+  funciona em runtime nesse OEM/Android específico.
+- **Fallback automático para SAF se probe falhar**: MIUI/Xiaomi
+  (Redmi Note 13 do usuário), OneUI/Samsung, OxygenOS podem negar
+  write mesmo com permissão concedida. SAF interativo é o último
+  recurso — usuário escolhe pasta uma vez, app aceita o URI SAF.
+  `requestVaultPermission()` legacy reutilizado.
+- **Modo da inicialização exposto** no retorno (`'auto' |
+  'saf-fallback' | 'web'`): permite Settings (M29) e M23
+  (onboarding) saberem em que modo o vault foi setado para mostrar
+  texto contextual ("Vault em /sdcard/..." vs "Vault em pasta
+  selecionada manualmente").
 
 Sprint pronta para execução sem perguntas pendentes.

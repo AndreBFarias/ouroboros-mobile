@@ -116,6 +116,23 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
   lidos (helpers de read não filtram por sufixo).
 - Helpers de save **só usam deviceId quando há colisão**: caminho
   feliz mantém nome canônico (`daily/2026-05-02.md`).
+- **DeviceId é < 32 bytes** — cabe em SecureStore sem risco de A20
+  (vide BRIEF §4).
+- **Resilience contra SecureStore zerado**: se `getItemAsync(KEY)`
+  retornar `null` em dispositivo onde já houve uso (raro mas
+  possível em uninstall+reinstall sem backup), o **novo deviceId
+  gerado** vai criar arquivos divergentes do histórico. O
+  `inbox/_devices.md` deve **registrar** essa transição
+  automaticamente: detectar que já há entrada com
+  `pessoa: <pessoaAtual>` mas deviceId diferente e marcar
+  `substituido_por: <novoId>` no registro antigo. Sub-tela de
+  Settings mostra dispositivos antigos como "(inativo)" para o
+  usuário entender.
+- **`atualizarDeviceIndex` em `BOOT_HOOKS`** (idempotente,
+  swallow-erro tolerável; vide CONTRACT §7.9).
+- **Mock de `SecureStore` em `jest.setup.cjs`** já existe (testes
+  de outros stores) — confirmar que `getItemAsync`/`setItemAsync`
+  estão mockados antes de adicionar este.
 
 ## 5. Procedimento sugerido
 
@@ -163,14 +180,20 @@ feat: m38 conflict resolution 4 nos via device id e index
 
 - **DeviceId 6 chars alfanuméricos**: 36^6 = 2.1 bi combinações;
   zero risco de colisão entre 4 nós.
+- **DeviceId em SecureStore (vs arquivo)**: é < 32 bytes, cabe
+  tranquilo em A20. Privacidade garantida (não vai pro Syncthing).
 - **Nome amigável editável**: usuário pode renomear para
   "celular-andre", "desktop-vitoria" para clareza.
 - **`inbox/_devices.md` único**: arquivo cresce com 4 entradas;
-  Syncthing merge resolve via timestamp `ultima_atividade` (last-write-wins
-  por subkey).
+  Syncthing merge resolve via timestamp `ultima_atividade`
+  (last-write-wins por subkey).
 - **Backward-compat**: arquivos `-pessoa_a.md` legados são lidos.
   M38 só altera o **futuro** padrão de naming.
 - **DeviceId não criptográfico**: é só identificador de arquivo,
-  não secret.
+  não secret. `Math.random` aceitável.
+- **Reinstall sem backup gera novo deviceId**: `inbox/_devices.md`
+  marca antigo como `substituido_por` para preservar histórico
+  legível em Settings. Não tenta migrar arquivos antigos (caro;
+  Syncthing já preserva ambos).
 
 Sprint pronta para execução sem perguntas pendentes.

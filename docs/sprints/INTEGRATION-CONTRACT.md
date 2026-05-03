@@ -650,9 +650,72 @@ Adicionadas ao `app/` na raiz (após M27 apagar `app/(tabs)/`):
 | `WRITE_EXTERNAL_STORAGE` | M22 | Android <11 |
 | `READ_EXTERNAL_STORAGE` | M22 | Android <11 |
 | `MANAGE_EXTERNAL_STORAGE` | M22 | Android ≥11 (APK fora da Play Store) |
-| `expo-auth-session` plugin + scheme `ouroboros://oauth-callback` | M37 | Google Calendar OAuth |
-| `@react-native-google-signin/google-signin` | M37 | Google sign-in |
+| `expo-auth-session` plugin + scheme `ouroboros://oauth-callback` | M37.1 | Google Calendar OAuth |
+| `expo-web-browser` | M37.1 | dependência de auth-session |
 
 Permissão `expo-notifications` não é nova em M30 — só a chamada
 proativa de `pedirPermissao()` no boot pós-onboarding via
 `useSessao.permissoesPedidas.notif`.
+
+### 7.8 Mocks padrão para Jest (`jest.setup.cjs`)
+
+Sprints que tocam APIs nativas **precisam adicionar mock** no
+`jest.setup.cjs` para evitar `ReferenceError`/`TypeError` em testes.
+Padrão consolidado:
+
+| API | Sprint que adicionou | Padrão |
+|---|---|---|
+| `react-native` `PermissionsAndroid` | M22 | `jest.mock('react-native/Libraries/PermissionsAndroid/PermissionsAndroid', () => ({ request: jest.fn().mockResolvedValue('granted'), PERMISSIONS: { WRITE_EXTERNAL_STORAGE: 'X', READ_EXTERNAL_STORAGE: 'Y' } }))` |
+| `expo-intent-launcher` | M22 | `jest.mock('expo-intent-launcher', () => ({ startActivityAsync: jest.fn().mockResolvedValue({ resultCode: -1 }) }))` |
+| `expo-notifications` `setNotificationChannelAsync` | M30 | `jest.mock('expo-notifications', () => ({ setNotificationChannelAsync: jest.fn(), AndroidImportance: { HIGH: 4 }, requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }) }))` |
+| `expo-auth-session` | M37.1 | `jest.mock('expo-auth-session', () => ({ makeRedirectUri: jest.fn(() => 'mock://callback'), useAuthRequest: jest.fn(() => [null, null, jest.fn().mockResolvedValue({ type: 'success', params: { code: 'mock-code' } })]) }))` |
+| `expo-web-browser` | M37.1 | `jest.mock('expo-web-browser', () => ({ openAuthSessionAsync: jest.fn().mockResolvedValue({ type: 'success' }), maybeCompleteAuthSession: jest.fn() }))` |
+
+**Regra:** sprint dona adiciona o mock no `jest.setup.cjs` na mesma
+sprint que registra o plugin/dependência. Mocks crescem
+incrementalmente — não duplicar.
+
+### 7.9 Boot hooks vs `useEffect` direto em `app/_layout.tsx`
+
+Critério de decisão:
+
+- **`BOOT_HOOKS` array em `src/lib/boot/reagendamento.ts`**: hooks
+  **idempotentes, não-bloqueantes, não-críticos** que rodam em
+  paralelo após hidratação. Falhas são swallowed (try/catch). Ex:
+  `reagendarAlarmes`, `limparLixeiraExpirada`,
+  `verificarMarcosAuto`, `migrarLembretesParaAlarmes`,
+  `migrarAssetsLegacyParaMedia`, `garantirDeviceId`.
+- **`useEffect` direto em `app/_layout.tsx`**: hooks **críticos**
+  que precisam **propagar erro de permissão para a UI** (toast,
+  banner, fallback). Ex: `inicializarVaultCanonico` (M22 — falha
+  bloqueia app inteiro), gate de biometria (M15), pedir permissão
+  de notificações (M30 — após onboarding).
+
+**Regra:** spec da sprint deve declarar **explicitamente** em §5
+qual padrão usar. Default quando ambíguo: `useEffect` direto se
+falha precisa ser visível ao usuário; `BOOT_HOOKS` se falha pode
+ser silenciada.
+
+### 7.10 Overlay z-index global em `app/_layout.tsx`
+
+Após M27 (menu lateral substitui tabs), a árvore de overlays
+globais cresce. Ordem canônica de z-index (de baixo para cima):
+
+| Camada | Componente | zIndex | Sprint dona |
+|---|---|---|---|
+| 0 | `<Stack>` (rotas) | 0 | M01 |
+| 10 | `<FABMenu>` purple esquerda | 10 | M27 |
+| 11 | `<MenuCapturaVerde>` direita (em /memoria) | 11 | M34 |
+| 20 | `<MenuLateral>` drawer | 20 | M27 |
+| 30 | `<BiometriaGate>` | 30 | M15 |
+| 40 | `<ToastProvider>` | 40 | M01.4 |
+
+**Rotas que escondem `<FABMenu>`** (lista canônica em
+`src/lib/navigation/rotasSemFAB.ts`, M27):
+`/onboarding`, `/share-receive`, `/humor-rapido`,
+`/diario-emocional`, `/eventos`, `/scanner`, `/recap` (M36).
+`/_components` (storybook dev, gated por `__DEV__`) **mostra** o FAB
+para validação visual.
+
+**Regra:** sprint que adiciona overlay novo edita esta tabela e o
+arquivo `rotasSemFAB.ts` na mesma sprint.

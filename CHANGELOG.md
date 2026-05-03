@@ -61,9 +61,56 @@ refundação apontando para o commit final.
 
 ### Próximo passo concreto
 
-Executar M21 (`docs/sprints/M21-spec.md`): `gh release delete v1.0.0
---repo AndreBFarias/ouroboros-mobile --yes`. Smoke trivial; sprint de
-0,3h apenas para limpar o estado público antes da refundação técnica.
+M21 fechado (commit `228b51e` + materialização anterior). Próxima:
+**M22** (vault canônico auto-criado em
+`/sdcard/Documents/Ouroboros/` com probe write+read+delete e
+fallback SAF se OEM bloquear).
+
+### Patches em massa pós-teste de auto-implementação (commits após `228b51e`)
+
+3 agentes independentes leram specs M22, M27 e M37 sem contexto da
+conversa de planejamento e produziram planos de implementação. As
+ressalvas identificadas viraram patches cobrindo todas as 21 sprints
+via docs centralizados:
+
+- **`VALIDATOR_BRIEF.md` §4**: Armadilhas A19 (scoped storage
+  Android 11+ + OEM agressivo — exige probe write+read+delete +
+  fallback SAF), A20 (SecureStore Android limite ~2KB por valor),
+  A21 (OAuth scheme custom precisa split clientId Expo Go proxy
+  vs dev-client/release).
+- **`docs/sprints/INTEGRATION-CONTRACT.md` §7**: padrões §7.8
+  (mocks Jest canônicos para `PermissionsAndroid`,
+  `expo-intent-launcher`, `expo-notifications`, `expo-auth-session`,
+  `expo-web-browser`), §7.9 (critério `BOOT_HOOKS` vs `useEffect`
+  direto), §7.10 (overlay z-index global + lista canônica de rotas
+  sem FAB).
+- **M37 splitado**: `M37-spec.md` removido. Substituído por
+  `M37.1-spec.md` (leitura, escopo `calendar.events.readonly`,
+  6-7h) e `M37.2-spec.md` (escrita, escopo `calendar.events`,
+  4-5h, exige reconsentimento).
+- **ADR-0018**: OAuth Google split clientId + cache em arquivo
+  + escopo mínimo + sem servidor próprio. Estende ADR-0007.
+- **M22 patcheada**: §4 absorve A19; §5 substitui
+  `Environment.isExternalStorageManager` (não-existente em RN/Expo)
+  por probe write+read+delete; §5 declara `useEffect` direto
+  (não `BOOT_HOOKS`) por A19; §6 ganha comandos
+  `dumpsys package | grep MANAGE` e validação probe; §9 expande
+  decisões explicitando modo de retorno (`auto | saf-fallback | web`).
+- **M24 patcheada**: §4 cap de 2000 chars por textarea no rascunho
+  + canário > 1500 bytes (A20); §9 plano-B split de chaves se
+  estourar.
+- **M27 patcheada**: §2 corrige fato (`app/index.tsx` não existe
+  hoje); §2 documenta que subgrupos carregam `_layout.tsx` interno
+  no `git mv`; §2 cria `src/lib/navigation/rotasSemFAB.ts`
+  canônico; §4 declara z-index e A18-preservada; §5 lista 6 itens
+  completos da seção "Registrar"; §5 grep exaustivo de `(tabs)`.
+- **M30 patcheada**: §4 obriga novo channel ID
+  `ouroboros-default-v2` (Android não permite editar canais
+  existentes); §4 hook crítico via `useEffect` direto (não
+  `BOOT_HOOKS`); §9 mock `expo-notifications`.
+- **M38 patcheada**: §4 detecta reinstall sem backup
+  (`substituido_por`); §4 confirma deviceId < 32 bytes cabe em
+  SecureStore.
 
 ## [1.0.0-rc1] — 2026-05-02 (não lançado, retirado do GitHub Releases)
 

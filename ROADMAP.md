@@ -103,7 +103,8 @@ fechamento de sprint.
 | `[todo]` | M34 | MenuCapturaVerde na tab Memórias (Foto/Música/Vídeo/Frase) | 09-11 | — | 6-7h | `M34-spec.md` |
 | `[todo]` | M35 | Aba Finanças: empty state honesto "Em desenvolvimento" | 22 | — | 1-2h | `M35-spec.md` |
 | `[todo]` | M36 | Tela Recap: agregação de período (Conquistas/Crises/Evoluções/Números) | nova | — | 6-8h | `M36-spec.md` |
-| `[todo]` | M37 | Integração Google Calendar via OAuth (leitura + escrita) | nova | googleAuth | 10-12h | `M37-spec.md` |
+| `[todo]` | M37.1 | Google Calendar OAuth + leitura de eventos (rota /agenda) | nova | googleAuth | 6-7h | `M37.1-spec.md` (split do M37 original) |
+| `[todo]` | M37.2 | Google Calendar escrita (criar e deletar evento) | nova | googleAuth | 4-5h | `M37.2-spec.md` (split do M37 original) |
 | `[todo]` | M38 | Conflict resolution para 4 dispositivos via deviceId no slug | — | — | 4-5h | `M38-spec.md` |
 | `[todo]` | M39 | Estrutura canônica de mídia + .md companion (formal ADR-0017) | — | midia-companion | 4-5h | `M39-spec.md` |
 | `[todo]` | M40 | Tela 01 Hoje v2: Recap + status do casal + próximos | 01 | — | 4-5h | `M40-spec.md` |

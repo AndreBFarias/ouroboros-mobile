@@ -22,3 +22,4 @@ com referência "Supersedes ADR-NNNN" no cabeçalho.
 | 0015 | Identidade de Pessoas em Runtime com Nome e Foto | Aceito (estende ADR-0011) | M03 + M03.2 + M00.docs |
 | 0016 | Vault Auto-criado em /sdcard/Documents/Ouroboros sem SAF | Aceito (estende ADR-0014) | M22 (refundação v1.0) |
 | 0017 | Mídia em Formato Original com .md Companion | Aceito | M39 (refundação v1.0) |
+| 0018 | OAuth Google: split clientId + cache em arquivo + escopo mínimo | Aceito (estende ADR-0007) | M37.1 + M37.2 (refundação v1.0) |

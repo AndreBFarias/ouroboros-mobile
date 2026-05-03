@@ -121,6 +121,24 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
   intrusivo.
 - Debounce 500ms — evitar overhead de SecureStore write a cada
   keystroke.
+- **Armadilha A20 (BRIEF §4)**: SecureStore Android limita ~2KB
+  por valor. Rascunhos individuais (humorRapido, alarmesNovo,
+  etc.) cabem facilmente. Mas a **soma serializada de todos os 7
+  rascunhos** sob a chave única `ouroboros.sessao.v1` pode
+  estourar se o usuário tiver textos longos em diário emocional
+  (textarea livre). **Mitigações obrigatórias:**
+  - Cap por rascunho de texto livre: **2000 caracteres** (truncar
+    silenciosamente ao salvar; UI não impede digitar mais, mas
+    rascunho só preserva 2000).
+  - Antes de cada `setItemAsync`, calcular `JSON.stringify(state).length`
+    e logar warning se > 1500 bytes (canário).
+  - Se warning persistir, plano-B: dividir em múltiplas chaves
+    SecureStore (`ouroboros.sessao.v1.rascunho.diario` etc.) em
+    sprint futura M24.x.
+- **Após M27**, todos os paths de formulários movem de
+  `app/(tabs)/X` para `app/X`. M24 já assume essa migração porque
+  bloqueia formulários — atualizar paths ao executar **se M27 já
+  rodou** (que é a ordem prevista).
 
 ## 5. Procedimento sugerido
 
@@ -176,6 +194,13 @@ feat: m24 sessao store auto save rascunhos e resume state
 
 - **SecureStore para rascunhos**: rascunhos contêm dados sensíveis
   (texto livre de diário emocional). SecureStore criptografa.
+- **Cap de 2000 caracteres por textarea no rascunho** (vide A20):
+  evita estourar o limite ~2KB por valor do EncryptedSharedPreferences
+  Android. Truncamento silencioso preserva UX (usuário pode digitar
+  mais; só não vai restaurar tudo após reabrir antes de salvar).
+- **Canário no `setItemAsync`**: log warning se serialização passar
+  de 1500 bytes. Se aparecer em telemetria local (`__DEV__`), plano-B
+  é split em chaves múltiplas (sprint M24.x futura).
 - **Debounce 500ms**: balanço entre overhead I/O e perda em crash.
 - **Limpar rascunho pós-save**: evitar restaurar dados já
   persistidos.
@@ -187,5 +212,7 @@ feat: m24 sessao store auto save rascunhos e resume state
 - **Permissões marcadas no store**: evitar pedir várias vezes.
   Quando `permissoesPedidas.notif === true`, não pede de novo (até
   reset manual).
+- **Paths de formulários em raiz após M27**: M24 executa após M27
+  na ordem prevista; usar `app/<rota>.tsx` (não `(tabs)`).
 
 Sprint pronta para execução sem perguntas pendentes.
