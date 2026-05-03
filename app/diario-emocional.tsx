@@ -46,6 +46,8 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import {
   DiarioEmocionalSchema,
   type DiarioEmocionalMeta,
@@ -157,21 +159,86 @@ export default function DiarioEmocional() {
   // (M15) sem afetar o resto do form. Se off, o MicrofoneButton
   // some inteiro - nao basta desabilitar.
   const permitirAudio = useSettings((s) => s.midia.permitirAudio);
+  // M24: rascunho previo (caso exista). Seed dos useState abaixo;
+  // ComQuem extra fica fora porque o rascunho persiste apenas
+  // PessoaAutor[] do schema (contexto social fica em contexto_social).
+  const rascunho = useSessao((s) => s.rascunhos.diarioEmocional);
 
-  const [modo, setModo] = useState<DiarioEmocionalModo>(modoInicial);
-  const [emocoes, setEmocoes] = useState<string[]>([]);
-  const [intensidade, setIntensidade] = useState<number>(INTENSIDADE_DEFAULT);
-  const [texto, setTexto] = useState<string>('');
-  const [com, setCom] = useState<ComQuem[]>([]);
-  const [estrategia, setEstrategia] = useState<string>('');
-  const [funcionou, setFuncionou] = useState<boolean>(false);
+  const [modo, setModo] = useState<DiarioEmocionalModo>(
+    () => rascunho?.modo ?? modoInicial
+  );
+  const [emocoes, setEmocoes] = useState<string[]>(
+    () => rascunho?.emocoes ?? []
+  );
+  const [intensidade, setIntensidade] = useState<number>(
+    () => rascunho?.intensidade ?? INTENSIDADE_DEFAULT
+  );
+  const [texto, setTexto] = useState<string>(() => rascunho?.texto ?? '');
+  const [com, setCom] = useState<ComQuem[]>(() => {
+    const semente: ComQuem[] = [];
+    if (Array.isArray(rascunho?.com)) {
+      // PessoaIdSchema aceita 'ambos' mas a UI desta tela so distingue
+      // pessoa_a/pessoa_b individualmente. Filtramos 'ambos' do
+      // rascunho ao restaurar.
+      for (const c of rascunho.com) {
+        if (c === 'pessoa_a' || c === 'pessoa_b') semente.push(c);
+      }
+    }
+    if (Array.isArray(rascunho?.contexto_social)) {
+      for (const c of rascunho.contexto_social) semente.push(c);
+    }
+    return semente;
+  });
+  const [estrategia, setEstrategia] = useState<string>(
+    () => rascunho?.estrategia ?? ''
+  );
+  const [funcionou, setFuncionou] = useState<boolean>(
+    () => rascunho?.funcionou ?? false
+  );
   const [salvando, setSalvando] = useState<boolean>(false);
   // Audio anexo: M06.5 cabea path relativo aqui quando o usuario
   // grava no MicrofoneButton. Frontmatter recebe via meta.audio.
-  const [audioPath, setAudioPath] = useState<string | null>(null);
+  const [audioPath, setAudioPath] = useState<string | null>(
+    () => rascunho?.audio ?? null
+  );
   // Midia anexada (M07.x). Em modo vitoria, save bloqueia se array
   // vazio (refine zod + check explicito antes do safeParse).
-  const [midia, setMidia] = useState<Midia[]>([]);
+  const [midia, setMidia] = useState<Midia[]>(() => rascunho?.midia ?? []);
+
+  // M24: snapshot do rascunho para auto-save debounced. So serializa
+  // campos compativeis com o schema; ComQuem 'amigos'/'sozinho' vira
+  // contexto_social. audioPath fica em audio (compativel com Meta).
+  const snapshotRascunho = useMemo(() => {
+    const comPessoaIds = com.filter(ehPessoaAutor);
+    const contextoSocial = com.filter(
+      (c): c is 'amigos' | 'sozinho' => c === 'amigos' || c === 'sozinho'
+    );
+    return {
+      modo,
+      emocoes,
+      intensidade,
+      texto,
+      com: comPessoaIds,
+      contexto_social: contextoSocial,
+      ...(modo === 'trigger' ? { funcionou } : {}),
+      ...(modo === 'trigger' && estrategia.trim().length > 0
+        ? { estrategia }
+        : {}),
+      audio: audioPath,
+      midia,
+    };
+  }, [
+    modo,
+    emocoes,
+    intensidade,
+    texto,
+    com,
+    estrategia,
+    funcionou,
+    audioPath,
+    midia,
+  ]);
+  useAutoSaveRascunho('diarioEmocional', snapshotRascunho);
 
   // Reset das emocoes ao trocar de modo: lista negativa não bate
   // com positiva, preservar slug seria payload invalido.
@@ -278,6 +345,8 @@ export default function DiarioEmocional() {
 
     try {
       await saveDiario(validacao.data, body, vaultRoot);
+      // M24: limpa rascunho pos-save bem-sucedido.
+      useSessao.getState().limparRascunho('diarioEmocional');
       sheetRef.current?.close();
       if (modo === 'vitoria') {
         // anonimato-allow: substantivo comum (conquista) na frase abaixo.

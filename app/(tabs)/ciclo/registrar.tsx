@@ -39,6 +39,8 @@ import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import { formatDateYmd } from '@/lib/vault/paths';
 import {
   escreverRegistroCiclo,
@@ -76,14 +78,40 @@ export default function CicloRegistrar() {
     return formatDateYmd(new Date());
   }, [params.data]);
 
+  // M24: rascunho previo (se existir).
+  const rascunho = useSessao((s) => s.rascunhos.cicloRegistrar);
+
   // Estado do form
   const [marcandoInicio, setMarcandoInicio] = useState(false);
-  const [faseManual, setFaseManual] = useState<FaseCiclo | null>(null);
-  const [sintomas, setSintomas] = useState<SintomaCiclo[]>([]);
-  const [intensidade, setIntensidade] = useState<number>(3);
-  const [humor, setHumor] = useState<number>(3);
-  const [texto, setTexto] = useState<string>('');
+  const [faseManual, setFaseManual] = useState<FaseCiclo | null>(
+    () => (rascunho?.fase as FaseCiclo | undefined) ?? null
+  );
+  const [sintomas, setSintomas] = useState<SintomaCiclo[]>(
+    () => rascunho?.sintomas ?? []
+  );
+  const [intensidade, setIntensidade] = useState<number>(
+    () => rascunho?.intensidade ?? 3
+  );
+  const [humor, setHumor] = useState<number>(
+    () => rascunho?.humor_associado ?? 3
+  );
+  const [texto, setTexto] = useState<string>(() => rascunho?.texto ?? '');
   const [salvando, setSalvando] = useState(false);
+
+  // M24: snapshot do rascunho debounced. Persistimos campos canonicos
+  // do CicloMenstrualMeta (sem data e autor, que sao derivados ao
+  // salvar de fato).
+  const snapshotRascunho = useMemo(
+    () => ({
+      fase: faseManual ?? undefined,
+      sintomas,
+      intensidade: sintomas.length > 0 ? intensidade : null,
+      humor_associado: humor,
+      texto: texto.trim().length > 0 ? texto : null,
+    }),
+    [faseManual, sintomas, intensidade, humor, texto]
+  );
+  useAutoSaveRascunho('cicloRegistrar', snapshotRascunho);
 
   // dataInicioContexto: ultimo data_inicio conhecido ANTES deste
   // registro. Usado para inferir fase default. Carregado do Vault
@@ -144,6 +172,8 @@ export default function CicloRegistrar() {
         return;
       }
       await escreverRegistroCiclo(vaultRoot, parsed.data, '');
+      // M24: limpa rascunho pos-save bem-sucedido.
+      useSessao.getState().limparRascunho('cicloRegistrar');
       void haptics.light();
       toast.show('Anotado.', 'success');
       router.back();

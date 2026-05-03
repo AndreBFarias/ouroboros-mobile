@@ -11,7 +11,7 @@
 // Conflito A5 (Syncthing entre celulares no mesmo dia): tratado
 // dentro de saveHumor; aqui apenas mostramos toast diferenciado se
 // retornar conflito=true.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import {
@@ -29,6 +29,8 @@ import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import { formatDateYmd } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { TAGS_RAPIDAS } from '@/lib/humor/tagsRapidas';
@@ -43,16 +45,53 @@ export default function HumorRapido() {
 
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  // M24: rascunho previo (caso exista). Usado apenas como seed inicial
+  // dos useState; mudancas posteriores nao precisam ler do store.
+  const rascunho = useSessao((s) => s.rascunhos.humorRapido);
 
-  const [humorVal, setHumorVal] = useState<number>(SLIDER_DEFAULT);
-  const [energia, setEnergia] = useState<number>(SLIDER_DEFAULT);
-  const [ansiedade, setAnsiedade] = useState<number>(SLIDER_DEFAULT);
-  const [foco, setFoco] = useState<number>(SLIDER_DEFAULT);
-  const [medicacao, setMedicacao] = useState<string>('');
-  const [horasSonoTexto, setHorasSonoTexto] = useState<string>('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [frase, setFrase] = useState<string>('');
+  const [humorVal, setHumorVal] = useState<number>(
+    () => rascunho?.humor ?? SLIDER_DEFAULT
+  );
+  const [energia, setEnergia] = useState<number>(
+    () => rascunho?.energia ?? SLIDER_DEFAULT
+  );
+  const [ansiedade, setAnsiedade] = useState<number>(
+    () => rascunho?.ansiedade ?? SLIDER_DEFAULT
+  );
+  const [foco, setFoco] = useState<number>(
+    () => rascunho?.foco ?? SLIDER_DEFAULT
+  );
+  const [medicacao, setMedicacao] = useState<string>(
+    () => rascunho?.medicacao ?? ''
+  );
+  const [horasSonoTexto, setHorasSonoTexto] = useState<string>(() =>
+    typeof rascunho?.horas_sono === 'number'
+      ? String(rascunho.horas_sono)
+      : ''
+  );
+  const [tags, setTags] = useState<string[]>(() => rascunho?.tags ?? []);
+  const [frase, setFrase] = useState<string>(() => rascunho?.frase ?? '');
   const [salvando, setSalvando] = useState<boolean>(false);
+
+  // M24: snapshot do rascunho atual; debounced via useAutoSaveRascunho.
+  // Memoizado para nao redisparar o effect a cada render.
+  const snapshotRascunho = useMemo(
+    () => ({
+      humor: humorVal,
+      energia,
+      ansiedade,
+      foco,
+      tags,
+      ...(medicacao.trim().length > 0 ? { medicacao } : {}),
+      ...(horasSonoTexto.trim().length > 0 &&
+      Number.isFinite(Number(horasSonoTexto))
+        ? { horas_sono: Number(horasSonoTexto) }
+        : {}),
+      ...(frase.trim().length > 0 ? { frase } : {}),
+    }),
+    [humorVal, energia, ansiedade, foco, tags, medicacao, horasSonoTexto, frase]
+  );
+  useAutoSaveRascunho('humorRapido', snapshotRascunho);
 
   // Abre o sheet automaticamente após a montagem. Index 0 = primeiro
   // snap point ('70%'). Usamos ref para controlar imperativamente, em
@@ -104,6 +143,9 @@ export default function HumorRapido() {
 
     try {
       const { conflito } = await saveHumor(validacao.data, vaultRoot);
+      // M24: limpa o rascunho pos-save para nao restaurar dados ja
+      // persistidos no Vault no proximo boot.
+      useSessao.getState().limparRascunho('humorRapido');
       sheetRef.current?.close();
       toast.show(
         conflito ? 'Salvo com sufixo de pessoa.' : 'Salvo.',

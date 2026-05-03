@@ -3,9 +3,9 @@ import {
   JetBrainsMono_400Regular,
   JetBrainsMono_500Medium,
 } from '@expo-google-fonts/jetbrains-mono';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Appearance, LogBox, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider, useToast } from '@/components/ui';
@@ -16,6 +16,9 @@ import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
+import { useSessao } from '@/lib/stores/sessao';
+import { useHasHydrated } from '@/lib/stores/hydrated';
+import { useUltimaRota, isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
 import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import '../global.css';
 
@@ -87,6 +90,7 @@ export default function RootLayout() {
       <BiometriaGate>
         <ToastProvider>
           <VaultBootGate />
+          <SessaoBootGate />
           <Stack
             screenOptions={{
               headerShown: false,
@@ -134,5 +138,54 @@ function VaultBootGate() {
     // useEffect uma unica vez na mount do gate. Plugin react-hooks
     // nao habilitado no eslint config do projeto.
   }, []);
+  return null;
+}
+
+// M24: gate de sessao. Espera as 3 stores (onboarding, vault, sessao)
+// hidratarem do SecureStore e, em uma unica execucao, restaura a
+// ultima rota visitada via router.replace - desde que essa rota nao
+// seja modal e o onboarding esteja concluido. Em paralelo, mantem o
+// ultimaRota atualizado a cada navegacao via useUltimaRota.
+//
+// Decisao CONTRACT secao 7.9: useEffect direto (nao BOOT_HOOKS)
+// porque a logica precisa do router e da hidratacao multi-store; um
+// hook idempotente em background desacoplaria do timing de boot.
+function SessaoBootGate() {
+  const router = useRouter();
+  const onboardingHidratado = useHasHydrated(useOnboarding);
+  const vaultHidratado = useHasHydrated(useVault);
+  const sessaoHidratada = useHasHydrated(useSessao);
+  // Lock para garantir que o restore so acontece uma vez por mount.
+  // Sem isso, useEffect re-disparado por mudanca de hidratacao
+  // poderia tentar router.replace varias vezes.
+  const restauradoRef = useRef<boolean>(false);
+
+  // Atualiza ultima rota a cada navegacao. Usa pathname interno; nada
+  // a fazer enquanto a sessao nao hidrata (evita gravar rota inicial
+  // antes do restore).
+  useUltimaRota();
+
+  useEffect(() => {
+    if (restauradoRef.current) return;
+    if (!onboardingHidratado || !vaultHidratado || !sessaoHidratada) return;
+    restauradoRef.current = true;
+
+    const onboardingDone = useOnboarding.getState().done;
+    if (!onboardingDone) return;
+    const vaultRoot = useVault.getState().vaultRoot;
+    if (!vaultRoot) return;
+
+    const ultimaRota = useSessao.getState().ultimaRota;
+    if (!isRotaRestauravel(ultimaRota)) return;
+    if (ultimaRota === null) return;
+
+    // router.replace porque "boot na rota X" nao deve criar entrada de
+    // historico que volte para a rota inicial. Cast porque expo-router
+    // usa template literal types restritivas; o pathname guardado e
+    // sempre devolvido pelo proprio router via usePathname(), entao
+    // garantidamente valido em runtime.
+    router.replace(ultimaRota as Parameters<typeof router.replace>[0]);
+  }, [onboardingHidratado, vaultHidratado, sessaoHidratada, router]);
+
   return null;
 }

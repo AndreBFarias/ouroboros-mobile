@@ -1,0 +1,231 @@
+// Store de sessao runtime (M24). Auto-save de rascunhos de formulario
+// e restore da ultima rota visitada para evitar perda de digitacao.
+//
+// Persiste em SecureStore via secureStorage adapter, chave
+// `ouroboros.sessao.v1`. Sete rascunhos ficam serializados num unico
+// blob; a soma deve respeitar o teto pratico de ~2KB do
+// EncryptedSharedPreferences Android (BRIEF A20). Mitigacoes:
+//   - cap por textarea livre em RASCUNHO_TEXTO_CAP caracteres,
+//     truncado silenciosamente ao gravar (UI nao impede digitar mais);
+//   - canario logando warning quando o snapshot serializado passa de
+//     CANARY_SOFT_LIMIT bytes.
+//
+// Comentarios sem acento (convencao shell/CI).
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { secureStorage } from '@/lib/stores/persist';
+import type { HumorMeta } from '@/lib/schemas/humor';
+import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
+import type { EventoMeta } from '@/lib/schemas/evento';
+import type { CicloMenstrualMeta } from '@/lib/schemas/ciclo_menstrual';
+import type { Alarme } from '@/lib/schemas/alarme';
+import type { Contador } from '@/lib/schemas/contador';
+import type { Tarefa } from '@/lib/schemas/tarefa';
+
+// Cap de caracteres por textarea livre ao gravar rascunho. Evita
+// estourar o blob unico de SecureStore. UI nao impede digitar mais
+// (UX livre); apenas o snapshot do rascunho e truncado.
+export const RASCUNHO_TEXTO_CAP = 2000;
+
+// Limite "soft" do canario. Se o JSON serializado do estado passar
+// disso, logamos warning em __DEV__ pra alertar antecipadamente
+// (margem ate o teto pratico de ~2KB).
+export const CANARY_SOFT_LIMIT = 1500;
+
+// Tipos parciais: rascunhos sao snapshots em construcao, sem
+// requisitos do schema final. Cada chave referencia o Meta original
+// como Partial e elimina props impossiveis no estado intermediario.
+export type HumorParcial = Partial<HumorMeta>;
+export type DiarioParcial = Partial<DiarioEmocionalMeta>;
+// Evento Meta nao carrega o texto livre (vai no body do .md). O
+// rascunho extende com 'texto' opcional para preservar a digitacao
+// entre sessoes - caso o usuario fechasse o app sem salvar.
+export type EventoParcial = Partial<EventoMeta> & { texto?: string };
+export type CicloParcial = Partial<CicloMenstrualMeta>;
+export type AlarmeParcial = Partial<Alarme>;
+export type ContadorParcial = Partial<Contador>;
+export type TarefaParcial = Partial<Tarefa>;
+
+export interface RascunhosState {
+  humorRapido: HumorParcial | null;
+  diarioEmocional: DiarioParcial | null;
+  eventos: EventoParcial | null;
+  cicloRegistrar: CicloParcial | null;
+  alarmesNovo: AlarmeParcial | null;
+  contadoresNovo: ContadorParcial | null;
+  tarefasNova: TarefaParcial | null;
+}
+
+export type RascunhoKey = keyof RascunhosState;
+
+// Mapa tipado: dada uma chave K, devolve o tipo do rascunho. Usado
+// nas assinaturas de salvarRascunho/limparRascunho para nao perder
+// inferencia.
+export type RascunhoTipo<K extends RascunhoKey> = NonNullable<
+  RascunhosState[K]
+>;
+
+export interface PermissoesPedidasState {
+  storage: boolean;
+  notif: boolean;
+  camera: boolean;
+  mic: boolean;
+}
+
+export type PermissaoKey = keyof PermissoesPedidasState;
+
+export interface SessaoState {
+  ultimaRota: string | null;
+  rascunhos: RascunhosState;
+  permissoesPedidas: PermissoesPedidasState;
+  atualizadoEm: string;
+  setUltimaRota: (rota: string) => void;
+  salvarRascunho: <K extends RascunhoKey>(
+    chave: K,
+    parcial: RascunhoTipo<K>
+  ) => void;
+  limparRascunho: (chave: RascunhoKey) => void;
+  marcarPermissaoPedida: (chave: PermissaoKey) => void;
+  resetar: () => void;
+}
+
+const RASCUNHOS_VAZIOS: RascunhosState = {
+  humorRapido: null,
+  diarioEmocional: null,
+  eventos: null,
+  cicloRegistrar: null,
+  alarmesNovo: null,
+  contadoresNovo: null,
+  tarefasNova: null,
+};
+
+const PERMISSOES_VAZIAS: PermissoesPedidasState = {
+  storage: false,
+  notif: false,
+  camera: false,
+  mic: false,
+};
+
+const DEFAULT_STATE: Omit<
+  SessaoState,
+  | 'setUltimaRota'
+  | 'salvarRascunho'
+  | 'limparRascunho'
+  | 'marcarPermissaoPedida'
+  | 'resetar'
+> = {
+  ultimaRota: null,
+  rascunhos: RASCUNHOS_VAZIOS,
+  permissoesPedidas: PERMISSOES_VAZIAS,
+  atualizadoEm: new Date(0).toISOString(),
+};
+
+// Trunca campos de texto livre conhecidos no payload do rascunho. So
+// percorre props com nomes de texto canonicos (texto, frase,
+// estrategia, lugar, titulo, medicacao). Outros campos passam intactos.
+const CAMPOS_TEXTO_LIVRE: ReadonlySet<string> = new Set([
+  'texto',
+  'frase',
+  'estrategia',
+  'lugar',
+  'titulo',
+  'medicacao',
+]);
+
+function truncarCampoLongo(valor: unknown): unknown {
+  if (typeof valor !== 'string') return valor;
+  if (valor.length <= RASCUNHO_TEXTO_CAP) return valor;
+  return valor.slice(0, RASCUNHO_TEXTO_CAP);
+}
+
+function aplicarCapTextos<T extends Record<string, unknown>>(
+  parcial: T
+): T {
+  const saida: Record<string, unknown> = { ...parcial };
+  for (const chave of Object.keys(saida)) {
+    if (CAMPOS_TEXTO_LIVRE.has(chave)) {
+      saida[chave] = truncarCampoLongo(saida[chave]);
+    }
+  }
+  return saida as T;
+}
+
+// Canario A20: warning em __DEV__ quando o snapshot serializado passa
+// do limite soft. Em producao silencia para nao poluir log do usuario.
+function checarCanario(state: SessaoState): void {
+  if (typeof __DEV__ !== 'undefined' && !__DEV__) return;
+  try {
+    const persistivel = {
+      ultimaRota: state.ultimaRota,
+      rascunhos: state.rascunhos,
+      permissoesPedidas: state.permissoesPedidas,
+      atualizadoEm: state.atualizadoEm,
+    };
+    const tamanho = JSON.stringify(persistivel).length;
+    if (tamanho > CANARY_SOFT_LIMIT) {
+      // Mensagem instrumentada para captura em telemetria local. Plano-B
+      // documentado no spec: split em multiplas chaves SecureStore.
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[sessao] snapshot ${tamanho}B excede ${CANARY_SOFT_LIMIT}B. ` +
+          'Considere limpar rascunhos antigos ou planejar split de chaves.'
+      );
+    }
+  } catch {
+    // JSON.stringify pode falhar em refs ciclicas; silenciamos para
+    // nao quebrar o set principal.
+  }
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+export const useSessao = create<SessaoState>()(
+  persist(
+    (set, get) => ({
+      ...DEFAULT_STATE,
+      setUltimaRota: (rota) => {
+        set({ ultimaRota: rota, atualizadoEm: nowIso() });
+        checarCanario(get());
+      },
+      salvarRascunho: (chave, parcial) => {
+        const aplicado = aplicarCapTextos(
+          parcial as unknown as Record<string, unknown>
+        ) as RascunhoTipo<typeof chave>;
+        set((s) => ({
+          rascunhos: { ...s.rascunhos, [chave]: aplicado },
+          atualizadoEm: nowIso(),
+        }));
+        checarCanario(get());
+      },
+      limparRascunho: (chave) => {
+        set((s) => ({
+          rascunhos: { ...s.rascunhos, [chave]: null },
+          atualizadoEm: nowIso(),
+        }));
+        checarCanario(get());
+      },
+      marcarPermissaoPedida: (chave) => {
+        set((s) => ({
+          permissoesPedidas: { ...s.permissoesPedidas, [chave]: true },
+          atualizadoEm: nowIso(),
+        }));
+        checarCanario(get());
+      },
+      resetar: () => set({ ...DEFAULT_STATE }),
+    }),
+    {
+      name: 'ouroboros.sessao.v1',
+      storage: createJSONStorage(() => secureStorage),
+      // Persistimos apenas o estado puro; mutators sao re-injetados
+      // pelo create. Evita warning de "function" no JSON.
+      partialize: (state) => ({
+        ultimaRota: state.ultimaRota,
+        rascunhos: state.rascunhos,
+        permissoesPedidas: state.permissoesPedidas,
+        atualizadoEm: state.atualizadoEm,
+      }),
+    }
+  )
+);

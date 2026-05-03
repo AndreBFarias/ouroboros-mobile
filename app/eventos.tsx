@@ -22,7 +22,7 @@
 //  - Cap arbitrario de 6 fotos.
 //
 // Modo negativo não dispara haptic no save (mesmo principio da M06).
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
@@ -48,6 +48,8 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useOnboarding } from '@/lib/stores/onboarding';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import {
   EventoSchema,
   type EventoMeta,
@@ -87,32 +89,71 @@ export default function Eventos() {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  // M24: rascunho previo. Notar que texto vive no body (.md), nao no
+  // meta; persistimos separado no rascunho para nao reescrever o
+  // schema de Evento, embora o snapshotRascunho abaixo armazene
+  // texto livre como campo extra (truncado pelo cap em useSessao).
+  const rascunho = useSessao((s) => s.rascunhos.eventos);
 
   // Estados do form. Modo default 'positivo'; toggle no header
   // alterna para 'negativo'.
-  const [modo, setModo] = useState<EventoModo>('positivo');
-  const [texto, setTexto] = useState<string>('');
-  const [lugar, setLugar] = useState<string>('');
-  const [bairro, setBairro] = useState<string | null>(null);
+  const [modo, setModo] = useState<EventoModo>(
+    () => rascunho?.modo ?? 'positivo'
+  );
+  // 'texto' vive no rascunho como campo extra (nao faz parte do
+  // Evento Meta - e gravado no body do .md ao salvar).
+  const [texto, setTexto] = useState<string>(() => rascunho?.texto ?? '');
+  const [lugar, setLugar] = useState<string>(() => rascunho?.lugar ?? '');
+  const [bairro, setBairro] = useState<string | null>(
+    () => rascunho?.bairro ?? null
+  );
   const [detectandoBairro, setDetectandoBairro] = useState<boolean>(false);
   const [quando, setQuando] = useState<QuandoMode>('agora');
   const [dataCustom, setDataCustom] = useState<Date | null>(null);
   // Auto-selecao de pessoa_b quando tipoCompanhia indica duo. Casal
   // ou amigos: comeca com pessoa_b já marcado para reduzir tap-cost.
-  // Sozinho: sem pre-selecao.
-  const [com, setCom] = useState<PessoaAutor[]>(() =>
-    tipoCompanhia === 'sozinho' ? [] : ['pessoa_b']
-  );
+  // Sozinho: sem pre-selecao. Rascunho sobrescreve quando existe -
+  // EventoMeta usa PessoaId[] (com 'ambos'), filtramos para a UI que
+  // so distingue pessoa_a/pessoa_b individualmente.
+  const [com, setCom] = useState<PessoaAutor[]>(() => {
+    if (Array.isArray(rascunho?.com)) {
+      const filtrado = rascunho.com.filter(
+        (c): c is PessoaAutor => c === 'pessoa_a' || c === 'pessoa_b'
+      );
+      return filtrado;
+    }
+    return tipoCompanhia === 'sozinho' ? [] : ['pessoa_b'];
+  });
   const [categoria, setCategoria] = useState<EventoCategoria>(
-    CATEGORIA_DEFAULT
+    () => (rascunho?.categoria as EventoCategoria | undefined) ?? CATEGORIA_DEFAULT
   );
   const [fotos, setFotos] = useState<string[]>([]);
   // Midia anexada (M07.x). Obrigatoria em modo positivo via refine.
   // FotosBlock continua existindo separado para fotos rapidas (legado
   // M07); MidiaPicker e usado para conquistas com peso emocional.
-  const [midia, setMidia] = useState<Midia[]>([]);
-  const [intensidade, setIntensidade] = useState<number>(INTENSIDADE_DEFAULT);
+  const [midia, setMidia] = useState<Midia[]>(() => rascunho?.midia ?? []);
+  const [intensidade, setIntensidade] = useState<number>(
+    () => rascunho?.intensidade ?? INTENSIDADE_DEFAULT
+  );
   const [salvando, setSalvando] = useState<boolean>(false);
+
+  // M24: snapshot do rascunho debounced. 'texto' vai como campo extra
+  // (truncado pelo cap em aplicarCapTextos). Fotos sao URIs locais
+  // efemeras pos-restart, nao persistimos.
+  const snapshotRascunho = useMemo(
+    () => ({
+      modo,
+      ...(lugar.trim().length > 0 ? { lugar } : {}),
+      ...(bairro && bairro.trim().length > 0 ? { bairro } : {}),
+      com,
+      categoria,
+      intensidade,
+      midia,
+      texto,
+    }),
+    [modo, lugar, bairro, com, categoria, intensidade, midia, texto]
+  );
+  useAutoSaveRascunho('eventos', snapshotRascunho);
 
   // Abre o sheet após a montagem (idempotente em re-mount via
   // navegacao por aba/deeplink futuro).
@@ -219,6 +260,8 @@ export default function Eventos() {
         vaultRoot,
         fotos,
       });
+      // M24: limpa rascunho pos-save bem-sucedido.
+      useSessao.getState().limparRascunho('eventos');
       sheetRef.current?.close();
       if (modo === 'positivo') {
         // Evento positivo é vitória — respeita Settings.somVibracao.vitoria.

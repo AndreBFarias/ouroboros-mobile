@@ -7,6 +7,58 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **M24 (2026-05-03)** — Resume state e auto-save de rascunhos.
+  - `src/lib/stores/sessao.ts` novo: store zustand persist com
+    `ultimaRota`, `rascunhos` (7 chaves: humorRapido, diarioEmocional,
+    eventos, cicloRegistrar, alarmesNovo, contadoresNovo, tarefasNova),
+    `permissoesPedidas` (4 chaves: storage, notif, camera, mic),
+    `atualizadoEm`. Persist key `ouroboros.sessao.v1` via
+    `secureStorage` adapter.
+  - `src/lib/hooks/useAutoSaveRascunho.ts` novo: hook genérico
+    debounced 500ms com cleanup correto.
+  - `src/lib/hooks/useUltimaRota.ts` novo: tracking via
+    `usePathname()` + função pura `isRotaRestauravel(path)` que
+    exclui rotas modais (`/onboarding`, `/share-receive`,
+    `/humor-rapido`, `/diario-emocional`, `/eventos`, `/scanner`,
+    `/_components`).
+  - `app/_layout.tsx` ganha `<SessaoBootGate />` via `useEffect`
+    direto (não BOOT_HOOKS — vide CONTRACT §7.9): espera as 3
+    stores hidratarem (`useOnboarding`, `useVault`, `useSessao`),
+    valida `done && vaultRoot && rota não-modal`, faz
+    `router.replace(ultimaRota)` uma única vez por mount via
+    lock `restauradoRef`.
+  - **A20 implementada** (BRIEF §4): cap 2000 chars por textarea
+    livre (texto, frase, estrategia, lugar, titulo, medicacao)
+    truncado silenciosamente em `salvarRascunho`; canário em
+    `__DEV__` log warning se snapshot serializado > 1500B (margem
+    para o teto prático de ~2KB do EncryptedSharedPreferences
+    Android).
+  - 7 formulários plugados com hidratação de rascunho (lazy
+    `useState`) + auto-save (`useAutoSaveRascunho`) + limpar
+    pós-save:
+    - `app/humor-rapido.tsx`
+    - `app/diario-emocional.tsx` (filtro `'ambos'` ao restaurar
+      `com[]` — UI usa `PessoaAutor[]` enquanto Meta aceita
+      `PessoaIdSchema`)
+    - `app/eventos.tsx` (idem + `EventoParcial.texto?` opcional
+      para preservar texto livre que vive no body do `.md`)
+    - `app/(tabs)/ciclo/registrar.tsx`
+    - `app/(tabs)/alarmes/novo.tsx` (discrimina criar vs editar:
+      em editar, rascunho ignorado — fonte é alarme persistido)
+    - `app/(tabs)/contadores/novo.tsx`
+    - `src/components/todo/SheetNovaTarefa.tsx` (guard de modo:
+      rascunho hidrata só em criar quando `tituloInicial === ''`)
+  - 32 testes novos (3 suítes): 22 em `sessao.test.ts` (incluindo
+    cap+canário), 5 em `useAutoSaveRascunho.test.tsx` (debounce,
+    cleanup), 5 em `useUltimaRota.test.tsx` (função pura).
+  - **Métricas**: 1080 → 1103 testes (+23), 123 → 126 suites (+3),
+    bundle Hermes 8.73 MB.
+  - Veredito do orquestrador (validador-sprint atingiu rate limit;
+    validação manual via inspeção do diff): APROVADO. A20 e §7.9
+    implementadas exemplarmente. Pendência R1: 2 screenshots
+    Nível B/C exigem boot real do app (`A-rascunho-restaurado.png`,
+    `A-rota-restaurada.png`).
+
 - **M23 (2026-05-02)** — Onboarding 3 frames sem SAF/Sync.
   - `app/onboarding.tsx` reduzido de 5 frames (621L) para 3 frames
     (466L, -25%): boas-vindas+nome → companhia+nome parceiro →

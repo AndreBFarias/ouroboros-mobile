@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Ouroboros — Shell de navegação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/components.css">
+  <style>
+    .empty-state {
+      display: grid; place-items: center;
+      min-height: calc(100vh - var(--topbar-h) - var(--sp-12));
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state .glyph-big {
+      width: 64px; height: 64px;
+      color: var(--border-strong);
+      margin: 0 auto var(--sp-4);
+    }
+    .empty-state h2 {
+      font-family: var(--ff-mono);
+      font-size: var(--fs-24); font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--text-secondary);
+      margin: 0 0 var(--sp-2);
+    }
+    .empty-state p { font-size: var(--fs-13); max-width: 480px; margin: 0 auto; }
+    .empty-state .atalhos {
+      margin-top: var(--sp-6);
+      display: inline-flex; gap: var(--sp-3); flex-wrap: wrap;
+      justify-content: center;
+    }
+    .kbd {
+      font-family: var(--ff-mono); font-size: 11px;
+      background: var(--bg-elevated); color: var(--text-secondary);
+      border: 1px solid var(--border-subtle); border-radius: var(--r-xs);
+      padding: 2px 6px;
+    }
+    .atalho-card {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4);
+      display: inline-flex; align-items: center; gap: var(--sp-3);
+      font-size: var(--fs-12);
+    }
+  </style>
+</head>
+<body>
+  <div id="shell-root"></div>
+
+  <script src="../_shared/glyphs.js"></script>
+  <script src="../_shared/shell.js"></script>
+  <script>
+    montarShell({
+      clusterAtivo: 'home',
+      abaAtiva: 'visao-geral',
+      breadcrumb: ['Ouroboros', 'Home', 'Shell de navegação'],
+      acoes: [
+        { label: 'Ajuda', icon: 'info' },
+      ],
+    });
+
+    document.getElementById('main-root').innerHTML = `
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">SHELL</h1>
+          <p class="page-subtitle">Layout-mãe com sidebar de clusters, topbar com breadcrumb e atalhos de teclado. Cada página do dashboard reutiliza este shell.</p>
+        </div>
+        <div class="page-meta">
+          <span class="sprint-tag">Sprint UX-125</span>
+          <span class="pill pill-d7-graduado">Graduado</span>
+        </div>
+      </div>
+
+      <div class="empty-state">
+        <div class="glyph-big">${glyph('ouroboros', 64)}</div>
+        <h2>Pronto para navegar</h2>
+        <p>Use os atalhos de teclado para saltar entre páginas, ou clique nos itens da sidebar. As páginas com mockup pronto têm o nome em destaque; as marcadas com <code>·</code> ainda usam a versão atual do dashboard.</p>
+        <div class="atalhos">
+          <div class="atalho-card"><span class="kbd">g</span> <span class="kbd">i</span> Inbox</div>
+          <div class="atalho-card"><span class="kbd">g</span> <span class="kbd">v</span> Validação</div>
+          <div class="atalho-card"><span class="kbd">g</span> <span class="kbd">r</span> Revisor</div>
+          <div class="atalho-card"><span class="kbd">g</span> <span class="kbd">f</span> IRPF</div>
+          <div class="atalho-card"><span class="kbd">/</span> Buscar</div>
+          <div class="atalho-card"><span class="kbd">?</span> Lista de atalhos</div>
+        </div>
+      </div>
+    `;
+    hidratarGlyphs(document.getElementById('main-root'));
+  </script>
+</body>
+</html>

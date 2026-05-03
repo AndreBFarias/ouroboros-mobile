@@ -24,6 +24,8 @@ import {
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import {
   escreverContador,
   listarContadores,
@@ -86,13 +88,37 @@ export default function ContadoresNovo() {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const toast = useToast();
 
-  const [titulo, setTitulo] = useState<string>('');
-  const [dataInicio, setDataInicio] = useState<Date>(() => new Date());
+  // M24: rascunho previo. inicio vem como YYYY-MM-DD no schema; ao
+  // hidratar no Date convertemos via Date(`${inicio}T00:00:00`).
+  const rascunho = useSessao((s) => s.rascunhos.contadoresNovo);
+
+  const [titulo, setTitulo] = useState<string>(
+    () => rascunho?.titulo ?? ''
+  );
+  const [dataInicio, setDataInicio] = useState<Date>(() => {
+    const semente = rascunho?.inicio;
+    if (typeof semente === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(semente)) {
+      const [y, m, d] = semente.split('-').map((s) => parseInt(s, 10));
+      return new Date(y, (m || 1) - 1, d || 1);
+    }
+    return new Date();
+  });
   const [pickerAberto, setPickerAberto] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
 
   const tituloValido = titulo.trim().length > 0;
   const formValido = useMemo(() => tituloValido, [tituloValido]);
+
+  // M24: snapshot do rascunho debounced. inicio formatado como
+  // YYYY-MM-DD para casar com Contador.inicio do schema.
+  const snapshotRascunho = useMemo(
+    () => ({
+      titulo,
+      inicio: formatDateYmd(dataInicio),
+    }),
+    [titulo, dataInicio]
+  );
+  useAutoSaveRascunho('contadoresNovo', snapshotRascunho);
 
   const handleDataChange = (
     event: DateTimePickerEvent,
@@ -135,6 +161,8 @@ export default function ContadoresNovo() {
       }
 
       await escreverContador(vaultRoot, parsed.data);
+      // M24: limpa rascunho pos-save bem-sucedido.
+      useSessao.getState().limparRascunho('contadoresNovo');
       void haptics.light();
       toast.show('Contador criado.', 'success');
       router.back();

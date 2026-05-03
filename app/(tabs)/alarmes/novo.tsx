@@ -35,6 +35,8 @@ import { SeletorDias } from '@/components/alarmes/SeletorDias';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import {
   escreverAlarme,
   excluirAlarme,
@@ -117,13 +119,33 @@ export default function AlarmesNovoOuEditar() {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const toast = useToast();
 
-  const [titulo, setTitulo] = useState('');
-  const [horario, setHorario] = useState('08:00');
-  const [diasSemana, setDiasSemana] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [tag, setTag] = useState<AlarmeTag>('medicacao');
-  const [som, setSom] = useState<AlarmeSom>('gentle');
-  const [snoozeMinutos, setSnoozeMinutos] = useState<number>(5);
-  const [ativo, setAtivo] = useState<boolean>(true);
+  // M24: rascunho previo. So usado em modo criacao - edicao popula
+  // dados a partir do alarme persistido (fonte da verdade) e nao deve
+  // ser sobrescrita por rascunho antigo de outra criacao.
+  const rascunho = useSessao((s) => s.rascunhos.alarmesNovo);
+  const usarRascunho = !editando;
+
+  const [titulo, setTitulo] = useState(() =>
+    usarRascunho ? (rascunho?.titulo ?? '') : ''
+  );
+  const [horario, setHorario] = useState(() =>
+    usarRascunho ? (rascunho?.horario ?? '08:00') : '08:00'
+  );
+  const [diasSemana, setDiasSemana] = useState<number[]>(() =>
+    usarRascunho ? (rascunho?.dias_semana ?? [1, 2, 3, 4, 5]) : [1, 2, 3, 4, 5]
+  );
+  const [tag, setTag] = useState<AlarmeTag>(() =>
+    usarRascunho ? (rascunho?.tag ?? 'medicacao') : 'medicacao'
+  );
+  const [som, setSom] = useState<AlarmeSom>(() =>
+    usarRascunho ? (rascunho?.som ?? 'gentle') : 'gentle'
+  );
+  const [snoozeMinutos, setSnoozeMinutos] = useState<number>(() =>
+    usarRascunho ? (rascunho?.snooze_minutos ?? 5) : 5
+  );
+  const [ativo, setAtivo] = useState<boolean>(() =>
+    usarRascunho ? (rascunho?.ativo ?? true) : true
+  );
 
   const [pickerAberto, setPickerAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -132,6 +154,27 @@ export default function AlarmesNovoOuEditar() {
   // Original carregado em edicao (usado para preservar criado_em e
   // notification_ids pre-existentes até re-agendar).
   const [original, setOriginal] = useState<Alarme | null>(null);
+
+  // M24: snapshot do rascunho debounced. So salva em modo criacao.
+  // Edicao tem fonte da verdade no Vault e nao deve poluir rascunho.
+  const snapshotRascunho = useMemo(
+    () => ({
+      titulo,
+      horario,
+      dias_semana: diasSemana,
+      tag,
+      som,
+      snooze_minutos: snoozeMinutos,
+      ativo,
+    }),
+    [titulo, horario, diasSemana, tag, som, snoozeMinutos, ativo]
+  );
+  // Hook chamado sempre (regra dos hooks); guard interno evita
+  // overwrite indevido em modo edicao.
+  useAutoSaveRascunho(
+    'alarmesNovo',
+    usarRascunho ? snapshotRascunho : (rascunho ?? snapshotRascunho)
+  );
 
   // Carregamento inicial em edicao.
   useEffect(() => {
@@ -243,6 +286,10 @@ export default function AlarmesNovoOuEditar() {
         notification_ids: notificationIds,
       };
       await escreverAlarme(vaultRoot, persistido);
+      // M24: limpa rascunho de criacao pos-save bem-sucedido. Em
+      // modo edicao tambem limpamos para nao recarregar dados antigos
+      // se o usuario abrir /alarmes/novo depois.
+      useSessao.getState().limparRascunho('alarmesNovo');
       void haptics.light();
       toast.show('Alarme salvo.', 'success');
       router.back();

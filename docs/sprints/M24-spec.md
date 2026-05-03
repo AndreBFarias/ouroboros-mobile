@@ -135,10 +135,14 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
   - Se warning persistir, plano-B: dividir em múltiplas chaves
     SecureStore (`ouroboros.sessao.v1.rascunho.diario` etc.) em
     sprint futura M24.x.
-- **Após M27**, todos os paths de formulários movem de
-  `app/(tabs)/X` para `app/X`. M24 já assume essa migração porque
-  bloqueia formulários — atualizar paths ao executar **se M27 já
-  rodou** (que é a ordem prevista).
+- **Paths atuais (M24 executa ANTES de M27)**:
+  - `app/humor-rapido.tsx`, `app/diario-emocional.tsx`,
+    `app/eventos.tsx` — já vivem na raiz (modais).
+  - `app/(tabs)/ciclo/registrar.tsx`, `app/(tabs)/alarmes/novo.tsx`,
+    `app/(tabs)/contadores/novo.tsx` — vivem dentro de `(tabs)`,
+    M27 fará `git mv` depois.
+  - `src/components/todo/SheetNovaTarefa.tsx` — componente de UI,
+    sem path de rota.
 
 ## 5. Procedimento sugerido
 
@@ -212,7 +216,9 @@ feat: m24 sessao store auto save rascunhos e resume state
 - **Permissões marcadas no store**: evitar pedir várias vezes.
   Quando `permissoesPedidas.notif === true`, não pede de novo (até
   reset manual).
-- **Paths de formulários em raiz após M27**: M24 executa após M27
-  na ordem prevista; usar `app/<rota>.tsx` (não `(tabs)`).
+- **Paths de formulários no estado atual (M24 executa ANTES de M27)**:
+  modais já estão em `app/<rota>.tsx` (humor-rapido, diario-emocional,
+  eventos); sub-tabs ainda em `app/(tabs)/<sub>/<rota>.tsx` (ciclo,
+  alarmes, contadores). M27 fará `git mv` consolidador depois.
 
 Sprint pronta para execução sem perguntas pendentes.

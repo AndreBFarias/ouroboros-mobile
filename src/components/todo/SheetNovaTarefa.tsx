@@ -14,7 +14,7 @@
 // permitir validação Nível A em web.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
 import {
   BottomSheetView,
@@ -22,6 +22,8 @@ import {
 } from '@gorhom/bottom-sheet';
 import { Button } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
+import { useSessao } from '@/lib/stores/sessao';
+import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 
 export interface SheetNovaTarefaProps {
   // Titulo inicial. Em modo criacao = ''. Em modo edicao = titulo
@@ -43,14 +45,35 @@ export function SheetNovaTarefa({
   onCancelar,
   salvando = false,
 }: SheetNovaTarefaProps): ReactNode {
-  const [titulo, setTitulo] = useState<string>(tituloInicial);
+  // M24: rascunho previo (so para modo 'criar'). Em 'editar' a fonte
+  // da verdade e tituloInicial passado pelo caller.
+  const rascunho = useSessao((s) => s.rascunhos.tarefasNova);
+  const sementeTitulo =
+    modo === 'criar' && tituloInicial.length === 0 && rascunho?.titulo
+      ? rascunho.titulo
+      : tituloInicial;
+
+  const [titulo, setTitulo] = useState<string>(sementeTitulo);
 
   // Re-sincroniza estado interno quando caller troca tituloInicial
   // (ex: long-press editar em outra tarefa). Effect simples para
-  // resetar o input.
+  // resetar o input. Em 'criar', tituloInicial costuma ser '' e o
+  // rascunho ja foi aplicado na primeira mount; nao reescrevemos
+  // sobre a digitacao do usuario.
   useEffect(() => {
-    setTitulo(tituloInicial);
-  }, [tituloInicial]);
+    if (modo === 'editar' || tituloInicial.length > 0) {
+      setTitulo(tituloInicial);
+    }
+  }, [tituloInicial, modo]);
+
+  // M24: snapshot do rascunho debounced. So salva em 'criar'; em
+  // 'editar', escrevemos um objeto vazio para evitar poluir o
+  // rascunho com titulo de tarefa ja existente.
+  const snapshotRascunho = useMemo(
+    () => (modo === 'criar' ? { titulo } : {}),
+    [modo, titulo]
+  );
+  useAutoSaveRascunho('tarefasNova', snapshotRascunho);
 
   const podeSalvar = titulo.trim().length > 0;
   const cabecalho = modo === 'criar' ? 'Nova tarefa' : 'Editar tarefa';
@@ -58,6 +81,11 @@ export function SheetNovaTarefa({
 
   const handleSalvar = () => {
     if (!podeSalvar || salvando) return;
+    // M24: limpa rascunho. Caller cuida da persistencia real; aqui
+    // apenas removemos o snapshot pre-save.
+    if (modo === 'criar') {
+      useSessao.getState().limparRascunho('tarefasNova');
+    }
     onSalvar(titulo.trim());
   };
 

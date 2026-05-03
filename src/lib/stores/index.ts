@@ -16,3 +16,22 @@ export {
   type TipoCompanhia,
   type Lembrete,
 } from './settings';
+// adicionado por M24:
+export {
+  useSessao,
+  RASCUNHO_TEXTO_CAP,
+  CANARY_SOFT_LIMIT,
+  type SessaoState,
+  type RascunhosState,
+  type RascunhoKey,
+  type RascunhoTipo,
+  type PermissaoKey,
+  type PermissoesPedidasState,
+  type HumorParcial,
+  type DiarioParcial,
+  type EventoParcial,
+  type CicloParcial,
+  type AlarmeParcial,
+  type ContadorParcial,
+  type TarefaParcial,
+} from './sessao';
