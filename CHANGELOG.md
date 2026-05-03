@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Validação consolidada via Gauntlet — M-REVALIDACAO-M20-M28 (2026-05-03)
+
+Orquestrador rodou 11 casos E2E playwright MCP no Gauntlet,
+validando 11 sprints concluídas (M20, M22, M23, M24, M25, M25.1,
+M26, M27, M27.1, M28; M21 doc-only). Resultado:
+
+- **PASS (5):** M22, M23, M25, M27, M28
+- **FAIL (3):** M24, M25.1, M27.1 — viram corretivas separadas
+- **INCONCLUSIVO (2):** M20 (widget Android), M26 (sheets) — exigem Nível B
+
+Achados que viram sprints corretivas bloqueando M29:
+
+- **M24.1** — `setUltimaRota('/memoria') + reload` abre app em `/`
+  em vez de `/memoria`. Race entre hidratação assíncrona da
+  `useSessao` e o `Redirect` do `SessaoBootGate`. Spec
+  `docs/sprints/M24.1-spec.md`.
+- **M25.2** — animação `OuroborosLoader` continua parada em web
+  mesmo após fix M25.1. Reanimated/SVG web não atualiza atributo
+  `transform` dinamicamente. Spec `docs/sprints/M25.2-spec.md`.
+- **M27.2** (regressão de M27.1) — boot screen oscila: loader
+  Ouroboros volta a sobrepor após conteúdo da rota carregar. Fix
+  M27.1 só tratou fontes; gate de sessão re-liga. Spec
+  `docs/sprints/M27.2-spec.md`.
+
+Entregáveis:
+- `docs/validacao-gauntlet-2026-05-03/RELATORIO.md` (relatório consolidado)
+- `docs/validacao-gauntlet-2026-05-03/screenshots/M*/` (12+ screenshots)
+- 10 arquivos E2E em `tests/e2e/playwright/m<NN>-*.e2e.ts`
+- `STATE.md`, `ROADMAP.md` atualizados; M29 represada até corretivos fecharem
+
 ### Sprints corretivas fechadas (2026-05-03)
 
 Bloco consolidado de fixes de bugs descobertos durante a validação
