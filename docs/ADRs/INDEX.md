@@ -20,3 +20,5 @@ com referência "Supersedes ADR-NNNN" no cabeçalho.
 | 0013 | Capitalização da UI: Sentence Case com Acentuação PT-BR | Aceito (revoga BRIEFING §1 e §2.4) | M01.5 |
 | 0014 | Vault Mobile em Pasta Dedicada (~/Protocolo-Ouroboros/) | Aceito | M03 + M00.docs |
 | 0015 | Identidade de Pessoas em Runtime com Nome e Foto | Aceito (estende ADR-0011) | M03 + M03.2 + M00.docs |
+| 0016 | Vault Auto-criado em /sdcard/Documents/Ouroboros sem SAF | Aceito (estende ADR-0014) | M22 (refundação v1.0) |
+| 0017 | Mídia em Formato Original com .md Companion | Aceito | M39 (refundação v1.0) |

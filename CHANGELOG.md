@@ -3,9 +3,73 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
-## [1.0.0] — 2026-05-02
+## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
-[**Download APK público** (156 MB, signed v2/v3+)](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0)
+A `v1.0.0-rc1` foi retirada do GitHub Releases por bugs críticos
+descobertos no uso real (vault inacessível, captura "tela infinita
+preta", FAB radial sem callbacks ligados, alarmes mudos, identidade
+hardcoded "Pessoa A/B"). 21 sprints (M21–M41) refazem a v1.0
+mantendo a numeração — não há v1.1. APK fica salvo localmente em
+`builds/` para histórico; tag git `v1.0.0` é recriada no fim da
+refundação apontando para o commit final.
+
+### Pendentes (M21–M41)
+
+| Sprint | Título | Estimativa |
+|---|---|---|
+| M21 | Despublicar release v1.0.0 do GitHub Releases | 0,3h |
+| M22 | Vault canônico auto-criado em /sdcard/Documents/Ouroboros | 5–6h |
+| M23 | Onboarding 3 frames (remove SAF e Sync) | 3–4h |
+| M24 | Resume state e auto-save de rascunhos | 5–6h |
+| M25 | Componentes OuroborosLogo + OuroborosLoader (SVG nativo) | 4–5h |
+| M26 | Refatorar 4 rotas modais (Screen opaco + index=0) | 3h |
+| M27 | MenuLateral substitui (tabs) + FABMenu purple esquerda | 6–7h |
+| M28 | Nomes reais via rotuloPessoa/useRotuloPessoa | 3–4h |
+| M29 | Settings v2: vibração simples + features default ON | 4h |
+| M30 | AlarmeSchema v2 + channel com vibrationPattern | 5–6h |
+| M31 | TarefaSchema v2 + categoria + pessoa_destino + alarme | 5–6h |
+| M32 | Contador v2: mensagens de apoio + marcos discretos | 2–3h |
+| M33 | Campo `para` em diário/evento/contador/marco | 3–4h |
+| M34 | MenuCapturaVerde nas tabs Memórias (foto/música/vídeo/frase) | 6–7h |
+| M35 | Aba Finanças: empty state "Em desenvolvimento" | 1–2h |
+| M36 | Tela Recap: agregação Conquistas/Crises/Evoluções/Números | 6–8h |
+| M37 | Integração Google Calendar via OAuth (R+W) | 10–12h |
+| M38 | Conflict resolution para 4 nós Syncthing via deviceId | 4–5h |
+| M39 | Estrutura canônica de mídia + .md companion (ADR-0017) | 4–5h |
+| M40 | Tela 01 Hoje v2: Recap + status do casal + próximos | 4–5h |
+| M41 | APK Release v1.0.0 final + GitHub Release público | 3–4h |
+
+### Documentação criada nesta materialização
+
+- 21 specs autocontidas em `docs/sprints/M21-spec.md` a
+  `docs/sprints/M41-spec.md`, cada uma seguindo o template de 9 seções
+  + INTEGRATION-CONTRACT (§3.5 Integração + §9 Decisões tomadas +
+  Definição de Pronto). Permite que um Claude novo, sem contexto da
+  conversa de planejamento, execute cada sprint isoladamente lendo
+  apenas `STATE.md` + a spec.
+- ADR-0016 (`docs/ADRs/0016-vault-auto-criado-sem-saf.md`) — estende
+  ADR-0014; vault Android auto-criado em `/sdcard/Documents/Ouroboros/`
+  sem prompt SAF; usa `MANAGE_EXTERNAL_STORAGE` em Android ≥ 11
+  (aceitável fora da Play Store).
+- ADR-0017 (`docs/ADRs/0017-midia-companion-md.md`) — formaliza
+  estrutura de mídia: cada binário em `media/<categoria>/<basename>.<ext>`
+  ganha `.md` companion no mesmo diretório com mesmo basename, com
+  frontmatter `tipo`/`arquivo`/`data`/`autor`/`transcricao`/`legenda`/
+  `para`/`origem`. Compatível com Obsidian + Desktop ETL Python.
+- `STATE.md`, `ROADMAP.md`, `README.md` atualizados com header de
+  refundação em curso e tabela das 21 sprints.
+
+### Próximo passo concreto
+
+Executar M21 (`docs/sprints/M21-spec.md`): `gh release delete v1.0.0
+--repo AndreBFarias/ouroboros-mobile --yes`. Smoke trivial; sprint de
+0,3h apenas para limpar o estado público antes da refundação técnica.
+
+## [1.0.0-rc1] — 2026-05-02 (não lançado, retirado do GitHub Releases)
+
+> Tag git `v1.0.0` permanece como marco histórico do bundle dessa
+> versão; release público foi despublicado em M21. APK salvo em
+> `builds/ouroboros-1.0.0.apk` para histórico.
 
 ### Added
 - **M19 — APK Release Hardening v1.0.0.** Versão final do MVP.

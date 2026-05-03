@@ -80,8 +80,37 @@ fechamento de sprint.
 | `[todo]` | M16 | F-15 Alarme pessoal opt-in (com snooze + actions) | nova | alarme | 5-6h | — |
 | `[todo]` | M17 | F-16 To-do leve opt-in (com drag&drop + busca) | nova | tarefa | 4-5h | — |
 | `[todo]` | M18 | F-17 Contador "dias sem X" opt-in (com histórico) | nova | contador | 4h | — |
-| `[ok]` | M19 | APK Release Hardening v1.0.0 — ícone Ouroboros (anel purple→cyan + cabeça serpente em PNG 1024 + foreground 1024 + splash 2400 fundo Dracula bg-page #14151a), `app.json` versão 1.0.0 + runtimeVersion 1.0.0 + versionCode 2 + adaptive icon + splash, `eas.json` production com `gradleCommand: bundleRelease` + `autoIncrement: true` + `env.NODE_ENV: production`, `credentials/README.md` (instruções keystore via eas credentials), 5 fluxos Maestro em `tests/e2e/` (onboarding + 4 críticos do BRIEFING §5), `scripts/release-apk.sh` (pipeline completo), `docs/RELEASE.md` (processo canônico), HTML mockup renomeado 22→24 telas, `.gitignore` com keystore exclusion. EAS production AAB (94 MB) e EAS preview APK signed (156 MB v2/v3+) gerados. **APK público** em [GitHub Releases v1.0.0](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0). 1057 testes / 121 suites verdes | — | — | 6-8h | tag `v1.0.0` |
-| `[done]` | — | **MVP v1 fechado** | — | — | — | tag `v1.0.0` |
+| `[ok]` | M19 | APK Release Hardening v1.0.0-rc1 — RETIRADO em 2026-05-02 (refundação M21-M41). 1057 testes / 121 suites. APK preservado em `builds/` localmente. | — | — | 6-8h | tag `v1.0.0` (mantida) |
+| `[done]` | — | **MVP v1.0-rc1 retirado — refundação em curso** | — | — | — | — |
+
+## Refundação v1.0 (2026-05-02 → fechamento M41)
+
+| Status | Sprint | Título | Telas | Schemas | Estimativa | Spec |
+|---|---|---|---|---|---|---|
+| `[wip]` | M21 | Despublicar release v1.0.0 do GitHub e marcar como rc1 | — | — | 0,3h | `docs/sprints/M21-spec.md` |
+| `[todo]` | M22 | Vault auto-criado em /sdcard/Documents/Ouroboros sem SAF | — | — | 5-6h | `M22-spec.md` |
+| `[todo]` | M23 | Onboarding 3 frames (remove Vault SAF e Sync) | 24 | — | 3-4h | `M23-spec.md` |
+| `[todo]` | M24 | Resume state e auto-save de rascunhos | — | sessao | 5-6h | `M24-spec.md` |
+| `[todo]` | M25 | OuroborosLogo + OuroborosLoader (SVG nativo animado) | — | — | 4-5h | `M25-spec.md` |
+| `[todo]` | M26 | Refatorar 4 rotas modais com Screen opaco e index=0 | 15, 18, 20, 16 | — | 3h | `M26-spec.md` |
+| `[todo]` | M27 | MenuLateral substitui bottom tabs e FABRadial | — | navegacao | 6-7h | `M27-spec.md` |
+| `[todo]` | M28 | Nomes reais em todas as UIs (substitui Pessoa A/B/Sobreposto) | — | — | 3-4h | `M28-spec.md` |
+| `[todo]` | M29 | Settings v2: vibração simples + features default ON + sync removido | 23 | settings v2 | 4h | `M29-spec.md` |
+| `[todo]` | M30 | AlarmeSchema v2: recorrência + channel com vibração + lembretes integrados | nova | alarme v2 | 5-6h | `M30-spec.md` |
+| `[todo]` | M31 | TarefaSchema v2: categoria + pessoa_destino + alarme | nova | tarefa v2 | 5-6h | `M31-spec.md` |
+| `[todo]` | M32 | Contador v2: mensagens de apoio + indicador de marcos | nova | — | 2-3h | `M32-spec.md` |
+| `[todo]` | M33 | Campo `para` em Diário/Evento/Contador/Marco (anotação para o casal) | múltiplas | 4 schemas | 3-4h | `M33-spec.md` |
+| `[todo]` | M34 | MenuCapturaVerde na tab Memórias (Foto/Música/Vídeo/Frase) | 09-11 | — | 6-7h | `M34-spec.md` |
+| `[todo]` | M35 | Aba Finanças: empty state honesto "Em desenvolvimento" | 22 | — | 1-2h | `M35-spec.md` |
+| `[todo]` | M36 | Tela Recap: agregação de período (Conquistas/Crises/Evoluções/Números) | nova | — | 6-8h | `M36-spec.md` |
+| `[todo]` | M37 | Integração Google Calendar via OAuth (leitura + escrita) | nova | googleAuth | 10-12h | `M37-spec.md` |
+| `[todo]` | M38 | Conflict resolution para 4 dispositivos via deviceId no slug | — | — | 4-5h | `M38-spec.md` |
+| `[todo]` | M39 | Estrutura canônica de mídia + .md companion (formal ADR-0017) | — | midia-companion | 4-5h | `M39-spec.md` |
+| `[todo]` | M40 | Tela 01 Hoje v2: Recap + status do casal + próximos | 01 | — | 4-5h | `M40-spec.md` |
+| `[todo]` | M41 | APK Release v1.0.0 final + GitHub Release público | — | — | 3-4h | `M41-spec.md` |
+
+**Total estimado refundação**: 85–110h. Plano em
+[`/home/andrefarias/.claude/plans/distributed-sauteeing-kettle.md`](/home/andrefarias/.claude/plans/distributed-sauteeing-kettle.md).
 
 ## Backend paralelo (repo `protocolo-ouroboros`)
 

@@ -521,6 +521,138 @@ hooks atual fica documentada em §1.7 deste contrato.
 | Versão | Data | Mudança |
 |---|---|---|
 | 1.0 | 2026-04-30 | Versão inicial. Define pontos 1.1 a 1.11, checklist da §2, padrões §3 e §4. |
+| 1.1 | 2026-05-02 | Refundação v1.0 (M21–M41). Mudanças estruturais listadas em §7. |
 
-Mudança de shape de `useSettings` ou de `app/(tabs)/_layout.tsx`
-exige bump de versão deste documento.
+Mudança de shape de `useSettings`, de `app/(tabs)/_layout.tsx` ou
+substituição da camada de navegação exige bump de versão deste
+documento.
+
+---
+
+## 7. Mudanças da v1.1 (Refundação v1.0, sprints M21–M41)
+
+A refundação reescreve pontos canônicos do contrato. As mudanças
+abaixo entram em vigor sprint por sprint; specs M21–M41 referenciam
+este §7 quando o ponto canônico que tocam mudou.
+
+### 7.1 Navegação: menu lateral substitui bottom tabs (M27)
+
+A partir da M27, `app/(tabs)/_layout.tsx` é **apagado** e
+`app/(tabs)/<rota>.tsx` é movido para `app/<rota>.tsx` (rotas raiz).
+A navegação principal passa a viver em
+`src/components/chrome/MenuLateral.tsx` (drawer custom Moti, abre
+da esquerda) acionado por `src/components/chrome/FABMenu.tsx` (FAB
+purple no canto inferior **esquerdo** — substitui o `<FABRadial>`
+do canto inferior direito).
+
+**Implicações para o §1.1:**
+
+- A tabela "Abas fixas (sempre visíveis)" e "Abas condicionais"
+  continua válida como **mapa de rotas + ícones + features**, mas
+  cada item agora é renderizado como `<Pressable>` 56dp em uma das 3
+  seções do MenuLateral (Ver / Registrar / Opcionais), não como
+  `<Tabs.Screen>`.
+- Sub-rotas (ex: `medidas/novo`, `exercicios/[slug]`) continuam
+  funcionando via `expo-router` file-based; só a casca de navegação
+  muda.
+- Rotas modais raiz ganham 4 novas em M22-M40: `/recap` (M36),
+  `/agenda` (M37), `/settings/contas-google` (M37),
+  `/settings/dispositivos` (M38).
+
+**Regra atualizada:** sprints novas plugam tela em
+`MenuLateral.tsx` (não em `_layout.tsx`). Tabela de seções:
+
+| Seção | Itens canônicos | Sprint dona |
+|---|---|---|
+| Ver | Hoje, Recap, Memórias, Humor, Calendário, Finanças | M27, M36, M37 |
+| Registrar | Humor, Voz, Câmera, Exercícios, Conquista, Crise | M27 (consome captureRoutes) |
+| Opcionais | Tarefas, Alarmes, Contadores, Ciclo (gated por toggle) | M27 |
+
+### 7.2 Captura: FAB radial vira FAB de menu + menu verde de mídia (M27, M34)
+
+`<FABRadial>` (canto inferior direito, semicírculo de 6 botões) é
+**removido** em M27. Substituído por:
+
+- `<FABMenu>` purple (canto inferior **esquerdo**, ícone Menu) —
+  abre `<MenuLateral>` global. Renderizado em `app/_layout.tsx`
+  (exceto rotas modais).
+- `<MenuCapturaVerde>` verde (canto inferior **direito** das tabs
+  de Memórias) — menu pequeno de 4 ações (Foto/Música/Vídeo/Frase),
+  M34.
+
+`captureRoutes.ts` continua sendo fonte de verdade dos 6 destinos
+históricos; agora é consumido pela seção "Registrar" do MenuLateral
+em vez do FABRadial.
+
+### 7.3 Settings v2: vibração simples + features default ON + sync removido (M29)
+
+A partir da M29, `useSettings` migra de `ouroboros.settings.v1` para
+`ouroboros.settings.v2` com migração one-shot. Mudanças no shape:
+
+- `somVibracao` passa de 5 chaves para
+  `{ geral, despertar, conquista, botoes }` (4 booleans, `geral`
+  é mestre).
+- `lembretes` **removido** do store. Migra para alarmes
+  pré-cadastrados desligados (M30) via
+  `migrarLembretesParaAlarmes()`.
+- `sync` **removido** (sempre Syncthing-ready implicitamente; M22
+  trata persistência canônica; M38 trata conflitos 4 nós).
+- `qualidadeScanner` **removido** (sempre `maxima`; M29 documenta).
+- `featureToggles` defaults: **todos `true`** (usuário desliga o
+  que não quer; era todos `false`).
+
+Tabela §1.5 fica obsoleta para v2; specs M21–M41 que tocam settings
+referenciam este §7.3 explicitamente.
+
+### 7.4 Schemas v2: tarefa, alarme, contador, diário, evento, marco (M30, M31, M33)
+
+| Schema | Sprint dona | Mudança principal |
+|---|---|---|
+| `AlarmeSchema` | M30 | Adiciona `recorrencia: 'unica'\|'diaria'\|'semanal'\|'mensal'`. |
+| `TarefaSchema` | M31 | Adiciona `categoria` (8 enum), `pessoa_destino` (discriminated union 4 tipos), `alarme` (objeto opcional). |
+| `DiarioEmocionalSchema` | M33 | Adiciona `para` (discriminated union mim/outra/casal). |
+| `EventoSchema` | M33 | Adiciona `para`. |
+| `ContadorSchema` | M33 | Adiciona `para`. |
+| `MarcoSchema` | M33 | Adiciona `para`. |
+| `MidiaCompanionSchema` (novo) | M39 | Companion `.md` formal de cada binário em `media/<categoria>/`. |
+
+Todos os adds são `.optional()` ou `.default(...)` para preservar
+leitura de arquivos legados (ver anti-pattern §5.3).
+
+### 7.5 Boot hooks novos (M22, M30, M38, M39)
+
+| Hook de boot | Sprint dona | Quando dispara |
+|---|---|---|
+| `inicializarVaultCanonico()` | M22 | sempre (idempotente; cria 18 subpastas em `/sdcard/Documents/Ouroboros/`) |
+| `migrarLembretesParaAlarmes()` | M30 | uma vez por install (deleta após sucesso) |
+| `garantirDeviceId()` | M38 | sempre (idempotente; gera curto em SecureStore) |
+| `migrarAssetsLegacyParaMedia()` | M39 | uma vez por install (idempotente) |
+| `salvarUltimaRota()` (não boot, navigation listener) | M24 | em cada navegação |
+
+Plugados em `src/lib/boot/reagendamento.ts` array `BOOT_HOOKS`
+(mesmo padrão do M16/M17 antigos).
+
+### 7.6 Rotas raiz novas (M22–M40)
+
+Adicionadas ao `app/` na raiz (após M27 apagar `app/(tabs)/`):
+
+| Rota | Sprint dona | Tipo |
+|---|---|---|
+| `/recap` | M36 | modal full-screen |
+| `/agenda` | M37 | rota raiz |
+| `/settings/contas-google` | M37 | sub-rota settings |
+| `/settings/dispositivos` | M38 | sub-rota settings |
+
+### 7.7 Permissões e plugins novos no `app.json` (M22, M37)
+
+| Plugin / permissão | Sprint dona | Motivo |
+|---|---|---|
+| `WRITE_EXTERNAL_STORAGE` | M22 | Android <11 |
+| `READ_EXTERNAL_STORAGE` | M22 | Android <11 |
+| `MANAGE_EXTERNAL_STORAGE` | M22 | Android ≥11 (APK fora da Play Store) |
+| `expo-auth-session` plugin + scheme `ouroboros://oauth-callback` | M37 | Google Calendar OAuth |
+| `@react-native-google-signin/google-signin` | M37 | Google sign-in |
+
+Permissão `expo-notifications` não é nova em M30 — só a chamada
+proativa de `pedirPermissao()` no boot pós-onboarding via
+`useSessao.permissoesPedidas.notif`.
