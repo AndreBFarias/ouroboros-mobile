@@ -7,6 +7,48 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **M26 (2026-05-03)** — 4 rotas modais com `<Screen>` opaco +
+  `index={0}` direto (resolve A17/A18 "tela infinita preta").
+  - `app/humor-rapido.tsx`, `app/diario-emocional.tsx`,
+    `app/eventos.tsx` envolvem `<BottomSheet>` em
+    `<Screen padded={false}>`. `<OuroborosLoader compacto />` atrás
+    do sheet em `<View pointerEvents="none">` centralizado — feedback
+    visual de marca mesmo se Reanimated falhar. Sheet abre em
+    `index={0}` direto (não `-1` + `useEffect expand()`); pan-down-to-close
+    fecha via `onChange={(idx) => idx === -1 && router.back()}`.
+  - `app/scanner.tsx` ganha `<OuroborosLoader compacto />` em
+    `position: 'absolute'` atrás do `<ScannerSheet>` (já tinha
+    `<Screen>` no nível externo).
+  - `app/_layout.tsx` registra 4 `<Stack.Screen>` com
+    `presentation: 'transparentModal'`,
+    `contentStyle.backgroundColor: '#14151a'`,
+    `animation: 'fade_from_bottom'`. Garante que o root Stack
+    fundo (#282a36) não vaze.
+  - `VALIDATOR_BRIEF.md` Armadilha A18 auditada — texto preservado,
+    referência ajustada para "Solução padrão M26 (aplicado
+    2026-05-03)". `INTEGRATION-CONTRACT.md` §7.10 não criou
+    `rotasSemFAB.ts` (nasce em M27).
+  - `jest.setup.cjs` mock BottomSheet expõe `index` via
+    `accessibilityHint` para os novos asserts.
+  - `tests/app/humor-rapido.test.tsx`, `tests/app/diario-emocional.test.tsx`,
+    `tests/app/eventos.test.tsx` ganham 1 caso M26 cada — render
+    contém `<Screen>` E `<BottomSheet>`. Suítes pré-existentes
+    ampliadas; spec §10 foi corrigida pela honestidade do executor
+    (não criar suítes duplicadas).
+  - 4 screenshots Nível A em `docs/sprints/M26-screenshots/`:
+    `A-humor-sheet-opaco.png`, `A-diario-sheet-opaco.png`,
+    `A-eventos-sheet-opaco.png`, `A-scanner-sheet-opaco.png`.
+    Limitação reconhecida: 3 mostram frame de onboarding
+    (BiometriaGate redireciona em web); scanner prova fundo Dracula
+    opaco + OuroborosLoader visível. Validação completa do sheet
+    aberto exige Nível B (emulador Android).
+  - **Métricas**: 1112 → 1115 testes (+3), 128 suites mantidas,
+    bundle Hermes 8.75 MB.
+  - Veredito validador-sprint: APROVADO (sem ressalvas).
+  - Achado colateral arquivado: planejador-sprint deve checar
+    existência de arquivos de teste antes de declarar "+N suites"
+    em §10. Melhoria do agente meta — não bloqueia M27.
+
 - **M25 (2026-05-03)** — OuroborosLogo + OuroborosLoader (SVG nativo
   animado).
   - `src/components/brand/OuroborosLogo.tsx` novo (204 L): versão

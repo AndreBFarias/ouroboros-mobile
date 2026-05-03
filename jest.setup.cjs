@@ -198,9 +198,16 @@ jest.mock('@gorhom/bottom-sheet', () => {
       }),
       []
     );
+    // M26: expoe a prop `index` via accessibilityHint para que testes
+    // possam asserir que o sheet abre direto (index=0) em vez de
+    // -1 + useEffect expand. Convencao: hint = `index=<n>`.
     return React.createElement(
       RN.View,
-      { accessibilityLabel: 'bottom-sheet-mock' },
+      {
+        accessibilityLabel: 'bottom-sheet-mock',
+        accessibilityHint:
+          typeof props.index === 'number' ? `index=${props.index}` : undefined,
+      },
       props.children
     );
   });

@@ -22,7 +22,7 @@
 //  - Cap arbitrario de 6 fotos.
 //
 // Modo negativo não dispara haptic no save (mesmo principio da M06).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
@@ -31,6 +31,7 @@ import {
   Button,
   Chip,
   ChipGroup,
+  Screen,
   SHEET_80,
   Slider,
   Textarea,
@@ -38,6 +39,7 @@ import {
   type BottomSheetRef,
   type ChipOption,
 } from '@/components/ui';
+import { OuroborosLoader } from '@/components/brand';
 import { LocalizacaoBlock } from '@/components/eventos/LocalizacaoBlock';
 import { QuandoBlock, type QuandoMode } from '@/components/eventos/QuandoBlock';
 import { FotosBlock } from '@/components/eventos/FotosBlock';
@@ -155,11 +157,8 @@ export default function Eventos() {
   );
   useAutoSaveRascunho('eventos', snapshotRascunho);
 
-  // Abre o sheet após a montagem (idempotente em re-mount via
-  // navegacao por aba/deeplink futuro).
-  useEffect(() => {
-    sheetRef.current?.expand();
-  }, []);
+  // M26: sheet abre via index={0} direto. Ver humor-rapido.tsx para
+  // racional completo (Armadilhas A17/A18).
 
   // Caso de borda: rota acessada sem onboarding concluido.
   if (!vaultRoot) {
@@ -281,15 +280,22 @@ export default function Eventos() {
   };
 
   return (
-    <BottomSheet
-      ref={sheetRef}
-      snapPoints={SHEET_80}
-      index={-1}
-      enablePanDownToClose
-      onChange={(idx) => {
-        if (idx === -1) router.back();
-      }}
-    >
+    <Screen padded={false}>
+      <View
+        pointerEvents="none"
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <OuroborosLoader compacto />
+      </View>
+      <BottomSheet
+        ref={sheetRef}
+        snapPoints={SHEET_80}
+        index={0}
+        enablePanDownToClose
+        onChange={(idx) => {
+          if (idx === -1) router.back();
+        }}
+      >
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
@@ -435,6 +441,7 @@ export default function Eventos() {
           disabled={salvando}
         />
       </ScrollView>
-    </BottomSheet>
+      </BottomSheet>
+    </Screen>
   );
 }

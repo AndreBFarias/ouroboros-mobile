@@ -126,6 +126,45 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            {/* M26: 4 rotas modais raiz que abrem BottomSheet. Sao
+                registradas com presentation='transparentModal' para que
+                o root Stack (#282a36) nao vaze por baixo, e
+                contentStyle.backgroundColor=#14151a (bgPage Dracula)
+                forca fundo opaco. Combina com Screen padded={false}
+                dentro de cada rota para eliminar a Armadilha A18
+                (tela preta quando expand do sheet falha). */}
+            <Stack.Screen
+              name="humor-rapido"
+              options={{
+                presentation: 'transparentModal',
+                contentStyle: { backgroundColor: '#14151a' },
+                animation: 'fade_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="diario-emocional"
+              options={{
+                presentation: 'transparentModal',
+                contentStyle: { backgroundColor: '#14151a' },
+                animation: 'fade_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="eventos"
+              options={{
+                presentation: 'transparentModal',
+                contentStyle: { backgroundColor: '#14151a' },
+                animation: 'fade_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="scanner"
+              options={{
+                presentation: 'transparentModal',
+                contentStyle: { backgroundColor: '#14151a' },
+                animation: 'fade_from_bottom',
+              }}
+            />
           </Stack>
         </ToastProvider>
       </BiometriaGate>

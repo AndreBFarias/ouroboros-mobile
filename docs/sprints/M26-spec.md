@@ -53,11 +53,10 @@ rota em `<Screen padded={false}>` opaco e abrir o sheet com
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/tests/app/eventos.test.tsx`
   — idem.
 - `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros/VALIDATOR_BRIEF.md`
-  — § 4 ganha entrada A18:
-  > **A18.** `<BottomSheet>` raiz sem `<Screen>` por trás cria
-  > "tela infinita preta" quando `expand()` falha (Armadilha A17
-  > recorre). Sempre envolver rota modal em `<Screen padded={false}>`
-  > + `index={0}` direto (não `-1` + useEffect).
+  — A18 **ja esta presente** em `VALIDATOR_BRIEF.md:386-418`
+  (pre-escrita em sessao anterior). Auditar apenas: confirmar texto
+  e ajustar referencia "Solucao padrao (M26)" para "Solucao padrao
+  M26 (aplicado 2026-05-03)" se ainda estiver no futuro do passado.
 
 ### Arquivos NÃO modificados
 
@@ -78,7 +77,12 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
 - **Rotas modais raiz:** seção 1.1 — 4 rotas com `presentation:
   'transparentModal'` + `contentStyle.backgroundColor` em
   `app/_layout.tsx`.
-- **VALIDATOR_BRIEF Armadilhas:** seção 1.4 — adicionar A18.
+- **VALIDATOR_BRIEF Armadilhas:** seção 1.4 — A18 ja registrada;
+  apenas auditar texto.
+- **Overlay z-index e modais raiz:** §7.10 — 4 rotas afetadas
+  (`humor-rapido`, `diario-emocional`, `eventos`, `scanner`) ja
+  listadas como rotas que escondem FAB. Nao criar `rotasSemFAB.ts`
+  nesta sprint (nasce em M27).
 
 ## 4. Restrições
 
@@ -91,6 +95,10 @@ Conforme `docs/sprints/INTEGRATION-CONTRACT.md`:
   envolver em `<View pointerEvents="none">`.
 - Se sheet inicia em `index={0}`, o pan-down-to-close continua
   funcionando para fechar.
+- Testes novos importam `BottomSheet` que depende de Reanimated 4
+  + `react-native-worklets`. **Armadilha A22** (registrada em M25)
+  ja cobre o mock necessario em `jest.setup.cjs`. Nao re-mockar
+  localmente nos arquivos de teste.
 
 ## 5. Procedimento sugerido
 
@@ -167,5 +175,20 @@ sheet (intencional — feedback visual mesmo se sheet falhar).
   Reanimated falhar (hipotético), usuário vê pelo menos o logo.
 - **Não tocar nos schemas / handlers**: M26 é puramente UX/render.
 - **Eventos e Scanner herdam mesma decisão**: consistência.
+
+## 10. Aritmética de proof-of-work (patch-pass 1)
+
+- Baseline pós-M25: **1112 testes / 128 suites** (commit `49a6079`).
+- Sprint adiciona 3 arquivos de teste novos (`humor-rapido.test.tsx`,
+  `diario-emocional.test.tsx`, `eventos.test.tsx`). Cada um com no
+  mínimo 1 caso ("render contém `<Screen>` E `<BottomSheet>`").
+  Executor pode adicionar casos extras (ex.: `index={0}`, snap
+  point, `onChange` callback) — declara N exato no relatório.
+- Esperado pós-sprint:
+  - Suítes: **131 suites** (+3).
+  - Testes: **≥ 1115 testes** (mínimo +3, executor declara delta exato).
+  - Arquivos modificados: 4 telas + `_layout.tsx` + `VALIDATOR_BRIEF.md`
+    (audit) + 3 testes novos = **9 arquivos**.
+  - Bundle Hermes: ≤ 8.85 MB (margem +0.11 MB sobre 8.74).
 
 Sprint pronta para execução sem perguntas pendentes.

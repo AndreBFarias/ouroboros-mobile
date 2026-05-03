@@ -11,7 +11,7 @@
 // Conflito A5 (Syncthing entre celulares no mesmo dia): tratado
 // dentro de saveHumor; aqui apenas mostramos toast diferenciado se
 // retornar conflito=true.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import {
@@ -19,12 +19,14 @@ import {
   Button,
   ChipGroup,
   Input,
+  Screen,
   SHEET_70,
   Slider,
   Textarea,
   useToast,
   type BottomSheetRef,
 } from '@/components/ui';
+import { OuroborosLoader } from '@/components/brand';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
@@ -93,13 +95,10 @@ export default function HumorRapido() {
   );
   useAutoSaveRascunho('humorRapido', snapshotRascunho);
 
-  // Abre o sheet automaticamente após a montagem. Index 0 = primeiro
-  // snap point ('70%'). Usamos ref para controlar imperativamente, em
-  // vez de prop index, porque queremos garantir abertura mesmo se a
-  // rota for re-montada (caso comum em navegacao via FAB Radial).
-  useEffect(() => {
-    sheetRef.current?.expand();
-  }, []);
+  // M26: sheet abre via index={0} direto (sem useEffect+expand). Evita
+  // Armadilha A17 (race entre montagem e expand) e A18 (tela preta se
+  // expand falha). O Screen opaco por tras garante fundo Dracula
+  // visivel mesmo se Reanimated falhar em algum dispositivo.
 
   // Caso de borda: rota acessada sem onboarding concluido. M03 já
   // protege a Tela 01, mas se chegou aqui via deep link sem vault,
@@ -162,19 +161,29 @@ export default function HumorRapido() {
   };
 
   return (
-    <BottomSheet
-      ref={sheetRef}
-      snapPoints={SHEET_70}
-      index={-1}
-      enablePanDownToClose
-      onChange={(idx) => {
-        if (idx === -1) {
-          // Sheet foi fechado (gesto ou imperativo). Volta para a
-          // tela anterior. router.back e idempotente quando já saiu.
-          router.back();
-        }
-      }}
-    >
+    <Screen padded={false}>
+      {/* M26: marca de fundo. pointerEvents='none' garante que o sheet
+          continua interativo. Visivel apenas se o sheet falhar ou
+          durante a animacao de entrada. */}
+      <View
+        pointerEvents="none"
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <OuroborosLoader compacto />
+      </View>
+      <BottomSheet
+        ref={sheetRef}
+        snapPoints={SHEET_70}
+        index={0}
+        enablePanDownToClose
+        onChange={(idx) => {
+          if (idx === -1) {
+            // Sheet foi fechado (gesto ou imperativo). Volta para a
+            // tela anterior. router.back e idempotente quando já saiu.
+            router.back();
+          }
+        }}
+      >
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
@@ -287,6 +296,7 @@ export default function HumorRapido() {
           disabled={salvando}
         />
       </ScrollView>
-    </BottomSheet>
+      </BottomSheet>
+    </Screen>
   );
 }

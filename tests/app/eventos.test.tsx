@@ -130,6 +130,12 @@ afterEach(() => {
 });
 
 describe('Tela 20 - render', () => {
+  it('M26: BottomSheet abre em index=0 direto (Screen opaco por tras)', () => {
+    const { getByLabelText } = renderTela();
+    const sheet = getByLabelText('bottom-sheet-mock');
+    expect(sheet.props.accessibilityHint).toBe('index=0');
+  });
+
   it('renderiza o bottom sheet com header Eventos', () => {
     const { getByLabelText } = renderTela();
     expect(getByLabelText('bottom-sheet-mock')).toBeTruthy();

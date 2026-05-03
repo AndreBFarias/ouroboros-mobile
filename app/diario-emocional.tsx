@@ -29,6 +29,7 @@ import {
   Button,
   Chip,
   ChipGroup,
+  Screen,
   SHEET_90,
   Slider,
   Textarea,
@@ -37,6 +38,7 @@ import {
   type BottomSheetRef,
   type ChipOption,
 } from '@/components/ui';
+import { OuroborosLoader } from '@/components/brand';
 import { EmocaoChips } from '@/components/diario/EmocaoChips';
 import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
 import { MidiaPicker } from '@/components/midia/MidiaPicker';
@@ -246,10 +248,8 @@ export default function DiarioEmocional() {
     setEmocoes([]);
   }, [modo]);
 
-  // Abre o sheet após a montagem (idempotente em re-mount via FAB).
-  useEffect(() => {
-    sheetRef.current?.expand();
-  }, []);
+  // M26: sheet abre via index={0} direto. Ver humor-rapido.tsx para
+  // racional completo (Armadilhas A17/A18).
 
   // Memoizado antes do early return para não quebrar regra dos hooks.
   const opcoesComQuem = useMemo<ChipOption[]>(
@@ -368,15 +368,22 @@ export default function DiarioEmocional() {
   };
 
   return (
-    <BottomSheet
-      ref={sheetRef}
-      snapPoints={SHEET_90}
-      index={-1}
-      enablePanDownToClose
-      onChange={(idx) => {
-        if (idx === -1) router.back();
-      }}
-    >
+    <Screen padded={false}>
+      <View
+        pointerEvents="none"
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <OuroborosLoader compacto />
+      </View>
+      <BottomSheet
+        ref={sheetRef}
+        snapPoints={SHEET_90}
+        index={0}
+        enablePanDownToClose
+        onChange={(idx) => {
+          if (idx === -1) router.back();
+        }}
+      >
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
@@ -569,6 +576,7 @@ export default function DiarioEmocional() {
         {/* M06.5: gravacao de audio agora vive inline acima do
             textarea via MicrofoneButton; placeholder antigo removido. */}
       </ScrollView>
-    </BottomSheet>
+      </BottomSheet>
+    </Screen>
   );
 }
