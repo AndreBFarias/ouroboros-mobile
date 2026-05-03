@@ -36,16 +36,21 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 interface BiometriaGateProps {
   children: ReactNode;
+  // M-GAUNTLET: bypass explicito do gate em modo dev. Pula auth e
+  // renderiza children direto. Combinado com GAUNTLET_ATIVO no
+  // _layout.tsx, garante que validacao visual via Chrome nao trava
+  // em prompt de biometria.
+  bypass?: boolean;
 }
 
-export function BiometriaGate({ children }: BiometriaGateProps) {
+export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) {
   const ativa = useSettings((s) => s.privacidade.biometriaAbrir);
   const [autenticado, setAutenticado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [tentando, setTentando] = useState(false);
 
   const tentar = useCallback(async () => {
-    if (!ativa) {
+    if (!ativa || bypass) {
       setAutenticado(true);
       return;
     }
@@ -83,18 +88,18 @@ export function BiometriaGate({ children }: BiometriaGateProps) {
     } finally {
       setTentando(false);
     }
-  }, [ativa]);
+  }, [ativa, bypass]);
 
   useEffect(() => {
-    if (!ativa) {
+    if (!ativa || bypass) {
       setAutenticado(true);
       return;
     }
     setAutenticado(false);
     void tentar();
-  }, [ativa, tentar]);
+  }, [ativa, bypass, tentar]);
 
-  if (!ativa || autenticado) {
+  if (!ativa || bypass || autenticado) {
     return <>{children}</>;
   }
 

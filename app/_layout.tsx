@@ -3,7 +3,7 @@ import {
   JetBrainsMono_400Regular,
   JetBrainsMono_500Medium,
 } from '@expo-google-fonts/jetbrains-mono';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef } from 'react';
 import { Appearance, LogBox, StyleSheet, View } from 'react-native';
@@ -24,6 +24,12 @@ import { useSessao } from '@/lib/stores/sessao';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { useUltimaRota, isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
 import { inicializarVaultCanonico } from '@/lib/vault/permissions';
+import {
+  GAUNTLET_ATIVO,
+  instalarGauntlet,
+  setRouterRef,
+  setPathnameRef,
+} from '@/lib/dev/gauntlet';
 import '../global.css';
 
 // Mantem a splash visivel até as fontes carregarem.
@@ -99,6 +105,16 @@ export default function RootLayout() {
     void registrarCategoriasAlarme();
   }, []);
 
+  // M-GAUNTLET: em web + EXPO_PUBLIC_GAUNTLET=1, instala
+  // window.__gauntlet com APIs JS deterministicas (seed, reset,
+  // setNomes, abrir, abrirSheet, etc). Em mobile release, dead-code
+  // (Platform.OS bloqueia GAUNTLET_ATIVO).
+  useEffect(() => {
+    if (GAUNTLET_ATIVO) {
+      instalarGauntlet();
+    }
+  }, []);
+
   if (mostrarBootScreen) {
     // M25: enquanto JetBrainsMono carrega, mostra a marca animada em
     // fundo bg-page (Dracula). Substitui o `return null` antigo que
@@ -106,26 +122,32 @@ export default function RootLayout() {
     // (CONTRACT secao 7.9: nao e BOOT_HOOK, e UI bloqueante visivel).
     // M27.1: usa flag persistente para evitar oscilacao de useFonts
     // em web (vide guard fontesPersistentementeCarregadas acima).
+    // M-GAUNTLET: envolve em FrameMobileGauntlet para que captura
+    // visual respeite viewport mobile mesmo durante boot.
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bgPage,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <OuroborosLoader />
-      </View>
+      <FrameMobileGauntlet>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.bgPage,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <OuroborosLoader />
+        </View>
+      </FrameMobileGauntlet>
     );
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BiometriaGate>
+      <FrameMobileGauntlet>
+      <BiometriaGate bypass={GAUNTLET_ATIVO}>
         <ToastProvider>
           <VaultBootGate />
           <SessaoBootGate />
+          <GauntletPathnameSync />
           <Stack
             screenOptions={{
               headerShown: false,
@@ -194,8 +216,69 @@ export default function RootLayout() {
           <MenuLateral />
         </ToastProvider>
       </BiometriaGate>
+      </FrameMobileGauntlet>
     </GestureHandlerRootView>
   );
+}
+
+// M-GAUNTLET: em web + GAUNTLET_ATIVO, envolve toda a UI em um frame
+// 412x892dp centralizado para que captura visual reflita celular real
+// sem stretch desktop. Em mobile nativo (Platform.OS !== 'web') vira
+// pass-through. Sem isto, validacao em Chrome desktop pega layout
+// esticado e esconde bugs de overflow horizontal.
+function FrameMobileGauntlet({ children }: { children: React.ReactNode }) {
+  if (!GAUNTLET_ATIVO) {
+    return <>{children}</>;
+  }
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: '#0a0a0e',
+        alignItems: 'center',
+      }}
+    >
+      <View
+        style={{
+          flex: 1,
+          width: 412,
+          maxWidth: 412,
+          minHeight: 892,
+          backgroundColor: colors.bgPage,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: colors.bgElev,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+// M-GAUNTLET: sincroniza routerRef + pathnameRef do modulo gauntlet
+// com o expo-router runtime. Sem isto, window.__gauntlet.abrir() nao
+// tem como navegar (router so existe dentro de hooks). Componente
+// inerte (return null) que so chama setters em useEffect. No-op em
+// mobile real e em web sem flag.
+function GauntletPathnameSync() {
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!GAUNTLET_ATIVO) return;
+    setRouterRef({
+      replace: (rota: string) =>
+        router.replace(rota as Parameters<typeof router.replace>[0]),
+      push: (rota: string) =>
+        router.push(rota as Parameters<typeof router.push>[0]),
+    });
+  }, [router]);
+  useEffect(() => {
+    if (!GAUNTLET_ATIVO) return;
+    setPathnameRef(pathname ?? '/');
+  }, [pathname]);
+  return null;
 }
 
 // M22: gate critico de Vault. Roda dentro do ToastProvider porque o

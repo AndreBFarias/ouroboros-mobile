@@ -51,6 +51,70 @@ ciclo após smoke verde (1126 testes / 130 suítes / 0 erros tsc).
     em emulador/celular. Screenshot de validação do M25.1 em
     `docs/sprints/M25.1-screenshots/A-cobra-frame1.png`.
 
+### Infraestrutura de validação implementada (2026-05-03)
+
+- **M-GAUNTLET fechada** — orquestrador implementou sozinho, sem
+  dispatch de agentes (pedido explícito do usuário).
+  - `src/lib/dev/gauntlet.ts` (módulo central, ~200 L):
+    - `GAUNTLET_ATIVO = Platform.OS === 'web' && __DEV__`. Substitui
+      a abordagem original com `EXPO_PUBLIC_GAUNTLET=1` (env var não
+      injetada em runtime browser sem `.env` file). `__DEV__` é
+      injetado pelo react-native em build time, sempre disponível,
+      `false` em release.
+    - `window.__gauntlet` com 11 APIs: `seed(opts)`, `reset()`,
+      `setNomes(a, b?)`, `setVaultRoot(root)`, `setOnboardingDone(d)`,
+      `setUltimaRota(r)`, `abrir(rota)`, `abrirMenu()`,
+      `fecharMenu()`, `abrirSheet(rota)`, `estado()`.
+    - `setRouterRef`/`setPathnameRef` para o `_layout.tsx` injetar
+      runtime do expo-router (router só existe em hooks).
+    - Idempotente em hot-reload (Metro re-monta).
+  - `src/lib/dev/seedDeterministico.ts` — helpers
+    `seedSozinho`/`seedDuo`/`seedCustom`/`resetTotal` + stubs para
+    versão 2 (humores, diários, eventos).
+  - `src/lib/boot/biometriaGate.tsx` — prop `bypass?: boolean`
+    pula auth e renderiza children direto. `app/_layout.tsx` passa
+    `bypass={GAUNTLET_ATIVO}`.
+  - `app/_layout.tsx` — `FrameMobileGauntlet` envolve toda UI em
+    container 412×892dp centralizado com fundo cinza `#0a0a0e`
+    fora do frame e Dracula `#14151a` dentro. **Aplica em TODAS as
+    rotas em modo dev**, não só `/_dev/*` (atendendo pedido do
+    usuário: "ajustar a tela também do gauntlet pra ser limitada
+    horizontalmente igual um celular"). Em mobile nativo
+    (Platform.OS !== 'web'), pass-through. Boot screen também
+    envolto pelo frame.
+  - `app/_dev/_layout.tsx` — Stack interno com banner amarelo
+    "MODO GAUNTLET ATIVO" no topo. `Redirect` `/` em produção.
+    Frame mobile movido para raiz (não duplicar).
+  - `app/_dev/gauntlet.tsx` — dashboard com 5 botões coloridos
+    (Seed verde, Reset vermelho, Seed casal verde, Abrir/Fechar
+    menu purple), painel JSON do estado auto-refresh 500ms, lista
+    de rotas em 4 seções (Ver/Registrar/Opcionais/Dev). Acentuação
+    PT-BR completa nas strings de UI; `accessibilityLabel` SEM
+    acento.
+  - `tests/e2e/playwright/00-bootstrap.e2e.ts` — caso E2E que
+    confirma `window.__gauntlet` exposto + `seed()` funcional. Não
+    rodado por Jest (`testMatch` filtra `*.test.ts/tsx`); executado
+    pelo orquestrador via playwright MCP.
+  - `docs/templates/e2e-template.e2e.ts` — template canônico para
+    sprints futuras adicionarem casos E2E.
+  - `docs/GAUNTLET.md` — guia completo: como ativar, API
+    `window.__gauntlet`, fluxo do orquestrador, limitações
+    conhecidas.
+  - 4 screenshots Nível A+ em `docs/sprints/M-GAUNTLET-screenshots/`:
+    `A-dashboard-funcionando.png`, `A-dashboard-pos-seed.png`,
+    `A-dashboard-frame-mobile.png`, `A-frame-mobile-aplicado.png`.
+    `window.__gauntlet.seed()` confirmado retornando
+    `{ onboardingDone: true, vaultRoot: 'web://mock-vault/Ouroboros',
+    nomes: { pessoa_a: 'Nome_A', pessoa_b: 'Nome_B' }, ... }`.
+  - **Garantia anti-vazamento confirmada**: `npx expo export
+    --platform android` + `grep -rn __gauntlet` retorna vazio.
+    Em release mobile, módulo é dead-code.
+  - **Issue conhecido residual**: `useFonts` SDK 54 web demora
+    30-45s em sessão fresh. M27.1 caminho A guard atenuou
+    parcialmente. Aceito como dev-only — não afeta release mobile.
+  - **Métricas**: 1126 testes / 130 suítes mantidas (não regrediu),
+    bundle Hermes Android 8.75 MB.
+
 ### Decisões de infraestrutura (2026-05-03)
 
 - **Gauntlet de validação visual — substitui Nível A puro como
