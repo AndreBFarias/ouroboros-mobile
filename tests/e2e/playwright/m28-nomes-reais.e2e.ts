@@ -14,7 +14,14 @@ export default async function caseM28(page: PlaywrightPageLike): Promise<Resulta
     await page.goto('http://localhost:8081/_dev/gauntlet');
     await page.waitForTimeout(2000);
     await page.evaluate(() => {
-      const w = globalThis as unknown as { __gauntlet: { seed: () => void; setNomes: (a: string | null, b: string | null) => void } };
+      const w = globalThis as unknown as {
+        __gauntlet: {
+          reset: () => void;
+          seed: () => void;
+          setNomes: (a: string | null, b: string | null) => void;
+        };
+      };
+      w.__gauntlet.reset();
       w.__gauntlet.seed();
       w.__gauntlet.setNomes('TestA', 'TestB');
     });

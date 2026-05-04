@@ -12,6 +12,15 @@ export default async function caseM26(page: PlaywrightPageLike): Promise<Resulta
   const screenshots: string[] = [];
 
   try {
+    await page.goto('http://localhost:8081/_dev/gauntlet');
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => {
+      const w = globalThis as unknown as {
+        __gauntlet?: { reset: () => void; seed: () => void };
+      };
+      w.__gauntlet?.reset();
+      w.__gauntlet?.seed();
+    });
     await page.goto('http://localhost:8081/humor');
     await page.waitForTimeout(8000);
 

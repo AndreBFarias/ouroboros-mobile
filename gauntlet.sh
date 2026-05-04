@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
-# gauntlet.sh -- atalho para subir o Gauntlet (validacao visual web).
+# gauntlet.sh v2 -- atalho para subir o Gauntlet (validacao visual web).
+#
+# Uso:
+#   ./gauntlet.sh             # padrao: sobe Metro web e mostra log
+#   ./gauntlet.sh --clear     # limpa cache do Metro antes de subir
+#   ./gauntlet.sh --quiet     # background sem foreground tail
 #
 # O que faz:
-#   1. Mata Metro orfao na porta 8081 (se houver).
-#   2. Sobe `./run.sh --web` em background (Metro + Chrome bundle web).
-#   3. Aguarda http://localhost:8081 responder.
-#   4. Abre o navegador padrao em http://localhost:8081/_dev/gauntlet.
-#   5. Mostra a janela do log em foreground (Ctrl-C derruba o servidor).
+#   1. Verifica porta 8081 -- so mata se for processo node/expo/metro;
+#      em caso de processo desconhecido, falha com mensagem acionavel.
+#   2. Rotaciona /tmp/gauntlet-expo.log -> .prev para manter historico.
+#   3. Sobe `./run.sh --web` em background com setsid (process group
+#      proprio) para que Ctrl-C derrube todos os filhos.
+#   4. Aguarda http://localhost:8081 responder.
+#   5. Abre o navegador padrao em http://localhost:8081/_dev/gauntlet.
+#   6. Mostra log em foreground (ou background se --quiet).
 #
-# Pre-requisito: GAUNTLET_ATIVO depende de Platform.OS === 'web' && __DEV__
-# (vide src/lib/dev/gauntlet.ts). Modo dev ja vem ligado em expo start;
-# nao precisa flag extra.
-#
-# Em sessao fresca, useFonts SDK 54 web demora 30-60s para resolver na
-# primeira navegacao. Aceitavel em dev. Aguarde antes de interagir.
+# Pre-requisito: GAUNTLET_ATIVO depende de Platform.OS === 'web' && __DEV__.
+# Em sessao fresca, useFonts SDK 54 web demora 30-60s para resolver
+# na primeira navegacao. Aguarde antes de interagir.
 #
 # Comentarios sem acento.
 set -euo pipefail
@@ -25,27 +30,61 @@ LOG_FILE="/tmp/gauntlet-expo.log"
 URL_GAUNTLET="http://localhost:8081/_dev/gauntlet"
 URL_METRO="http://localhost:8081"
 
+CLEAR=0
+QUIET=0
+for arg in "$@"; do
+  case "$arg" in
+    --clear) CLEAR=1 ;;
+    --quiet) QUIET=1 ;;
+    *) echo "AVISO: flag desconhecida: $arg (ignorada)";;
+  esac
+done
+
 echo "=================================================="
-echo "GAUNTLET - validacao visual em Chrome"
+echo "GAUNTLET v2 - validacao visual em Chrome"
 echo "=================================================="
 
-# 1. Limpa Metro orfao
+# 1. Limpa Metro orfao (so processos node/expo/metro)
 PIDS=$(lsof -ti:8081 2>/dev/null || true)
 if [[ -n "$PIDS" ]]; then
-  echo ">> matando processo na porta 8081 (PID $PIDS)"
-  kill -9 $PIDS 2>/dev/null || true
+  for PID in $PIDS; do
+    CMD=$(ps -p "$PID" -o comm= 2>/dev/null | tr -d ' ' || echo "?")
+    case "$CMD" in
+      node|expo|metro|esbuild|npm|npx)
+        echo ">> matando processo conhecido na porta 8081 ($CMD PID $PID)"
+        kill -9 "$PID" 2>/dev/null || true
+        ;;
+      *)
+        echo "ERRO: porta 8081 ocupada por '$CMD' (PID $PID)."
+        echo "   Para matar manualmente: kill -9 $PID"
+        echo "   Ou rode: lsof -ti:8081 | xargs -r kill -9"
+        exit 1
+        ;;
+    esac
+  done
   sleep 1
 fi
 
-# 2. Sobe Metro + Web em background
+# 2. Rotaciona log
+[[ -f "$LOG_FILE" ]] && mv "$LOG_FILE" "${LOG_FILE}.prev" 2>/dev/null || true
+
+# 3. Limpa cache se pedido
+if [[ $CLEAR -eq 1 ]]; then
+  echo ">> limpando cache local"
+  rm -rf .expo node_modules/.cache 2>/dev/null || true
+fi
+
+# 4. Sobe Metro + Web em background, em process group proprio
 echo ">> subindo Metro web em background (log: $LOG_FILE)"
-nohup ./run.sh --web > "$LOG_FILE" 2>&1 &
+setsid nohup ./run.sh --web > "$LOG_FILE" 2>&1 &
 METRO_PID=$!
-echo ">> PID Metro: $METRO_PID"
+echo ">> PID Metro: $METRO_PID (process group: -$METRO_PID)"
 
-trap 'echo ""; echo ">> derrubando Metro (PID $METRO_PID)"; kill $METRO_PID 2>/dev/null || true; exit 0' INT TERM
+# Trap derruba grupo inteiro (Metro + Bundler + Watcher).
+# kill -- -PGID envia signal para todos os filhos do grupo.
+trap 'echo ""; echo ">> derrubando grupo do Metro (-$METRO_PID)"; kill -- -$METRO_PID 2>/dev/null || true; kill $METRO_PID 2>/dev/null || true; exit 0' INT TERM
 
-# 3. Aguarda servidor responder
+# 5. Aguarda servidor responder
 echo ">> aguardando $URL_METRO responder"
 for i in {1..60}; do
   if curl -sf "$URL_METRO" > /dev/null 2>&1; then
@@ -54,12 +93,14 @@ for i in {1..60}; do
   fi
   sleep 1
   if [[ $i -eq 60 ]]; then
-    echo "ERRO: Metro nao subiu em 60s. Veja $LOG_FILE"
+    echo "ERRO: Metro nao subiu em 60s."
+    echo "   Diagnostico: tail -100 $LOG_FILE | grep -i error"
+    echo "   Cache problema: ./gauntlet.sh --clear"
     exit 1
   fi
 done
 
-# 4. Abre navegador
+# 6. Abre navegador
 echo ">> abrindo $URL_GAUNTLET"
 if command -v xdg-open >/dev/null 2>&1; then
   xdg-open "$URL_GAUNTLET" > /dev/null 2>&1 &
@@ -74,9 +115,14 @@ echo "=================================================="
 echo "Gauntlet rodando."
 echo "URL:    $URL_GAUNTLET"
 echo "Log:    tail -f $LOG_FILE"
-echo "Stop:   Ctrl-C aqui ou kill $METRO_PID"
+echo "Stop:   Ctrl-C aqui ou kill -- -$METRO_PID"
 echo "=================================================="
 echo ""
 
-# 5. Mostra log em foreground
+if [[ $QUIET -eq 1 ]]; then
+  echo "Modo --quiet: deixando rodar em background. PID=$METRO_PID"
+  exit 0
+fi
+
+# 7. Mostra log em foreground
 exec tail -f "$LOG_FILE"

@@ -5,6 +5,52 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-GAUNTLET-AUDITORIA fechada (2026-05-04)
+
+Auditor externo cego (subagente isolado) avaliou 30 itens em 7
+seções. Resultado: 4 SIM, 12 NÃO, 14 PARCIAL. Edits triviais
+aplicados em ciclo único, sub-sprints abertas para refatorações
+maiores.
+
+**Aplicados:**
+- `src/lib/dev/gauntlet.ts`: guard `GAUNTLET_ATIVO` em cada método
+  público da API (item 3, 5 — vazamento de bypass via import
+  direto). `aplicarSeed` reseta `menuAberto: false` (item 6).
+  `aplicarReset` v2 limpa localStorage do persist em web (item 7).
+  4 APIs novas: `aguardarBoot()`, `tempoDeBoot()`, `consoleErros()`,
+  `marcarBootCompleto()`. Captura de `console.error` ativa em
+  modo dev web (item 27).
+- `src/lib/boot/biometriaGate.tsx`: `bypassReal = bypass && __DEV__`
+  (item 4 — bypass só vale em dev, mesmo se prop vazar em
+  release).
+- `gauntlet.sh` v2: flags `--clear`/`--quiet`, valida `comm` do PID
+  antes de matar (item 15), rotaciona log para `.prev` (item 17),
+  `setsid` + `kill -- -PGID` derruba process group inteiro
+  (item 18), mensagens acionáveis com comandos (item 16).
+- `app/_dev/showcase.tsx` criado com 20 telas listadas, banner
+  "MODO GAUNTLET ATIVO", frame mobile centralizado (item 21).
+- 11 casos E2E + template chamam `reset()` antes de `seed()`
+  (item 20).
+- `docs/GAUNTLET.md` ganhou seção Troubleshooting com 6 cenários
+  comuns (itens 28, 30).
+- `VALIDATOR_BRIEF.md` §1.9 sem ambiguidade entre "proibido" e
+  "permitido para debugging" (item 29).
+
+**Sub-sprints abertas (refatorações maiores):**
+- `M-GAUNTLET-LEAK-CHECK-spec.md` — CI gate de export Android
+  sem `__gauntlet` (item 1).
+- `M-GAUNTLET-SEED-V2-spec.md` — fixtures realistas humores 30d,
+  diários 3, eventos 7 + API `seedComDados()` (item 23).
+- `M-GAUNTLET-FAST-BOOT-spec.md` — pré-cache JetBrainsMono em
+  `public/fonts/` para encurtar boot inicial (item 26).
+
+**Validação:** Gauntlet com 14 APIs expostas, `tempoDeBoot()`
+retorna 187ms, showcase renderiza, banner ativo, frame mobile
+centralizado. 1126 testes / 130 suítes / tsc 0 erros / smoke OK.
+
+Relatório completo em
+`docs/auditoria-gauntlet-2026-05-04/RELATORIO.md`.
+
 ### Specs materializados — fila de execução completa (2026-05-04)
 
 Achado de uso real via Gauntlet em `/memoria` mostrou que a tela

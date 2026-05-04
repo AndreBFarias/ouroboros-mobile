@@ -15,7 +15,10 @@ export default async function caseM22(page: PlaywrightPageLike): Promise<Resulta
     await page.waitForTimeout(2000);
 
     const estado = await page.evaluate(() => {
-      const w = globalThis as unknown as { __gauntlet: { seed: () => void; estado: () => { vaultRoot: string | null } } };
+      const w = globalThis as unknown as {
+        __gauntlet: { reset: () => void; seed: () => void; estado: () => { vaultRoot: string | null } };
+      };
+      w.__gauntlet.reset();
       w.__gauntlet.seed();
       return w.__gauntlet.estado();
     });

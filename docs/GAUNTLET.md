@@ -189,10 +189,77 @@ validada.
 - Reanimated em web tem latência de runtime (~500ms-1s). Para
   captura de animação confiável, aguardar 1.5s+ entre frames.
 
+## Troubleshooting
+
+Auditoria 2026-05-04 documentou os erros operacionais mais comuns.
+
+### Metro não sobe em 60s
+- Diagnóstico: `tail -100 /tmp/gauntlet-expo.log | grep -i error`.
+- Causa comum: cache corrompido. Solução: `./gauntlet.sh --clear`
+  (apaga `.expo/` e `node_modules/.cache`).
+- Porta 8081 ocupada por processo desconhecido: o `gauntlet.sh` v2
+  recusa matar e mostra o nome do processo. Mate manualmente
+  conferindo o que é, ou rode `lsof -ti:8081 | xargs -r kill -9`
+  com confiança.
+
+### Browser abre em `chrome-error://chromewebdata/`
+- Causa: `__gauntlet.abrirSheet()` em web. Limitação do
+  `@gorhom/bottom-sheet` em React-Native-Web. O Gauntlet emite
+  `console.warn` antes de tentar.
+- Solução: validar sheets em Nível B (emulador `ouroboros-test`)
+  com `./scripts/start-emulator.sh` + `./run.sh --emulator`.
+
+### Boot screen oscila entre presente e ausente
+- Causa: `useFonts` SDK 54 web demora 30-60s na primeira sessão
+  fresh. M27.1 (useRef guard) cobre 95% dos casos. M27.3 (Suspense
+  boundary, [todo]) cobre o residual.
+- Solução: aguardar `__gauntlet.aguardarBoot(60000)` retornar
+  `true` antes de interagir. Métrica disponível via
+  `__gauntlet.tempoDeBoot()`.
+
+### "Maximum update depth exceeded" no console
+- Causa: alteração de variável de módulo (`let`) ou
+  `sessionStorage` durante render em React 19 strict mode.
+- Solução: usar `useState` ou `useRef`. Nunca mexer em estado
+  externo durante render fora do contexto React.
+
+### Animação parou no SVG
+- Causa: `useAnimatedProps` não propaga em `react-native-svg-web`.
+  M25.2 implementou bypass via `requestAnimationFrame` +
+  `data-anim-id` + `setAttribute`.
+- Diagnóstico: confirmar que `<g data-anim-id="og-g1-...">` existe
+  no DOM e que o atributo `transform` muda entre amostras
+  (`document.querySelector('[data-anim-id^="og-g1-"]').getAttribute('transform')`).
+
+### `console.error` do browser não aparece no log do Metro
+- Causa: log do Metro mostra Node, não browser. Auditoria
+  2026-05-04 expôs `__gauntlet.consoleErros()` para inspecionar
+  buffer do navegador.
+- Uso: `window.__gauntlet.consoleErros()` retorna array de
+  `{ ts, msg }`.
+
+### `element.ref` deprecation warning (React 19)
+- Origem: dependência transitiva (expo-router ou react-native-svg).
+- Status: benigno, não afeta uso. Aguardando upstream atualizar
+  para React 19 ref-as-prop.
+
+## APIs novas pós-auditoria 2026-05-04
+
+- `aguardarBoot(timeoutMs?: number): Promise<boolean>` — resolve
+  `true` quando fontes carregaram e stores hidrataram (default
+  60s).
+- `tempoDeBoot(): number | null` — retorna ms entre primeiro mount
+  e fontes prontas. `null` se ainda não completou.
+- `consoleErros(): Array<{ts, msg}>` — buffer dos `console.error`
+  capturados na sessão atual (até 200 entradas).
+- `reset()` v2 — limpa todas as stores + menuAberto + pathnameRef
+  + localStorage do persist em web.
+
 ## Próximos passos
 
-- M-REVALIDACAO-M20-M28 — primeira aplicação em massa: re-valida 11
-  sprints concluídas via Gauntlet, gera relatório consolidado,
-  abre corretivas para FAIL.
-- VALIDATOR_BRIEF.md §1.9 atualizada com Nível A+ (Gauntlet)
-  detalhado.
+- M-GAUNTLET-LEAK-CHECK — script CI que confirma `expo export
+  --platform android` sem `__gauntlet`.
+- M-GAUNTLET-SEED-V2 — fixtures realistas (humores 30d, diários
+  3, eventos 7).
+- M-GAUNTLET-FAST-BOOT — pré-cache de fontes JetBrainsMono para
+  encurtar boot inicial.

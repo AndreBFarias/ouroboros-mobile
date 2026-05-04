@@ -51,10 +51,15 @@ export default async function caseTemplate(
     await page.goto('http://localhost:8081/_dev/gauntlet');
     await page.waitForTimeout(1000);
 
-    // 2. Aplicar seed deterministico
+    // 2. Reset + seed deterministico (cada caso comeca limpo).
+    // Auditoria 2026-05-04 (item 20): reset() antes de seed() garante
+    // que ordem de execucao dos E2E nao afeta resultado.
     const seedOk = await page.evaluate(() => {
-      const w = globalThis as unknown as { __gauntlet?: { seed: () => void; estado: () => unknown } };
+      const w = globalThis as unknown as {
+        __gauntlet?: { reset: () => void; seed: () => void; estado: () => unknown };
+      };
       if (!w.__gauntlet) return false;
+      w.__gauntlet.reset();
       w.__gauntlet.seed();
       return true;
     });

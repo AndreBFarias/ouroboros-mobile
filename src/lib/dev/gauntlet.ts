@@ -42,6 +42,12 @@ export interface GauntletEstado {
   ultimaRota: string | null;
   menuAberto: boolean;
   rota: string;
+  // Auditoria 2026-05-04 (item 25): timestamp do mount inicial
+  // do RootLayout em ms (Date.now()) e ms ate fontes prontas.
+  bootIniciadoEm: number;
+  bootCompletadoEm: number | null;
+  // Auditoria 2026-05-04 (item 24): true quando useFonts resolveu.
+  bootCompleto: boolean;
 }
 
 export interface SeedOpcoes {
@@ -75,6 +81,15 @@ export interface GauntletAPI {
   fecharMenu(): void;
   abrirSheet(rota: 'humor-rapido' | 'diario-emocional' | 'eventos' | 'scanner'): Promise<void>;
   estado(): GauntletEstado;
+  // APIs novas pos auditoria 2026-05-04.
+  // Aguarda fontes carregarem e stores hidratarem. Resolve true
+  // quando pronto, false em timeout (default 60s).
+  aguardarBoot(timeoutMs?: number): Promise<boolean>;
+  // Retorna ms entre primeiro mount do RootLayout e fontes prontas.
+  // null se ainda nao completou.
+  tempoDeBoot(): number | null;
+  // Retorna buffer de console.error capturado nesta sessao.
+  consoleErros(): Array<{ ts: number; msg: string }>;
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -83,12 +98,25 @@ export interface GauntletAPI {
 let routerRef: RouterLike | null = null;
 let pathnameRef: string = '/';
 
+// Auditoria 2026-05-04: timestamps de boot e buffer de erros.
+const bootIniciadoEm = Date.now();
+let bootCompletadoEm: number | null = null;
+const errosCapturados: Array<{ ts: number; msg: string }> = [];
+
 export function setRouterRef(router: RouterLike): void {
   routerRef = router;
 }
 
 export function setPathnameRef(pathname: string): void {
   pathnameRef = pathname;
+}
+
+// Marca boot completo (chamado pelo RootLayout quando useFonts
+// resolve pela primeira vez).
+export function marcarBootCompleto(): void {
+  if (bootCompletadoEm === null) {
+    bootCompletadoEm = Date.now();
+  }
 }
 
 function lerEstado(): GauntletEstado {
@@ -106,6 +134,9 @@ function lerEstado(): GauntletEstado {
     ultimaRota: ss.ultimaRota,
     menuAberto: nv.menuAberto,
     rota: pathnameRef,
+    bootIniciadoEm,
+    bootCompletadoEm,
+    bootCompleto: bootCompletadoEm !== null,
   };
 }
 
@@ -125,6 +156,8 @@ function aplicarSeed(opts?: SeedOpcoes): void {
     fotos: { pessoa_a: null, pessoa_b: null },
   });
   useSessao.setState({ ultimaRota });
+  // Auditoria 2026-05-04 (item 6): garantir consistencia com reset.
+  useNavegacao.setState({ menuAberto: false });
 }
 
 function aplicarReset(): void {
@@ -136,6 +169,21 @@ function aplicarReset(): void {
   });
   useSessao.setState({ ultimaRota: null });
   useNavegacao.setState({ menuAberto: false });
+  // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
+  // em web para que reload nao re-hidrate estado anterior. Em mobile,
+  // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage?.removeItem('ouroboros.onboarding');
+      window.localStorage?.removeItem('ouroboros.vault');
+      window.localStorage?.removeItem('ouroboros.pessoa');
+      window.localStorage?.removeItem('ouroboros.sessao.v1');
+    } catch {
+      // ignora -- modo privado, iframe sem permissao.
+    }
+  }
+  // Reseta pathnameRef interno.
+  pathnameRef = '/';
 }
 
 function aplicarSetNomes(nomeA: string, nomeB?: string | null): void {
@@ -156,27 +204,116 @@ function navegar(rota: string): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 50));
 }
 
+// Helper: noop em mobile/release; chama fn em dev/web.
+// Auditoria 2026-05-04 (item 3, 5): cada metodo publico checa
+// GAUNTLET_ATIVO antes de tocar nas stores. Sem isto, import direto
+// da const `gauntlet` em mobile real vazaria bypass.
+function comGuard<T extends unknown[], R>(fn: (...args: T) => R, fallback: R): (...args: T) => R {
+  return (...args: T): R => {
+    if (!GAUNTLET_ATIVO) return fallback;
+    return fn(...args);
+  };
+}
+
+const ESTADO_MOCK_MOBILE: GauntletEstado = {
+  onboardingDone: false,
+  tipoCompanhia: 'sozinho',
+  vaultRoot: null,
+  nomes: { pessoa_a: 'Nome_A', pessoa_b: 'Nome_B' },
+  fotos: { pessoa_a: null, pessoa_b: null },
+  ultimaRota: null,
+  menuAberto: false,
+  rota: '/',
+  bootIniciadoEm: 0,
+  bootCompletadoEm: null,
+  bootCompleto: false,
+};
+
+async function aguardarBoot(timeoutMs: number = 60000): Promise<boolean> {
+  if (!GAUNTLET_ATIVO) return false;
+  const inicio = Date.now();
+  while (Date.now() - inicio < timeoutMs) {
+    if (bootCompletadoEm !== null) return true;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+
+function tempoDeBoot(): number | null {
+  if (!GAUNTLET_ATIVO) return null;
+  if (bootCompletadoEm === null) return null;
+  return bootCompletadoEm - bootIniciadoEm;
+}
+
+function consoleErros(): Array<{ ts: number; msg: string }> {
+  if (!GAUNTLET_ATIVO) return [];
+  return errosCapturados.slice();
+}
+
 const api: GauntletAPI = {
-  seed: aplicarSeed,
-  reset: aplicarReset,
-  setNomes: aplicarSetNomes,
-  setVaultRoot: (root) => useVault.setState({ vaultRoot: root }),
-  setOnboardingDone: (done) => useOnboarding.setState({ done }),
-  setUltimaRota: (rota) => useSessao.setState({ ultimaRota: rota }),
-  abrir: navegar,
-  abrirMenu: () => useNavegacao.setState({ menuAberto: true }),
-  fecharMenu: () => useNavegacao.setState({ menuAberto: false }),
+  seed: comGuard(aplicarSeed, undefined as void),
+  reset: comGuard(aplicarReset, undefined as void),
+  setNomes: comGuard(aplicarSetNomes, undefined as void),
+  setVaultRoot: comGuard(
+    (root: string) => useVault.setState({ vaultRoot: root }),
+    undefined as void
+  ),
+  setOnboardingDone: comGuard(
+    (done: boolean) => useOnboarding.setState({ done }),
+    undefined as void
+  ),
+  setUltimaRota: comGuard(
+    (rota: string | null) => useSessao.setState({ ultimaRota: rota }),
+    undefined as void
+  ),
+  abrir: async (rota) => {
+    if (!GAUNTLET_ATIVO) return;
+    return navegar(rota);
+  },
+  abrirMenu: comGuard(() => useNavegacao.setState({ menuAberto: true }), undefined as void),
+  fecharMenu: comGuard(() => useNavegacao.setState({ menuAberto: false }), undefined as void),
   abrirSheet: async (rota) => {
+    if (!GAUNTLET_ATIVO) return;
     // Garante seed minimo antes de tentar abrir sheet (rota modal
     // exige onboarding done + vaultRoot, senao redireciona para
     // /onboarding).
     if (!useOnboarding.getState().done) {
       aplicarSeed();
     }
+    // Auditoria 2026-05-04 (item 14): aviso explicito da limitacao
+    // @gorhom/bottom-sheet em web.
+    if (typeof console !== 'undefined' && typeof window !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[gauntlet] abrirSheet em web pode redirecionar para chrome-error pela limitacao @gorhom/bottom-sheet. Use Nivel B para sheets.'
+      );
+    }
     await navegar(`/${rota}`);
   },
-  estado: lerEstado,
+  estado: () => (GAUNTLET_ATIVO ? lerEstado() : ESTADO_MOCK_MOBILE),
+  aguardarBoot,
+  tempoDeBoot,
+  consoleErros,
 };
+
+// Auditoria 2026-05-04 (item 27): captura console.error para o
+// orquestrador inspecionar via __gauntlet.consoleErros(). So ativa
+// em modo dev web para nao impactar perf de release.
+if (GAUNTLET_ATIVO && typeof console !== 'undefined') {
+  const origError = console.error;
+  console.error = (...args: unknown[]) => {
+    try {
+      const msg = args
+        .map((a) => (typeof a === 'string' ? a : JSON.stringify(a)))
+        .join(' ');
+      errosCapturados.push({ ts: Date.now(), msg });
+      if (errosCapturados.length > 200) errosCapturados.shift();
+    } catch {
+      // nao deixa o capturador derrubar console.error original.
+    }
+    origError(...(args as Parameters<typeof console.error>));
+  };
+}
 
 export function instalarGauntlet(): void {
   if (!GAUNTLET_ATIVO) return;

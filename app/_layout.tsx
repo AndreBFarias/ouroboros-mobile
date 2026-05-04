@@ -27,6 +27,7 @@ import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import {
   GAUNTLET_ATIVO,
   instalarGauntlet,
+  marcarBootCompleto,
   setRouterRef,
   setPathnameRef,
 } from '@/lib/dev/gauntlet';
@@ -88,6 +89,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      // Auditoria 2026-05-04: sinaliza boot completo para o
+      // orquestrador via __gauntlet.aguardarBoot() / tempoDeBoot().
+      if (GAUNTLET_ATIVO) {
+        marcarBootCompleto();
+      }
     }
   }, [loaded]);
 

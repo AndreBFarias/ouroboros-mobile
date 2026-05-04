@@ -44,13 +44,18 @@ interface BiometriaGateProps {
 }
 
 export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) {
+  // Auditoria 2026-05-04 (item 4): bypass so vale em build dev.
+  // __DEV__ vira false em release; mesmo se um caller passar
+  // bypass={true} por engano, em release a auth roda normalmente.
+  const bypassReal =
+    bypass && (typeof __DEV__ !== 'undefined' ? __DEV__ : false);
   const ativa = useSettings((s) => s.privacidade.biometriaAbrir);
   const [autenticado, setAutenticado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [tentando, setTentando] = useState(false);
 
   const tentar = useCallback(async () => {
-    if (!ativa || bypass) {
+    if (!ativa || bypassReal) {
       setAutenticado(true);
       return;
     }
@@ -88,18 +93,18 @@ export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) 
     } finally {
       setTentando(false);
     }
-  }, [ativa, bypass]);
+  }, [ativa, bypassReal]);
 
   useEffect(() => {
-    if (!ativa || bypass) {
+    if (!ativa || bypassReal) {
       setAutenticado(true);
       return;
     }
     setAutenticado(false);
     void tentar();
-  }, [ativa, bypass, tentar]);
+  }, [ativa, bypassReal, tentar]);
 
-  if (!ativa || bypass || autenticado) {
+  if (!ativa || bypassReal || autenticado) {
     return <>{children}</>;
   }
 

@@ -13,7 +13,10 @@ export default async function caseM24(page: PlaywrightPageLike): Promise<Resulta
     await page.goto('http://localhost:8081/_dev/gauntlet');
     await page.waitForTimeout(1500);
     await page.evaluate(() => {
-      const w = globalThis as unknown as { __gauntlet: { seed: () => void; setUltimaRota: (r: string) => void } };
+      const w = globalThis as unknown as {
+        __gauntlet: { reset: () => void; seed: () => void; setUltimaRota: (r: string) => void };
+      };
+      w.__gauntlet.reset();
       w.__gauntlet.seed();
       w.__gauntlet.setUltimaRota('/memoria');
     });
