@@ -64,26 +64,76 @@ spec PARA o ciclo e pede clarificação.
 | ~~17~~ | ~~M11.2~~ | ~~useGaleriaMock useEffect~~ — **fechada 2026-05-04** (subscribe + GAUNTLET_ATIVO guard) | `M11.2-spec.md` | — |
 | ~~18~~ | ~~M27.4~~ | ~~SessaoBootGate latch~~ — **fechada 2026-05-04** (bootPronto fast-path) | `M27.4-spec.md` | — |
 | ~~19~~ | ~~M-DEBITO-UI-UX-SEED-DUO~~ | ~~3 fixes consolidados~~ — **fechada 2026-05-04** (chip Outro ghost, KeyboardAvoidingView contadores/novo, AnimatePresence toggle alarme) | `M-DEBITO-UI-UX-SEED-DUO-spec.md` | — |
-| 19.1 | **M-DEBITO-CATEGORIA-CORES** | 8 categorias de tarefa todas com accent='orange' — atribuir cores Dracula semânticas | `M-DEBITO-CATEGORIA-CORES-spec.md` | 0,5-1h |
-| 20 | **M-PT-BR-AUDIT** | Hook pre-commit + script CI valida sentence case + acentuação PT-BR completa em todas strings UI. Agentes vinham violando em batch | `M-PT-BR-AUDIT-spec.md` | 3-4h |
-| 21 | **M-VAULT-MD-AUDIT** | Auditoria: tudo .md no Vault + mídias originais + companion + Obsidian-friendly. Relatório + script + testes integrados | `M-VAULT-MD-AUDIT-spec.md` | 3-4h |
-| 22 | **M-EXPORT-COMPLETO** | exportarVaultZip empacota .md + mídias + companion + cache + snapshot settings + MANIFEST. Restaurar inverso simétrico | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
-| 23 | **M11.4** | Memórias aba Marcos ganha "Evolução corporal" — fotos perfil/lado/braço + atalho /medidas/novo + marco.medidaRef | `M11.4-spec.md` | 4-5h |
-| 24 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
-| 25 | **M-GAUNTLET-DEAD-CODE-V2** | Refactor lazy require — bytecode Android sem `__gauntlet`. **Bloqueia M41** | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
-| ~~19~~ | ~~M-GAUNTLET-FAST-BOOT-FOLLOWUP~~ | ~~`+html.tsx` aplicar em build estático~~ — **fechada NÃO-FIX 2026-05-04** (aguardar SDK 55+) | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` | 1-2h |
-| 20 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
-| 21 | **M-GAUNTLET-DEAD-CODE-V2** | Refactor `gauntletBootstrap.ts` lazy require — bytecode Android sem `__gauntlet`. **Bloqueia M41** | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
-| 12 | M35 | Aba Finanças "Em desenvolvimento" honesto (será absorvido por M-CAPTURA-UNIFICADA empty state caminho documento) | `M35-spec.md` | 1-2h |
-| 13 | M36 | Tela Recap (agregação Conquistas/Crises/Evoluções/Números) | `M36-spec.md` | 6-8h |
-| 26 | M35 | Aba Finanças "Em desenvolvimento" honesto (será absorvido por M-CAPTURA-UNIFICADA) | `M35-spec.md` | 1-2h |
-| 27 | M36 | Tela Recap (Conquistas/Crises/Evoluções/Números) | `M36-spec.md` | 6-8h |
-| 28 | M37.1 | Google Calendar OAuth + leitura (PAUSA para usuário) | `M37.1-spec.md` | 6-7h |
-| 29 | M37.2 | Google Calendar escrita | `M37.2-spec.md` | 4-5h |
-| 30 | M38 | Conflict resolution 4 dispositivos via deviceId | `M38-spec.md` | 4-5h |
-| 31 | M39 | Estrutura mídia + .md companion (formal ADR-0017) | `M39-spec.md` | 4-5h |
-| 32 | M40 | Tela Hoje v2 (consome `para` da M33) | `M40-spec.md` | 4-5h |
-| 33 | M41 | APK Release v1.0.0 final (PAUSA para usuário) | `M41-spec.md` | 3-4h |
+| ~~19.x~~ | ~~M-GAUNTLET-FAST-BOOT-FOLLOWUP~~ | ~~`+html.tsx` aplicar em build estático~~ — **fechada NÃO-FIX 2026-05-04** (aguardar SDK 55+) | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` | — |
+
+### Fila ativa reordenada por blocos (auditoria 2026-05-04, decisões do dono)
+
+> Auditoria completa em `docs/AUDITORIA-2026-05-04.md`. Decisões do
+> dono: (a) v1.0 inclui dev-client, (b) field test 7 dias bloqueante,
+> (c) ordem aceita, (d) M-DEV-CLIENT-DECISAO criada.
+
+**BLOCO A — Fundação (top da fila, prioridade absoluta)**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| A1 | **M-PT-BR-AUDIT** | Hook pre-commit + script PT-BR | `M-PT-BR-AUDIT-spec.md` | 3-4h |
+| A2 | **M-VAULT-MD-AUDIT** | Auditoria .md + Obsidian-friendly | `M-VAULT-MD-AUDIT-spec.md` | 3-4h |
+| A3 | **M39** | Mídia companion oficial (ADR-0017) | `M39-spec.md` | 4-5h |
+| A4 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
+
+**BLOCO B — Polish UX (corrige débitos visíveis)**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| B1 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
+| B2 | **M11.4** | Evolução corporal em Marcos | `M11.4-spec.md` | 4-5h |
+| B3 | **M-DEBITO-CATEGORIA-CORES** | 8 chips com cores semânticas | `M-DEBITO-CATEGORIA-CORES-spec.md` | 0,5-1h |
+| B4 | **M40** | Tela Hoje v2 (Recap + para + próximos) | `M40-spec.md` | 4-5h |
+| B5 | **M36** | Tela Recap (Conquistas/Crises/Números) | `M36-spec.md` | 6-8h |
+| B6 | **M35** | Aba Finanças empty state honesto | `M35-spec.md` | 1-2h |
+
+**BLOCO C — Release-readiness (NOVAS, propostas pela auditoria)**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| C1 | **M-BUNDLE-DIET** | Reduzir bundle 300-500 KB (margem) | `M-BUNDLE-DIET-spec.md` | 2-3h |
+| C2 | **M-WCAG-COMPLETO** | Acessibilidade AA todas as telas | `M-WCAG-COMPLETO-spec.md` | 4-6h |
+| C3 | **M-RELEASE-ASSETS** | Ícone + splash + app name finais | `M-RELEASE-ASSETS-spec.md` | 3-4h |
+| C4 | **M-SOBRE-RELEASE-NOTES** | Settings → Sobre + changelog | `M-SOBRE-RELEASE-NOTES-spec.md` | 2-3h |
+| C5 | **M-BACKUP-AUTOMATICO** | Backup semanal local opt-in | `M-BACKUP-AUTOMATICO-spec.md` | 3-4h |
+| C6 | **M-GAUNTLET-DEAD-CODE-V2** | Bytecode Android sem `__gauntlet` | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
+| C7 | **M38** | Conflict resolution 4 devices | `M38-spec.md` | 4-5h |
+
+**BLOCO D — Decisão registrada (executar como pre-condição de E)**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| D1 | **M-DEV-CLIENT-DECISAO** | Decisão (a): v1.0 INCLUI dev-client | `M-DEV-CLIENT-DECISAO-spec.md` | 0,5h |
+
+**BLOCO E — Features dev-client (após Bloco A+B+C+D)**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| E1 | **M06.5** | Microfone — Diário Emocional | `M06.5-spec.md` | 5-7h |
+| E2 | **M07.x** | Conquistas com mídia obrigatória | `M07.x-conquistas-com-midia.md` | 5-7h |
+| E3 | **M11.5** | Calendário visual de conquistas | `M11.5-spec.md` | 5-7h |
+| E4 | **M09** | Scanner OCR notas fiscais (paralelo a E3) | `M09-spec.md` | 7-9h |
+| E5 | **M37.1** | Google Calendar OAuth (PAUSA usuário) | `M37.1-spec.md` | 6-7h |
+| E6 | **M37.2** | Google Calendar escrita | `M37.2-spec.md` | 4-5h |
+
+**BLOCO F — Field test (humano-only, bloqueante para M41)**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| F1 | **M-FIELD-TEST** | 7 dias uso real + bugs catalogados | `M-FIELD-TEST-spec.md` | 7 dias |
+
+**BLOCO G — Release final**
+
+| # | Sprint | Título | Spec | Estim. |
+|---|---|---|---|---|
+| G1 | **M41** | APK Release v1.0.0 final (PAUSA usuário) | `M41-spec.md` | 3-4h |
+
+**Estimativa total para v1.0:** ~63-90h ativas + 7 dias field test.
 
 **Sprints checkpoint visual paralelas** (rodar em paralelo, baixa
 prioridade, requerem emulador ou APK dev-client):
