@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-GAUNTLET-LEAK-CHECK fechada com achado crítico (2026-05-04)
+
+Script CI `scripts/check_gauntlet_leak.sh` que roda
+`npx expo export --platform android` e busca por 6 marcadores
+canônicos do Gauntlet no bundle Hermes (`*.hbc` em
+`_expo/static/js/android/`). Exit 1 com lista de FAILs se vazar,
+exit 0 com tamanho do bundle se limpo. Não invocado pelo smoke por
+padrão (chamada manual ou via `--full` futuro).
+
+**Achado crítico revelado:** 5 dos 6 marcadores presentes no
+bundle release Android (`__gauntlet`, `instalarGauntlet`,
+`useGaleriaMock`, `GAUNTLET_ATIVO`, `adicionarFotoMock`). Causa
+raiz: `app/_layout.tsx` importa diretamente
+`@/lib/dev/gauntlet` — Metro/Hermes não fazem tree-shake de export
+referenciado, mesmo com guard `if (!GAUNTLET_ATIVO) return` em
+cada método. Política zero-trust dos métodos individuais protege o
+runtime, mas não impede o bytecode de carregar os símbolos.
+
+**Sprint corretiva criada:**
+`docs/sprints/M-GAUNTLET-DEAD-CODE-V2-spec.md` — caminho A (módulo
+de bootstrap separado com `require` lazy guardado por
+`Platform.OS !== 'web' || !__DEV__`). Bloqueia M41 (release final).
+
 ### M27.3 fechada (2026-05-04)
 
 Boot screen sem oscilar via hook agregador `useAppPronto` + store
