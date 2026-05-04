@@ -74,12 +74,18 @@ spec PARA o ciclo e pede clarificação.
 
 **BLOCO A — Fundação (top da fila, prioridade absoluta)**
 
+> **Inclui infraestrutura Gauntlet** (M-GAUNTLET-DEAD-CODE-V2 promovida
+> de C6 em 2026-05-04 por decisão do dono — Gauntlet é fundação de
+> validação visual; vazamento de bytecode em release é falha de
+> qualidade core, não débito tardio).
+
 | # | Sprint | Título | Spec | Estim. |
 |---|---|---|---|---|
 | A1 | **M-PT-BR-AUDIT** | Hook pre-commit + script PT-BR | `M-PT-BR-AUDIT-spec.md` | 3-4h |
-| A2 | **M-VAULT-MD-AUDIT** | Auditoria .md + Obsidian-friendly | `M-VAULT-MD-AUDIT-spec.md` | 3-4h |
-| A3 | **M39** | Mídia companion oficial (ADR-0017) | `M39-spec.md` | 4-5h |
-| A4 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
+| A2 | **M-GAUNTLET-DEAD-CODE-V2** | Bytecode Android sem `__gauntlet` (lazy require) | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
+| A3 | **M-VAULT-MD-AUDIT** | Auditoria .md + Obsidian-friendly | `M-VAULT-MD-AUDIT-spec.md` | 3-4h |
+| A4 | **M39** | Mídia companion oficial (ADR-0017) | `M39-spec.md` | 4-5h |
+| A5 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
 
 **BLOCO B — Polish UX (corrige débitos visíveis)**
 
@@ -101,8 +107,7 @@ spec PARA o ciclo e pede clarificação.
 | C3 | **M-RELEASE-ASSETS** | Ícone + splash + app name finais | `M-RELEASE-ASSETS-spec.md` | 3-4h |
 | C4 | **M-SOBRE-RELEASE-NOTES** | Settings → Sobre + changelog | `M-SOBRE-RELEASE-NOTES-spec.md` | 2-3h |
 | C5 | **M-BACKUP-AUTOMATICO** | Backup semanal local opt-in | `M-BACKUP-AUTOMATICO-spec.md` | 3-4h |
-| C6 | **M-GAUNTLET-DEAD-CODE-V2** | Bytecode Android sem `__gauntlet` | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
-| C7 | **M38** | Conflict resolution 4 devices | `M38-spec.md` | 4-5h |
+| C6 | **M38** | Conflict resolution 4 devices | `M38-spec.md` | 4-5h |
 
 **BLOCO D — Decisão registrada (executar como pre-condição de E)**
 
@@ -134,6 +139,22 @@ spec PARA o ciclo e pede clarificação.
 | G1 | **M41** | APK Release v1.0.0 final (PAUSA usuário) | `M41-spec.md` | 3-4h |
 
 **Estimativa total para v1.0:** ~63-90h ativas + 7 dias field test.
+
+### Inventário Gauntlet (estado atual)
+
+| Sprint | Status | Função |
+|---|---|---|
+| ~~M-GAUNTLET~~ | `[ok]` | Cria infra `/_dev/gauntlet` + `__gauntlet` + frame mobile |
+| ~~M-GAUNTLET-AUDITORIA~~ | `[ok]` | Auditoria externa cega 30 itens |
+| ~~M-GAUNTLET-LEAK-CHECK~~ | `[ok]` | Script CI revelou vazamento |
+| ~~M-GAUNTLET-SEED-V2~~ | `[ok]` | Fixtures realistas |
+| ~~M-GAUNTLET-FAST-BOOT~~ | `[ok com ressalva]` | Pré-cache fontes |
+| ~~M-GAUNTLET-FAST-BOOT-FOLLOWUP~~ | `[ok NÃO-FIX]` | Aguarda SDK 55+ |
+| ~~M-GAUNTLET-SEED-DUO~~ | `[ok]` | Seed duo propaga tipoCompanhia |
+| **M-GAUNTLET-DEAD-CODE-V2** | `[todo A2]` | Lazy require — **PROMOVIDO** para fundação |
+
+Após M-GAUNTLET-DEAD-CODE-V2 fechar, infra Gauntlet está **completa**.
+Field test (F1) usa Gauntlet final como referência cruzada.
 
 **Sprints checkpoint visual paralelas** (rodar em paralelo, baixa
 prioridade, requerem emulador ou APK dev-client):
