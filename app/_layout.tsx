@@ -16,6 +16,7 @@ import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
+import { useAppPronto } from '@/lib/boot/useAppPronto';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import { useOnboarding } from '@/lib/stores/onboarding';
@@ -68,34 +69,41 @@ export default function RootLayout() {
     JetBrainsMono_500Medium,
   });
 
-  // M27.1: guard contra useFonts oscilante em SDK 54 web. Em web, o
-  // hook useFonts as vezes alterna loaded=true/false apos primeira
-  // hidratacao quando o documento.fonts re-emite eventos, fazendo o
-  // early-return abaixo re-montar o OuroborosLoader e causar piscar
-  // de boot screen sobre a Home. Uma vez true, fica true para a
-  // sessao toda (re-mount real do app passa pelo SplashScreen
-  // novamente, separado).
-  const fontesPersistentementeCarregadas = useRef(false);
-  if (loaded) {
-    fontesPersistentementeCarregadas.current = true;
-  }
-  const mostrarBootScreen =
-    !loaded && !fontesPersistentementeCarregadas.current;
+  // M27.3: substitui o guard useRef do M27.1 por hook agregador
+  // useAppPronto que combina useFonts + hidratacao das 3 stores
+  // criticas (onboarding, vault, sessao) com latch em store global
+  // (useBootStatus). Uma vez pronto, sempre pronto -- elimina o
+  // residual de oscilacao em sessao fresh do Chrome dev quando
+  // useFonts SDK 54 demora 30-60s e BiometriaGate/SessaoBootGate
+  // disparam re-renders intermediarios.
+  //
+  // Mantemos a variavel local mostrarBootScreen com a mesma
+  // semantica anterior (true = renderiza OuroborosLoader bloqueante)
+  // para reduzir delta no JSX abaixo.
+  const appPronto = useAppPronto({ fontesProntas: loaded });
+  const mostrarBootScreen = !appPronto;
 
   // Boot hook: registra listener de share intent (M00.5; M08 plugara
   // o fluxo real). Hook idempotente ao desmontar.
   useDeepLinkListener();
 
+  // M27.3: hideAsync idempotente. Spec exige UMA unica chamada.
+  // Ref guard local ao componente; useFonts em SDK 54 web pode
+  // oscilar e re-entregar loaded=true (ja documentado em M27.1).
+  // O appPronto e o gatilho canonico de "tudo pronto" (fontes +
+  // stores hidratadas), entao usamos ele como trigger principal.
+  const splashEsconderRef = useRef<boolean>(false);
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-      // Auditoria 2026-05-04: sinaliza boot completo para o
-      // orquestrador via __gauntlet.aguardarBoot() / tempoDeBoot().
-      if (GAUNTLET_ATIVO) {
-        marcarBootCompleto();
-      }
+    if (!appPronto) return;
+    if (splashEsconderRef.current) return;
+    splashEsconderRef.current = true;
+    SplashScreen.hideAsync();
+    // Auditoria 2026-05-04: sinaliza boot completo para o
+    // orquestrador via __gauntlet.aguardarBoot() / tempoDeBoot().
+    if (GAUNTLET_ATIVO) {
+      marcarBootCompleto();
     }
-  }, [loaded]);
+  }, [appPronto]);
 
   // Boot hook: reagenda alarmes/limpeza/marcos auto/widget. M00.5
   // cria o orquestrador vazio; cada sprint dona faz BOOT_HOOKS.push

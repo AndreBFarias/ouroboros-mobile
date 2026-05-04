@@ -38,8 +38,8 @@ spec PARA o ciclo e pede clarificação.
 |---|---|---|---|---|
 | ~~1~~ | ~~M11.1~~ | ~~Memórias usável~~ — **fechada 2026-05-04** (1136/133, 4 screenshots Gauntlet) | `M11.1-spec.md` | — |
 | ~~2~~ | ~~M-GAUNTLET-AUDITORIA~~ | ~~Auditoria externa~~ — **fechada 2026-05-04** | `M-GAUNTLET-AUDITORIA-spec.md` | — |
-| 1 | M27.3 | Boot screen sem oscilar via Suspense boundary | `M27.3-spec.md` | 4-6h |
-| 1.5 | M-GAUNTLET-LEAK-CHECK | Script CI confirma `expo export android` sem `__gauntlet` | `M-GAUNTLET-LEAK-CHECK-spec.md` | 1-2h |
+| ~~1~~ | ~~M27.3~~ | ~~Boot screen sem oscilar~~ — **fechada 2026-05-04** (1143/134, boot 183ms, 0 transições) | `M27.3-spec.md` | — |
+| 1 | M-GAUNTLET-LEAK-CHECK | Script CI confirma `expo export android` sem `__gauntlet` | `M-GAUNTLET-LEAK-CHECK-spec.md` | 1-2h |
 | 1.6 | M-GAUNTLET-SEED-V2 | Fixtures realistas (humores 30d, diários 3, eventos 7) + `seedComDados()` | `M-GAUNTLET-SEED-V2-spec.md` | 3-4h |
 | 1.7 | M-GAUNTLET-FAST-BOOT | Pré-cache JetBrainsMono encurta boot 30-60s → <5s | `M-GAUNTLET-FAST-BOOT-spec.md` | 2-3h |
 | 4 | M29 | Settings v2 (vibração simples + features default ON + sync removido) | `M29-spec.md` | 4h |
@@ -144,7 +144,7 @@ prioridade, requerem emulador ou APK dev-client):
 | `[todo]` | M-GAUNTLET-FAST-BOOT | Pré-cache JetBrainsMono em `public/fonts/` + `<link rel="preload">` para encurtar boot de 30-60s para <5s | — | — | 2-3h | `M-GAUNTLET-FAST-BOOT-spec.md` |
 | `[ok]` | M24.1 | Resume state. `useUltimaRota` ignora o primeiro pathname após mount. Antes ele sobrescrevia `ultimaRota` antes do `SessaoBootGate` ler. Validação Gauntlet: `seed() + setUltimaRota('/memoria') + reload` abre `/memoria`. | — | — | 0,5h | (este ciclo) |
 | `[ok]` | M25.2 | Animação Reanimated não rodava em SVG web. Fix: `OuroborosLoader.tsx` ganha bloco `requestAnimationFrame` (web only) que localiza `<g>` por `data-anim-id` + setAttribute('transform', ...) direto. Native mantém Reanimated. g3 medido em ~15°/s. | — | — | 1h | (este ciclo) |
-| `[todo]` | M27.3 | Boot screen sem oscilar via Suspense boundary (deferido de M27.2). Hook `useAppPronto` agrega useFonts + hidratação das stores; `<Suspense fallback={<BootScreen/>}>` na raiz. M27.1 cobre 95% mas residual em sessão fresh do Chrome dev. | — | — | 4-6h | `M27.3-spec.md` |
+| `[ok]` | M27.3 | Boot screen sem oscilar. Hook `useAppPronto` agrega `loaded` (useFonts) + `useHasHydrated` das 3 stores criticas (onboarding/vault/sessao). Latch via `useBootStatus` (zustand sem persist) — uma vez `true`, sempre `true`. `app/_layout.tsx` usa conditional render (não Suspense throw — decisão por seguranca em RN+Reanimated 4). `splashEsconderRef` garante `hideAsync` UMA vez. `marcarBootCompleto` sinalizado uma vez. Validação Gauntlet: boot 183ms, 0 transições do loader em 4 rotas (/, /humor, /settings, /memoria). 1136→1143 testes (+7), 133→134 suítes. Bundle Hermes 8.4 MB. Achado pré-existente: `SessaoBootGate` cascata em reset+navega rápido — sprint M27.4 sugerida | — | — | 4-6h | `M27.3-spec.md` |
 
 ### Linha principal
 

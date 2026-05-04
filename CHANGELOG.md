@@ -5,6 +5,63 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M27.3 fechada (2026-05-04)
+
+Boot screen sem oscilar via hook agregador `useAppPronto` + store
+`useBootStatus` (latch boolean global). Substitui o guard `useRef`
+`fontesPersistentementeCarregadas` do M27.1 por solução baseada em
+selector estável.
+
+**Decisão de design:** **conditional render** (não Suspense throw).
+A spec §5 alertou contra Suspense em React Native nativo com
+Reanimated worklet não-validado. O orquestrador autorizou
+explicitamente o conditional render direto — equivalente em UX,
+mais seguro. Migração futura para Suspense throw é trocar APENAS
+o consumidor (hook + store ficam reutilizáveis).
+
+**Entregáveis:**
+- `src/lib/boot/useAppPronto.ts` (novo) — combina `loaded` (useFonts)
+  + `useHasHydrated` das 3 stores críticas (onboarding, vault,
+  sessao). Latch via store global. Uma vez `true`, sempre `true`.
+- `src/lib/boot/useBootStatus.ts` (novo) — store zustand leve sem
+  persist. `pronto: boolean` + `marcarPronto()` idempotente.
+  Selector estável `selectBootPronto`.
+- `app/_layout.tsx` (+8L) — substitui guard `useRef` por
+  `useAppPronto({ fontesProntas: loaded })`. `splashEsconderRef`
+  garante UMA chamada de `SplashScreen.hideAsync()` mesmo se
+  `useFonts` SDK 54 web oscilar `loaded=true`. `marcarBootCompleto()`
+  do gauntlet sinalizado uma vez quando appPronto vira true.
+- `tests/lib/boot/useAppPronto.test.tsx` (novo, 7 cases) — 3
+  useBootStatus + 4 useAppPronto incluindo latch persistente após
+  oscilação.
+- `tests/e2e/playwright/m27-3-boot-suspense.e2e.ts` (novo) —
+  `aguardarBoot()` + `tempoDeBoot()` do gauntlet. Conta
+  `transicoesAusenteParaPresente` em 60s pós-boot. Espera 0.
+
+**Aritmética:** 1136 → 1143 testes (+7, spec previa 3-6, +1 por
+separar suite useBootStatus de useAppPronto), 133 → 134 suítes
+(+1), tsc 0 erros, anonimato OK, smoke OK. Bundle Hermes Android
+8.4 MB (≤ 8.85 MB).
+
+**Validação visual via Gauntlet (playwright MCP):**
+- `/_dev/gauntlet`: boot pronto em 183ms (vs 187ms baseline),
+  `tempoDeBoot()` retorna 183, 0 transições do loader em 8s.
+- `/humor`, `/settings`, `/memoria`: 0 transições do loader em
+  cada (3s amostra cada). Loader não volta após primeira
+  desmontagem.
+- Screenshot em `docs/sprints/M27.3-screenshots-gauntlet/`:
+  `A-pos-boot-estavel.png`.
+
+**Achado colateral (sprint corretiva M27.4 sugerida):**
+- `SessaoBootGate` dispara "Maximum update depth exceeded" em
+  cenário de `__gauntlet.reset()` + `seed()` + `abrir()` em
+  sequência rápida (<2s). Pré-existente desde M24 — `useUltimaRota`
+  + `useHasHydrated` cascata após reset das 3 stores. Não é
+  regressão de M27.3 (M27.3 não tocou em `SessaoBootGate`).
+  Não bloqueia uso real (usuário não faz reset+navega rápido).
+  Sprint M27.4 deve adicionar debounce ou guard duplo no
+  `restauradoRef`.
+
 ### M11.1 fechada (2026-05-04)
 
 Memórias usável. Achado de uso real (orquestrador validando via
