@@ -39,6 +39,7 @@ import {
   registrarReset,
 } from '@/lib/vault/contadores';
 import { diasEntre } from '@/lib/util/diasEntre';
+import { mensagemApoio, marcoAtingido } from '@/lib/contadores/mensagens';
 import type { Contador } from '@/lib/schemas/contador';
 
 // Formata ISO datetime para "DD/MM/YYYY HH:MM" (UTC-3 implicito; o
@@ -273,6 +274,35 @@ export default function ContadorDetalhe() {
           >
             {`Recorde: ${contador.recorde} ${contador.recorde === 1 ? 'dia' : 'dias'}`}
           </Text>
+          {/* M32: mensagem de apoio sobria + indicador discreto de marco.
+              ADR-0005 zero gamificacao -- texto em muted, sem cor de festa. */}
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 13,
+              lineHeight: 20,
+              marginTop: spacing.sm,
+            }}
+            accessibilityLabel="mensagem de apoio"
+          >
+            {mensagemApoio(dias)}
+          </Text>
+          {marcoAtingido(dias) !== null ? (
+            <Text
+              style={{
+                color: colors.mutedDecor,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 11,
+                lineHeight: 16,
+                letterSpacing: 1,
+                marginTop: spacing.xs,
+              }}
+              accessibilityLabel={`marco de ${marcoAtingido(dias)} dias`}
+            >
+              {`marco de ${marcoAtingido(dias)} dias`}
+            </Text>
+          ) : null}
         </View>
 
         {/* Ações */}

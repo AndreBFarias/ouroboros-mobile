@@ -5,6 +5,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M32 fechada (2026-05-04)
+
+Contador v2: mensagens de apoio sóbrias + indicador discreto de
+marcos.
+
+**Entregáveis:**
+- `src/lib/contadores/mensagens.ts` (novo) — função pura
+  `mensagemApoio(dias)` com 6 faixas (0/recomeço, <5/início, <30/
+  constância, <100/hábito, <365/médio, ≥365/anos). `marcoAtingido(dias)`
+  retorna o último marco de `MARCOS_DIAS = [5, 30, 100, 365]` ou
+  null.
+- `app/contadores/[slug].tsx` — após o número grande, 2 `<Text>`:
+  mensagem de apoio em `colors.muted` + (condicional) "marco de N
+  dias" em `colors.mutedDecor` 11dp letter-spacing 1 (estilo
+  rodapé, ADR-0005 zero gamificação).
+- `tests/lib/contadores/mensagens.test.ts` — 14 cases (6 faixas
+  com numeração, marcos com boundaries, defesa de negativos).
+
+**Aritmética:** 1207 → 1221 testes (+14), 136 → 137 suítes (+1),
+tsc 0 erros, anonimato OK. Bundle Hermes 8.5 MB (sem alteração
+material).
+
+**Tom respeita ADR-0005:**
+- Sem badge, sem troféu, sem confete, sem cor de festa.
+- "marco de N dias" cinza-violeta discreto, font 11dp.
+- Mensagens sem exclamação, sem emoji.
+
 ### M31 fechada (2026-05-04)
 
 TarefaSchema v2: categoria + pessoa_destino + alarme + aba
