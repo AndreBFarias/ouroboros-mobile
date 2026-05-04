@@ -47,7 +47,7 @@ spec PARA o ciclo e pede clarificação.
 | ~~6~~ | ~~M31~~ | ~~TarefaSchema v2~~ — **fechada 2026-05-04** (1207/136, bundle 8.5 MB) | `M31-spec.md` | — |
 | ~~7~~ | ~~M32~~ | ~~Contador v2~~ — **fechada 2026-05-04** (1221/137) | `M32-spec.md` | — |
 | ~~8~~ | ~~M33~~ | ~~Campo `para`~~ — **fechada 2026-05-04** (1257/138) | `M33-spec.md` | — |
-| 9 | M34 | MenuCapturaVerde na tab Memórias | `M34-spec.md` | 6-7h |
+| ~~9~~ | ~~M34~~ | ~~MenuCapturaVerde tab Memórias~~ — **fechada 2026-05-04** (1289/144, 5 screenshots Gauntlet, 3 sub-sprints colaterais M34.1/M34.2/M11.3) | `M34-spec.md` | — |
 | 10 | M35 | Aba Finanças "Em desenvolvimento" honesto | `M35-spec.md` | 1-2h |
 | 11 | M36 | Tela Recap (agregação Conquistas/Crises/Evoluções/Números) | `M36-spec.md` | 6-8h |
 | 12 | M37.1 | Google Calendar OAuth + leitura | `M37.1-spec.md` | 6-7h (PAUSA para usuário) |
@@ -168,7 +168,10 @@ prioridade, requerem emulador ou APK dev-client):
 | `[ok]` | M31 | TarefaSchema v2 com `categoria` (8 slugs canônicos), `pessoa_destino` discriminatedUnion (mim/outra/casal/terceiro), `alarme` (vincula slug em `alarmes/`). `criarTarefa()` branch alarme cria companion; `reabrirTarefa()` novo. `SeletorPessoaDestino` (novo, ciência de tipoCompanhia), `SecaoConcluidas` (collapsable >5 itens), `SheetNovaTarefa` reescrito com ChipGroup categoria + alarme expansível. `MenuLongPress` extendido (backwards-compat) com prop `acoes` para Reabrir/Apagar definitivo. 1177→1207 testes (+30). Bundle 8.8→**8.5 MB** (-300 KB). Validação Gauntlet `/todo` empty state OK | nova | tarefa v2 | 5-6h | `M31-spec.md` |
 | `[ok]` | M32 | Contador v2: `mensagemApoio(dias)` 6 faixas (0/<5/<30/<100/<365/≥365), `marcoAtingido(dias)` retorna marco em `[5,30,100,365]`. `app/contadores/[slug].tsx` ganha 2 `<Text>` em muted/mutedDecor 11dp letter-spacing 1 (ADR-0005 zero gamificação). 1207→1221 testes (+14), 136→137 suítes | nova | — | 2-3h | `M32-spec.md` |
 | `[ok]` | M33 | Campo `para` discriminatedUnion (mim/outra/casal) em 4 schemas + componente `<SeletorPara>` plugado em 4 telas. Esconde em modo sozinho. Default `{tipo:'mim'}` backward-compat. 1221→1257 testes (+36), 137→138 suítes. TODO `useHoje` filtro adiado para M40 | múltiplas | 4 schemas | 3-4h | `M33-spec.md` |
-| `[todo]` | M34 | MenuCapturaVerde na tab Memórias (Foto/Música/Vídeo/Frase) | 09-11 | — | 6-7h | `M34-spec.md` |
+| `[ok]` | M34 | MenuCapturaVerde tab Memórias. FAB verde Dracula `#50fa7b` canto inferior direito + BottomSheet com 4 ações (Foto/Música/Vídeo/Frase). 4 wrappers em `src/lib/midia/` + helper `companion.ts` (DRY) + `SheetFrase` com SeletorPara M33. `useFotosAgregadas` varre extensões ampliadas. Companion .md preliminar (M39 expande). 1260→1289 testes (+29), 139→144 suítes (+5). 5 screenshots Gauntlet validados. 3 sub-sprints colaterais: M34.1 (FABMenu z-index sobrepõe sheet), M34.2 (botão Registrar foto contraste), M11.3 (grid useWindowDimensions ignora frame) | 09-11 | — | 6-7h | `M34-spec.md` |
+| `[todo]` | M34.1 | FABMenu z-index sobrepõe SheetFrase — `BottomSheet` default `containerStyle.zIndex: 30` | — | — | 1-2h | `M34.1-spec.md` |
+| `[todo]` | M34.2 | Botão "Registrar foto" empty state Fotos com contraste insuficiente — diagnosticar + fix | — | — | 0,5h | `M34.2-spec.md` |
+| `[todo]` | M11.3 | Grid Fotos `useWindowDimensions` ignora frame 412dp em web — helper `useLarguraFrame` | — | — | 0,5h | `M11.3-spec.md` |
 | `[todo]` | M35 | Aba Finanças: empty state honesto "Em desenvolvimento" | 22 | — | 1-2h | `M35-spec.md` |
 | `[todo]` | M36 | Tela Recap: agregação de período (Conquistas/Crises/Evoluções/Números) | nova | — | 6-8h | `M36-spec.md` |
 | `[todo]` | M37.1 | Google Calendar OAuth + leitura de eventos (rota /agenda) | nova | googleAuth | 6-7h | `M37.1-spec.md` (split do M37 original) |

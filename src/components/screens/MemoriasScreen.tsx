@@ -19,6 +19,7 @@ import { haptics } from '@/lib/haptics';
 import { MemoriasTreinosTab } from './MemoriasTreinosTab';
 import { MemoriasFotosTab } from './MemoriasFotosTab';
 import { MemoriasMarcosTab } from './MemoriasMarcosTab';
+import { MenuCapturaVerde } from '@/components/chrome/MenuCapturaVerde';
 
 type TabKey = 'treinos' | 'fotos' | 'marcos';
 
@@ -30,10 +31,20 @@ const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
 
 export function MemoriasScreen(): ReactNode {
   const [tab, setTab] = useState<TabKey>('treinos');
+  // M34: nonce para forcar re-mount da tab ativa apos uma captura
+  // bem-sucedida. useFotosAgregadas tem useFocusEffect mas o foco
+  // nao muda quando o usuario fica na mesma tab (so muda quando
+  // navega fora e volta); incrementar o nonce gera key novo no
+  // container e re-disparar carregamento.
+  const [capturaNonce, setCapturaNonce] = useState(0);
 
   const handleTabPress = useCallback((next: TabKey) => {
     haptics.selection();
     setTab(next);
+  }, []);
+
+  const handleCapturaConcluida = useCallback(() => {
+    setCapturaNonce((n) => n + 1);
   }, []);
 
   return (
@@ -97,11 +108,13 @@ export function MemoriasScreen(): ReactNode {
         })}
       </View>
 
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }} key={`tabs-${capturaNonce}`}>
         {tab === 'treinos' ? <MemoriasTreinosTab /> : null}
         {tab === 'fotos' ? <MemoriasFotosTab /> : null}
         {tab === 'marcos' ? <MemoriasMarcosTab /> : null}
       </View>
+
+      <MenuCapturaVerde onCapturaConcluida={handleCapturaConcluida} />
     </Screen>
   );
 }

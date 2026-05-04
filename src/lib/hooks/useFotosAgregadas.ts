@@ -130,18 +130,29 @@ async function lerMedidas(
   return out;
 }
 
-// M11.1: le pasta media/fotos/<YYYY-MM-DD>-<rand>.jpg (helper canonico
-// mediaFotosPath em paths.ts). Cada arquivo vira uma FotoAgregada com
-// origem 'galeria-manual'. Data extraida do nome do arquivo (10 chars
-// iniciais). Sem schema zod -- nao ha .md companion para fotos manuais
-// nesta sprint; entrada e o proprio binario.
+// M11.1 + M34: le pasta media/fotos/<YYYY-MM-DD>-<rand>.<ext>. Em M11.1
+// o helper canonico (mediaFotosPath) gerava .jpg sem companion; M34
+// ampliou a captura para escrever tambem .md companion ao lado de cada
+// binario (formato preliminar; M39 ratifica via ADR-0017). Aqui
+// ignoramos os .md (sao metadata, nao thumbnail) e varremos .jpg /
+// .jpeg / .png para suportar pickers que devolvem PNG. Data extraida
+// do nome do arquivo (10 chars iniciais).
 async function lerGaleriaManual(vaultRoot: string): Promise<FotoAgregada[]> {
   const folder = joinUri(vaultRoot, VAULT_FOLDERS.mediaFotos);
-  const arquivos = await listVaultFolder(folder, '.jpg');
+  // Varre 3 extensoes em paralelo. listVaultFolder filtra por sufixo
+  // exato; para cobrir .jpg + .jpeg + .png chamamos 3 vezes e
+  // concatenamos. Em mobile real o picker padrao devolve .jpg; .png e
+  // .jpeg ficam como rede de seguranca.
+  const [jpg, jpeg, png] = await Promise.all([
+    listVaultFolder(folder, '.jpg'),
+    listVaultFolder(folder, '.jpeg'),
+    listVaultFolder(folder, '.png'),
+  ]);
+  const arquivos = [...jpg, ...jpeg, ...png];
   const out: FotoAgregada[] = [];
   for (const uri of arquivos) {
     const nome = decodeURIComponent(uri).split('/').pop() ?? '';
-    const semExt = nome.replace(/\.jpg$/i, '');
+    const semExt = nome.replace(/\.(jpg|jpeg|png)$/i, '');
     // Espera padrao YYYY-MM-DD-<rand>. Se nao bater, ignora.
     const match = semExt.match(/^(\d{4}-\d{2}-\d{2})(?:-(.+))?$/);
     if (!match) continue;

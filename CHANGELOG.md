@@ -5,6 +5,86 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M34 fechada (2026-05-04)
+
+MenuCapturaVerde adicionado à tab Memórias. FAB **verde** (Dracula
+`#50fa7b`) no canto inferior direito abre BottomSheet com 4 ações
+de captura unificada: **Foto / Música / Vídeo / Frase**. Cada ação
+salva binário em `media/<categoria>/<data-rand>.<ext>` mais um
+`.md` companion preliminar (M39 ratifica formato via ADR-0017).
+
+**Arquivos novos (13):**
+- `src/components/chrome/MenuCapturaVerde.tsx` — FAB + 2 sheets.
+- `src/components/midia/SheetFrase.tsx` — sheet 60% com Textarea +
+  SeletorPara (M33) + botões Salvar/Cancelar.
+- `src/lib/midia/capturarFoto.ts` — wrapper expo-image-picker
+  (camera+galeria) + `.md` companion.
+- `src/lib/midia/capturarMusica.ts` — wrapper expo-document-picker
+  (audio/*) + `.md` companion.
+- `src/lib/midia/capturarVideo.ts` — wrapper expo-image-picker
+  (mediaTypes vídeo) + `.md` companion.
+- `src/lib/midia/salvarFrase.ts` — escreve só `.md` em
+  `media/frases/<data>-<slug>.md`.
+- `src/lib/midia/companion.ts` — helper compartilhado
+  `stringifyCompanionMidia` + `slugDeFrase` (DRY entre os 4 wrappers).
+- 5 suítes Jest novas em `tests/lib/midia/` (incluindo `companion.test.ts`).
+- `tests/e2e/playwright/m34-menu-captura.e2e.ts` — caso E2E
+  obrigatório (Gauntlet §1.9).
+
+**Arquivos modificados (3):**
+- `src/components/screens/MemoriasScreen.tsx` — pluga
+  `<MenuCapturaVerde />` ao final.
+- `src/components/screens/MemoriasFotosTab.tsx` — botão "Registrar
+  foto" inline no empty state.
+- `src/lib/hooks/useFotosAgregadas.ts` — varre também
+  `media/fotos/` com extensões ampliadas (.jpg/.jpeg/.png).
+
+Sem mudança em `app.json` (permissões `CAMERA` + `RECORD_AUDIO` já
+existem desde M00.5/M22).
+
+Decisão de UI: cor verde distingue do FAB roxo de navegação (FABMenu,
+esquerda); posição direita evita conflito de gestos. Companion .md
+preliminar em formato YAML simples (tipo/arquivo/data/autor/para/
+legenda); M39 expande com transcrição/duração/tags via ADR-0017.
+
+**Aritmética:** 1260 → 1289 testes (+29), 139 → 144 suítes (+5).
+TS strict 0 erros, anonimato OK, smoke OK. Bundle Hermes Android
+sem regressão (~8.5 MB).
+
+**Validação visual via Gauntlet (playwright MCP):**
+5 screenshots em `docs/sprints/M34-screenshots-gauntlet/`:
+- `A-fab-verde-memorias.png` — FAB verde (rgb 80,250,123) 56×56
+  no canto direito (right=825), simétrico ao FABMenu roxo esquerdo.
+- `A-menu-aberto.png` — header verde "Registrar" + 4 itens
+  (Foto/Música/Vídeo/Frase) com ícones verde Dracula em chips
+  cinza e labels acentuação completa, áreas de toque 64dp.
+- `A-sheet-frase.png` — header "Nova frase" verde, label "FRASE"
+  uppercase muted, Textarea 368×260, SeletorPara M33
+  ("Para mim/Para Ana/Para o casal"), botões Salvar disabled
+  (frase vazia) + Cancelar.
+- `A-empty-state-com-botao.png` — empty state Fotos com ícone
+  caixa, frases secundárias e botão "Registrar foto" inline.
+- `A-foto-na-galeria.png` — após `__gauntlet.adicionarFotoMock()`,
+  card aparece no grid (placeholder cinza por scheme `web://`
+  bloqueado pelo browser; limitação pré-existente do mock M11.1).
+
+**Achados de UI/UX (anti-débito, materializados em specs próprias):**
+- **M34.1** — `FABMenu` (z-index 10) sobrepõe botão "Cancelar" do
+  SheetFrase ao rolar o sheet. Caminho preferido: `BottomSheet`
+  default `containerStyle.zIndex: 30`. Spec
+  `docs/sprints/M34.1-spec.md`.
+- **M34.2** — Botão "Registrar foto" do empty state (Fotos) com
+  contraste insuficiente — visualmente parece desabilitado. Spec
+  `docs/sprints/M34.2-spec.md` (diagnóstico + fix).
+- **M11.3** — Grid de Fotos calcula `thumbSize` via
+  `useWindowDimensions().width` retornando 1280 em web (frame
+  mobile 412 ignorado), causando thumbs gigantes. Spec
+  `docs/sprints/M11.3-spec.md` (helper `useLarguraFrame`).
+
+Caso E2E `m34-menu-captura.e2e.ts` valida: FAB verde presente em
+`/memoria`; tap abre sheet com 4 itens; tap em "capturar frase"
+monta sheet com `aria-label="campo da frase"` acessível.
+
 ### M-GAUNTLET-SEED-DUO fechada (2026-05-04)
 
 `aplicarSeed` e `aplicarSetNomes` agora propagam

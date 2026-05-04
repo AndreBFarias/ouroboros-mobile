@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import {
   BottomSheet,
+  Button,
   EmptyState,
   FAB,
   SHEET_70,
@@ -26,6 +27,7 @@ import {
 } from '@/lib/hooks/useFotosAgregadas';
 import { FotoDetalhe } from './FotoDetalhe';
 import { adicionarFotoManual } from '@/lib/midia/adicionarFotoManual';
+import { capturarFoto } from '@/lib/midia/capturarFoto';
 
 const COLS = 3;
 
@@ -74,6 +76,17 @@ export function MemoriasFotosTab(): ReactNode {
     }
   }, [recarregar]);
 
+  // M34: atalho do empty state. Reusa capturarFoto (helper unificado
+  // do menu verde) com origem galeria. Em web/dev cai no caminho mock
+  // do gauntlet; em mobile real, abre expo-image-picker e grava .md
+  // companion preliminar junto com o binario.
+  const handleRegistrarFotoEmptyState = useCallback(async () => {
+    const r = await capturarFoto({ origem: 'galeria' });
+    if (r.ok) {
+      await recarregar();
+    }
+  }, [recarregar]);
+
   // Agrupa em linhas de COLS para grid manual (FlatList numColumns
   // tem bug em web).
   const linhas = useMemo(() => {
@@ -109,6 +122,15 @@ export function MemoriasFotosTab(): ReactNode {
             >
               Toque + para adicionar uma foto agora.
             </Text>
+            <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.sm }}>
+              <Button
+                label="Registrar foto"
+                onPress={() => {
+                  void handleRegistrarFotoEmptyState();
+                }}
+                variant="primary"
+              />
+            </View>
           </View>
         ) : (
           linhas.map((linha, idx) => (
