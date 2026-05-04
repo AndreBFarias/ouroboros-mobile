@@ -77,3 +77,11 @@ builds/
 # o backup deve sobreviver ao computador.
 credentials/keystore.jks
 credentials/keystore.json
+
+# Arquivos de instrucao/orquestracao para IA (CLAUDE.md, HANDOFF, etc).
+# Mantidos apenas localmente -- nao versionar (Regra -1, anonimato).
+CLAUDE.md
+HANDOFF-PROMPT.md
+HOW_TO_RESUME.md
+VALIDATOR_BRIEF.md
+STATE.md
