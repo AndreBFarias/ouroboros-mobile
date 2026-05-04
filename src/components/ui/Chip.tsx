@@ -9,6 +9,11 @@ import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
 
+// 'ghost' = chip neutro/genérico (categoria "outro", filtros sem
+// destaque). Selected vira fundo muted-decor com texto bg, em vez de
+// hex saturado. Mantém affordance de seleção sem competir visualmente
+// com chips de cor semantica. Convencao ADR-010 hierarquia por
+// contraste.
 export type ChipAccent =
   | 'purple'
   | 'pink'
@@ -16,7 +21,8 @@ export type ChipAccent =
   | 'green'
   | 'yellow'
   | 'orange'
-  | 'red';
+  | 'red'
+  | 'ghost';
 
 const ACCENT_HEX: Record<ChipAccent, string> = {
   purple: colors.purple,
@@ -26,6 +32,7 @@ const ACCENT_HEX: Record<ChipAccent, string> = {
   yellow: colors.yellow,
   orange: colors.orange,
   red: colors.red,
+  ghost: colors.mutedDecor,
 };
 
 export interface ChipProps {

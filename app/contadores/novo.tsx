@@ -9,7 +9,14 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import DateTimePicker, {
   type DateTimePickerEvent,
@@ -182,6 +189,15 @@ export default function ContadoresNovo() {
     <Screen>
       <Header title="Novo contador" onBack={() => router.back()} />
 
+      {/* M-DEBITO-UI-UX-SEED-DUO: KeyboardAvoidingView garante que o
+          botao "Criar" no rodape suba com o teclado virtual em vez de
+          ser empurrado para fora do viewport. Comportamento padrao
+          para mobile UX (primary action sempre visivel). */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -260,6 +276,7 @@ export default function ContadoresNovo() {
           disabled={salvando || !formValido || !vaultRoot}
         />
       </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

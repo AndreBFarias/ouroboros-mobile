@@ -23,7 +23,7 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
-import { useGaleriaMock } from '@/lib/dev/galeriaMock';
+import { useGaleriaMock, type FotoMock } from '@/lib/dev/galeriaMock';
 import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
 
 // Origens declaradas. M11.1 adicionou 'galeria-manual' para fotos
@@ -181,13 +181,21 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   // Filtro efetivo respeita pessoa.vaultCompartilhado.
   const filtroPessoa = useFiltroPessoaEfetivo();
-  // M11.1: assina galeria mock so quando GAUNTLET_ATIVO. Em mobile
-  // real, a store esta congelada vazia e o seletor sempre devolve [].
-  const fotosMock = useGaleriaMock((s) => s.fotos);
 
   const [fotos, setFotos] = useState<FotoAgregada[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // M11.2: leitura do store dev movida para useEffect guardado por
+  // GAUNTLET_ATIVO. Em release Android (GAUNTLET_ATIVO === false) o
+  // effect retorna early e o estado permanece [] - o store mock nao
+  // contribui para o render. Em web/dev assina mudancas via
+  // subscribe() para reagir a __gauntlet.adicionarFotoMock().
+  const [fotosMock, setFotosMock] = useState<FotoMock[]>([]);
+  useEffect(() => {
+    if (!GAUNTLET_ATIVO) return;
+    setFotosMock(useGaleriaMock.getState().fotos);
+    return useGaleriaMock.subscribe((s) => setFotosMock(s.fotos));
+  }, []);
 
   const carregar = useCallback(async () => {
     if (!vaultRoot) {

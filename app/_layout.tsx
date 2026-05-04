@@ -25,6 +25,7 @@ import { useVault } from '@/lib/stores/vault';
 import { useSessao } from '@/lib/stores/sessao';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { useUltimaRota, isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
+import { useBootStatus, selectBootPronto } from '@/lib/boot/useBootStatus';
 import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import {
   GAUNTLET_ATIVO,
@@ -396,11 +397,24 @@ function VaultBootGate() {
 // Decisao CONTRACT secao 7.9: useEffect direto (nao BOOT_HOOKS)
 // porque a logica precisa do router e da hidratacao multi-store; um
 // hook idempotente em background desacoplaria do timing de boot.
+//
+// M27.4 (Caminho A -- latch persistente): le useBootStatus.pronto via
+// selector estavel. Se o latch global ja virou true em algum momento
+// anterior (boot completado em sessao previa do componente, ou em
+// cenario gauntlet onde reset()+seed()+abrir() reciclam as 3 stores
+// em sequencia rapida e o componente re-monta), tratamos como "ja
+// restaurado" -- nao tentamos novo router.replace. Sem isto, a
+// cascata `useHasHydrated` apos reset disparava re-render do efeito,
+// e em conjunto com `useUltimaRota` (M24.1) gerava "Maximum update
+// depth exceeded" em sequencia <2s. Documentado em M27.4-spec.md.
 function SessaoBootGate() {
   const router = useRouter();
   const onboardingHidratado = useHasHydrated(useOnboarding);
   const vaultHidratado = useHasHydrated(useVault);
   const sessaoHidratada = useHasHydrated(useSessao);
+  // M27.4: latch global -- uma vez bootstrapado, gate vira no-op.
+  // Selector estavel evita re-subscribe a cada render.
+  const bootPronto = useBootStatus(selectBootPronto);
   // Lock para garantir que o restore so acontece uma vez por mount.
   // Sem isso, useEffect re-disparado por mudanca de hidratacao
   // poderia tentar router.replace varias vezes.
@@ -412,6 +426,13 @@ function SessaoBootGate() {
   useUltimaRota();
 
   useEffect(() => {
+    // M27.4 fast-path: latch global ja indica que o boot foi
+    // concluido alguma vez. Nada a restaurar -- evita cascata em
+    // reset()+seed()+abrir() do gauntlet.
+    if (bootPronto && !restauradoRef.current) {
+      restauradoRef.current = true;
+      return;
+    }
     if (restauradoRef.current) return;
     if (!onboardingHidratado || !vaultHidratado || !sessaoHidratada) return;
     restauradoRef.current = true;
@@ -431,7 +452,13 @@ function SessaoBootGate() {
     // sempre devolvido pelo proprio router via usePathname(), entao
     // garantidamente valido em runtime.
     router.replace(ultimaRota as Parameters<typeof router.replace>[0]);
-  }, [onboardingHidratado, vaultHidratado, sessaoHidratada, router]);
+  }, [
+    bootPronto,
+    onboardingHidratado,
+    vaultHidratado,
+    sessaoHidratada,
+    router,
+  ]);
 
   return null;
 }

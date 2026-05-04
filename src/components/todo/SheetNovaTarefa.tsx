@@ -19,6 +19,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { AnimatePresence, MotiView } from 'moti';
 import {
   BottomSheetView,
   BottomSheetTextInput,
@@ -38,7 +39,9 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { Button, ChipGroup, Toggle } from '@/components/ui';
+import type { ChipAccent } from '@/components/ui/Chip';
 import { colors, radius, spacing } from '@/theme/tokens';
+import { springs } from '@/lib/motion';
 import { useSessao } from '@/lib/stores/sessao';
 import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import {
@@ -93,10 +96,26 @@ const CATEGORIA_ICON: Record<TarefaCategoria, LucideIcon> = {
   outro: HelpCircle,
 };
 
+// M-DEBITO-UI-UX-SEED-DUO: "outro" e' opcao neutra/generica e nao
+// deve competir visualmente com as categorias de cor semantica.
+// Aplica accent 'ghost' (muted-decor quando selected) para ele e
+// mantem 'orange' para o resto do grupo. Coerente com ADR-010
+// hierarquia por contraste.
+const CATEGORIA_ACCENTS: Record<TarefaCategoria, ChipAccent> = {
+  trabalho: 'orange',
+  casa: 'orange',
+  rotina: 'orange',
+  financas: 'orange',
+  desenvolvimento_pessoal: 'orange',
+  obrigacoes: 'orange',
+  saude: 'orange',
+  outro: 'ghost',
+};
+
 const CATEGORIA_OPTIONS = TAREFA_CATEGORIAS.map((c) => ({
   value: c,
   label: TAREFA_CATEGORIA_LABELS[c],
-  accent: 'orange' as const,
+  accent: CATEGORIA_ACCENTS[c],
 }));
 
 const RECORRENCIA_OPTIONS: ReadonlyArray<{
@@ -414,8 +433,26 @@ export function SheetNovaTarefa({
             />
           </View>
 
-          {alarmeAtivo ? (
-            <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+          {/* M-DEBITO-UI-UX-SEED-DUO: bloco expansivel envolto em
+              AnimatePresence + MotiView com spring snappy em vez de
+              mount/unmount instantaneo. Coerente com ADR-010 (fisica,
+              nao duration linear). aria-label inerente para validacao
+              E2E na transicao on/off. */}
+          <AnimatePresence>
+            {alarmeAtivo ? (
+              <MotiView
+                key="alarme-bloco"
+                from={{ opacity: 0, scale: 0.96, translateY: -8 }}
+                animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                exit={{ opacity: 0, scale: 0.96, translateY: -8 }}
+                transition={springs.snappy}
+                style={{
+                  gap: spacing.sm,
+                  marginTop: spacing.sm,
+                  overflow: 'hidden',
+                }}
+                accessibilityLabel="bloco alarme expandido"
+              >
               <Text
                 style={{
                   color: colors.muted,
@@ -480,8 +517,9 @@ export function SheetNovaTarefa({
                 options={RECORRENCIA_CHIP_OPTIONS}
                 disabled={salvando}
               />
-            </View>
-          ) : null}
+              </MotiView>
+            ) : null}
+          </AnimatePresence>
         </View>
 
         <View style={{ gap: spacing.sm, marginTop: spacing.base }}>

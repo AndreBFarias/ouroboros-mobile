@@ -18,7 +18,7 @@ import { useNavegacao } from '@/lib/stores/navegacao';
 
 describe('FABMenu', () => {
   beforeEach(() => {
-    useNavegacao.setState({ menuAberto: false });
+    useNavegacao.setState({ menuAberto: false, sheetCapturaAberto: false });
     mockPathname = '/';
   });
 
@@ -38,5 +38,28 @@ describe('FABMenu', () => {
     expect(useNavegacao.getState().menuAberto).toBe(false);
     fireEvent.press(getByLabelText('abrir menu lateral'));
     expect(useNavegacao.getState().menuAberto).toBe(true);
+  });
+
+  // M34.1.1: FAB se desmonta quando MenuCapturaVerde abre o sheet de
+  // captura. Ciclo abrir -> flag true -> fechar -> flag false.
+  it('M34.1.1: esconde quando sheetCapturaAberto=true e volta quando false', () => {
+    const { queryByLabelText, rerender } = render(<FABMenu />);
+    expect(queryByLabelText('abrir menu lateral')).toBeTruthy();
+
+    useNavegacao.setState({ sheetCapturaAberto: true });
+    rerender(<FABMenu />);
+    expect(queryByLabelText('abrir menu lateral')).toBeNull();
+
+    useNavegacao.setState({ sheetCapturaAberto: false });
+    rerender(<FABMenu />);
+    expect(queryByLabelText('abrir menu lateral')).toBeTruthy();
+  });
+
+  it('M34.1.1: setSheetCapturaAberto alterna a flag corretamente', () => {
+    expect(useNavegacao.getState().sheetCapturaAberto).toBe(false);
+    useNavegacao.getState().setSheetCapturaAberto(true);
+    expect(useNavegacao.getState().sheetCapturaAberto).toBe(true);
+    useNavegacao.getState().setSheetCapturaAberto(false);
+    expect(useNavegacao.getState().sheetCapturaAberto).toBe(false);
   });
 });

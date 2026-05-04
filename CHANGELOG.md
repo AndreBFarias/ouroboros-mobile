@@ -5,6 +5,90 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch paralelo 5 sprints fechado (2026-05-04)
+
+5 sub-sprints da Fase 1 anti-débito executadas em paralelo
+(agentes em background) e validadas via Gauntlet:
+
+#### M34.2 — Button variant primary com contraste WCAG AA
+
+**Diagnóstico do agente revelou bug sistêmico** (não específico do
+empty state Fotos): `<Button>` em RN-Web aplicava apenas
+`className` NativeWind, e o interop não propagava o background
+através de `MotiView → DOM div`. Resultado: backgroundColor
+herdado transparente sobre `colors.bg` com texto cor `colors.bg`
+— ratio efetivo ~1:1, invisível.
+
+**Fix em `src/components/ui/Button.tsx`:** dict `VARIANT_CLASSES`
+ganhou campos `bgColor`/`textColor`/`borderColor`/`borderWidth`
+lidos de tokens. `MotiView` e `Text` agora aplicam `style={{...}}`
+direto **além** do `className` (defense in depth). Mantida cor
+purple para variant primary (coerência paleta — verde reservado
+para FAB de captura). Ratio pós-fix: 7.5:1 (acima de WCAG AA
+4.5:1).
+
+**Validação Gauntlet:** botão "Registrar foto" do empty state
+Fotos agora renderiza ROXO Dracula proeminente com texto escuro
+legível (screenshot em `M34.2-screenshots-gauntlet/`).
+
+#### M11.2 — useGaleriaMock leitura em useEffect guardado
+
+`src/lib/hooks/useFotosAgregadas.ts`: substitui leitura síncrona
+`useGaleriaMock((s) => s.fotos)` por `useState + useEffect`
+guardado por `GAUNTLET_ATIVO`. Em release Android,
+early-return mantém `fotosMock = []` sem importar o store mock.
+Subscribe + cleanup via `useGaleriaMock.subscribe()`.
+
+#### M27.4 — SessaoBootGate fast-path com latch
+
+`app/_layout.tsx` SessaoBootGate consome `bootPronto` do
+`useBootStatus` (M27.3). Se `bootPronto && !restauradoRef.current`,
+marca `restauradoRef = true` e retorna — short-circuit pós-reset
+quebra o ciclo "Maximum update depth" em sequência rápida
+`__gauntlet.reset() + seed() + abrir()`. Idempotência mantida:
+boot virgem (latch false) entra no caminho original.
+
+#### M-DEBITO-UI-UX-SEED-DUO — 3 fixes consolidados
+
+- **Chip "Outro" ghost:** novo variant `'ghost'` adicionado em
+  `src/components/ui/Chip.tsx` (mapeado para `colors.mutedDecor`).
+  `SheetNovaTarefa.tsx` `CATEGORIA_ACCENTS` atribui `'ghost'` só
+  para `outro`. Achado colateral: as outras 7 categorias estão
+  todas com `'orange'` (divergência do spec original) —
+  materializado como **M-DEBITO-CATEGORIA-CORES** sub-sprint.
+- **Botão "Criar" do contadores/novo:** `KeyboardAvoidingView`
+  envolvendo ScrollView + botão. Reage ao teclado virtual sem
+  precisar reescrever para sticky-bottom.
+- **Toggle alarme animado:** `<AnimatePresence>` + `<MotiView>`
+  com spring `springs.snappy` (ADR-010 — física, não duration).
+
+#### M34.1.1 — FAB esconde quando MenuCapturaVerde abre
+
+Caminho B do M34.1 original (descartado por "invasivo"; provou-se
+único viável). Flag `sheetCapturaAberto` em `useNavegacao`,
+sincronizada via `onChange` do gorhom (cobre fechamento por gesto
+pan-down). `<FABMenu>` early-return null quando flag true.
+**Validação Gauntlet:** FAB roxo confirmadamente ausente do DOM
+quando menu/frase aberto; volta após cancelar
+(`M34.1.1-screenshots-gauntlet/A-fab-some-com-sheet.png`).
+
+#### Aritmética batch
+
+- Testes: 1298 → **1300** (+2 cases novos no FABMenu.test.tsx).
+- Suítes: 145 → 145 (estável; +6 cases distribuídos em existentes).
+- Bundle Hermes: **8.85 MB** (no teto exato 8.85 MB; margem
+  ~10 KB).
+- TS strict 0, anonimato OK, smoke OK.
+
+#### Decisão durável anti-débito
+
+Pacote de 5 sprints validadas no MESMO Gauntlet sem regressão
+entre elas — paralelização funciona quando arquivos são disjuntos
+(M11.2 hook, M34.2 Button, M27.4 SessaoBootGate, M-DEBITO 3
+arquivos UI, M34.1.1 navegacao+chrome). Conflito potencial em
+`MemoriasFotosTab.tsx` previsto entre M34.2 e M11.2 não
+materializou (M34.2 ficou em Button.tsx, M11.2 em hook).
+
 ### M-GAUNTLET-FAST-BOOT-FOLLOWUP fechada (2026-05-04) — NÃO-FIX documentado
 
 Investigação dos 3 caminhos propostos pela spec para fazer

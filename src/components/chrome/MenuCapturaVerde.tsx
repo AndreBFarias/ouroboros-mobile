@@ -49,6 +49,7 @@ import { capturarMusica } from '@/lib/midia/capturarMusica';
 import { capturarVideo } from '@/lib/midia/capturarVideo';
 import { salvarFrase } from '@/lib/midia/salvarFrase';
 import type { Para } from '@/lib/schemas/para';
+import { useNavegacao } from '@/lib/stores/navegacao';
 
 const FAB_SIZE = 56;
 
@@ -148,15 +149,46 @@ export function MenuCapturaVerde({
   const [pressed, setPressed] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [resetFrase, setResetFrase] = useState(0);
+  const setSheetCapturaAberto = useNavegacao(
+    (s) => s.setSheetCapturaAberto
+  );
 
   const abrirMenu = useCallback(() => {
+    setSheetCapturaAberto(true);
     haptics.fab();
     sheetRef.current?.expand();
-  }, []);
+  }, [setSheetCapturaAberto]);
 
   const fecharMenu = useCallback(() => {
+    setSheetCapturaAberto(false);
     sheetRef.current?.close();
-  }, []);
+  }, [setSheetCapturaAberto]);
+
+  // Sincroniza flag global quando o usuario fecha por gesto pan-down
+  // ou quando o gorhom emite snap-change (index === -1 e' fechado).
+  // Tambem cobre transicoes do SheetFrase, que e' filho deste menu —
+  // se ambos estiverem fechados, FABMenu pode reaparecer.
+  const handleSheetChange = useCallback(
+    (idx: number) => {
+      if (idx === -1) {
+        setSheetCapturaAberto(false);
+      } else {
+        setSheetCapturaAberto(true);
+      }
+    },
+    [setSheetCapturaAberto]
+  );
+
+  const handleFraseChange = useCallback(
+    (idx: number) => {
+      if (idx === -1) {
+        setSheetCapturaAberto(false);
+      } else {
+        setSheetCapturaAberto(true);
+      }
+    },
+    [setSheetCapturaAberto]
+  );
 
   const tratarSucesso = useCallback(() => {
     onCapturaConcluida?.();
@@ -187,12 +219,14 @@ export function MenuCapturaVerde({
   }, [fecharMenu, tratarSucesso]);
 
   const handleAbrirFrase = useCallback(() => {
-    fecharMenu();
+    // Mantem flag sheetCapturaAberto=true durante a transicao
+    // (menu->frase). fecharMenu zeraria a flag e o FAB roxo piscaria
+    // visivel na janela de 200ms; reafirmamos true logo apos.
+    sheetRef.current?.close();
+    setSheetCapturaAberto(true);
     setResetFrase((n) => n + 1);
-    // Pequeno delay para o sheet do menu fechar antes do sheet de
-    // frase abrir; evita corrida de dois sheets simultaneos.
     setTimeout(() => fraseRef.current?.expand(), 200);
-  }, [fecharMenu]);
+  }, [setSheetCapturaAberto]);
 
   const handleSalvarFrase = useCallback(
     async (payload: { frase: string; para: Para }) => {
@@ -254,6 +288,7 @@ export function MenuCapturaVerde({
         ref={sheetRef}
         snapPoints={SHEET_60}
         index={-1}
+        onChange={handleSheetChange}
       >
         <BottomSheetView style={{ paddingVertical: spacing.base }}>
           <Text
@@ -315,7 +350,12 @@ export function MenuCapturaVerde({
         </BottomSheetView>
       </BottomSheet>
 
-      <BottomSheet ref={fraseRef} snapPoints={SHEET_60} index={-1}>
+      <BottomSheet
+        ref={fraseRef}
+        snapPoints={SHEET_60}
+        index={-1}
+        onChange={handleFraseChange}
+      >
         <SheetFrase
           onSalvar={(payload) => {
             void handleSalvarFrase(payload);

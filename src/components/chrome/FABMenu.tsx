@@ -6,6 +6,12 @@
 // Comportamento:
 //   - Tap dispara haptic light + abre o MenuLateral via useNavegacao.
 //   - Esconde automaticamente em rotas modais (rotaEsconderFAB).
+//   - M34.1.1: tambem se desmonta quando sheetCapturaAberto=true
+//     (MenuCapturaVerde ou SheetFrase abertos). z-index isolado (=10)
+//     nao bastava porque os sheets vivem dentro do <Stack> enquanto o
+//     FAB e' irmao no _layout raiz; CSS compara stacking contexts no
+//     ancestor comum e o FAB vencia. Solucao: sair do DOM quando
+//     captura ativa.
 //   - z-index 10 (CONTRACT secao 7.10).
 //
 // Strings visiveis em PT-BR sentence case com acentuacao; a11y sem
@@ -26,9 +32,11 @@ const FAB_SIZE = 72;
 export function FABMenu() {
   const pathname = usePathname();
   const abrir = useNavegacao((s) => s.abrir);
+  const sheetCapturaAberto = useNavegacao((s) => s.sheetCapturaAberto);
   const [pressed, setPressed] = useState(false);
 
   if (rotaEsconderFAB(pathname)) return null;
+  if (sheetCapturaAberto) return null;
 
   const handlePress = () => {
     haptics.light();

@@ -58,12 +58,13 @@ spec PARA o ciclo e pede clarificação.
 | ~~11~~ | ~~M-SLIDER-WEB-LOOP~~ | ~~Wrapper Slider web/native~~ — **fechada 2026-05-04** (1293/145, `<input type="range">` em web, RNSlider em native, /medidas + /humor-rapido sem loop) | `M-SLIDER-WEB-LOOP-spec.md` | — |
 | ~~12~~ | ~~M34.3~~ | ~~FAB verde unificado~~ — **fechada 2026-05-04** (1293/145, FABs próprios removidos, 5 itens no sheet com Adicionar marco/foto/treino contextual + 4 captura, bundle 8.44 MB) | `M34.3-spec.md` | — |
 | ~~13~~ | ~~M34.1~~ | ~~BottomSheet zIndex 100~~ — **fechada com ressalva 2026-05-04** (z-index aplicado, residual visual via M34.1.1) | `M34.1-spec.md` | — |
-| 14 | **M34.1.1** | FAB esconde quando MenuCapturaVerde abre (caminho B do M34.1 — flag sheetCapturaAberto em useNavegacao) | `M34.1.1-spec.md` | 1-2h |
-| 15 | **M34.2** | Botão "Registrar foto" empty state Fotos contraste WCAG AA | `M34.2-spec.md` | 0,5h |
+| ~~14~~ | ~~M34.1.1~~ | ~~FAB esconde quando MenuCapturaVerde abre~~ — **fechada 2026-05-04** (1300/145, flag sheetCapturaAberto, FAB confirmadamente ausente em sheet aberto) | `M34.1.1-spec.md` | — |
+| ~~15~~ | ~~M34.2~~ | ~~Button variant primary contraste~~ — **fechada 2026-05-04** (bug sistêmico NativeWind+MotiView, fix style direto, ratio 7.5:1) | `M34.2-spec.md` | — |
 | ~~16~~ | ~~M01.7~~ | ~~Button accessibilityLabel desacoplado~~ — **fechada 2026-05-04** (1298/145, label aceita ReactNode) | `M01.7-spec.md` | — |
-| 17 | **M11.2** | useGaleriaMock leitura dentro de useEffect guardado | `M11.2-spec.md` | 0,5-1h |
-| 18 | **M27.4** | SessaoBootGate "Max update depth" em reset+seed+abrir rápido | `M27.4-spec.md` | 1-2h |
-| 19 | **M-DEBITO-UI-UX-SEED-DUO** | 3 achados visuais consolidados (chip Outro laranja, botão Salvar fora viewport, toggle alarme animação) | `M-DEBITO-UI-UX-SEED-DUO-spec.md` | 1-2h |
+| ~~17~~ | ~~M11.2~~ | ~~useGaleriaMock useEffect~~ — **fechada 2026-05-04** (subscribe + GAUNTLET_ATIVO guard) | `M11.2-spec.md` | — |
+| ~~18~~ | ~~M27.4~~ | ~~SessaoBootGate latch~~ — **fechada 2026-05-04** (bootPronto fast-path) | `M27.4-spec.md` | — |
+| ~~19~~ | ~~M-DEBITO-UI-UX-SEED-DUO~~ | ~~3 fixes consolidados~~ — **fechada 2026-05-04** (chip Outro ghost, KeyboardAvoidingView contadores/novo, AnimatePresence toggle alarme) | `M-DEBITO-UI-UX-SEED-DUO-spec.md` | — |
+| 19.1 | **M-DEBITO-CATEGORIA-CORES** | 8 categorias de tarefa todas com accent='orange' — atribuir cores Dracula semânticas | `M-DEBITO-CATEGORIA-CORES-spec.md` | 0,5-1h |
 | ~~19~~ | ~~M-GAUNTLET-FAST-BOOT-FOLLOWUP~~ | ~~`+html.tsx` aplicar em build estático~~ — **fechada NÃO-FIX 2026-05-04** (aguardar SDK 55+) | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` | 1-2h |
 | 20 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
 | 21 | **M-GAUNTLET-DEAD-CODE-V2** | Refactor `gauntletBootstrap.ts` lazy require — bytecode Android sem `__gauntlet`. **Bloqueia M41** | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
