@@ -91,9 +91,16 @@ export {
 } from './alarme';
 export {
   TarefaSchema,
+  TarefaPessoaDestinoSchema,
+  TarefaAlarmeSchema,
+  TAREFA_CATEGORIAS,
+  TAREFA_CATEGORIA_LABELS,
   slugifyTitulo as slugifyTarefa,
   sufixoRandom,
   type Tarefa,
+  type TarefaCategoria,
+  type TarefaPessoaDestino,
+  type TarefaAlarme,
 } from './tarefa';
 export {
   ContadorSchema,

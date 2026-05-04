@@ -6,6 +6,10 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { ItemTarefa } from '@/components/todo/ItemTarefa';
 import type { Tarefa } from '@/lib/schemas/tarefa';
 
+// M31: Tarefa v2 inclui categoria, pessoa_destino e alarme com
+// defaults explicitos no fixture (TS exige porque o tipo e nao-optional
+// pos-parse). Defaults espelham os do schema (categoria 'outro',
+// destino 'mim', sem alarme).
 const baseTarefa: Tarefa = {
   tipo: 'tarefa',
   data: '2026-04-29',
@@ -13,6 +17,9 @@ const baseTarefa: Tarefa = {
   titulo: 'Comprar pão',
   feito: false,
   feito_em: null,
+  categoria: 'outro',
+  pessoa_destino: { tipo: 'mim' },
+  alarme: null,
 };
 
 describe('ItemTarefa', () => {

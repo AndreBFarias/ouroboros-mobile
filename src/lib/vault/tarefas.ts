@@ -10,6 +10,12 @@
 // listarTarefas devolve a lista ordenada com pendentes (data desc) e
 // feitas (feito_em desc) intercaladas; o caller separa em grupos.
 //
+// M31: criarTarefa ganha branch para alarme vinculado. Quando
+// meta.alarme.ativo === true, escreve antes uma entry em
+// alarmes/<slug-tarefa>-alarme.md via escreverAlarme + agendarAlarme,
+// e popula meta.alarme.slug_vinculado para cancelamento idempotente
+// posterior. reabrirTarefa inverte marcarFeito (concluida -> pendente).
+//
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
@@ -19,6 +25,9 @@ import { tarefasPath, VAULT_FOLDERS } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
+import { escreverAlarme } from '@/lib/vault/alarmes';
+import { agendarAlarme } from '@/lib/services/alarmesNotificacoes';
+import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
 
 // Item lido do Vault: meta + path relativo ao root (ex:
 // 'tarefas/2026-04-29-comprar-pao.md'). UI usa esse path como id estavel
@@ -121,15 +130,94 @@ export async function escreverTarefa(
 // Helper para criar uma tarefa nova: deriva path canonico
 // tarefas/YYYY-MM-DD-<slug>.md a partir do meta. Caller responsável
 // por garantir que slug e unico (sufixo random recomendado).
+//
+// M31: branch alarme vinculado. Quando meta.alarme.ativo === true e
+// meta.alarme.data_hora_iso esta preenchido, monta um Alarme e o
+// persiste em alarmes/<slug>-alarme.md ANTES de gravar a tarefa,
+// agendando o trigger nativo via agendarAlarme. O slug_vinculado e
+// gravado dentro do meta.alarme da tarefa para cancelamento idempotente
+// posterior (marcarFeito futuro pode chamar cancelarAlarme(slug)).
+//
+// Falha ao agendar/escrever alarme nao impede a criacao da tarefa: o
+// alarme companion fica como TODO (slug_vinculado preenchido mas sem
+// schedule garantido). Decisao conservadora: a tarefa e a entidade
+// canonica; o alarme e um companion opcional que pode ser re-tentado.
 export async function criarTarefa(
   vaultRoot: string,
   meta: Tarefa,
   slug: string,
   body: string = ''
 ): Promise<{ uri: string; rel: string }> {
-  const dataDate = new Date(`${meta.data}T00:00:00-03:00`);
+  let metaFinal = meta;
+
+  // M31: branch alarme. So roda quando o usuario explicitou alarme
+  // ativo + horario; caso contrario o bloco continua null/inativo.
+  if (meta.alarme && meta.alarme.ativo && meta.alarme.data_hora_iso) {
+    const slugAlarme = `${slug}-alarme`;
+    const alarmeMontado = construirAlarmeDeTarefa(meta, slugAlarme);
+    if (alarmeMontado) {
+      try {
+        await escreverAlarme(vaultRoot, alarmeMontado);
+        // agendarAlarme e no-op em web e idempotente em nativo. Falhas
+        // de schedule (sem permissao, cap atingido) nao quebram a
+        // criacao da tarefa.
+        await agendarAlarme(alarmeMontado).catch(() => undefined);
+      } catch {
+        // Mantem tarefa criavel mesmo se alarme companion falhar.
+      }
+      metaFinal = {
+        ...meta,
+        alarme: { ...meta.alarme, slug_vinculado: slugAlarme },
+      };
+    }
+  }
+
+  const dataDate = new Date(`${metaFinal.data}T00:00:00-03:00`);
   const rel = tarefasPath(dataDate, slug);
-  return escreverTarefa(vaultRoot, rel, meta, body);
+  return escreverTarefa(vaultRoot, rel, metaFinal, body);
+}
+
+// M31: helper que monta um Alarme valido a partir do meta.alarme da
+// tarefa. Reusa o vocabulario do AlarmeSchema (M30): titulo herda o
+// titulo da tarefa; horario deriva de data_hora_iso (HH:MM 24h);
+// dias_semana fica [] para recorrencia nao-semanal e [0..6] (todos
+// os dias) para 'semanal' como default conservador.
+//
+// Retorna null se o meta.alarme nao tiver data_hora_iso valido (caller
+// ja deve filtrar; defesa em profundidade).
+function construirAlarmeDeTarefa(meta: Tarefa, slug: string): Alarme | null {
+  if (!meta.alarme || !meta.alarme.data_hora_iso) return null;
+  const date = new Date(meta.alarme.data_hora_iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const horario = `${hh}:${mm}`;
+  const recorrencia = meta.alarme.recorrencia;
+  // semanal default: todos os 7 dias quando o usuario escolhe recorrer
+  // semanalmente sem especificar dia (caso comum: "todo dia da semana
+  // util" pode ser refinado em UI futura). Conservador: cobre todos
+  // para nao silenciar trigger.
+  const diasSemana =
+    recorrencia === 'semanal' ? [0, 1, 2, 3, 4, 5, 6] : [];
+  const proposto: Alarme = {
+    tipo: 'alarme',
+    slug,
+    titulo: meta.titulo,
+    horario,
+    dias_semana: diasSemana,
+    recorrencia,
+    data_unica: meta.alarme.data_hora_iso,
+    tag: 'outro',
+    som: 'gentle',
+    ativo: true,
+    snooze_minutos: 5,
+    criado_em: new Date().toISOString().replace('Z', '+00:00'),
+    ultimo_disparo: null,
+    notification_ids: [],
+    snooze_id: null,
+  };
+  const parsed = AlarmeSchema.safeParse(proposto);
+  return parsed.success ? parsed.data : null;
 }
 
 // Marca tarefa como feita ou pendente, regravando o frontmatter.
@@ -149,6 +237,33 @@ export async function marcarFeito(
     ...atual,
     feito,
     feito_em: feito ? agora.toISOString() : null,
+  };
+  await escreverTarefa(vaultRoot, rel, atualizado);
+  return atualizado;
+}
+
+// M31: reabre uma tarefa concluida, voltando para o estado pendente.
+// Inverte semantica de marcarFeito: feito=false, feito_em=null. Idempotente
+// (chamar em tarefa ja pendente nao quebra). Lanca quando a tarefa nao
+// existe (alinha com marcarFeito).
+//
+// TODO M30: re-agendamento do alarme companion ainda nao e responsabilidade
+// deste helper. Quando o usuario reabre uma tarefa, o alarme original ja
+// foi cancelado por marcarFeito (decisao M30); decidir se re-cria ou nao
+// fica para sprint futura. Por hora, alarme companion permanece cancelado;
+// usuario edita a tarefa pra re-ativar manualmente.
+export async function reabrirTarefa(
+  vaultRoot: string,
+  rel: string
+): Promise<Tarefa> {
+  const atual = await lerTarefa(vaultRoot, rel);
+  if (!atual) {
+    throw new Error(`tarefa nao encontrada: ${rel}`);
+  }
+  const atualizado: Tarefa = {
+    ...atual,
+    feito: false,
+    feito_em: null,
   };
   await escreverTarefa(vaultRoot, rel, atualizado);
   return atualizado;

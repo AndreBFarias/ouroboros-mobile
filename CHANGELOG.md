@@ -5,6 +5,77 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M31 fechada (2026-05-04)
+
+TarefaSchema v2: categoria + pessoa_destino + alarme + aba
+Concluídas + long-press Reabrir/Apagar.
+
+**Entregáveis:**
+- `src/lib/schemas/tarefa.ts` — `TAREFA_CATEGORIAS` (8 slugs:
+  trabalho/casa/rotina/financas/desenvolvimento_pessoal/obrigacoes/
+  saude/outro), `TAREFA_CATEGORIA_LABELS`, `TarefaPessoaDestinoSchema`
+  discriminatedUnion (mim/outra/casal/terceiro), `TarefaAlarmeSchema`
+  (ativo + data_hora_iso + recorrencia + slug_vinculado opcional).
+  Defaults garantem migração silenciosa v1→v2.
+- `src/lib/vault/tarefas.ts` — `criarTarefa()` com branch alarme
+  (escreverAlarme + agendarAlarme antes de gravar tarefa, popula
+  `slug_vinculado`). Falha de companion não bloqueia tarefa
+  (graceful). `reabrirTarefa()` novo (inverte feito + zera
+  feito_em; TODO inline para re-agendamento de alarme).
+- `src/components/todo/SeletorPessoaDestino.tsx` (novo) — chips
+  dinâmicos baseados em `useSettings.pessoa.tipoCompanhia`. Modo
+  'sozinho' esconde "Para [parceiro]" e "Para o casal". Input
+  expansível para "terceiro" (1-60 chars).
+- `src/components/todo/SheetNovaTarefa.tsx` — reescrito. ChipGroup
+  categoria 8 slugs com ícone preview lucide
+  (Briefcase/Home/Repeat/Wallet/Sparkles/Scale/Heart/HelpCircle),
+  SeletorPessoaDestino, Toggle "Lembrar com alarme" expansível com
+  DateTimePicker mode `datetime` + ChipGroup recorrência.
+- `src/components/todo/SecaoConcluidas.tsx` (novo) — collapsable
+  header "Concluídas (N)" + lista. Empty state silencioso (return
+  null). Default colapsada quando >5 itens.
+- `src/components/todo/ItemTarefa.tsx` — render com ícone
+  categoria 14dp + chip micro destino (≠ mim). Item concluída
+  opacity 60% + line-through.
+- `src/components/todo/MenuLongPress.tsx` — extendido com prop
+  opcional `acoes` (backwards-compat). M31 usa para Reabrir/Apagar
+  definitivo em concluídas.
+- `app/todo.tsx` — 2 seções: pendentes (preserva drag&drop) +
+  `<SecaoConcluidas>`. Tap em concluída reabre via
+  `handleTapConcluida`. Long-press em concluída abre menu
+  Reabrir/Apagar definitivo.
+
+**Aritmética:** 1177 → 1207 testes (+30), 136 → 136 suítes,
+tsc 0 erros, anonimato OK. Bundle Hermes 8.8 → **8.5 MB** (-300 KB,
+margem 350 KB do limite — refactor enxuto reduziu size).
+
+**Testes M31 (4 arquivos):**
+- `tests/lib/schemas/tarefa.test.ts` (+30 cases): categoria 8 slugs,
+  pessoa_destino discriminado mim/casal/outra/terceiro com
+  rejeições corretas, alarme com 4 recorrências, migração v1→v2
+  com defaults silenciosos via zod.
+- `tests/components/todo/SheetNovaTarefa.test.tsx` (+6): 8 chips
+  categoria, payload com defaults M31, toggle alarme ligando, modo
+  editar com categoriaInicial.
+- `tests/lib/vault/tarefas.test.ts` (+7): `reabrirTarefa` inverte/
+  idempotente/lança; `criarTarefa` branch alarme com slug_vinculado,
+  no-op quando alarme null/inativo, graceful em falha de
+  escreverAlarme.
+- `tests/components/todo/ItemTarefa.test.tsx` — fixture migrado
+  para v2.
+
+**Validação Gauntlet:** `/todo` renderiza empty state correto
+("Sem tarefas. Crie quando quiser.") com header "Tarefas".
+Screenshot em `docs/sprints/M31-screenshots/A-todo-pendentes-vazio.png`.
+
+**Atenção (não-bloqueantes):**
+- `useRotuloPessoa` mencionado pela spec (M28) não existe no
+  código — implementado com `useNomeDe` direto (helper canônico
+  real).
+- `reabrirTarefa` ainda não cancela/re-agenda alarme companion
+  (TODO inline). M30 decide convenção futura.
+- `MenuLongPress` ganhou prop opcional sem quebrar M17.
+
 ### M30 fechada (2026-05-04)
 
 AlarmeSchema v2: recorrência + channel com vibração + lembretes

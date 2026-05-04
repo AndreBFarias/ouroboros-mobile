@@ -22,7 +22,7 @@ import {
 } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { ChevronDown, ChevronRight, ListChecks } from 'lucide-react-native';
+import { ListChecks } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { MotiView } from 'moti';
@@ -47,6 +47,9 @@ import {
   slugifyTitulo,
   sufixoRandom,
   type Tarefa,
+  type TarefaAlarme,
+  type TarefaCategoria,
+  type TarefaPessoaDestino,
 } from '@/lib/schemas/tarefa';
 import {
   criarTarefa,
@@ -54,13 +57,18 @@ import {
   listarTarefas,
   marcarFeito,
   escreverTarefa,
+  reabrirTarefa,
   type TarefaListada,
 } from '@/lib/vault/tarefas';
 import { ItemTarefa } from '@/components/todo/ItemTarefa';
-import { SheetNovaTarefa } from '@/components/todo/SheetNovaTarefa';
+import {
+  SheetNovaTarefa,
+  type SheetNovaTarefaPayload,
+} from '@/components/todo/SheetNovaTarefa';
 import { MenuLongPress } from '@/components/todo/MenuLongPress';
 import { BarraBusca, normalizarBusca } from '@/components/todo/BarraBusca';
 import { ListaArrastavel } from '@/components/todo/ListaArrastavel';
+import { SecaoConcluidas } from '@/components/todo/SecaoConcluidas';
 
 // Chave SecureStore para ordem custom dos pendentes (array de paths
 // relativos). Tarefas novas ou não listadas caem para o topo
@@ -126,8 +134,17 @@ function aplicarOrdem(
   });
 }
 
-// Nova fixture meta (criar). Caller injeta titulo do form.
-function novaTarefa(autor: 'pessoa_a' | 'pessoa_b', titulo: string): {
+// Nova fixture meta (criar). Caller injeta payload completo do Sheet
+// M31 (titulo + categoria + destino + alarme).
+function novaTarefa(
+  autor: 'pessoa_a' | 'pessoa_b',
+  payload: {
+    titulo: string;
+    categoria: TarefaCategoria;
+    pessoa_destino: TarefaPessoaDestino;
+    alarme: TarefaAlarme | null;
+  }
+): {
   meta: Tarefa;
   slug: string;
 } {
@@ -138,15 +155,18 @@ function novaTarefa(autor: 'pessoa_a' | 'pessoa_b', titulo: string): {
   const m = String(local.getUTCMonth() + 1).padStart(2, '0');
   const d = String(local.getUTCDate()).padStart(2, '0');
   const data = `${y}-${m}-${d}`;
-  const slugBase = slugifyTitulo(titulo);
+  const slugBase = slugifyTitulo(payload.titulo);
   const slug = `${slugBase}-${sufixoRandom()}`;
   const meta: Tarefa = {
     tipo: 'tarefa',
     data,
     autor,
-    titulo,
+    titulo: payload.titulo,
     feito: false,
     feito_em: null,
+    categoria: payload.categoria,
+    pessoa_destino: payload.pessoa_destino,
+    alarme: payload.alarme,
   };
   return { meta, slug };
 }
@@ -158,7 +178,6 @@ export default function TelaTarefas() {
 
   const [tarefas, setTarefas] = useState<TarefaListada[]>([]);
   const [busca, setBusca] = useState<string>('');
-  const [feitasAbertas, setFeitasAbertas] = useState<boolean>(false);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [ordemSalva, setOrdemSalva] = useState<string[]>([]);
 
@@ -167,6 +186,14 @@ export default function TelaTarefas() {
   const [sheetAberto, setSheetAberto] = useState<boolean>(false);
   const [modoSheet, setModoSheet] = useState<'criar' | 'editar'>('criar');
   const [tituloEditando, setTituloEditando] = useState<string>('');
+  // M31: campos M31 carregados quando o usuario abre edicao. Sheet le
+  // estes para popular categoria/destino/alarme atuais.
+  const [categoriaEditando, setCategoriaEditando] =
+    useState<TarefaCategoria | undefined>(undefined);
+  const [destinoEditando, setDestinoEditando] =
+    useState<TarefaPessoaDestino | undefined>(undefined);
+  const [alarmeEditando, setAlarmeEditando] =
+    useState<TarefaAlarme | null | undefined>(undefined);
   const [relEditando, setRelEditando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<boolean>(false);
 
@@ -221,6 +248,9 @@ export default function TelaTarefas() {
   const handleAbrirCriar = useCallback(() => {
     setModoSheet('criar');
     setTituloEditando('');
+    setCategoriaEditando(undefined);
+    setDestinoEditando(undefined);
+    setAlarmeEditando(undefined);
     setRelEditando(null);
     setSheetAberto(true);
     sheetRef.current?.expand();
@@ -232,7 +262,7 @@ export default function TelaTarefas() {
   }, []);
 
   const handleSalvarSheet = useCallback(
-    async (titulo: string) => {
+    async (payload: SheetNovaTarefaPayload) => {
       if (!vaultRoot) {
         toast.show('Vault não conectado.', 'error');
         return;
@@ -240,17 +270,23 @@ export default function TelaTarefas() {
       setSalvando(true);
       try {
         if (modoSheet === 'criar') {
-          const { meta, slug } = novaTarefa(pessoaAtiva, titulo);
+          const { meta, slug } = novaTarefa(pessoaAtiva, payload);
           const parsed = TarefaSchema.parse(meta);
           await criarTarefa(vaultRoot, parsed, slug);
           haptics.success();
           toast.show('Tarefa anotada.', 'success');
         } else if (relEditando) {
-          // Re-ler atual para preservar feito/feito_em durante edicao
-          // de titulo.
+          // Re-ler atual para preservar feito/feito_em durante edicao.
+          // M31: tambem aplica categoria/destino/alarme do payload.
           const atual = tarefas.find((t) => t.rel === relEditando);
           if (atual) {
-            const atualizado: Tarefa = { ...atual.meta, titulo };
+            const atualizado: Tarefa = {
+              ...atual.meta,
+              titulo: payload.titulo,
+              categoria: payload.categoria,
+              pessoa_destino: payload.pessoa_destino,
+              alarme: payload.alarme,
+            };
             await escreverTarefa(vaultRoot, relEditando, atualizado);
             haptics.success();
             toast.show('Tarefa atualizada.', 'success');
@@ -307,6 +343,33 @@ export default function TelaTarefas() {
     [vaultRoot, toast]
   );
 
+  // M31: tap em concluida nao alterna feito (ja eh true) - reabre
+  // imediatamente. Decisao alinhada ao mesmo gesto da pendente: tap
+  // resolve um lado, long-press abre menu para opcoes destrutivas.
+  const handleTapConcluida = useCallback(
+    async (item: TarefaListada) => {
+      if (!vaultRoot) return;
+      try {
+        await reabrirTarefa(vaultRoot, item.rel);
+        haptics.selection();
+        setTarefas((cur) =>
+          cur.map((t) =>
+            t.rel === item.rel
+              ? {
+                  ...t,
+                  meta: { ...t.meta, feito: false, feito_em: null },
+                }
+              : t
+          )
+        );
+        toast.show('Tarefa reaberta.', 'success');
+      } catch {
+        toast.show('Não foi possível reabrir.', 'error');
+      }
+    },
+    [vaultRoot, toast]
+  );
+
   const handleLongPress = useCallback((item: TarefaListada) => {
     setMenuAlvo(item);
   }, []);
@@ -315,6 +378,9 @@ export default function TelaTarefas() {
     if (!menuAlvo) return;
     setModoSheet('editar');
     setTituloEditando(menuAlvo.meta.titulo);
+    setCategoriaEditando(menuAlvo.meta.categoria);
+    setDestinoEditando(menuAlvo.meta.pessoa_destino);
+    setAlarmeEditando(menuAlvo.meta.alarme);
     setRelEditando(menuAlvo.rel);
     setMenuAlvo(null);
     setSheetAberto(true);
@@ -327,6 +393,31 @@ export default function TelaTarefas() {
     setMenuAlvo(null);
     setModalExcluirVisivel(true);
   }, [menuAlvo]);
+
+  // M31: reabrir a partir do menu long-press de uma tarefa concluida.
+  // Inverte feito + atualiza estado local (sem reload pesado).
+  const handleReabrirMenu = useCallback(async () => {
+    if (!menuAlvo || !vaultRoot) return;
+    try {
+      await reabrirTarefa(vaultRoot, menuAlvo.rel);
+      haptics.success();
+      toast.show('Tarefa reaberta.', 'success');
+      setTarefas((cur) =>
+        cur.map((t) =>
+          t.rel === menuAlvo.rel
+            ? {
+                ...t,
+                meta: { ...t.meta, feito: false, feito_em: null },
+              }
+            : t
+        )
+      );
+      setMenuAlvo(null);
+    } catch {
+      haptics.error();
+      toast.show('Não foi possível reabrir.', 'error');
+    }
+  }, [menuAlvo, vaultRoot, toast]);
 
   const handleConfirmarExclusao = useCallback(async () => {
     if (!vaultRoot || !tarefaParaExcluir) return;
@@ -401,62 +492,16 @@ export default function TelaTarefas() {
     </View>
   );
 
-  // Footer com collapse de feitas.
-  const listFooter =
-    feitas.length > 0 ? (
-      <View style={{ marginTop: spacing.base, gap: spacing.sm }}>
-        <Pressable
-          onPress={() => {
-            haptics.selection();
-            setFeitasAbertas((v) => !v);
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`feitas ${feitasAbertas ? 'expandido' : 'colapsado'}`}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: spacing.sm,
-            paddingVertical: spacing.sm,
-          }}
-        >
-          {feitasAbertas ? (
-            <ChevronDown
-              size={16}
-              color={colors.muted}
-              strokeWidth={2}
-              accessibilityLabel="aberto"
-            />
-          ) : (
-            <ChevronRight
-              size={16}
-              color={colors.muted}
-              strokeWidth={2}
-              accessibilityLabel="fechado"
-            />
-          )}
-          <Text
-            style={{
-              color: colors.muted,
-              fontFamily: 'JetBrainsMono_500Medium',
-              fontSize: 13,
-              lineHeight: 20,
-            }}
-          >
-            {`Feitas (${feitas.length})`}
-          </Text>
-        </Pressable>
-        {feitasAbertas
-          ? feitas.map((item) => (
-              <ItemTarefa
-                key={item.rel}
-                tarefa={item.meta}
-                onTap={() => void handleTap(item)}
-                onLongPress={() => handleLongPress(item)}
-              />
-            ))
-          : null}
-      </View>
-    ) : null;
+  // M31: footer agora delega para SecaoConcluidas (collapsable, empty
+  // state silencioso, default colapsada quando >5). Tap em concluida
+  // reabre via handleTapConcluida; long-press abre menu Reabrir/Apagar.
+  const listFooter = (
+    <SecaoConcluidas
+      itens={feitas}
+      onTap={(item) => void handleTapConcluida(item)}
+      onLongPress={(item) => handleLongPress(item)}
+    />
+  );
 
   return (
     <Screen>
@@ -521,18 +566,40 @@ export default function TelaTarefas() {
         <SheetNovaTarefa
           tituloInicial={tituloEditando}
           modo={modoSheet}
-          onSalvar={(titulo) => void handleSalvarSheet(titulo)}
+          categoriaInicial={categoriaEditando}
+          destinoInicial={destinoEditando}
+          alarmeInicial={alarmeEditando}
+          onSalvar={(payload) => void handleSalvarSheet(payload)}
           onCancelar={handleFecharSheet}
           salvando={salvando}
         />
       </BottomSheet>
 
-      {/* Menu long-press. */}
+      {/* Menu long-press. M31: tarefa concluida abre acoes Reabrir/
+          Apagar definitivo; pendente mantem Editar/Excluir (M17). */}
       <MenuLongPress
         visible={menuAlvo !== null}
         tituloAlvo={menuAlvo?.meta.titulo}
         onEditar={handleAbrirEditar}
         onExcluir={handleAbrirExcluir}
+        acoes={
+          menuAlvo?.meta.feito
+            ? [
+                {
+                  label: 'Reabrir',
+                  corTexto: colors.fg,
+                  onPress: () => void handleReabrirMenu(),
+                  accessibilityLabel: 'reabrir tarefa concluida',
+                },
+                {
+                  label: 'Apagar definitivo',
+                  corTexto: colors.red,
+                  onPress: handleAbrirExcluir,
+                  accessibilityLabel: 'apagar tarefa definitivamente',
+                },
+              ]
+            : undefined
+        }
         onFechar={() => setMenuAlvo(null)}
       />
 

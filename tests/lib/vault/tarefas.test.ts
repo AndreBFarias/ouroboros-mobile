@@ -1,7 +1,9 @@
 // Testes dos helpers de Vault para tarefas (M17). Cobre listagem,
 // leitura, escrita, marcacao de feito e exclusao para lixeira.
 //
-// Mocks: reader/writer/SAF/cacheDir para isolar I/O.
+// Mocks: reader/writer/SAF/cacheDir para isolar I/O. M31: tambem mocka
+// alarmes/escreverAlarme + agendarAlarme para isolar o branch novo de
+// criarTarefa.
 //
 // Comentarios sem acento (convencao shell/CI).
 import type { Tarefa } from '@/lib/schemas/tarefa';
@@ -13,6 +15,8 @@ const mockReadAsString = jest.fn();
 const mockWriteAsString = jest.fn();
 const mockDeleteAsync = jest.fn();
 const mockMakeDir = jest.fn();
+const mockEscreverAlarme = jest.fn();
+const mockAgendarAlarme = jest.fn();
 
 jest.mock('@/lib/vault/reader', () => ({
   __esModule: true,
@@ -33,6 +37,14 @@ jest.mock('expo-file-system/legacy', () => ({
     deleteAsync: (...args: unknown[]) => mockDeleteAsync(...args),
   },
 }));
+jest.mock('@/lib/vault/alarmes', () => ({
+  __esModule: true,
+  escreverAlarme: (...args: unknown[]) => mockEscreverAlarme(...args),
+}));
+jest.mock('@/lib/services/alarmesNotificacoes', () => ({
+  __esModule: true,
+  agendarAlarme: (...args: unknown[]) => mockAgendarAlarme(...args),
+}));
 
 import {
   listarTarefas,
@@ -40,12 +52,15 @@ import {
   escreverTarefa,
   criarTarefa,
   marcarFeito,
+  reabrirTarefa,
   excluirTarefa,
 } from '@/lib/vault/tarefas';
 
 const VAULT_ROOT = 'content://test/vault';
 
 function fixture(over: Partial<Tarefa> = {}): Tarefa {
+  // M31: Tarefa v2 inclui categoria/pessoa_destino/alarme com defaults
+  // explicitos. Defaults espelham os do schema.
   return {
     tipo: 'tarefa',
     data: '2026-04-29',
@@ -53,6 +68,9 @@ function fixture(over: Partial<Tarefa> = {}): Tarefa {
     titulo: 'Comprar pão',
     feito: false,
     feito_em: null,
+    categoria: 'outro',
+    pessoa_destino: { tipo: 'mim' },
+    alarme: null,
     ...over,
   };
 }
@@ -209,6 +227,120 @@ describe('criarTarefa', () => {
     const meta = fixture({ data: '2026-04-29' });
     const { rel } = await criarTarefa(VAULT_ROOT, meta, 'comprar-pao-7k2x');
     expect(rel).toBe('tarefas/2026-04-29-comprar-pao-7k2x.md');
+  });
+
+  it('M31: nao cria alarme companion quando meta.alarme === null', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const meta = fixture({ alarme: null });
+    await criarTarefa(VAULT_ROOT, meta, 'tarefa-1234');
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+    expect(mockAgendarAlarme).not.toHaveBeenCalled();
+  });
+
+  it('M31: nao cria alarme companion quando ativo=false', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const meta = fixture({
+      alarme: {
+        ativo: false,
+        data_hora_iso: null,
+        recorrencia: 'unica',
+      },
+    });
+    await criarTarefa(VAULT_ROOT, meta, 'tarefa-1234');
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('M31: cria alarme companion quando ativo=true e popula slug_vinculado', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    mockEscreverAlarme.mockResolvedValueOnce({
+      uri: `${VAULT_ROOT}/alarmes/foo-1234-alarme.md`,
+      rel: 'alarmes/foo-1234-alarme.md',
+    });
+    mockAgendarAlarme.mockResolvedValueOnce({ ids: ['x'], estourou: false });
+
+    const meta = fixture({
+      titulo: 'Reuniao',
+      alarme: {
+        ativo: true,
+        data_hora_iso: '2026-05-01T14:00:00-03:00',
+        recorrencia: 'unica',
+      },
+    });
+    await criarTarefa(VAULT_ROOT, meta, 'foo-1234');
+
+    expect(mockEscreverAlarme).toHaveBeenCalledTimes(1);
+    expect(mockAgendarAlarme).toHaveBeenCalledTimes(1);
+    // Tarefa final tem slug_vinculado canonico (<slug>-alarme).
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      expect.stringContaining('tarefas/2026-04-29-foo-1234.md'),
+      expect.objectContaining({
+        alarme: expect.objectContaining({
+          slug_vinculado: 'foo-1234-alarme',
+        }),
+      }),
+      ''
+    );
+  });
+
+  it('M31: cria tarefa mesmo se escreverAlarme falhar (graceful)', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    mockEscreverAlarme.mockRejectedValueOnce(new Error('vault offline'));
+
+    const meta = fixture({
+      alarme: {
+        ativo: true,
+        data_hora_iso: '2026-05-01T14:00:00-03:00',
+        recorrencia: 'unica',
+      },
+    });
+    await expect(
+      criarTarefa(VAULT_ROOT, meta, 'foo-1234')
+    ).resolves.toMatchObject({
+      rel: 'tarefas/2026-04-29-foo-1234.md',
+    });
+    expect(mockWriteVaultFile).toHaveBeenCalled();
+  });
+});
+
+describe('reabrirTarefa (M31)', () => {
+  it('inverte feito de true para false e zera feito_em', async () => {
+    const atual = fixture({
+      feito: true,
+      feito_em: '2026-04-29T10:00:00-03:00',
+    });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const out = await reabrirTarefa(
+      VAULT_ROOT,
+      'tarefas/2026-04-29-foo.md'
+    );
+    expect(out.feito).toBe(false);
+    expect(out.feito_em).toBeNull();
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      `${VAULT_ROOT}/tarefas/2026-04-29-foo.md`,
+      expect.objectContaining({ feito: false, feito_em: null }),
+      ''
+    );
+  });
+
+  it('idempotente em tarefa ja pendente', async () => {
+    const atual = fixture({ feito: false, feito_em: null });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const out = await reabrirTarefa(
+      VAULT_ROOT,
+      'tarefas/2026-04-29-foo.md'
+    );
+    expect(out.feito).toBe(false);
+  });
+
+  it('lanca quando arquivo nao existe', async () => {
+    mockReadVaultFile.mockResolvedValueOnce(null);
+    await expect(
+      reabrirTarefa(VAULT_ROOT, 'tarefas/inexistente.md')
+    ).rejects.toThrow(/nao encontrada/);
   });
 });
 
