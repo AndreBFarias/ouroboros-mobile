@@ -24,6 +24,7 @@
 //  - Sem gamificacao (ADR-0005).
 //  - Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
+import { ParaSchema } from '@/lib/schemas/para';
 
 // Slug: kebab-case ASCII. Aceita letras minusculas, digitos e '-'.
 // Comprimento minimo 1, maximo 64 (limite de filesystem amigavel).
@@ -60,6 +61,9 @@ export const ContadorSchema = z.object({
   // reset; o array cresce ao longo do tempo. Default [] em novo.
   resets: z.array(IsoDatetime).default([]),
   criado_em: IsoDatetime,
+  // Destinatario / tema do contador (M33). Discriminado: mim /
+  // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
+  para: ParaSchema,
 });
 
 export type Contador = z.infer<typeof ContadorSchema>;

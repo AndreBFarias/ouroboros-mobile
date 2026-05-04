@@ -8,6 +8,7 @@ export {
   type PessoaAutor,
   isAutor,
 } from './pessoa';
+export { ParaSchema, type Para } from './para';
 export { HumorSchema, type HumorMeta } from './humor';
 export {
   EventoSchema,

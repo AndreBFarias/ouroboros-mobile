@@ -130,6 +130,64 @@ describe('ContadorSchema', () => {
   });
 });
 
+describe('ContadorSchema campo para (M33)', () => {
+  it('default {tipo:"mim"} quando campo omitido (compat .md v1)', () => {
+    const out = ContadorSchema.parse(baseContador);
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para mim explicito', () => {
+    const out = ContadorSchema.parse({
+      ...baseContador,
+      para: { tipo: 'mim' },
+    });
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para outra pessoa (pessoa_b)', () => {
+    const out = ContadorSchema.parse({
+      ...baseContador,
+      para: { tipo: 'outra', pessoa: 'pessoa_b' },
+    });
+    expect(out.para).toEqual({ tipo: 'outra', pessoa: 'pessoa_b' });
+  });
+
+  it('aceita para o casal', () => {
+    const out = ContadorSchema.parse({
+      ...baseContador,
+      para: { tipo: 'casal' },
+    });
+    expect(out.para).toEqual({ tipo: 'casal' });
+  });
+
+  it('rejeita tipo invalido em para', () => {
+    expect(() =>
+      ContadorSchema.parse({
+        ...baseContador,
+        para: { tipo: 'todos' },
+      })
+    ).toThrow();
+  });
+
+  it('rejeita outra sem pessoa', () => {
+    expect(() =>
+      ContadorSchema.parse({
+        ...baseContador,
+        para: { tipo: 'outra' },
+      })
+    ).toThrow();
+  });
+
+  it('rejeita outra com pessoa = ambos', () => {
+    expect(() =>
+      ContadorSchema.parse({
+        ...baseContador,
+        para: { tipo: 'outra', pessoa: 'ambos' },
+      })
+    ).toThrow();
+  });
+});
+
 describe('slugifyTitulo (contador)', () => {
   it('remove acentos e troca espacos por hifen', () => {
     expect(slugifyTitulo('Sem açúcar')).toBe('sem-acucar');

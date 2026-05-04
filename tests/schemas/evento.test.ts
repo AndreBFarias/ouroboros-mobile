@@ -77,3 +77,52 @@ describe('EventoSchema', () => {
     expect(out.midia).toEqual([]);
   });
 });
+
+describe('EventoSchema campo para (M33)', () => {
+  it('default {tipo:"mim"} quando campo omitido (compat .md v1)', () => {
+    const out = EventoSchema.parse(baseEvento);
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para mim explicito', () => {
+    const out = EventoSchema.parse({
+      ...baseEvento,
+      para: { tipo: 'mim' },
+    });
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para outra pessoa (pessoa_b)', () => {
+    const out = EventoSchema.parse({
+      ...baseEvento,
+      para: { tipo: 'outra', pessoa: 'pessoa_b' },
+    });
+    expect(out.para).toEqual({ tipo: 'outra', pessoa: 'pessoa_b' });
+  });
+
+  it('aceita para o casal', () => {
+    const out = EventoSchema.parse({
+      ...baseEvento,
+      para: { tipo: 'casal' },
+    });
+    expect(out.para).toEqual({ tipo: 'casal' });
+  });
+
+  it('rejeita tipo invalido', () => {
+    expect(() =>
+      EventoSchema.parse({
+        ...baseEvento,
+        para: { tipo: 'todos' },
+      })
+    ).toThrow();
+  });
+
+  it('rejeita outra sem pessoa', () => {
+    expect(() =>
+      EventoSchema.parse({
+        ...baseEvento,
+        para: { tipo: 'outra' },
+      })
+    ).toThrow();
+  });
+});

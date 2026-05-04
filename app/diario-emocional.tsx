@@ -30,6 +30,7 @@ import {
   Chip,
   ChipGroup,
   Screen,
+  SeletorPara,
   SHEET_90,
   Slider,
   Textarea,
@@ -55,6 +56,7 @@ import {
   type DiarioEmocionalMeta,
   type DiarioEmocionalModo,
 } from '@/lib/schemas/diario_emocional';
+import type { Para } from '@/lib/schemas/para';
 import { saveDiario } from '@/lib/diario/saveDiario';
 import { formatEmocao } from '@/lib/diario/emocoes';
 import type { Midia } from '@/lib/schemas/midia';
@@ -206,6 +208,8 @@ export default function DiarioEmocional() {
   // Midia anexada (M07.x). Em modo vitoria, save bloqueia se array
   // vazio (refine zod + check explicito antes do safeParse).
   const [midia, setMidia] = useState<Midia[]>(() => rascunho?.midia ?? []);
+  // M33: destinatario / tema da anotacao. Default {tipo:'mim'}.
+  const [para, setPara] = useState<Para>({ tipo: 'mim' });
 
   // M24: snapshot do rascunho para auto-save debounced. So serializa
   // campos compativeis com o schema; ComQuem 'amigos'/'sozinho' vira
@@ -326,6 +330,7 @@ export default function DiarioEmocional() {
       ...(ehTrigger ? { funcionou } : {}),
       audio: audioPath,
       midia,
+      para,
     };
 
     const validacao = DiarioEmocionalSchema.safeParse(meta);
@@ -552,6 +557,11 @@ export default function DiarioEmocional() {
             </View>
           ) : null}
         </MotiView>
+
+        {/* M33: destinatario / tema da anotacao. Render dinamico via
+            useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
+            null e o default {tipo:'mim'} ja esta seedado. */}
+        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
 
         <Text
           style={{

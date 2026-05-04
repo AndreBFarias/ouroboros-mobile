@@ -37,6 +37,7 @@ const baseTrigger: DiarioEmocionalMeta = {
   funcionou: true,
   audio: null,
   midia: [],
+  para: { tipo: 'mim' },
 };
 
 const baseSucesso: DiarioEmocionalMeta = {
@@ -55,6 +56,7 @@ const baseSucesso: DiarioEmocionalMeta = {
   // recebe meta ja validado e nao reaplica refine, manter midia
   // populada com um item reduz risco de mock futuro pegar refine.
   midia: [{ tipo: 'foto', path: 'assets/2026-04-29-1945-stub.jpg' }],
+  para: { tipo: 'mim' },
 };
 
 beforeEach(() => {

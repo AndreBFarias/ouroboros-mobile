@@ -102,6 +102,64 @@ describe('DiarioEmocionalSchema validacoes gerais', () => {
   });
 });
 
+describe('DiarioEmocionalSchema campo para (M33)', () => {
+  it('default {tipo:"mim"} quando campo omitido (compat .md v1)', () => {
+    const out = DiarioEmocionalSchema.parse(baseTrigger);
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para mim explicito', () => {
+    const out = DiarioEmocionalSchema.parse({
+      ...baseTrigger,
+      para: { tipo: 'mim' },
+    });
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para outra pessoa (pessoa_b)', () => {
+    const out = DiarioEmocionalSchema.parse({
+      ...baseTrigger,
+      para: { tipo: 'outra', pessoa: 'pessoa_b' },
+    });
+    expect(out.para).toEqual({ tipo: 'outra', pessoa: 'pessoa_b' });
+  });
+
+  it('aceita para o casal', () => {
+    const out = DiarioEmocionalSchema.parse({
+      ...baseTrigger,
+      para: { tipo: 'casal' },
+    });
+    expect(out.para).toEqual({ tipo: 'casal' });
+  });
+
+  it('rejeita tipo invalido', () => {
+    expect(() =>
+      DiarioEmocionalSchema.parse({
+        ...baseTrigger,
+        para: { tipo: 'terceiro' },
+      })
+    ).toThrow();
+  });
+
+  it('rejeita outra sem campo pessoa', () => {
+    expect(() =>
+      DiarioEmocionalSchema.parse({
+        ...baseTrigger,
+        para: { tipo: 'outra' },
+      })
+    ).toThrow();
+  });
+
+  it('rejeita outra com pessoa = ambos', () => {
+    expect(() =>
+      DiarioEmocionalSchema.parse({
+        ...baseTrigger,
+        para: { tipo: 'outra', pessoa: 'ambos' },
+      })
+    ).toThrow();
+  });
+});
+
 describe('DiarioEmocionalSchema contexto_social (M06.X)', () => {
   it('default vazio quando campo omitido (compat com .md antigos)', () => {
     const out = DiarioEmocionalSchema.parse(baseTrigger);

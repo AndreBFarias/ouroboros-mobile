@@ -272,6 +272,9 @@ export async function verificarMarcosAuto(
       auto: true,
       origem: 'client',
       hash,
+      // M33: marcos automaticos ficam "para mim" por padrao; o
+      // usuario pode editar manualmente via UI mais tarde.
+      para: { tipo: 'mim' },
     };
     try {
       await saveMarco({ meta: marco, vaultRoot });

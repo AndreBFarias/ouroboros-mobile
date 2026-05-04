@@ -16,6 +16,7 @@ import {
 import {
   Button,
   ChipGroup,
+  SeletorPara,
   useToast,
   type ChipOption,
 } from '@/components/ui';
@@ -25,6 +26,7 @@ import { saveMarco } from '@/lib/marcos/saveMarco';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import type { Marco } from '@/lib/schemas/marco';
+import type { Para } from '@/lib/schemas/para';
 
 const TAGS_SUGERIDAS: ChipOption[] = [
   { value: 'treino', label: 'Treino', accent: 'green' },
@@ -49,6 +51,8 @@ export function SheetNovoMarco({
 
   const [descricao, setDescricao] = useState<string>('');
   const [tags, setTags] = useState<string[]>([]);
+  // M33: destinatario / tema do marco. Default {tipo:'mim'}.
+  const [para, setPara] = useState<Para>({ tipo: 'mim' });
   const [salvando, setSalvando] = useState<boolean>(false);
 
   const podeSalvar = descricao.trim().length > 0;
@@ -76,6 +80,7 @@ export function SheetNovoMarco({
         descricao: descricao.trim(),
         tags,
         auto: false,
+        para,
       };
 
       await saveMarco({ meta, vaultRoot });
@@ -90,7 +95,7 @@ export function SheetNovoMarco({
     } finally {
       setSalvando(false);
     }
-  }, [podeSalvar, vaultRoot, pessoaAtiva, descricao, tags, toast, onSalvo]);
+  }, [podeSalvar, vaultRoot, pessoaAtiva, descricao, tags, para, toast, onSalvo]);
 
   return (
     <BottomSheetView style={{ flex: 1 }}>
@@ -177,6 +182,11 @@ export function SheetNovoMarco({
             onChange={setTags}
           />
         </View>
+
+        {/* M33: destinatario / tema do marco. Render dinamico via
+            useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
+            null e o default {tipo:'mim'} ja esta seedado. */}
+        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
 
         <View style={{ gap: spacing.sm, marginTop: spacing.base }}>
           <Button

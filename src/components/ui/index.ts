@@ -46,3 +46,5 @@ export { FAB } from './FAB';
 export type { FABProps } from './FAB';
 export { FABRadial } from './FABRadial';
 export type { FABRadialKey, FABRadialProps } from './FABRadial';
+export { SeletorPara } from './SeletorPara';
+export type { SeletorParaProps } from './SeletorPara';

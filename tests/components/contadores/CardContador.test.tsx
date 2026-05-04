@@ -16,6 +16,7 @@ const baseContador: Contador = {
   recorde: 28,
   resets: ['2026-04-01T08:00:00Z'],
   criado_em: '2026-02-04T14:00:00-03:00',
+  para: { tipo: 'mim' },
 };
 
 describe('CardContador', () => {

@@ -75,6 +75,7 @@ function fakeDiario(
     contexto_social: [],
     texto: 'algo.',
     midia: [],
+    para: { tipo: 'mim' },
   } as DiarioEmocionalMeta;
 }
 
@@ -147,6 +148,7 @@ describe('verificarMarcosAuto', () => {
         auto: true,
         origem: 'backend',
         hash: hashEsperado,
+        para: { tipo: 'mim' },
       } as Marco,
     ]);
 

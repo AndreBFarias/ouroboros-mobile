@@ -41,6 +41,7 @@ const marcoBase: Marco = {
   descricao: 'Algo importante.',
   tags: [],
   auto: false,
+  para: { tipo: 'mim' },
 };
 
 beforeEach(() => {

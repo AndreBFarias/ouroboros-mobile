@@ -32,6 +32,7 @@ import {
   Chip,
   ChipGroup,
   Screen,
+  SeletorPara,
   SHEET_80,
   Slider,
   Textarea,
@@ -57,6 +58,7 @@ import {
   type EventoMeta,
   type EventoModo,
 } from '@/lib/schemas/evento';
+import type { Para } from '@/lib/schemas/para';
 import {
   EVENTO_CATEGORIAS_OPTIONS,
   type EventoCategoria,
@@ -137,6 +139,8 @@ export default function Eventos() {
   const [intensidade, setIntensidade] = useState<number>(
     () => rascunho?.intensidade ?? INTENSIDADE_DEFAULT
   );
+  // M33: destinatario / tema da anotacao. Default {tipo:'mim'}.
+  const [para, setPara] = useState<Para>({ tipo: 'mim' });
   const [salvando, setSalvando] = useState<boolean>(false);
 
   // M24: snapshot do rascunho debounced. 'texto' vai como campo extra
@@ -240,6 +244,7 @@ export default function Eventos() {
       intensidade,
       fotos: [],
       midia,
+      para,
     };
 
     const validacao = EventoSchema.safeParse(meta);
@@ -420,6 +425,11 @@ export default function Eventos() {
             accessibilityLabel="slider como foi"
           />
         </MotiView>
+
+        {/* M33: destinatario / tema da anotacao. Render dinamico via
+            useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
+            null e o default {tipo:'mim'} ja esta seedado. */}
+        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
 
         <Text
           style={{

@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
 import { MidiaSchema } from '@/lib/schemas/midia';
+import { ParaSchema } from '@/lib/schemas/para';
 
 export const EventoModoSchema = z.enum(['positivo', 'negativo']);
 export type EventoModo = z.infer<typeof EventoModoSchema>;
@@ -32,6 +33,9 @@ export const EventoSchema = z
     // legados sem o campo. Refine abaixo bloqueia save de positivo
     // sem ao menos uma midia (conquistas exigem peso emocional).
     midia: z.array(MidiaSchema).default([]),
+    // Destinatario / tema da anotacao (M33). Discriminado: mim /
+    // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
+    para: ParaSchema,
   })
   .refine(
     (v) => v.modo !== 'positivo' || v.midia.length > 0,

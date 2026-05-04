@@ -24,6 +24,7 @@ const marcoBase: Marco = {
   descricao: 'Tres treinos nesta semana.',
   tags: ['treino'],
   auto: false,
+  para: { tipo: 'mim' },
 };
 
 beforeEach(() => {

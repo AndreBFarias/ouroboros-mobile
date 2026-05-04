@@ -5,6 +5,48 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M33 fechada (2026-05-04)
+
+Campo `para` em 4 schemas (Diário/Evento/Contador/Marco) + componente
+compartilhado `<SeletorPara>` plugado em 4 telas.
+
+**Entregáveis:**
+- `src/lib/schemas/para.ts` (novo) — `ParaSchema`
+  discriminatedUnion (mim/outra com pessoa/casal). Default
+  `{ tipo: 'mim' }` para backward-compat com .md v1.
+- 4 schemas estendidos: `diario_emocional.ts`, `evento.ts`,
+  `contador.ts`, `marco.ts`. Barrel atualizado.
+- `src/components/ui/SeletorPara.tsx` (novo, 127L) — 3 chips
+  dinâmicos. Retorna null em modo `'sozinho'` (esconde
+  inteiramente). Label da opção `outra` usa `useNomeDe`.
+  `useSettings.pessoa.tipoCompanhia` (canônico M29).
+- `src/components/ui/index.ts` — exporta SeletorPara.
+- 4 telas plugadas com `<SeletorPara value={para} onChange={setPara}
+  disabled={salvando} />` antes do botão final:
+  - `app/diario-emocional.tsx`
+  - `app/eventos.tsx`
+  - `app/contadores/novo.tsx`
+  - `src/components/screens/SheetNovoMarco.tsx`
+- `src/lib/marcos/marcosAuto.ts` — builder de marcos automáticos
+  seta `para: { tipo: 'mim' }` por default.
+- 9 fixtures de teste existentes ajustadas com `para: {tipo:'mim'}`
+  (tipo TS estritamente correto após extensão de schema).
+- `tests/components/ui/SeletorPara.test.tsx` (novo, 12 cases) +
+  testes nos 4 schemas (+24).
+
+**Aritmética:** 1221 → 1257 testes (+36), 137 → 138 suítes (+1),
+tsc 0 erros, anonimato OK. Bundle não re-medido (sprint aditiva
+schema+UI; sem deps novas).
+
+**TODO documentado (deferido para M40):**
+- `src/lib/hooks/useHoje.ts` filtro por `para` — M40 (Home v2
+  status do casal) é o consumidor natural; código morto se
+  adicionado agora.
+
+**Sem mudança em Tarefa:**
+- M31 já tem `pessoa_destino` (semântica diferente: quem deve
+  fazer vs. tema/destinatário emocional).
+
 ### M32 fechada (2026-05-04)
 
 Contador v2: mensagens de apoio sóbrias + indicador discreto de

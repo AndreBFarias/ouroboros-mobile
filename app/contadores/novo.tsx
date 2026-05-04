@@ -19,6 +19,7 @@ import {
   Header,
   Input,
   Screen,
+  SeletorPara,
   useToast,
 } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -36,6 +37,7 @@ import {
   sufixoRandom,
   type Contador,
 } from '@/lib/schemas/contador';
+import type { Para } from '@/lib/schemas/para';
 import { formatDateYmd } from '@/lib/vault/paths';
 
 function nowIso(): string {
@@ -104,6 +106,8 @@ export default function ContadoresNovo() {
     return new Date();
   });
   const [pickerAberto, setPickerAberto] = useState<boolean>(false);
+  // M33: destinatario / tema do contador. Default {tipo:'mim'}.
+  const [para, setPara] = useState<Para>({ tipo: 'mim' });
   const [salvando, setSalvando] = useState<boolean>(false);
 
   const tituloValido = titulo.trim().length > 0;
@@ -152,6 +156,7 @@ export default function ContadoresNovo() {
         recorde: 0,
         resets: [],
         criado_em: nowIso(),
+        para,
       };
 
       const parsed = ContadorSchema.safeParse(proposto);
@@ -171,7 +176,7 @@ export default function ContadoresNovo() {
     } finally {
       setSalvando(false);
     }
-  }, [vaultRoot, salvando, formValido, titulo, dataInicio, toast, router]);
+  }, [vaultRoot, salvando, formValido, titulo, dataInicio, para, toast, router]);
 
   return (
     <Screen>
@@ -240,6 +245,11 @@ export default function ContadoresNovo() {
             />
           ) : null}
         </View>
+
+        {/* M33: destinatario / tema do contador. Render dinamico via
+            useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
+            null e o default {tipo:'mim'} ja esta seedado. */}
+        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
       </ScrollView>
 
       <View style={{ paddingBottom: spacing.base }}>

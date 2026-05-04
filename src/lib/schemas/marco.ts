@@ -13,6 +13,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 import { PessoaAutorSchema } from '@/lib/schemas/pessoa';
+import { ParaSchema } from '@/lib/schemas/para';
 
 const Iso8601 = z
   .string()
@@ -39,6 +40,9 @@ export const MarcoSchema = z.object({
   // hash: SHA-256 truncado 12 chars do conteudo canonical (autor +
   // descricao). Idempotencia entre client e backend.
   hash: z.string().length(12).optional(),
+  // Destinatario / tema do marco (M33). Discriminado: mim /
+  // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
+  para: ParaSchema,
 });
 
 export type Marco = z.infer<typeof MarcoSchema>;

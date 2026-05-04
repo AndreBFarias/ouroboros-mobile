@@ -49,6 +49,7 @@ function fixture(over: Partial<Contador> = {}): Contador {
     recorde: 0,
     resets: [],
     criado_em: '2026-02-04T14:00:00-03:00',
+    para: { tipo: 'mim' },
     ...over,
   };
 }

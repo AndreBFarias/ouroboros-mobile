@@ -79,6 +79,55 @@ describe('MarcoSchema', () => {
   });
 });
 
+describe('MarcoSchema campo para (M33)', () => {
+  it('default {tipo:"mim"} quando campo omitido (compat .md v1)', () => {
+    const out = MarcoSchema.parse(baseMarco);
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para mim explicito', () => {
+    const out = MarcoSchema.parse({
+      ...baseMarco,
+      para: { tipo: 'mim' },
+    });
+    expect(out.para).toEqual({ tipo: 'mim' });
+  });
+
+  it('aceita para outra pessoa (pessoa_a)', () => {
+    const out = MarcoSchema.parse({
+      ...baseMarco,
+      para: { tipo: 'outra', pessoa: 'pessoa_a' },
+    });
+    expect(out.para).toEqual({ tipo: 'outra', pessoa: 'pessoa_a' });
+  });
+
+  it('aceita para o casal', () => {
+    const out = MarcoSchema.parse({
+      ...baseMarco,
+      para: { tipo: 'casal' },
+    });
+    expect(out.para).toEqual({ tipo: 'casal' });
+  });
+
+  it('rejeita tipo invalido em para', () => {
+    expect(() =>
+      MarcoSchema.parse({
+        ...baseMarco,
+        para: { tipo: 'parceiro' },
+      })
+    ).toThrow();
+  });
+
+  it('rejeita outra sem pessoa', () => {
+    expect(() =>
+      MarcoSchema.parse({
+        ...baseMarco,
+        para: { tipo: 'outra' },
+      })
+    ).toThrow();
+  });
+});
+
 describe('MarcoOrigemSchema', () => {
   it('aceita "backend" e "client"', () => {
     expect(MarcoOrigemSchema.parse('backend')).toBe('backend');

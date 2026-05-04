@@ -10,6 +10,7 @@
 import { z } from 'zod';
 import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
 import { MidiaSchema } from '@/lib/schemas/midia';
+import { ParaSchema } from '@/lib/schemas/para';
 
 export const DiarioEmocionalModoSchema = z.enum(['trigger', 'vitoria']);
 export type DiarioEmocionalModo = z.infer<typeof DiarioEmocionalModoSchema>;
@@ -47,6 +48,9 @@ export const DiarioEmocionalSchema = z
     // legados sem o campo. Refine abaixo bloqueia save de vitoria
     // sem ao menos uma midia (conquistas exigem peso emocional).
     midia: z.array(MidiaSchema).default([]),
+    // Destinatario / tema da anotacao (M33). Discriminado: mim /
+    // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
+    para: ParaSchema,
   })
   .refine(
     (v) => v.modo === 'trigger' || v.funcionou === undefined,
