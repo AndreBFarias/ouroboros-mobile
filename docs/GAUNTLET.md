@@ -257,9 +257,19 @@ Auditoria 2026-05-04 documentou os erros operacionais mais comuns.
 
 ## Próximos passos
 
-- M-GAUNTLET-LEAK-CHECK — script CI que confirma `expo export
-  --platform android` sem `__gauntlet`.
-- M-GAUNTLET-SEED-V2 — fixtures realistas (humores 30d, diários
-  3, eventos 7).
-- M-GAUNTLET-FAST-BOOT — pré-cache de fontes JetBrainsMono para
-  encurtar boot inicial.
+- M-GAUNTLET-DEAD-CODE-V2 — refactor para tornar gauntlet
+  realmente dead-code em release Android (achado de
+  `M-GAUNTLET-LEAK-CHECK` 2026-05-04).
+
+## Histórico de melhorias
+
+- **M-GAUNTLET-LEAK-CHECK** (2026-05-04) — script
+  `scripts/check_gauntlet_leak.sh` valida bundle Android sem
+  marcadores Gauntlet.
+- **M-GAUNTLET-SEED-V2** (2026-05-04) — fixtures determinísticas
+  (humores-30d 33 registros, diarios-3, eventos-7) + API
+  `seedComDados(fixture)`.
+- **M-GAUNTLET-FAST-BOOT** (2026-05-04) — fontes JetBrainsMono
+  pré-cacheadas em `public/fonts/` + `<link rel="preload">` em
+  `app/+html.tsx`. Boot esperado <5s (vs 30-60s do `useFonts` SDK
+  54 web sem preload).

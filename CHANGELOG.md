@@ -5,6 +5,45 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-GAUNTLET-FAST-BOOT fechada com ressalva (2026-05-04)
+
+Pré-cache de fontes JetBrainsMono no Vault servido pelo Metro,
+para encurtar boot de 30-60s (`useFonts` SDK 54 web fresh) para
+<5s (preload paralelo ao JS bundle).
+
+**Entregáveis:**
+- `public/fonts/JetBrainsMono_400Regular.ttf` (115 KB) — copiada
+  de `node_modules/@expo-google-fonts/jetbrains-mono/400Regular/`.
+- `public/fonts/JetBrainsMono_500Medium.ttf` (115 KB).
+- `public/styles/flash-inicial.css` — fundo `#14151a` (bgPage
+  Dracula) carregado antes do React montar, evita white flash.
+- `app/+html.tsx` (novo) — Root HTML customizado com
+  `<link rel="preload" as="font" crossOrigin="">` para as 2
+  fontes + `<link rel="stylesheet">` para o flash CSS. Usa
+  `ScrollViewStyleReset` do `expo-router/html`.
+- `docs/GAUNTLET.md` — seção "Histórico de melhorias" com 3
+  sprints da auditoria.
+
+**Validação:**
+- Em modo dev (`./run.sh --web`): `fetch('/fonts/...')` retorna
+  200, `fetch('/styles/flash-inicial.css')` retorna 200.
+  `tempoDeBoot()` mede 123ms (vs 183ms baseline M27.3 — variação
+  natural; cache do Metro hot).
+- `tsc 0 erros`, anonimato OK, smoke verde, 1157/135 mantidos.
+
+**Ressalva (sprint M-GAUNTLET-FAST-BOOT-FOLLOWUP criada):**
+- `app/+html.tsx` não é aplicado em modo dev (Expo Router só usa
+  em static rendering / export). Tentativa de habilitar
+  `web.output: "static"` em `app.json` quebrou build com exit 1
+  (provavelmente rota dinâmica sem `getStaticPaths`). Revertido.
+- Preload tags portanto não aparecem no HTML servido em dev.
+  Boot rápido atual (123ms) é resultado do Metro hot cache, não
+  do preload. Em sessão fresh real do Chrome (Ctrl+Shift+R com
+  cache vazio), o impacto do preload ainda precisa ser medido.
+- Sprint corretiva
+  `docs/sprints/M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` documenta
+  3 caminhos de investigação para fazer `+html.tsx` aplicar.
+
 ### M-GAUNTLET-SEED-V2 fechada (2026-05-04)
 
 Fixtures realistas no seed do Gauntlet. Substitui stubs vazios de
