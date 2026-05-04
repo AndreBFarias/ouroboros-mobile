@@ -18,7 +18,6 @@ import {
   ScrollView,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Dumbbell } from 'lucide-react-native';
@@ -43,6 +42,7 @@ import {
   excluirExercicio,
 } from '@/lib/vault/exercicios';
 import { adicionarTreinoLivre } from '@/lib/exercicios/adicionarTreinoLivre';
+import { useLarguraFrame } from '@/lib/ui/useLarguraFrame';
 import { formatGrupoMuscular } from '@/lib/exercicios/grupos';
 import type { Exercicio } from '@/lib/schemas/exercicio';
 
@@ -65,7 +65,7 @@ export default function DetalheExercicio() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const dim = useWindowDimensions();
+  const larguraFrame = useLarguraFrame();
 
   const [exercicio, setExercicio] = useState<Exercicio | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -175,7 +175,9 @@ export default function DetalheExercicio() {
     );
   }
 
-  const larguraConteudo = dim.width - spacing.lg * 2;
+  // Em web usa FRAME_W via useLarguraFrame; em native usa a largura
+  // dinamica do viewport (orientacao, split-screen).
+  const larguraConteudo = larguraFrame - spacing.lg * 2;
 
   return (
     <Screen>

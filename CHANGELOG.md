@@ -5,6 +5,59 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M11.3 fechada (2026-05-04)
+
+`useLarguraFrame()` hook em `src/lib/ui/useLarguraFrame.ts` que
+retorna **constante 412** em web (`Platform.OS === 'web'`) e
+`useWindowDimensions().width` real em native. Centraliza a lógica
+para layouts dependentes do frame mobile do `FrameMobileGauntlet`
+(412×892dp aplicado em todas as rotas dev web).
+
+**Bug confirmado pelo usuário em browser real (2026-05-04):** card
+de foto na tab Memórias aba Fotos vazava para fora do frame após
+adicionar 1 foto via `__gauntlet.adicionarFotoMock()`. Causa raiz:
+`useWindowDimensions().width` retorna a largura do **viewport**
+(1280px) em web, não a do frame.
+
+**Arquivos novos (3):**
+- `src/lib/ui/useLarguraFrame.ts` — hook + constante `FRAME_W = 412`.
+- `tests/lib/ui/useLarguraFrame.test.ts` — 3 cases (web=412,
+  native dim.width, native largura dinâmica).
+- `tests/e2e/playwright/m11-3-largura-frame.e2e.ts` — E2E mede
+  `getBoundingClientRect()` da thumb (esperado 100-160px).
+
+**Arquivos modificados (3 consumidores migrados):**
+- `src/components/screens/MemoriasFotosTab.tsx:37` — `dim.width`
+  → `useLarguraFrame()` no cálculo de `thumbSize`.
+- `app/medidas/index.tsx:105` — idem para `larguraCard` e
+  `larguraSlider`.
+- `app/exercicios/[slug].tsx:68` — idem para `larguraConteudo`.
+
+Auditoria via `grep useWindowDimensions src/ app/` confirmou 3/3
+consumidores reais (`CardComparativo.tsx:35` é menção em comentário,
+não import).
+
+**Aritmética:** 1289 → 1292 testes (+3), 144 → 145 suítes (+1).
+TS strict 0, anonimato OK, smoke OK. Bundle Hermes 8.84 MB.
+
+**Validação visual via Gauntlet:**
+- `A-grid-fotos-3-cols.png` — 4 thumbs 118×118 em grid 3+1
+  perfeitamente contidas no frame (left=455, right=825, frame=434/846).
+- B/C (medidas + exercicios) **não capturados** porque rotas
+  travam com bug pré-existente RTCSliderWebComponent infinite
+  loop (`Maximum update depth exceeded` em
+  `@react-native-community/slider` versão web). Confirmado
+  pré-existente via `git stash` da M11.3 — bug persiste em
+  estado pré-sprint, portanto NÃO é regressão.
+
+**Sub-sprint colateral (anti-débito):**
+- **M-SLIDER-WEB-LOOP** — `RTCSliderWebComponent` em loop infinito
+  trava `/medidas` e `/exercicios/<slug>` em web. Bug pré-existente
+  desde M12/M13 (passou despercebido porque essas rotas nunca
+  foram validadas em Gauntlet antes). Spec
+  `docs/sprints/M-SLIDER-WEB-LOOP-spec.md` propõe wrapper
+  `<Slider>` web/native com `<input type="range">` em web.
+
 ### M34 fechada (2026-05-04)
 
 MenuCapturaVerde adicionado à tab Memórias. FAB **verde** (Dracula

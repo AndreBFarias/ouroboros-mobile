@@ -9,7 +9,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import {
@@ -28,13 +28,14 @@ import {
 import { FotoDetalhe } from './FotoDetalhe';
 import { adicionarFotoManual } from '@/lib/midia/adicionarFotoManual';
 import { capturarFoto } from '@/lib/midia/capturarFoto';
+import { useLarguraFrame } from '@/lib/ui/useLarguraFrame';
 
 const COLS = 3;
 
 export function MemoriasFotosTab(): ReactNode {
   const router = useRouter();
   const { fotos, recarregar } = useFotosAgregadas();
-  const dim = useWindowDimensions();
+  const larguraFrame = useLarguraFrame();
   const fotoRef = useRef<BottomSheetRef>(null);
 
   const [fotoSelecionada, setFotoSelecionada] = useState<FotoAgregada | null>(
@@ -42,12 +43,14 @@ export function MemoriasFotosTab(): ReactNode {
   );
 
   // Tamanho de cada thumbnail. width disponível - 2*padding lateral
-  // - 2*gaps internos.
+  // - 2*gaps internos. Em web usa FRAME_W (412) via useLarguraFrame
+  // para que a grid respeite o frame mobile do Gauntlet em vez de
+  // estourar com a largura do viewport desktop.
   const thumbSize = useMemo(() => {
     const padding = spacing.lg * 2;
     const gaps = spacing.sm * (COLS - 1);
-    return Math.floor((dim.width - padding - gaps) / COLS);
-  }, [dim.width]);
+    return Math.floor((larguraFrame - padding - gaps) / COLS);
+  }, [larguraFrame]);
 
   const handlePress = useCallback((foto: FotoAgregada) => {
     setFotoSelecionada(foto);

@@ -14,7 +14,6 @@ import {
   ScrollView,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -30,6 +29,7 @@ import type { FotoMedida } from '@/components/medidas';
 import type { SparklineMedidaPoint } from '@/components/data';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
+import { useLarguraFrame } from '@/lib/ui/useLarguraFrame';
 import { listarMedidas, type MedidasPeriodo } from '@/lib/vault/medidas';
 import {
   MEDIDAS_CAMPOS,
@@ -102,7 +102,7 @@ function montarFotos(
 export default function ComparativoMedidas() {
   const router = useRouter();
   const vaultRoot = useVault((s) => s.vaultRoot);
-  const dim = useWindowDimensions();
+  const larguraFrame = useLarguraFrame();
 
   const [periodo, setPeriodo] = useState<MedidasPeriodo>('tudo');
   const [lista, setLista] = useState<Medida[]>([]);
@@ -134,17 +134,18 @@ export default function ComparativoMedidas() {
   );
 
   // Largura disponível para cada card (grid 2 cols com gap, padding
-  // lateral 20dp da Screen, gap interno 8dp).
+  // lateral 20dp da Screen, gap interno 8dp). Em web usa FRAME_W
+  // via useLarguraFrame para respeitar o frame mobile do Gauntlet.
   const larguraCard = useMemo(() => {
     const padding = spacing.lg * 2;
     const gap = spacing.sm;
-    return Math.floor((dim.width - padding - gap) / 2);
-  }, [dim.width]);
+    return Math.floor((larguraFrame - padding - gap) / 2);
+  }, [larguraFrame]);
 
   // Largura para SliderFotos (full width menos padding lateral).
   const larguraSlider = useMemo(
-    () => Math.max(0, dim.width - spacing.lg * 2),
-    [dim.width]
+    () => Math.max(0, larguraFrame - spacing.lg * 2),
+    [larguraFrame]
   );
 
   const fotosAgregadas = useMemo(
