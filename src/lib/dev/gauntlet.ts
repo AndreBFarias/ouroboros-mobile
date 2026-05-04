@@ -25,6 +25,7 @@ import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useSessao } from '@/lib/stores/sessao';
 import { useNavegacao } from '@/lib/stores/navegacao';
+import { useGaleriaMock } from '@/lib/dev/galeriaMock';
 
 // __DEV__ e injetado pelo react-native (true em dev, false em release).
 // Declarado para typecheck strict.
@@ -90,6 +91,11 @@ export interface GauntletAPI {
   tempoDeBoot(): number | null;
   // Retorna buffer de console.error capturado nesta sessao.
   consoleErros(): Array<{ ts: number; msg: string }>;
+  // M11.1 (§2.6): simula adicao manual de foto na aba Fotos sem
+  // chamar expo-image-picker (que nao funciona em RN-Web). Insere
+  // entrada in-memory na useGaleriaMock que o useFotosAgregadas
+  // mescla quando GAUNTLET_ATIVO. No-op em mobile (guard ja filtra).
+  adicionarFotoMock(): Promise<void>;
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -169,6 +175,8 @@ function aplicarReset(): void {
   });
   useSessao.setState({ ultimaRota: null });
   useNavegacao.setState({ menuAberto: false });
+  // M11.1: galeria mock zerada para que cada caso E2E comece limpo.
+  useGaleriaMock.getState().limpar();
   // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
   // em web para que reload nao re-hidrate estado anterior. Em mobile,
   // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
@@ -250,6 +258,22 @@ function consoleErros(): Array<{ ts: number; msg: string }> {
   return errosCapturados.slice();
 }
 
+// M11.1: insere entrada deterministica em useGaleriaMock simulando
+// "usuario tocou FAB + escolheu foto". Path nao bate em arquivo
+// real -- e so um marcador para o useFotosAgregadas mostrar a
+// thumbnail no grid quando estiver em web/dev.
+async function aplicarAdicionarFotoMock(): Promise<void> {
+  const ts = Date.now();
+  const data = new Date(ts).toISOString().slice(0, 10);
+  const slug = `mock-${ts}`;
+  useGaleriaMock.getState().adicionar({
+    uri: `web://mock/foto-${ts}.jpg`,
+    data,
+    origemPath: `media/fotos/mock-${ts}.jpg`,
+    origemSlug: slug,
+  });
+}
+
 const api: GauntletAPI = {
   seed: comGuard(aplicarSeed, undefined as void),
   reset: comGuard(aplicarReset, undefined as void),
@@ -294,6 +318,10 @@ const api: GauntletAPI = {
   aguardarBoot,
   tempoDeBoot,
   consoleErros,
+  adicionarFotoMock: async () => {
+    if (!GAUNTLET_ATIVO) return;
+    await aplicarAdicionarFotoMock();
+  },
 };
 
 // Auditoria 2026-05-04 (item 27): captura console.error para o

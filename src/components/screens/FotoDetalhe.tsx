@@ -14,6 +14,8 @@ const ORIGEM_LABEL: Record<FotoAgregada['origem'], string> = {
   evento: 'Evento',
   medida: 'Medida',
   diario: 'Diário',
+  // M11.1: foto adicionada manualmente pelo FAB + da aba Fotos.
+  'galeria-manual': 'Galeria',
 };
 
 export interface FotoDetalheProps {

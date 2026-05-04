@@ -10,9 +10,11 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import {
   BottomSheet,
+  Button,
   EmptyState,
   FAB,
   SHEET_60,
@@ -34,10 +36,19 @@ import { slugifyTreino } from '@/lib/treinos/slug';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
 export function MemoriasTreinosTab(): ReactNode {
+  const router = useRouter();
   const { sessoes, recarregar } = useTreinos();
   const detalheRef = useRef<BottomSheetRef>(null);
   const novoRef = useRef<BottomSheetRef>(null);
   const editarRef = useRef<BottomSheetRef>(null);
+
+  // M11.1 (§2.2): atalho navegacional para a galeria de exercicios.
+  // Usuario que ainda nao tem exercicios cadastrados (FAB Salvar
+  // disabled no SheetNovoTreino) consegue ir direto para /exercicios
+  // sem precisar abrir o sheet primeiro.
+  const handleAbrirGaleria = useCallback(() => {
+    router.push('/exercicios');
+  }, [router]);
 
   const [sessaoSelecionada, setSessaoSelecionada] =
     useState<TreinoSessao | null>(null);
@@ -138,12 +149,14 @@ export function MemoriasTreinosTab(): ReactNode {
             : `${total} ${total === 1 ? 'treino' : 'treinos'} em 90 dias.`}
         </Text>
 
-        <HeatmapBase
-          celulas={celulas}
-          paleta={PALETA_TREINOS}
-          onCelulaPress={handleCelulaPress}
-          accessibilityLabel="heatmap de treinos"
-        />
+        <View style={{ alignItems: 'center' }} accessibilityLabel="container heatmap centralizado">
+          <HeatmapBase
+            celulas={celulas}
+            paleta={PALETA_TREINOS}
+            onCelulaPress={handleCelulaPress}
+            accessibilityLabel="heatmap de treinos"
+          />
+        </View>
 
         <View
           style={{
@@ -189,7 +202,14 @@ export function MemoriasTreinosTab(): ReactNode {
         </View>
 
         {total === 0 ? (
-          <EmptyState frase="Vai aparecer aqui assim que você treinar." />
+          <View style={{ gap: spacing.base }}>
+            <EmptyState frase="Vai aparecer aqui assim que você treinar." />
+            <Button
+              variant="ghost"
+              label="Cadastrar exercícios na Galeria"
+              onPress={handleAbrirGaleria}
+            />
+          </View>
         ) : null}
       </ScrollView>
 

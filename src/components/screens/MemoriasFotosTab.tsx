@@ -1,16 +1,21 @@
-// Aba Fotos da MemoriasScreen. Galeria agregada que varre 5 fontes
-// do Vault e renderiza grid 3 colunas em ordem cronologica desc.
-// Tap abre FotoDetalhe com metadata + atalho para registro origem.
+// Aba Fotos da MemoriasScreen. Galeria agregada que varre fontes do
+// Vault e renderiza grid 3 colunas em ordem cronologica desc. Tap
+// abre FotoDetalhe com metadata + atalho para registro origem.
 //
-// Empty state quando nenhuma foto encontrada.
+// M11.1 (§2.1): FAB roxo + adiciona foto manual via expo-image-picker
+// em mobile real; em web/dev (GAUNTLET_ATIVO) chama
+// __gauntlet.adicionarFotoMock() que insere entrada in-memory.
+// Empty state ganha texto secundario.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import {
   BottomSheet,
   EmptyState,
+  FAB,
   SHEET_70,
   type BottomSheetRef,
 } from '@/components/ui';
@@ -20,12 +25,13 @@ import {
   type FotoAgregada,
 } from '@/lib/hooks/useFotosAgregadas';
 import { FotoDetalhe } from './FotoDetalhe';
+import { adicionarFotoManual } from '@/lib/midia/adicionarFotoManual';
 
 const COLS = 3;
 
 export function MemoriasFotosTab(): ReactNode {
   const router = useRouter();
-  const { fotos } = useFotosAgregadas();
+  const { fotos, recarregar } = useFotosAgregadas();
   const dim = useWindowDimensions();
   const fotoRef = useRef<BottomSheetRef>(null);
 
@@ -57,6 +63,17 @@ export function MemoriasFotosTab(): ReactNode {
     setFotoSelecionada(null);
   }, [fotoSelecionada, router]);
 
+  // M11.1: handler do FAB. Em mobile real abre expo-image-picker e
+  // copia para media/fotos/. Em web/dev (GAUNTLET_ATIVO) o helper
+  // delega ao __gauntlet.adicionarFotoMock(). Apos sucesso recarrega
+  // a galeria para refletir a entrada nova no grid.
+  const handleAdicionarFoto = useCallback(async () => {
+    const sucesso = await adicionarFotoManual();
+    if (sucesso) {
+      await recarregar();
+    }
+  }, [recarregar]);
+
   // Agrupa em linhas de COLS para grid manual (FlatList numColumns
   // tem bug em web).
   const linhas = useMemo(() => {
@@ -79,7 +96,20 @@ export function MemoriasFotosTab(): ReactNode {
         showsVerticalScrollIndicator={false}
       >
         {fotos.length === 0 ? (
-          <EmptyState frase="Suas fotos vão aparecer aqui conforme você registrar." />
+          <View style={{ gap: spacing.sm }}>
+            <EmptyState frase="Suas fotos vão aparecer aqui conforme você registrar." />
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 13,
+                lineHeight: 20,
+                textAlign: 'center',
+              }}
+            >
+              Toque + para adicionar uma foto agora.
+            </Text>
+          </View>
         ) : (
           linhas.map((linha, idx) => (
             <View
@@ -119,6 +149,14 @@ export function MemoriasFotosTab(): ReactNode {
           ))
         )}
       </ScrollView>
+
+      <FAB
+        icon={<Plus size={24} color={colors.bg} strokeWidth={2} />}
+        onPress={() => {
+          void handleAdicionarFoto();
+        }}
+        accessibilityLabel="adicionar foto"
+      />
 
       <BottomSheet ref={fotoRef} snapPoints={SHEET_70} index={-1}>
         {fotoSelecionada ? (

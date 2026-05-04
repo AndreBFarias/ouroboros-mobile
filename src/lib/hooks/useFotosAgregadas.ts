@@ -23,11 +23,14 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
+import { useGaleriaMock } from '@/lib/dev/galeriaMock';
+import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
 
-// Origens declaradas. Em sprints futuras, novas pastas (medidas,
-// inbox/mente/diario com midia, etc) entram nesta enum sem mexer
-// em consumidores.
-export type FotoOrigem = 'evento' | 'medida' | 'diario';
+// Origens declaradas. M11.1 adicionou 'galeria-manual' para fotos
+// inseridas via FAB + na aba Fotos da MemoriasScreen. Em sprints
+// futuras, novas pastas (inbox/mente/diario com midia, etc) entram
+// nesta enum sem mexer em consumidores.
+export type FotoOrigem = 'evento' | 'medida' | 'diario' | 'galeria-manual';
 
 export interface FotoAgregada {
   // URI absoluto resolvido para <Image source={{ uri }} />.
@@ -127,6 +130,34 @@ async function lerMedidas(
   return out;
 }
 
+// M11.1: le pasta media/fotos/<YYYY-MM-DD>-<rand>.jpg (helper canonico
+// mediaFotosPath em paths.ts). Cada arquivo vira uma FotoAgregada com
+// origem 'galeria-manual'. Data extraida do nome do arquivo (10 chars
+// iniciais). Sem schema zod -- nao ha .md companion para fotos manuais
+// nesta sprint; entrada e o proprio binario.
+async function lerGaleriaManual(vaultRoot: string): Promise<FotoAgregada[]> {
+  const folder = joinUri(vaultRoot, VAULT_FOLDERS.mediaFotos);
+  const arquivos = await listVaultFolder(folder, '.jpg');
+  const out: FotoAgregada[] = [];
+  for (const uri of arquivos) {
+    const nome = decodeURIComponent(uri).split('/').pop() ?? '';
+    const semExt = nome.replace(/\.jpg$/i, '');
+    // Espera padrao YYYY-MM-DD-<rand>. Se nao bater, ignora.
+    const match = semExt.match(/^(\d{4}-\d{2}-\d{2})(?:-(.+))?$/);
+    if (!match) continue;
+    const data = match[1];
+    const slug = match[2] ?? semExt;
+    out.push({
+      uri,
+      data,
+      origem: 'galeria-manual',
+      origemPath: `${VAULT_FOLDERS.mediaFotos}/${nome}`,
+      origemSlug: slug,
+    });
+  }
+  return out;
+}
+
 export interface UseFotosAgregadasResult {
   fotos: FotoAgregada[];
   loading: boolean;
@@ -139,6 +170,9 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   // Filtro efetivo respeita pessoa.vaultCompartilhado.
   const filtroPessoa = useFiltroPessoaEfetivo();
+  // M11.1: assina galeria mock so quando GAUNTLET_ATIVO. Em mobile
+  // real, a store esta congelada vazia e o seletor sempre devolve [].
+  const fotosMock = useGaleriaMock((s) => s.fotos);
 
   const [fotos, setFotos] = useState<FotoAgregada[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -154,14 +188,15 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     setError(null);
     const autor = filtroPessoa === 'ambos' ? null : pessoaAtiva;
     try {
-      // Eventos (M07) + medidas (M12). M06.5 adicionara midia em
-      // diario emocional. Estrutura do hook já esta pronta para
-      // crescer sem consumer ter que mudar.
-      const [eventos, medidas] = await Promise.all([
+      // Eventos (M07) + medidas (M12) + galeria-manual (M11.1).
+      // M06.5 adicionara midia em diario emocional. Estrutura do
+      // hook ja esta pronta para crescer sem consumer ter que mudar.
+      const [eventos, medidas, galeriaManual] = await Promise.all([
         lerEventos(vaultRoot, autor),
         lerMedidas(vaultRoot, autor),
+        lerGaleriaManual(vaultRoot),
       ]);
-      const todas = [...eventos, ...medidas];
+      const todas = [...eventos, ...medidas, ...galeriaManual];
       // Mais recentes primeiro.
       todas.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
       setFotos(todas);
@@ -182,5 +217,22 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     }, [carregar])
   );
 
-  return { fotos, loading, error, recarregar: carregar };
+  // M11.1: em web/dev (GAUNTLET_ATIVO), mescla as entradas da galeria
+  // mock por cima das do Vault. Em mobile real fotosMock e sempre []
+  // (a store nunca recebe entrada fora do helper guardado), entao
+  // este merge e benigno.
+  const fotosFinais: FotoAgregada[] = GAUNTLET_ATIVO && fotosMock.length > 0
+    ? [
+        ...fotosMock.map((m) => ({
+          uri: m.uri,
+          data: m.data,
+          origem: 'galeria-manual' as FotoOrigem,
+          origemPath: m.origemPath,
+          origemSlug: m.origemSlug,
+        })),
+        ...fotos,
+      ]
+    : fotos;
+
+  return { fotos: fotosFinais, loading, error, recarregar: carregar };
 }

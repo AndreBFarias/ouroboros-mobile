@@ -5,6 +5,85 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M11.1 fechada (2026-05-04)
+
+Memórias usável. Achado de uso real (orquestrador validando via
+Gauntlet) mostrou 4 problemas estruturais em `/memoria`. Sprint
+fechou os 4 com proof-of-work runtime + visual.
+
+**Entregáveis:**
+- `src/components/screens/MemoriasFotosTab.tsx` (+52L) — FAB roxo
+  "+" no canto inferior direito com `accessibilityLabel="adicionar
+  foto"`. Empty state ganha linha secundária "Toque + para
+  adicionar uma foto agora." Handler chama
+  `adicionarFotoManual()` e dispara `recarregar()`.
+- `src/lib/midia/adicionarFotoManual.ts` (79L, novo) — 3 caminhos:
+  web/dev (mock via Gauntlet), web release (no-op), mobile real
+  (`expo-image-picker` + `FileSystem.copyAsync` para
+  `media/fotos/<YYYY-MM-DD>-<rand>.jpg`).
+- `src/components/screens/MemoriasTreinosTab.tsx` (+34L) — atalho
+  ghost "Cadastrar exercícios na Galeria" no empty state da aba
+  Treinos navegando para `/exercicios`. `<HeatmapBase>` envolto em
+  `<View style={{ alignItems: 'center' }} accessibilityLabel="container heatmap centralizado">`.
+- `src/lib/dev/gauntlet.ts` (+28L) — API `adicionarFotoMock()` na
+  `GauntletAPI` com guard `GAUNTLET_ATIVO`. `reset()` limpa
+  `useGaleriaMock` para idempotência entre E2E.
+- `src/lib/dev/galeriaMock.ts` (32L, novo) — store zustand auxiliar
+  `useGaleriaMock` (web-only, alimentada apenas pelo Gauntlet).
+- `src/lib/hooks/useFotosAgregadas.ts` (+72L) — leitor novo
+  `lerGaleriaManual(vaultRoot)` varre `media/fotos/` (canônica
+  conforme `paths.ts:224`). `FotoOrigem` estende para
+  `'galeria-manual'`. Em web/dev mescla entradas do
+  `useGaleriaMock` por cima do Vault.
+- `src/components/screens/FotoDetalhe.tsx` (+2L) — Record de label
+  cobre nova origem.
+- 3 E2E novos em `tests/e2e/playwright/`:
+  `m11-1-marcos-criar.e2e.ts`, `m11-1-fotos-upload.e2e.ts`,
+  `m11-1-memorias-usavel.e2e.ts`.
+- 3 suítes Jest novas (`tests/lib/dev/galeriaMock.test.ts`,
+  `tests/lib/dev/gauntlet-adicionarFotoMock.test.ts`,
+  `tests/lib/midia/adicionarFotoManual.test.ts`) cobrindo +10
+  cases.
+
+**Aritmética:** 1126 → 1136 testes (+10), 130 → 133 suítes (+3),
+tsc 0 erros, anonimato OK, smoke OK.
+
+**Validação visual via Gauntlet (playwright MCP):**
+- Aba Treinos: heatmap centralizado matemático
+  (`getBoundingClientRect()` left=775 right=775 diff=0px no frame
+  mobile 412dp), atalho "Cadastrar exercícios na Galeria" presente
+  no DOM e visível na captura.
+- Aba Fotos: FAB com `aria-label="adicionar foto"` posicionado
+  inferior direito. Empty state mostra texto secundário.
+  `__gauntlet.adicionarFotoMock()` insere entrada e thumb
+  `[aria-label^="foto galeria-manual"]` aparece (delta=1).
+- Aba Marcos: FAB "+" presente.
+- 4 screenshots em
+  `docs/sprints/M11.1-screenshots-gauntlet/`:
+  `A-treinos-heatmap-centralizado.png`,
+  `B-fotos-com-fab.png`, `B2-fotos-com-mock.png`,
+  `C-marcos-aba.png`.
+
+**Divergências da spec resolvidas fielmente ao espírito:**
+- `MidiaSchema` não tem campos `origem`/`data` (é
+  `discriminatedUnion` minimalista). `'galeria-manual'` virou novo
+  valor de `FotoOrigem` no enum do hook agregador (não do schema).
+- Não existe "store da galeria agregada usada por M11" — galeria é
+  agregador puro de leitura. Solução: leitor novo
+  `lerGaleriaManual()` paralelo aos de eventos/medidas, varrendo a
+  pasta canônica `media/fotos/` (já existente em `paths.ts`, M22 +
+  M34).
+- Convenção real do projeto é
+  `media/fotos/<YYYY-MM-DD>-<rand>.jpg`, não a sugerida na spec
+  (`media/YYYY-MM-DD/IMG_<unix-ts>.jpg`). Adotada a real.
+
+**Sub-sprints abertas (anti-débito):**
+- `M01.6-spec.md` (proposto pelo executor) — `<Button>` aceitar
+  `accessibilityLabel` opcional desacoplado do label visível.
+- `M11.2-spec.md` (proposto pelo executor) — micro-impureza em
+  `useFotosAgregadas` lendo `useGaleriaMock` fora de
+  `GAUNTLET_ATIVO` (benigno, mas arquiteturalmente impuro).
+
 ### M-GAUNTLET-AUDITORIA fechada (2026-05-04)
 
 Auditor externo cego (subagente isolado) avaliou 30 itens em 7
