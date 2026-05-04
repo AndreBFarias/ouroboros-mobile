@@ -5,6 +5,52 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-GAUNTLET-FAST-BOOT-FOLLOWUP fechada (2026-05-04) — NÃO-FIX documentado
+
+Investigação dos 3 caminhos propostos pela spec para fazer
+`app/+html.tsx` (preload de fontes JetBrainsMono) aplicar em build
+web. Resultado:
+
+- **Caminho A — `web.output: "static"`:** **inviável.** Export quebra
+  com `TypeError: Cannot destructure property '__extends' of
+  'n.default' as it is undefined` no SSR de `framer-motion`
+  (transitiva via `moti@0.30`). Reproduzido em `npx expo export
+  --platform web` 2026-05-04. Causa raiz: `framer-motion` ESM importa
+  `tslib` em modo destructured; `expo-router 6.0.23` em SSG não
+  exporta `default` de `tslib` corretamente em Node.
+- **Caminho B — `web.output: "single"`:** export funciona
+  (5.73 MB JS bundle, 10.8 KB CSS), mas o `index.html` gerado é o
+  template padrão do `expo-router/cli` — `+html.tsx` **não é lido**.
+  Sem ganho.
+- **Caminho C — injeção JS via `_layout.tsx`:** funcionaria em dev e
+  build, mas a fonte só começaria a baixar após o bundle JS parsear,
+  anulando o ganho de paralelismo (objetivo da preload).
+
+**Decisão:** NÃO-FIX. Aguardar Expo SDK 55+ ou release `moti` que
+não quebre SSR. Os arquivos já entregues por M-GAUNTLET-FAST-BOOT
+(`public/fonts/JetBrainsMono_400Regular.ttf` 115 KB,
+`public/fonts/JetBrainsMono_500Medium.ttf` 115 KB,
+`public/styles/flash-inicial.css`, `app/+html.tsx`) **permanecem
+versionados e servidos pelo Metro em dev** — sem regressão funcional.
+Quando uma futura sprint retomar o caminho A (após fix upstream em
+moti ou expo-router), os preload tags voltam a ser efetivos
+imediatamente sem refactor.
+
+**Documentação atualizada:**
+- `app/+html.tsx` — comentário expandido com motivo e tracking.
+- `VALIDATOR_BRIEF.md` §4 — armadilha **A23** registrada.
+
+**Aritmética:** 1293 (baseline informado) → 1295 testes na execução
+(zero teste novo desta sprint; delta veio de baseline desatualizado
+no prompt). 145 suítes mantidas. `tsc --noEmit` 0.
+`check_anonimato.sh` 0. Bundle Hermes sem alteração (esta sprint não
+tocou em código de runtime).
+
+**Verificação `tempoDeBoot()`** não aplicável: investigação não
+introduziu mudança de runtime que pudesse impactar boot. O baseline
+informado pelo usuário continua válido (`< 200ms` em sessão fresh
+do Gauntlet).
+
 ### M34.3 fechada (2026-05-04) — FAB verde unificado
 
 `<MenuCapturaVerde>` aceita prop `acoesExtras` que renderiza ações

@@ -5,8 +5,50 @@ DEPENDE:    M-GAUNTLET-FAST-BOOT fechada (infra pronta)
 BLOQUEIA:   nenhuma (otimizacao residual)
 ESTIMATIVA: 1-2h
 PRIORIDADE: baixa
-STATUS:     [todo]
+STATUS:     [ok] -- NAO-FIX documentado (2026-05-04)
 ```
+
+## 0. Resolucao (2026-05-04) -- NAO-FIX documentado
+
+Investigacao executada conforme spec. Resultado:
+
+- **Caminho A (`web.output: "static"`)** -- inviavel. Reproduzido o
+  erro original em `npx expo export --platform web`:
+  ```
+  TypeError: Cannot destructure property '__extends' of 'n.default'
+  as it is undefined.
+    at factory (node_modules/tslib/modules/index.js:3:5)
+    at factory (node_modules/framer-motion/dist/es/render/dom/motion.mjs:1:1)
+  ```
+  Causa raiz: SSR Node de `framer-motion` (transitiva via `moti@0.30`)
+  via `expo-router 6.0.23` SSG nao resolve `default` de `tslib`
+  corretamente. Nao e bug do codigo de aplicacao.
+- **Caminho B (`web.output: "single"`)** -- export funciona (5.73 MB
+  bundle JS, 10.8 KB CSS). Mas o `index.html` gerado e o template
+  padrao do `expo-router/cli` -- `+html.tsx` **NAO e lido**. Sem
+  ganho.
+- **Caminho C (injecao JS no `_layout`)** -- a fonte so comecaria
+  a baixar apos o bundle JS parsear, anulando o ganho de paralelismo
+  (que e a razao de existir o preload).
+
+**Decisao:** NAO-FIX. Aguardar Expo SDK 55+ ou release `moti` que
+nao quebre SSR.
+
+**Sem regressao:** os arquivos de M-GAUNTLET-FAST-BOOT permanecem
+versionados (`public/fonts/JetBrainsMono_*.ttf`,
+`public/styles/flash-inicial.css`, `app/+html.tsx`) e servidos pelo
+Metro em dev. Quando uma futura sprint retomar o caminho A apos fix
+upstream, os preload tags voltam a ser efetivos imediatamente.
+
+**Documentacao:**
+- `app/+html.tsx` -- comentario expandido com motivo e tracking.
+- `VALIDATOR_BRIEF.md` §4 -- armadilha **A23** registrada com
+  causa raiz e decisao.
+- `CHANGELOG.md` `[Unreleased]` -- entrada com aritmetica completa.
+- `ROADMAP.md` -- status `[ok]`.
+
+**Aritmetica:** 1293 -> 1293 testes. 145 suites. tsc 0. anonimato 0.
+Bundle Hermes nao reexecutado (esta sprint nao tocou em runtime).
 
 ## 1. Achado (M-GAUNTLET-FAST-BOOT 2026-05-04)
 

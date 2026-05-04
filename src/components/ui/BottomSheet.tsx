@@ -9,6 +9,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
+import { type StyleProp, type ViewStyle } from 'react-native';
 import GorhomBottomSheet, {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
@@ -26,6 +27,11 @@ export interface BottomSheetProps {
   onChange?: (index: number) => void;
   children: ReactNode;
   enablePanDownToClose?: boolean;
+  // M34.1: containerStyle override opcional. Default aplica
+  // zIndex 100 para que sheets fiquem acima dos overlays globais
+  // FABMenu (z=10) e MenuLateral (z=20). Consumidor pode passar
+  // estilo proprio que sera mesclado ao default (override no merge).
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export type BottomSheetRef = GorhomBottomSheet;
@@ -33,6 +39,11 @@ export type BottomSheetRef = GorhomBottomSheet;
 // Fallback do snap quando consumidor não passa snapPoints. Vem do
 // preset compartilhado SHEET_DEFAULT (['40%', '85%'], M01.4).
 const DEFAULT_SNAP_POINTS: Array<string | number> = [...SHEET_DEFAULT];
+
+// M34.1: z-index default acima dos overlays globais. FABMenu = 10,
+// MenuLateral = 20. Sheet = 30 garante que botoes do rodape do
+// sheet (Cancelar, Salvar) nao fiquem cobertos pelo FAB roxo.
+const DEFAULT_CONTAINER_STYLE: ViewStyle = { zIndex: 100 };
 
 export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
   function BottomSheet(
@@ -42,6 +53,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       onChange,
       children,
       enablePanDownToClose = true,
+      containerStyle,
     },
     ref
   ) {
@@ -51,6 +63,18 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     const points = useMemo<Array<string | number>>(
       () => [...(snapPoints ?? DEFAULT_SNAP_POINTS)],
       [snapPoints]
+    );
+
+    // M34.1: merge containerStyle default + override do consumidor.
+    // Array de StyleProp permite que props especificas do consumidor
+    // sobrescrevam o zIndex 100 quando explicitamente desejado, mas
+    // mantem o default para todas as 4 chamadas atuais nao-customizadas.
+    const mergedContainerStyle = useMemo<StyleProp<ViewStyle>>(
+      () =>
+        containerStyle === undefined
+          ? DEFAULT_CONTAINER_STYLE
+          : [DEFAULT_CONTAINER_STYLE, containerStyle],
+      [containerStyle]
     );
 
     const renderBackdrop = useCallback(
@@ -81,6 +105,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
         onChange={handleChange}
         enablePanDownToClose={enablePanDownToClose}
         backdropComponent={renderBackdrop}
+        containerStyle={mergedContainerStyle}
         backgroundStyle={{
           backgroundColor: colors.bgAlt,
           borderTopLeftRadius: radius.sheet,

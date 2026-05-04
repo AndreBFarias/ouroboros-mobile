@@ -1,4 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import { Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 
 describe('Button', () => {
@@ -28,5 +29,42 @@ describe('Button', () => {
       expect(getByLabelText(`v ${variant}`)).toBeTruthy();
       unmount();
     }
+  });
+
+  it('deriva accessibilityLabel do label quando label e string', () => {
+    const { getByLabelText } = render(
+      <Button label="Salvar" onPress={() => undefined} />
+    );
+    expect(getByLabelText('Salvar')).toBeTruthy();
+  });
+
+  it('usa accessibilityLabel explicito sobre o label string (override)', () => {
+    const { getByLabelText, queryByLabelText } = render(
+      <Button
+        label="Salvar"
+        accessibilityLabel="botao salvar"
+        onPress={() => undefined}
+      />
+    );
+    expect(getByLabelText('botao salvar')).toBeTruthy();
+    expect(queryByLabelText('Salvar')).toBeNull();
+  });
+
+  it('aceita label ReactNode com accessibilityLabel desacoplado', () => {
+    const onPress = jest.fn();
+    const { getByLabelText, getByText } = render(
+      <Button
+        label={
+          <View>
+            <Text>Foo</Text>
+          </View>
+        }
+        accessibilityLabel="botao foo"
+        onPress={onPress}
+      />
+    );
+    expect(getByText('Foo')).toBeTruthy();
+    fireEvent.press(getByLabelText('botao foo'));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });

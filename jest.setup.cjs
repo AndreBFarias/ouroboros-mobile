@@ -207,6 +207,9 @@ jest.mock('@gorhom/bottom-sheet', () => {
         accessibilityLabel: 'bottom-sheet-mock',
         accessibilityHint:
           typeof props.index === 'number' ? `index=${props.index}` : undefined,
+        // M34.1: reflete containerStyle no element raiz para que
+        // testes possam asserir z-index default (30) e override.
+        style: props.containerStyle,
       },
       props.children
     );

@@ -57,13 +57,14 @@ spec PARA o ciclo e pede clarificação.
 | ~~10~~ | ~~M11.3~~ | ~~useLarguraFrame~~ — **fechada 2026-05-04** (1292/145, hook web→412 / native→dim.width, 3 consumidores migrados, sub-sprint M-SLIDER-WEB-LOOP criada) | `M11.3-spec.md` | — |
 | ~~11~~ | ~~M-SLIDER-WEB-LOOP~~ | ~~Wrapper Slider web/native~~ — **fechada 2026-05-04** (1293/145, `<input type="range">` em web, RNSlider em native, /medidas + /humor-rapido sem loop) | `M-SLIDER-WEB-LOOP-spec.md` | — |
 | ~~12~~ | ~~M34.3~~ | ~~FAB verde unificado~~ — **fechada 2026-05-04** (1293/145, FABs próprios removidos, 5 itens no sheet com Adicionar marco/foto/treino contextual + 4 captura, bundle 8.44 MB) | `M34.3-spec.md` | — |
-| 13 | **M34.1** | FABMenu z-index sobrepõe Cancelar do SheetFrase | `M34.1-spec.md` | 1-2h |
-| 14 | **M34.2** | Botão "Registrar foto" empty state Fotos contraste WCAG AA | `M34.2-spec.md` | 0,5h |
-| 15 | **M01.6** | `<Button>` aceitar `accessibilityLabel` opcional desacoplado | `M01.6-spec.md` | 1-2h |
-| 16 | **M11.2** | useGaleriaMock leitura dentro de useEffect guardado | `M11.2-spec.md` | 0,5-1h |
-| 17 | **M27.4** | SessaoBootGate "Max update depth" em reset+seed+abrir rápido | `M27.4-spec.md` | 1-2h |
-| 18 | **M-DEBITO-UI-UX-SEED-DUO** | 3 achados visuais consolidados (chip Outro laranja, botão Salvar fora viewport, toggle alarme animação) | `M-DEBITO-UI-UX-SEED-DUO-spec.md` | 1-2h |
-| 19 | **M-GAUNTLET-FAST-BOOT-FOLLOWUP** | `+html.tsx` aplicar em build estático | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` | 1-2h |
+| ~~13~~ | ~~M34.1~~ | ~~BottomSheet zIndex 100~~ — **fechada com ressalva 2026-05-04** (z-index aplicado, residual visual via M34.1.1) | `M34.1-spec.md` | — |
+| 14 | **M34.1.1** | FAB esconde quando MenuCapturaVerde abre (caminho B do M34.1 — flag sheetCapturaAberto em useNavegacao) | `M34.1.1-spec.md` | 1-2h |
+| 15 | **M34.2** | Botão "Registrar foto" empty state Fotos contraste WCAG AA | `M34.2-spec.md` | 0,5h |
+| ~~16~~ | ~~M01.7~~ | ~~Button accessibilityLabel desacoplado~~ — **fechada 2026-05-04** (1298/145, label aceita ReactNode) | `M01.7-spec.md` | — |
+| 17 | **M11.2** | useGaleriaMock leitura dentro de useEffect guardado | `M11.2-spec.md` | 0,5-1h |
+| 18 | **M27.4** | SessaoBootGate "Max update depth" em reset+seed+abrir rápido | `M27.4-spec.md` | 1-2h |
+| 19 | **M-DEBITO-UI-UX-SEED-DUO** | 3 achados visuais consolidados (chip Outro laranja, botão Salvar fora viewport, toggle alarme animação) | `M-DEBITO-UI-UX-SEED-DUO-spec.md` | 1-2h |
+| ~~19~~ | ~~M-GAUNTLET-FAST-BOOT-FOLLOWUP~~ | ~~`+html.tsx` aplicar em build estático~~ — **fechada NÃO-FIX 2026-05-04** (aguardar SDK 55+) | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` | 1-2h |
 | 20 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
 | 21 | **M-GAUNTLET-DEAD-CODE-V2** | Refactor `gauntletBootstrap.ts` lazy require — bytecode Android sem `__gauntlet`. **Bloqueia M41** | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
 | 12 | M35 | Aba Finanças "Em desenvolvimento" honesto (será absorvido por M-CAPTURA-UNIFICADA empty state caminho documento) | `M35-spec.md` | 1-2h |
@@ -161,7 +162,7 @@ prioridade, requerem emulador ou APK dev-client):
 | `[todo]` | M-GAUNTLET-DEAD-CODE-V2 | Refactor: `gauntletBootstrap.ts` com `require` lazy guardado por `__DEV__`. `app/_layout.tsx` substitui imports diretos. **Bloqueia M41 (release final)** | — | — | 4-6h | `M-GAUNTLET-DEAD-CODE-V2-spec.md` |
 | `[ok]` | M-GAUNTLET-SEED-V2 | Fixtures determinísticas: humores-30d (33 registros), diarios-3 (trigger/vitória/reflexão), eventos-7. Stores mock isoladas (`humorMock`/`diarioMock`/`eventosMock`). API `seedComDados(fixture)` (16ª no `__gauntlet`). `useHumorHeatmap` assina mock. Validação Gauntlet: 23/91 células coloridas, "Média 30d: 3,6 Registros: 23/30". 1143→1157 testes (+14), 134→135 suítes. Bundle 8.79 MB | — | — | 3-4h | `M-GAUNTLET-SEED-V2-spec.md` |
 | `[ok]` | M-GAUNTLET-FAST-BOOT | Pré-cache JetBrainsMono em `public/fonts/` (115 KB cada), CSS de flash inicial em `public/styles/`, `app/+html.tsx` com `<link rel="preload">`. Servidos pelo Metro (200). Em dev `+html.tsx` é ignorado (limitação Expo Router); sprint M-GAUNTLET-FAST-BOOT-FOLLOWUP investiga aplicar em build estático. tempoDeBoot 123ms | — | — | 2-3h | `M-GAUNTLET-FAST-BOOT-spec.md` |
-| `[todo]` | M-GAUNTLET-FAST-BOOT-FOLLOWUP | Investigar 3 caminhos para fazer `+html.tsx` aplicar em build (web.output static, ou single, ou injeção JS no _layout) | — | — | 1-2h | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` |
+| `[ok]` | M-GAUNTLET-FAST-BOOT-FOLLOWUP | **NÃO-FIX documentado (2026-05-04).** A: `web.output: "static"` quebra com `__extends` de `tslib` no SSR de `framer-motion` (via `moti@0.30`); B: `web.output: "single"` exporta mas `+html.tsx` não é lido (template padrão); C: injeção JS no `_layout` perde paralelismo. Decisão: aguardar Expo SDK 55+. Arquivos preload permanecem versionados (sem regressão). VALIDATOR_BRIEF §4 A23 registrada. | — | — | 1-2h | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` |
 | `[ok]` | M-GAUNTLET-SEED-DUO | `aplicarSeed`/`aplicarSetNomes`/`aplicarReset` propagam `tipoCompanhia` para `useSettings.pessoa.tipoCompanhia` (canônico M29). Destrava validação visual de M31/M33 chips Para mim/X/casal. 1257→1260 testes (+3), 138→139 suítes | — | — | 0,5h | `M-GAUNTLET-SEED-DUO-spec.md` |
 | `[ok]` | M24.1 | Resume state. `useUltimaRota` ignora o primeiro pathname após mount. Antes ele sobrescrevia `ultimaRota` antes do `SessaoBootGate` ler. Validação Gauntlet: `seed() + setUltimaRota('/memoria') + reload` abre `/memoria`. | — | — | 0,5h | (este ciclo) |
 | `[ok]` | M25.2 | Animação Reanimated não rodava em SVG web. Fix: `OuroborosLoader.tsx` ganha bloco `requestAnimationFrame` (web only) que localiza `<g>` por `data-anim-id` + setAttribute('transform', ...) direto. Native mantém Reanimated. g3 medido em ~15°/s. | — | — | 1h | (este ciclo) |
