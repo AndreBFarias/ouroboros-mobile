@@ -5,6 +5,49 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-SLIDER-WEB-LOOP fechada (2026-05-04)
+
+`<Slider>` em `src/components/ui/Slider.tsx` agora ramifica por
+`Platform.OS`:
+- **Web:** `<input type="range">` nativo com CSS injetado uma vez
+  via `ensureCssWeb()` (track `colors.bgElev`, fill `colors.cyan`,
+  thumb `colors.purple`, foco `box-shadow` ciano `:focus-visible`,
+  altura 44px para WCAG AA, `aria-valuemin/max/now`).
+- **Native:** `RNSlider` de `@react-native-community/slider`
+  preservado integral (zero regressão Android/iOS).
+
+Interface pública (`SliderProps`) inalterada — 8 consumidores
+existentes (humor-rapido, eventos, diario-emocional, alarmes/novo,
+ciclo/registrar, SheetNovoTreino, FiltrosBar, app/index) continuam
+funcionando sem mudança.
+
+**Bug original:** `RTCSliderWebComponent` em loop infinito travava
+`/medidas` e `/exercicios/<slug>` em web com tela em branco +
+`Maximum update depth exceeded`. Causa: AnimatedProps callback do
+slider web em loop com Reanimated em React 19 strict mode. Fix
+elimina a dependência da implementação web do pacote nativo.
+
+**Aritmética:** 1292 → 1293 testes (+1), 145 → 145 suítes. TS strict
+0, anonimato OK, smoke OK. Bundle Hermes 8.85 MB (10 KB do limite —
+margem apertada).
+
+**Validação visual via Gauntlet:**
+- `A-medidas-funcional.png` — `/medidas` renderiza header "Medidas",
+  chips PERÍODO, empty state "Suas medidas vão aparecer aqui.",
+  FAB roxo. Console: 0 erros, sem loop.
+- `B-humor-rapido-sliders.png` — 4 `<input type="range">` confirmados
+  no DOM (370×44 cada, dentro do frame). 0 erros de loop.
+
+**Achado crítico em paralelo (M34.3 nova spec):** validação da aba
+Marcos via Gauntlet revelou que **FAB verde do MenuCapturaVerde
+(M34) sobrepõe** os FABs próprios das abas Fotos ("adicionar foto"
+M11.1) e Marcos ("adicionar marco"). Coordenadas batem 1:1
+(769, 900, 56×56). Usuário não consegue tocar nos FABs próprios
+das abas pelo gesto direto. Spec
+`docs/sprints/M34.3-spec.md` propõe FAB verde unificado por
+contexto (caminho A) ou absorção via M-CAPTURA-UNIFICADA (caminho C).
+**Bloqueia M-CAPTURA-UNIFICADA** (precisa decisão UX antes).
+
 ### M11.3 fechada (2026-05-04)
 
 `useLarguraFrame()` hook em `src/lib/ui/useLarguraFrame.ts` que

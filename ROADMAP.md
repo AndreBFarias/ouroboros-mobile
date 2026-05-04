@@ -3,6 +3,12 @@
 Mapa canônico de todas as sprints do projeto. Atualizado a cada
 fechamento de sprint.
 
+> **Mapa funcional do app:**
+> [`docs/FEATURES-CANONICAS.md`](docs/FEATURES-CANONICAS.md)
+> consolida o que cada sprint entrega na perspectiva do usuário
+> final. Toda sprint que introduz/modifica/remove feature deve
+> atualizar esse arquivo no mesmo commit.
+
 ## Como ler este arquivo
 
 - **Status**:
@@ -49,8 +55,9 @@ spec PARA o ciclo e pede clarificação.
 | ~~8~~ | ~~M33~~ | ~~Campo `para`~~ — **fechada 2026-05-04** (1257/138) | `M33-spec.md` | — |
 | ~~9~~ | ~~M34~~ | ~~MenuCapturaVerde tab Memórias~~ — **fechada 2026-05-04** (1289/144, 5 screenshots Gauntlet, 3 sub-sprints colaterais M34.1/M34.2/M11.3) | `M34-spec.md` | — |
 | ~~10~~ | ~~M11.3~~ | ~~useLarguraFrame~~ — **fechada 2026-05-04** (1292/145, hook web→412 / native→dim.width, 3 consumidores migrados, sub-sprint M-SLIDER-WEB-LOOP criada) | `M11.3-spec.md` | — |
-| 11 | **M-SLIDER-WEB-LOOP** | RTCSliderWebComponent infinite loop trava /medidas e /exercicios em web. Bug pré-existente desde M12/M13. Wrapper `<Slider>` web/native | `M-SLIDER-WEB-LOOP-spec.md` | 1-2h |
-| 12 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
+| ~~11~~ | ~~M-SLIDER-WEB-LOOP~~ | ~~Wrapper Slider web/native~~ — **fechada 2026-05-04** (1293/145, `<input type="range">` em web, RNSlider em native, /medidas + /humor-rapido sem loop) | `M-SLIDER-WEB-LOOP-spec.md` | — |
+| 12 | **M34.3** | FAB verde do MenuCapturaVerde sobrepõe FABs próprios das abas Fotos e Marcos. Achado durante validação aba Marcos. **Bloqueia M-CAPTURA-UNIFICADA** | `M34.3-spec.md` | 1-2h |
+| 13 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
 | 12 | M35 | Aba Finanças "Em desenvolvimento" honesto (será absorvido por M-CAPTURA-UNIFICADA empty state caminho documento) | `M35-spec.md` | 1-2h |
 | 13 | M36 | Tela Recap (agregação Conquistas/Crises/Evoluções/Números) | `M36-spec.md` | 6-8h |
 | 12 | M37.1 | Google Calendar OAuth + leitura | `M37.1-spec.md` | 6-7h (PAUSA para usuário) |
@@ -175,7 +182,8 @@ prioridade, requerem emulador ou APK dev-client):
 | `[todo]` | M34.1 | FABMenu z-index sobrepõe SheetFrase — `BottomSheet` default `containerStyle.zIndex: 30` | — | — | 1-2h | `M34.1-spec.md` |
 | `[todo]` | M34.2 | Botão "Registrar foto" empty state Fotos com contraste insuficiente — diagnosticar + fix | — | — | 0,5h | `M34.2-spec.md` |
 | `[ok]` | M11.3 | `useLarguraFrame()` hook centralizador: web → constante 412, native → `useWindowDimensions().width` real. 3 consumidores migrados (`MemoriasFotosTab`, `medidas`, `exercicios/[slug]`). Validação Gauntlet: 4 thumbs 118×118 em grid 3+1 contidas no frame (left=455, right=825). Bug pré-existente RTCSliderWebComponent revelado em /medidas + /exercicios — sub-sprint M-SLIDER-WEB-LOOP criada. 1289→1292 testes (+3), 144→145 suítes (+1). Bundle Hermes 8.84 MB | — | — | 1h | `M11.3-spec.md` |
-| `[todo]` | M-SLIDER-WEB-LOOP | RTCSliderWebComponent em loop infinito trava /medidas e /exercicios em web. Pré-existente desde M12/M13 (passou despercebido — rotas nunca validadas em Gauntlet antes). Wrapper `<Slider>` web/native com `<input type="range">` | — | — | 1-2h | `M-SLIDER-WEB-LOOP-spec.md` |
+| `[ok]` | M-SLIDER-WEB-LOOP | Wrapper `<Slider>` ramifica por `Platform.OS`: web → `<input type="range">` com CSS Dracula injetado idempotente, native → `RNSlider` preservado. Interface pública intacta — 8 consumidores migrados sem mudança. Bug original RTCSliderWebComponent loop infinito em /medidas + /exercicios resolvido. 1292→1293 testes (+1). Bundle Hermes 8.85 MB | — | — | 1-2h | `M-SLIDER-WEB-LOOP-spec.md` |
+| `[todo]` | M34.3 | FAB verde do `MenuCapturaVerde` sobrepõe FABs próprios das abas (Fotos "adicionar foto" + Marcos "adicionar marco" — coordenadas 769,900 batem 1:1). Caminho A: FAB verde absorve ações contextuais por tab. Caminho C: M-CAPTURA-UNIFICADA já endereça via `/captura` modal. Bloqueia M-CAPTURA-UNIFICADA até decisão UX | — | — | 1-2h | `M34.3-spec.md` |
 | `[todo]` | M35 | Aba Finanças: empty state honesto "Em desenvolvimento" | 22 | — | 1-2h | `M35-spec.md` |
 | `[todo]` | M36 | Tela Recap: agregação de período (Conquistas/Crises/Evoluções/Números) | nova | — | 6-8h | `M36-spec.md` |
 | `[todo]` | M37.1 | Google Calendar OAuth + leitura de eventos (rota /agenda) | nova | googleAuth | 6-7h | `M37.1-spec.md` (split do M37 original) |

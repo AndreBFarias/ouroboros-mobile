@@ -107,6 +107,17 @@ aplicável. Comparar lado a lado com mockup
 `docs/Ouroboros_22_telas-standalone.html` quando a sprint
 implementar uma das 22 telas core.
 
+### Checklist obrigatório de manutenção
+
+- [ ] `docs/FEATURES-CANONICAS.md` atualizado (sprint que
+  introduz/modifica/remove feature). Validador-sprint recusa
+  sprint que toca UI ou schema sem este check.
+- [ ] `STATE.md` atualizado.
+- [ ] `ROADMAP.md` atualizado.
+- [ ] `CHANGELOG.md` atualizado em `[Unreleased]`.
+- [ ] `VALIDATOR_BRIEF.md` §1.9 atualizado (se sprint mudou
+  política de validação).
+
 ## 9. Dúvidas em aberto
 
 <perguntas pendentes que precisam ser resolvidas com o humano antes
