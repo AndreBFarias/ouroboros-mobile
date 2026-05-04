@@ -57,7 +57,15 @@ spec PARA o ciclo e pede clarificação.
 | ~~10~~ | ~~M11.3~~ | ~~useLarguraFrame~~ — **fechada 2026-05-04** (1292/145, hook web→412 / native→dim.width, 3 consumidores migrados, sub-sprint M-SLIDER-WEB-LOOP criada) | `M11.3-spec.md` | — |
 | ~~11~~ | ~~M-SLIDER-WEB-LOOP~~ | ~~Wrapper Slider web/native~~ — **fechada 2026-05-04** (1293/145, `<input type="range">` em web, RNSlider em native, /medidas + /humor-rapido sem loop) | `M-SLIDER-WEB-LOOP-spec.md` | — |
 | 12 | **M34.3** | FAB verde do MenuCapturaVerde sobrepõe FABs próprios das abas Fotos e Marcos. Achado durante validação aba Marcos. **Bloqueia M-CAPTURA-UNIFICADA** | `M34.3-spec.md` | 1-2h |
-| 13 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
+| 13 | **M34.1** | FABMenu z-index sobrepõe Cancelar do SheetFrase | `M34.1-spec.md` | 1-2h |
+| 14 | **M34.2** | Botão "Registrar foto" empty state Fotos contraste WCAG AA | `M34.2-spec.md` | 0,5h |
+| 15 | **M01.6** | `<Button>` aceitar `accessibilityLabel` opcional desacoplado | `M01.6-spec.md` | 1-2h |
+| 16 | **M11.2** | useGaleriaMock leitura dentro de useEffect guardado | `M11.2-spec.md` | 0,5-1h |
+| 17 | **M27.4** | SessaoBootGate "Max update depth" em reset+seed+abrir rápido | `M27.4-spec.md` | 1-2h |
+| 18 | **M-DEBITO-UI-UX-SEED-DUO** | 3 achados visuais consolidados (chip Outro laranja, botão Salvar fora viewport, toggle alarme animação) | `M-DEBITO-UI-UX-SEED-DUO-spec.md` | 1-2h |
+| 19 | **M-GAUNTLET-FAST-BOOT-FOLLOWUP** | `+html.tsx` aplicar em build estático | `M-GAUNTLET-FAST-BOOT-FOLLOWUP-spec.md` | 1-2h |
+| 20 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera do MenuLateral em "Registrar momento" e "Escanear documento". Pré-M09 = empty state honesto. **Bloqueia M41** | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
+| 21 | **M-GAUNTLET-DEAD-CODE-V2** | Refactor `gauntletBootstrap.ts` lazy require — bytecode Android sem `__gauntlet`. **Bloqueia M41** | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
 | 12 | M35 | Aba Finanças "Em desenvolvimento" honesto (será absorvido por M-CAPTURA-UNIFICADA empty state caminho documento) | `M35-spec.md` | 1-2h |
 | 13 | M36 | Tela Recap (agregação Conquistas/Crises/Evoluções/Números) | `M36-spec.md` | 6-8h |
 | 12 | M37.1 | Google Calendar OAuth + leitura | `M37.1-spec.md` | 6-7h (PAUSA para usuário) |
