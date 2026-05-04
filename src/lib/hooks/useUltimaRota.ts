@@ -9,7 +9,7 @@
 // store.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'expo-router';
 import { useSessao } from '@/lib/stores/sessao';
 
@@ -46,7 +46,17 @@ export function isRotaRestauravel(path: string | null): boolean {
 
 export function useUltimaRota(): void {
   const pathname = usePathname();
+  // M24.1: ignora o primeiro pathname recebido. Ele e o destino de
+  // boot (potencialmente o '/' default ou o restaurado pelo
+  // SessaoBootGate); gravar nesse momento sobrescreve o ultimaRota
+  // que o gate ainda vai usar para restore. A partir do segundo
+  // pathname, persiste cada navegacao restauravel.
+  const primeiroPathnameIgnorado = useRef<boolean>(false);
   useEffect(() => {
+    if (!primeiroPathnameIgnorado.current) {
+      primeiroPathnameIgnorado.current = true;
+      return;
+    }
     if (!isRotaRestauravel(pathname)) return;
     useSessao.getState().setUltimaRota(pathname);
   }, [pathname]);

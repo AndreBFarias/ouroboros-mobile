@@ -25,8 +25,8 @@
 // rotacao (e.g. boot que vai direto para onboarding apos hidratar).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useEffect } from 'react';
-import { View } from 'react-native';
+import { useEffect, useId } from 'react';
+import { Platform, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -92,6 +92,48 @@ export function OuroborosLoader({
   const rotacaoG2 = useSharedValue(0);
   const rotacaoG3 = useSharedValue(0);
   const offsetFlow = useSharedValue(0);
+
+  // M25.2: animacao via DOM em web. react-native-svg-web nao propaga
+  // animatedProps de useAnimatedProps para o atributo transform de
+  // <g>, entao a animacao para no frame inicial. Em web, atribuimos
+  // data-anim-id em cada grupo e o RAF escreve transform via
+  // querySelector + setAttribute. Em native, este bloco e no-op
+  // (Platform.OS !== 'web') e Reanimated assume.
+  const animId = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const idG1 = `og-g1-${animId}`;
+  const idG2 = `og-g2-${animId}`;
+  const idG3 = `og-g3-${animId}`;
+  const idFlow = `og-flow-${animId}`;
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    let raf = 0;
+    const tick = () => {
+      // Usa timestamp absoluto Date.now() para que re-mounts do
+      // componente nao reiniciem o angulo do zero. Em 90s o ciclo
+      // se fecha mesmo entre re-renders.
+      const t = Date.now();
+      const a1 = ((t / DURACAO_GS1) * 360) % 360;
+      const a2 = -(((t / DURACAO_GS2) * 360) % 360);
+      const a3 = ((t / DURACAO_GS3) * 360) % 360;
+      const flow = ((t / DURACAO_FLOW) * PERIMETRO_FLOW) % PERIMETRO_FLOW;
+      const escreverPorAttr = (
+        seletor: string,
+        atributo: string,
+        valor: string
+      ) => {
+        const node = document.querySelector(seletor) as Element | null;
+        if (node) node.setAttribute(atributo, valor);
+      };
+      escreverPorAttr(`[data-anim-id="${idG1}"]`, 'transform', `rotate(${a1} ${PIVOT} ${PIVOT})`);
+      escreverPorAttr(`[data-anim-id="${idG2}"]`, 'transform', `rotate(${a2} ${PIVOT} ${PIVOT})`);
+      escreverPorAttr(`[data-anim-id="${idG3}"]`, 'transform', `rotate(${a3} ${PIVOT} ${PIVOT})`);
+      escreverPorAttr(`[data-anim-id="${idFlow}"]`, 'stroke-dashoffset', String(flow));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [idG1, idG2, idG3, idFlow]);
 
   useEffect(() => {
     // gs-1: 90s linear infinito (sentido horario).
@@ -168,8 +210,10 @@ export function OuroborosLoader({
         {/* ambient glow estatico (fundo) */}
         <Circle cx={PIVOT} cy={PIVOT} r={150} fill="url(#og-glow)" />
 
-        {/* outer dotted orbit (gs-2: 60s reverso) */}
-        <AnimatedG animatedProps={propsG2}>
+        {/* outer dotted orbit (gs-2: 60s reverso). data-anim-id atravessa
+            rn-svg-web e vira atributo no <g>; o RAF de M25.2 usa esse
+            seletor para atualizar transform. */}
+        <AnimatedG animatedProps={propsG2} data-anim-id={idG2}>
           <Circle
             cx={PIVOT}
             cy={PIVOT}
@@ -183,7 +227,7 @@ export function OuroborosLoader({
         </AnimatedG>
 
         {/* inner flow ring (gs-3: 30s; gs-flow: dashoffset 6s) */}
-        <AnimatedG animatedProps={propsG3}>
+        <AnimatedG animatedProps={propsG3} data-anim-id={idG3}>
           <AnimatedCircle
             cx={PIVOT}
             cy={PIVOT}
@@ -194,11 +238,12 @@ export function OuroborosLoader({
             strokeDasharray="3 7"
             opacity={0.35}
             animatedProps={propsFlow}
+            data-anim-id={idFlow}
           />
         </AnimatedG>
 
         {/* main snake (gs-1: 90s) */}
-        <AnimatedG animatedProps={propsG1}>
+        <AnimatedG animatedProps={propsG1} data-anim-id={idG1}>
           <Path
             d="M 155 40 A 120 120 0 0 0 40 160 A 120 120 0 0 0 160 280 A 120 120 0 0 0 280 160 A 120 120 0 0 0 175 40"
             fill="none"

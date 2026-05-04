@@ -5,6 +5,35 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Ciclo corretivo M24.1 + M25.2 (2026-05-03)
+
+Pós-revalidação, fechados 2 dos 3 corretivos descobertos. M27.2
+deferida para M27.3 — tentativas de fix em React 19 strict mode
+causaram `Maximum update depth exceeded`; solução completa exige
+refatoração via Suspense boundary, fora de escopo.
+
+- **M24.1 — resume state** — `src/lib/hooks/useUltimaRota.ts`:
+  hook ignora o primeiro pathname recebido após mount. Esse era o
+  destino de boot (potencialmente o `/` default ou o restaurado pelo
+  `SessaoBootGate`), não uma navegação do usuário. Sem essa guarda,
+  o pathname inicial sobrescrevia `ultimaRota` antes do useEffect do
+  gate ler o valor restaurado. Validação Gauntlet: `seed() +
+  setUltimaRota('/memoria') + reload` agora abre app em `/memoria`.
+- **M25.2 — animação SVG roda em web** —
+  `src/components/brand/OuroborosLoader.tsx`: bloco
+  `requestAnimationFrame` (web only via `Platform.OS === 'web'`)
+  escreve `transform` direto no DOM. Cada `<AnimatedG>` recebe
+  `data-anim-id` único (`useId()`) e o RAF localiza via
+  `document.querySelector` + `setAttribute`. Em native, bloco é
+  no-op e Reanimated mantém worklet. Timestamp absoluto `Date.now()`
+  sobrevive a re-mounts. Validação: g3 (30s/volta) medido em
+  ~15°/s; cabeça da cobra muda de posição entre prints.
+- **M27.2 — deferida para M27.3.** Vide spec.
+
+Métricas: 1126 testes / 130 suítes mantidos, tsc 0 erros, anonimato
+OK, console gauntlet com 0 erros (1 warning React 19 `element.ref`
+de dep transitiva ignorado).
+
 ### Validação consolidada via Gauntlet — M-REVALIDACAO-M20-M28 (2026-05-03)
 
 Orquestrador rodou 11 casos E2E playwright MCP no Gauntlet,
