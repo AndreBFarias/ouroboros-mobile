@@ -1,0 +1,141 @@
+{
+  "schema": "eventos-7",
+  "versao": 1,
+  "descricao": "Sete eventos espalhados de -7d a -1d. offsetDias relativo a hoje.",
+  "total": 7,
+  "eventos": [
+    {
+      "offsetDias": -1,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "feira",
+      "categoria": "consulta",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de consulta em feira.",
+      "fotos": [
+        "media/fotos/mock-evento-0.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-0.jpg"
+      ],
+      "slug": "feira-0"
+    },
+    {
+      "offsetDias": -2,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "parque",
+      "categoria": "compras",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de compras em parque.",
+      "fotos": [
+        "media/fotos/mock-evento-1.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-1.jpg"
+      ],
+      "slug": "parque-1"
+    },
+    {
+      "offsetDias": -3,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "casa",
+      "categoria": "consulta",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de consulta em casa.",
+      "fotos": [
+        "media/fotos/mock-evento-2.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-2.jpg"
+      ],
+      "slug": "casa-2"
+    },
+    {
+      "offsetDias": -4,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "feira",
+      "categoria": "compras",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de compras em feira.",
+      "fotos": [
+        "media/fotos/mock-evento-3.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-3.jpg"
+      ],
+      "slug": "feira-3"
+    },
+    {
+      "offsetDias": -5,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "praca",
+      "categoria": "exercicio",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de exercicio em praca.",
+      "fotos": [
+        "media/fotos/mock-evento-4.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-4.jpg"
+      ],
+      "slug": "praca-4"
+    },
+    {
+      "offsetDias": -6,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "parque",
+      "categoria": "consulta",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de consulta em parque.",
+      "fotos": [
+        "media/fotos/mock-evento-5.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-5.jpg"
+      ],
+      "slug": "parque-5"
+    },
+    {
+      "offsetDias": -7,
+      "autor": "pessoa_a",
+      "modo": "positivo",
+      "lugar": "casa",
+      "categoria": "rolezinho",
+      "com": [
+        "pessoa_a"
+      ],
+      "intensidade": 2,
+      "descricao": "Registro de rolezinho em casa.",
+      "fotos": [
+        "media/fotos/mock-evento-6.jpg"
+      ],
+      "midia": [
+        "media/fotos/mock-evento-6.jpg"
+      ],
+      "slug": "casa-6"
+    }
+  ]
+}

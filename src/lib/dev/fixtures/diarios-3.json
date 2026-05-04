@@ -1,0 +1,72 @@
+{
+  "schema": "diarios-3",
+  "versao": 1,
+  "descricao": "Tres entradas de diario emocional: 1 trigger, 1 vitoria, 1 reflexao. offsetHoras relativo a agora.",
+  "total": 3,
+  "entradas": [
+    {
+      "offsetHoras": -72,
+      "autor": "pessoa_a",
+      "modo": "trigger",
+      "intensidade": 4,
+      "emocoes": [
+        "ansiedade",
+        "frustracao"
+      ],
+      "com": [
+        "pessoa_b"
+      ],
+      "contextoSocial": [],
+      "texto": "Conversa difícil sobre limites no trabalho. Senti que não fui ouvida no início, mas a conversa virou ao longo da noite.",
+      "estrategia": "Pausa de cinco minutos e respiração lenta antes de retomar a fala.",
+      "funcionou": true,
+      "tags": [
+        "conflito",
+        "trabalho"
+      ]
+    },
+    {
+      "offsetHoras": -36,
+      "autor": "pessoa_b",
+      "modo": "vitoria",
+      "intensidade": 5,
+      "emocoes": [
+        "alegria",
+        "gratidao"
+      ],
+      "com": [
+        "pessoa_a"
+      ],
+      "contextoSocial": [
+        "amigos"
+      ],
+      "texto": "Reencontro com amigos antigos. Riso fácil e a sensação rara de estar inteiro no presente.",
+      "tags": [
+        "amizade",
+        "presente"
+      ],
+      "midia": [
+        "media/fotos/2026-05-02-mock-vitoria.jpg"
+      ]
+    },
+    {
+      "offsetHoras": -12,
+      "autor": "pessoa_a",
+      "modo": "reflexao",
+      "intensidade": 3,
+      "emocoes": [
+        "paz",
+        "gratidao"
+      ],
+      "com": [],
+      "contextoSocial": [
+        "sozinho"
+      ],
+      "texto": "Caminhada no parque pela manhã. Pensei em como pequenos rituais sustentam dias difíceis.",
+      "tags": [
+        "rotina",
+        "autocuidado"
+      ]
+    }
+  ]
+}

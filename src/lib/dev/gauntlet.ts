@@ -26,6 +26,9 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { useSessao } from '@/lib/stores/sessao';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { useGaleriaMock } from '@/lib/dev/galeriaMock';
+import { useHumorMock } from '@/lib/dev/humorMock';
+import { useDiarioMock } from '@/lib/dev/diarioMock';
+import { useEventosMock } from '@/lib/dev/eventosMock';
 
 // __DEV__ e injetado pelo react-native (true em dev, false em release).
 // Declarado para typecheck strict.
@@ -96,6 +99,12 @@ export interface GauntletAPI {
   // entrada in-memory na useGaleriaMock que o useFotosAgregadas
   // mescla quando GAUNTLET_ATIVO. No-op em mobile (guard ja filtra).
   adicionarFotoMock(): Promise<void>;
+  // M-GAUNTLET-SEED-V2: popula stores mock com fixtures realistas.
+  // 'humores-30d' alimenta useHumorMock (heatmap colorido).
+  // 'diarios-3' alimenta useDiarioMock (3 entradas: trigger + vitoria
+  // + reflexao). 'eventos-7' alimenta useEventosMock (7 eventos em
+  // -7d a hoje). No-op em mobile (guard ja filtra).
+  seedComDados(fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'): Promise<void>;
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -177,6 +186,11 @@ function aplicarReset(): void {
   useNavegacao.setState({ menuAberto: false });
   // M11.1: galeria mock zerada para que cada caso E2E comece limpo.
   useGaleriaMock.getState().limpar();
+  // M-GAUNTLET-SEED-V2: zerar stores de dados (humor, diario, eventos)
+  // para isolar casos E2E.
+  useHumorMock.getState().limpar();
+  useDiarioMock.getState().limpar();
+  useEventosMock.getState().limpar();
   // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
   // em web para que reload nao re-hidrate estado anterior. Em mobile,
   // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
@@ -258,6 +272,24 @@ function consoleErros(): Array<{ ts: number; msg: string }> {
   return errosCapturados.slice();
 }
 
+// M-GAUNTLET-SEED-V2: aplica fixture nas stores mock. Import dinamico
+// para evitar ciclo (seedDeterministico importa gauntlet). require()
+// resolve sob demanda, mas TS strict precisa de tipo explicito.
+async function aplicarSeedComDados(
+  fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'
+): Promise<void> {
+  // Import dinamico do seedDeterministico para quebrar ciclo. Em
+  // tempo de execucao web/dev, o bundle ja inclui ambos os modulos.
+  const seed = await import('@/lib/dev/seedDeterministico');
+  if (fixture === 'humores-30d') {
+    seed.seedHumores(30);
+  } else if (fixture === 'diarios-3') {
+    seed.seedDiarios(3);
+  } else if (fixture === 'eventos-7') {
+    seed.seedEventos(7);
+  }
+}
+
 // M11.1: insere entrada deterministica em useGaleriaMock simulando
 // "usuario tocou FAB + escolheu foto". Path nao bate em arquivo
 // real -- e so um marcador para o useFotosAgregadas mostrar a
@@ -321,6 +353,10 @@ const api: GauntletAPI = {
   adicionarFotoMock: async () => {
     if (!GAUNTLET_ATIVO) return;
     await aplicarAdicionarFotoMock();
+  },
+  seedComDados: async (fixture) => {
+    if (!GAUNTLET_ATIVO) return;
+    await aplicarSeedComDados(fixture);
   },
 };
 

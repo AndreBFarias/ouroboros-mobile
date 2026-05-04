@@ -5,6 +5,64 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-GAUNTLET-SEED-V2 fechada (2026-05-04)
+
+Fixtures realistas no seed do Gauntlet. Substitui stubs vazios de
+`seedHumores`/`seedDiarios`/`seedEventos` por implementações
+determinísticas baseadas em fixtures JSON.
+
+**Entregáveis:**
+- `src/lib/dev/seedDeterministico.ts` (reescrito) — `seedHumores()`,
+  `seedDiarios()`, `seedEventos()` lendo fixtures JSON e
+  persistindo em stores mock dedicadas. `seedTudo()` orquestra
+  todos. Helpers de leitura `lerHumoresMock`, `lerDiariosMock`,
+  `lerEventosMock` para testes.
+- `src/lib/dev/humorMock.ts`, `diarioMock.ts`, `eventosMock.ts`
+  (novos) — stores zustand in-memory dev-only.
+- `src/lib/dev/fixtures/humores-30d.json` — 33 registros em 30
+  dias, intensidades 1-5, distribuição 60/30/10 (pessoa_a/
+  pessoa_b/sobreposto).
+- `src/lib/dev/fixtures/diarios-3.json` — 1 trigger, 1 vitória, 1
+  reflexão. Textos abstratos, zero nomes próprios (Regra −1
+  conservadora). Tipo `DiarioMockModo` aceita `'reflexao'`
+  desacoplado do `DiarioEmocionalSchema` zod (que só conhece
+  `'trigger'`/`'vitoria'`).
+- `src/lib/dev/fixtures/eventos-7.json` — 7 eventos em -7d a -1d.
+- `src/lib/dev/gauntlet.ts` — API `seedComDados(fixture)` com
+  guard `GAUNTLET_ATIVO`. `reset()` limpa todos 3 mocks +
+  `useGaleriaMock`.
+- `src/lib/hooks/useHumorHeatmap.ts` — assina `useHumorMock`;
+  quando `GAUNTLET_ATIVO` + mock tem células, monta `cacheFinal`
+  sintético sobrepondo cache do Vault.
+- `tests/lib/dev/seedDeterministico.test.ts` — 14 cases (seed,
+  schema, sobreposto, determinismo).
+- `tests/e2e/playwright/m-gauntlet-seed-v2.e2e.ts` — heatmap
+  validation pós-seed.
+
+**Aritmética:** 1143 → 1157 testes (+14, executor entregou +14
+pelo zelo), 134 → 135 suítes (+1), tsc 0 erros, anonimato OK.
+Bundle Hermes 8.4 → 8.79 MB (+0.39 MB; limite 8.85 MB; margem 60 KB).
+
+**Validação visual via Gauntlet (playwright MCP):**
+- API `seedComDados` listada em `__gauntlet` (16ª).
+- Após `reset() + seed() + seedComDados('humores-30d') + abrir('/humor')`:
+  - 91 células totais no heatmap (13×7).
+  - **23 células com humor > 0** (coloridas).
+  - "Média 30d: 3,6  Registros: 23 / 30" exibido.
+  - Paleta Dracula visível (vermelho/amarelo/verde/ciano/laranja).
+- Screenshot em
+  `docs/sprints/M-GAUNTLET-SEED-V2-screenshots-gauntlet/B-heatmap-colorido.png`.
+
+**Pontos de atenção (não-bloqueantes):**
+- `useDiarioMock` e `useEventosMock` não plugados em hooks de UI
+  ainda. Auditoria item 23 só pediu fixtures + API, não o plug nas
+  telas. Sprints futuras (M11.x) podem plugar quando relevante.
+- Schema `reflexao` desacoplado do zod canônico — decisão por
+  pragmatismo (mock só serve para validação de UI).
+- "Maximum update depth exceeded" do `SessaoBootGate` re-aparece
+  em cenário `reset()+seed()+abrir()` rápido — confirma achado da
+  M27.3 (sprint M27.4 sugerida).
+
 ### M-GAUNTLET-LEAK-CHECK fechada com achado crítico (2026-05-04)
 
 Script CI `scripts/check_gauntlet_leak.sh` que roda
