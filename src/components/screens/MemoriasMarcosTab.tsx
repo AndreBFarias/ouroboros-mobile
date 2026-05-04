@@ -5,22 +5,28 @@
 // Sem hierarquia visual de níveis ou ranking (ADR-0005). Marcos auto-
 // gerados marcam um indicador discreto "auto" muted.
 //
-// FAB + cria marco manual.
+// M34.3: o FAB proprio "adicionar marco" foi REMOVIDO porque colidia
+// com o FAB verde do MenuCapturaVerde (mesmas coordenadas 769,900).
+// Em vez disso a tab registra sua acao contextual via prop
+// onRegistrarAcaoExtra; o MenuCapturaVerde unificado renderiza
+// "Adicionar marco" como primeiro item do sheet. Sheet interno
+// SheetNovoMarco preservado para que a tab continue funcionando
+// isoladamente caso seja reusada fora de MemoriasScreen.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import {
   BottomSheet,
   EmptyState,
-  FAB,
   SHEET_70,
   type BottomSheetRef,
 } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { useMarcos } from '@/lib/hooks/useMarcos';
 import { SheetNovoMarco } from './SheetNovoMarco';
+import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { Marco } from '@/lib/schemas/marco';
 
 const MESES_PT_CURTO: Record<number, string> = {
@@ -147,7 +153,17 @@ function ItemTimeline({ marco }: { marco: Marco }) {
   );
 }
 
-export function MemoriasMarcosTab(): ReactNode {
+// M34.3: prop opcional usada pela MemoriasScreen para coletar a acao
+// contextual da tab e injetar no MenuCapturaVerde. Quando undefined a
+// tab funciona isoladamente (sem FAB visivel — em runtime fora da
+// MemoriasScreen o consumidor deve providenciar outro disparador).
+export interface MemoriasMarcosTabProps {
+  onRegistrarAcaoExtra?: (acao: AcaoExtraCaptura | null) => void;
+}
+
+export function MemoriasMarcosTab({
+  onRegistrarAcaoExtra,
+}: MemoriasMarcosTabProps = {}): ReactNode {
   const { marcos, recarregar } = useMarcos();
   const novoRef = useRef<BottomSheetRef>(null);
 
@@ -159,6 +175,22 @@ export function MemoriasMarcosTab(): ReactNode {
     novoRef.current?.close();
     void recarregar();
   }, [recarregar]);
+
+  // M34.3: registra a acao "Adicionar marco" no MenuCapturaVerde da
+  // screen pai. Limpa no unmount para evitar leak da acao em outras
+  // tabs.
+  useEffect(() => {
+    if (!onRegistrarAcaoExtra) return;
+    onRegistrarAcaoExtra({
+      label: 'Adicionar marco',
+      icone: <Plus size={20} color={colors.green} strokeWidth={2} />,
+      onPress: handleNovo,
+      accessibilityLabel: 'adicionar marco',
+    });
+    return () => {
+      onRegistrarAcaoExtra(null);
+    };
+  }, [onRegistrarAcaoExtra, handleNovo]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -178,12 +210,6 @@ export function MemoriasMarcosTab(): ReactNode {
           ))
         )}
       </ScrollView>
-
-      <FAB
-        icon={<Plus size={24} color={colors.bg} strokeWidth={2} />}
-        onPress={handleNovo}
-        accessibilityLabel="adicionar marco"
-      />
 
       <BottomSheet ref={novoRef} snapPoints={SHEET_70} index={-1}>
         <SheetNovoMarco

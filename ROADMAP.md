@@ -56,7 +56,7 @@ spec PARA o ciclo e pede clarificação.
 | ~~9~~ | ~~M34~~ | ~~MenuCapturaVerde tab Memórias~~ — **fechada 2026-05-04** (1289/144, 5 screenshots Gauntlet, 3 sub-sprints colaterais M34.1/M34.2/M11.3) | `M34-spec.md` | — |
 | ~~10~~ | ~~M11.3~~ | ~~useLarguraFrame~~ — **fechada 2026-05-04** (1292/145, hook web→412 / native→dim.width, 3 consumidores migrados, sub-sprint M-SLIDER-WEB-LOOP criada) | `M11.3-spec.md` | — |
 | ~~11~~ | ~~M-SLIDER-WEB-LOOP~~ | ~~Wrapper Slider web/native~~ — **fechada 2026-05-04** (1293/145, `<input type="range">` em web, RNSlider em native, /medidas + /humor-rapido sem loop) | `M-SLIDER-WEB-LOOP-spec.md` | — |
-| 12 | **M34.3** | FAB verde do MenuCapturaVerde sobrepõe FABs próprios das abas Fotos e Marcos. Achado durante validação aba Marcos. **Bloqueia M-CAPTURA-UNIFICADA** | `M34.3-spec.md` | 1-2h |
+| ~~12~~ | ~~M34.3~~ | ~~FAB verde unificado~~ — **fechada 2026-05-04** (1293/145, FABs próprios removidos, 5 itens no sheet com Adicionar marco/foto/treino contextual + 4 captura, bundle 8.44 MB) | `M34.3-spec.md` | — |
 | 13 | **M34.1** | FABMenu z-index sobrepõe Cancelar do SheetFrase | `M34.1-spec.md` | 1-2h |
 | 14 | **M34.2** | Botão "Registrar foto" empty state Fotos contraste WCAG AA | `M34.2-spec.md` | 0,5h |
 | 15 | **M01.6** | `<Button>` aceitar `accessibilityLabel` opcional desacoplado | `M01.6-spec.md` | 1-2h |

@@ -112,13 +112,19 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   - **Escanear documento** → encaminha para Scanner (M09) ou
     empty state pré-M09.
 
-### 2.9 MenuCapturaVerde — M34 (em Memórias)
+### 2.9 MenuCapturaVerde — M34 + M34.3 (em Memórias)
 
-- FAB verde no canto direito da tab Memórias.
-- 4 ações: **Foto / Música / Vídeo / Frase**.
+- **FAB verde único** no canto direito da tela Memórias (substituiu
+  os FABs próprios das tabs em M34.3, que colidiam em z-order com
+  o FAB verde nas mesmas coordenadas).
+- Sheet "Registrar" mostra 5 ações: **1 ação contextual da tab
+  ativa** (Novo treino / Adicionar foto / Adicionar marco) + 4
+  ações de captura (Foto / Música / Vídeo / Frase).
 - Cada captura salva binário em `media/<categoria>/<data-rand>.<ext>`
   + companion `.md` com `tipo`, `arquivo`, `data`, `autor`,
   `para`, `legenda`.
+- Item contextual delega para o sheet interno da tab
+  (`SheetNovoTreino`, `expo-image-picker`, `SheetNovoMarco`).
 
 ## 3. Memórias e Marcos — M11 + M11.1 (Telas 09, 10, 11)
 
@@ -131,6 +137,8 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Tap em célula abre detalhe da sessão.
 - CRUD de sessão de treino: rotina, duração, observações,
   exercícios feitos, peso/reps.
+- "Novo treino" agora é item do MenuCapturaVerde unificado
+  (M34.3); abre `SheetNovoTreino` interno.
 - Atalho ghost "Cadastrar exercícios na Galeria" no empty state
   (M11.1) navega para `/exercicios`.
 
@@ -139,13 +147,16 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   marcos + medidas + galeria-manual).
 - Grid 3 colunas. Tap abre detalhe + atalho para registro de
   origem.
-- FAB roxo "+" para adicionar foto manual via
-  `expo-image-picker` (M11.1).
+- "Adicionar foto" agora é item do MenuCapturaVerde unificado
+  (M34.3); helper `expo-image-picker` continua o motor (M11.1).
+- Empty state mantém botão inline "Registrar foto" para
+  descoberta.
 
 ### 3.3 Marcos
 - Lista de marcos manuais + auto-gerados.
 - Tags: treino / consistência / emocional / vitória / retomada.
-- CRUD via FAB.
+- "Adicionar marco" agora é item do MenuCapturaVerde unificado
+  (M34.3); abre `SheetNovoMarco` interno.
 - Marcos automáticos (MOB-bridge-3): 5 heurísticas (ex: 7 dias
   seguidos, primeira nota acima de 4) com dedup `sha256`.
 

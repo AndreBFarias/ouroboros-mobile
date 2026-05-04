@@ -2,6 +2,11 @@
 // foto" no DOM e que __gauntlet.adicionarFotoMock() insere uma
 // thumbnail no grid (mesmo sem expo-image-picker funcionar em web).
 //
+// M34.3: o FAB proprio "adicionar foto" foi removido; o item agora
+// vive no MenuCapturaVerde unificado. O E2E confirma que ao abrir o
+// menu o item "adicionar foto" aparece. O incremento de galeria via
+// adicionarFotoMock continua independente do fluxo de tap.
+//
 // Comentarios sem acento.
 import type {
   PlaywrightPageLike,
@@ -64,18 +69,49 @@ export default async function caseM111Fotos(
     }
     await page.waitForTimeout(700);
 
-    const fabPresente = await page.evaluate(() => {
-      return !!document.querySelector('[aria-label="adicionar foto"]');
+    // M34.3: o FAB proprio sumiu; o item "adicionar foto" agora vive
+    // dentro do menu do FAB verde. Abrimos o menu primeiro.
+    const fabVerdePresente = await page.evaluate(() => {
+      return !!document.querySelector('[aria-label="abrir menu de captura"]');
     });
-    if (!fabPresente) {
+    if (!fabVerdePresente) {
       return {
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'FAB adicionar foto ausente no DOM',
+        detalhe: 'FAB verde "abrir menu de captura" ausente no DOM',
         screenshots,
       };
     }
+    await page.evaluate(() => {
+      const f = document.querySelector(
+        '[aria-label="abrir menu de captura"]'
+      ) as HTMLElement | null;
+      f?.click();
+    });
+    await page.waitForTimeout(700);
+    const itemFotoPresente = await page.evaluate(() => {
+      return !!document.querySelector('[aria-label="adicionar foto"]');
+    });
+    if (!itemFotoPresente) {
+      return {
+        sprint,
+        aspecto,
+        status: 'FAIL',
+        detalhe:
+          'item "adicionar foto" ausente no sheet do MenuCapturaVerde apos M34.3',
+        screenshots,
+      };
+    }
+    // Fecha o menu para nao interferir nos passos seguintes (alguns
+    // testes reusam o DOM).
+    await page.evaluate(() => {
+      const f = document.querySelector(
+        '[aria-label="abrir menu de captura"]'
+      ) as HTMLElement | null;
+      f?.click();
+    });
+    await page.waitForTimeout(400);
 
     const antes = 'docs/sprints/M11.1-screenshots-gauntlet/B-fotos-com-fab.png';
     await page.screenshot({ path: antes });

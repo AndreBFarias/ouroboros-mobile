@@ -5,6 +5,45 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M34.3 fechada (2026-05-04) — FAB verde unificado
+
+`<MenuCapturaVerde>` aceita prop `acoesExtras` que renderiza ações
+contextuais por tab ACIMA das 4 ações de captura. FABs próprios das
+3 tabs (`MemoriasTreinosTab`, `MemoriasFotosTab`, `MemoriasMarcosTab`)
+**removidos** — antes ocupavam coordenadas (769,900) idênticas ao
+FAB verde, causando intercept de pointer events.
+
+Cada tab passa sua ação contextual via `useEffect` + callback do
+parent `MemoriasScreen`:
+- Treinos: "Novo treino" abre `<SheetNovoTreino>`.
+- Fotos: "Adicionar foto" abre image picker via
+  `__gauntlet.adicionarFotoMock` (web/dev) ou `expo-image-picker`
+  (mobile real).
+- Marcos: "Adicionar marco" abre `<SheetNovoMarco>`.
+
+**Sheet "Registrar" agora tem 5 itens** (1 contextual + 4 captura),
+todos verde Dracula, ícone Plus para ação contextual.
+
+**Aritmética:** 1293 → 1293 testes (sem novos), 145 suítes mantidas.
+TS strict 0, anonimato OK, smoke OK. Bundle Hermes **8.44 MB**
+(redução de 410 KB do baseline 8.85 MB — remoção de 3 instâncias FAB
+inline + 3 imports compensou as props extras).
+
+**Validação visual via Gauntlet:**
+- `A-marcos-menu-com-acao-contextual.png` — sheet aberto na aba
+  Marcos com 5 itens em 64dp cada (Adicionar marco em top=472,
+  Foto/Música/Vídeo/Frase em 536/600/664/728), header verde
+  "Registrar", FABs antigos confirmadamente ausentes do DOM.
+
+**Side-effect (atualizações em testes existentes):** 3 E2Es legados
+do M11.1 (`m11-1-fotos-upload`, `m11-1-marcos-criar`,
+`m11-1-memorias-usavel`) atualizados para abrir o FAB verde antes
+de buscar o item contextual (não mais o FAB próprio que sumiu).
+Mudança trivial de seletor — não requereu sub-sprint nova.
+
+**FEATURES-CANONICAS atualizado:** §2.9 (M34→M34+M34.3) e §3.1/3.2/3.3
+refletem o FAB verde unificado.
+
 ### M-SLIDER-WEB-LOOP fechada (2026-05-04)
 
 `<Slider>` em `src/components/ui/Slider.tsx` agora ramifica por

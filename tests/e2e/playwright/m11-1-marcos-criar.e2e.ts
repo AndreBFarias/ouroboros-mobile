@@ -1,6 +1,10 @@
 // E2E M11.1 -- aba Marcos da MemoriasScreen: criar marco novo via FAB
 // + sheet "Novo marco" e confirmar que aparece na lista.
 //
+// M34.3: o FAB proprio "adicionar marco" foi removido; agora o fluxo
+// passa pelo MenuCapturaVerde unificado. Clica no FAB verde "abrir
+// menu de captura" e depois no item "adicionar marco" do sheet.
+//
 // Pre: __gauntlet.reset() + seed() para zerar stores e definir vault
 // mock. Em web/dev (GAUNTLET_ATIVO) o BiometriaGate e bypassado e
 // onboarding ja vem feito apos seed().
@@ -74,9 +78,12 @@ export default async function caseM111Marcos(
     await page.screenshot({ path: formPath });
     screenshots.push(formPath);
 
-    // Click no FAB "+" da aba Marcos.
+    // M34.3: Click no FAB verde unificado (substituiu o FAB proprio
+    // da tab Marcos).
     const fabClicado = await page.evaluate(() => {
-      const fab = document.querySelector('[aria-label="adicionar marco"]') as HTMLElement | null;
+      const fab = document.querySelector(
+        '[aria-label="abrir menu de captura"]'
+      ) as HTMLElement | null;
       if (!fab) return false;
       fab.click();
       return true;
@@ -86,7 +93,27 @@ export default async function caseM111Marcos(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'FAB adicionar marco ausente',
+        detalhe: 'FAB verde "abrir menu de captura" ausente',
+        screenshots,
+      };
+    }
+    await page.waitForTimeout(700);
+
+    // M34.3: clica no item contextual "adicionar marco" do sheet.
+    const itemMarcoClicado = await page.evaluate(() => {
+      const item = document.querySelector(
+        '[aria-label="adicionar marco"]'
+      ) as HTMLElement | null;
+      if (!item) return false;
+      item.click();
+      return true;
+    });
+    if (!itemMarcoClicado) {
+      return {
+        sprint,
+        aspecto,
+        status: 'FAIL',
+        detalhe: 'item "adicionar marco" ausente no sheet do MenuCapturaVerde',
         screenshots,
       };
     }

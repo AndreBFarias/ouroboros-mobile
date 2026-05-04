@@ -3,15 +3,25 @@
 // Video / Frase). Cada acao delega ao helper correspondente em
 // src/lib/midia/.
 //
+// M34.3: prop acoesExtras permite que cada tab da MemoriasScreen
+// injete sua acao contextual ("Adicionar marco", "Adicionar foto",
+// "Novo treino") como primeiro item do sheet. Resolveu o conflito de
+// z-order do FAB verde sobrepondo os FABs proprios das tabs (mesmas
+// coordenadas 769,900 56x56). Os FABs proprios foram removidos das
+// tabs em troca, restando 1 FAB unico por tela com semantica clara.
+//
 // Decisao de UI:
 //  - Cor verde distingue do FAB roxo de navegacao (FABMenu, esquerda).
 //  - Posicao direita evita conflito de gestos.
 //  - Sheet usa SHEET_60 (50% +10% para garantir 4 itens visiveis +
-//    paddings sem corte em tela 412dp).
+//    paddings sem corte em tela 412dp). Com 1 acao extra cabe 5 itens
+//    mantendo o snap; itens extras alem disso vao roer paddings.
 //  - Indice 0 (aberto direto) quando o caller decide via expand(); aqui
 //    inicializamos -1 e o tap no FAB chama expand(). A17 nao se aplica
 //    porque o sheet e' filho do mesmo provider de tab e o expand e
 //    disparado por tap sincrono (mesmo padrao do MemoriasFotosTab).
+//  - Itens contextuais usam mesma cor green dos itens de captura por
+//    coerencia visual; o que diferencia e a posicao (1a) e o icone.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useRef, useState, type ReactNode } from 'react';
@@ -42,10 +52,27 @@ import type { Para } from '@/lib/schemas/para';
 
 const FAB_SIZE = 56;
 
+// M34.3: descricao de uma acao contextual injetada pela tab que
+// hospeda o MenuCapturaVerde. A tab fornece o conjunto que deve
+// aparecer ANTES das 4 acoes de captura no sheet. Permite que o FAB
+// verde unificado absorva o papel do FAB proprio da tab ("Adicionar
+// marco" em Marcos, "Adicionar foto" em Fotos, "Novo treino" em
+// Treinos).
+export interface AcaoExtraCaptura {
+  label: string;
+  icone: ReactNode;
+  onPress: () => void;
+  accessibilityLabel: string;
+}
+
 export interface MenuCapturaVerdeProps {
   // Disparado apos qualquer captura concluida com sucesso (foto/audio/
   // video/frase). Caller usa para recarregar galerias relevantes.
   onCapturaConcluida?: () => void;
+  // M34.3: acoes contextuais da tab atual. Renderizadas acima das 4
+  // acoes de captura. Quando vazio/undefined o sheet mantem layout M34
+  // original (4 itens).
+  acoesExtras?: ReadonlyArray<AcaoExtraCaptura>;
 }
 
 interface AcaoMenuItemProps {
@@ -114,6 +141,7 @@ function AcaoMenuItem({
 
 export function MenuCapturaVerde({
   onCapturaConcluida,
+  acoesExtras,
 }: MenuCapturaVerdeProps): ReactNode {
   const sheetRef = useRef<BottomSheetRef>(null);
   const fraseRef = useRef<BottomSheetRef>(null);
@@ -240,6 +268,18 @@ export function MenuCapturaVerde({
           >
             Registrar
           </Text>
+          {acoesExtras?.map((acao) => (
+            <AcaoMenuItem
+              key={acao.accessibilityLabel}
+              icone={acao.icone}
+              label={acao.label}
+              onPress={() => {
+                fecharMenu();
+                acao.onPress();
+              }}
+              accessibilityLabel={acao.accessibilityLabel}
+            />
+          ))}
           <AcaoMenuItem
             icone={<ImageIcon size={20} color={colors.green} strokeWidth={2} />}
             label="Foto"

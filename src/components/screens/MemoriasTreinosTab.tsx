@@ -1,14 +1,27 @@
 // Tela 09 - Aba Treinos da MemoriasScreen. Heatmap 13x7 dos ultimos
 // 91 dias de sessoes formais, stats em cyan ("X treinos em 90 dias")
 // e legenda muted "Menos -> Mais". Tap em quadrado abre detalhe da
-// sessao do dia. Botao + flutuante para criar nova sessao.
+// sessao do dia.
 //
 // Quando o dia tem 2+ sessoes, abre a mais recente (sessoes de
 // rotina dupla so foram modeladas como 1 arquivo na M11; multi-
 // sessoes/dia entram no V2 quando aplicavel).
 //
+// M34.3: o FAB proprio "adicionar treino" foi REMOVIDO porque colidia
+// com o FAB verde do MenuCapturaVerde (mesmas coordenadas 769,900).
+// A tab registra "Novo treino" como acao contextual via
+// onRegistrarAcaoExtra; o sheet do MenuCapturaVerde unificado a
+// renderiza como primeiro item. Sheets internos preservados.
+//
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -16,7 +29,6 @@ import {
   BottomSheet,
   Button,
   EmptyState,
-  FAB,
   SHEET_60,
   SHEET_90,
   type BottomSheetRef,
@@ -33,9 +45,19 @@ import { SheetNovoTreino } from './SheetNovoTreino';
 import { DetalheDiaTreinoModal } from './DetalheDiaTreinoModal';
 import { treinosPath } from '@/lib/vault/paths';
 import { slugifyTreino } from '@/lib/treinos/slug';
+import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
-export function MemoriasTreinosTab(): ReactNode {
+// M34.3: prop opcional usada pela MemoriasScreen para coletar a acao
+// contextual da tab e injetar no MenuCapturaVerde. Quando undefined a
+// tab funciona isoladamente.
+export interface MemoriasTreinosTabProps {
+  onRegistrarAcaoExtra?: (acao: AcaoExtraCaptura | null) => void;
+}
+
+export function MemoriasTreinosTab({
+  onRegistrarAcaoExtra,
+}: MemoriasTreinosTabProps = {}): ReactNode {
   const router = useRouter();
   const { sessoes, recarregar } = useTreinos();
   const detalheRef = useRef<BottomSheetRef>(null);
@@ -92,6 +114,21 @@ export function MemoriasTreinosTab(): ReactNode {
   const handleNovo = useCallback(() => {
     novoRef.current?.expand();
   }, []);
+
+  // M34.3: registra a acao "Novo treino" no MenuCapturaVerde da
+  // screen pai. Limpa no unmount.
+  useEffect(() => {
+    if (!onRegistrarAcaoExtra) return;
+    onRegistrarAcaoExtra({
+      label: 'Novo treino',
+      icone: <Plus size={20} color={colors.green} strokeWidth={2} />,
+      onPress: handleNovo,
+      accessibilityLabel: 'novo treino',
+    });
+    return () => {
+      onRegistrarAcaoExtra(null);
+    };
+  }, [onRegistrarAcaoExtra, handleNovo]);
 
   const handleEditar = useCallback(() => {
     if (!sessaoSelecionada) return;
@@ -212,12 +249,6 @@ export function MemoriasTreinosTab(): ReactNode {
           </View>
         ) : null}
       </ScrollView>
-
-      <FAB
-        icon={<Plus size={24} color={colors.bg} strokeWidth={2} />}
-        onPress={handleNovo}
-        accessibilityLabel="adicionar treino"
-      />
 
       <BottomSheet ref={detalheRef} snapPoints={SHEET_60} index={-1}>
         {sessaoSelecionada ? (

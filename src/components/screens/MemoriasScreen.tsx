@@ -8,6 +8,13 @@
 // como dependencias novas (a spec da abertura para essa decisão na
 // seção 5).
 //
+// M34.3: o MenuCapturaVerde unificado absorveu o papel dos FABs
+// proprios das tabs (que colidiam em z-order com ele). Cada tab
+// registra uma acao contextual ("Adicionar marco", "Adicionar foto",
+// "Novo treino") via prop onRegistrarAcaoExtra; a screen agrega a
+// acao da tab ativa em acoesExtras do MenuCapturaVerde, que renderiza
+// como primeiro item do sheet "Registrar".
+//
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -19,7 +26,10 @@ import { haptics } from '@/lib/haptics';
 import { MemoriasTreinosTab } from './MemoriasTreinosTab';
 import { MemoriasFotosTab } from './MemoriasFotosTab';
 import { MemoriasMarcosTab } from './MemoriasMarcosTab';
-import { MenuCapturaVerde } from '@/components/chrome/MenuCapturaVerde';
+import {
+  MenuCapturaVerde,
+  type AcaoExtraCaptura,
+} from '@/components/chrome/MenuCapturaVerde';
 
 type TabKey = 'treinos' | 'fotos' | 'marcos';
 
@@ -38,6 +48,11 @@ export function MemoriasScreen(): ReactNode {
   // container e re-disparar carregamento.
   const [capturaNonce, setCapturaNonce] = useState(0);
 
+  // M34.3: acao contextual registrada pela tab ativa para o
+  // MenuCapturaVerde. So uma tab esta montada por vez (render
+  // condicional), entao o estado e' simples (1 ou null).
+  const [acaoExtra, setAcaoExtra] = useState<AcaoExtraCaptura | null>(null);
+
   const handleTabPress = useCallback((next: TabKey) => {
     haptics.selection();
     setTab(next);
@@ -46,6 +61,13 @@ export function MemoriasScreen(): ReactNode {
   const handleCapturaConcluida = useCallback(() => {
     setCapturaNonce((n) => n + 1);
   }, []);
+
+  const handleRegistrarAcaoExtra = useCallback(
+    (acao: AcaoExtraCaptura | null) => {
+      setAcaoExtra(acao);
+    },
+    []
+  );
 
   return (
     <Screen padded={false}>
@@ -109,12 +131,23 @@ export function MemoriasScreen(): ReactNode {
       </View>
 
       <View style={{ flex: 1 }} key={`tabs-${capturaNonce}`}>
-        {tab === 'treinos' ? <MemoriasTreinosTab /> : null}
-        {tab === 'fotos' ? <MemoriasFotosTab /> : null}
-        {tab === 'marcos' ? <MemoriasMarcosTab /> : null}
+        {tab === 'treinos' ? (
+          <MemoriasTreinosTab
+            onRegistrarAcaoExtra={handleRegistrarAcaoExtra}
+          />
+        ) : null}
+        {tab === 'fotos' ? (
+          <MemoriasFotosTab onRegistrarAcaoExtra={handleRegistrarAcaoExtra} />
+        ) : null}
+        {tab === 'marcos' ? (
+          <MemoriasMarcosTab onRegistrarAcaoExtra={handleRegistrarAcaoExtra} />
+        ) : null}
       </View>
 
-      <MenuCapturaVerde onCapturaConcluida={handleCapturaConcluida} />
+      <MenuCapturaVerde
+        onCapturaConcluida={handleCapturaConcluida}
+        acoesExtras={acaoExtra ? [acaoExtra] : undefined}
+      />
     </Screen>
   );
 }

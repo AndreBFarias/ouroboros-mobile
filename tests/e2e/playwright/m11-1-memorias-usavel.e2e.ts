@@ -1,7 +1,8 @@
 // E2E M11.1 -- regressao unificada Memorias usavel:
 //   1. Heatmap centralizado horizontalmente no frame 412dp
 //      (primeira linha tem x ~= (412 - largura_grid)/2 +- 8px).
-//   2. FAB "adicionar foto" presente na aba Fotos.
+//   2. FAB unificado verde presente na aba Fotos (M34.3 removeu FAB
+//      proprio "adicionar foto").
 //   3. Botao "Cadastrar exercicios na Galeria" presente na aba Treinos
 //      (visivel quando total === 0, que e o caso apos seed limpo).
 //
@@ -131,9 +132,12 @@ export default async function caseM111Regressao(
     }
     await page.waitForTimeout(500);
 
+    // M34.3: o FAB proprio "adicionar foto" foi removido; o item virou
+    // entrada do MenuCapturaVerde unificado. Confirmamos a presenca do
+    // FAB verde unificado (substitui o FAB roxo proprio da aba).
     const fotosCheck = await page.evaluate(() => {
       return {
-        fab: !!document.querySelector('[aria-label="adicionar foto"]'),
+        fab: !!document.querySelector('[aria-label="abrir menu de captura"]'),
       };
     });
 
@@ -146,7 +150,8 @@ export default async function caseM111Regressao(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'FAB adicionar foto ausente na aba Fotos',
+        detalhe:
+          'FAB verde unificado ausente na aba Fotos (M34.3 removeu o FAB proprio)',
         screenshots,
       };
     }

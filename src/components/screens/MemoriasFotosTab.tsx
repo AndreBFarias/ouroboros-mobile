@@ -7,8 +7,21 @@
 // __gauntlet.adicionarFotoMock() que insere entrada in-memory.
 // Empty state ganha texto secundario.
 //
+// M34.3: o FAB proprio "adicionar foto" foi REMOVIDO porque colidia
+// com o FAB verde do MenuCapturaVerde (mesmas coordenadas 769,900).
+// A tab registra "Adicionar foto" como acao contextual via
+// onRegistrarAcaoExtra; o sheet do MenuCapturaVerde unificado a
+// renderiza como primeiro item. Empty state preservado.
+//
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -16,7 +29,6 @@ import {
   BottomSheet,
   Button,
   EmptyState,
-  FAB,
   SHEET_70,
   type BottomSheetRef,
 } from '@/components/ui';
@@ -29,10 +41,20 @@ import { FotoDetalhe } from './FotoDetalhe';
 import { adicionarFotoManual } from '@/lib/midia/adicionarFotoManual';
 import { capturarFoto } from '@/lib/midia/capturarFoto';
 import { useLarguraFrame } from '@/lib/ui/useLarguraFrame';
+import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 
 const COLS = 3;
 
-export function MemoriasFotosTab(): ReactNode {
+// M34.3: prop opcional usada pela MemoriasScreen para coletar a acao
+// contextual da tab e injetar no MenuCapturaVerde. Quando undefined a
+// tab funciona isoladamente.
+export interface MemoriasFotosTabProps {
+  onRegistrarAcaoExtra?: (acao: AcaoExtraCaptura | null) => void;
+}
+
+export function MemoriasFotosTab({
+  onRegistrarAcaoExtra,
+}: MemoriasFotosTabProps = {}): ReactNode {
   const router = useRouter();
   const { fotos, recarregar } = useFotosAgregadas();
   const larguraFrame = useLarguraFrame();
@@ -68,16 +90,34 @@ export function MemoriasFotosTab(): ReactNode {
     setFotoSelecionada(null);
   }, [fotoSelecionada, router]);
 
-  // M11.1: handler do FAB. Em mobile real abre expo-image-picker e
-  // copia para media/fotos/. Em web/dev (GAUNTLET_ATIVO) o helper
-  // delega ao __gauntlet.adicionarFotoMock(). Apos sucesso recarrega
-  // a galeria para refletir a entrada nova no grid.
+  // M11.1: handler do FAB original (M34.3: agora chamado pelo
+  // MenuCapturaVerde unificado via acao contextual). Em mobile real
+  // abre expo-image-picker e copia para media/fotos/. Em web/dev
+  // (GAUNTLET_ATIVO) delega ao __gauntlet.adicionarFotoMock(). Apos
+  // sucesso recarrega a galeria.
   const handleAdicionarFoto = useCallback(async () => {
     const sucesso = await adicionarFotoManual();
     if (sucesso) {
       await recarregar();
     }
   }, [recarregar]);
+
+  // M34.3: registra a acao "Adicionar foto" no MenuCapturaVerde da
+  // screen pai. Limpa no unmount.
+  useEffect(() => {
+    if (!onRegistrarAcaoExtra) return;
+    onRegistrarAcaoExtra({
+      label: 'Adicionar foto',
+      icone: <Plus size={20} color={colors.green} strokeWidth={2} />,
+      onPress: () => {
+        void handleAdicionarFoto();
+      },
+      accessibilityLabel: 'adicionar foto',
+    });
+    return () => {
+      onRegistrarAcaoExtra(null);
+    };
+  }, [onRegistrarAcaoExtra, handleAdicionarFoto]);
 
   // M34: atalho do empty state. Reusa capturarFoto (helper unificado
   // do menu verde) com origem galeria. Em web/dev cai no caminho mock
@@ -174,14 +214,6 @@ export function MemoriasFotosTab(): ReactNode {
           ))
         )}
       </ScrollView>
-
-      <FAB
-        icon={<Plus size={24} color={colors.bg} strokeWidth={2} />}
-        onPress={() => {
-          void handleAdicionarFoto();
-        }}
-        accessibilityLabel="adicionar foto"
-      />
 
       <BottomSheet ref={fotoRef} snapPoints={SHEET_70} index={-1}>
         {fotoSelecionada ? (
