@@ -5,6 +5,66 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M29 fechada (2026-05-04)
+
+Settings v2: vibração simples + features default ON + sync removido.
+
+**Entregáveis principais:**
+- `src/lib/stores/settings.ts` (198→278L) — shape v2 com `somVibracao`
+  4-toggle (geral/despertar/conquista/botoes), `featureToggles` 6/7
+  defaults TRUE, REMOVIDOS `lembretes` e `sync`. Persist key
+  `ouroboros.settings.v2`. Migration v1→v2 conservadora preservando
+  intenção do usuário (`alarme→despertar`, `vitoria→conquista`,
+  `humor||fab→botoes`).
+- `src/lib/haptics.ts` — refatorado: `humor/trigger/fab=botoes`,
+  `vitoria=conquista`, `alarme=despertar`. `tomVibracaoLigado(chave)`
+  retorna false se mestre `geral` off.
+- `app/settings/index.tsx` (938→561L; -377L) — REMOVIDOS
+  `<SecaoLembretes>`, `<SecaoSync>`, `<SelectorQualidade>`. Nova
+  `<SecaoSomVibracao>` com 4 toggles + disable visual quando geral
+  off. Features reordenadas (To-do → Alarme → Contador → Ciclo →
+  Calendário → Widget). Adicionado `<LinkSubTela>` "Reinicializar
+  pasta do Vault" chamando `inicializarVaultCanonico()`.
+
+**Refactor inevitável (consumidores externos do shape antigo):**
+- `src/components/screens/ScannerSheet.tsx` — `s.sync.qualidadeScanner`
+  → constante `'maxima'` inline (decisão "sempre máxima implícita").
+- `src/lib/scanner/launch.ts` — `type ScannerQualidade` movido para o
+  próprio módulo.
+- `src/lib/services/notificacoesLembretes.ts` — `reagendarLembretes()`
+  neutralizado para chamar apenas `cancelarTudo()` (M30 substitui).
+- `src/lib/stores/index.ts` — barrel sem `SyncMethod/ScannerQualidade/
+  Lembrete`.
+- `tests/app/settings/index.test.tsx` (4 testes), `tests/components/
+  chrome/MenuLateral.test.tsx` (2), `tests/lib/widget/
+  atualizarWidgetHomescreen.test.ts` (1) — atualizados para shape v2.
+
+**Aritmética:** 1157 → 1162 testes (+5), 135 → 135 suítes,
+tsc 0 erros, anonimato OK. Bundle Hermes 8.79 → 8.78 MB (-10 KB).
+`app/settings/index.tsx` -377L pelo cleanup.
+
+**Validação visual via Gauntlet (playwright MCP):**
+- `/settings` renderiza com:
+  - Header "Configurações" laranja.
+  - Seção SOM E VIBRAÇÃO com 4 toggles purple ativos:
+    - "Vibração geral" (mestre, "Ao desligar, silencia tudo.")
+    - "Vibrar em alarmes (despertar)"
+    - "Vibrar em conquistas"
+    - "Vibrar em botões e gestos" ("Humor, fab, registros rápidos.")
+  - Seção PESSOA: Vault compartilhado, Editar nomes e fotos,
+    **Reinicializar pasta do Vault** (novo), Adicionar segunda
+    pessoa.
+  - Seção OPCIONAIS começando com To-do leve (toggle ativo por
+    default).
+  - **Sem Lembretes**, **sem Sync** (confirmado).
+- Screenshot em `docs/sprints/M29-screenshots/A-settings-v2-render.png`.
+
+**Migração v1→v2 (4 cases em `tests/lib/stores/settings.test.ts`):**
+- Estado v1 sintético mapeia conservador.
+- Shape parcial preenche defaults.
+- Null retorna defaults limpos.
+- v2 já persistido passa intacto.
+
 ### M-GAUNTLET-FAST-BOOT fechada com ressalva (2026-05-04)
 
 Pré-cache de fontes JetBrainsMono no Vault servido pelo Metro,

@@ -23,38 +23,7 @@ jest.mock('expo-constants', () => ({
   },
 }));
 
-// Mock de DateTimePicker para evitar UI nativa.
-jest.mock('@react-native-community/datetimepicker', () => {
-  const ReactMock = require('react');
-  const RNMock = require('react-native');
-  const DTP = () =>
-    ReactMock.createElement(RNMock.View, {
-      accessibilityLabel: 'mock-datetimepicker',
-    });
-  return { __esModule: true, default: DTP };
-});
-
-// Mocks de servicos para nao tocar filesystem nem notification API
-// real.
-jest.mock('@/lib/services/syncStatus', () => ({
-  __esModule: true,
-  verificarSyncStatus: jest.fn(() =>
-    Promise.resolve({
-      cor: 'verde',
-      ultimaModificacao: new Date(Date.now() - 5 * 60 * 1000),
-      conflito: false,
-      alvo: '/tmp/vault',
-    })
-  ),
-  descreverDelta: jest.fn(() => 'Atualizado há 5 min.'),
-}));
-
-jest.mock('@/lib/services/notificacoesLembretes', () => ({
-  __esModule: true,
-  agendarLembrete: jest.fn(() => Promise.resolve(true)),
-  cancelarLembrete: jest.fn(() => Promise.resolve()),
-}));
-
+// Mocks de servicos para nao tocar filesystem nem APIs reais.
 jest.mock('@/lib/services/exportarVault', () => ({
   __esModule: true,
   exportarVaultZip: jest.fn(() =>
@@ -67,18 +36,25 @@ jest.mock('@/lib/services/limparCache', () => ({
   limparCache: jest.fn(() => Promise.resolve({ arquivosRemovidos: 2 })),
 }));
 
+jest.mock('@/lib/vault/permissions', () => ({
+  __esModule: true,
+  inicializarVaultCanonico: jest.fn(() =>
+    Promise.resolve({ ok: true, vaultRoot: '/tmp/vault' })
+  ),
+}));
+
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import SettingsTela from '@/../app/settings/index';
 import { useSettings } from '@/lib/stores/settings';
 import { ToastProvider } from '@/components/ui/Toast';
 
-describe('Tela 23 — Settings', () => {
+describe('Tela 23 — Settings v2 (sprint M29)', () => {
   beforeEach(() => {
     useSettings.getState().resetar();
     jest.clearAllMocks();
   });
 
-  it('renderiza header e as 7 secoes', async () => {
+  it('renderiza header e as 5 secoes (sem Lembretes nem Sync)', async () => {
     const tree = render(
       <ToastProvider>
         <SettingsTela />
@@ -86,36 +62,66 @@ describe('Tela 23 — Settings', () => {
     );
     expect(tree.getByText('Configurações')).toBeTruthy();
     expect(tree.getByText('Som e vibração')).toBeTruthy();
-    expect(tree.getByText('Lembretes')).toBeTruthy();
     expect(tree.getByText('Pessoa')).toBeTruthy();
-    expect(tree.getByText('Sync')).toBeTruthy();
     expect(tree.getByText('Features opcionais')).toBeTruthy();
     expect(tree.getByText('Privacidade')).toBeTruthy();
     expect(tree.getByText('Sobre')).toBeTruthy();
+    // Removidas em v2:
+    expect(tree.queryByText('Lembretes')).toBeNull();
+    expect(tree.queryByText('Sync')).toBeNull();
   });
 
-  it('toggle de feature persiste em useSettings', async () => {
+  it('toggle de feature persiste em useSettings (default true; alterna para false)', async () => {
     const tree = render(
       <ToastProvider>
         <SettingsTela />
       </ToastProvider>
     );
+    expect(useSettings.getState().featureToggles.cicloMenstrual).toBe(true);
     fireEvent.press(tree.getByLabelText('toggle ciclo menstrual'));
     await waitFor(() =>
-      expect(useSettings.getState().featureToggles.cicloMenstrual).toBe(true)
+      expect(useSettings.getState().featureToggles.cicloMenstrual).toBe(false)
     );
   });
 
-  it('toggle som vibracao trigger ligavel pelo usuario', async () => {
+  it('toggle vibrar geral atua como mestre (default true; desliga)', async () => {
     const tree = render(
       <ToastProvider>
         <SettingsTela />
       </ToastProvider>
     );
-    expect(useSettings.getState().somVibracao.trigger).toBe(false);
-    fireEvent.press(tree.getByLabelText('toggle vibrar trigger'));
+    expect(useSettings.getState().somVibracao.geral).toBe(true);
+    fireEvent.press(tree.getByLabelText('toggle vibrar geral'));
     await waitFor(() =>
-      expect(useSettings.getState().somVibracao.trigger).toBe(true)
+      expect(useSettings.getState().somVibracao.geral).toBe(false)
+    );
+  });
+
+  it('toggle vibrar botoes alterna para false', async () => {
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    expect(useSettings.getState().somVibracao.botoes).toBe(true);
+    fireEvent.press(tree.getByLabelText('toggle vibrar botoes'));
+    await waitFor(() =>
+      expect(useSettings.getState().somVibracao.botoes).toBe(false)
+    );
+  });
+
+  it('quando geral off, toggle dos demais nao altera estado (disabled)', async () => {
+    useSettings.getState().setSomVibracao('geral', false);
+    useSettings.getState().setSomVibracao('despertar', true);
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    fireEvent.press(tree.getByLabelText('toggle vibrar despertar'));
+    // disabled => onChange ignorado, valor permanece.
+    await waitFor(() =>
+      expect(useSettings.getState().somVibracao.despertar).toBe(true)
     );
   });
 
@@ -139,44 +145,22 @@ describe('Tela 23 — Settings', () => {
     expect(tree.getByLabelText('adicionar segunda pessoa')).toBeTruthy();
   });
 
-  it('forcar sync mostra toast informativo', async () => {
-    // Com sync.metodo='nao-uso' (default), o botao "Forçar sync" e o
-    // card de status ficam ocultos por design — não faz sentido sem
-    // ferramenta externa. Para exercitar o botao, ligamos um metodo.
-    useSettings.getState().setSync('metodo', 'syncthing');
+  it('link "Reinicializar pasta do Vault" chama o servico e mostra toast', async () => {
+    // require sincrono evita TypeError do dynamic import sem
+    // --experimental-vm-modules.
+    const {
+      inicializarVaultCanonico,
+    } = require('@/lib/vault/permissions') as {
+      inicializarVaultCanonico: jest.Mock;
+    };
     const tree = render(
       <ToastProvider>
         <SettingsTela />
       </ToastProvider>
     );
-    fireEvent.press(tree.getByLabelText('Forçar sync'));
-    expect(
-      await tree.findByText('Sync gerenciado pelo aplicativo externo.')
-    ).toBeTruthy();
-  });
-
-  it('selector qualidade scanner persiste 8mp', async () => {
-    const tree = render(
-      <ToastProvider>
-        <SettingsTela />
-      </ToastProvider>
-    );
-    fireEvent.press(tree.getByLabelText('qualidade 8mp'));
-    await waitFor(() =>
-      expect(useSettings.getState().sync.qualidadeScanner).toBe('8mp')
-    );
-  });
-
-  it('selector metodo sync persiste syncthing', async () => {
-    const tree = render(
-      <ToastProvider>
-        <SettingsTela />
-      </ToastProvider>
-    );
-    fireEvent.press(tree.getByLabelText('metodo syncthing'));
-    await waitFor(() =>
-      expect(useSettings.getState().sync.metodo).toBe('syncthing')
-    );
+    fireEvent.press(tree.getByLabelText('reinicializar pasta do vault'));
+    await waitFor(() => expect(inicializarVaultCanonico).toHaveBeenCalled());
+    expect(await tree.findByText('Pasta verificada.')).toBeTruthy();
   });
 
   it('versao da Sobre exibe valor de Constants', () => {

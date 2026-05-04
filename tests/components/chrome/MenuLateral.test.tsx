@@ -50,6 +50,13 @@ describe('MenuLateral', () => {
   });
 
   it('Opcionais nao aparece quando todos os toggles estao off', () => {
+    // Sprint M29: defaults v2 trazem todos os featureToggles ON. Forca
+    // explicitamente off para exercitar o caminho de "menu sem opcionais".
+    useSettings.getState().setFeatureToggle('todoLeve', false);
+    useSettings.getState().setFeatureToggle('alarmePessoal', false);
+    useSettings.getState().setFeatureToggle('contadorDiasSem', false);
+    useSettings.getState().setFeatureToggle('cicloMenstrual', false);
+    useSettings.getState().setFeatureToggle('calendarioConquistas', false);
     useNavegacao.setState({ menuAberto: true });
     const { queryByLabelText } = render(<MenuLateral />);
     expect(queryByLabelText('item tarefas')).toBeNull();
@@ -59,8 +66,12 @@ describe('MenuLateral', () => {
   });
 
   it('Opcionais filtra por featureToggles individualmente', () => {
+    // Sprint M29: defaults v2 trazem todos os featureToggles ON. Para
+    // testar o filtro, ligamos so dois e desligamos os outros explicitos.
     useSettings.getState().setFeatureToggle('todoLeve', true);
     useSettings.getState().setFeatureToggle('cicloMenstrual', true);
+    useSettings.getState().setFeatureToggle('alarmePessoal', false);
+    useSettings.getState().setFeatureToggle('contadorDiasSem', false);
     useNavegacao.setState({ menuAberto: true });
     const { getByLabelText, queryByLabelText } = render(<MenuLateral />);
 

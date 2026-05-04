@@ -1,9 +1,14 @@
-// Testes do módulo haptics. Cobre:
-//   - 5 funções genéricas sempre disparam expo-haptics
-//   - 5 funções contextuais consultam Settings.somVibracao antes
-//   - Quando o toggle correspondente está off, contextual cai em
-//     no-op silencioso (não chama expo-haptics)
-//   - Quando o toggle está on, contextual chama o método nativo certo
+// Testes do modulo haptics (sprint M29 - shape v2). Cobre:
+//   - 5 funcoes genericas sempre disparam expo-haptics
+//   - 5 funcoes contextuais consultam Settings.somVibracao agrupado:
+//       humor/trigger/fab -> botoes
+//       vitoria           -> conquista
+//       alarme            -> despertar
+//   - Quando o toggle agrupado esta off, contextual cai em no-op
+//   - Quando o mestre `geral` esta off, todos os contextuais ficam
+//     silenciosos independente das chaves
+//   - Quando o toggle agrupado esta on (e geral on), contextual chama
+//     o metodo nativo certo
 import * as ExpoHaptics from 'expo-haptics';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/stores/settings';
@@ -33,11 +38,11 @@ const mockNotification = ExpoHaptics.notificationAsync as jest.MockedFunction<
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // Reset do store para defaults (todos toggles ON exceto trigger).
+  // Reset do store para defaults v2 (todos toggles ON).
   useSettings.getState().resetar();
 });
 
-describe('haptics genéricos (sempre disparam)', () => {
+describe('haptics genericos (sempre disparam)', () => {
   it('light dispara impactAsync(Light)', async () => {
     await haptics.light();
     expect(mockImpact).toHaveBeenCalledWith('light');
@@ -64,81 +69,102 @@ describe('haptics genéricos (sempre disparam)', () => {
   });
 });
 
-describe('haptics contextuais — toggle ON', () => {
-  beforeEach(() => {
-    useSettings.getState().setSomVibracao('humor', true);
-    useSettings.getState().setSomVibracao('vitoria', true);
-    useSettings.getState().setSomVibracao('trigger', true);
-    useSettings.getState().setSomVibracao('fab', true);
-    useSettings.getState().setSomVibracao('alarme', true);
-  });
-
-  it('humor dispara impactAsync(Light) quando toggle on', async () => {
+describe('haptics contextuais — toggle ON (defaults v2)', () => {
+  it('humor dispara impactAsync(Light) quando botoes on', async () => {
     await haptics.humor();
     expect(mockImpact).toHaveBeenCalledWith('light');
   });
 
-  it('vitoria dispara notificationAsync(Success) quando toggle on', async () => {
+  it('vitoria dispara notificationAsync(Success) quando conquista on', async () => {
     await haptics.vitoria();
     expect(mockNotification).toHaveBeenCalledWith('success');
   });
 
-  it('trigger dispara impactAsync(Medium) quando toggle on', async () => {
+  it('trigger dispara impactAsync(Medium) quando botoes on', async () => {
     await haptics.trigger();
     expect(mockImpact).toHaveBeenCalledWith('medium');
   });
 
-  it('fab dispara impactAsync(Medium) quando toggle on', async () => {
+  it('fab dispara impactAsync(Medium) quando botoes on', async () => {
     await haptics.fab();
     expect(mockImpact).toHaveBeenCalledWith('medium');
   });
 
-  it('alarme dispara notificationAsync(Warning) quando toggle on', async () => {
+  it('alarme dispara notificationAsync(Warning) quando despertar on', async () => {
     await haptics.alarme();
     expect(mockNotification).toHaveBeenCalledWith('warning');
   });
 });
 
-describe('haptics contextuais — toggle OFF (no-op silencioso)', () => {
-  it('humor não chama nada quando toggle off', async () => {
-    useSettings.getState().setSomVibracao('humor', false);
+describe('haptics contextuais — toggle agrupado OFF (no-op)', () => {
+  it('humor/trigger/fab silenciam quando botoes off', async () => {
+    useSettings.getState().setSomVibracao('botoes', false);
     await haptics.humor();
-    expect(mockImpact).not.toHaveBeenCalled();
-    expect(mockNotification).not.toHaveBeenCalled();
-  });
-
-  it('vitoria não chama nada quando toggle off', async () => {
-    useSettings.getState().setSomVibracao('vitoria', false);
-    await haptics.vitoria();
-    expect(mockNotification).not.toHaveBeenCalled();
-  });
-
-  it('trigger não chama nada quando toggle off', async () => {
-    useSettings.getState().setSomVibracao('trigger', false);
     await haptics.trigger();
-    expect(mockImpact).not.toHaveBeenCalled();
-  });
-
-  it('fab não chama nada quando toggle off', async () => {
-    useSettings.getState().setSomVibracao('fab', false);
     await haptics.fab();
     expect(mockImpact).not.toHaveBeenCalled();
   });
 
-  it('alarme não chama nada quando toggle off', async () => {
-    useSettings.getState().setSomVibracao('alarme', false);
+  it('vitoria silencia quando conquista off', async () => {
+    useSettings.getState().setSomVibracao('conquista', false);
+    await haptics.vitoria();
+    expect(mockNotification).not.toHaveBeenCalled();
+  });
+
+  it('alarme silencia quando despertar off', async () => {
+    useSettings.getState().setSomVibracao('despertar', false);
     await haptics.alarme();
     expect(mockNotification).not.toHaveBeenCalled();
   });
 });
 
-describe('haptics contextuais — independência entre toggles', () => {
-  it('toggle off de humor não afeta vitoria', async () => {
-    useSettings.getState().setSomVibracao('humor', false);
-    useSettings.getState().setSomVibracao('vitoria', true);
+describe('haptics contextuais — mestre geral OFF', () => {
+  beforeEach(() => {
+    useSettings.getState().setSomVibracao('geral', false);
+    // Confirma que demais permanecem ON na store; mestre off deve
+    // sobrepor independente do estado dos outros.
+  });
+
+  it('humor silencia mesmo com botoes on', async () => {
+    await haptics.humor();
+    expect(mockImpact).not.toHaveBeenCalled();
+  });
+
+  it('vitoria silencia mesmo com conquista on', async () => {
+    await haptics.vitoria();
+    expect(mockNotification).not.toHaveBeenCalled();
+  });
+
+  it('alarme silencia mesmo com despertar on', async () => {
+    await haptics.alarme();
+    expect(mockNotification).not.toHaveBeenCalled();
+  });
+
+  it('trigger silencia mesmo com botoes on', async () => {
+    await haptics.trigger();
+    expect(mockImpact).not.toHaveBeenCalled();
+  });
+
+  it('fab silencia mesmo com botoes on', async () => {
+    await haptics.fab();
+    expect(mockImpact).not.toHaveBeenCalled();
+  });
+});
+
+describe('haptics contextuais — independencia entre toggles agrupados', () => {
+  it('botoes off nao afeta vitoria (conquista on)', async () => {
+    useSettings.getState().setSomVibracao('botoes', false);
     await haptics.humor();
     await haptics.vitoria();
     expect(mockImpact).not.toHaveBeenCalled();
     expect(mockNotification).toHaveBeenCalledWith('success');
+  });
+
+  it('conquista off nao afeta alarme (despertar on)', async () => {
+    useSettings.getState().setSomVibracao('conquista', false);
+    await haptics.vitoria();
+    await haptics.alarme();
+    expect(mockNotification).toHaveBeenCalledTimes(1);
+    expect(mockNotification).toHaveBeenCalledWith('warning');
   });
 });

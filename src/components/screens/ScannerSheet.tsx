@@ -1,26 +1,29 @@
 // Modal sheet wrap sobre abrirScanner. Nao renderiza viewfinder
-// próprio: o pacote nativo @dariyd/react-native-document-scanner
-// entrega UI completa (câmera, detecção de cantos, deskew). O
+// proprio: o pacote nativo @dariyd/react-native-document-scanner
+// entrega UI completa (camera, deteccao de cantos, deskew). O
 // componente apenas:
 //   1. Mostra um botao primario CTA "Capturar nota".
-//   2. Le qualidadeScanner do useSettings.
+//   2. Usa qualidade 'maxima' (sprint M29 removeu o seletor; sempre
+//      maximo, sem compressao adicional).
 //   3. Chama abrirScanner e trata a discriminated union.
 //   4. Em sucesso, navega para /scanner/preview com URIs em params.
-//   5. Em cancelamento, fica silencioso (usuário voltou).
+//   5. Em cancelamento, fica silencioso (usuario voltou).
 //   6. Em erro, mostra toast vermelho.
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Camera } from 'lucide-react-native';
 import { Button, EmptyState, useToast } from '@/components/ui';
-import { useSettings } from '@/lib/stores/settings';
 import { haptics } from '@/lib/haptics';
 import { abrirScanner } from '@/lib/scanner/launch';
+
+// Sprint M29: qualidade fixa 'maxima'. Antes vinha de
+// useSettings.sync.qualidadeScanner; o seletor foi removido da UI.
+const QUALIDADE_FIXA = 'maxima' as const;
 
 export function ScannerSheet() {
   const router = useRouter();
   const toast = useToast();
-  const qualidade = useSettings((s) => s.sync.qualidadeScanner);
   const [carregando, setCarregando] = useState(false);
 
   async function aoCapturar() {
@@ -28,7 +31,7 @@ export function ScannerSheet() {
     setCarregando(true);
     await haptics.medium();
     try {
-      const resultado = await abrirScanner(qualidade);
+      const resultado = await abrirScanner(QUALIDADE_FIXA);
       if (!resultado.ok) {
         if (resultado.erro.tipo === 'cancelado') {
           return;

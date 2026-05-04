@@ -8,13 +8,12 @@ export {
   type TipoCompanhia as OnboardingTipoCompanhia,
 } from './onboarding';
 export { useHasHydrated } from './hydrated';
+// Sprint M29: shape v2 removeu SyncMethod, ScannerQualidade e Lembrete.
+// Quem precisa de ScannerQualidade importa de '@/lib/scanner/launch'.
 export {
   useSettings,
   type SettingsState,
-  type SyncMethod,
-  type ScannerQualidade,
   type TipoCompanhia,
-  type Lembrete,
 } from './settings';
 // adicionado por M27:
 export { useNavegacao, type NavegacaoState } from './navegacao';

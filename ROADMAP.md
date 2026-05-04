@@ -42,7 +42,7 @@ spec PARA o ciclo e pede clarificação.
 | ~~1~~ | ~~M-GAUNTLET-LEAK-CHECK~~ | ~~Script CI~~ — **fechada 2026-05-04** com achado crítico (vazamento revelado). M-GAUNTLET-DEAD-CODE-V2 corretiva criada | `M-GAUNTLET-LEAK-CHECK-spec.md` | — |
 | ~~1.6~~ | ~~M-GAUNTLET-SEED-V2~~ | ~~Fixtures realistas~~ — **fechada 2026-05-04** (1157/135) | `M-GAUNTLET-SEED-V2-spec.md` | — |
 | ~~1.7~~ | ~~M-GAUNTLET-FAST-BOOT~~ | ~~Pré-cache JetBrainsMono~~ — **fechada com ressalva 2026-05-04** (M-GAUNTLET-FAST-BOOT-FOLLOWUP corretiva) | `M-GAUNTLET-FAST-BOOT-spec.md` | — |
-| 4 | M29 | Settings v2 (vibração simples + features default ON + sync removido) | `M29-spec.md` | 4h |
+| ~~4~~ | ~~M29~~ | ~~Settings v2~~ — **fechada 2026-05-04** (1162/135) | `M29-spec.md` | — |
 | 5 | M30 | AlarmeSchema v2 (recorrência + channel + lembretes) | `M30-spec.md` | 5-6h |
 | 6 | M31 | TarefaSchema v2 (categoria + pessoa_destino + alarme) | `M31-spec.md` | 5-6h |
 | 7 | M32 | Contador v2 (mensagens de apoio + marcos) | `M32-spec.md` | 2-3h |
@@ -162,7 +162,7 @@ prioridade, requerem emulador ou APK dev-client):
 | `[ok]` | M28 | Varredura de identidade. Adiciona `useNomeDe(pessoa)` hook reativo em `pessoa.ts` (mantém `nomeDe` síncrono). `PESSOAS_CONFIG.ambos.nome` `'Ambos'`→`'Casal'`. Migra `MiniHumorScreen`, `FiltrosBar`, `editar-pessoa`, `ScannerPreview`, `ShareReceiver`, `HumorHeatmapStats` para o hook. "Sobreposto" mantido (label de modo). +7 testes em 1 suite nova (1118→1125, 129→130). Bundle Hermes 8.75 MB. 2/3 screenshots Nível A (FiltrosBar travada em web — achado COLAT-01) | — | — | 3-4h | `M28-spec.md` |
 | `[ok]` | M25.1 | Fix animação OuroborosLoader em web. `useAnimatedProps` agora retorna string SVG nativa `transform="rotate(N 160 160)"` (rn-svg-web converte `<G rotation>` perdendo `cx`/`cy`; rotação caía em `(0,0)`). +1 teste novo confirma formato (1125→1126). Caminhos não invocados: nenhum — fix direto e isolado | — | — | 30min | `M25.1-spec.md` |
 | `[ok]` | M27.1 | Fix combinado caminhos A+C. **Caminho C** em `lerConquistas`: early-return `{ conquistas: [], totaisPorOrigem: ... }` quando `vaultRoot.startsWith('web://')` (Promise FileSystem nunca resolvia em web mock). **Caminho A** em `_layout.tsx`: `useRef` `fontesPersistentementeCarregadas` segura o early-return contra oscilação de `useFonts` SDK 54 web. Caminho D (fade transition) não invocado | — | — | 1-2h | `M27.1-spec.md` |
-| `[todo]` | M29 | Settings v2: vibração simples + features default ON + sync removido | 23 | settings v2 | 4h | `M29-spec.md` |
+| `[ok]` | M29 | Settings v2. `useSettings` shape v2 com `somVibracao` 4-toggle (geral mestre/despertar/conquista/botoes), `featureToggles` 6/7 default ON, `lembretes` e `sync` REMOVIDOS. Persist key `ouroboros.settings.v2` + migration v1→v2 conservadora. `haptics.ts` refatorado. `app/settings/index.tsx` 938→561L (-377L) sem `<SecaoLembretes/Sync/SelectorQualidade>`, com `<LinkSubTela>` "Reinicializar pasta do Vault". Refactor inevitável em 7 arquivos (consumidores). Validação Gauntlet: render correto. 1157→1162 testes (+5). Bundle 8.78 MB | 23 | settings v2 | 4h | `M29-spec.md` |
 | `[todo]` | M30 | AlarmeSchema v2: recorrência + channel com vibração + lembretes integrados | nova | alarme v2 | 5-6h | `M30-spec.md` |
 | `[todo]` | M31 | TarefaSchema v2: categoria + pessoa_destino + alarme | nova | tarefa v2 | 5-6h | `M31-spec.md` |
 | `[todo]` | M32 | Contador v2: mensagens de apoio + indicador de marcos | nova | — | 2-3h | `M32-spec.md` |

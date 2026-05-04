@@ -1,34 +1,26 @@
-// Tela 23 — Settings. Lista vertical de 7 seções:
-//   1. Som e vibracao (4 toggles)
-//   2. Lembretes (3 linhas com toggle + time picker)
-//   3. Pessoa (radio + Vault compartilhado + sub-rotas)
-//   4. Sync (CardStatus + Forcar sync + selector método + qualidade scanner)
-//   5. Features opcionais (6 toggles: ciclo, alarme, todo, contador,
-//      calendario, widget)
-//   6. Privacidade (biometria + ocultar transcricoes + export + limpar cache)
-//   7. Sobre (versao, GitHub, licenca)
+// Tela 23 — Settings v2 (sprint M29). Lista vertical de 5 secoes:
+//   1. Som e vibracao (4 toggles: geral mestre + despertar + conquista
+//      + botoes; quando geral off, demais ficam disabled visualmente).
+//   2. Pessoa (radio + Vault compartilhado + sub-rotas + reinicializar
+//      pasta do Vault).
+//   3. Features opcionais (6 toggles: Tarefas, Alarmes, Contadores,
+//      Ciclo, Calendario, Widget; defaults TRUE para o app nascer
+//      cheio e o usuario desligar o que nao quer).
+//   4. Privacidade (biometria + ocultar transcricoes + export + limpar
+//      cache).
+//   5. Sobre (versao, GitHub, licenca).
+//
+// Removidos vs v1:
+//   - SecaoLembretes (M30 absorve em alarmes pre-cadastrados).
+//   - SecaoSync (Syncthing-ready implicito).
+//   - SelectorQualidade (sempre maxima).
 //
 // Toda a UI e reativa ao useSettings (zustand). Persistencia via
-// SecureStore (web cai em localStorage). Toggles default off:
-// ativacao explicita pelo usuario; ao ligar uma feature, a tab/menu
-// correspondente aparece imediatamente em <BottomTabs> (que já le
-// useSettings.featureToggles).
-import { useEffect, useMemo, useState } from 'react';
-import {
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
-import { MotiView } from 'moti';
+// SecureStore (web cai em localStorage).
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
 import {
   Button,
   Header,
@@ -37,50 +29,20 @@ import {
   useToast,
 } from '@/components/ui';
 import { SecaoLista } from '@/components/settings/SecaoLista';
-import { CardStatus } from '@/components/settings/CardStatus';
 import { LinkSubTela } from '@/components/settings/LinkSubTela';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { useVault } from '@/lib/stores/vault';
-import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
-import {
-  agendarLembrete,
-  cancelarLembrete,
-  type LembreteChave,
-} from '@/lib/services/notificacoesLembretes';
-import {
-  verificarSyncStatus,
-  descreverDelta,
-  type SyncStatus,
-} from '@/lib/services/syncStatus';
 import { exportarVaultZip } from '@/lib/services/exportarVault';
 import { limparCache } from '@/lib/services/limparCache';
+import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import {
   APP_GITHUB_LABEL,
   APP_LICENSE,
   APP_REPO_URL,
 } from '@/config/app.config';
-import type {
-  ScannerQualidade,
-  SyncMethod,
-} from '@/lib/stores/settings';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
-
-// HH:MM helper. Pad zero, 24h.
-function formatHora(date: Date): string {
-  const h = String(date.getHours()).padStart(2, '0');
-  const m = String(date.getMinutes()).padStart(2, '0');
-  return `${h}:${m}`;
-}
-
-function parseHoraParaDate(hora: string): Date {
-  const [h, m] = hora.split(':');
-  const d = new Date();
-  d.setHours(parseInt(h, 10) || 9, parseInt(m, 10) || 0, 0, 0);
-  return d;
-}
 
 export default function SettingsTela() {
   const router = useRouter();
@@ -96,9 +58,7 @@ export default function SettingsTela() {
         showsVerticalScrollIndicator={false}
       >
         <SecaoSomVibracao />
-        <SecaoLembretes />
         <SecaoPessoa />
-        <SecaoSync />
         <SecaoFeatures />
         <SecaoPrivacidade />
         <SecaoSobre />
@@ -107,206 +67,53 @@ export default function SettingsTela() {
   );
 }
 
-// === Seção 1: Som e vibracao ===
+// === Secao 1: Som e vibracao (sprint M29) ===
 
 function SecaoSomVibracao() {
   const somVibracao = useSettings((s) => s.somVibracao);
   const setSomVibracao = useSettings((s) => s.setSomVibracao);
+  const mestreOff = !somVibracao.geral;
 
   return (
     <SecaoLista titulo="Som e vibração" accessibilityLabel="secao som vibracao">
       <ToggleRow
-        label="Vibrar ao registrar humor"
-        valor={somVibracao.humor}
-        onChange={(v) => setSomVibracao('humor', v)}
-        a11y="toggle vibrar humor"
+        label="Vibração geral"
+        subtitulo="Mestre. Ao desligar, silencia tudo."
+        valor={somVibracao.geral}
+        onChange={(v) => setSomVibracao('geral', v)}
+        a11y="toggle vibrar geral"
       />
       <ToggleRow
-        label="Vibrar em vitória"
-        valor={somVibracao.vitoria}
-        onChange={(v) => setSomVibracao('vitoria', v)}
-        a11y="toggle vibrar vitoria"
+        label="Vibrar em alarmes (despertar)"
+        valor={somVibracao.despertar}
+        onChange={(v) => setSomVibracao('despertar', v)}
+        a11y="toggle vibrar despertar"
+        disabled={mestreOff}
       />
       <ToggleRow
-        label="Vibrar em trigger"
-        valor={somVibracao.trigger}
-        onChange={(v) => setSomVibracao('trigger', v)}
-        a11y="toggle vibrar trigger"
+        label="Vibrar em conquistas"
+        valor={somVibracao.conquista}
+        onChange={(v) => setSomVibracao('conquista', v)}
+        a11y="toggle vibrar conquista"
+        disabled={mestreOff}
       />
       <ToggleRow
-        label="Vibrar ao abrir o FAB"
-        valor={somVibracao.fab}
-        onChange={(v) => setSomVibracao('fab', v)}
-        a11y="toggle vibrar fab"
+        label="Vibrar em botões e gestos"
+        subtitulo="Humor, fab, registros rápidos."
+        valor={somVibracao.botoes}
+        onChange={(v) => setSomVibracao('botoes', v)}
+        a11y="toggle vibrar botoes"
+        disabled={mestreOff}
       />
     </SecaoLista>
   );
 }
 
-// === Seção 2: Lembretes ===
-
-function SecaoLembretes() {
-  const lembretes = useSettings((s) => s.lembretes);
-  const setLembrete = useSettings((s) => s.setLembrete);
-  const toast = useToast();
-
-  const togglar = async (chave: LembreteChave, valor: boolean) => {
-    const horario = lembretes[chave].horario;
-    setLembrete(chave, { ativo: valor });
-    if (valor) {
-      const ok = await agendarLembrete(chave, horario);
-      if (!ok) {
-        // Permissao recusada ou web: desfaz.
-        setLembrete(chave, { ativo: false });
-        toast.show('Permissão de notificação recusada.', 'warn');
-      }
-    } else {
-      await cancelarLembrete(chave);
-    }
-  };
-
-  const trocarHora = async (chave: LembreteChave, hora: string) => {
-    setLembrete(chave, { horario: hora });
-    if (lembretes[chave].ativo) {
-      // Re-agenda com horario novo (cancelarLembrete e idempotente).
-      const ok = await agendarLembrete(chave, hora);
-      if (!ok) toast.show('Falha ao reagendar.', 'warn');
-    }
-  };
-
-  return (
-    <SecaoLista titulo="Lembretes" accessibilityLabel="secao lembretes">
-      <LembreteRow
-        label="Medicação"
-        chave="medicacao"
-        ativo={lembretes.medicacao.ativo}
-        horario={lembretes.medicacao.horario}
-        onToggle={(v) => void togglar('medicacao', v)}
-        onChangeHora={(h) => void trocarHora('medicacao', h)}
-      />
-      <LembreteRow
-        label="Treino"
-        chave="treino"
-        ativo={lembretes.treino.ativo}
-        horario={lembretes.treino.horario}
-        onToggle={(v) => void togglar('treino', v)}
-        onChangeHora={(h) => void trocarHora('treino', h)}
-      />
-      <LembreteRow
-        label="Humor diário"
-        chave="humor"
-        ativo={lembretes.humor.ativo}
-        horario={lembretes.humor.horario}
-        onToggle={(v) => void togglar('humor', v)}
-        onChangeHora={(h) => void trocarHora('humor', h)}
-      />
-    </SecaoLista>
-  );
-}
-
-interface LembreteRowProps {
-  label: string;
-  chave: LembreteChave;
-  ativo: boolean;
-  horario: string;
-  onToggle: (next: boolean) => void;
-  onChangeHora: (hora: string) => void;
-}
-
-function LembreteRow({
-  label,
-  chave,
-  ativo,
-  horario,
-  onToggle,
-  onChangeHora,
-}: LembreteRowProps) {
-  const [pickerAberto, setPickerAberto] = useState(false);
-
-  const abrir = () => {
-    if (!ativo) return;
-    setPickerAberto(true);
-  };
-
-  const handle = (event: DateTimePickerEvent, selecionado?: Date) => {
-    if (Platform.OS === 'android') setPickerAberto(false);
-    if (event.type === 'dismissed') return;
-    if (selecionado) onChangeHora(formatHora(selecionado));
-  };
-
-  return (
-    <View
-      accessibilityLabel={`linha lembrete ${chave}`}
-      style={{
-        backgroundColor: colors.bgAlt,
-        borderRadius: radius.card,
-        padding: spacing.base,
-        gap: spacing.sm,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Text
-          style={{
-            color: colors.fg,
-            fontFamily: 'JetBrainsMono_400Regular',
-            fontSize: typography.body.size,
-            flex: 1,
-          }}
-        >
-          {label}
-        </Text>
-        <Toggle
-          value={ativo}
-          onChange={onToggle}
-          accessibilityLabel={`toggle lembrete ${chave}`}
-        />
-      </View>
-      {ativo ? (
-        <MotiView
-          from={{ opacity: 0, translateY: -4 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={springs.subtle}
-        >
-          <Pressable
-            onPress={abrir}
-            accessibilityRole="button"
-            accessibilityLabel={`escolher hora lembrete ${chave}`}
-          >
-            <Text
-              style={{
-                color: colors.cyan,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: typography.body.size,
-                paddingVertical: spacing.xs,
-              }}
-            >
-              {horario}
-            </Text>
-          </Pressable>
-        </MotiView>
-      ) : null}
-      {pickerAberto ? (
-        <DateTimePicker
-          value={parseHoraParaDate(horario)}
-          mode="time"
-          is24Hour
-          onChange={handle}
-        />
-      ) : null}
-    </View>
-  );
-}
-
-// === Seção 3: Pessoa ===
+// === Secao 2: Pessoa ===
 
 function SecaoPessoa() {
   const router = useRouter();
+  const toast = useToast();
   const pessoa = useSettings((s) => s.pessoa);
   const setPessoa = useSettings((s) => s.setPessoa);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
@@ -317,6 +124,16 @@ function SecaoPessoa() {
   const trocar = (next: PessoaAutor) => {
     setPessoaAtiva(next);
     setPessoa('ativa', next);
+  };
+
+  const reinicializarVault = async () => {
+    haptics.medium();
+    try {
+      await inicializarVaultCanonico();
+      toast.show('Pasta verificada.', 'success');
+    } catch {
+      toast.show('Falha ao verificar a pasta.', 'error');
+    }
   };
 
   return (
@@ -369,6 +186,13 @@ function SecaoPessoa() {
         titulo="Editar nomes e fotos"
         onPress={() => router.push('/settings/editar-pessoa')}
         accessibilityLabel="editar nomes e fotos"
+      />
+
+      <LinkSubTela
+        titulo="Reinicializar pasta do Vault"
+        subtitulo="Verifica e recria a pasta canônica do Mobile."
+        onPress={() => void reinicializarVault()}
+        accessibilityLabel="reinicializar pasta do vault"
       />
 
       {ehSozinho ? (
@@ -448,222 +272,9 @@ function RadioPessoa({ label, ativa, onPress, cor }: RadioPessoaProps) {
   );
 }
 
-// === Seção 4: Sync ===
-
-function SecaoSync() {
-  const sync = useSettings((s) => s.sync);
-  const setSync = useSettings((s) => s.setSync);
-  const vaultRoot = useVault((s) => s.vaultRoot);
-  const toast = useToast();
-  const [status, setStatus] = useState<SyncStatus | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void verificarSyncStatus(vaultRoot).then((s) => {
-      if (!cancelled) setStatus(s);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [vaultRoot]);
-
-  const cor = status?.cor ?? 'desconhecido';
-  const titulo =
-    cor === 'verde'
-      ? 'Sincronizado'
-      : cor === 'amarelo'
-        ? 'Atrasado'
-        : cor === 'vermelho'
-          ? status?.conflito
-            ? 'Conflito detectado'
-            : 'Desatualizado'
-          : 'Aguardando primeira leitura.';
-  const subtitulo = useMemo(() => {
-    const path = vaultRoot
-      ? 'Vault: ~/Protocolo-Ouroboros/'
-      : 'Vault: não configurado';
-    const delta = status ? descreverDelta(status.ultimaModificacao) : '';
-    return delta ? `${path} · ${delta}` : path;
-  }, [status, vaultRoot]);
-
-  const forcar = () => {
-    haptics.light();
-    toast.show('Sync gerenciado pelo aplicativo externo.', 'info');
-  };
-
-  // Quando o usuário declara 'nao-uso', o card de status e o botão
-  // "Forçar sync" não fazem sentido — o app não tem como sincronizar
-  // sem ferramenta externa. Esconder mantém a UI honesta com o flag.
-  const usaSync = sync.metodo !== 'nao-uso';
-
-  return (
-    <SecaoLista titulo="Sync" accessibilityLabel="secao sync">
-      {usaSync ? (
-        <>
-          <CardStatus
-            cor={cor}
-            titulo={titulo}
-            subtitulo={subtitulo}
-            accessibilityLabel={`status sync ${cor}`}
-          />
-
-          <Button
-            label="Forçar sync"
-            variant="ghost"
-            onPress={forcar}
-          />
-        </>
-      ) : null}
-
-      <SelectorMetodo
-        valor={sync.metodo}
-        onChange={(v) => setSync('metodo', v)}
-      />
-
-      <SelectorQualidade
-        valor={sync.qualidadeScanner}
-        onChange={(v) => setSync('qualidadeScanner', v)}
-      />
-    </SecaoLista>
-  );
-}
-
-interface SelectorMetodoProps {
-  valor: SyncMethod;
-  onChange: (next: SyncMethod) => void;
-}
-
-function SelectorMetodo({ valor, onChange }: SelectorMetodoProps) {
-  const opcoes: { v: SyncMethod; label: string }[] = [
-    { v: 'syncthing', label: 'Syncthing' },
-    { v: 'obsidian-sync', label: 'Obsidian Sync' },
-    { v: 'nao-uso', label: 'Não uso' },
-  ];
-  return (
-    <View
-      accessibilityLabel="selector metodo sync"
-      style={{
-        backgroundColor: colors.bgAlt,
-        borderRadius: radius.card,
-        padding: spacing.base,
-        gap: spacing.sm,
-      }}
-    >
-      <Text
-        style={{
-          color: colors.muted,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: typography.caption.size,
-        }}
-      >
-        Método de sync
-      </Text>
-      <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
-        {opcoes.map((o) => (
-          <Pressable
-            key={o.v}
-            onPress={() => {
-              haptics.selection();
-              onChange(o.v);
-            }}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: valor === o.v }}
-            accessibilityLabel={`metodo ${o.v}`}
-            style={{
-              paddingVertical: spacing.sm,
-              paddingHorizontal: spacing.md,
-              backgroundColor:
-                valor === o.v ? colors.purple : colors.bgPage,
-              borderRadius: radius.chip,
-              minHeight: 36,
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              style={{
-                color: valor === o.v ? colors.bg : colors.fg,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: typography.caption.size,
-              }}
-            >
-              {o.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-interface SelectorQualidadeProps {
-  valor: ScannerQualidade;
-  onChange: (next: ScannerQualidade) => void;
-}
-
-function SelectorQualidade({ valor, onChange }: SelectorQualidadeProps) {
-  const opcoes: { v: ScannerQualidade; label: string }[] = [
-    { v: '8mp', label: '8MP' },
-    { v: '12mp', label: '12MP' },
-    { v: 'maxima', label: 'Máxima' },
-  ];
-  return (
-    <View
-      accessibilityLabel="selector qualidade scanner"
-      style={{
-        backgroundColor: colors.bgAlt,
-        borderRadius: radius.card,
-        padding: spacing.base,
-        gap: spacing.sm,
-      }}
-    >
-      <Text
-        style={{
-          color: colors.muted,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: typography.caption.size,
-        }}
-      >
-        Qualidade do scanner
-      </Text>
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        {opcoes.map((o) => (
-          <Pressable
-            key={o.v}
-            onPress={() => {
-              haptics.selection();
-              onChange(o.v);
-            }}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: valor === o.v }}
-            accessibilityLabel={`qualidade ${o.v}`}
-            style={{
-              flex: 1,
-              paddingVertical: spacing.sm,
-              backgroundColor:
-                valor === o.v ? colors.purple : colors.bgPage,
-              borderRadius: radius.chip,
-              minHeight: 36,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              style={{
-                color: valor === o.v ? colors.bg : colors.fg,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: typography.caption.size,
-              }}
-            >
-              {o.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-// === Seção 5: Features opcionais ===
+// === Secao 3: Features opcionais (sprint M29) ===
+// Reordenada: Tarefas / Alarmes / Contadores / Ciclo / Calendario /
+// Widget. Defaults TRUE para o app nascer cheio.
 
 function SecaoFeatures() {
   const featureToggles = useSettings((s) => s.featureToggles);
@@ -675,10 +286,10 @@ function SecaoFeatures() {
       accessibilityLabel="secao features opcionais"
     >
       <ToggleRow
-        label="Acompanhamento do ciclo menstrual"
-        valor={featureToggles.cicloMenstrual}
-        onChange={(v) => setFeatureToggle('cicloMenstrual', v)}
-        a11y="toggle ciclo menstrual"
+        label="To-do leve"
+        valor={featureToggles.todoLeve}
+        onChange={(v) => setFeatureToggle('todoLeve', v)}
+        a11y="toggle todo leve"
       />
       <ToggleRow
         label="Alarme pessoal"
@@ -687,16 +298,16 @@ function SecaoFeatures() {
         a11y="toggle alarme pessoal"
       />
       <ToggleRow
-        label="To-do leve"
-        valor={featureToggles.todoLeve}
-        onChange={(v) => setFeatureToggle('todoLeve', v)}
-        a11y="toggle todo leve"
-      />
-      <ToggleRow
         label="Contador de dias sem"
         valor={featureToggles.contadorDiasSem}
         onChange={(v) => setFeatureToggle('contadorDiasSem', v)}
         a11y="toggle contador dias sem"
+      />
+      <ToggleRow
+        label="Acompanhamento do ciclo menstrual"
+        valor={featureToggles.cicloMenstrual}
+        onChange={(v) => setFeatureToggle('cicloMenstrual', v)}
+        a11y="toggle ciclo menstrual"
       />
       <ToggleRow
         label="Calendário de conquistas"
@@ -724,7 +335,7 @@ function SecaoFeatures() {
   );
 }
 
-// === Seção 6: Privacidade ===
+// === Secao 4: Privacidade ===
 
 function SecaoPrivacidade() {
   const privacidade = useSettings((s) => s.privacidade);
@@ -793,7 +404,7 @@ function SecaoPrivacidade() {
   );
 }
 
-// === Seção 7: Sobre ===
+// === Secao 5: Sobre ===
 
 function SecaoSobre() {
   const versao =
@@ -880,10 +491,21 @@ interface ToggleRowProps {
   onChange: (next: boolean) => void;
   subtitulo?: string;
   a11y?: string;
+  // Sprint M29: ToggleRow disabled (mestre off em SomVibracao).
+  // Quando disabled, o toggle e o container ficam com opacidade
+  // reduzida e onChange e ignorado.
+  disabled?: boolean;
 }
 
-function ToggleRow({ label, valor, onChange, subtitulo, a11y }: ToggleRowProps) {
-  // a11y do container e do toggle não devem coincidir (testing-library
+function ToggleRow({
+  label,
+  valor,
+  onChange,
+  subtitulo,
+  a11y,
+  disabled,
+}: ToggleRowProps) {
+  // a11y do container e do toggle nao devem coincidir (testing-library
   // falha em getByLabelText quando duas Views compartilham o mesmo
   // label). Container ganha "linha <a11y>" e o Toggle herda o a11y
   // canonico (que os testes usam diretamente).
@@ -900,6 +522,7 @@ function ToggleRow({ label, valor, onChange, subtitulo, a11y }: ToggleRowProps) 
         alignItems: 'center',
         justifyContent: 'space-between',
         minHeight: 56,
+        opacity: disabled ? 0.4 : 1,
       }}
     >
       <View style={{ flex: 1, paddingRight: spacing.md }}>
@@ -930,7 +553,7 @@ function ToggleRow({ label, valor, onChange, subtitulo, a11y }: ToggleRowProps) 
       </View>
       <Toggle
         value={valor}
-        onChange={onChange}
+        onChange={disabled ? () => undefined : onChange}
         accessibilityLabel={labelToggle}
       />
     </View>

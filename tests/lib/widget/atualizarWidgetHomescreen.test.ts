@@ -71,7 +71,9 @@ describe('atualizarWidgetHomescreen', () => {
 
   describe('toggle off', () => {
     it('chama desativarWidget e nao chama atualizarWidget', async () => {
-      // Toggle vem default off do resetar()
+      // Sprint M29: defaults v2 trazem widgetHomescreen=true. Forca off
+      // explicito para exercitar o caminho de desativacao.
+      useSettings.getState().setFeatureToggle('widgetHomescreen', false);
       await atualizarWidgetHomescreen();
       expect(mockDesativarWidget).toHaveBeenCalledTimes(1);
       expect(mockAtualizarWidget).not.toHaveBeenCalled();

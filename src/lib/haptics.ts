@@ -1,19 +1,24 @@
-// Wrappers tipados sobre expo-haptics. Async para não bloquear a UI thread.
+// Wrappers tipados sobre expo-haptics. Async para nao bloquear a UI thread.
 //
 // Duas camadas:
 //
-// 1. Genéricos (sempre disparam, independente de toggle): light,
+// 1. Genericos (sempre disparam, independente de toggle): light,
 //    medium, selection, success, error. Use quando o haptic for
-//    intrínseco da interação (ex.: validação de formulário) e não
-//    deva ser silenciado por preferência de som/vibração do usuário.
+//    intrinseco da interacao (ex.: validacao de formulario) e nao
+//    deva ser silenciado por preferencia de som/vibracao do usuario.
 //
 // 2. Contextuais (consultam Settings.somVibracao antes de disparar):
-//    humor, vitoria, trigger, fab, alarme. Use nos call sites ligados
-//    diretamente aos toggles que o usuário controla em Settings —
-//    cada função respeita seu toggle correspondente e cai em no-op
-//    silencioso quando desligado.
+//    humor, vitoria, trigger, fab, alarme. Mapeamento sprint M29:
+//      humor   -> botoes
+//      vitoria -> conquista
+//      trigger -> botoes
+//      fab     -> botoes
+//      alarme  -> despertar
+//    Quando o mestre `geral` esta off, todos os contextuais ficam
+//    silenciosos independente da chave (UX simples: 1 mestre desliga
+//    tudo de uma vez).
 //
-// Convenção de uso:
+// Convencao de uso:
 //   await haptics.light();      // toggle leve generico
 //   await haptics.medium();     // confirmacao de acao destrutiva
 //   await haptics.selection();  // tick por step em slider/picker
@@ -27,20 +32,23 @@
 import * as ExpoHaptics from 'expo-haptics';
 import { useSettings } from '@/lib/stores/settings';
 
-// Snapshot do toggle no momento da chamada. Se o store ainda não
-// hidratou (boot inicial), tudo retorna true (default permissivo).
-function tomVibracaoLigado(
-  chave: 'humor' | 'vitoria' | 'trigger' | 'fab' | 'alarme'
+// Snapshot do toggle no momento da chamada. Mestre `geral` off
+// desabilita tudo. Se o store ainda nao hidratou (boot inicial), o
+// default permissivo (true) prevalece via try/catch.
+export function tomVibracaoLigado(
+  chave: 'despertar' | 'conquista' | 'botoes'
 ): boolean {
   try {
-    return useSettings.getState().somVibracao[chave];
+    const sv = useSettings.getState().somVibracao;
+    if (!sv.geral) return false;
+    return sv[chave];
   } catch {
     return true;
   }
 }
 
 export const haptics = {
-  // Camada 1 — genéricos. Sempre disparam.
+  // Camada 1 — genericos. Sempre disparam.
   light: (): Promise<void> =>
     ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light),
   medium: (): Promise<void> =>
@@ -55,30 +63,31 @@ export const haptics = {
       ExpoHaptics.NotificationFeedbackType.Error
     ),
 
-  // Camada 2 — contextuais. Cada uma consulta o toggle equivalente
-  // em useSettings.somVibracao antes de disparar. Quando o toggle
-  // está off, retorna Promise.resolve() — no-op silencioso, mantém
-  // a mesma assinatura para callers que fazem `await haptics.fab()`.
+  // Camada 2 — contextuais. Cada uma consulta o toggle agrupado
+  // (sprint M29: humor/trigger/fab -> botoes, vitoria -> conquista,
+  // alarme -> despertar). Quando o toggle esta off, retorna
+  // Promise.resolve() (no-op silencioso) preservando a assinatura
+  // para callers que fazem `await haptics.fab()`.
   humor: (): Promise<void> =>
-    tomVibracaoLigado('humor')
+    tomVibracaoLigado('botoes')
       ? ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light)
       : Promise.resolve(),
   vitoria: (): Promise<void> =>
-    tomVibracaoLigado('vitoria')
+    tomVibracaoLigado('conquista')
       ? ExpoHaptics.notificationAsync(
           ExpoHaptics.NotificationFeedbackType.Success
         )
       : Promise.resolve(),
   trigger: (): Promise<void> =>
-    tomVibracaoLigado('trigger')
+    tomVibracaoLigado('botoes')
       ? ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Medium)
       : Promise.resolve(),
   fab: (): Promise<void> =>
-    tomVibracaoLigado('fab')
+    tomVibracaoLigado('botoes')
       ? ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Medium)
       : Promise.resolve(),
   alarme: (): Promise<void> =>
-    tomVibracaoLigado('alarme')
+    tomVibracaoLigado('despertar')
       ? ExpoHaptics.notificationAsync(
           ExpoHaptics.NotificationFeedbackType.Warning
         )

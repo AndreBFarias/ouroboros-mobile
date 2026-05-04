@@ -6,11 +6,15 @@
 // Kit Document Scanner API no Android e VisionKit no iOS, entao o
 // caller recebe URIs prontas para OCR.
 import { launchScanner as nativeLaunch, type ScanResult } from '@dariyd/react-native-document-scanner';
-import type { ScannerQualidade } from '@/lib/stores/settings';
 
-// Mapeamento canonico das qualidades expostas em Settings (M00.5)
-// para o quality 0..1 do pacote nativo. 'maxima' = 1.0 (sem
-// compressao adicional); '12mp' default = 0.85; '8mp' = 0.7.
+// Sprint M29: tipo local (antes vinha de useSettings, removido em v2).
+// 'maxima' continua sendo o unico valor usado em runtime; demais
+// permanecem para compatibilidade do mapeamento ate eventual cleanup.
+export type ScannerQualidade = '8mp' | '12mp' | 'maxima';
+
+// Mapeamento canonico das qualidades para o quality 0..1 do pacote
+// nativo. 'maxima' = 1.0 (sem compressao adicional); '12mp' = 0.85;
+// '8mp' = 0.7.
 const MAPA_QUALIDADE: Record<ScannerQualidade, number> = {
   '8mp': 0.7,
   '12mp': 0.85,
