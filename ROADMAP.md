@@ -26,6 +26,49 @@ fechamento de sprint.
 - **Coluna "Schemas"**: schemas YAML do Vault tocados pela sprint
   (criados ou consumidos), conforme `docs/BRIEFING.md` §7.
 
+## Fila de execução (ordem priorizada — 2026-05-04)
+
+Próximas sprints **a executar em ordem**, todas com spec já
+materializada em `docs/sprints/`. Orquestrador Opus deve
+processar uma a uma via ciclo padrão (planejador → executor →
+validador via Gauntlet → commit/push). Ambíguidade em qualquer
+spec PARA o ciclo e pede clarificação.
+
+| Posição | Sprint | Título | Spec | Estimativa |
+|---|---|---|---|---|
+| 1 | M11.1 | Memórias usável (Fotos com upload, heatmap centralizado, atalhos) | `M11.1-spec.md` | 3-4h |
+| 2 | M-GAUNTLET-AUDITORIA | Auditoria externa do Gauntlet, fix e melhorias (`gauntlet.sh` v2 + APIs novas) | `M-GAUNTLET-AUDITORIA-spec.md` | 4-6h |
+| 3 | M27.3 | Boot screen sem oscilar via Suspense boundary | `M27.3-spec.md` | 4-6h |
+| 4 | M29 | Settings v2 (vibração simples + features default ON + sync removido) | `M29-spec.md` | 4h |
+| 5 | M30 | AlarmeSchema v2 (recorrência + channel + lembretes) | `M30-spec.md` | 5-6h |
+| 6 | M31 | TarefaSchema v2 (categoria + pessoa_destino + alarme) | `M31-spec.md` | 5-6h |
+| 7 | M32 | Contador v2 (mensagens de apoio + marcos) | `M32-spec.md` | 2-3h |
+| 8 | M33 | Campo `para` em Diário/Evento/Contador/Marco | `M33-spec.md` | 3-4h |
+| 9 | M34 | MenuCapturaVerde na tab Memórias | `M34-spec.md` | 6-7h |
+| 10 | M35 | Aba Finanças "Em desenvolvimento" honesto | `M35-spec.md` | 1-2h |
+| 11 | M36 | Tela Recap (agregação Conquistas/Crises/Evoluções/Números) | `M36-spec.md` | 6-8h |
+| 12 | M37.1 | Google Calendar OAuth + leitura | `M37.1-spec.md` | 6-7h (PAUSA para usuário) |
+| 13 | M37.2 | Google Calendar escrita | `M37.2-spec.md` | 4-5h |
+| 14 | M38 | Conflict resolution para 4 dispositivos via deviceId | `M38-spec.md` | 4-5h |
+| 15 | M39 | (próximas — verificar em ROADMAP body abaixo) | — | — |
+| ... | M40 | ... | — | — |
+| ... | M41 | Release final v1.0.0 (PAUSA para usuário) | `M41-spec.md` | — |
+
+**Sprints checkpoint visual paralelas** (rodar em paralelo, baixa
+prioridade, requerem emulador ou APK dev-client):
+
+| Sprint | Título | Spec | Estimativa |
+|---|---|---|---|
+| M10-checkpoint-visual | Heatmap em runtime Android real | `M10-checkpoint-visual-spec.md` | 0,5-1h |
+| M14-checkpoint-visual | Mini Financeiro em runtime Android real | `M14-checkpoint-visual-spec.md` | 0,5-1h |
+| M20.x | Validação Nível B widget homescreen | `M20.x-spec.md` | 1-2h |
+
+**Sprint paralela em outro repositório** (Backend Python):
+
+| Sprint | Título | Spec | Estimativa |
+|---|---|---|---|
+| M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL | Acentuação PT-BR no Python | `M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL-spec.md` | 0,5h |
+
 ## Linha do tempo
 
 | Status | Sprint | Título | Telas | Schemas | Estimativa | Commit / Tag |
@@ -60,20 +103,20 @@ fechamento de sprint.
 | `[ok]` | M00.5.x | Fix Rules of Hooks em `(tabs)/index.tsx:81` — hook movido para topo antes dos early returns; ESLint exit 0 prova fix | — | — | 0,3h | `1f7ac8a` |
 | `[ok]` | INFRA-acentuacao-comentarios | Varrer `app/` e `src/` corrigindo comentários PT-BR sem acento — 145 arquivos, 715 substituições 1:1, residual 3 (paths legítimos sem acento), redução 99.3% | — | — | 3h | `a792156` |
 | `[ok]` | M19.x | Inventário de mockups + stub build-mockups + seção CONTEXTO §7.1 (fechada parcialmente; toolchain JSX→HTML completa fica para M19 final) | — | — | 1,5h | `ce0b187` |
-| `[todo]` | M20.x | Validação Nível B/C real do widget na home (após `npm run build:dev`) | 26 | — | 1-2h | — |
+| `[todo]` | M20.x | Validação Nível B real do widget no emulador `ouroboros-test` (4 screenshots: 4x2, 4x4, pós-humor, toggle off) | 26 | — | 1-2h | `M20.x-spec.md` |
 | `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |
 | `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
 | `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | inbox_arquivo + financeiro | 4-5h | — |
 | `[todo]` | M09 | Scanner OCR + multipágina + bairro auto | 16 | financeiro_nota | 7-9h | — |
 | `[ok]` | M10 | Mini Humor Tela 21 — heatmap 13x7 (91 dias), modo sobreposto pessoa_a+pessoa_b 50% opacity, stats 30d, modal detalhe dia, empty state. Cache readonly via SAF (ADR-0012). +23 testes (889→912 / 100→103 suites). Validacao Nivel A capturou empty state (SAF Android-only); render colorido fica para M10-checkpoint-visual em Nivel B/C | 21 | humor_heatmap_cache | 4-5h | `b98458e` |
-| `[todo]` | M10-checkpoint-visual | Capturar 4 screenshots em Nivel B/C (emulador ouroboros-test ou APK celular fisico carsvg7du8kfnrlj) com cache real sincronizado: heatmap pessoa_a, heatmap pessoa_b, modo sobreposto, DiaHumorModal aberto. Origem: ponto-cego do validador M10 (render real nao evidenciado em runtime Android) | 21 | — | 0,5-1h | — |
+| `[todo]` | M10-checkpoint-visual | Capturar 4 screenshots em Nível B (emulador) com cache real: heatmap pessoa_a, heatmap pessoa_b, modo sobreposto, DiaHumorModal | 21 | — | 0,5-1h | `M10-checkpoint-visual-spec.md` |
 | `[todo]` | M11 | Memórias e Marcos (CRUD completo + galeria fotos agregada) | 09, 10, 11 | treino_sessao, marco | 8-10h | — |
 | `[todo]` | M11.5 | Calendário visual de conquistas (oEmbed + filtros) | 25 | evento, diario_emocional + media | 5-7h | — |
 | `[todo]` | M12 | Medidas (form + comparativo) | 12, 13 | medidas | 5-6h | — |
 | `[todo]` | M13 | Galeria + Detalhe + Cadastro Exercícios (CRUD) | 07, 08, 02 | exercicio | 8-10h | — |
 | `[ok]` | M14 | Mini Financeiro Tela 22 readonly — header laranja, banner modo leitura, CardHero (gasto semana cyan + delta), top 5 categorias com barras, lista virtualizada de 20 últimas transações (despesa cyan, crédito green), empty state, hook `useFinancasCache`, fixture web. +25 testes (912→937 / 103→108 suites). Reader em `src/lib/cache/` (uniformidade canônica com M10). Validação Nível A capturou render real via fixture | 22 | financas_cache | 4-5h | `29f0472` |
-| `[todo]` | M14-checkpoint-visual | Capturar 4 screenshots em Nível B/C com cache real do Vault sincronizado: hero com gasto semana real, top categorias preenchido, lista transações reais, empty state. Origem: ponto-cego do validador M14 (screenshot Nível A foi via fixture, não cache real) | 22 | — | 0,5-1h | — |
-| `[todo]` `[para]` | M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL | Backend Python (`MOB-bridge-2`/`mobile_cache.financas_cache`) gera `delta_textual` sem acentuação completa (ex.: `"abaixo da media"` em vez de `"abaixo da média"`). Mobile só renderiza string opaca (ADR-0005). Fix em `src/mobile_cache/financas_cache.py` no Python | 22 | financas_cache | 0,5h | — |
+| `[todo]` | M14-checkpoint-visual | Capturar 4 screenshots em Nível B com cache real: hero gasto semana, categorias, lista transações, banner modo leitura | 22 | — | 0,5-1h | `M14-checkpoint-visual-spec.md` |
+| `[todo]` `[para]` | M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL | Backend Python: corrigir `delta_textual` para emitir acentuação PT-BR completa | 22 | financas_cache | 0,5h | `M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL-spec.md` |
 | `[ok]` | M14.1 | Micro-fix: warning eslint `unused-disable` em `src/lib/hooks/useFinancasCache.ts:40` (disable do `no-require-imports` sem problema reportado). Remoção trivial. Fechado 2026-05-03 no ciclo corretivo M14.1+M25.1+M27.1 | — | — | 0,1h | — |
 | `[todo]` | M14.5 | Acompanhador de Ciclo Menstrual (opt-in) | nova | ciclo_menstrual | 5-6h | — |
 | `[todo]` | M15 | Settings (7 grupos + biometria + export) | 23 | (vários) | 7-8h | — |
@@ -91,9 +134,11 @@ fechamento de sprint.
 |---|---|---|---|---|---|---|
 | `[ok]` | M-GAUNTLET | Teste visual unificado em Chrome controlável. `src/lib/dev/gauntlet.ts` com `GAUNTLET_ATIVO = Platform.OS === 'web' && __DEV__` (dead-code em release mobile, verificado: bundle export sem `__gauntlet`). `window.__gauntlet` com 11 APIs (`seed`/`reset`/`setNomes`/`setVaultRoot`/`setOnboardingDone`/`setUltimaRota`/`abrir`/`abrirMenu`/`fecharMenu`/`abrirSheet`/`estado`). `BiometriaGate` ganha prop `bypass`. `FrameMobileGauntlet` em `_layout.tsx` raiz envolve TODAS as rotas em modo dev em container 412×892dp centralizado. `/_dev/_layout.tsx` com banner amarelo + `/_dev/gauntlet.tsx` dashboard com 5 botões coloridos + JSON estado auto-refresh + lista de rotas. `tests/e2e/playwright/00-bootstrap.e2e.ts` + template. `docs/GAUNTLET.md` documentação completa. Métricas: 1126/130 mantidas, bundle Hermes 8.75 MB | — | — | 6-8h | `M-GAUNTLET-spec.md` |
 | `[ok]` | M-REVALIDACAO-M20-M28 | Revalidação executada via Gauntlet em 2026-05-03. 11 casos E2E em `tests/e2e/playwright/m<NN>-*.e2e.ts`. Resultado: 5 PASS (M22, M23, M25, M27, M28), 3 FAIL (M24, M25.1, M27.1), 2 INCONCLUSIVO (M20 widget Android, M26 sheets — exigem Nível B). Relatório em `docs/validacao-gauntlet-2026-05-03/RELATORIO.md`. **3 sprints corretivas geradas (M24.1, M25.2, M27.2) bloqueiam M29** | — | — | 4-6h | `M-REVALIDACAO-M20-M28-spec.md` |
+| `[todo]` | M11.1 | Memórias usável: aba Fotos ganha FAB + upload via expo-image-picker (mock no Gauntlet); aba Treinos ganha atalho "Cadastrar exercícios" para `/exercicios`; heatmap centralizado horizontalmente; aba Marcos validada E2E. Achado de uso real 2026-05-04 — usuário viu tela inerte | — | — | 3-4h | `M11.1-spec.md` |
+| `[todo]` | M-GAUNTLET-AUDITORIA | Auditoria externa do Gauntlet (subagente cego) + fix dos achados + `gauntlet.sh` v2 (flags `--clear`/`--quiet`/healthcheck) + APIs novas (`aguardarBoot`, `tempoDeBoot`, `consoleErros`, `seedComDados`) + seção Troubleshooting em `docs/GAUNTLET.md`. Decisão durável: Gauntlet precisa estar maduro antes de virar pipeline padrão para sprint nova | — | — | 4-6h | `M-GAUNTLET-AUDITORIA-spec.md` |
 | `[ok]` | M24.1 | Resume state. `useUltimaRota` ignora o primeiro pathname após mount. Antes ele sobrescrevia `ultimaRota` antes do `SessaoBootGate` ler. Validação Gauntlet: `seed() + setUltimaRota('/memoria') + reload` abre `/memoria`. | — | — | 0,5h | (este ciclo) |
 | `[ok]` | M25.2 | Animação Reanimated não rodava em SVG web. Fix: `OuroborosLoader.tsx` ganha bloco `requestAnimationFrame` (web only) que localiza `<g>` por `data-anim-id` + setAttribute('transform', ...) direto. Native mantém Reanimated. g3 medido em ~15°/s. | — | — | 1h | (este ciclo) |
-| `[todo]` | M27.3 | Boot screen oscilante (deferido de M27.2). Tentativas de latch em módulo / sessionStorage geraram `Maximum update depth` em React 19 strict mode. Solução real: Suspense boundary + expo-splash-screen orquestrado. Fora de escopo agora. M27.1 atual cobre 95% do caso. | — | — | 2-4h | `M27.2-spec.md` |
+| `[todo]` | M27.3 | Boot screen sem oscilar via Suspense boundary (deferido de M27.2). Hook `useAppPronto` agrega useFonts + hidratação das stores; `<Suspense fallback={<BootScreen/>}>` na raiz. M27.1 cobre 95% mas residual em sessão fresh do Chrome dev. | — | — | 4-6h | `M27.3-spec.md` |
 
 ### Linha principal
 

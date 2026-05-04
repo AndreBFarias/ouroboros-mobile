@@ -5,6 +5,39 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Specs materializados — fila de execução completa (2026-05-04)
+
+Achado de uso real via Gauntlet em `/memoria` mostrou que a tela
+está montada mas não usável (aba Fotos passiva, Treinos bloqueada
+por dependência, heatmap descentralizado, Marcos sem E2E).
+Aproveitando o ciclo, todos os pendentes foram materializados em
+specs e ROADMAP.md ganhou tabela "Fila de execução" no topo.
+
+Specs criadas:
+
+- `docs/sprints/M11.1-spec.md` — Memórias usável (Fotos com
+  upload, heatmap centralizado, atalho Treinos→Galeria, E2E
+  Marcos).
+- `docs/sprints/M-GAUNTLET-AUDITORIA-spec.md` — Auditoria externa
+  cega do Gauntlet (subagente isolado), `gauntlet.sh` v2 (flags
+  `--clear`/`--quiet`/healthcheck), 4 APIs novas (`aguardarBoot`,
+  `tempoDeBoot`, `consoleErros`, `seedComDados`), seção
+  Troubleshooting em `docs/GAUNTLET.md`.
+- `docs/sprints/M27.3-spec.md` — Boot screen sem oscilar via
+  Suspense boundary com `useAppPronto` agregando useFonts +
+  hidratação multi-store.
+- `docs/sprints/M20.x-spec.md` — Validação Nível B do widget
+  homescreen no emulador (4 screenshots).
+- `docs/sprints/M10-checkpoint-visual-spec.md` — Heatmap em
+  Android real (4 screenshots).
+- `docs/sprints/M14-checkpoint-visual-spec.md` — Financeiro em
+  Android real (4 screenshots).
+- `docs/sprints/M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL-spec.md` —
+  Acentuação PT-BR no Python (sprint paralela no repo Backend).
+
+ROADMAP.md tabela "Fila de execução" lista 14+ sprints na ordem
+correta. STATE.md atualizado com fila e marcos.
+
 ### Ciclo corretivo M24.1 + M25.2 (2026-05-03)
 
 Pós-revalidação, fechados 2 dos 3 corretivos descobertos. M27.2
