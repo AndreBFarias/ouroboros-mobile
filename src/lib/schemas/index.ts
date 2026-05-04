@@ -73,6 +73,9 @@ export {
   AlarmeTagSchema,
   AlarmeSomSchema,
   DiaSemanaSchema,
+  RecorrenciaSchema,
+  RECORRENCIA_LABELS,
+  RECORRENCIAS_CANONICAS,
   TAG_LABELS,
   SOM_LABELS,
   TAGS_CANONICAS,
@@ -84,6 +87,7 @@ export {
   type Alarme,
   type AlarmeTag,
   type AlarmeSom,
+  type Recorrencia,
 } from './alarme';
 export {
   TarefaSchema,

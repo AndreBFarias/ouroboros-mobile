@@ -94,11 +94,32 @@ export function parseHorario(
   return { hour, minute };
 }
 
-// Agenda um alarme: 1 schedule por dia da semana presente em
-// alarme.dias_semana. Cancela schedules previos do mesmo slug antes
-// para evitar duplicidade. Retorna array de identifiers (vazio se
-// agendamento não foi possivel) e flag estourou=true quando o cap
-// global de 64 foi atingido.
+// M30: identifier canonico para schedules nao-semanais. Como nao ha
+// dia da semana especifico, usamos sufixo .once (DATE), .daily (DAILY)
+// e .monthly (MONTHLY). Mantem compat com prefixo cancelamento
+// idempotente (cancelarAlarme varre prefixoSlug = `${ID_PREFIX}${slug}.`).
+function idOnce(slug: string): string {
+  return `${ID_PREFIX}${slug}.once`;
+}
+function idDaily(slug: string): string {
+  return `${ID_PREFIX}${slug}.daily`;
+}
+function idMonthly(slug: string): string {
+  return `${ID_PREFIX}${slug}.monthly`;
+}
+
+// Agenda um alarme conforme sua recorrencia (M30):
+//   - 'unica':   1 schedule DATE com data_unica (timestamp absoluto).
+//   - 'diaria':  1 schedule DAILY com hour/minute.
+//   - 'semanal': N schedules WEEKLY (1 por dia em dias_semana). Modo
+//                v1 mantido para alarmes pre-M30 sem mudar logica.
+//   - 'mensal':  1 schedule MONTHLY com day/hour/minute. day deriva de
+//                data_unica quando presente, senao usa 1 (default
+//                conservador, decisao §9 do M30-spec).
+//
+// Cancela schedules previos do mesmo slug antes para evitar duplicidade.
+// Retorna array de identifiers (vazio se agendamento nao foi possivel)
+// e flag estourou=true quando o cap global de 64 foi atingido.
 //
 // Em Web vira no-op (ids=[], estourou=false).
 export async function agendarAlarme(
@@ -112,44 +133,124 @@ export async function agendarAlarme(
   const ok = await pedirPermissao();
   if (!ok) return { ids: [], estourou: false };
 
-  // Cancela qualquer schedule previo deste slug.
+  // Cancela qualquer schedule previo deste slug (cobre todos os
+  // sufixos: .dN, .once, .daily, .monthly, .snooze).
   await cancelarAlarme(parsed.data.slug);
 
-  // Verifica cap antes de criar os novos. dias_semana.length adicionais.
+  // Conta quantos novos schedules vamos pedir conforme recorrencia.
+  // Usado para verificar o cap antes de criar.
+  const novosCount =
+    parsed.data.recorrencia === 'semanal'
+      ? parsed.data.dias_semana.length
+      : 1;
+
   const ativos = await contarSchedulesAlarmes();
-  if (ativos + parsed.data.dias_semana.length > LIMITE_SCHEDULES) {
+  if (ativos + novosCount > LIMITE_SCHEDULES) {
     return { ids: [], estourou: true };
   }
 
-  const ids: string[] = [];
-  for (const dia of parsed.data.dias_semana) {
-    const identifier = idDia(parsed.data.slug, dia);
-    // expo-notifications WeeklyTriggerInput: weekday 1=domingo,
-    // 7=sabado (formato iOS-like). Convertendo: 0=domingo -> 1.
-    const weekday = ((dia % 7) + 1);
-    await Notifications.scheduleNotificationAsync({
-      identifier,
-      content: {
-        title: parsed.data.titulo,
-        // Body vazio: notificação simples (decisão do spec, seção 5).
-        body: '',
-        sound: nomeArquivoSom(parsed.data.som),
-        categoryIdentifier: ALARME_CATEGORY_ID,
-        // Payload útil para o handler de action button identificar o
-        // slug do alarme afetado.
-        data: { slug: parsed.data.slug, dia },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-        weekday,
-        hour: tempo.hour,
-        minute: tempo.minute,
-        channelId: ALARME_CHANNEL_ID,
-      },
-    });
-    ids.push(identifier);
+  const baseContent = {
+    title: parsed.data.titulo,
+    // Body vazio: notificação simples (decisão do spec, seção 5).
+    body: '',
+    sound: nomeArquivoSom(parsed.data.som),
+    categoryIdentifier: ALARME_CATEGORY_ID,
+  };
+
+  switch (parsed.data.recorrencia) {
+    case 'unica': {
+      // data_unica garantido pelo cross-field do schema.
+      const dataIso = parsed.data.data_unica;
+      if (!dataIso) return { ids: [], estourou: false };
+      const date = new Date(dataIso);
+      if (Number.isNaN(date.getTime())) {
+        return { ids: [], estourou: false };
+      }
+      const identifier = idOnce(parsed.data.slug);
+      await Notifications.scheduleNotificationAsync({
+        identifier,
+        content: {
+          ...baseContent,
+          data: { slug: parsed.data.slug, recorrencia: 'unica' },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date,
+          channelId: ALARME_CHANNEL_ID,
+        },
+      });
+      return { ids: [identifier], estourou: false };
+    }
+    case 'diaria': {
+      const identifier = idDaily(parsed.data.slug);
+      await Notifications.scheduleNotificationAsync({
+        identifier,
+        content: {
+          ...baseContent,
+          data: { slug: parsed.data.slug, recorrencia: 'diaria' },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: tempo.hour,
+          minute: tempo.minute,
+          channelId: ALARME_CHANNEL_ID,
+        },
+      });
+      return { ids: [identifier], estourou: false };
+    }
+    case 'mensal': {
+      // day deriva de data_unica.getDate() quando presente; default 1.
+      let day = 1;
+      if (parsed.data.data_unica) {
+        const date = new Date(parsed.data.data_unica);
+        if (!Number.isNaN(date.getTime())) {
+          day = date.getDate();
+        }
+      }
+      const identifier = idMonthly(parsed.data.slug);
+      await Notifications.scheduleNotificationAsync({
+        identifier,
+        content: {
+          ...baseContent,
+          data: { slug: parsed.data.slug, recorrencia: 'mensal', day },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.MONTHLY,
+          day,
+          hour: tempo.hour,
+          minute: tempo.minute,
+          channelId: ALARME_CHANNEL_ID,
+        },
+      });
+      return { ids: [identifier], estourou: false };
+    }
+    case 'semanal':
+    default: {
+      const ids: string[] = [];
+      for (const dia of parsed.data.dias_semana) {
+        const identifier = idDia(parsed.data.slug, dia);
+        // expo-notifications WeeklyTriggerInput: weekday 1=domingo,
+        // 7=sabado (formato iOS-like). Convertendo: 0=domingo -> 1.
+        const weekday = (dia % 7) + 1;
+        await Notifications.scheduleNotificationAsync({
+          identifier,
+          content: {
+            ...baseContent,
+            data: { slug: parsed.data.slug, dia },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            weekday,
+            hour: tempo.hour,
+            minute: tempo.minute,
+            channelId: ALARME_CHANNEL_ID,
+          },
+        });
+        ids.push(identifier);
+      }
+      return { ids, estourou: false };
+    }
   }
-  return { ids, estourou: false };
 }
 
 // Cancela todos os schedules de um alarme (todos os dias da semana

@@ -13,6 +13,8 @@ const baseAlarme: Alarme = {
   titulo: 'Medicação da manhã',
   horario: '08:30',
   dias_semana: [1, 2, 3, 4, 5],
+  // M30: recorrencia required no output type apos default.
+  recorrencia: 'semanal',
   tag: 'medicacao',
   som: 'gentle',
   ativo: true,

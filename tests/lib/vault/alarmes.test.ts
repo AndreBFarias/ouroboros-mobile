@@ -47,6 +47,8 @@ function fixture(over: Partial<Alarme> = {}): Alarme {
     titulo: 'Medicação da manhã',
     horario: '08:30',
     dias_semana: [1, 2, 3, 4, 5],
+    // M30: default 'semanal' explicito (output type zod required).
+    recorrencia: 'semanal',
     tag: 'medicacao',
     som: 'gentle',
     ativo: true,

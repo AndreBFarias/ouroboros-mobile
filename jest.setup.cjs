@@ -236,6 +236,8 @@ jest.mock('expo-notifications', () => {
     SchedulableTriggerInputTypes: {
       DAILY: 'daily',
       WEEKLY: 'weekly',
+      MONTHLY: 'monthly',
+      DATE: 'date',
       TIME_INTERVAL: 'timeInterval',
     },
     AndroidImportance: {
@@ -274,6 +276,10 @@ jest.mock('expo-notifications', () => {
     }),
     setNotificationChannelAsync: jest.fn((id, channel) => {
       canais.set(id, channel);
+      return Promise.resolve();
+    }),
+    deleteNotificationChannelAsync: jest.fn((id) => {
+      canais.delete(id);
       return Promise.resolve();
     }),
     __memory: memory,

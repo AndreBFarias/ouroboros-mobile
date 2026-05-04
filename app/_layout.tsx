@@ -18,6 +18,7 @@ import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 import { useAppPronto } from '@/lib/boot/useAppPronto';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
+import { pedirPermissao as pedirPermissaoNotificacao } from '@/lib/services/alarmesNotificacoes';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
@@ -119,6 +120,14 @@ export default function RootLayout() {
     void registrarCategoriasAlarme();
   }, []);
 
+  // M30: pedir permissao de notificacao proativamente apos onboarding.
+  // useEffect DIRETO (nao BOOT_HOOKS) - decisao CONTRACT 7.9: falha
+  // precisa propagar a UI via toast. Idempotente uma vez por instalacao
+  // via useSessao.permissoesPedidas.notif. Em web no-op (pedirPermissao
+  // ja retorna false silenciosamente). Renderizado dentro do provider
+  // ToastProvider via PermissaoNotificacaoGate (precisa do hook
+  // useToast); aqui o componente e montado abaixo no JSX.
+
   // M-GAUNTLET: em web + EXPO_PUBLIC_GAUNTLET=1, instala
   // window.__gauntlet com APIs JS deterministicas (seed, reset,
   // setNomes, abrir, abrirSheet, etc). Em mobile release, dead-code
@@ -161,6 +170,7 @@ export default function RootLayout() {
         <ToastProvider>
           <VaultBootGate />
           <SessaoBootGate />
+          <PermissaoNotificacaoGate />
           <GauntletPathnameSync />
           <Stack
             screenOptions={{
@@ -292,6 +302,63 @@ function GauntletPathnameSync() {
     if (!GAUNTLET_ATIVO) return;
     setPathnameRef(pathname ?? '/');
   }, [pathname]);
+  return null;
+}
+
+// M30: gate de permissao de notificacao. Roda dentro do ToastProvider
+// porque a falha precisa propagar a UI via toast (decisao CONTRACT
+// secao 7.9: nao pode ser silenciado em BOOT_HOOKS). Idempotente uma
+// vez por instalacao via useSessao.permissoesPedidas.notif.
+//
+// Logica:
+//  1. Espera onboarding done E permissoesPedidas.notif === false.
+//  2. Chama pedirPermissao() (no-op em web).
+//  3. Marca via useSessao.marcarPermissaoPedida('notif') APOS request -
+//     independente do resultado, para nao reciclar dialog do SO.
+//  4. Em falha (granted === false), exibe toast informativo.
+//
+// useEffect direto (nao BOOT_HOOKS) garante que toast.show tenha o
+// provider hidratado e o gate seja re-acionado se o usuario fechar e
+// reabrir antes de hidratar onboarding.done (raro, mas defensivo).
+function PermissaoNotificacaoGate() {
+  const toast = useToast();
+  const onboardingHidratado = useHasHydrated(useOnboarding);
+  const sessaoHidratada = useHasHydrated(useSessao);
+  // Lock por mount: evita re-disparar se a hidratacao oscilar.
+  const pedidoRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (pedidoRef.current) return;
+    if (!onboardingHidratado || !sessaoHidratada) return;
+    const onboardingDone = useOnboarding.getState().done;
+    if (!onboardingDone) return;
+    const jaPedido = useSessao.getState().permissoesPedidas.notif;
+    if (jaPedido) return;
+    pedidoRef.current = true;
+    void (async () => {
+      let concedida = false;
+      try {
+        concedida = await pedirPermissaoNotificacao();
+      } catch {
+        concedida = false;
+      }
+      // Marca como pedida independente do resultado para nao tentar
+      // de novo no proximo boot (pessoa ja decidiu, respeitar).
+      try {
+        useSessao.getState().marcarPermissaoPedida('notif');
+      } catch {
+        // Store sem hidratacao; ok, proximo boot tenta de novo.
+      }
+      if (!concedida) {
+        toast.show(
+          'Permita notificações em Configurações para receber alarmes.',
+          'info'
+        );
+      }
+    })();
+    // toast captura snapshot uma unica vez na mount; segue padrao
+    // de VaultBootGate.
+  }, [onboardingHidratado, sessaoHidratada]);
   return null;
 }
 

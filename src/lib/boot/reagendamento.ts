@@ -59,6 +59,34 @@ const reagendarAlarmesHook: BootHook = async () => {
   await reagendarAlarmes();
 };
 
+// M30: migra lembretes legados (medicacao/treino/humor) do shape v1
+// de useSettings para alarmes pre-cadastrados no Vault. Idempotente
+// (alarmes existentes com mesmo slug sao preservados; apos sucesso
+// apaga o blob v1 do SecureStore). Roda ANTES de reagendarAlarmes
+// para que os alarmes pre-cadastrados ja entrem no schedule do boot
+// quando estiverem com ativo=true.
+const migrarLembretesHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { migrarLembretesParaAlarmes } = await import(
+    '@/lib/boot/migrarLembretes'
+  );
+  await migrarLembretesParaAlarmes(vaultRoot);
+};
+
+// M30: apaga channels Android legados uma unica vez por instalacao.
+// Necessario porque Android nao permite editar vibrationPattern de
+// channel existente; o novo channel 'ouroboros-default-v2' nasce via
+// registrarCategoriasAlarme em app/_layout.tsx, e este hook limpa o
+// lixo. Guardado por useSessao.flags.canalV1Deletado.
+const apagarChannelsLegadosHook: BootHook = async () => {
+  const { apagarChannelsLegadosUmaVez } = await import(
+    '@/lib/services/notificationActions'
+  );
+  await apagarChannelsLegadosUmaVez();
+};
+
 // M17 to-do leve: limpa lixeira soft de tarefas com retencao de 30
 // dias. Idempotente: roda uma vez por dia, controlado por timestamp
 // em SecureStore.
@@ -95,6 +123,11 @@ const reagendarLembretesHook: BootHook = async () => {
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
+  // M30: migracao + limpeza de channels legados rodam ANTES do
+  // reagendar para que alarmes pre-cadastrados (humor, medicacao,
+  // treino) entrem no schedule do boot ja com o channel v2 disponivel.
+  migrarLembretesHook,
+  apagarChannelsLegadosHook,
   reagendarAlarmesHook,
   limparLixeiraTarefasHook,
   atualizarWidgetHomescreenHook,

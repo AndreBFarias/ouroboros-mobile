@@ -5,6 +5,72 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M30 fechada (2026-05-04)
+
+AlarmeSchema v2: recorrência + channel com vibração + lembretes
+integrados.
+
+**Entregáveis:**
+- `src/lib/schemas/alarme.ts` — `RecorrenciaSchema`, campo
+  `recorrencia` (default `'semanal'`), `data_unica` (ISO opcional),
+  `dias_semana` min 0, `superRefine` cross-field.
+- `src/lib/services/alarmesNotificacoes.ts` — switch por
+  recorrência (`unica` DATE / `diaria` DAILY / `semanal` WEEKLY /
+  `mensal` MONTHLY) + identifiers `.once/.daily/.monthly`.
+- `src/lib/services/notificationActions.ts` — `ALARME_CHANNEL_ID =
+  'ouroboros-default-v2'`, `vibrationPattern: [0,250,500,250]`,
+  `enableVibrate: true`, `lightColor: '#bd93f9'`. Helper
+  `apagarChannelsLegadosUmaVez()` apaga `'default'` e `'alarmes'`
+  (legados v1) guardado por `useSessao.flags.canalV1Deletado`.
+- `app/_layout.tsx` — `PermissaoNotificacaoGate` via `useEffect`
+  direto (CONTRACT §7.9) chama `pedirPermissao()` se
+  `permissoesPedidas.notif === false`. Toast "Permita notificações
+  em Configurações para receber alarmes." em falha.
+- `app/alarmes/novo.tsx` — `<ChipGroup>` "Recorrência" condiciona
+  seletor (DateTimePicker para única/mensal, SeletorDias só
+  semanal).
+- `src/lib/boot/migrarLembretes.ts` (novo) — migração idempotente
+  dos 3 lembretes v1 (medicação/treino/humor) lendo
+  `ouroboros.settings.v1` direto do SecureStore para alarmes
+  pré-cadastrados off. Plug em `BOOT_HOOKS` antes de
+  `reagendarAlarmes`.
+- `src/lib/stores/sessao.ts` — campo `flags.canalV1Deletado` +
+  mutator `marcarFlagBoot` + migração defensiva.
+- `jest.setup.cjs` — `SchedulableTriggerInputTypes.{DATE,MONTHLY}`
+  + `deleteNotificationChannelAsync` mock.
+- 3 fixtures de teste atualizadas (`CardAlarme.test.tsx`,
+  `alarmesNotificacoes.test.ts`, `vault/alarmes.test.ts`) com
+  `recorrencia: 'semanal'` explícito.
+- `tests/lib/boot/migrarLembretes.test.ts` (novo, 8 cases) —
+  migração, idempotência (rodar 2x não duplica), apaga blob v1,
+  blob ausente/corrompido/sem chave, vaultRoot vazio, default
+  horário.
+
+**Aritmética:** 1162 → 1177 testes (+15), 135 → 136 suítes (+1),
+tsc 0 erros, anonimato OK. Bundle Hermes 8.78 → 8.8 MB
+(50 KB margem do limite 8.85).
+
+**Validação visual via Gauntlet (playwright MCP):**
+- `/alarmes/novo` renderiza:
+  - "Novo alarme" header.
+  - Campos: TÍTULO, HORÁRIO 08:00.
+  - **RECORRÊNCIA**: 4 chips (Única/Diária/**Semanal**/Mensal),
+    Semanal selecionado purple por default.
+  - DIAS DA SEMANA: D S T Q Q S S (visível só quando Semanal).
+  - CATEGORIA: Medicação/Treino/Outro.
+  - SOM: Suave/Normal/Forte (Suave selecionado ciano).
+  - Soneca 5 min slider.
+  - Ativo toggle ON.
+- Screenshot em
+  `docs/sprints/M30-screenshots/A-novo-alarme-recorrencia.png`.
+
+**Pendência Nível B (não-bloqueante):**
+- Validação de `vibrationPattern` real precisa emulador Android +
+  logcat (`Vibrator: pattern [0,250,500,250]`). Spec sinaliza como
+  obrigatório para Nível B; Gauntlet em web não cobre.
+- `apagarChannelsLegadosUmaVez()` em devices que rodaram v1.0-rc1
+  precisa validação manual pós-instalação.
+
 ### M29 fechada (2026-05-04)
 
 Settings v2: vibração simples + features default ON + sync removido.

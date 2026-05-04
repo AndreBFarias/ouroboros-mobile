@@ -60,6 +60,35 @@ export type AlarmeTag = z.infer<typeof AlarmeTagSchema>;
 export const AlarmeSomSchema = z.enum(['gentle', 'normal', 'forte']);
 export type AlarmeSom = z.infer<typeof AlarmeSomSchema>;
 
+// Recorrencia v2 (M30):
+//  - 'unica'   : trigger DATE com data_unica (ISO).
+//  - 'diaria'  : trigger DAILY com hour/minute.
+//  - 'semanal' : trigger WEEKLY por dia da semana (modo legacy v1).
+//  - 'mensal'  : trigger MONTHLY com day/hour/minute (1-31).
+// Default 'semanal' preserva compatibilidade com alarmes v1 sem migracao
+// de logica - so o schema ganha campo novo com default.
+export const RecorrenciaSchema = z.enum([
+  'unica',
+  'diaria',
+  'semanal',
+  'mensal',
+]);
+export type Recorrencia = z.infer<typeof RecorrenciaSchema>;
+
+export const RECORRENCIA_LABELS: Record<Recorrencia, string> = {
+  unica: 'Única',
+  diaria: 'Diária',
+  semanal: 'Semanal',
+  mensal: 'Mensal',
+};
+
+export const RECORRENCIAS_CANONICAS = [
+  'unica',
+  'diaria',
+  'semanal',
+  'mensal',
+] as const satisfies ReadonlyArray<Recorrencia>;
+
 // ISO datetime com offset (ex: 2026-04-29T10:00:00-03:00).
 const IsoDatetime = z
   .string()
@@ -68,28 +97,58 @@ const IsoDatetime = z
     'datetime deve estar em ISO 8601 com offset'
   );
 
-export const AlarmeSchema = z.object({
-  tipo: z.literal('alarme'),
-  slug: SlugSchema,
-  titulo: z.string().min(1).max(80),
-  horario: HorarioSchema,
-  // Pelo menos 1 dia, no maximo 7 (sem repetidos faz sentido mas não
-  // forcamos uniqueness no schema; UI cuida disso).
-  dias_semana: z.array(DiaSemanaSchema).min(1).max(7),
-  tag: AlarmeTagSchema,
-  som: AlarmeSomSchema,
-  ativo: z.boolean(),
-  // 1 a 60 minutos. Default 5 conforme decisão do spec.
-  snooze_minutos: z.number().int().min(1).max(60).default(5),
-  criado_em: IsoDatetime,
-  // Null antes do primeiro Desligar.
-  ultimo_disparo: IsoDatetime.nullable(),
-  // Array de identifiers do expo-notifications. Pode ser vazio quando
-  // alarme inativo.
-  notification_ids: z.array(z.string()).default([]),
-  // Identifier de snooze pendente; null quando não ha snooze ativo.
-  snooze_id: z.string().nullable(),
-});
+// M30 v2: dias_semana flexivel para 0-7 itens. Quando recorrencia !==
+// 'semanal' o array tipicamente vem [] (irrelevante). Validacao cross
+// field via .refine() abaixo garante que semanal exige >= 1 dia. Limite
+// max 7 mantido (sem repetidos uma semana inteira).
+export const AlarmeSchema = z
+  .object({
+    tipo: z.literal('alarme'),
+    slug: SlugSchema,
+    titulo: z.string().min(1).max(80),
+    horario: HorarioSchema,
+    // M30: 0-7 itens. Cross-field exige >=1 quando recorrencia=='semanal'.
+    dias_semana: z.array(DiaSemanaSchema).min(0).max(7),
+    // M30: recorrencia v2 com default 'semanal' (compativel v1 sem
+    // migracao de logica nem dado).
+    recorrencia: RecorrenciaSchema.default('semanal'),
+    // M30: data ISO opcional para recorrencia 'unica'. Quando ausente
+    // em modo unica o cross-field abaixo rejeita.
+    data_unica: IsoDatetime.optional(),
+    tag: AlarmeTagSchema,
+    som: AlarmeSomSchema,
+    ativo: z.boolean(),
+    // 1 a 60 minutos. Default 5 conforme decisão do spec.
+    snooze_minutos: z.number().int().min(1).max(60).default(5),
+    criado_em: IsoDatetime,
+    // Null antes do primeiro Desligar.
+    ultimo_disparo: IsoDatetime.nullable(),
+    // Array de identifiers do expo-notifications. Pode ser vazio quando
+    // alarme inativo.
+    notification_ids: z.array(z.string()).default([]),
+    // Identifier de snooze pendente; null quando não ha snooze ativo.
+    snooze_id: z.string().nullable(),
+  })
+  // M30: cross-field. semanal precisa de pelo menos 1 dia; unica precisa
+  // de data_unica preenchida. diaria/mensal nao tem requisitos extras
+  // alem do horario base (mensal usa o dia derivado de data_unica
+  // opcionalmente; default e dia 1 quando ausente, decisao §9 do spec).
+  .superRefine((alarme, ctx) => {
+    if (alarme.recorrencia === 'semanal' && alarme.dias_semana.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dias_semana'],
+        message: 'recorrencia semanal exige pelo menos 1 dia da semana',
+      });
+    }
+    if (alarme.recorrencia === 'unica' && !alarme.data_unica) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['data_unica'],
+        message: 'recorrencia unica exige data_unica',
+      });
+    }
+  });
 
 export type Alarme = z.infer<typeof AlarmeSchema>;
 

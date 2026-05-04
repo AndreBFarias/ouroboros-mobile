@@ -74,10 +74,23 @@ export interface PermissoesPedidasState {
 
 export type PermissaoKey = keyof PermissoesPedidasState;
 
+// M30: flags one-shot de boot. Marcam acoes idempotentes que devem
+// rodar uma unica vez por instalacao (apos primeiro sucesso, ficam
+// true para sempre).
+//   - canalV1Deletado: indica se a rotina de boot ja apagou o canal
+//     Android legado 'default' (gerado em v1.0-rc1 sem vibrationPattern,
+//     vide A30 e §4 do M30-spec).
+export interface FlagsBootState {
+  canalV1Deletado: boolean;
+}
+
+export type FlagBootKey = keyof FlagsBootState;
+
 export interface SessaoState {
   ultimaRota: string | null;
   rascunhos: RascunhosState;
   permissoesPedidas: PermissoesPedidasState;
+  flags: FlagsBootState;
   atualizadoEm: string;
   setUltimaRota: (rota: string) => void;
   salvarRascunho: <K extends RascunhoKey>(
@@ -86,6 +99,7 @@ export interface SessaoState {
   ) => void;
   limparRascunho: (chave: RascunhoKey) => void;
   marcarPermissaoPedida: (chave: PermissaoKey) => void;
+  marcarFlagBoot: (chave: FlagBootKey) => void;
   resetar: () => void;
 }
 
@@ -106,17 +120,23 @@ const PERMISSOES_VAZIAS: PermissoesPedidasState = {
   mic: false,
 };
 
+const FLAGS_VAZIAS: FlagsBootState = {
+  canalV1Deletado: false,
+};
+
 const DEFAULT_STATE: Omit<
   SessaoState,
   | 'setUltimaRota'
   | 'salvarRascunho'
   | 'limparRascunho'
   | 'marcarPermissaoPedida'
+  | 'marcarFlagBoot'
   | 'resetar'
 > = {
   ultimaRota: null,
   rascunhos: RASCUNHOS_VAZIOS,
   permissoesPedidas: PERMISSOES_VAZIAS,
+  flags: FLAGS_VAZIAS,
   atualizadoEm: new Date(0).toISOString(),
 };
 
@@ -159,6 +179,7 @@ function checarCanario(state: SessaoState): void {
       ultimaRota: state.ultimaRota,
       rascunhos: state.rascunhos,
       permissoesPedidas: state.permissoesPedidas,
+      flags: state.flags,
       atualizadoEm: state.atualizadoEm,
     };
     const tamanho = JSON.stringify(persistivel).length;
@@ -213,6 +234,13 @@ export const useSessao = create<SessaoState>()(
         }));
         checarCanario(get());
       },
+      marcarFlagBoot: (chave) => {
+        set((s) => ({
+          flags: { ...s.flags, [chave]: true },
+          atualizadoEm: nowIso(),
+        }));
+        checarCanario(get());
+      },
       resetar: () => set({ ...DEFAULT_STATE }),
     }),
     {
@@ -224,6 +252,7 @@ export const useSessao = create<SessaoState>()(
         ultimaRota: state.ultimaRota,
         rascunhos: state.rascunhos,
         permissoesPedidas: state.permissoesPedidas,
+        flags: state.flags,
         atualizadoEm: state.atualizadoEm,
       }),
       // M27: rotas migraram de /(tabs)/* para raiz. Usuarios pre-M27
@@ -241,6 +270,10 @@ export const useSessao = create<SessaoState>()(
           } else if (state.ultimaRota === '/(tabs)') {
             state.ultimaRota = '/';
           }
+        }
+        // M30: garante flags ausentes em estados pre-M30 (v2 sem flags).
+        if (state && typeof state === 'object' && !state.flags) {
+          state.flags = { ...FLAGS_VAZIAS };
         }
         return state;
       },
