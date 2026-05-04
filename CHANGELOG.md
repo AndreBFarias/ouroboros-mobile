@@ -5,6 +5,47 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### M-GAUNTLET-SEED-DUO fechada (2026-05-04)
+
+`aplicarSeed` e `aplicarSetNomes` agora propagam
+`tipoCompanhia` para o canônico **`useSettings.pessoa.tipoCompanhia`**
+(M29) além do legado `useOnboarding.tipoCompanhia`.
+
+Mapeamento: `nomeB === null → 'sozinho'`; `nomeB string → 'duo'`.
+`aplicarReset` zera ambos. `localStorage.removeItem('ouroboros.settings.v2')`
+adicionado para evitar re-hidratação de estado anterior.
+
+**Aritmética:** 1257 → 1260 testes (+3 cases em
+`tests/lib/dev/gauntlet-seed-duo.test.ts`), 138 → 139 suítes (+1).
+
+**Validação visual via Gauntlet (playwright MCP):**
+- `seed({ nomeA: 'Alex', nomeB: 'Sam' }) + abrir('/eventos')`:
+  9 chips renderizam (3 chips × 3 telas com SeletorPara).
+  "Para mim" / "Para Sam" / "Para o casal" visíveis no form
+  Eventos.
+- `abrir('/contadores/novo')`: PARA QUEM com 3 chips M33,
+  Para mim purple selecionado.
+- `abrir('/todo')` + click "Nova tarefa": Sheet abre com 8 chips
+  CATEGORIA (Trabalho/Casa/Rotina/Finanças/Desenvolvimento pessoal/
+  Obrigações/Saúde/Outro), 4 chips PARA QUEM
+  (Para mim/Para Sam/Para o casal/Para outro), toggle "Lembrar
+  com alarme" com texto secundário "Cria um alarme companion
+  vinculado à tarefa."
+- Screenshots em
+  `docs/sprints/M33-screenshots/A-evento-seletor-para.png`,
+  `B-contador-novo-seletor-para.png` e
+  `docs/sprints/M31-screenshots/B-nova-tarefa-categoria.png`.
+
+**Achados de UI/UX (não-bloqueantes, anotados para sprint
+corretiva futura):**
+- Chip "Outro" de categoria Tarefa renderiza em laranja accent
+  (cor de destaque) sendo apenas opção neutra. Investigar se foi
+  intencional ou regressão. Sprint corretiva sugerida:
+  `M31.1-spec.md` ou ajuste no `<ChipGroup>` quando relevante.
+- Categoria em 3 linhas 4-2-2 (irregular).
+- Toggle "Lembrar com alarme" expande bloco DateTimePicker
+  embaixo — animação não validada visualmente.
+
 ### M33 fechada (2026-05-04)
 
 Campo `para` em 4 schemas (Diário/Evento/Contador/Marco) + componente

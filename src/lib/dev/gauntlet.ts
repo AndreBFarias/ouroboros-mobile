@@ -25,6 +25,7 @@ import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useSessao } from '@/lib/stores/sessao';
 import { useNavegacao } from '@/lib/stores/navegacao';
+import { useSettings } from '@/lib/stores/settings';
 import { useGaleriaMock } from '@/lib/dev/galeriaMock';
 import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock } from '@/lib/dev/diarioMock';
@@ -173,6 +174,19 @@ function aplicarSeed(opts?: SeedOpcoes): void {
   useSessao.setState({ ultimaRota });
   // Auditoria 2026-05-04 (item 6): garantir consistencia com reset.
   useNavegacao.setState({ menuAberto: false });
+  // M-GAUNTLET-SEED-DUO: useSettings.pessoa.tipoCompanhia e o canonico
+  // atual (M29). Componentes M31/M33 leem dele -- sem isto, modo casal
+  // do seed nao reflete em UI nova (chips ficam ocultos).
+  // Valores: 'sozinho' | 'duo' (canonico M29, distinto de useOnboarding
+  // legado que ainda aceita 'casal'/'amigos').
+  const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
+  const settingsAtual = useSettings.getState();
+  useSettings.setState({
+    pessoa: {
+      ...settingsAtual.pessoa,
+      tipoCompanhia: tipoCompanhiaSettings,
+    },
+  });
 }
 
 function aplicarReset(): void {
@@ -184,6 +198,11 @@ function aplicarReset(): void {
   });
   useSessao.setState({ ultimaRota: null });
   useNavegacao.setState({ menuAberto: false });
+  // M-GAUNTLET-SEED-DUO: reset tambem do canonico useSettings.
+  const settingsAtual = useSettings.getState();
+  useSettings.setState({
+    pessoa: { ...settingsAtual.pessoa, tipoCompanhia: 'sozinho' },
+  });
   // M11.1: galeria mock zerada para que cada caso E2E comece limpo.
   useGaleriaMock.getState().limpar();
   // M-GAUNTLET-SEED-V2: zerar stores de dados (humor, diario, eventos)
@@ -200,6 +219,7 @@ function aplicarReset(): void {
       window.localStorage?.removeItem('ouroboros.vault');
       window.localStorage?.removeItem('ouroboros.pessoa');
       window.localStorage?.removeItem('ouroboros.sessao.v1');
+      window.localStorage?.removeItem('ouroboros.settings.v2');
     } catch {
       // ignora -- modo privado, iframe sem permissao.
     }
@@ -214,6 +234,15 @@ function aplicarSetNomes(nomeA: string, nomeB?: string | null): void {
     nomes: { pessoa_a: nomeA, pessoa_b: nomeB ?? 'Nome_B' },
   });
   useOnboarding.setState({ tipoCompanhia });
+  // M-GAUNTLET-SEED-DUO: espelha em useSettings (canonico M29).
+  const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
+  const settingsAtual = useSettings.getState();
+  useSettings.setState({
+    pessoa: {
+      ...settingsAtual.pessoa,
+      tipoCompanhia: tipoCompanhiaSettings,
+    },
+  });
 }
 
 function navegar(rota: string): Promise<void> {
