@@ -1,25 +1,41 @@
 # Gauntlet — Validação visual unificada em Chrome
 
 > **Status**: implementado em M-GAUNTLET (2026-05-03).
-> **Substitui** o pipeline 3-tentativas de Nível A puro como
-> default para validação visual de qualquer sprint que toca UI.
+> **OBRIGATÓRIO** desde 2026-05-04 para qualquer sprint nova que
+> toca UI. Substitui o pipeline 3-tentativas de Nível A puro.
 
 ## O que é
 
 Camada de bypass dev-only que expõe controle determinístico do app
 via JS API (`window.__gauntlet`) e interface dashboard
-(`/_dev/gauntlet`) em modo `EXPO_PUBLIC_GAUNTLET=1`. Permite ao
-orquestrador (Claude) validar visualmente o app web no Chrome sem
-ficar preso aos 6 problemas estruturais documentados em
-`docs/sprints/M-GAUNTLET-spec.md` §1 (BiometriaGate redirect,
-useFonts oscilante, refs voláteis, MouseEvent sintético, gorhom
-em web, etc).
+(`/_dev/gauntlet`). Em modo dev (`__DEV__`) o Gauntlet é instalado
+automaticamente. Permite ao orquestrador (Claude) validar
+visualmente o app web no Chrome sem ficar preso aos 6 problemas
+estruturais documentados em `docs/sprints/M-GAUNTLET-spec.md` §1
+(BiometriaGate redirect, useFonts oscilante, refs voláteis,
+MouseEvent sintético, gorhom em web, etc).
 
-## Como ativar
+## Como ativar (atalho recomendado)
+
+```bash
+./gauntlet.sh
+```
+
+O script:
+1. Mata Metro órfão na porta 8081 (se houver).
+2. Sobe `./run.sh --web` em background (log em `/tmp/gauntlet-expo.log`).
+3. Aguarda Metro responder em `localhost:8081`.
+4. Abre o navegador padrão direto em `/_dev/gauntlet`.
+5. Mostra log em foreground; `Ctrl-C` derruba tudo limpo.
+
+Em sessão fresca, `useFonts` SDK 54 web demora ~30-60s para resolver
+na primeira navegação. Aguarde antes de interagir.
+
+## Alternativa manual
 
 ```bash
 cd ~/Desenvolvimento/Protocolo-Mob-Ouroboros
-EXPO_PUBLIC_GAUNTLET=1 ./run.sh --web
+./run.sh --web
 ```
 
 Aguarde `localhost:8081` responder. Abra
@@ -39,12 +55,13 @@ Em modo dev você verá:
 `GAUNTLET_ATIVO` é avaliado em runtime como:
 
 ```ts
-Platform.OS === 'web' && process.env.EXPO_PUBLIC_GAUNTLET === '1'
+Platform.OS === 'web' && __DEV__
 ```
 
-Em mobile release Android/iOS, `Platform.OS !== 'web'` faz o módulo
-ser dead-code mesmo se a env var vazar. Build sem flag não inclui
-o dashboard nas rotas (Redirect para `/`).
+`__DEV__` é flag build-time do React Native que vira `false` em
+release. Em mobile release Android/iOS, `Platform.OS !== 'web'` E
+`__DEV__ === false` fazem o módulo ser dead-code. Build sem dev
+não inclui o dashboard nas rotas (Redirect para `/`).
 
 Verificação opcional após build:
 
@@ -145,12 +162,15 @@ orquestrador (Claude) usando o playwright MCP.
 
 1. Após executor entregar código, orquestrador escreve o E2E em
    `tests/e2e/playwright/m<NN>-*.e2e.ts`.
-2. Sobe expo: `EXPO_PUBLIC_GAUNTLET=1 ./run.sh --web` em background.
+2. Sobe Gauntlet: `./gauntlet.sh` (em outra janela) ou
+   `./run.sh --web` em background.
 3. Carrega tools playwright via ToolSearch.
-4. Executa o caso via `browser_evaluate({ function: ... })` ou
-   `browser_click/type` direto.
-5. Captura screenshots em `docs/sprints/M<NN>-screenshots-gauntlet/`.
-6. Aprova ou reprova baseado no resultado.
+4. Navega `http://localhost:8081/_dev/gauntlet`, aguarda fontes,
+   roda `__gauntlet.seed()` ou `setNomes()/setUltimaRota()` etc.
+5. Executa o caso via `browser_evaluate({ function: ... })` ou
+   `browser_click/type` direto. Clica e navega como app real.
+6. Captura screenshots em `docs/sprints/M<NN>-screenshots-gauntlet/`.
+7. Aprova ou reprova baseado no resultado.
 
 Bugs descobertos viram sprints corretivas separadas
 (`M<NN>.<x>-spec.md`), nunca fix inline na sprint que está sendo
