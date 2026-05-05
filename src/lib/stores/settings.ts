@@ -55,6 +55,13 @@ export interface SettingsState {
     // backend publicar cache no Vault. Quando o usuario liga, o item
     // aparece no menu e a tela renderiza um EmptyState honesto.
     mostrarFinancasEmDesenvolvimento: boolean;
+    // M-BACKUP-AUTOMATICO (Bloco C5): toggle opt-in para backup
+    // periodico semanal local. Default false (privacy-first). Quando
+    // ligado, o helper agendarBackup avalia a cada boot se passou >=7d
+    // desde ultimaExecucaoMs e dispara executarBackup() (chama
+    // exportarVaultZip + escreve em Documents/Ouroboros-Backups/auto/
+    // com rotacao em 4 arquivos).
+    backupAutomaticoSemanal: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -124,6 +131,9 @@ const DEFAULT_STATE_V2: Omit<
     // M35: default OFF. v1.0 nao publica cache de financas; a aba so
     // volta a aparecer quando o usuario liga este toggle conscientemente.
     mostrarFinancasEmDesenvolvimento: false,
+    // M-BACKUP-AUTOMATICO: default OFF (privacy-first). Usuario ativa
+    // conscientemente. Quando OFF, agendarBackup nem registra timer.
+    backupAutomaticoSemanal: false,
   },
   privacidade: {
     biometriaAbrir: false,

@@ -475,6 +475,7 @@ export default function TelaTarefas() {
           onPress={() => void handleResetarOrdem()}
           accessibilityRole="button"
           accessibilityLabel="restaurar ordem padrao"
+          hitSlop={12}
           style={{ alignSelf: 'flex-end' }}
         >
           <Text

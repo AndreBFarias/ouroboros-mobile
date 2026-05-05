@@ -109,10 +109,13 @@ spec PARA o ciclo e pede clarificação.
 | # | Sprint | Título | Spec | Estim. |
 |---|---|---|---|---|
 | ~~C1~~ | ~~M-BUNDLE-DIET~~ | **fechada 2026-05-04** (bundle 8.84→7.08 MB, -1.67 MB / -19.8%, 5x acima da meta; 5 deps removidas + lucide shim) | `M-BUNDLE-DIET-spec.md` | — |
-| C2 | **M-WCAG-COMPLETO** | Acessibilidade AA todas as telas | `M-WCAG-COMPLETO-spec.md` | 4-6h |
-| C3 | **M-RELEASE-ASSETS** | Ícone + splash + app name finais | `M-RELEASE-ASSETS-spec.md` | 3-4h |
-| C4 | **M-SOBRE-RELEASE-NOTES** | Settings → Sobre + changelog | `M-SOBRE-RELEASE-NOTES-spec.md` | 2-3h |
-| C5 | **M-BACKUP-AUTOMATICO** | Backup semanal local opt-in | `M-BACKUP-AUTOMATICO-spec.md` | 3-4h |
+| ~~C2~~ | ~~M-WCAG-COMPLETO~~ | **fechada 2026-05-05** (auditoria 24 telas, helper contraste, 25 testes, 1 fix inline + 3 sub-sprints WCAG-CHIP/MEDIDAS/MUTED-DECOR-TEXTO) | `M-WCAG-COMPLETO-spec.md` | — |
+| ~~C3~~ | ~~M-RELEASE-ASSETS~~ | **fechada 2026-05-05** (6 PNGs gerados via SVG procedural, app.json name+bg, script reprodutível) | `M-RELEASE-ASSETS-spec.md` | — |
+| ~~C4~~ | ~~M-SOBRE-RELEASE-NOTES~~ | **fechada 2026-05-05** (Settings→Sobre + changelog estruturado + 7 cases) | `M-SOBRE-RELEASE-NOTES-spec.md` | — |
+| ~~C5~~ | ~~M-BACKUP-AUTOMATICO~~ | **fechada 2026-05-05** (semanal opt-in default OFF, +14 cases; descoberta A24 regex Tailwind no VALIDATOR_BRIEF) | `M-BACKUP-AUTOMATICO-spec.md` | — |
+| C2.x.1 | **M-WCAG-CHIP** | Chip altura + borda mutedDecor (FAIL AA) | `M-WCAG-CHIP-spec.md` | 0,5h |
+| C2.x.2 | **M-WCAG-MEDIDAS** | botão remover foto 34dp efetivo | `M-WCAG-MEDIDAS-spec.md` | 0,5h |
+| C2.x.3 | **M-WCAG-MUTED-DECOR-TEXTO** | 24 ocorrências mutedDecor texto pequeno | `M-WCAG-MUTED-DECOR-TEXTO-spec.md` | 1-2h |
 | C6 | **M38** | Conflict resolution 4 devices | `M38-spec.md` | 4-5h |
 
 **BLOCO D — Decisão registrada (executar como pre-condição de E)**

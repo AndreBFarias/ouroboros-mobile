@@ -5,6 +5,103 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Bloco C — C2 + C3 + C4 + C5 batch paralelo (2026-05-05)
+
+#### C2 — M-WCAG-COMPLETO
+
+Auditoria WCAG AA de 24 telas + 14 componentes UI base. Helper
+`src/lib/a11y/contraste.ts` (`ratioContraste(fg, bg)` puro JS) +
+25 cases canônicos. E2E `m-wcag-audit.e2e.ts` mede contraste em
+runtime via Gauntlet (5 rotas).
+
+**Status auditoria:** 22 OK, 5 WARN (decorativo aceito), 1 FAIL
+inline (`app/todo.tsx:478` `hitSlop={12}` adicionado), 1 FAIL →
+sub-sprint. **3 sub-sprints geradas:**
+- `M-WCAG-CHIP` — `Chip.tsx` altura 32dp + borda mutedDecor
+  ratio 1.94 (FAIL).
+- `M-WCAG-MEDIDAS` — `app/medidas/novo.tsx:378` botão remover
+  foto 22dp + hitSlop=6 = 34dp (FAIL).
+- `M-WCAG-MUTED-DECOR-TEXTO` — 24 ocorrências `colors.mutedDecor`
+  como `color:` em `<Text>` ratio 3.03 (FAIL AA).
+
+**Arquivos novos (8):** helper, snapshot, 2 testes, E2E, relatório,
+3 specs.
+
+#### C3 — M-RELEASE-ASSETS
+
+6 PNGs regenerados via SVG procedural derivado de `OuroborosLogo.tsx`:
+icon (1024²), icon-foreground (1024²), adaptive-icon (1024²),
+splash (2400²), splash-icon, favicon (196²). Anel Ouroboros
+gradient purple→pink + escamas + cabeça/cauda + glow ambiente.
+
+`app.json`: `name: "Ouroboros"` (capitalização final),
+`splash.backgroundColor: "#282a36"`,
+`android.adaptiveIcon.backgroundColor: "#282a36"`.
+
+Script reprodutível `scripts/gerar-assets-marca.py` (134L,
+cairosvg). Tamanho total assets: 1.92 MB → 0.97 MB (-49%).
+
+**Diagnóstico realizado:** `adaptive-icon.png` e `splash-icon.png`
+eram **placeholders Expo default** (sha bate `5f4c0a73`,
+timestamp 1985-10-26). Substituídos.
+
+#### C4 — M-SOBRE-RELEASE-NOTES
+
+`app/settings/sobre.tsx` (nova tela) acessível via
+`<LinkSubTela titulo="Sobre o app">` no rodapé de `/settings`.
+3 seções: SecaoSobre (versão/build/commit/GitHub/licença),
+SecaoMiniChangelog (3 entradas iniciais 1.0.0/0.9.0/0.8.0),
+SecaoCreditos (anônimo Regra −1).
+
+`src/lib/release/changelog.ts` (novo) — `RELEASE_NOTES` array
+estruturado TS, não markdown raw. Permite formatação humana
+e tradução PT-BR.
+
+`app.json:extra.commitHash` (preenchido em build via env var).
+
+**Arquivos novos (5):** `changelog.ts`, `SecaoSobre.tsx`,
+`sobre.tsx`, test (7 cases), E2E.
+
+#### C5 — M-BACKUP-AUTOMATICO
+
+Backup semanal local opt-in (default OFF, ADR-0007 zero nuvem).
+`agendarBackup.ts` (115L) + `executarBackup.ts` (216L). Salva em
+`Documents/Ouroboros-Backups/auto/<data>.zip`, mantém últimos 4
+(rotação). Reusa `exportarVaultZip()` da A5.
+
+`SecaoBackupAutomatico.tsx` (101L) com toggle + "Último backup:
+há X dias.". Inserida entre `SecaoFeatures` e `SecaoPrivacidade`
+(meio de `app/settings/index.tsx`, sem conflito com C4 que tocou
+rodapé).
+
+`useSettings` v3: `backupAutomaticoSemanal: boolean` default false.
+
+**Arquivos novos (4):** 2 helpers backup, 1 componente, 3 testes
+(executar 14 + agendar 6 + componente 8 — total 14 cases),
+E2E.
+
+**Descoberta importante — Armadilha A24:** durante implementação,
+`npx expo export --platform android` quebrou com `SyntaxError:
+Unexpected token Semicolon` em `style.css`. Causa raiz: regex
+literal `/[-:.]/g` em `executarBackup.ts:155` é interpretado pelo
+extrator de classes Tailwind do NativeWind 4 como pseudo-classe
+arbitrária inválida. Fix inline: substituir por chained `.split()`.
+**Registrado em VALIDATOR_BRIEF.md §4 A24** com workaround +
+recomendação de lint rule durável. Bug C2 reportou bundle quebrado
+"pré-existente" — era exatamente este, do C5 ainda em curso.
+
+#### Métricas batch C2+C3+C4+C5
+
+- Testes: 1427 → **1473** (+46 cases novos: 25 C2 + 0 C3 + 7 C4
+  + 14 C5).
+- Suítes: 160 → **165** (+5).
+- Bundle Hermes: **7.14 → 6.9 MB** (-240 KB; assets PNG melhor
+  comprimidos compensaram código novo).
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet
+  leak OK.
+
+
+
 ### Bloco B FECHADO — B4 + B5 + B6 batch paralelo (2026-05-05)
 
 #### B4 — M40 Tela Hoje v2

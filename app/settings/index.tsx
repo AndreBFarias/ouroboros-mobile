@@ -31,6 +31,7 @@ import {
 } from '@/components/ui';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { LinkSubTela } from '@/components/settings/LinkSubTela';
+import { SecaoBackupAutomatico } from '@/components/settings/SecaoBackupAutomatico';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { haptics } from '@/lib/haptics';
@@ -62,6 +63,7 @@ export default function SettingsTela() {
         <SecaoSomVibracao />
         <SecaoPessoa />
         <SecaoFeatures />
+        <SecaoBackupAutomatico />
         <SecaoPrivacidade />
         <SecaoSobre />
       </ScrollView>
