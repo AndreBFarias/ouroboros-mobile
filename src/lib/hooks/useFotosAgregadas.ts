@@ -23,8 +23,15 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
-import { useGaleriaMock, type FotoMock } from '@/lib/dev/galeriaMock';
-import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
+// M-GAUNTLET-DEAD-CODE-V2: galeriaMock e gauntlet sao dev-only.
+// MODO_DEV_WEB vem do micro-modulo gauntletAtivo (sem strings markers).
+// FotoMock e importado como type-only -- types desaparecem do bundle
+// e nao geram referencia runtime ao modulo. useGaleriaMock entra via
+// require lazy no useEffect guardado por __DEV__ apenas em dev web.
+import type { FotoMock } from '@/lib/dev/galeriaMock';
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
+
+declare const __DEV__: boolean;
 
 // Origens declaradas. M11.1 adicionou 'galeria-manual' para fotos
 // inseridas via FAB + na aba Fotos da MemoriasScreen. Em sprints
@@ -186,15 +193,25 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   // M11.2: leitura do store dev movida para useEffect guardado por
-  // GAUNTLET_ATIVO. Em release Android (GAUNTLET_ATIVO === false) o
+  // MODO_DEV_WEB. Em release Android (MODO_DEV_WEB === false) o
   // effect retorna early e o estado permanece [] - o store mock nao
   // contribui para o render. Em web/dev assina mudancas via
   // subscribe() para reagir a __gauntlet.adicionarFotoMock().
+  // M-GAUNTLET-DEAD-CODE-V2: require lazy guardado por __DEV__ para
+  // que Metro DCE elimine o branch e useGaleriaMock NAO entre no
+  // bundle Android release.
   const [fotosMock, setFotosMock] = useState<FotoMock[]>([]);
   useEffect(() => {
-    if (!GAUNTLET_ATIVO) return;
-    setFotosMock(useGaleriaMock.getState().fotos);
-    return useGaleriaMock.subscribe((s) => setFotosMock(s.fotos));
+    // M-GAUNTLET-DEAD-CODE-V2: __DEV__ como guard top-level para
+    // Metro DCE remover este branch (e o require lazy + as referencias
+    // a useGaleriaMock) do bundle release.
+    if (__DEV__) {
+      if (!MODO_DEV_WEB) return;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
+      setFotosMock(galeria.useGaleriaMock.getState().fotos);
+      return galeria.useGaleriaMock.subscribe((s) => setFotosMock(s.fotos));
+    }
   }, []);
 
   const carregar = useCallback(async () => {
@@ -236,11 +253,11 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     }, [carregar])
   );
 
-  // M11.1: em web/dev (GAUNTLET_ATIVO), mescla as entradas da galeria
+  // M11.1: em web/dev (MODO_DEV_WEB), mescla as entradas da galeria
   // mock por cima das do Vault. Em mobile real fotosMock e sempre []
   // (a store nunca recebe entrada fora do helper guardado), entao
   // este merge e benigno.
-  const fotosFinais: FotoAgregada[] = GAUNTLET_ATIVO && fotosMock.length > 0
+  const fotosFinais: FotoAgregada[] = MODO_DEV_WEB && fotosMock.length > 0
     ? [
         ...fotosMock.map((m) => ({
           uri: m.uri,

@@ -4,9 +4,12 @@
 // screenshots das telas em sequencia.
 //
 // Comentarios sem acento.
+// M-GAUNTLET-DEAD-CODE-V2: import direto de gauntlet vazaria markers
+// (showcase entra no bundle release via require.context do expo-router,
+// mesmo que _layout faca redirect runtime). MODO_DEV_WEB e zero-marker.
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 interface ItemTela {
@@ -43,7 +46,7 @@ const TELAS: ItemTela[] = [
 
 export default function Showcase() {
   const router = useRouter();
-  if (!GAUNTLET_ATIVO) {
+  if (!MODO_DEV_WEB) {
     return (
       <View style={{ flex: 1, padding: spacing.lg, justifyContent: 'center' }}>
         <Text style={{ color: colors.fg, textAlign: 'center' }}>
@@ -77,8 +80,8 @@ export default function Showcase() {
         }}
       >
         Lista canonica das telas do mockup. Toque para navegar.
-        Modais ({'modal'}) abrem via __gauntlet.abrirSheet em vez de
-        navegacao direta. Boot fresh demora ~30s na primeira tela.
+        Modais ({'modal'}) abrem via console dev em vez de navegacao
+        direta. Boot fresh demora ~30s na primeira tela.
       </Text>
 
       {TELAS.map((tela) => (

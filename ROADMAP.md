@@ -81,8 +81,9 @@ spec PARA o ciclo e pede clarificação.
 
 | # | Sprint | Título | Spec | Estim. |
 |---|---|---|---|---|
-| A1 | **M-PT-BR-AUDIT** | Hook pre-commit + script PT-BR | `M-PT-BR-AUDIT-spec.md` | 3-4h |
-| A2 | **M-GAUNTLET-DEAD-CODE-V2** | Bytecode Android sem `__gauntlet` (lazy require) | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | 4-6h |
+| ~~A1~~ | ~~M-PT-BR-AUDIT~~ | **fechada 2026-05-04** (script + dicionário 147 + hook + smoke; M-PT-BR-RETROFIT criada para 3 violações detectadas) | `M-PT-BR-AUDIT-spec.md` | — |
+| ~~A2~~ | ~~M-GAUNTLET-DEAD-CODE-V2~~ | **fechada 2026-05-04** (1302/146, lazy require + DCE Hermes, leak check 0/6 markers, bundle 8.85→8.5 MB) | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | — |
+| A2.x | **M-PT-BR-RETROFIT** | Corrigir 3 violações detectadas pelo A1 (`permissions.ts`, `gauntlet.tsx`, `gauntletDashboard.tsx`) | `M-PT-BR-RETROFIT-spec.md` | 0,5h |
 | A3 | **M-VAULT-MD-AUDIT** | Auditoria .md + Obsidian-friendly | `M-VAULT-MD-AUDIT-spec.md` | 3-4h |
 | A4 | **M39** | Mídia companion oficial (ADR-0017) | `M39-spec.md` | 4-5h |
 | A5 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso | `M-EXPORT-COMPLETO-spec.md` | 2-3h |

@@ -8,7 +8,7 @@
 // (mesma politica do FotosBlock M07 + MidiaFotoTab); cancel do picker
 // e tratado como sucesso=false sem ruido.
 //
-// Em web/dev (GAUNTLET_ATIVO): delega ao __gauntlet.adicionarFotoMock
+// Em web/dev (MODO_DEV_WEB): delega ao __gauntlet.adicionarFotoMock
 // que insere uma entrada in-memory no useGaleriaMock; o hook
 // useFotosAgregadas mescla por cima. Sem contato com expo-image-picker
 // (que nao funciona em RN-Web).
@@ -16,14 +16,19 @@
 // Em web release (sem __DEV__): no-op silencioso para nao chamar
 // expo-image-picker em ambiente sem suporte.
 //
+// M-GAUNTLET-DEAD-CODE-V2: import direto de useGaleriaMock vazaria a
+// string no bundle Android release. Substituido por require lazy
+// guardado por __DEV__ (Babel/Metro DCE elimina o branch em release).
+//
 // Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { mediaFotosPath } from '@/lib/vault/paths';
-import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
-import { useGaleriaMock } from '@/lib/dev/galeriaMock';
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
+
+declare const __DEV__: boolean;
 
 // Sufixo aleatorio curto (4 chars hex) para deduplicar dentro do
 // mesmo dia. Mesma politica do MidiaFotoTab M07.x.
@@ -40,17 +45,25 @@ function joinUri(root: string, rel: string): string {
 // dispara recarregar). false quando cancelado/erro/no-op.
 export async function adicionarFotoManual(): Promise<boolean> {
   // Em web/dev, delega ao gauntlet (sem chamar expo-image-picker).
-  if (GAUNTLET_ATIVO) {
-    const ts = Date.now();
-    const data = new Date(ts).toISOString().slice(0, 10);
-    const slug = `mock-${ts}`;
-    useGaleriaMock.getState().adicionar({
-      uri: `web://mock/foto-${ts}.jpg`,
-      data,
-      origemPath: `media/fotos/mock-${ts}.jpg`,
-      origemSlug: slug,
-    });
-    return true;
+  // M-GAUNTLET-DEAD-CODE-V2: __DEV__ como guard top-level e pre-requisito
+  // para Metro DCE eliminar o branch em release. Combinado com if MODO_
+  // DEV_WEB interno, o branch so executa em web dev (e Platform.OS guard
+  // implicito de MODO_DEV_WEB previne mobile dev).
+  if (__DEV__) {
+    if (MODO_DEV_WEB) {
+      const ts = Date.now();
+      const data = new Date(ts).toISOString().slice(0, 10);
+      const slug = `mock-${ts}`;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
+      galeria.useGaleriaMock.getState().adicionar({
+        uri: `web://mock/foto-${ts}.jpg`,
+        data,
+        origemPath: `media/fotos/mock-${ts}.jpg`,
+        origemSlug: slug,
+      });
+      return true;
+    }
   }
   // Em web release sem __DEV__, nao tentamos nada.
   if (Platform.OS === 'web') {

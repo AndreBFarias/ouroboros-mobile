@@ -5,6 +5,111 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Bloco A iniciado — A1 + A2 paralelas fechadas (2026-05-04)
+
+#### A1 — M-PT-BR-AUDIT
+
+Tooling de validação automática de strings UI PT-BR:
+- `scripts/check_strings_ui_ptbr.py` (369 linhas, Python 3.10+
+  stdlib only). Varre `src/` e `app/` por strings literais em
+  contextos JSX (text node, props `label`/`placeholder`/`title`/
+  `message`/`frase`). Tokeniza, checa contra dicionário curado,
+  reporta path:linha:coluna + sugestão. Suporta override
+  `// ptbr-allow: <razao>`. Tempo de varredura sobre 267 arquivos:
+  0,17s.
+- `scripts/dicionario_ptbr_canonico.json` — **147 entradas
+  efetivas** (meta era ≥60). Cobre nao→não, voce→você,
+  musica→música, video→vídeo, acoes→ações, atencao→atenção, etc.
+- `hooks/pre-commit` — invoca check antes de eslint. Bloqueia
+  commit se exit != 0.
+- `scripts/smoke.sh` — invoca check antes de typecheck. Falha do
+  smoke se violação.
+
+**Primeiro run detectou 3 violações reais** em código existente:
+- `src/lib/diario/permissions.ts:22` — `'permissao de microfone
+  negada'` em Error message default.
+- `app/_dev/gauntlet.tsx:93` — `<Secao titulo="Acoes">` em rota
+  dev.
+- `src/lib/dev/gauntletDashboard.tsx:99` — mesmo padrão (arquivo
+  novo da A2).
+
+Excluídas temporariamente via `.ptbr-violations.txt`. Sub-sprint
+**M-PT-BR-RETROFIT** materializada para fix em batch.
+
+`VALIDATOR_BRIEF.md` §1.4, `CLAUDE.md` Regra de Linguagem e
+`HANDOFF-PROMPT.md` atualizados com referência ao novo check.
+
+#### A2 — M-GAUNTLET-DEAD-CODE-V2
+
+Refactor para eliminar vazamento de `__gauntlet` no bytecode
+Android release. Caminho A da spec (lazy require + DCE Hermes).
+
+**Estratégia:**
+1. **Micro-módulo `gauntletAtivo.ts`** sem deps do gauntlet pesado
+   — exporta apenas `MODO_DEV_WEB`. Consumidores de release
+   importam só de lá.
+2. **Padrão `if (__DEV__) { if (MODO_DEV_WEB) { require(...) } }`**
+   — `__DEV__` precisa ser predicate top-level porque Metro/Hermes
+   só faz DCE quando vê literal `if (__DEV__)`. Predicado composto
+   `if (X && __DEV__)` NÃO faz DCE.
+3. **Renomeação de identificadores** para nomes neutros
+   (`GauntletRoute`→`RotaModoDev`, `GauntletPathnameSync`→
+   `PathnameSyncDev`, `FrameMobileGauntlet`→`FrameMobileDev`,
+   `bootstrapGauntletSeAtivo`→`iniciarModoDev`). Hermes preserva
+   nomes de funções/componentes mesmo com DCE; nomes neutros
+   evitam confusão com markers.
+4. **`app/_dev/gauntlet.tsx` reduzido a 32 linhas** (era 289) —
+   wrapper com `require` lazy guardado por `__DEV__`. Conteúdo do
+   dashboard extraído para `src/lib/dev/gauntletDashboard.tsx`
+   (dropado em release).
+5. **String runtime `__gauntlet.abrirSheet`** removida de
+   `app/_dev/showcase.tsx`.
+6. **Bug pré-existente em `check_gauntlet_leak.sh`**: `set -euo
+   pipefail` abortava o loop em primeiro `grep` com 0 matches
+   (mascarava sucesso). Fix com `set +e` durante loop.
+
+**Arquivos novos (5):**
+- `src/lib/dev/gauntletAtivo.ts` — micro-módulo `MODO_DEV_WEB`.
+- `src/lib/dev/gauntletBootstrap.ts` — 4 entry-points lazy
+  (`iniciarModoDev`, `sinalizarBootDev`, `registrarRouterDev`,
+  `registrarPathnameDev`).
+- `src/lib/dev/gauntletDashboard.tsx` — conteúdo do dashboard
+  extraído (carregado via require lazy).
+- `tests/lib/dev/gauntletBootstrap.test.ts` — contrato dev/no-op.
+- `tests/e2e/playwright/m-gauntlet-dead-code-v2.e2e.ts` — valida
+  `window.__gauntlet` ainda presente em dev web com 16 APIs.
+
+**Arquivos modificados (10):** `app/_layout.tsx`, `app/_dev/_layout.tsx`,
+`app/_dev/gauntlet.tsx`, `app/_dev/showcase.tsx`,
+`scripts/check_gauntlet_leak.sh`, `src/lib/dev/gauntlet.ts`,
+`src/lib/hooks/useFotosAgregadas.ts`,
+`src/lib/hooks/useHumorHeatmap.ts`,
+`src/lib/midia/adicionarFotoManual.ts`,
+`src/lib/midia/capturarFoto.ts`.
+
+**Métricas finais batch A1+A2:**
+- Testes: 1300 → **1302** (+2 cases novos do gauntletBootstrap).
+- Suítes: 145 → **146** (+1).
+- Bundle Hermes Android: **8.85 MB → 8.5 MB** (-350 KB de dead
+  code dropado).
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK.
+
+**Leak check pós-fix (CRÍTICO):**
+```
+   OK:   __gauntlet         (0 matches)
+   OK:   instalarGauntlet   (0 matches)
+   OK:   aplicarSeed        (0 matches)
+   OK:   useGaleriaMock     (0 matches)
+   OK:   GAUNTLET_ATIVO     (0 matches)
+   OK:   adicionarFotoMock  (0 matches)
+OK: bundle Android sem gauntlet (8.5 MB)
+```
+
+**Antes:** 5/6 markers vazaram. **Depois:** 0/6. Infra Gauntlet
+agora release-clean. M41 desbloqueado nesta dimensão.
+
+
+
 ### Batch paralelo 5 sprints fechado (2026-05-04)
 
 5 sub-sprints da Fase 1 anti-débito executadas em paralelo

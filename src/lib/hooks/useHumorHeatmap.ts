@@ -9,10 +9,15 @@ import { useFocusEffect } from 'expo-router';
 import { lerHumorHeatmap } from '@/lib/cache/humor-heatmap';
 import { humorHeatmapCachePath } from '@/lib/vault/paths';
 import { useVault } from '@/lib/stores/vault';
-import { useHumorMock } from '@/lib/dev/humorMock';
-import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
+// M-GAUNTLET-DEAD-CODE-V2: humorMock e gauntlet sao dev-only.
+// MODO_DEV_WEB vem do micro-modulo gauntletAtivo (sem strings markers).
+// useHumorMock entra via require lazy no useEffect guardado por
+// __DEV__ apenas em dev web.
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 import type { HumorHeatmapCache } from '@/lib/schemas/humor_heatmap_cache';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+
+declare const __DEV__: boolean;
 
 function joinUri(root: string, rel: string): string {
   const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
@@ -31,7 +36,7 @@ export interface UseHumorHeatmapResult {
 
 // M-GAUNTLET-SEED-V2: monta um cache sintetico a partir das celulas do
 // useHumorMock. Permite que o heatmap renderize colorido em web/dev
-// sem pipeline backend. Em mobile/release, GAUNTLET_ATIVO=false e este
+// sem pipeline backend. Em mobile/release, MODO_DEV_WEB=false e este
 // caminho nunca executa (dead-code apos tree-shake).
 function montarCacheMock(
   celulas: HumorHeatmapCache['celulas']
@@ -64,9 +69,25 @@ function montarCacheMock(
 
 export function useHumorHeatmap(): UseHumorHeatmapResult {
   const vaultRoot = useVault((s) => s.vaultRoot);
-  // M-GAUNTLET-SEED-V2: assina celulas mock so quando GAUNTLET_ATIVO.
-  // Em mobile real a store esta congelada vazia.
-  const celulasMock = useHumorMock((s) => s.celulas);
+  // M-GAUNTLET-SEED-V2 + M-GAUNTLET-DEAD-CODE-V2: assina celulas mock
+  // via require lazy guardado por __DEV__. Em release Android, o
+  // branch e DCE-ado e celulasMock fica permanentemente []. Em mobile
+  // dev/web ou web release o guard MODO_DEV_WEB tambem bloqueia.
+  const [celulasMock, setCelulasMock] = useState<
+    HumorHeatmapCache['celulas']
+  >([]);
+  useEffect(() => {
+    // M-GAUNTLET-DEAD-CODE-V2: __DEV__ como guard top-level. Metro DCE
+    // remove este branch em release Android, eliminando referencia
+    // estatica a useHumorMock e mantendo o modulo fora do bundle.
+    if (__DEV__) {
+      if (!MODO_DEV_WEB) return;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const humor = require('@/lib/dev/humorMock') as typeof import('@/lib/dev/humorMock');
+      setCelulasMock(humor.useHumorMock.getState().celulas);
+      return humor.useHumorMock.subscribe((s) => setCelulasMock(s.celulas));
+    }
+  }, []);
   const [cache, setCache] = useState<HumorHeatmapCache | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +129,7 @@ export function useHumorHeatmap(): UseHumorHeatmapResult {
   // do Vault (que tipicamente esta ausente no mock web). Em mobile real
   // celulasMock e sempre [], entao o ramo sintetico nunca roda.
   const cacheFinal: HumorHeatmapCache | null =
-    GAUNTLET_ATIVO && celulasMock.length > 0
+    MODO_DEV_WEB && celulasMock.length > 0
       ? montarCacheMock(celulasMock)
       : cache;
 

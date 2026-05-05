@@ -8,13 +8,18 @@
 // orquestrador que esta em rota dev.
 //
 // Comentarios sem acento.
+// M-GAUNTLET-DEAD-CODE-V2: import direto de @/lib/dev/gauntlet vazaria
+// markers no bytecode. MODO_DEV_WEB vem do micro-modulo gauntletAtivo
+// (zero strings markers). Como expo-router faz require.context que
+// inclui app/_dev/* no bundle release, precisamos garantir que esses
+// arquivos NAO importem o gauntlet pesado.
 import { Redirect, Stack } from 'expo-router';
 import { Text, View } from 'react-native';
-import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 export default function DevLayout() {
-  if (!GAUNTLET_ATIVO) {
+  if (!MODO_DEV_WEB) {
     return <Redirect href="/" />;
   }
 

@@ -8,6 +8,11 @@ cd "$(git rev-parse --show-toplevel)"
 ./scripts/check_anonimato.sh
 ./scripts/check_test_data.sh
 
+# M-PT-BR-AUDIT (2026-05-04): bloqueia commit com strings UI sem
+# acentuacao canonica em src/ ou app/. Override por linha via
+# // ptbr-allow: <razao> ou exclusao em batch via .ptbr-violations.txt
+python3 scripts/check_strings_ui_ptbr.py
+
 if [[ -f package.json ]]; then
   STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
   if [[ -n "$STAGED" ]]; then

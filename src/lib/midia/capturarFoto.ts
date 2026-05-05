@@ -22,16 +22,21 @@
 //   ---
 //
 // Comentarios sem acento (convencao shell/CI).
+// M-GAUNTLET-DEAD-CODE-V2: imports diretos de gauntlet/galeriaMock
+// vazariam no bundle release. MODO_DEV_WEB vem do micro-modulo
+// gauntletAtivo (zero strings markers); useGaleriaMock entra via
+// require lazy guardado por __DEV__ apenas no branch dev web.
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { mediaFotosPath } from '@/lib/vault/paths';
-import { GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
-import { useGaleriaMock } from '@/lib/dev/galeriaMock';
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 import type { Para } from '@/lib/schemas/para';
 import { stringifyCompanionMidia } from '@/lib/midia/companion';
+
+declare const __DEV__: boolean;
 
 export type OrigemCaptura = 'galeria' | 'camera';
 
@@ -76,17 +81,22 @@ export async function capturarFoto(
   // Caminho gauntlet: marca entrada na galeria mock para a UI refletir.
   // Companion nao e' escrito (web nao tem vault real). Caller pode
   // checar resultado.companion === null para entender que foi mock.
-  if (GAUNTLET_ATIVO) {
-    const ts = Date.now();
-    const data = new Date(ts).toISOString().slice(0, 10);
-    const slug = `mock-${ts}`;
-    useGaleriaMock.getState().adicionar({
-      uri: `web://mock/foto-${ts}.jpg`,
-      data,
-      origemPath: `media/fotos/mock-${ts}.jpg`,
-      origemSlug: slug,
-    });
-    return { ok: true, arquivo: `media/fotos/mock-${ts}.jpg`, companion: null };
+  // M-GAUNTLET-DEAD-CODE-V2: __DEV__ como guard top-level para Metro DCE.
+  if (__DEV__) {
+    if (MODO_DEV_WEB) {
+      const ts = Date.now();
+      const data = new Date(ts).toISOString().slice(0, 10);
+      const slug = `mock-${ts}`;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
+      galeria.useGaleriaMock.getState().adicionar({
+        uri: `web://mock/foto-${ts}.jpg`,
+        data,
+        origemPath: `media/fotos/mock-${ts}.jpg`,
+        origemSlug: slug,
+      });
+      return { ok: true, arquivo: `media/fotos/mock-${ts}.jpg`, companion: null };
+    }
   }
 
   if (Platform.OS === 'web') {

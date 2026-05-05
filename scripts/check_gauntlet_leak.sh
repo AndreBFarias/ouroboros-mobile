@@ -50,6 +50,9 @@ MARCADORES=(
 
 VAZAMENTOS=0
 echo ">> verificando $JS_DIR/*.hbc"
+# Desabilita set -e pois `grep -ao` com 0 matches retorna exit 1, o
+# que abortaria o loop antes de validar todos os markers.
+set +e
 for marker in "${MARCADORES[@]}"; do
   count=$(grep -ao "$marker" "$JS_DIR"/*.hbc 2>/dev/null | wc -l)
   if [[ $count -gt 0 ]]; then
@@ -60,6 +63,7 @@ for marker in "${MARCADORES[@]}"; do
   fi
 done
 
+set -e
 # Tamanho do bundle JS principal (sanity check para tracking).
 BUNDLE_SIZE=$(du -sh "$JS_DIR"/*.hbc 2>/dev/null | head -1)
 

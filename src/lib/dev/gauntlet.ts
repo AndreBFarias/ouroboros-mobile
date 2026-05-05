@@ -19,7 +19,6 @@
 //   const e = window.__gauntlet.estado();
 //
 // Comentarios sem acento (convencao shell/CI).
-import { Platform } from 'react-native';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
@@ -30,13 +29,17 @@ import { useGaleriaMock } from '@/lib/dev/galeriaMock';
 import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock } from '@/lib/dev/diarioMock';
 import { useEventosMock } from '@/lib/dev/eventosMock';
+// M-GAUNTLET-DEAD-CODE-V2: a flag canonica vive em gauntletAtivo (micro-
+// modulo zero-deps). Reexportamos como GAUNTLET_ATIVO aqui para back-compat
+// de testes existentes (jest mocks de '@/lib/dev/gauntlet') e do
+// gauntletDashboard. Consumidores em runtime de release devem importar
+// diretamente de '@/lib/dev/gauntletAtivo' para evitar arrastar este
+// modulo pesado.
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 
-// __DEV__ e injetado pelo react-native (true em dev, false em release).
-// Declarado para typecheck strict.
 declare const __DEV__: boolean;
 
-export const GAUNTLET_ATIVO: boolean =
-  Platform.OS === 'web' && (typeof __DEV__ !== 'undefined' ? __DEV__ : false);
+export const GAUNTLET_ATIVO: boolean = MODO_DEV_WEB;
 
 export interface GauntletEstado {
   onboardingDone: boolean;

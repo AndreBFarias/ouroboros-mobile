@@ -11,6 +11,9 @@ echo ">> anonimato (Regra -1)"
 echo ">> dados de teste"
 ./scripts/check_test_data.sh
 
+echo ">> strings UI PT-BR (acentuacao canonica)"
+python3 scripts/check_strings_ui_ptbr.py
+
 # Typecheck, lint e testes so rodam quando o projeto Expo existir
 if [[ -f package.json ]]; then
   echo ">> typecheck"
