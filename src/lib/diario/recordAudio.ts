@@ -6,9 +6,19 @@
 // Preset RECORDING_OPTIONS_PRESET_HIGH_QUALITY: AAC 44.1kHz mono
 // suficiente para fala clara, ~50KB por 10 segundos. Compressao
 // Opus fica para sprint M15.1 caso o usuario reclame de tamanho.
+//
+// M-VAULT-MD-FIX-diario-audio (2026-05-04): destino canonico migrou
+// de assets/<HHmm>-<rand>.m4a para media/audios/<YYYY-MM-DD>-<rand>.m4a // ptbr-allow: nome de pasta canonica do Vault, nao palavra portuguesa
+// + companion .md 1:1 (formato unificado M34/M39, alinhado com
+// capturarMusica.ts). Arquivos antigos em assets/ permanecem legiveis;
+// so novos vao para o lugar canonico.
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
-import { assetsAudioPath } from '@/lib/vault/paths';
+import { mediaAudiosPath } from '@/lib/vault/paths';
+import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { usePessoa } from '@/lib/stores/pessoa';
+import type { Para } from '@/lib/schemas/para';
+import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 export interface StopResult {
   // URI temporario do arquivo no cache. Caller normalmente passa
@@ -93,17 +103,59 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
-// Copia o URI temporario para assets/<YYYY-MM-DD-HHmm>-<suffix>.m4a
-// dentro do Vault e devolve o path relativo (formato esperado pelo
-// frontmatter do diario_emocional: comeca com 'assets/'). Caller
-// guarda esse string no campo meta.audio.
+// Opcoes do companion .md gravado ao lado do binario. Todos os
+// campos sao opcionais: caller que nao informa cai em defaults
+// seguros (autor lido do store usePessoa, destinatario {tipo:'mim'},
+// sem legenda). Mantem assinatura antiga compativel para os callers
+// que so querem o binario salvo.
+export interface SaveRecordingOpcoes {
+  autor?: PessoaAutor;
+  para?: Para;
+  legenda?: string;
+}
+
+// Copia o URI temporario para media/audios/<YYYY-MM-DD>-<suffix>.m4a
+// dentro do Vault e escreve o companion .md 1:1 ao lado (formato
+// unificado M34/M39 via stringifyCompanionMidia). Devolve o path
+// relativo do binario (string que o caller guarda em meta.audio do
+// diario emocional). O companion fica em
+// media/audios/<YYYY-MM-DD>-<suffix>.md, descoberto por convencao
+// (mesmo basename, extensao .md) - segue padrao do capturarMusica.
 export async function saveRecordingToVault(
   uri: string,
   vaultRoot: string,
-  date: Date = new Date()
+  date: Date = new Date(),
+  opcoes: SaveRecordingOpcoes = {}
 ): Promise<string> {
-  const relPath = assetsAudioPath(date, suffixCurto());
-  const destinoUri = joinUri(vaultRoot, relPath);
-  await FileSystem.copyAsync({ from: uri, to: destinoUri });
-  return relPath;
+  const relBin = mediaAudiosPath(date, suffixCurto());
+  const destinoBin = joinUri(vaultRoot, relBin);
+  await FileSystem.copyAsync({ from: uri, to: destinoBin });
+
+  // Companion .md ao lado do binario. Erro de escrita do companion
+  // nao deve invalidar o binario (audio e' o ativo principal); por
+  // isso o try interno engole falha defensivamente. Caller continua
+  // recebendo o relPath do binario.
+  try {
+    const relCompanion = relBin.replace(/\.m4a$/i, '.md');
+    const destinoCompanion = joinUri(vaultRoot, relCompanion);
+    const basename = relBin.split('/').pop() ?? relBin;
+    const autor =
+      opcoes.autor ?? usePessoa.getState().pessoaAtiva;
+    const para: Para = opcoes.para ?? { tipo: 'mim' };
+    const conteudo = stringifyCompanionMidia({
+      tipo: 'midia_audio',
+      arquivo: basename,
+      data: date.toISOString(),
+      autor,
+      para,
+      legenda: opcoes.legenda,
+    });
+    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+  } catch {
+    // Falha do companion nao bloqueia o fluxo. Binario ja esta no
+    // Vault e e o que importa para o usuario. Sprint futura pode
+    // adicionar reconciliacao (gerar companion ausente em batch).
+  }
+
+  return relBin;
 }

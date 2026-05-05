@@ -43,6 +43,7 @@ import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { lerUltimaMedida, escreverMedida } from '@/lib/vault/medidas';
 import { medidasFotoPath } from '@/lib/vault/paths';
+import { stringifyCompanionMidia } from '@/lib/midia/companion';
 import {
   MEDIDAS_CAMPOS,
   MEDIDAS_LABELS,
@@ -120,10 +121,11 @@ interface FotoSlot {
 const LADOS_FOTO: ReadonlyArray<{
   key: 'frente' | 'costas' | 'lado';
   label: string;
+  legenda: string;
 }> = [
-  { key: 'frente', label: 'Frente' },
-  { key: 'costas', label: 'Costas' },
-  { key: 'lado', label: 'Lado' },
+  { key: 'frente', label: 'Frente', legenda: 'Evolução corporal — frente' },
+  { key: 'costas', label: 'Costas', legenda: 'Evolução corporal — costas' },
+  { key: 'lado', label: 'Lado', legenda: 'Evolução corporal — lado' },
 ];
 
 function joinUri(root: string, rel: string): string {
@@ -209,15 +211,41 @@ export default function NovaMedida() {
       const dataYmd = formatHojeYmd();
       const dataDate = new Date(`${dataYmd}T12:00:00Z`);
 
-      // Copia fotos escolhidas para o Vault sob assets/m-<data>-<lado>.
+      // Copia fotos escolhidas para o Vault sob
+      // media/fotos/medidas-<data>-<lado>.jpg + escreve .md companion
+      // ao lado (tipo: midia_foto, medida_ref: <YYYY-MM-DD>) para
+      // consumo da SecaoEvolucaoCorporal (M11.4) e do hook
+      // useFotosAgregadas. Sprint M-VAULT-MD-FIX-medidas-fotos
+      // (2026-05-04) migrou de assets/m-<data>-<lado>.jpg.
       const fotosRel: string[] = [];
-      for (const { key } of LADOS_FOTO) {
+      for (const { key, legenda } of LADOS_FOTO) {
         const slot = fotos[key];
         if (!slot.origem) continue;
         const rel = medidasFotoPath(dataDate, key);
         const destinoUri = joinUri(vaultRoot, rel);
         await FileSystem.copyAsync({ from: slot.origem, to: destinoUri });
         fotosRel.push(rel);
+
+        // Companion .md ao lado do binario. Mesma raiz, troca .jpg
+        // por .md. Caller (escreverMedida) ja faz o frontmatter da
+        // medida; aqui escrevemos o companion da media para
+        // reverse-link.
+        const relCompanion = rel.replace(/\.jpg$/i, '.md');
+        const destinoCompanion = joinUri(vaultRoot, relCompanion);
+        const basename = rel.split('/').pop() ?? rel;
+        const conteudoCompanion = stringifyCompanionMidia({
+          tipo: 'midia_foto',
+          arquivo: basename,
+          data: dataDate.toISOString(),
+          autor: pessoaAtiva,
+          para: { tipo: 'mim' },
+          legenda,
+          medida_ref: dataYmd,
+        });
+        await FileSystem.writeAsStringAsync(
+          destinoCompanion,
+          conteudoCompanion
+        );
       }
 
       // Monta meta validado.

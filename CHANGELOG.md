@@ -5,6 +5,73 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch A3.x — 4 sub-sprints corretivas paralelas fechadas (2026-05-04)
+
+Após auditoria A3 revelar 4 desvios estruturais (binários em
+`assets/` em vez de `media/<categoria>/`), batch de 4 agentes
+paralelos corrigiu cada caminho. Vault agora 100% canônico para
+escritas novas. Backward-compat: arquivos legados em `assets/`
+continuam acessíveis via `useFotosAgregadas`.
+
+**Métricas batch:** 1316 → **1335** testes (+19 cases novos), 147
+→ **148** suítes (+1). Bundle Hermes **8.5 MB** mantido. TS strict
+0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet leak **0/6**.
+
+#### A3.x.1 — M-VAULT-MD-FIX-diario-audio
+
+`src/lib/diario/recordAudio.ts`: assinatura
+`saveRecordingToVault` ganha 4º param `SaveRecordingOpcoes` (autor,
+para, legenda). Destino canônico
+`media/audios/<YYYY-MM-DD>-<rand>.m4a` + `.md` companion 1:1 via
+`stringifyCompanionMidia`. +4 cases Jest. E2E em
+`tests/e2e/playwright/m-vault-md-fix-diario-audio.e2e.ts`.
+
+#### A3.x.2 — M-VAULT-MD-FIX-evento-fotos
+
+`src/lib/eventos/saveEvento.ts:copiarFotos`: destino canônico
+`media/fotos/<YYYY-MM-DD>-eventos-<rand4>-<idx>.jpg` + companion
+`.md` com `legenda: "evento <data> <slug>"` (rastreabilidade
+reversa galeria→evento). Slug do evento agora calculado antes do
+copy. +3 cases Jest. E2E em
+`tests/e2e/playwright/m-vault-md-fix-evento-fotos.e2e.ts`.
+
+#### A3.x.3 — M-VAULT-MD-FIX-medidas-fotos
+
+`src/lib/vault/paths.ts:medidasFotoPath` agora retorna
+`media/fotos/medidas-<YYYY-MM-DD>-<lado>.jpg`. `app/medidas/novo.tsx`
+escreve `.md` companion ao lado com `legenda: "Evolução corporal —
+{frente,lado,costas}"` + `medida_ref: <slug>`.
+`src/lib/midia/companion.ts:CompanionMidiaInput` ganha campo
+opcional `medida_ref?: string`. `useFotosAgregadas.lerGaleriaManual`
+ignora `medidas-*.jpg` (regex exige começar com YYYY-MM-DD), evita
+duplicata. +9 cases Jest (3 paths overload + 3 medida_ref + 3
+medidasFotoPath). E2E em
+`tests/e2e/playwright/m-vault-md-fix-medidas-fotos.e2e.ts`.
+**Desbloqueia M11.4** (evolução corporal).
+
+#### A3.x.4 — M-VAULT-MD-FIX-scanner
+
+`src/lib/scanner/saveNota.ts`: binário PDF agora em
+`media/scanner/<basename>.<ext>` + companion `.md` 1:1.
+`mediaScannerPath` ganha overload `(basename, ext)` genérico
+(legado 1-arg→`.jpg` preservado). `TipoMidia` em `companion.ts`
+ganha `'midia_pdf'`. `.md` semântico em `inbox/financeiro/nota/`
+mantido com wikilink Obsidian no body apontando para
+`[[../../../media/scanner/<basename>.<ext>]]`. +10 cases Jest
+(suíte nova `saveNota.test.ts` + 3 paths overload + 1 companion
+midia_pdf). E2E em
+`tests/e2e/playwright/m-vault-md-fix-scanner.e2e.ts`.
+
+**Conflitos paralelos endereçados:** os 4 agentes trabalharam em
+arquivos disjuntos (recordAudio.ts, saveEvento.ts, medidas/novo.tsx,
+scanner/*) com helpers compartilhados (`companion.ts`, `paths.ts`)
+estendidos cirurgicamente sem overlap (regiões diferentes do
+arquivo). Hook PT-BR pegou 4-5 violações intermediárias durante o
+batch — todas resolvidas pelo próprio agente A3.x.4 com
+`// ptbr-allow:` em path literais (não palavras PT-BR).
+
+
+
 ### A3 — M-VAULT-MD-AUDIT fechada (2026-05-04)
 
 Auditoria completa de 14 features confirmou que a estrutura

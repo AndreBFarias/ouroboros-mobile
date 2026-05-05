@@ -128,15 +128,24 @@ export function medidasPath(date: Date): string {
   return `medidas/${formatDateYmd(date)}.md`;
 }
 
-// assets/m-YYYY-MM-DD-<lado>.jpg (foto de medida corporal). Lado e
-// uma das tres posicoes canonicas (frente, costas, lado). Caller
-// fornece lado em snake_case ASCII para não colidir com encoding
-// nem misturar acentos no filesystem (convencao do projeto).
+// media/fotos/medidas-YYYY-MM-DD-<lado>.jpg (foto de medida corporal).
+// Lado e uma das tres posicoes canonicas (frente, costas, lado).
+// Caller fornece lado em snake_case ASCII para não colidir com
+// encoding nem misturar acentos no filesystem (convencao do projeto).
+//
+// Sprint M-VAULT-MD-FIX-medidas-fotos (2026-05-04): migrado de
+// assets/m-<data>-<lado>.jpg para media/fotos/medidas-<data>-<lado>.jpg // ptbr-allow: 'media' aqui e nome de pasta literal do filesystem (path canonico), nao palavra PT-BR
+// alinhando com a convencao M22/M34 (pasta media/ dedicada). Caller
+// (app/medidas/novo.tsx) agora tambem escreve .md companion ao lado
+// (tipo: midia_foto, medida_ref: <YYYY-MM-DD>) para consumo da
+// SecaoEvolucaoCorporal (M11.4). Backward-compat para fotos antigas
+// em assets/m-* preservada via inferirLado em app/medidas/index.tsx
+// e via leitura direta do array fotos[] no MedidasSchema.
 export function medidasFotoPath(
   date: Date,
   lado: 'frente' | 'costas' | 'lado'
 ): string {
-  return `assets/m-${formatDateYmd(date)}-${lado}.jpg`;
+  return `media/fotos/medidas-${formatDateYmd(date)}-${lado}.jpg`;
 }
 
 // inbox/saude/ciclo/YYYY-MM-DD.md (acompanhamento de ciclo menstrual,
@@ -255,11 +264,26 @@ export function mediaAvataresPath(
   return `media/avatares/${pessoa}-${ts}.jpg`;
 }
 
-// media/scanner/<slug>.jpg (M22 + M34). Documentos digitalizados
-// (notas, recibos) que ainda nao foram movidos para inbox/financeiro.
-// Caller fornece slug em kebab-case ASCII.
-export function mediaScannerPath(slug: string): string {
-  return `media/scanner/${slug}.jpg`;
+// media/scanner/<slug>.<ext> (M22 + M34 + M-VAULT-MD-FIX-scanner).
+// Documentos digitalizados (notas, recibos) capturados pelo scanner.
+// Convencao 1:1: binario (.jpg/.pdf) e companion .md compartilham o
+// mesmo basename neste diretorio (ADR de companion 1:1 para midia,
+// auditado em M-VAULT-MD-AUDIT).
+//
+// Sobrecarga:
+//  - mediaScannerPath(slug) retorna media/scanner/[slug].jpg
+//    (legado M22).
+//  - mediaScannerPath(basename, ext) retorna media/scanner/[basename].[ext]
+//    (M-VAULT-MD-FIX-scanner: PDF multi-page, .md companion). Caller
+//    fornece basename ja serializado (ex: 2026-05-04-abcd) e ext sem
+//    o ponto (ex: 'pdf', 'md', 'jpg').
+export function mediaScannerPath(slug: string): string;
+export function mediaScannerPath(basename: string, ext: string): string;
+export function mediaScannerPath(slugOrBasename: string, ext?: string): string {
+  if (typeof ext === 'string' && ext.length > 0) {
+    return `media/scanner/${slugOrBasename}.${ext}`;
+  }
+  return `media/scanner/${slugOrBasename}.jpg`;
 }
 
 // Pasta-prefixos das pastas canonicas do mobile. Reader/lister deve

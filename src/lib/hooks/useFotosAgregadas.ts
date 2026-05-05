@@ -161,6 +161,12 @@ async function lerGaleriaManual(vaultRoot: string): Promise<FotoAgregada[]> {
     const nome = decodeURIComponent(uri).split('/').pop() ?? '';
     const semExt = nome.replace(/\.(jpg|jpeg|png)$/i, '');
     // Espera padrao YYYY-MM-DD-<rand>. Se nao bater, ignora.
+    // Sprint M-VAULT-MD-FIX-medidas-fotos (2026-05-04): fotos de
+    // medidas vivem em media/fotos/medidas-YYYY-MM-DD-<lado>.jpg
+    // (prefixo 'medidas-' antes da data). Estas NAO casam com este
+    // regex (que exige inicio com YYYY-MM-DD), entao sao ignoradas
+    // aqui de proposito - lerMedidas ja as agrega via fotos[] do
+    // schema, evitando duplicata na galeria.
     const match = semExt.match(/^(\d{4}-\d{2}-\d{2})(?:-(.+))?$/);
     if (!match) continue;
     const data = match[1];

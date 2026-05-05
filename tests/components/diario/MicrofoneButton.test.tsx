@@ -98,12 +98,20 @@ jest.mock('expo-speech-recognition', () => ({
 
 // Mock do FileSystem para isolar o saveRecordingToVault. O teste
 // nao verifica I/O real; so confirma que copyAsync foi chamado.
+// M-VAULT-MD-FIX-diario-audio (2026-05-04): tambem precisa
+// writeAsStringAsync porque saveRecordingToVault agora escreve
+// o companion .md ao lado do binario.
 const mockCopyAsync = jest.fn((_args?: { from: string; to: string }) =>
+  Promise.resolve()
+);
+const mockWriteAsStringAsync = jest.fn((_a?: string, _b?: string) =>
   Promise.resolve()
 );
 jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
   copyAsync: (args: { from: string; to: string }) => mockCopyAsync(args),
+  writeAsStringAsync: (a: string, b: string) =>
+    mockWriteAsStringAsync(a, b),
 }));
 
 // Mock do useVault: retorna vaultRoot fixo para o componente nao
@@ -186,7 +194,7 @@ describe('MicrofoneButton ciclo press/release', () => {
     expect(mockStopAndUnloadAsync).toHaveBeenCalled();
     expect(mockCopyAsync).toHaveBeenCalled();
     expect(onAudioGravado).toHaveBeenCalledWith(
-      expect.stringMatching(/^assets\/\d{4}-\d{2}-\d{2}-\d{4}-[0-9a-f]{4}\.m4a$/)
+      expect.stringMatching(/^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.m4a$/)
     );
     expect(onTextoTranscrito).toHaveBeenCalledWith('oi diario hoje foi bom');
   });

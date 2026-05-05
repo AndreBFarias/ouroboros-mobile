@@ -1,7 +1,14 @@
 // Testes da funcao saveEvento. Mocka writeVaultFile e readVaultFile
 // do barrel '@/lib/vault' para isolar a logica pura sem tocar SAF;
-// mocka expo-file-system/legacy.copyAsync para validar a copia das
-// fotos sem mexer no filesystem real.
+// mocka expo-file-system/legacy.copyAsync e writeAsStringAsync para
+// validar a copia das fotos e do companion .md sem mexer no
+// filesystem real.
+//
+// M-VAULT-MD-FIX-evento-fotos (2026-05-04): destino dos binarios
+// migrou de assets/<prefixo>-evento-<idx>.jpg para
+// media/fotos/<YYYY-MM-DD>-eventos-<rand4>-<idx>.jpg + companion .md
+// ao lado. Math.random e' fixado com spy para tornar rand
+// deterministico (rand4 = "0000" quando random = 0).
 import type { EventoMeta } from '@/lib/schemas/evento';
 
 const mockWriteVaultFile = jest.fn<Promise<void>, [string, unknown, string]>();
@@ -22,10 +29,13 @@ jest.mock('@/lib/vault', () => {
 });
 
 const mockCopyAsync = jest.fn<Promise<void>, [{ from: string; to: string }]>();
+const mockWriteAsStringAsync = jest.fn<Promise<void>, [string, string]>();
 
 jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
   copyAsync: (...args: [{ from: string; to: string }]) => mockCopyAsync(...args),
+  writeAsStringAsync: (...args: [string, string]) =>
+    mockWriteAsStringAsync(...args),
 }));
 
 import { saveEvento } from '@/lib/eventos/saveEvento';
@@ -54,13 +64,18 @@ beforeEach(() => {
   mockReadVaultFile.mockResolvedValue(null);
   mockWriteVaultFile.mockResolvedValue(undefined);
   mockCopyAsync.mockResolvedValue(undefined);
+  mockWriteAsStringAsync.mockResolvedValue(undefined);
   // Fixa relogio para path canonico determinista. 2026-04-29 12:00
   // UTC = 09:00 em Sao Paulo (UTC-3).
   jest.useFakeTimers().setSystemTime(new Date('2026-04-29T12:00:00.000Z'));
+  // Math.random fixado em 0 -> suffixCurto() retorna "0000". Mantem
+  // rand4 deterministico nos asserts. Restaurado em afterEach.
+  jest.spyOn(Math, 'random').mockReturnValue(0);
 });
 
 afterEach(() => {
   jest.useRealTimers();
+  jest.restoreAllMocks();
 });
 
 describe('saveEvento caminho feliz', () => {
@@ -128,7 +143,7 @@ describe('saveEvento caminho feliz', () => {
 });
 
 describe('saveEvento fotos copiadas', () => {
-  it('copia cada foto para assets/ e atualiza meta.fotos', async () => {
+  it('copia cada foto para media/fotos/ e atualiza meta.fotos', async () => {
     const out = await saveEvento({
       meta: baseMeta,
       body: '',
@@ -140,13 +155,15 @@ describe('saveEvento fotos copiadas', () => {
     });
     expect(mockCopyAsync).toHaveBeenCalledTimes(2);
     expect(out.fotosGravadas).toHaveLength(2);
-    // Os paths gravados ficam relativos ao Vault e usam o
-    // formatDateYmdHm (2026-04-29-0900) + sufixo evento + indice.
+    // Paths gravados ficam relativos ao Vault sob media/fotos/ com
+    // prefixo "eventos-" + rand4 + indice. Math.random fixado em 0
+    // -> suffixCurto() = "0000". Data YYYY-MM-DD vem de formatDateYmd
+    // que normaliza para Sao Paulo (UTC-3).
     expect(out.fotosGravadas[0]).toMatch(
-      /^assets\/2026-04-29-0900-evento-1\.jpg$/
+      /^media\/fotos\/2026-04-29-eventos-0000-1\.jpg$/
     );
     expect(out.fotosGravadas[1]).toMatch(
-      /^assets\/2026-04-29-0900-evento-2\.jpg$/
+      /^media\/fotos\/2026-04-29-eventos-0000-2\.jpg$/
     );
     // O meta gravado tem fotos com paths relativos (nao URIs locais).
     const [, metaGravado] = mockWriteVaultFile.mock.calls[0];
@@ -162,10 +179,44 @@ describe('saveEvento fotos copiadas', () => {
     });
     const [arg] = mockCopyAsync.mock.calls[0];
     expect(arg.from).toBe('file:///cache/img.jpg');
-    expect(arg.to).toMatch(/Vault\/assets\/2026-04-29-0900-evento-1\.jpg$/);
+    expect(arg.to).toMatch(
+      /Vault\/media\/fotos\/2026-04-29-eventos-0000-1\.jpg$/
+    );
   });
 
-  it('lista vazia de fotos nao chama copyAsync', async () => {
+  it('grava companion .md ao lado de cada foto', async () => {
+    await saveEvento({
+      meta: baseMeta,
+      body: 'cafe da manha gostoso.',
+      vaultRoot: VAULT_ROOT,
+      fotos: [
+        'file:///cache/img-1.jpg',
+        'file:///cache/img-2.jpg',
+      ],
+    });
+    expect(mockWriteAsStringAsync).toHaveBeenCalledTimes(2);
+    // Companion .md ao lado do binario: mesmo nome, extensao trocada.
+    const [destino1, conteudo1] = mockWriteAsStringAsync.mock.calls[0];
+    expect(destino1).toMatch(
+      /Vault\/media\/fotos\/2026-04-29-eventos-0000-1\.md$/
+    );
+    // Frontmatter canonico midia_foto com legenda referenciando o
+    // evento de origem (rastreabilidade reversa galeria -> evento).
+    expect(conteudo1).toContain('tipo: midia_foto');
+    expect(conteudo1).toContain('arquivo: 2026-04-29-eventos-0000-1.jpg');
+    expect(conteudo1).toContain('autor: pessoa_a');
+    expect(conteudo1).toContain('para: mim');
+    // Slug do evento base e' "vila-madalena" (bairro).
+    expect(conteudo1).toContain(
+      'legenda: "evento 2026-04-29 vila-madalena"'
+    );
+    const [destino2] = mockWriteAsStringAsync.mock.calls[1];
+    expect(destino2).toMatch(
+      /Vault\/media\/fotos\/2026-04-29-eventos-0000-2\.md$/
+    );
+  });
+
+  it('lista vazia de fotos nao chama copyAsync nem writeAsStringAsync', async () => {
     await saveEvento({
       meta: baseMeta,
       body: '',
@@ -173,6 +224,7 @@ describe('saveEvento fotos copiadas', () => {
       fotos: [],
     });
     expect(mockCopyAsync).not.toHaveBeenCalled();
+    expect(mockWriteAsStringAsync).not.toHaveBeenCalled();
   });
 });
 

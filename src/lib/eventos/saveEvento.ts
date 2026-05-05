@@ -2,23 +2,31 @@
 // eventos/YYYY-MM-DD-<slug>.md no Vault. Função pura: recebe meta
 // validado, body livre, vaultRoot e lista de URIs locais de fotos;
 // devolve URI final. Antes de chamar writeVaultFile, copia cada foto
-// de URI temporario para assets/<formatDateYmdHm>-evento-<idx>.jpg
-// e atualiza meta.fotos com paths relativos ao Vault.
+// para media/fotos/eventos-<YYYY-MM-DD>-<rand>-<idx>.jpg e grava
+// um companion .md ao lado (frontmatter midia_foto). Atualiza
+// meta.fotos com os paths relativos do Vault para o frontmatter
+// canonico apontar para os arquivos novos.
 //
 // Slug do nome do arquivo: deriva do bairro detectado, do texto
 // livre ou da categoria via slugifyEvento. Em colisao improvavel
 // (mesmo dia, mesmo slug, mesmo autor), aplica sufixo numerico
 // crescente.
+//
+// Backward-compat: arquivos legados sob assets/ continuam visiveis
+// na galeria via useFotosAgregadas (que resolve qualquer path
+// relativo gravado em meta.fotos[]). Esta sprint so muda o destino
+// das fotos NOVAS; nada sobre fotos antigas no disco e' tocado.
 import * as FileSystem from 'expo-file-system/legacy';
 import {
-  assetsPath,
   eventosPath,
-  formatDateYmdHm,
+  formatDateYmd,
+  mediaFotosPath,
   readVaultFile,
   writeVaultFile,
 } from '@/lib/vault';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { slugifyEvento } from '@/lib/eventos/slug';
+import { stringifyCompanionMidia } from '@/lib/midia/companion';
 
 export interface SaveEventoArgs {
   meta: EventoMeta;
@@ -70,22 +78,65 @@ async function resolvePath(
   return applyConflictSuffix(relCanonico, Date.now());
 }
 
-// Copia cada foto do URI temporario para assets/<prefixo>-<idx>.jpg
-// dentro do Vault, devolvendo a lista de paths relativos. O caller
-// usa esses paths para popular meta.fotos antes de gravar o .md.
+// Sufixo random curto (4 chars hex) para deduplicar fotos do mesmo
+// evento dentro do mesmo dia sem expor minuto exato. Mesma estrategia
+// de capturarFoto.suffixCurto, replicada local para nao acoplar
+// midia/capturarFoto (helper especifico de captura via ImagePicker).
+function suffixCurto(): string {
+  return Math.floor(Math.random() * 0xffff)
+    .toString(16)
+    .padStart(4, '0');
+}
+
+// Copia cada foto do URI temporario para
+// media/fotos/eventos-<YYYY-MM-DD>-<rand>-<idx>.jpg dentro do Vault
+// e grava um companion .md ao lado (frontmatter midia_foto). Devolve
+// a lista de paths relativos do binario; o caller usa para popular
+// meta.fotos antes de gravar o .md do evento. O .md companion fica
+// independente do evento.md e nao e' contado em meta.fotos (apenas
+// o binario entra no frontmatter, o companion e' descoberta via
+// reader.listVaultFolder).
 async function copiarFotos(
   vaultRoot: string,
-  prefixo: string,
-  fotos: string[]
+  data: Date,
+  fotos: string[],
+  meta: EventoMeta,
+  slugEvento: string
 ): Promise<string[]> {
   if (fotos.length === 0) return [];
   const out: string[] = [];
+  const dataIso = meta.data;
+  const ymd = formatDateYmd(data);
   for (let i = 0; i < fotos.length; i++) {
     const origem = fotos[i];
-    const relAsset = assetsPath(`${prefixo}-evento-${i + 1}.jpg`);
-    const destinoUri = joinUri(vaultRoot, relAsset);
-    await FileSystem.copyAsync({ from: origem, to: destinoUri });
-    out.push(relAsset);
+    // mediaFotosPath gera media/fotos/<YYYY-MM-DD>-<rand>.jpg. Para
+    // marcar origem evento + ordem, usamos rand="eventos-<rand4>-<idx>"
+    // resultando em media/fotos/<YYYY-MM-DD>-eventos-<rand4>-<idx>.jpg.
+    // Mantem o helper canonico intocado (compartilhado com captura
+    // livre) e ainda permite filtrar fotos de evento via prefixo.
+    const rand = `eventos-${suffixCurto()}-${i + 1}`;
+    const relBin = mediaFotosPath(data, rand);
+    const destinoBin = joinUri(vaultRoot, relBin);
+    await FileSystem.copyAsync({ from: origem, to: destinoBin });
+    out.push(relBin);
+
+    // Companion .md ao lado do binario. Permite que o reader
+    // descubra metadata sem precisar abrir o evento.md inteiro,
+    // e mantem paridade com fotos avulsas (capturarFoto.ts).
+    // legenda recebe o body do evento para Obsidian renderizar
+    // contexto; evento_ref guarda o slug para hiperlink futuro.
+    const basename = relBin.split('/').pop() ?? relBin;
+    const relCompanion = relBin.replace(/\.jpg$/i, '.md');
+    const destinoCompanion = joinUri(vaultRoot, relCompanion);
+    const conteudo = stringifyCompanionMidia({
+      tipo: 'midia_foto',
+      arquivo: basename,
+      data: dataIso,
+      autor: meta.autor,
+      para: meta.para,
+      legenda: `evento ${ymd} ${slugEvento}`,
+    });
+    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
   }
   return out;
 }
@@ -105,27 +156,35 @@ export async function saveEvento(
 
   const agora = new Date();
 
+  // Slug deriva do bairro / texto / categoria (nessa ordem). Calculado
+  // antes da copia das fotos porque o companion .md de cada foto
+  // referencia o slug via "evento <YYYY-MM-DD> <slug>" na legenda
+  // (rastreabilidade reversa: galeria -> evento de origem).
+  const slug = slugifyEvento({
+    texto: body,
+    bairro: parsed.data.bairro ?? null,
+    categoria: parsed.data.categoria,
+  });
+
   // Copia as fotos primeiro: se a copia falhar, não chegamos a
   // gravar o .md com referências quebradas. Em caso de erro, a
-  // promise rejeita e o caller mostra toast de falha.
-  const prefixo = formatDateYmdHm(agora);
-  const fotosGravadas = await copiarFotos(vaultRoot, prefixo, fotos);
+  // promise rejeita e o caller mostra toast de falha. Cada foto
+  // entra em media/fotos/<YYYY-MM-DD>-eventos-<rand>-<idx>.jpg
+  // + companion .md (frontmatter midia_foto).
+  const fotosGravadas = await copiarFotos(
+    vaultRoot,
+    agora,
+    fotos,
+    parsed.data,
+    slug
+  );
 
   // Atualiza meta.fotos com os paths relativos do Vault. O
-  // frontmatter passa a apontar para arquivos reais sob assets/.
+  // frontmatter passa a apontar para arquivos reais sob media/fotos/.
   const metaComFotos: EventoMeta = {
     ...parsed.data,
     fotos: fotosGravadas,
   };
-
-  // Slug deriva do bairro / texto / categoria (nessa ordem).
-  // Texto livre vem do body (o caller pode passar string vazia se
-  // não quiser corpo no .md).
-  const slug = slugifyEvento({
-    texto: body,
-    bairro: metaComFotos.bairro ?? null,
-    categoria: metaComFotos.categoria,
-  });
 
   const relCanonico = eventosPath(agora, slug);
   const rel = await resolvePath(vaultRoot, relCanonico);

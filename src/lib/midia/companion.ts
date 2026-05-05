@@ -12,11 +12,16 @@
 import type { Para } from '@/lib/schemas/para';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
+// midia_pdf adicionado em M-VAULT-MD-FIX-scanner: nota fiscal multi
+// page consolidada via expo-print salva binario em media/scanner/
+// junto com companion .md de mesmo basename. Tratamento generico
+// segue o caminho dos demais tipos (frontmatter sem body extra).
 export type TipoMidia =
   | 'midia_foto'
   | 'midia_audio'
   | 'midia_video'
-  | 'midia_frase';
+  | 'midia_frase'
+  | 'midia_pdf';
 
 export interface CompanionMidiaInput {
   tipo: TipoMidia;
@@ -28,6 +33,14 @@ export interface CompanionMidiaInput {
   // Texto opcional digitado pelo usuario. Em frase tambem entra como
   // body apos o frontmatter; caller controla.
   legenda?: string;
+  // Sprint M-VAULT-MD-FIX-medidas-fotos (2026-05-04): referencia
+  // opcional ao registro-mae (ex: 'YYYY-MM-DD' para medidas/<data>.md
+  // ou slug para eventos/<...>.md). Quando presente vai para o
+  // frontmatter como `medida_ref: <ref>`. Consumido pela
+  // SecaoEvolucaoCorporal (M11.4) e por hooks de agregacao que
+  // precisam reverse-link da media para a entrada-mae sem reparsear
+  // todo o Vault.
+  medida_ref?: string;
 }
 
 // Serializa o destinatario em string canonica para frontmatter:
@@ -57,6 +70,14 @@ export function stringifyCompanionMidia(
     // quebrar o YAML quando o usuario digitar texto livre.
     const escapada = input.legenda.replace(/"/g, '\\"');
     linhas.push(`legenda: "${escapada}"`);
+  }
+  if (
+    typeof input.medida_ref === 'string' &&
+    input.medida_ref.length > 0
+  ) {
+    // Referencia ao registro-mae. Sem aspas: slug ASCII / data sem
+    // espacos, seguro como YAML scalar simples.
+    linhas.push(`medida_ref: ${input.medida_ref}`);
   }
   linhas.push('---');
   // Body: para midia_frase, repete o texto integral apos o

@@ -65,6 +65,24 @@ describe('stringifyCompanionMidia (M34)', () => {
     expect(md).toContain('legenda: "ela disse \\"oi\\""');
   });
 
+  it('serializa midia_pdf (M-VAULT-MD-FIX-scanner) sem body extra', () => {
+    const md = stringifyCompanionMidia({
+      tipo: 'midia_pdf',
+      arquivo: '2026-05-04-1230-nota-multipagina.pdf',
+      data: '2026-05-04T15:30:00.000Z',
+      autor: 'pessoa_a',
+      para: { tipo: 'mim' },
+      legenda: 'Nota fiscal — Mercado da esquina',
+    });
+    expect(md).toContain('tipo: midia_pdf');
+    expect(md).toContain('arquivo: 2026-05-04-1230-nota-multipagina.pdf');
+    expect(md).toContain('legenda: "Nota fiscal — Mercado da esquina"');
+    // Body extra (o que midia_frase faria) so vale para midia_frase.
+    const partes = md.split('---\n');
+    // Layout esperado: ['', frontmatter+'---\n', '\n']
+    expect(partes[2].trim()).toBe('');
+  });
+
   it('em midia_frase replica o texto no body apos o frontmatter', () => {
     const md = stringifyCompanionMidia({
       tipo: 'midia_frase',
@@ -79,6 +97,49 @@ describe('stringifyCompanionMidia (M34)', () => {
     // Layout: ['', frontmatter+'---\n', '\n<body>\n']
     expect(partes.length).toBeGreaterThanOrEqual(3);
     expect(partes[2]).toContain('tudo bem comigo hoje');
+  });
+
+  it('inclui medida_ref no frontmatter quando informado (M-VAULT-MD-FIX-medidas-fotos)', () => {
+    const md = stringifyCompanionMidia({
+      tipo: 'midia_foto',
+      arquivo: 'medidas-2026-05-04-frente.jpg',
+      data: '2026-05-04T12:00:00.000Z',
+      autor: 'pessoa_a',
+      para: { tipo: 'mim' },
+      legenda: 'Evolução corporal — frente',
+      medida_ref: '2026-05-04',
+    });
+    expect(md).toContain('medida_ref: 2026-05-04');
+    expect(md).toContain('legenda: "Evolução corporal — frente"');
+    // medida_ref aparece DEPOIS de legenda, antes do --- final.
+    const idxLegenda = md.indexOf('legenda:');
+    const idxRef = md.indexOf('medida_ref:');
+    const idxFimFront = md.lastIndexOf('---');
+    expect(idxLegenda).toBeLessThan(idxRef);
+    expect(idxRef).toBeLessThan(idxFimFront);
+  });
+
+  it('omite medida_ref quando ausente (backward-compat M34)', () => {
+    const md = stringifyCompanionMidia({
+      tipo: 'midia_foto',
+      arquivo: '2026-05-04-abcd.jpg',
+      data: '2026-05-04T12:00:00.000Z',
+      autor: 'pessoa_a',
+      para: { tipo: 'mim' },
+    });
+    expect(md).not.toContain('medida_ref:');
+  });
+
+  it('omite medida_ref quando string vazia', () => {
+    const md = stringifyCompanionMidia({
+      tipo: 'midia_foto',
+      arquivo: '2026-05-04-abcd.jpg',
+      data: '2026-05-04T12:00:00.000Z',
+      autor: 'pessoa_a',
+      para: { tipo: 'mim' },
+      medida_ref: '',
+    });
+    expect(md).not.toContain('medida_ref:');
   });
 });
 

@@ -85,10 +85,10 @@ spec PARA o ciclo e pede clarificação.
 | ~~A2~~ | ~~M-GAUNTLET-DEAD-CODE-V2~~ | **fechada 2026-05-04** (1302/146, lazy require + DCE Hermes, leak check 0/6 markers, bundle 8.85→8.5 MB) | `M-GAUNTLET-DEAD-CODE-V2-spec.md` | — |
 | ~~A2.x~~ | ~~M-PT-BR-RETROFIT~~ | **fechada 2026-05-04** (3 violações corrigidas inline pelo maestro) | `M-PT-BR-RETROFIT-spec.md` | — |
 | ~~A3~~ | ~~M-VAULT-MD-AUDIT~~ | **fechada 2026-05-04** (1316/147, +14 cases, 6 achados → 4 sub-sprints geradas) | `M-VAULT-MD-AUDIT-spec.md` | — |
-| A3.x.1 | **M-VAULT-MD-FIX-diario-audio** | Áudio do diário em `media/audios/` (era `assets/`) | `M-VAULT-MD-FIX-diario-audio-spec.md` | 1-2h |
-| A3.x.2 | **M-VAULT-MD-FIX-evento-fotos** | Fotos de evento em `media/fotos/` | `M-VAULT-MD-FIX-evento-fotos-spec.md` | 1-2h |
-| A3.x.3 | **M-VAULT-MD-FIX-medidas-fotos** | Fotos de medida em `media/fotos/` (bloqueia M11.4) | `M-VAULT-MD-FIX-medidas-fotos-spec.md` | 1-2h |
-| A3.x.4 | **M-VAULT-MD-FIX-scanner** | PDF + companion 1:1 (será integrado em E4 se ainda aberto) | `M-VAULT-MD-FIX-scanner-spec.md` | 1-2h |
+| ~~A3.x.1~~ | ~~M-VAULT-MD-FIX-diario-audio~~ | **fechada 2026-05-04** (recordAudio.ts → media/audios/, +4 cases) | `M-VAULT-MD-FIX-diario-audio-spec.md` | — |
+| ~~A3.x.2~~ | ~~M-VAULT-MD-FIX-evento-fotos~~ | **fechada 2026-05-04** (saveEvento.ts → media/fotos/eventos-*, +3 cases) | `M-VAULT-MD-FIX-evento-fotos-spec.md` | — |
+| ~~A3.x.3~~ | ~~M-VAULT-MD-FIX-medidas-fotos~~ | **fechada 2026-05-04** (medidasFotoPath + medida_ref, +9 cases, **desbloqueia M11.4**) | `M-VAULT-MD-FIX-medidas-fotos-spec.md` | — |
+| ~~A3.x.4~~ | ~~M-VAULT-MD-FIX-scanner~~ | **fechada 2026-05-04** (saveNota.ts → media/scanner/, midia_pdf adicionado, +10 cases) | `M-VAULT-MD-FIX-scanner-spec.md` | — |
 | A4 | **M39** | Mídia companion oficial (ADR-0017) — após A3.x.1-3 | `M39-spec.md` | 4-5h |
 | A5 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
 

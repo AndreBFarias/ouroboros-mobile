@@ -44,7 +44,11 @@ const PERIODO_OPTIONS = [
   { value: 'tudo', label: 'Tudo' },
 ];
 
-// Resolve URI absoluto a partir do path relativo (assets/...).
+// Resolve URI absoluto a partir do path relativo. Aceita tanto o
+// path canonico atual (media/fotos/medidas-<data>-<lado>.jpg, sprint
+// M-VAULT-MD-FIX-medidas-fotos 2026-05-04) quanto o legado
+// (assets/m-<data>-<lado>.jpg). Backward-compat: fotos antigas em
+// assets/ continuam visiveis.
 function resolveUri(vaultRoot: string | null, rel: string): string {
   if (!vaultRoot) return rel;
   const trimmed = vaultRoot.endsWith('/')
@@ -71,7 +75,11 @@ function pontosDoCampo(
 }
 
 // Decodifica nome de arquivo de foto para inferir lado (frente /
-// costas / lado). Path canonico assets/m-YYYY-MM-DD-<lado>.jpg.
+// costas / lado). Aceita ambos formatos:
+//   - canonico atual (M-VAULT-MD-FIX 2026-05-04):
+//     media/fotos/medidas-YYYY-MM-DD-<lado>.jpg
+//   - legado: assets/m-YYYY-MM-DD-<lado>.jpg
+// Sufixo final do filename antes da extensao decide o lado em ambos.
 function inferirLado(rel: string): 'frente' | 'costas' | 'lado' {
   if (rel.endsWith('-costas.jpg')) return 'costas';
   if (rel.endsWith('-lado.jpg')) return 'lado';

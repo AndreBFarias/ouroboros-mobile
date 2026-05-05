@@ -9,6 +9,8 @@ import {
   inboxFinanceiroPath,
   fileMatchesDate,
   tarefasPath,
+  medidasFotoPath,
+  mediaScannerPath,
   VAULT_FOLDERS,
 } from '@/lib/vault/paths';
 
@@ -131,6 +133,62 @@ describe('tarefasPath', () => {
     // 02:30 UTC = 23:30 do dia anterior em UTC-3.
     const d = new Date('2026-04-29T02:30:00.000Z');
     expect(tarefasPath(d, 's')).toBe('tarefas/2026-04-28-s.md');
+  });
+});
+
+describe('medidasFotoPath (M-VAULT-MD-FIX-medidas-fotos)', () => {
+  it('gera media/fotos/medidas-YYYY-MM-DD-<lado>.jpg para os 3 lados', () => {
+    const d = new Date('2026-05-04T15:00:00.000Z');
+    expect(medidasFotoPath(d, 'frente')).toBe(
+      'media/fotos/medidas-2026-05-04-frente.jpg'
+    );
+    expect(medidasFotoPath(d, 'costas')).toBe(
+      'media/fotos/medidas-2026-05-04-costas.jpg'
+    );
+    expect(medidasFotoPath(d, 'lado')).toBe(
+      'media/fotos/medidas-2026-05-04-lado.jpg'
+    );
+  });
+
+  it('respeita virada de dia em UTC-3', () => {
+    // 02:30 UTC = 23:30 do dia anterior em UTC-3.
+    const d = new Date('2026-04-29T02:30:00.000Z');
+    expect(medidasFotoPath(d, 'frente')).toBe(
+      'media/fotos/medidas-2026-04-28-frente.jpg'
+    );
+  });
+
+  it('NAO usa o legado assets/m-* (path migrado)', () => {
+    const d = new Date('2026-05-04T15:00:00.000Z');
+    const path = medidasFotoPath(d, 'frente');
+    expect(path.startsWith('assets/')).toBe(false);
+    expect(path.startsWith('media/fotos/')).toBe(true);
+  });
+});
+
+describe('mediaScannerPath (M-VAULT-MD-FIX-scanner)', () => {
+  it('overload legado de 1 arg mantem media/scanner/<slug>.jpg', () => {
+    expect(mediaScannerPath('nota-mercado')).toBe(
+      'media/scanner/nota-mercado.jpg'
+    );
+  });
+
+  it('overload com (basename, ext) gera media/scanner/<basename>.<ext>', () => {
+    expect(mediaScannerPath('2026-05-04-1230-nota-multipagina', 'pdf')).toBe(
+      'media/scanner/2026-05-04-1230-nota-multipagina.pdf'
+    );
+    expect(mediaScannerPath('2026-05-04-1230-nota', 'md')).toBe(
+      'media/scanner/2026-05-04-1230-nota.md'
+    );
+  });
+
+  it('binario e companion compartilham basename', () => {
+    const base = '2026-05-04-1230-nota';
+    const bin = mediaScannerPath(base, 'jpg');
+    const md = mediaScannerPath(base, 'md');
+    const baseBin = bin.replace(/\.jpg$/, '');
+    const baseMd = md.replace(/\.md$/, '');
+    expect(baseBin).toBe(baseMd);
   });
 });
 
