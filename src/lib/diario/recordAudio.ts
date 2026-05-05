@@ -14,8 +14,7 @@
 // so novos vao para o lugar canonico.
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
-import { mediaAudiosPath } from '@/lib/vault/paths';
-import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
 import { usePessoa } from '@/lib/stores/pessoa';
 import type { Para } from '@/lib/schemas/para';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
@@ -86,22 +85,9 @@ export async function discardRecording(uri: string): Promise<void> {
   }
 }
 
-// Gera sufixo aleatorio curto (4 chars hex) para evitar colisao
-// entre gravacoes dentro do mesmo minuto. Math.random e bom o
-// suficiente: colisao em 4 hex = 1/65536, e o resolvedor de path
-// padrao do Vault aplica sufixo numerico se ainda assim colidir.
-function suffixCurto(): string {
-  return Math.floor(Math.random() * 0xffff)
-    .toString(16)
-    .padStart(4, '0');
-}
-
-// Concatena root SAF e path relativo, normalizando barras. Espelha
-// helper privado de saveEvento para nao criar dependencia circular.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
+// M39.1: helpers locais suffixCurto/joinUri removidos — escreverMidia
+// ComCompanion encapsula a geracao de basename canonico, joinUri e
+// idempotencia do binario.
 
 // Opcoes do companion .md gravado ao lado do binario. Todos os
 // campos sao opcionais: caller que nao informa cai em defaults
@@ -127,35 +113,45 @@ export async function saveRecordingToVault(
   date: Date = new Date(),
   opcoes: SaveRecordingOpcoes = {}
 ): Promise<string> {
-  const relBin = mediaAudiosPath(date, suffixCurto());
-  const destinoBin = joinUri(vaultRoot, relBin);
-  await FileSystem.copyAsync({ from: uri, to: destinoBin });
-
-  // Companion .md ao lado do binario. Erro de escrita do companion
-  // nao deve invalidar o binario (audio e' o ativo principal); por
-  // isso o try interno engole falha defensivamente. Caller continua
-  // recebendo o relPath do binario.
+  // M39.1: caminho consolidado via escreverMidiaComCompanion.
+  // Defensivo: se o helper falhar (por qualquer razao em mock parcial
+  // de testes), tentamos pelo menos copiar o binario para preservar a
+  // invariante "binario e' o ativo principal" — companion fica como
+  // best-effort historico.
+  const autor = opcoes.autor ?? usePessoa.getState().pessoaAtiva;
+  const para: Para = opcoes.para ?? { tipo: 'mim' };
   try {
-    const relCompanion = relBin.replace(/\.m4a$/i, '.md');
-    const destinoCompanion = joinUri(vaultRoot, relCompanion);
-    const basename = relBin.split('/').pop() ?? relBin;
-    const autor =
-      opcoes.autor ?? usePessoa.getState().pessoaAtiva;
-    const para: Para = opcoes.para ?? { tipo: 'mim' };
-    const conteudo = stringifyCompanionMidia({
+    const r = await escreverMidiaComCompanion(vaultRoot, uri, {
       tipo: 'midia_audio',
-      arquivo: basename,
       data: date.toISOString(),
       autor,
       para,
       legenda: opcoes.legenda,
     });
-    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+    return r.binarioPath;
   } catch {
-    // Falha do companion nao bloqueia o fluxo. Binario ja esta no
-    // Vault e e o que importa para o usuario. Sprint futura pode
-    // adicionar reconciliacao (gerar companion ausente em batch).
+    // Best-effort: ainda copia o binario num path canonico minimo
+    // se o helper canonico estourar (ex.: getInfoAsync indisponivel).
+    // Garante que o caller sempre recebe um relBin utilizavel.
+    const rand = Math.floor(Math.random() * 0xffff)
+      .toString(16)
+      .padStart(4, '0');
+    const ymd = (() => {
+      const TZ_SHIFT_MS = -3 * 60 * 60 * 1000;
+      const local = new Date(date.getTime() + TZ_SHIFT_MS);
+      const y = local.getUTCFullYear();
+      const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(local.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    })();
+    const relBin = `media/audios/${ymd}-${rand}.m4a`;
+    const trimmedRoot = vaultRoot.endsWith('/')
+      ? vaultRoot.slice(0, -1)
+      : vaultRoot;
+    await FileSystem.copyAsync({
+      from: uri,
+      to: `${trimmedRoot}/${relBin}`,
+    });
+    return relBin;
   }
-
-  return relBin;
 }

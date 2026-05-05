@@ -16,12 +16,11 @@
 // Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { mediaAudiosPath } from '@/lib/vault/paths';
 import type { Para } from '@/lib/schemas/para';
-import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
+import { formatDateYmd } from '@/lib/vault/paths';
 
 export interface CapturarMusicaOpcoes {
   para?: Para;
@@ -34,19 +33,9 @@ export interface CapturarMusicaResultado {
   companion: string | null;
 }
 
-function suffixCurto(): string {
-  return Math.floor(Math.random() * 0xffff)
-    .toString(16)
-    .padStart(4, '0');
-}
-
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
 // Extrai a extensao do nome do asset. Default 'm4a' (formato canonico
 // do M06.5) quando o picker devolve URI sem extensao detectavel.
+// M39.1: helpers suffixCurto/joinUri foram para escreverMidiaComCompanion.
 function extrairExtensao(name: string | null | undefined): string {
   if (!name) return 'm4a';
   const m = name.match(/\.([a-z0-9]{1,5})$/i);
@@ -84,29 +73,33 @@ export async function capturarMusica(
 
     const agora = new Date();
     const ext = extrairExtensao(asset.name);
-    // mediaAudiosPath fixa .m4a; para preservar a extensao original
-    // trocamos a posfix manualmente.
-    const relCanonico = mediaAudiosPath(agora, suffixCurto());
-    const relBin = relCanonico.replace(/\.m4a$/i, `.${ext}`);
-    const relCompanion = relBin.replace(/\.[a-z0-9]+$/i, '.md');
-    const destinoBin = joinUri(vaultRoot, relBin);
-    const destinoCompanion = joinUri(vaultRoot, relCompanion);
-
-    await FileSystem.copyAsync({ from: asset.uri, to: destinoBin });
-
+    // M39.1: writer migrado para escreverMidiaComCompanion. O helper
+    // canonico extrai a extensao do binarioUri, mas como
+    // expo-document-picker devolve cache temporario sem extensao
+    // confiavel, embutimos no asset URI (sintetico) ou explicitamente
+    // via meta.arquivo. Aqui usamos meta.arquivo no formato canonico
+    // <YYYY-MM-DD>-<rand4>.<ext> para preservar match dos testes
+    // (regex /^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.<ext>$/).
+    // O canonico vai re-extrair ext de meta.arquivo via extOf(),
+    // entao basename serializa identico.
+    const rand = Math.floor(Math.random() * 0xffff)
+      .toString(16)
+      .padStart(4, '0');
+    const arquivo = `${formatDateYmd(agora)}-${rand}.${ext}`;
     const autor = usePessoa.getState().pessoaAtiva;
-    const basename = relBin.split('/').pop() ?? relBin;
-    const conteudo = stringifyCompanionMidia({
+    const r = await escreverMidiaComCompanion(vaultRoot, asset.uri, {
       tipo: 'midia_audio',
-      arquivo: basename,
+      arquivo,
       data: agora.toISOString(),
       autor,
       para,
       legenda,
     });
-    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
-
-    return { ok: true, arquivo: relBin, companion: relCompanion };
+    return {
+      ok: true,
+      arquivo: r.binarioPath,
+      companion: r.companionPath,
+    };
   } catch {
     return { ok: false, arquivo: null, companion: null };
   }

@@ -90,8 +90,8 @@ spec PARA o ciclo e pede clarificação.
 | ~~A3.x.3~~ | ~~M-VAULT-MD-FIX-medidas-fotos~~ | **fechada 2026-05-04** (medidasFotoPath + medida_ref, +9 cases, **desbloqueia M11.4**) | `M-VAULT-MD-FIX-medidas-fotos-spec.md` | — |
 | ~~A3.x.4~~ | ~~M-VAULT-MD-FIX-scanner~~ | **fechada 2026-05-04** (saveNota.ts → media/scanner/, midia_pdf adicionado, +10 cases) | `M-VAULT-MD-FIX-scanner-spec.md` | — |
 | ~~A4~~ | ~~M39~~ | **fechada 2026-05-04** (1349/149, schema zod + helpers + boot hook, M39.1 criada para migrar 9 writers) | `M39-spec.md` | — |
-| A4.x | **M39.1** | Migrar 9 writers para `escreverMidiaComCompanion` (incremental, 1 por commit) | `M39.1-spec.md` | 2-3h |
-| A5 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso (consome `lerCompanion` da M39) | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
+| ~~A4.x~~ | ~~M39.1~~ | **fechada 2026-05-04** (6/9 migrados, 3 exclusões anti-débito documentadas, net -55 LOCs) | `M39.1-spec.md` | — |
+| ~~A5~~ | ~~M-EXPORT-COMPLETO~~ | **fechada 2026-05-04** (1364/151, ZIP+restore+MANIFEST sha256+snapshot settings, roundtrip 62 arquivos byte-a-byte) | `M-EXPORT-COMPLETO-spec.md` | — |
 
 **BLOCO B — Polish UX (corrige débitos visíveis)**
 

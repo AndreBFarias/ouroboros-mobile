@@ -28,7 +28,6 @@ import {
 import { useRouter } from 'expo-router';
 import { Camera, X } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import {
   Button,
   Header,
@@ -42,8 +41,7 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { lerUltimaMedida, escreverMedida } from '@/lib/vault/medidas';
-import { medidasFotoPath } from '@/lib/vault/paths';
-import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
 import {
   MEDIDAS_CAMPOS,
   MEDIDAS_LABELS,
@@ -128,10 +126,8 @@ const LADOS_FOTO: ReadonlyArray<{
   { key: 'lado', label: 'Lado', legenda: 'Evolução corporal — lado' },
 ];
 
-function joinUri(root: string, rel: string): string {
-  const trimmed = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmed}/${rel}`;
-}
+// M39.1: helpers locais (joinUri / copia + write manual) substituidos
+// pela chamada a escreverMidiaComCompanion no handleSalvar.
 
 export default function NovaMedida() {
   const router = useRouter();
@@ -221,31 +217,23 @@ export default function NovaMedida() {
       for (const { key, legenda } of LADOS_FOTO) {
         const slot = fotos[key];
         if (!slot.origem) continue;
-        const rel = medidasFotoPath(dataDate, key);
-        const destinoUri = joinUri(vaultRoot, rel);
-        await FileSystem.copyAsync({ from: slot.origem, to: destinoUri });
-        fotosRel.push(rel);
-
-        // Companion .md ao lado do binario. Mesma raiz, troca .jpg
-        // por .md. Caller (escreverMedida) ja faz o frontmatter da
-        // medida; aqui escrevemos o companion da media para
-        // reverse-link.
-        const relCompanion = rel.replace(/\.jpg$/i, '.md');
-        const destinoCompanion = joinUri(vaultRoot, relCompanion);
-        const basename = rel.split('/').pop() ?? rel;
-        const conteudoCompanion = stringifyCompanionMidia({
+        // M39.1: escreverMidiaComCompanion encapsula copia + companion
+        // + idempotencia. O basename canonico desta tela e'
+        // "medidas-<YYYY-MM-DD>-<lado>.jpg" (helper medidasFotoPath
+        // antigo); passamos via meta.arquivo para preservar o nome
+        // semantico que SecaoEvolucaoCorporal (M11.4) le como pista
+        // de lado quando companion estiver ausente.
+        const arquivo = `medidas-${dataYmd}-${key}.jpg`;
+        const r = await escreverMidiaComCompanion(vaultRoot, slot.origem, {
           tipo: 'midia_foto',
-          arquivo: basename,
+          arquivo,
           data: dataDate.toISOString(),
           autor: pessoaAtiva,
           para: { tipo: 'mim' },
           legenda,
           medida_ref: dataYmd,
         });
-        await FileSystem.writeAsStringAsync(
-          destinoCompanion,
-          conteudoCompanion
-        );
+        fotosRel.push(r.binarioPath);
       }
 
       // Monta meta validado.

@@ -11,12 +11,10 @@
 // Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { mediaVideosPath } from '@/lib/vault/paths';
 import type { Para } from '@/lib/schemas/para';
-import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
 import type { OrigemCaptura } from '@/lib/midia/capturarFoto';
 
 export interface CapturarVideoOpcoes {
@@ -31,16 +29,7 @@ export interface CapturarVideoResultado {
   companion: string | null;
 }
 
-function suffixCurto(): string {
-  return Math.floor(Math.random() * 0xffff)
-    .toString(16)
-    .padStart(4, '0');
-}
-
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
+// M39.1: helpers locais foram para escreverMidiaComCompanion.
 
 export async function capturarVideo(
   opcoes: CapturarVideoOpcoes = {}
@@ -98,25 +87,24 @@ async function gravar(
   para: Para,
   legenda: string | undefined
 ): Promise<CapturarVideoResultado> {
-  const agora = new Date();
-  const relBin = mediaVideosPath(agora, suffixCurto());
-  const relCompanion = relBin.replace(/\.mp4$/i, '.md');
-  const destinoBin = joinUri(vaultRoot, relBin);
-  const destinoCompanion = joinUri(vaultRoot, relCompanion);
-
-  await FileSystem.copyAsync({ from: origemUri, to: destinoBin });
-
-  const autor = usePessoa.getState().pessoaAtiva;
-  const basename = relBin.split('/').pop() ?? relBin;
-  const conteudo = stringifyCompanionMidia({
-    tipo: 'midia_video',
-    arquivo: basename,
-    data: agora.toISOString(),
-    autor,
-    para,
-    legenda,
-  });
-  await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
-
-  return { ok: true, arquivo: relBin, companion: relCompanion };
+  // M39.1: writer migrado para escreverMidiaComCompanion. Encapsula
+  // basename canonico, copia binaria e ordem do .md companion.
+  try {
+    const agora = new Date();
+    const autor = usePessoa.getState().pessoaAtiva;
+    const r = await escreverMidiaComCompanion(vaultRoot, origemUri, {
+      tipo: 'midia_video',
+      data: agora.toISOString(),
+      autor,
+      para,
+      legenda,
+    });
+    return {
+      ok: true,
+      arquivo: r.binarioPath,
+      companion: r.companionPath,
+    };
+  } catch {
+    return { ok: false, arquivo: null, companion: null };
+  }
 }

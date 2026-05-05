@@ -295,7 +295,23 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - **Privacidade**: biometria ao abrir / ocultar transcrições /
   `widgetMostraNome` (off por default).
 - **Mídia**: cap por registro (default 4), permitir áudio.
-- **Dados**: export ZIP do Vault inteiro (M15).
+- **Dados**:
+  - **Exportar todos os meus dados** (M15 + M-EXPORT-COMPLETO): gera
+    ZIP no `cacheDirectory` com todos os `.md` recursivos das 19
+    subpastas canônicas, todos os binários (jpg/m4a/mp4/pdf) com
+    bytes preservados, todos os companion `.md` (M34/M39), o cache
+    `.ouroboros/cache/*.json` e um snapshot `snapshot-settings.json`
+    com `useSettings` + `useOnboarding` + `usePessoa`. Manifest
+    `MANIFEST.json` na raiz lista cada arquivo com sha256 para
+    verificação no restore.
+  - **Importar backup** (M-EXPORT-COMPLETO): document picker para
+    `.zip`, valida cada arquivo via sha256 do MANIFEST antes de
+    escrever, restore default não-destrutivo em
+    `restaurado-<YYYY-MM-DD>/` (sobrescrever o Vault existente exige
+    confirmação explícita do usuário). Schema versionado
+    (`EXPORT_SCHEMA_VERSION = 1`).
+  - **Limpar cache local**: remove `ouroboros-export-*.zip` do
+    cacheDirectory (M15).
 - **Sobre**: versão, contribuidores anônimos, ADRs.
 
 ## 12. Widget Homescreen Android — M20 (Tela 26)

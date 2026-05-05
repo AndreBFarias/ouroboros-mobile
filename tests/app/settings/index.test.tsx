@@ -36,6 +36,38 @@ jest.mock('@/lib/services/limparCache', () => ({
   limparCache: jest.fn(() => Promise.resolve({ arquivosRemovidos: 2 })),
 }));
 
+// M-EXPORT-COMPLETO (A5): mock de restaurarVaultZip e document picker
+// para o botao "Importar backup".
+jest.mock('@/lib/services/restaurarVault', () => ({
+  __esModule: true,
+  restaurarVaultZip: jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      raizDestino: '/tmp/vault/restaurado-2026-05-04',
+      totalEscritos: 5,
+      totalIgnorados: 0,
+      falhas: [],
+    })
+  ),
+}));
+
+jest.mock('expo-document-picker', () => ({
+  __esModule: true,
+  getDocumentAsync: jest.fn(() =>
+    Promise.resolve({
+      canceled: false,
+      assets: [
+        {
+          uri: '/tmp/import-backup.zip',
+          name: 'import-backup.zip',
+          mimeType: 'application/zip',
+          size: 1024,
+        },
+      ],
+    })
+  ),
+}));
+
 jest.mock('@/lib/vault/permissions', () => ({
   __esModule: true,
   inicializarVaultCanonico: jest.fn(() =>
@@ -180,5 +212,83 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
     );
     expect(tree.getByText('Ver no GitHub')).toBeTruthy();
     expect(tree.getByLabelText('abrir github')).toBeTruthy();
+  });
+
+  it('botao "Exportar todos os meus dados" renderiza com label canonico', () => {
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    expect(tree.getByText('Exportar todos os meus dados')).toBeTruthy();
+  });
+
+  it('botao "Importar backup" renderiza e dispara restaurarVaultZip', async () => {
+    const {
+      restaurarVaultZip,
+    } = require('@/lib/services/restaurarVault') as {
+      restaurarVaultZip: jest.Mock;
+    };
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    const botao = tree.getByText('Importar backup');
+    expect(botao).toBeTruthy();
+    fireEvent.press(botao);
+    await waitFor(() => expect(restaurarVaultZip).toHaveBeenCalled());
+    expect(await tree.findByText('Restauração concluída.')).toBeTruthy();
+  });
+
+  it('importar com falhas mostra toast com contagem', async () => {
+    const {
+      restaurarVaultZip,
+    } = require('@/lib/services/restaurarVault') as {
+      restaurarVaultZip: jest.Mock;
+    };
+    restaurarVaultZip.mockResolvedValueOnce({
+      ok: false,
+      raizDestino: '/tmp/vault/restaurado-2026-05-04',
+      totalEscritos: 3,
+      totalIgnorados: 0,
+      falhas: [
+        { path: 'daily/2026-05-01.md', motivo: 'sha-divergente' as const },
+        { path: 'media/fotos/x.jpg', motivo: 'arquivo-ausente' as const },
+      ],
+    });
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    fireEvent.press(tree.getByText('Importar backup'));
+    expect(
+      await tree.findByText('Restauração concluída com 2 falha(s).')
+    ).toBeTruthy();
+  });
+
+  it('importar cancelado nao chama restaurarVaultZip', async () => {
+    const DocumentPicker = require('expo-document-picker') as {
+      getDocumentAsync: jest.Mock;
+    };
+    const {
+      restaurarVaultZip,
+    } = require('@/lib/services/restaurarVault') as {
+      restaurarVaultZip: jest.Mock;
+    };
+    DocumentPicker.getDocumentAsync.mockResolvedValueOnce({
+      canceled: true,
+      assets: null,
+    });
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    fireEvent.press(tree.getByText('Importar backup'));
+    await waitFor(() => {
+      expect(restaurarVaultZip).not.toHaveBeenCalled();
+    });
   });
 });

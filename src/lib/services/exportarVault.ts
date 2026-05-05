@@ -1,32 +1,90 @@
-// Servico de exportacao do Vault em ZIP. M15 chamou a API simples:
-// gerar 1 ZIP com tudo, salvar em cacheDirectory, retornar URI para
-// Sharing.shareAsync. UI mostra toast "Exportando..." enquanto roda.
+// Servico de exportacao do Vault em ZIP. M15 lancou a versao basica
+// (apenas conteudo das pastas canonicas). M-EXPORT-COMPLETO (Bloco A5)
+// expande para entregar um backup fiel:
 //
-// Decisão M15 (spec seção 11): UI sem barra de progresso. Sucesso
-// abre share sheet; falha mostra toast vermelho.
+//   1. Todos os .md de cada subpasta canonica (recursivo).
+//   2. Todos os binarios (jpg/mp4/m4a/pdf) com bytes preservados.
+//   3. Todos os companion .md de mídia (M34/M39).
+//   4. Cache .ouroboros/cache/*.json (heatmap, financas-cache,
+//      marcos-auto).
+//   5. Snapshot de settings/identidade em
+//      .ouroboros/snapshot-settings.json (serializa useSettings,
+//      useOnboarding, usePessoa).
+//   6. MANIFEST.json na raiz com versao, data, contagem por subpasta
+//      e sha256 de cada arquivo (validado no restore).
 //
-// Estrategia:
-//   - Iterar pastas canonicas via VAULT_FOLDERS de paths.ts.
-//   - readDirectoryAsync recursivo onde necessario (assets/* tem
-//     subpastas; inbox/* idem).
-//   - Adicionar binarios com base64; texto com utf-8.
-//   - Gerar ZIP via JSZip 3.x e salvar em cacheDirectory.
+// Decisoes (spec §6):
+//   - Snapshot fica em .ouroboros/ (oculto no Obsidian, nao polui Vault).
+//   - Sem encryption (ADR-0007: confianca no usuario).
+//   - JSZip level 1 (mantem binarios streamable).
 //
 // Plataforma:
-//   - Web: vault e mock; retorna null sem erro (UI pode mostrar
-//     toast "Exportação não disponível em web").
-//   - Android: caminho real.
+//   - Web: vault e mock; retorna null sem erro.
+//   - Android: caminho real via SAF (FileSystem/legacy).
+//
+// Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import JSZip from 'jszip';
 import { VAULT_FOLDERS } from '@/lib/vault/paths';
 import { loadVaultRoot } from '@/lib/vault/permissions';
+import { sha256Base64, sha256Utf8 } from '@/lib/crypto/sha256';
+import { useSettings } from '@/lib/stores/settings';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { usePessoa } from '@/lib/stores/pessoa';
+
+// Versao do schema MANIFEST. Bump a cada mudanca incompativel.
+export const EXPORT_SCHEMA_VERSION = 1;
 
 // Resultado canonico. URI null em falha; mensagem para tracking.
 export interface ExportarResultado {
   uri: string | null;
   totalArquivos: number;
   motivo?: string;
+}
+
+// Estrutura do MANIFEST.json gravado na raiz do ZIP. Restore valida
+// cada arquivo via sha256 antes de escrever no Vault destino.
+export interface ManifestEntry {
+  path: string; // path relativo ao ZIP (igual ao path no Vault).
+  bytes: number; // tamanho original (decodificado se base64).
+  sha256: string; // hash do conteudo bruto.
+  binario: boolean; // true = base64 no ZIP; false = utf8 puro.
+}
+
+export interface Manifest {
+  schema: number; // EXPORT_SCHEMA_VERSION.
+  exportadoEm: string; // ISO 8601.
+  totalArquivos: number;
+  porSubpasta: Record<string, number>; // contagem por chave de VAULT_FOLDERS.
+  arquivos: ManifestEntry[];
+}
+
+// Snapshot de stores serializaveis. Fotos binarias NAO entram aqui
+// (vao como arquivo em media/avatares/). URIs locais ficam, restore
+// pode ou nao reconstruir o link.
+export interface SnapshotSettings {
+  schema: number;
+  exportadoEm: string;
+  settings: Omit<
+    ReturnType<typeof useSettings.getState>,
+    | 'setSomVibracao'
+    | 'setPessoa'
+    | 'setFeatureToggle'
+    | 'setPrivacidade'
+    | 'setMidia'
+    | 'resetar'
+  >;
+  onboarding: {
+    done: boolean;
+    tipoCompanhia: ReturnType<typeof useOnboarding.getState>['tipoCompanhia'];
+  };
+  pessoa: {
+    pessoaAtiva: ReturnType<typeof usePessoa.getState>['pessoaAtiva'];
+    filtroPessoa: ReturnType<typeof usePessoa.getState>['filtroPessoa'];
+    nomes: ReturnType<typeof usePessoa.getState>['nomes'];
+    fotos: ReturnType<typeof usePessoa.getState>['fotos'];
+  };
 }
 
 // Conjunto de extensoes binarias. Ler como base64.
@@ -52,7 +110,7 @@ function isBinario(nome: string): boolean {
 }
 
 // Lista recursivamente arquivos abaixo de `pasta`. Retorna paths
-// relativos ao `vaultRoot`. Se a pasta não existe, devolve [].
+// relativos ao `vaultRoot`. Se a pasta nao existe, devolve [].
 async function listarRecursivo(
   vaultRoot: string,
   rel: string
@@ -88,6 +146,64 @@ async function listarRecursivo(
   return out;
 }
 
+// Calcula tamanho original em bytes a partir do conteudo gravado no
+// ZIP. Para utf8 medimos os bytes da TextEncoder; para base64
+// decodificamos para saber o tamanho real.
+function bytesUtf8(text: string): number {
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder().encode(text).length;
+  }
+  // Fallback: estima via charCodes (suficiente para fallback antigo).
+  let n = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (c < 0x80) n += 1;
+    else if (c < 0x800) n += 2;
+    else if (c < 0xd800 || c >= 0xe000) n += 3;
+    else {
+      n += 4;
+      i++;
+    }
+  }
+  return n;
+}
+
+function bytesBase64(b64: string): number {
+  // Padding "=" conta como zero bytes adicionados.
+  const limpos = b64.replace(/=+$/g, '');
+  return Math.floor((limpos.length * 3) / 4);
+}
+
+// Serializa snapshot de stores. Fora de componente React, usamos
+// getState() puro. Os mutators sao removidos para o JSON ficar
+// estavel e carregavel.
+export function gerarSnapshotSettings(): SnapshotSettings {
+  const s = useSettings.getState();
+  const o = useOnboarding.getState();
+  const p = usePessoa.getState();
+  return {
+    schema: EXPORT_SCHEMA_VERSION,
+    exportadoEm: new Date().toISOString(),
+    settings: {
+      somVibracao: s.somVibracao,
+      pessoa: s.pessoa,
+      featureToggles: s.featureToggles,
+      privacidade: s.privacidade,
+      midia: s.midia,
+    },
+    onboarding: {
+      done: o.done,
+      tipoCompanhia: o.tipoCompanhia,
+    },
+    pessoa: {
+      pessoaAtiva: p.pessoaAtiva,
+      filtroPessoa: p.filtroPessoa,
+      nomes: p.nomes,
+      fotos: p.fotos,
+    },
+  };
+}
+
 // Gera ZIP com tudo e salva em cacheDirectory/ouroboros-export-<ts>.zip.
 // Em sucesso, retorna URI absoluto. Em falha (sem permissao SAF, web,
 // erro de IO), retorna null com motivo.
@@ -117,11 +233,18 @@ export async function exportarVaultZip(): Promise<ExportarResultado> {
   }
 
   const zip = new JSZip();
+  const entries: ManifestEntry[] = [];
+  const porSubpasta: Record<string, number> = {};
   let totalArquivos = 0;
 
-  const pastasCanonicas = Object.values(VAULT_FOLDERS);
-  for (const pasta of pastasCanonicas) {
+  // Pares [chaveSubpasta, pathRelativo]. Chave usada para contagem
+  // por subpasta no MANIFEST.
+  const pastas = Object.entries(VAULT_FOLDERS) as Array<
+    [string, (typeof VAULT_FOLDERS)[keyof typeof VAULT_FOLDERS]]
+  >;
+  for (const [chave, pasta] of pastas) {
     const arquivos = await listarRecursivo(vaultRoot, pasta);
+    porSubpasta[chave] = 0;
     for (const rel of arquivos) {
       const absoluto = `${vaultRoot.replace(/\/$/, '')}/${rel}`;
       try {
@@ -130,20 +253,64 @@ export async function exportarVaultZip(): Promise<ExportarResultado> {
             encoding: FileSystem.EncodingType.Base64,
           });
           zip.file(rel, b64, { base64: true });
+          entries.push({
+            path: rel,
+            bytes: bytesBase64(b64),
+            sha256: sha256Base64(b64),
+            binario: true,
+          });
         } else {
           const txt = await FileSystem.readAsStringAsync(absoluto, {
             encoding: FileSystem.EncodingType.UTF8,
           });
           zip.file(rel, txt);
+          entries.push({
+            path: rel,
+            bytes: bytesUtf8(txt),
+            sha256: sha256Utf8(txt),
+            binario: false,
+          });
         }
         totalArquivos += 1;
+        porSubpasta[chave] += 1;
       } catch {
         // Arquivo ilegivel; pula sem abortar exportacao toda.
       }
     }
   }
 
-  const conteudo = await zip.generateAsync({ type: 'base64' });
+  // Snapshot de stores em .ouroboros/snapshot-settings.json.
+  const snapshot = gerarSnapshotSettings();
+  const snapshotJson = JSON.stringify(snapshot, null, 2);
+  const snapshotPath = '.ouroboros/snapshot-settings.json';
+  zip.file(snapshotPath, snapshotJson);
+  entries.push({
+    path: snapshotPath,
+    bytes: bytesUtf8(snapshotJson),
+    sha256: sha256Utf8(snapshotJson),
+    binario: false,
+  });
+  totalArquivos += 1;
+  porSubpasta['snapshotSettings'] = 1;
+
+  // MANIFEST.json na raiz. Importante: nao incluir o proprio MANIFEST
+  // na lista de arquivos (sha auto-referente quebraria validacao).
+  const manifest: Manifest = {
+    schema: EXPORT_SCHEMA_VERSION,
+    exportadoEm: new Date().toISOString(),
+    totalArquivos,
+    porSubpasta,
+    arquivos: entries,
+  };
+  const manifestJson = JSON.stringify(manifest, null, 2);
+  zip.file('MANIFEST.json', manifestJson);
+
+  // generateAsync com level 1 (rapido, mantem binarios streamable).
+  const conteudo = await zip.generateAsync({
+    type: 'base64',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 1 },
+  });
   const ts = new Date()
     .toISOString()
     .replace(/[:.]/g, '')

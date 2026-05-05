@@ -21,6 +21,7 @@ import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import {
   Button,
   Header,
@@ -35,6 +36,7 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { exportarVaultZip } from '@/lib/services/exportarVault';
+import { restaurarVaultZip } from '@/lib/services/restaurarVault';
 import { limparCache } from '@/lib/services/limparCache';
 import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import {
@@ -375,6 +377,50 @@ function SecaoPrivacidade() {
     toast.show(`Cache limpo. ${r.arquivosRemovidos} item(ns).`, 'success');
   };
 
+  // Importa backup .zip via document picker. Restore default e
+  // nao-destrutivo: cria pasta restaurado-<data>/ no Vault. Se o
+  // usuario quiser sobrescrever, sprint futura abre confirmacao;
+  // por ora a entrega A5 sempre faz append.
+  const importar = async () => {
+    haptics.light();
+    let pickerRes: DocumentPicker.DocumentPickerResult;
+    try {
+      pickerRes = await DocumentPicker.getDocumentAsync({
+        type: 'application/zip',
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+    } catch {
+      toast.show('Falha ao abrir o seletor de arquivos.', 'error');
+      return;
+    }
+    if (pickerRes.canceled) return;
+    const arquivo = pickerRes.assets?.[0];
+    if (!arquivo) {
+      toast.show('Nenhum arquivo selecionado.', 'info');
+      return;
+    }
+    toast.show('Restaurando…', 'info');
+    const res = await restaurarVaultZip(arquivo.uri);
+    // Falhas individuais (sha-divergente, arquivo-ausente, erro-escrita)
+    // tem prioridade sobre o motivo global: quando o restore comeca e
+    // alguns arquivos falham, queremos a contagem detalhada. Quando o
+    // restore nem comeca (zip ilegivel, manifest ausente), falhas e
+    // vazio e o motivo descreve.
+    if (res.falhas.length > 0) {
+      toast.show(
+        `Restauração concluída com ${res.falhas.length} falha(s).`,
+        'warn'
+      );
+      return;
+    }
+    if (!res.ok) {
+      toast.show(res.motivo ?? 'Falha ao restaurar.', 'error');
+      return;
+    }
+    toast.show('Restauração concluída.', 'success');
+  };
+
   return (
     <SecaoLista titulo="Privacidade" accessibilityLabel="secao privacidade">
       <ToggleRow
@@ -391,9 +437,14 @@ function SecaoPrivacidade() {
       />
 
       <Button
-        label="Exportar todos meus dados"
+        label="Exportar todos os meus dados"
         variant="primary"
         onPress={exportar}
+      />
+      <Button
+        label="Importar backup"
+        variant="ghost"
+        onPress={importar}
       />
       <Button
         label="Limpar cache local"

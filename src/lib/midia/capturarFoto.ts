@@ -28,13 +28,11 @@
 // require lazy guardado por __DEV__ apenas no branch dev web.
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { mediaFotosPath } from '@/lib/vault/paths';
 import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 import type { Para } from '@/lib/schemas/para';
-import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
 
 declare const __DEV__: boolean;
 
@@ -60,16 +58,9 @@ export interface CapturarFotoResultado {
   companion: string | null;
 }
 
-function suffixCurto(): string {
-  return Math.floor(Math.random() * 0xffff)
-    .toString(16)
-    .padStart(4, '0');
-}
-
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
+// M39.1: helpers locais suffixCurto/joinUri foram para
+// src/lib/vault/midiaCompanion.ts (escreverMidiaComCompanion gere
+// basename + path interno).
 
 export async function capturarFoto(
   opcoes: CapturarFotoOpcoes = {}
@@ -148,25 +139,28 @@ async function gravar(
   para: Para,
   legenda: string | undefined
 ): Promise<CapturarFotoResultado> {
-  const agora = new Date();
-  const relBin = mediaFotosPath(agora, suffixCurto());
-  const relCompanion = relBin.replace(/\.jpg$/i, '.md');
-  const destinoBin = joinUri(vaultRoot, relBin);
-  const destinoCompanion = joinUri(vaultRoot, relCompanion);
-
-  await FileSystem.copyAsync({ from: origemUri, to: destinoBin });
-
-  const autor = usePessoa.getState().pessoaAtiva;
-  const basename = relBin.split('/').pop() ?? relBin;
-  const conteudo = stringifyCompanionMidia({
-    tipo: 'midia_foto',
-    arquivo: basename,
-    data: agora.toISOString(),
-    autor,
-    para,
-    legenda,
-  });
-  await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
-
-  return { ok: true, arquivo: relBin, companion: relCompanion };
+  // M39.1: writer migrado para o helper canonico
+  // escreverMidiaComCompanion. Ele encapsula suffixCurto, joinUri,
+  // copia binaria, ordem de chaves do .md companion e validacao zod.
+  // Comportamento observavel preservado: copy chamado uma vez, write
+  // chamado uma vez, paths em media/fotos/<YYYY-MM-DD>-<rand4>.jpg /
+  // .md.
+  try {
+    const agora = new Date();
+    const autor = usePessoa.getState().pessoaAtiva;
+    const r = await escreverMidiaComCompanion(vaultRoot, origemUri, {
+      tipo: 'midia_foto',
+      data: agora.toISOString(),
+      autor,
+      para,
+      legenda,
+    });
+    return {
+      ok: true,
+      arquivo: r.binarioPath,
+      companion: r.companionPath,
+    };
+  } catch {
+    return { ok: false, arquivo: null, companion: null };
+  }
 }

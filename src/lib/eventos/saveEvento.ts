@@ -16,17 +16,15 @@
 // na galeria via useFotosAgregadas (que resolve qualquer path
 // relativo gravado em meta.fotos[]). Esta sprint so muda o destino
 // das fotos NOVAS; nada sobre fotos antigas no disco e' tocado.
-import * as FileSystem from 'expo-file-system/legacy';
 import {
   eventosPath,
   formatDateYmd,
-  mediaFotosPath,
   readVaultFile,
   writeVaultFile,
 } from '@/lib/vault';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { slugifyEvento } from '@/lib/eventos/slug';
-import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
 
 export interface SaveEventoArgs {
   meta: EventoMeta;
@@ -107,36 +105,24 @@ async function copiarFotos(
   const out: string[] = [];
   const dataIso = meta.data;
   const ymd = formatDateYmd(data);
+  // M39.1: loop migrado para escreverMidiaComCompanion. Cada foto
+  // recebe basename "<YYYY-MM-DD>-eventos-<rand4>-<idx>.jpg" passado
+  // explicitamente via meta.arquivo (preserva regex dos testes M-VAULT-
+  // MD-FIX-evento-fotos). O canonico encapsula copia + companion +
+  // ordenacao das chaves.
   for (let i = 0; i < fotos.length; i++) {
     const origem = fotos[i];
-    // mediaFotosPath gera media/fotos/<YYYY-MM-DD>-<rand>.jpg. Para
-    // marcar origem evento + ordem, usamos rand="eventos-<rand4>-<idx>"
-    // resultando em media/fotos/<YYYY-MM-DD>-eventos-<rand4>-<idx>.jpg.
-    // Mantem o helper canonico intocado (compartilhado com captura
-    // livre) e ainda permite filtrar fotos de evento via prefixo.
     const rand = `eventos-${suffixCurto()}-${i + 1}`;
-    const relBin = mediaFotosPath(data, rand);
-    const destinoBin = joinUri(vaultRoot, relBin);
-    await FileSystem.copyAsync({ from: origem, to: destinoBin });
-    out.push(relBin);
-
-    // Companion .md ao lado do binario. Permite que o reader
-    // descubra metadata sem precisar abrir o evento.md inteiro,
-    // e mantem paridade com fotos avulsas (capturarFoto.ts).
-    // legenda recebe o body do evento para Obsidian renderizar
-    // contexto; evento_ref guarda o slug para hiperlink futuro.
-    const basename = relBin.split('/').pop() ?? relBin;
-    const relCompanion = relBin.replace(/\.jpg$/i, '.md');
-    const destinoCompanion = joinUri(vaultRoot, relCompanion);
-    const conteudo = stringifyCompanionMidia({
+    const arquivo = `${ymd}-${rand}.jpg`;
+    const r = await escreverMidiaComCompanion(vaultRoot, origem, {
       tipo: 'midia_foto',
-      arquivo: basename,
+      arquivo,
       data: dataIso,
       autor: meta.autor,
       para: meta.para,
       legenda: `evento ${ymd} ${slugEvento}`,
     });
-    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+    out.push(r.binarioPath);
   }
   return out;
 }
