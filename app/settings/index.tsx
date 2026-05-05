@@ -206,6 +206,13 @@ function SecaoPessoa() {
         accessibilityLabel="dispositivos pareados"
       />
 
+      <LinkSubTela
+        titulo="Contas Google"
+        subtitulo="Conexão com a sua agenda Google."
+        onPress={() => router.push('/settings/contas-google')}
+        accessibilityLabel="contas google"
+      />
+
       {ehSozinho ? (
         <LinkSubTela
           titulo="Adicionar segunda pessoa"

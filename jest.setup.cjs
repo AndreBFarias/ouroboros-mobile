@@ -460,3 +460,67 @@ jest.mock('react-native-gesture-handler', () => {
     },
   };
 });
+
+// M37.1: expo-auth-session, expo-web-browser e netinfo. Mocks
+// minimos suficientes para tests de unidade do googleAuth store
+// (que injeta token sintetico em web dev) e do calendarApi
+// (que tem fetch mockado por teste). AuthRequest e construtor
+// que devolve objeto com makeAuthUrlAsync + promptAsync; testes
+// que precisam exercitar flow real sobrescrevem com mock local.
+jest.mock('expo-auth-session', () => ({
+  __esModule: true,
+  makeRedirectUri: jest.fn(() => 'mock://callback'),
+  ResponseType: { Code: 'code', Token: 'token' },
+  AuthRequest: jest.fn().mockImplementation(function () {
+    this.codeVerifier = 'mock-code-verifier';
+    this.makeAuthUrlAsync = jest.fn(() => Promise.resolve('https://mock'));
+    this.promptAsync = jest.fn(() =>
+      Promise.resolve({ type: 'success', params: { code: 'mock-code' } })
+    );
+  }),
+  useAuthRequest: jest.fn(() => [
+    null,
+    null,
+    jest.fn().mockResolvedValue({ type: 'success', params: { code: 'mock' } }),
+  ]),
+}));
+
+jest.mock('expo-web-browser', () => ({
+  __esModule: true,
+  openAuthSessionAsync: jest.fn(() => Promise.resolve({ type: 'success' })),
+  maybeCompleteAuthSession: jest.fn(),
+  dismissBrowser: jest.fn(),
+}));
+
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: {
+    fetch: jest.fn(() =>
+      Promise.resolve({ isConnected: true, isInternetReachable: true })
+    ),
+    addEventListener: jest.fn(() => () => undefined),
+  },
+  fetch: jest.fn(() =>
+    Promise.resolve({ isConnected: true, isInternetReachable: true })
+  ),
+  addEventListener: jest.fn(() => () => undefined),
+  useNetInfo: jest.fn(() => ({
+    isConnected: true,
+    isInternetReachable: true,
+  })),
+}));
+
+// react-native-calendars: stub minimo. O componente Calendar vira
+// View que expoe propriedades clicaveis via onDayPress no
+// accessibilityHint para testes acessarem interacao.
+jest.mock('react-native-calendars', () => {
+  const React = require('react');
+  const RN = require('react-native');
+  const Calendar = (props) =>
+    React.createElement(RN.View, {
+      ...props,
+      accessibilityLabel: 'calendar-mock',
+    });
+  Calendar.displayName = 'MockCalendar';
+  return { __esModule: true, Calendar, CalendarList: Calendar, Agenda: Calendar };
+});

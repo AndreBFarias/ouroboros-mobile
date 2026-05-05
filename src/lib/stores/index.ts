@@ -36,3 +36,10 @@ export {
   type ContadorParcial,
   type TarefaParcial,
 } from './sessao';
+// adicionado por M37.1:
+export {
+  useGoogleAuth,
+  type GoogleAuthState,
+  type ContaGoogle,
+  type AutenticarResultado,
+} from './googleAuth';

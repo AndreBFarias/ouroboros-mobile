@@ -5,6 +5,106 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sessão E5 (2026-05-05 tarde) — M37.1 entregue + MOTI-REPLACE descopada
+
+#### E5 — M37.1 Google Calendar OAuth + leitura de agenda
+
+Sprint nova entregue em sessão paralela ao Bloco E. Rota raiz
+`/agenda` com 5 estados explícitos (`nao-conectado` /
+`conectando` / `online` / `offline` / `invalido`); store
+`useGoogleAuth` com persist SecureStore para tokens (< 2KB,
+respeita Armadilha A20); cache de eventos em arquivo
+`media/cache/agenda-<pessoa>.json` no Vault (TTL 1h, fallback
+stale-while-revalidate); `calendarApi.listarEventos` com
+tratamento explícito 401/403/429/5xx + retry 1x;
+`googleAuthFlow` PKCE com `pickClientId()` que adapta entre
+proxy Expo Go e custom-scheme dev-client/release (Armadilha
+A21); `<CalendarGrid>` mensal com tema Dracula sobre
+`react-native-calendars`; sub-tela `/settings/contas-google`
+para gestão por pessoa (revogar / reconectar).
+
+**Decisão durável**: client_id lido de `env.json` (gitignored)
+em vez de env vars `EXPO_PUBLIC_GOOGLE_CLIENT_ID_*`,
+documentada em **adendo ADR-0018**. Mais simples e mantém
+secrets fora do bundle. Pacote canônico
+`com.ouroboros.mobile`; SHA-1
+`E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`
+cadastrado.
+
+**Branch dev-only `__DEV__ && Platform.OS === 'web'`** em
+`useGoogleAuth.autenticar()` injeta token sintético + cache
+mock para validação Nível A (5 estados visíveis no Gauntlet
+sem rede). OAuth real só roda em runtime nativo — Nível B
+deferido para sprint `M37.1-checkpoint-nivel-B` quando APK
+dev-client fresh chegar.
+
+**Workaround Metro**: `react-native-calendars` quebra com
+`unstable_enablePackageExports = true` (default Expo SDK 54);
+`metro.config.js` ganha `resolveRequest` custom filtrado ao
+pacote afetado. Documentado no comentário do arquivo e
+escalado para sprint `M-BRIEF-A25` (registra como Armadilha
+A25 no VALIDATOR_BRIEF §4).
+
+**Achados colaterais (3 sub-sprints criadas, anti-débito):**
+- M37.1.1 — calendar locale PT-BR (header "Maio de 2026"
+  + "Sáb"). Spec `M37.1.1-spec.md`.
+- M-BRIEF-A25 — armadilha Metro package exports.
+- M37.1-checkpoint-nivel-B — OAuth real no emulador.
+
+**Métricas:** 1512→1530 testes (+18 / +3 suítes); bundle
+Hermes 7,19→7,7 MB (+0,51 MB absorvendo 4 deps:
+expo-auth-session, expo-web-browser, react-native-calendars,
+@react-native-community/netinfo); leak 0/6 markers; TS strict
+0; anonimato OK; PT-BR check 0 violações.
+
+**Arquivos novos (10):** `app/agenda.tsx`,
+`app/settings/contas-google.tsx`,
+`src/components/agenda/CalendarGrid.tsx`,
+`src/lib/services/{googleAuthFlow,calendarApi,calendarCache}.ts`,
+`src/lib/stores/googleAuth.ts`,
+`docs/SETUP-OAUTH-GOOGLE.md`,
+3 testes (`agenda.test.tsx`, `calendarApi.test.ts`,
+`googleAuth.test.ts`).
+
+**Arquivos modificados (9):** `app.json`, `app/settings/index.tsx`,
+ADR-0018, `jest.setup.cjs`, `metro.config.js`, `package.json`,
+`package-lock.json`, `MenuLateral.tsx`, `src/lib/stores/index.ts`.
+
+#### M-BUNDLE-DIET-MOTI-REPLACE — DESCOPADA para v1.1
+
+Executor sub-agente rejeitou formalmente a sprint após
+auditoria empírica via grep: superfície real é **42 arquivos
+distintos** com **46 ocorrências de `<MotiView>`** e **3
+`<AnimatePresence>`**, e **1 type-pivot canônico**
+(`MotiTransitionProp` em `src/lib/motion.ts` consumido por 20
+importadores diretos). Estimativa real **16-21h em 5
+sub-sprints sequenciais** (presets foundation → UI leaves →
+data viz → chrome FAB → AnimatePresence + uninstall), não 4-6h
+em 1 sprint como o spec original presumia. Riscos colaterais
+não-cobertos pelo spec: A17/A18 gorhom + Reanimated 4 web,
+A22 mock react-native-worklets, A23 NÃO-FIX moti SSR (que pode
+reabrir `web.output: "static"` se moti sair), peer issues
+Reanimated 4 + React 19. Springs `{damping, stiffness}` em
+moti vs Reanimated têm defaults diferentes para
+`mass`/`velocity`/`restDisplacementThreshold` — visualmente
+idêntico não é garantido sem calibração caso-a-caso.
+
+**Decisão durável do dono 2026-05-05:** descopar para v1.1.
+Ganho 333 KB ≈ 4% do bundle não justifica risco com margem
+atual 1,15 MB (limite 8,85 MB, atual 7,7 MB). ROADMAP §Bloco C
+marca a sprint como `[v2]` riscada com justificativa.
+
+#### M19.x mockups — spec materializado, dispatch enfileirado
+
+Toolchain JSX→HTML completa para mockups em
+`docs/design-canvas-export/`. Spec novo
+`docs/sprints/M19.x-spec.md` (~2,5-4h, esbuild +
+react-dom/server + dc-shims, gera
+`docs/Ouroboros_24_telas-standalone-rebuild.html` em arquivo
+separado preservando o bundle frozen original byte-a-byte).
+**Enfileirada** (não dispatchada) por decisão de qualidade do
+dono — janela paralela só após M41 ou entre sprints do Bloco E.
+
 ### Pós-auditoria — 4 sprints fechadas (2026-05-05)
 
 #### D1 — M-DEV-CLIENT-DECISAO
@@ -2919,9 +3019,9 @@ via docs centralizados:
     `exercicio`, `foco_dificil`, `dormi_mal`, `treino_bom`,
     `dia_leve`) + helper `formatTag` que converte snake_case em
     Sentence case para exibição.
-  - `tests/app/humor-rapido.test.tsx` (10 testes), 
-    `tests/lib/humor/saveHumor.test.ts` (5 testes), 
-    `tests/lib/humor/tagsRapidas.test.ts` (8 testes). Total de 
+  - `tests/app/humor-rapido.test.tsx` (10 testes),
+    `tests/lib/humor/saveHumor.test.ts` (5 testes),
+    `tests/lib/humor/tagsRapidas.test.ts` (8 testes). Total de
     testes salta de 120 para 143.
 
 - **Sprint M04 — FAB Radial integrado em capturas.** Commit

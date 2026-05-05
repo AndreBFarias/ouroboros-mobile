@@ -409,14 +409,44 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `widgetMostraNome` toggle) + 1 alarme próximo.
 - Bridge JS → atualizar widget ao registrar humor.
 
-## 13. Calendário Google — M37.1 + M37.2 (PAUSA usuário)
+## 13. Calendário Google — M37.1 (entregue 2026-05-05) + M37.2 (todo)
 
-- OAuth via expo-auth-session com clientId Expo Go vs
-  dev-client/release split.
-- **Leitura** (M37.1): rota `/agenda` mostra eventos do mês.
-- **Escrita** (M37.2): criar / atualizar / deletar evento.
-- Cache local de 7 dias.
-- Escopo mínimo `https://www.googleapis.com/auth/calendar.events`.
+- OAuth via `expo-auth-session` com **split clientId** Expo Go
+  (proxy `auth.expo.io`) vs dev-client/release (custom-scheme
+  `ouroboros://oauth-callback`). Detecção automática via
+  `Constants.appOwnership`. Armadilha A21.
+- **Leitura — M37.1** (entregue 2026-05-05, Nível A validado):
+  rota raiz `/agenda` mostra eventos dos próximos 30 dias com 5
+  estados explícitos:
+  - `nao-conectado` — empty + botão "Conectar conta Google".
+  - `conectando` — `<OuroborosLoader compacto>`.
+  - `online` — `<CalendarGrid>` mensal Dracula com dots por
+    dia + lista de "Eventos do dia" abaixo.
+  - `offline` — banner "Sem conexão. Mostrando eventos do
+    cache." sobre UI normal (cache stale aceito).
+  - `invalido` — banner vermelho "Sua conexão Google
+    expirou. Reconecte." + botão de reconectar.
+- **Escrita — M37.2** (todo, depende M37.1): criar / atualizar
+  / deletar evento. Pede reconsentimento subindo escopo de
+  `calendar.events.readonly` para `calendar.events`.
+- **Cache em arquivo** `media/cache/agenda-<pessoa>.json` no
+  Vault (Armadilha A20 — tokens só em SecureStore, eventos em
+  arquivo). TTL 1h com fallback stale-while-revalidate.
+- **Escopo mínimo M37.1**: `https://www.googleapis.com/auth/calendar.events.readonly`.
+- **Sub-tela** `/settings/contas-google`: lista contas
+  conectadas por pessoa, email, "Conectado há X dias", botão
+  Revogar.
+- **Privacidade absoluta**: tokens só em SecureStore local
+  (chave `ouroboros.google.v1`). Sem servidor próprio, sem
+  proxy, sem analytics. Documentado em ADR-0018.
+- **Credenciais**: `client_id` lido de `env.json` (gitignored)
+  via `import env from '../../env.json'` — nunca hardcoded
+  nem em env vars de bundle. Pacote `com.ouroboros.mobile`
+  + SHA-1 cadastrado no Google Cloud Console.
+- **Sub-sprints colaterais ainda abertas**: M37.1.1 (calendar
+  locale PT-BR — `Maio de 2026` em vez de `May 2026`),
+  M37.1-checkpoint-nivel-B (OAuth real no emulador, 3
+  screenshots).
 
 ## 14. Compartilhamento via Syncthing — M38 (4 dispositivos)
 

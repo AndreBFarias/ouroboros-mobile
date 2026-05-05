@@ -106,7 +106,8 @@
           "microphonePermission": "Permitir gravar áudio para transcrever na hora.",
           "speechRecognitionPermission": "Permitir reconhecimento de voz para preencher o diário."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

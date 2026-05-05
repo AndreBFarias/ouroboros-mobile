@@ -195,6 +195,44 @@ UI em `app/agenda.tsx` reage por estado:
   401/403/429/5xx.
 - ADR-0007 ganha link cruzado para esta ADR na próxima edição.
 
+## Adendo 2026-05-05 — env.json em vez de env vars EXPO_PUBLIC_*
+
+Na execução real de M37.1, o dono do projeto criou um único OAuth
+client tipo **Desktop/Installed** no Google Cloud Console e salvou
+o JSON original em `env.json` (raiz, gitignored). Decisão durol:
+o código lê `env.installed.client_id` em runtime via
+`import env from '../../env.json'` em vez de
+`process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_*`.
+
+**Motivos:**
+
+1. **Privacidade efetiva.** Env vars `EXPO_PUBLIC_*` são embedded
+   no bundle JS do build, então ficam visíveis em qualquer extração
+   do APK. `env.json` gitignored mantém o `client_id` longe do git
+   e do bundle quando o build for feito com `--no-bundler` em
+   ambiente sem o arquivo.
+2. **Simplicidade.** Um único `client_id` Desktop cobre Expo Go
+   (proxy `auth.expo.io`) e dev-client/release (custom scheme
+   `ouroboros://oauth-callback`) porque `expo-auth-session` usa
+   o mesmo `client_id` em ambos os fluxos quando combinado com
+   `makeRedirectUri` que adapta por ambiente.
+3. **Setup do dono já feito.** `client_id` válido já está em
+   `env.json`; SHA-1 do keystore release/dev (mesmo) cadastrado.
+4. **Fallback futuro.** Se Google rejeitar mismatch e for preciso
+   2 clients (Web + Android), basta estender `pickClientId()` para
+   ler `env.installed.client_id` + um campo opcional
+   `env.android.client_id` futuro. Mudança backward-compat.
+
+**Implicação técnica:**
+
+- A Decisão 1 do ADR (split clientId) **continua válida
+  conceitualmente** (detecção via `Constants.appOwnership`,
+  `makeRedirectUri` por ambiente), mas operacionalmente a v1.0
+  passa um único `clientId` em ambos os ramos.
+- A2 do BRIEF §4 (split clientId) continua marcada como
+  armadilha conhecida; só não é mais bloqueante na v1.0.
+- Setup detalhado em `docs/SETUP-OAUTH-GOOGLE.md`.
+
 ## Referências
 
 - ADR-0007 (Zero Telemetria, Zero Analytics)

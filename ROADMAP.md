@@ -121,7 +121,7 @@ spec PARA o ciclo e pede clarificação.
 | ~~AUDIT~~ | ~~M-SHEET-MODAL-SNAP~~ | **fechada 2026-05-05** (DOM patch web-only após mount via useEffect; ty=920→276/184/92 medido) | `M-SHEET-MODAL-SNAP-spec.md` | — |
 | ~~AUDIT~~ | ~~M-DEBITO-CATEGORIA-CORES-VISIBLE~~ | **fechada 2026-05-05** (hexToRgba 40% opacity em rest, +4 cases) | `M-DEBITO-CATEGORIA-CORES-VISIBLE-spec.md` | — |
 | ~~AUDIT~~ | ~~M-DEBITO-CATEGORIA-ICONE~~ | **fechada 2026-05-05** (helper corDaCategoria refletindo accent, +6 cases) | `M-DEBITO-CATEGORIA-ICONE-spec.md` | — |
-| **PARALELO-E** | **M-BUNDLE-DIET-MOTI-REPLACE** | Substituir Moti por Reanimated puro (333 KB ganho; v1.0 conforme decisão dono 2026-05-05) | `M-BUNDLE-DIET-MOTI-REPLACE-spec.md` | 4-6h |
+| ~~PARALELO-E~~ | ~~M-BUNDLE-DIET-MOTI-REPLACE~~ | **DESCOPADA para v1.1 em 2026-05-05** — executor revelou superfície real 42 arquivos / 16-21h vs 4-6h estimadas (motion.ts pivot, AnimatePresence, FAB radial, drawer, waveform, etc). Ganho 333 KB ≈ 4% do bundle não justifica risco com margem atual 1,15 MB. Decisão durável dono | `M-BUNDLE-DIET-MOTI-REPLACE-spec.md` | [v2] |
 | **PARALELO-E** | **M19.x** | Mockups toolchain JSX→HTML completa (decisão dono 2026-05-05: paralelo ao Bloco E) | `M19.x-spec.md` | 1,5-3h |
 
 **BLOCO D — Decisão registrada (executar como pre-condição de E)**
@@ -138,7 +138,10 @@ spec PARA o ciclo e pede clarificação.
 | E2 | **M07.x** | Conquistas com mídia obrigatória | `M07.x-conquistas-com-midia.md` | 5-7h |
 | E3 | **M11.5** | Calendário visual de conquistas | `M11.5-spec.md` | 5-7h |
 | E4 | **M09** | Scanner OCR notas fiscais (paralelo a E3) | `M09-spec.md` | 7-9h |
-| E5 | **M37.1** | Google Calendar OAuth (PAUSA usuário) | `M37.1-spec.md` | 6-7h |
+| E5 | **M37.1** | Google Calendar OAuth (entregue 2026-05-05, validado maestro, aguarda commit dono) | `M37.1-spec.md` | 6-7h |
+| E5.x.1 | **M37.1.1** | Calendar locale PT-BR (header "Maio de 2026" + dias acentuados) | `M37.1.1-spec.md` | 0,5-1h |
+| E5.x.2 | **M-BRIEF-A25** | Registrar A25 (Metro package exports vs imports relativos) no VALIDATOR_BRIEF §4 | `M-BRIEF-A25-METRO-PACKAGE-EXPORTS-spec.md` | 0,3h |
+| E5.B | **M37.1-checkpoint-nivel-B** | OAuth real no emulador (3 screenshots; depende APK dev-client fresh) | `M37.1-checkpoint-nivel-B-spec.md` | 0,5-1h |
 | E6 | **M37.2** | Google Calendar escrita | `M37.2-spec.md` | 4-5h |
 
 **BLOCO F — Field test (humano-only, bloqueante para M41)**
@@ -153,7 +156,9 @@ spec PARA o ciclo e pede clarificação.
 |---|---|---|---|---|
 | G1 | **M41** | APK Release v1.0.0 final (PAUSA usuário) | `M41-spec.md` | 3-4h |
 
-**Estimativa total para v1.0:** ~63-90h ativas + 7 dias field test.
+**Estimativa total para v1.0:** ~64-92h ativas + 7 dias field test
+(inclui M37.1.1 + M-BRIEF-A25 + M37.1-checkpoint-nivel-B
+adicionadas em 2026-05-05 como anti-débito de M37.1).
 
 ### Inventário Gauntlet (estado atual)
 

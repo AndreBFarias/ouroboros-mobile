@@ -23,6 +23,7 @@ import {
   BarChart,
   BellRing,
   Calendar,
+  CalendarRange,
   Camera,
   Dumbbell,
   Hash,
@@ -96,6 +97,8 @@ export function MenuLateral() {
       { label: 'Memórias', a11yLabel: 'item memorias', icone: Layers, route: '/memoria' },
       { label: 'Humor', a11yLabel: 'item humor', icone: Heart, route: '/humor' },
       { label: 'Calendário', a11yLabel: 'item calendario', icone: Calendar, route: '/calendario' },
+      // M37.1: item "Agenda" (Google Calendar leitura).
+      { label: 'Agenda', a11yLabel: 'item agenda', icone: CalendarRange, route: '/agenda' },
     ];
     if (featureToggles.mostrarFinancasEmDesenvolvimento) {
       ver.push({ label: 'Finanças', a11yLabel: 'item financas', icone: Wallet, route: '/financas' });
