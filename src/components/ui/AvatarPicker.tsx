@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
+import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { corDe, inicialDe } from '@/config/pessoas.config';
@@ -163,6 +164,7 @@ function PlaceholderCamera({ pessoa, size }: PlaceholderProps) {
     >
       <Camera size={size * 0.32} color={colors.mutedDecor} strokeWidth={1.6} />
       <Text
+        {...textPropsDecor()}
         style={{
           color: colors.mutedDecor,
           fontFamily: 'JetBrainsMono_500Medium',

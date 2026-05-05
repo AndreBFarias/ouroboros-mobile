@@ -199,6 +199,13 @@ function SecaoPessoa() {
         accessibilityLabel="reinicializar pasta do vault"
       />
 
+      <LinkSubTela
+        titulo="Dispositivos pareados"
+        subtitulo="Lista de aparelhos com este Vault sincronizado."
+        onPress={() => router.push('/settings/dispositivos')}
+        accessibilityLabel="dispositivos pareados"
+      />
+
       {ehSozinho ? (
         <LinkSubTela
           titulo="Adicionar segunda pessoa"

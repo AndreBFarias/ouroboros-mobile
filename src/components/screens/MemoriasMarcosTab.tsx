@@ -24,6 +24,7 @@ import {
   type BottomSheetRef,
 } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
+import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import { useMarcos } from '@/lib/hooks/useMarcos';
 import { SheetNovoMarco } from './SheetNovoMarco';
 import { SecaoEvolucaoCorporal } from './MemoriasMarcosTab/SecaoEvolucaoCorporal';
@@ -111,6 +112,7 @@ function ItemTimeline({ marco }: { marco: Marco }) {
           </Text>
           {marco.auto ? (
             <Text
+              {...textPropsDecor()}
               style={{
                 color: colors.mutedDecor,
                 fontFamily: 'JetBrainsMono_400Regular',

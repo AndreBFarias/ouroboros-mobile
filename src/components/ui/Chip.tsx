@@ -7,7 +7,7 @@ import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
-import { colors } from '@/theme/tokens';
+import { colors, hitSlop as hitSlopToken } from '@/theme/tokens';
 
 // 'ghost' = chip neutro/genérico (categoria "outro", filtros sem
 // destaque). Selected vira fundo muted-decor com texto bg, em vez de
@@ -66,6 +66,11 @@ export function Chip({
         onPress();
       }}
       disabled={disabled}
+      // WCAG 2.1 SC 2.5.5 — area de toque minima 44x44dp (Material AAA).
+      // Visual do chip mantem altura ~32dp (paddingVertical 8 + texto 14
+      // + borderWidth 1); hitSlop expande area sensivel sem alterar layout.
+      // Resultado efetivo: 32 + 8*2 = 48dp vertical, suficiente para AA.
+      hitSlop={hitSlopToken}
       accessibilityRole="button"
       accessibilityLabel={`chip ${label}`}
       accessibilityState={{ selected, disabled }}
@@ -86,7 +91,11 @@ export function Chip({
           // sem `from` correspondente, deixando o chip selecionado sem
           // fundo preenchido e o texto colors.bg invisivel).
           backgroundColor: selected ? accentHex : 'transparent',
-          borderColor: selected ? accentHex : colors.mutedDecor,
+          // Borda em rest usa colors.muted (#c9c9cc, ratio ~5.30:1 sobre
+          // bgElev) em vez de mutedDecor (~1.74:1, falha WCAG AA texto
+          // grande). Preserva contraste >= 3:1 contra qualquer superficie
+          // do app (bg, bgAlt, bgElev). Auditoria 2026-05-04 secao 4.
+          borderColor: selected ? accentHex : colors.muted,
         }}
       >
         <Text

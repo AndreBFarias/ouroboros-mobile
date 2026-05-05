@@ -73,7 +73,7 @@ export function HistoricoSparkline({
       >
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 12,
             lineHeight: 18,

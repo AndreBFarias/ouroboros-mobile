@@ -379,7 +379,7 @@ export default function NovaMedida() {
                           onPress={() => handleRemoverFoto(key)}
                           accessibilityRole="button"
                           accessibilityLabel={`remover foto ${key}`}
-                          hitSlop={6}
+                          hitSlop={12}
                           style={{
                             position: 'absolute',
                             top: 4,

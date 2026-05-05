@@ -74,16 +74,18 @@ describe('saveHumor', () => {
     expect(out.uri).toMatch(/daily\/2026-04-29\.md$/);
   });
 
-  it('outro autor ja gravou: aplica sufixo de pessoa', async () => {
+  it('outra instalacao ja gravou: aplica sufixo deviceId M38', async () => {
     mockReadVaultFile.mockResolvedValueOnce({
       meta: { ...baseHumor, autor: 'pessoa_b' },
       body: '',
     });
     const out = await saveHumor(baseHumor, VAULT_ROOT);
     expect(out.conflito).toBe(true);
-    expect(out.uri).toMatch(/daily\/2026-04-29-pessoa_a\.md$/);
+    // M38: suffix mudou de '-pessoa_<a|b>' para '-ouro-<6chars>' para
+    // cobrir 4+ devices em vez de so 2.
+    expect(out.uri).toMatch(/daily\/2026-04-29-ouro-[a-z0-9]{6}\.md$/);
     const [uri] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('daily/2026-04-29-pessoa_a.md');
+    expect(uri).toMatch(/daily\/2026-04-29-ouro-[a-z0-9]{6}\.md$/);
   });
 
   it('rejeita payload invalido (humor=0)', async () => {

@@ -137,6 +137,19 @@ const migrarAssetsHook: BootHook = async () => {
   await migrarAssetsLegacyParaMedia(vaultRoot);
 };
 
+// M38: registra/atualiza este dispositivo no inbox/_devices.md a cada
+// boot. Idempotente. Marca dispositivos antigos com mesma pessoa como
+// 'substituido_por: <novoId>' quando SecureStore foi zerado por
+// uninstall+reinstall sem backup (resilience). Swallow-erro tolerado
+// (CONTRACT secao 7.9): falha de I/O nao impede o boot.
+const atualizarDeviceIndexHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { atualizarDeviceIndex } = await import('@/lib/vault/devicesIndex');
+  await atualizarDeviceIndex();
+};
+
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
@@ -153,5 +166,9 @@ BOOT_HOOKS.push(
   // boot (idempotente). Roda por ultimo: nao depende de notificacoes
   // nem de stores reagendados, e seu custo (readDirectory + N copies)
   // nao deve atrasar arranque interativo do app.
-  migrarAssetsHook
+  migrarAssetsHook,
+  // M38: registra/atualiza dispositivo atual no devices index. Roda
+  // depois de migrarAssets para nao competir por SAF de leitura no
+  // arranque. Idempotente (so ultima_atividade muda em boot subsequente).
+  atualizarDeviceIndexHook
 );

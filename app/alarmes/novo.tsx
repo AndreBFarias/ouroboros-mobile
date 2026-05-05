@@ -382,7 +382,10 @@ export default function AlarmesNovoOuEditar() {
         ...parsed.data,
         notification_ids: notificationIds,
       };
-      await escreverAlarme(vaultRoot, persistido);
+      // M38: passa modoCriacao=!editando para que escreverAlarme
+      // aplique suffix '-<deviceId>' caso outro device ja tenha
+      // criado alarme com mesmo slug (conflict resolution Syncthing).
+      await escreverAlarme(vaultRoot, persistido, '', !editando);
       // M24: limpa rascunho de criacao pos-save bem-sucedido. Em
       // modo edicao tambem limpamos para nao recarregar dados antigos
       // se o usuario abrir /alarmes/novo depois.

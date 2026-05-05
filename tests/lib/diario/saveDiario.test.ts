@@ -140,32 +140,31 @@ describe('saveDiario validacao', () => {
 });
 
 describe('saveDiario conflito de path', () => {
-  it('aplica sufixo numerico quando arquivo canonico ja existe', async () => {
+  it('M38: aplica suffix deviceId quando arquivo canonico ja existe', async () => {
     mockReadVaultFile.mockImplementation((uri) => {
       if (typeof uri !== 'string') return Promise.resolve(null);
-      // Canonico existe; primeira tentativa com -1 nao existe.
+      // Canonico existe; suffix deviceId nao existe ainda.
       if (/-raiva\.md$/.test(uri)) {
         return Promise.resolve({ meta: baseTrigger, body: '' });
       }
       return Promise.resolve(null);
     });
     const out = await saveDiario(baseTrigger, 'corpo.', VAULT_ROOT);
-    expect(out.uri).toMatch(/-raiva-1\.md$/);
+    // M38: cobre 4 nos (2 desktops + 2 celulares) via -<deviceId>.
+    expect(out.uri).toMatch(/-raiva-ouro-[a-z0-9]{6}\.md$/);
   });
 
-  it('aplica sufixo numerico crescente em colisoes consecutivas', async () => {
+  it('M38: fallback timestamp se ate suffix deviceId colidir', async () => {
     mockReadVaultFile.mockImplementation((uri) => {
       if (typeof uri !== 'string') return Promise.resolve(null);
-      if (
-        /-raiva\.md$/.test(uri) ||
-        /-raiva-1\.md$/.test(uri) ||
-        /-raiva-2\.md$/.test(uri)
-      ) {
+      // Tudo existe -- canonico, deviceId. Cai no fallback ts.
+      if (/-raiva(-ouro-[a-z0-9]{6})?\.md$/.test(uri)) {
         return Promise.resolve({ meta: baseTrigger, body: '' });
       }
       return Promise.resolve(null);
     });
     const out = await saveDiario(baseTrigger, 'corpo.', VAULT_ROOT);
-    expect(out.uri).toMatch(/-raiva-3\.md$/);
+    // Fallback: deviceId + timestamp ms.
+    expect(out.uri).toMatch(/-raiva-ouro-[a-z0-9]{6}-\d{10,}\.md$/);
   });
 });

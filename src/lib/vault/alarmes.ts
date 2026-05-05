@@ -9,6 +9,7 @@ import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
+import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 function joinUri(root: string, rel: string): string {
   const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
@@ -55,16 +56,31 @@ export async function lerAlarme(
 // Persiste um alarme. Caller fornece meta já validado (revalidamos
 // defensivamente). Escreve em alarmes/<slug>.md derivando o nome do
 // slug. Body opcional para anotacao livre (tipicamente vazio).
+//
+// M38: parametro opcional modoCriacao. Quando true, se ja existe
+// arquivo no path canonico (outro device criou alarme com mesmo
+// slug), aplica suffix '-<deviceId>'. Quando false (default = edicao),
+// preserva sobrescrita -- usuario esta editando seu proprio alarme.
 export async function escreverAlarme(
   vaultRoot: string,
   meta: Alarme,
-  body: string = ''
+  body: string = '',
+  modoCriacao: boolean = false
 ): Promise<{ uri: string; rel: string }> {
   const parsed = AlarmeSchema.safeParse(meta);
   if (!parsed.success) {
     throw new Error(`alarme invalido: ${parsed.error.message}`);
   }
-  const rel = alarmesPath(parsed.data.slug);
+  const relCanonico = alarmesPath(parsed.data.slug);
+  let rel = relCanonico;
+  if (modoCriacao) {
+    const uriCanonico = joinUri(vaultRoot, relCanonico);
+    const existente = await readVaultFile(uriCanonico, AlarmeSchema);
+    if (existente) {
+      const deviceId = await getDeviceId();
+      rel = applyDeviceIdSuffix(relCanonico, deviceId);
+    }
+  }
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<Alarme>(uri, parsed.data, body);
   return { uri, rel };

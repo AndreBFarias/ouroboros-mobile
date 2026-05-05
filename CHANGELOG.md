@@ -5,6 +5,106 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Bloco C FECHADO — C2.x.1 + C2.x.2 + C2.x.3 + C6 batch (2026-05-05)
+
+#### C2.x.1 — M-WCAG-CHIP
+
+`Chip.tsx`: `hitSlop={{ top:8, bottom:8, left:8, right:8 }}` via
+token canônico `hitSlopToken`. Visual mantido 32dp + hitSlop = 48dp
+efetivo. Borda em rest trocada de `colors.mutedDecor` (ratio 1.74)
+para `colors.muted` (ratio 5.30 sobre `bgElev` — passa WCAG AA).
+Borda em selected mantém `accentHex` (não muda).
+
+**Aritmética:** +3 cases Jest (`Chip.test.tsx`). E2E mede touch +
+ratio via Gauntlet em `/humor-rapido`.
+
+#### C2.x.2 — M-WCAG-MEDIDAS
+
+`app/medidas/novo.tsx:382` botão remover foto: `hitSlop={6}` →
+`hitSlop={12}`. Visual mantido 22dp + hitSlop = 46dp efetivo
+(WCAG AA OK). Edit cirúrgica de 1 literal.
+
+#### C2.x.3 — M-WCAG-MUTED-DECOR-TEXTO
+
+22 ocorrências de `colors.mutedDecor` em `<Text>` auditadas
+caso-a-caso:
+- **14 promoções para `colors.muted`** (ratio 4.6+) — todos os
+  empty states e mensagens funcionais informativas.
+- **8 marcações decorativas** via novo helper
+  `src/lib/a11y/textPropsDecor.ts` (`textPropsDecor()` retorna
+  `{ dataSet: { a11y: 'decor' } }` — bypass de tipagem RN/RN-Web).
+  Aplicado em micro-rótulos uppercase, badges "auto", glifos
+  decorativos.
+
+**Achado pendente (sub-sprint nova):** 10 ocorrências em
+`app/exercicios/[slug].tsx`, `app/eventos.tsx`, `app/todo.tsx`,
+`app/diario-emocional.tsx`, `app/contadores/[slug].tsx`,
+`app/settings/sobre.tsx`, `gauntletDashboard.tsx` — fora da lista
+canônica do RELATÓRIO. Sub-sprint
+**M-WCAG-MUTED-DECOR-TEXTO-V2** materializar futura.
+
+#### C6 — M38 conflict resolution
+
+DeviceId único por instalação + sufixo de colisão de slug + index
+de devices pareados.
+
+**Arquivos novos (7):**
+- `src/lib/util/deviceId.ts` — gera/persiste deviceId em
+  SecureStore.
+- `src/lib/vault/devicesIndex.ts` — schema/atualizar/renomear
+  index `.ouroboros/devices.json`.
+- `src/lib/vault/devicesPath.ts`.
+- `app/settings/dispositivos.tsx` — sub-tela "Dispositivos
+  pareados".
+- 2 testes Jest novos + 1 E2E.
+
+**Arquivos modificados (12):**
+- 3 helpers de save (`saveHumor`, `saveDiario`, `saveEvento`):
+  colisão usa deviceId em vez de sufixo numérico crescente.
+- 3 helpers de Vault (`alarmes`, `contadores`, `tarefas`): param
+  `modoCriacao` opcional para distinguir create de update.
+- 2 telas (`alarmes/novo`, `contadores/novo`): passam `modoCriacao=true`.
+- `app/settings/index.tsx`: link "Dispositivos pareados".
+- `src/lib/boot/reagendamento.ts`: `atualizarDeviceIndexHook` plug.
+- 3 testes Jest atualizados.
+- `docs/FEATURES-CANONICAS.md` §14 expandida (6→14 bullets).
+
+**Backward-compat preservado:** sufixos legados `-pessoa_<a|b>.md`
+continuam aceitos pelos readers.
+
+#### Métricas batch C2.x.1+C2.x.2+C2.x.3+C6
+
+- Testes: 1473 → **1502** (+29: 3 chip + 0 medidas + 0 mutedDecor
+  refactor + 26 M38).
+- Suítes: 165 → **167** (+2: deviceId + devicesIndex).
+- Bundle Hermes: **6.9 → 6.9 MB** (incremento desprezível).
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet
+  leak OK.
+
+### Bloco C — encerramento
+
+Release-readiness completo (10 sprints fechadas — 6 da fila
+original + 4 sub-sprints WCAG):
+
+- C1 — Bundle diet (-1.67 MB; em A já)
+- C2 — WCAG audit + helper + 25 testes
+- C3 — Release assets (6 PNGs)
+- C4 — Sobre + release notes
+- C5 — Backup automático opt-in
+- C2.x.1 — WCAG-CHIP
+- C2.x.2 — WCAG-MEDIDAS
+- C2.x.3 — WCAG-MUTED-DECOR-TEXTO
+- C6 — M38 conflict resolution
+
+**Sub-sprint adiada:** M-WCAG-MUTED-DECOR-TEXTO-V2 (10 ocorrências
+fora da lista canônica original).
+
+**Métricas finais Bloco C:** 1427 → **1502** testes (+75), 160 →
+**167** suítes (+7), Hermes **7.14 → 6.9 MB**. Próximo: Bloco D
+(decisão D1) → Bloco E (dev-client, 6 sprints).
+
+
+
 ### Bloco C — C2 + C3 + C4 + C5 batch paralelo (2026-05-05)
 
 #### C2 — M-WCAG-COMPLETO

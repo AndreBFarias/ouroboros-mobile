@@ -268,7 +268,7 @@ export function ShareReceiver(props: ShareReceiverProps) {
 
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 11,
             lineHeight: 16,

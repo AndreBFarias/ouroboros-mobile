@@ -259,7 +259,7 @@ describe('saveEvento validacao', () => {
 });
 
 describe('saveEvento conflito de path', () => {
-  it('aplica sufixo numerico quando arquivo canonico ja existe', async () => {
+  it('M38: aplica suffix deviceId quando arquivo canonico ja existe', async () => {
     mockReadVaultFile.mockImplementation((uri) => {
       if (typeof uri !== 'string') return Promise.resolve(null);
       if (/-vila-madalena\.md$/.test(uri)) {
@@ -273,17 +273,14 @@ describe('saveEvento conflito de path', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/-vila-madalena-1\.md$/);
+    // M38: cobre 4 nos via -<deviceId> (substituiu -1/-2 numericos).
+    expect(out.uri).toMatch(/-vila-madalena-ouro-[a-z0-9]{6}\.md$/);
   });
 
-  it('aplica sufixo numerico crescente em colisoes consecutivas', async () => {
+  it('M38: fallback timestamp se ate suffix deviceId colidir', async () => {
     mockReadVaultFile.mockImplementation((uri) => {
       if (typeof uri !== 'string') return Promise.resolve(null);
-      if (
-        /-vila-madalena\.md$/.test(uri) ||
-        /-vila-madalena-1\.md$/.test(uri) ||
-        /-vila-madalena-2\.md$/.test(uri)
-      ) {
+      if (/-vila-madalena(-ouro-[a-z0-9]{6})?\.md$/.test(uri)) {
         return Promise.resolve({ meta: baseMeta, body: '' });
       }
       return Promise.resolve(null);
@@ -294,6 +291,6 @@ describe('saveEvento conflito de path', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/-vila-madalena-3\.md$/);
+    expect(out.uri).toMatch(/-vila-madalena-ouro-[a-z0-9]{6}-\d{10,}\.md$/);
   });
 });

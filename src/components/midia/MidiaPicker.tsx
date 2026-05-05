@@ -307,7 +307,7 @@ export function MidiaPicker({
       {cheio ? (
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 11,
           }}

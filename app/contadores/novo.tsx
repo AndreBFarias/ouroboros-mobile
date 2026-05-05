@@ -172,7 +172,9 @@ export default function ContadoresNovo() {
         return;
       }
 
-      await escreverContador(vaultRoot, parsed.data);
+      // M38: criacao -> aplica suffix '-<deviceId>' se outro device
+      // ja criou contador com mesmo slug (conflict resolution Syncthing).
+      await escreverContador(vaultRoot, parsed.data, '', true);
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('contadoresNovo');
       void haptics.light();

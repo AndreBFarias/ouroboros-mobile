@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import { Card } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme/tokens';
+import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import type { FinancasTransacao } from '@/lib/schemas/financas-cache';
 
 interface ListaTransacoesProps {
@@ -95,7 +96,7 @@ function LinhaTransacao({ item, ultima }: LinhaProps): ReactNode {
       >
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: typography.caption.size,
             lineHeight:
@@ -105,6 +106,7 @@ function LinhaTransacao({ item, ultima }: LinhaProps): ReactNode {
           {formatarDataDM(item.data)} · {item.categoria}
         </Text>
         <Text
+          {...textPropsDecor()}
           style={{
             color: colors.mutedDecor,
             fontFamily: 'JetBrainsMono_400Regular',

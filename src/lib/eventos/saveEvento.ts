@@ -25,6 +25,7 @@ import {
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { slugifyEvento } from '@/lib/eventos/slug';
 import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
+import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 export interface SaveEventoArgs {
   meta: EventoMeta;
@@ -48,16 +49,12 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
-// Aplica sufixo numerico no rel para evitar colisao ('-1', '-2', ...).
-function applyConflictSuffix(rel: string, n: number): string {
-  const dotIdx = rel.lastIndexOf('.');
-  if (dotIdx === -1) return `${rel}-${n}`;
-  return `${rel.slice(0, dotIdx)}-${n}${rel.slice(dotIdx)}`;
-}
-
-// Tenta gravar no path canonico. Se já existir, incrementa sufixo
-// até encontrar slot livre. Limite defensivo de 9 tentativas para
-// não entrar em loop infinito caso o reader minta sobre existencia.
+// Tenta gravar no path canonico. Se ja existir (colisao real entre
+// devices via Syncthing), aplica suffix '-<deviceId>' M38 alinhado
+// com saveHumor/saveDiario; cobre 4 nos sem perder dado.
+//
+// Fallback: deviceId + timestamp ms para o caso raro de mesmo device
+// regravando mesmo dia/slug em tempo identico.
 async function resolvePath(
   vaultRoot: string,
   relCanonico: string
@@ -66,14 +63,17 @@ async function resolvePath(
   const existente = await readVaultFile(uriCanonico, EventoSchema);
   if (!existente) return relCanonico;
 
-  for (let n = 1; n <= 9; n++) {
-    const rel = applyConflictSuffix(relCanonico, n);
-    const uri = joinUri(vaultRoot, rel);
-    const ja = await readVaultFile(uri, EventoSchema);
-    if (!ja) return rel;
-  }
-  // Fallback: timestamp em ms para garantir unicidade absoluta.
-  return applyConflictSuffix(relCanonico, Date.now());
+  const deviceId = await getDeviceId();
+  const relComDevice = applyDeviceIdSuffix(relCanonico, deviceId);
+  const uriComDevice = joinUri(vaultRoot, relComDevice);
+  const jaComDevice = await readVaultFile(uriComDevice, EventoSchema);
+  if (!jaComDevice) return relComDevice;
+
+  // Fallback: deviceId + timestamp ms.
+  const dotIdx = relComDevice.lastIndexOf('.');
+  const ts = Date.now();
+  if (dotIdx === -1) return `${relComDevice}-${ts}`;
+  return `${relComDevice.slice(0, dotIdx)}-${ts}${relComDevice.slice(dotIdx)}`;
 }
 
 // Sufixo random curto (4 chars hex) para deduplicar fotos do mesmo

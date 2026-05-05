@@ -18,6 +18,7 @@ import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ContadorSchema, type Contador } from '@/lib/schemas/contador';
 import { diasEntre } from '@/lib/util/diasEntre';
+import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 function joinUri(root: string, rel: string): string {
   const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
@@ -63,16 +64,32 @@ export async function lerContador(
 // Persiste um contador. Caller fornece meta já validado (revalidamos
 // defensivamente). Body opcional para anotacao livre (motivo opcional
 // em prosa, conforme spec seção 3).
+//
+// M38: parametro opcional modoCriacao. Quando true, se ja existe
+// arquivo no path canonico (outro device criou contador com mesmo
+// slug), aplica suffix '-<deviceId>' para evitar overwrite cego.
+// Quando false (default = edicao), preserva comportamento legacy de
+// sobrescrita -- usuario esta editando seu proprio contador.
 export async function escreverContador(
   vaultRoot: string,
   meta: Contador,
-  body: string = ''
+  body: string = '',
+  modoCriacao: boolean = false
 ): Promise<{ uri: string; rel: string }> {
   const parsed = ContadorSchema.safeParse(meta);
   if (!parsed.success) {
     throw new Error(`contador invalido: ${parsed.error.message}`);
   }
-  const rel = contadoresPath(parsed.data.slug);
+  const relCanonico = contadoresPath(parsed.data.slug);
+  let rel = relCanonico;
+  if (modoCriacao) {
+    const uriCanonico = joinUri(vaultRoot, relCanonico);
+    const existente = await readVaultFile(uriCanonico, ContadorSchema);
+    if (existente) {
+      const deviceId = await getDeviceId();
+      rel = applyDeviceIdSuffix(relCanonico, deviceId);
+    }
+  }
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<Contador>(uri, parsed.data, body);
   return { uri, rel };

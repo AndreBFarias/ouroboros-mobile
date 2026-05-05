@@ -1,6 +1,11 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { useState } from 'react';
 import { Chip, ChipGroup, type ChipOption } from '@/components/ui/Chip';
+import { colors } from '@/theme/tokens';
+import {
+  ratioContraste,
+  WCAG_AA_TEXTO_GRANDE,
+} from '@/lib/a11y/contraste';
 
 const OPTS: ChipOption[] = [
   { value: 'a', label: 'a' },
@@ -30,6 +35,31 @@ describe('Chip', () => {
     );
     fireEvent.press(getByLabelText('chip bloqueado'));
     expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it('expoe hitSlop simetrico de 8dp (area efetiva >= 44dp)', () => {
+    const { getByLabelText } = render(
+      <Chip label="alvo" selected={false} onPress={jest.fn()} />
+    );
+    const pressable = getByLabelText('chip alvo');
+    expect(pressable.props.hitSlop).toEqual({
+      top: 8,
+      bottom: 8,
+      left: 8,
+      right: 8,
+    });
+  });
+});
+
+describe('Chip WCAG AA — borda em rest', () => {
+  it('borda em rest usa colors.muted (>= 3:1 sobre bgElev)', () => {
+    const ratio = ratioContraste(colors.muted, colors.bgElev);
+    expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_TEXTO_GRANDE);
+  });
+
+  it('mutedDecor antigo falhava WCAG AA texto grande sobre bgElev', () => {
+    const ratio = ratioContraste(colors.mutedDecor, colors.bgElev);
+    expect(ratio).toBeLessThan(WCAG_AA_TEXTO_GRANDE);
   });
 });
 

@@ -6,10 +6,10 @@
 // 'registro' se vazia). Em colisao improvavel (mesmo arquivo no
 // mesmo minuto e mesmo slug), aplica sufixo numerico crescente.
 //
-// Diferenca para saveHumor: aqui não ha A5 de Syncthing porque o
-// path já contem hora e minuto, dificultando colisao real entre
-// dois celulares. Mantemos a logica de sufixo defensiva mesmo
-// assim.
+// Diferenca para saveHumor: o path já contem hora e minuto, dificultando
+// colisao real entre devices. Quando ha colisao, M38 troca o sufixo
+// numerico ('-1', '-2', ...) por '-<deviceId>' para alinhar com o
+// padrao de conflict resolution do Syncthing (4 nos).
 import {
   diarioEmocionalPath,
   readVaultFile,
@@ -19,6 +19,7 @@ import {
   DiarioEmocionalSchema,
   type DiarioEmocionalMeta,
 } from '@/lib/schemas/diario_emocional';
+import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 export interface SaveDiarioResult {
   uri: string;
@@ -42,17 +43,15 @@ function slugDe(meta: DiarioEmocionalMeta): string {
   return 'registro';
 }
 
-// Aplica sufixo numerico no rel para evitar colisao ('-1', '-2', ...).
-function applyConflictSuffix(rel: string, n: number): string {
-  const dotIdx = rel.lastIndexOf('.');
-  if (dotIdx === -1) return `${rel}-${n}`;
-  return `${rel.slice(0, dotIdx)}-${n}${rel.slice(dotIdx)}`;
-}
-
 // Tenta gravar no path canonico. Se já existir um arquivo no mesmo
-// URI, incrementa sufixo até encontrar slot livre. Limite defensivo
-// de 9 tentativas (mesmo minuto, mesmo slug, mesmo autor) para não
-// entrar em loop infinito caso o reader minta sobre existencia.
+// URI (colisao real entre devices via Syncthing), aplica suffix
+// '-<deviceId>' para garantir slot unico por instalacao. M38: padrao
+// alinhado com saveHumor, cobre 4 nos.
+//
+// Se ate o suffix de deviceId colidir (mesmo deviceId regravando
+// mesmo minuto, mesmo slug -- improvavel mas teoricamente possivel
+// quando user clica salvar duas vezes no mesmo segundo), aplica
+// fallback de timestamp ms para garantir unicidade absoluta.
 async function resolvePath(
   vaultRoot: string,
   relCanonico: string
@@ -64,14 +63,17 @@ async function resolvePath(
   );
   if (!existente) return relCanonico;
 
-  for (let n = 1; n <= 9; n++) {
-    const rel = applyConflictSuffix(relCanonico, n);
-    const uri = joinUri(vaultRoot, rel);
-    const ja = await readVaultFile(uri, DiarioEmocionalSchema);
-    if (!ja) return rel;
-  }
-  // Fallback: timestamp em ms para garantir unicidade absoluta.
-  return applyConflictSuffix(relCanonico, Date.now());
+  const deviceId = await getDeviceId();
+  const relComDevice = applyDeviceIdSuffix(relCanonico, deviceId);
+  const uriComDevice = joinUri(vaultRoot, relComDevice);
+  const jaComDevice = await readVaultFile(uriComDevice, DiarioEmocionalSchema);
+  if (!jaComDevice) return relComDevice;
+
+  // Fallback: deviceId + timestamp ms para garantir unicidade.
+  const dotIdx = relComDevice.lastIndexOf('.');
+  const ts = Date.now();
+  if (dotIdx === -1) return `${relComDevice}-${ts}`;
+  return `${relComDevice.slice(0, dotIdx)}-${ts}${relComDevice.slice(dotIdx)}`;
 }
 
 export async function saveDiario(

@@ -113,10 +113,11 @@ spec PARA o ciclo e pede clarificação.
 | ~~C3~~ | ~~M-RELEASE-ASSETS~~ | **fechada 2026-05-05** (6 PNGs gerados via SVG procedural, app.json name+bg, script reprodutível) | `M-RELEASE-ASSETS-spec.md` | — |
 | ~~C4~~ | ~~M-SOBRE-RELEASE-NOTES~~ | **fechada 2026-05-05** (Settings→Sobre + changelog estruturado + 7 cases) | `M-SOBRE-RELEASE-NOTES-spec.md` | — |
 | ~~C5~~ | ~~M-BACKUP-AUTOMATICO~~ | **fechada 2026-05-05** (semanal opt-in default OFF, +14 cases; descoberta A24 regex Tailwind no VALIDATOR_BRIEF) | `M-BACKUP-AUTOMATICO-spec.md` | — |
-| C2.x.1 | **M-WCAG-CHIP** | Chip altura + borda mutedDecor (FAIL AA) | `M-WCAG-CHIP-spec.md` | 0,5h |
-| C2.x.2 | **M-WCAG-MEDIDAS** | botão remover foto 34dp efetivo | `M-WCAG-MEDIDAS-spec.md` | 0,5h |
-| C2.x.3 | **M-WCAG-MUTED-DECOR-TEXTO** | 24 ocorrências mutedDecor texto pequeno | `M-WCAG-MUTED-DECOR-TEXTO-spec.md` | 1-2h |
-| C6 | **M38** | Conflict resolution 4 devices | `M38-spec.md` | 4-5h |
+| ~~C2.x.1~~ | ~~M-WCAG-CHIP~~ | **fechada 2026-05-05** (hitSlop 48dp + borda muted ratio 5.30) | `M-WCAG-CHIP-spec.md` | — |
+| ~~C2.x.2~~ | ~~M-WCAG-MEDIDAS~~ | **fechada 2026-05-05** (hitSlop=12 → 46dp efetivo) | `M-WCAG-MEDIDAS-spec.md` | — |
+| ~~C2.x.3~~ | ~~M-WCAG-MUTED-DECOR-TEXTO~~ | **fechada 2026-05-05** (14 muted + 8 decor via textPropsDecor helper) | `M-WCAG-MUTED-DECOR-TEXTO-spec.md` | — |
+| ~~C6~~ | ~~M38~~ | **fechada 2026-05-05** (1502/167, deviceId + colisão suffix + devicesIndex + Settings/dispositivos) | `M38-spec.md` | — |
+| C2.x.4 | **M-WCAG-MUTED-DECOR-TEXTO-V2** | 10 ocorrências mutedDecor fora lista canônica (achado pós-C2.x.3) | `M-WCAG-MUTED-DECOR-TEXTO-V2-spec.md` | 1-2h |
 
 **BLOCO D — Decisão registrada (executar como pre-condição de E)**
 

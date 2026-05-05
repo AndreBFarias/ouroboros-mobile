@@ -28,6 +28,7 @@ import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
 import { escreverAlarme } from '@/lib/vault/alarmes';
 import { agendarAlarme } from '@/lib/services/alarmesNotificacoes';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
+import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 // Item lido do Vault: meta + path relativo ao root (ex:
 // 'tarefas/2026-04-29-comprar-pao.md'). UI usa esse path como id estavel
@@ -173,7 +174,20 @@ export async function criarTarefa(
   }
 
   const dataDate = new Date(`${metaFinal.data}T00:00:00-03:00`);
-  const rel = tarefasPath(dataDate, slug);
+  const relCanonico = tarefasPath(dataDate, slug);
+
+  // M38: conflict resolution. Se ja existe arquivo no path canonico
+  // com autor diferente (outro device criou tarefa de mesmo dia/slug),
+  // aplica suffix '-<deviceId>' pra evitar overwrite cego em sync.
+  // Mesmo autor regravando = edicao legitima -> mantem canonico.
+  const uriCanonico = joinUri(vaultRoot, relCanonico);
+  const existente = await readVaultFile(uriCanonico, TarefaSchema);
+  let rel = relCanonico;
+  if (existente && existente.meta.autor !== metaFinal.autor) {
+    const deviceId = await getDeviceId();
+    rel = applyDeviceIdSuffix(relCanonico, deviceId);
+  }
+
   return escreverTarefa(vaultRoot, rel, metaFinal, body);
 }
 

@@ -112,7 +112,7 @@ export function ConquistaCard({ conquista, onPress }: ConquistaCardProps) {
           <View>
             <Text
               style={{
-                color: colors.mutedDecor,
+                color: colors.muted,
                 fontSize: 11,
                 lineHeight: 14,
               }}

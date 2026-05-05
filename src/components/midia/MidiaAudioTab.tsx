@@ -54,7 +54,7 @@ export function MidiaAudioTab({
       {desabilitado ? (
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 11,
           }}

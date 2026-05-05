@@ -18,6 +18,7 @@ import { ChevronDown } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
+import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 
 export interface FotoMedida {
   // YYYY-MM-DD da medida-mae.
@@ -85,6 +86,7 @@ function DropdownData({
   return (
     <View style={{ gap: 4 }}>
       <Text
+        {...textPropsDecor()}
         style={{
           color: colors.mutedDecor,
           fontFamily: 'JetBrainsMono_400Regular',
@@ -209,6 +211,7 @@ function LadoComparativo({
       ) : (
         <View style={{ gap: 4 }}>
           <Text
+            {...textPropsDecor()}
             style={{
               color: colors.mutedDecor,
               fontFamily: 'JetBrainsMono_400Regular',
@@ -231,6 +234,7 @@ function LadoComparativo({
             }}
           >
             <Text
+              {...textPropsDecor()}
               style={{
                 color: colors.mutedDecor,
                 fontFamily: 'JetBrainsMono_400Regular',
@@ -268,7 +272,7 @@ function LadoComparativo({
         ) : (
           <Text
             style={{
-              color: colors.mutedDecor,
+              color: colors.muted,
               fontFamily: 'JetBrainsMono_400Regular',
               fontSize: 11,
               lineHeight: 16,
@@ -338,7 +342,7 @@ export function SliderFotos({ fotos, largura }: SliderFotosProps) {
       >
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 12,
             lineHeight: 18,

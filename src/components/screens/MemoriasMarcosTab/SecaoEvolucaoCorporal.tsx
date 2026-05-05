@@ -22,6 +22,7 @@ import { Plus } from '@/lib/icons';
 import { useMedidas } from '@/lib/hooks/useMedidas';
 import { useVault } from '@/lib/stores/vault';
 import { colors, spacing } from '@/theme/tokens';
+import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import { haptics } from '@/lib/haptics';
 import type { Medida } from '@/lib/schemas/medidas';
 
@@ -163,7 +164,7 @@ function CardEvolucao({
         ) : (
           <Text
             style={{
-              color: colors.mutedDecor,
+              color: colors.muted,
               fontFamily: 'JetBrainsMono_400Regular',
               fontSize: 11,
               lineHeight: 14,
@@ -204,6 +205,7 @@ function CardEvolucao({
             {peso}
           </Text>
           <Text
+            {...textPropsDecor()}
             style={{
               color: colors.mutedDecor,
               fontFamily: 'JetBrainsMono_400Regular',
@@ -302,7 +304,7 @@ export function SecaoEvolucaoCorporal({
           {subtitulo ? (
             <Text
               style={{
-                color: colors.mutedDecor,
+                color: colors.muted,
                 fontFamily: 'JetBrainsMono_400Regular',
                 fontSize: 11,
                 lineHeight: 14,
@@ -364,7 +366,7 @@ export function SecaoEvolucaoCorporal({
           </Text>
           <Text
             style={{
-              color: colors.mutedDecor,
+              color: colors.muted,
               fontFamily: 'JetBrainsMono_400Regular',
               fontSize: 11,
               lineHeight: 16,

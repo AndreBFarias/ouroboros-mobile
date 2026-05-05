@@ -2,10 +2,16 @@
 // Vault. Função pura: recebe meta validado e vaultRoot, devolve URI
 // final e flag de conflito A5.
 //
-// A5 (Armadilha do BRIEF seção 4): Syncthing entre 2 celulares pode
-// gerar colisao quando ambos registram humor no mesmo dia. Estrategia:
-// se já existe arquivo no path canonico escrito por outra pessoa,
-// gravamos em daily/YYYY-MM-DD-<pessoa>.md.
+// A5 (Armadilha do BRIEF seção 4): Syncthing entre N celulares pode
+// gerar colisao quando dois ou mais registram humor no mesmo dia.
+// Estrategia M38: se já existe arquivo no path canonico escrito por
+// outra instalacao (mesmo autor ou nao), gravamos em
+// daily/YYYY-MM-DD-<deviceId>.md. Cobre 4 nos (2 desktops + 2 celulares)
+// sem perder dado em sync.
+//
+// Backward-compat: arquivos legados '-pessoa_a.md'/'-pessoa_b.md'
+// continuam sendo lidos por listarHumor (filtra por basename data sem
+// olhar suffix). M38 so altera o futuro padrao de naming.
 //
 // Importante: esta função não decide o que mostrar na UI quando ha
 // conflito; apenas grava na variante segura e devolve o flag para o
@@ -13,6 +19,7 @@
 import { dailyPath, readVaultFile, writeVaultFile } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { useSettings } from '@/lib/stores/settings';
+import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 export interface SaveHumorResult {
   uri: string;
@@ -27,14 +34,6 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
-// Aplica sufixo de pessoa no nome do arquivo .md:
-//   'daily/2026-04-29.md' + 'pessoa_a' -> 'daily/2026-04-29-pessoa_a.md'
-function applyPessoaSuffix(rel: string, autor: HumorMeta['autor']): string {
-  const dotIdx = rel.lastIndexOf('.');
-  if (dotIdx === -1) return `${rel}-${autor}`;
-  return `${rel.slice(0, dotIdx)}-${autor}${rel.slice(dotIdx)}`;
-}
-
 // Monta o corpo .md a partir do meta. Hoje colocamos a frase apenas
 // no frontmatter (decisão M05 spec seção 9 item 1), entao o corpo
 // fica vazio. Mantemos a função isolada para sprint futura migrar a
@@ -43,7 +42,11 @@ function buildBody(_meta: HumorMeta): string {
   return '';
 }
 
-// Decide qual path usar: canonico ou com sufixo de pessoa.
+// Decide qual path usar: canonico ou com sufixo de deviceId. M38:
+// trocamos o suffix '-pessoa_<a|b>' (cobria so 2 devices) por
+// '-<deviceId>' (cobre 4+ devices). Caminho feliz mantem nome
+// canonico (daily/YYYY-MM-DD.md) tanto em escrita inicial quanto em
+// reescrita pelo mesmo deviceId (mesmo autor, mesma instalacao).
 async function resolvePath(
   vaultRoot: string,
   relCanonico: string,
@@ -58,8 +61,13 @@ async function resolvePath(
     // Mesmo autor regravando o dia: sobrescreve no canonico.
     return { rel: relCanonico, conflito: false };
   }
-  // Outra pessoa já escreveu: usamos sufixo para evitar colisao.
-  return { rel: applyPessoaSuffix(relCanonico, autor), conflito: true };
+  // Outra instalacao ja escreveu: usamos suffix de deviceId para
+  // evitar colisao. Cobre 4 nos sem perder dado.
+  const deviceId = await getDeviceId();
+  return {
+    rel: applyDeviceIdSuffix(relCanonico, deviceId),
+    conflito: true,
+  };
 }
 
 export async function saveHumor(

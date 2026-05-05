@@ -10,6 +10,7 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { colors, spacing, typography } from '@/theme/tokens';
+import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 
 interface BannerLeituraProps {
   geradoEm?: string | null;
@@ -69,6 +70,7 @@ export function BannerLeitura({
       </Text>
       {meta ? (
         <Text
+          {...(meta.alerta ? {} : textPropsDecor())}
           style={{
             color: meta.alerta ? colors.red : colors.mutedDecor,
             fontFamily: 'JetBrainsMono_400Regular',

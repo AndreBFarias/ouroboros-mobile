@@ -224,7 +224,7 @@ export function ItemTarefa({
 
         <Text
           style={{
-            color: colors.mutedDecor,
+            color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 11,
             lineHeight: 14,

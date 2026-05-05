@@ -420,13 +420,39 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 
 ## 14. Compartilhamento via Syncthing — M38 (4 dispositivos)
 
-- Conflict resolution via `deviceId` no slug do arquivo
-  (`<data>-<slug>-<deviceId>.md`).
-- Suporta até 4 dispositivos pareados.
-- Política Last-Write-Wins por timestamp + manual merge para
-  campos específicos.
-- Status do sync no Settings (não roda nada — Syncthing é
-  externo).
+- **`deviceId` por instalação** — gerado uma única vez no primeiro
+  uso e persistido em SecureStore (`ouroboros.device.id`,
+  `ouro-<6chars>` alfanuméricos). Cabe em < 32 bytes (limite A20).
+  Reinstall sem backup gera novo deviceId; o antigo fica marcado
+  como `substituido_por: <novoId>` no devices index para o usuário
+  entender a transição em Settings.
+- **Conflict resolution via suffix de deviceId no slug do arquivo
+  `.md`** — caminho feliz mantém nome canônico
+  (`daily/YYYY-MM-DD.md`); colisão real entre devices via Syncthing
+  aplica `<canonico>-<deviceId>.md` (cobre 4 nós). Substitui o
+  legado `-pessoa_<a|b>.md` (cobria só 2 devices) em humor / diário
+  emocional / eventos / tarefas / contadores / alarmes.
+- **Backward-compat**: arquivos legados `-pessoa_a.md` /
+  `-pessoa_b.md` continuam sendo lidos pelos listers (filtram por
+  basename data sem olhar suffix). M38 só altera o futuro padrão de
+  naming.
+- **Devices index** em `inbox/_devices.md` — registra cada deviceId
+  com `nome_amigavel` (editável), `pessoa`, `primeira_atividade`,
+  `ultima_atividade`, `substituido_por`. Last-write-wins por subkey
+  via Syncthing (cada device sobrescreve só sua própria entrada).
+- **Boot hook `atualizarDeviceIndex`** atualiza
+  `ultima_atividade` do deviceId atual a cada boot do app.
+  Idempotente, swallow-erro tolerado (CONTRACT §7.9).
+- **Sub-tela Settings → Pessoa → "Dispositivos pareados"**
+  (`/settings/dispositivos`) — lista todos os deviceIds com
+  nome amigável editável, marca o atual com "(este aparelho)" e
+  inativos com "(inativo)".
+- **Suporta até 4 dispositivos pareados** (2 desktops + 2 celulares).
+  36^6 = 2.1 bi combinações de deviceId; zero risco de colisão.
+- **Política Last-Write-Wins por timestamp** + suffix de deviceId
+  para preservar ambos quando há colisão genuína.
+- **Zero rede** (ADR-0007): detecção é local via varredura do Vault.
+  Syncthing é externo e gerenciado pelo usuário.
 
 ## 15. Estrutura de mídia — M39 (formaliza ADR-0017)
 
