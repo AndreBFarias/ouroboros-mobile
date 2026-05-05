@@ -19,7 +19,7 @@ import { Audio } from 'expo-av';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 export class MicPermissionError extends Error {
-  constructor(message = 'permissao de microfone negada') {
+  constructor(message = 'Permissão de microfone negada.') {
     super(message);
     this.name = 'MicPermissionError';
   }

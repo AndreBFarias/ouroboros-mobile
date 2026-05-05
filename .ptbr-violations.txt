@@ -3,19 +3,11 @@
 # Cada linha e um path relativo a raiz do repo.
 # Linhas iniciadas por '#' sao comentario.
 #
-# RETROFIT PENDENTE EM: M-PT-BR-RETROFIT (criado 2026-05-04 ao fechar
-# M-PT-BR-AUDIT). Spec em docs/sprints/M-PT-BR-RETROFIT-spec.md.
+# RETROFIT FECHADO 2026-05-04 EM A2.x — todos os 3 arquivos corrigidos:
+#   - src/lib/diario/permissions.ts: 'permissao de microfone negada'
+#     -> 'Permissão de microfone negada.'
+#   - app/_dev/gauntlet.tsx: extinto (refatorado por A2 — agora wrapper).
+#   - src/lib/dev/gauntletDashboard.tsx: titulo="Acoes" -> titulo="Ações".
 #
-# REGRA: ao corrigir um arquivo aqui, REMOVA a linha. Quando este
-# arquivo ficar vazio (so com comentarios), pode ser deletado.
-#
-# Violacoes identificadas no primeiro run em 2026-05-04 (cb688a9):
-
-src/lib/diario/permissions.ts
-app/_dev/gauntlet.tsx
-
-# Arquivo dev novo (gauntletDashboard.tsx) detectado durante M-PT-BR-AUDIT
-# em estado misto do working tree (mudancas paralelas fora do escopo da
-# AUDIT). Inclui mesma violacao 'titulo="Acoes"'. Sera fixado pela mesma
-# M-PT-BR-RETROFIT junto com gauntlet.tsx.
-src/lib/dev/gauntletDashboard.tsx
+# Lista vazia. Se aparecer linha aqui no futuro, e exclusao temporaria
+# de batch novo a ser fechado em sub-sprint.

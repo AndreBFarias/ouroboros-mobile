@@ -96,7 +96,7 @@ export default function GauntletDashboard() {
         window.__gauntlet via console.
       </Text>
 
-      <Secao titulo="Acoes">
+      <Secao titulo="Ações">
         <FileiraBotoes>
           <BotaoAcao
             label="Seed"
