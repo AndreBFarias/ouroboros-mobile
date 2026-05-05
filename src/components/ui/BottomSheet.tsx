@@ -6,10 +6,11 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   type ReactNode,
 } from 'react';
-import { type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, type StyleProp, type ViewStyle } from 'react-native';
 import GorhomBottomSheet, {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
@@ -76,6 +77,96 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
           : [DEFAULT_CONTAINER_STYLE, containerStyle],
       [containerStyle]
     );
+
+    // M-SHEET-MODAL-SNAP (2026-05-05): em Web (Gauntlet/Nivel A+) o
+    // gorhom v5 falha ao disparar useAnimatedReaction inicial -- o
+    // sheet renderiza no DOM mas fica travado em transform
+    // matrix(1, 0, 0, 1, 0, windowH) (fora do viewport, snap "fechado").
+    // Confirma a Armadilha A17 (worklet de animacao inicial nao
+    // executa em RN-Web). Fallback automatizado: em Platform 'web' e
+    // index>=0, apos mount + 250ms (tempo de gorhom fazer onLayout +
+    // normalizar detents), localizamos o container hosting (View com
+    // matrix translate(0, ty>0) que cobre maior area) e setamos
+    // transform direto via DOM para a posicao alvo. Idempotente e
+    // controlado por flag de plataforma; em mobile real (Platform
+    // 'android'/'ios') vira no-op completo. Replica o "fix manual"
+    // documentado em A17 sem precisar de DevTools.
+    //
+    // NOTA A24: regex de extracao do ty usa RegExp constructor + string
+    // (nao literal) por convencao defensiva de NativeWind 4 + Metro.
+    // Padrao seguro mesmo sem [...] suspeitos no body.
+    useEffect(() => {
+      if (Platform.OS !== 'web') return;
+      if (index === undefined || index < 0) return;
+      const targetSnap = snapPoints?.[index] ?? points[index];
+      if (targetSnap === undefined) return;
+
+      let cancelled = false;
+      // RegExp constructor + string evita literal /\.../ que poderia
+      // ser confundido com seletor Tailwind arbitrario por NativeWind
+      // 4 (A24). Captura o ty (translate Y) do matrix 2D do RN-Web.
+      const matrixYRegex = new RegExp(
+        '^matrix\\(\\s*1,\\s*0,\\s*0,\\s*1,\\s*0,\\s*(-?\\d+\\.?\\d*)\\)$'
+      );
+      const aplicar = () => {
+        if (cancelled) return;
+        if (typeof document === 'undefined') return;
+        const win = document.defaultView ?? window;
+        const winH = win.innerHeight;
+        // Resolve snap em pixels: '70%' -> 0.7*winH; numero literal -> px.
+        let snapPx: number;
+        if (typeof targetSnap === 'number') {
+          snapPx = targetSnap;
+        } else if (typeof targetSnap === 'string' && targetSnap.endsWith('%')) {
+          const pct = Number(targetSnap.slice(0, -1));
+          if (!Number.isFinite(pct)) return;
+          snapPx = (pct / 100) * winH;
+        } else {
+          return;
+        }
+        const targetY = Math.max(0, winH - snapPx);
+
+        // Procura o container hosting do sheet: View absoluteFill
+        // dentro da arvore que tem transform matrix translate(0, ty)
+        // com ty proximo a winH (snap fechado) e cobre area > 50%
+        // do viewport. Em Web o gorhom emite o transform via inline
+        // style do RN-Web; nao tem classe identificadora.
+        const todos = document.querySelectorAll('div');
+        for (const el of Array.from(todos)) {
+          const cs = win.getComputedStyle(el);
+          const tr = cs.transform;
+          if (!tr || tr === 'none' || !tr.startsWith('matrix(')) continue;
+          // Extrai o ty (ultimo numero do matrix 2D) via regex acima.
+          const m = tr.match(matrixYRegex);
+          if (!m) continue;
+          const ty = parseFloat(m[1]);
+          // Heuristica: ty proximo de winH (sheet fechado) e elemento
+          // largo (cobre mais da metade da largura).
+          if (Math.abs(ty - winH) > 24) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width < winH * 0.3) continue;
+          // Aplica transform alvo. transition='none' para nao
+          // gerar slide visual interrompido.
+          (el as HTMLElement).style.transform = `matrix(1, 0, 0, 1, 0, ${targetY})`;
+          (el as HTMLElement).style.transition = 'none';
+          break;
+        }
+      };
+
+      // Tenta multiplas vezes para cobrir o caso onde gorhom mede
+      // containerHeight tarde (re-aplica transform errado depois do
+      // primeiro fix). 250ms cobre o boot tipico em Gauntlet apos
+      // navegacao a rota modal.
+      const tA = setTimeout(aplicar, 250);
+      const tB = setTimeout(aplicar, 750);
+      const tC = setTimeout(aplicar, 1500);
+      return () => {
+        cancelled = true;
+        clearTimeout(tA);
+        clearTimeout(tB);
+        clearTimeout(tC);
+      };
+    }, [index, snapPoints, points]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (

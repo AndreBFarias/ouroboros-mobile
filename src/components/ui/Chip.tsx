@@ -8,6 +8,7 @@ import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, hitSlop as hitSlopToken } from '@/theme/tokens';
+import { hexToRgba } from '@/lib/a11y/contraste';
 
 // 'ghost' = chip neutro/genérico (categoria "outro", filtros sem
 // destaque). Selected vira fundo muted-decor com texto bg, em vez de
@@ -91,11 +92,17 @@ export function Chip({
           // sem `from` correspondente, deixando o chip selecionado sem
           // fundo preenchido e o texto colors.bg invisivel).
           backgroundColor: selected ? accentHex : 'transparent',
-          // Borda em rest usa colors.muted (#c9c9cc, ratio ~5.30:1 sobre
-          // bgElev) em vez de mutedDecor (~1.74:1, falha WCAG AA texto
-          // grande). Preserva contraste >= 3:1 contra qualquer superficie
-          // do app (bg, bgAlt, bgElev). Auditoria 2026-05-04 secao 4.
-          borderColor: selected ? accentHex : colors.muted,
+          // Borda em rest aplica o accent semantico em 40% opacity (rgba)
+          // para que cada categoria seja visualmente distinguivel antes do
+          // toque, sem competir com o selected (100% saturado). Ghost
+          // permanece colors.muted (~5.30:1 sobre bgElev), preservando o
+          // fallback WCAG AA texto grande do C2.x.1 para a categoria
+          // "outro" que nao tem cor semantica. Auditoria 2026-05-05 §4.
+          borderColor: selected
+            ? accentHex
+            : accent === 'ghost'
+              ? colors.muted
+              : hexToRgba(accentHex, 0.4),
         }}
       >
         <Text

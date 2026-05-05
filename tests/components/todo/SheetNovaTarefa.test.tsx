@@ -48,7 +48,9 @@ import { render, fireEvent } from '@testing-library/react-native';
 import {
   SheetNovaTarefa,
   CATEGORIA_ACCENTS,
+  corDaCategoria,
 } from '@/components/todo/SheetNovaTarefa';
+import { colors } from '@/theme/tokens';
 import { TAREFA_CATEGORIAS } from '@/lib/schemas/tarefa';
 
 describe('SheetNovaTarefa', () => {
@@ -289,5 +291,46 @@ describe('SheetNovaTarefa - M31 destino', () => {
     expect(onSalvar).toHaveBeenCalledWith(
       expect.objectContaining({ pessoa_destino: { tipo: 'mim' } })
     );
+  });
+});
+
+describe('SheetNovaTarefa - M-DEBITO-CATEGORIA-ICONE', () => {
+  // Helper puro corDaCategoria deve refletir CATEGORIA_ACCENTS
+  // (paleta Dracula) e tratar 'ghost' como muted. Antes do fix:
+  // SheetNovaTarefa renderizava color={colors.orange} hardcoded em
+  // duas posicoes (header + IconeCategoriaAtiva). Depois do fix:
+  // ambos usam corDaCategoria(categoria).
+  it('trabalho resolve cyan', () => {
+    expect(corDaCategoria('trabalho')).toBe(colors.cyan);
+  });
+
+  it('saude resolve red (critico, alerta)', () => {
+    expect(corDaCategoria('saude')).toBe(colors.red);
+  });
+
+  it('outro (ghost) resolve muted, nao tem cor accent semantica', () => {
+    expect(corDaCategoria('outro')).toBe(colors.muted);
+    // Garantia explicita: nunca laranja (regressao do bug pre-fix).
+    expect(corDaCategoria('outro')).not.toBe(colors.orange);
+  });
+
+  it('cobre todas as 8 categorias canonicas com cor resolvida nao vazia', () => {
+    for (const cat of TAREFA_CATEGORIAS) {
+      const cor = corDaCategoria(cat);
+      expect(typeof cor).toBe('string');
+      expect(cor.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('mapeamento canonico Dracula completo (3 cores aleatoriamente checadas)', () => {
+    expect(corDaCategoria('casa')).toBe(colors.pink);
+    expect(corDaCategoria('financas')).toBe(colors.green);
+    expect(corDaCategoria('obrigacoes')).toBe(colors.orange);
+  });
+
+  it('regressao: trabalho/saude/outro nao usam mais colors.orange hardcoded', () => {
+    expect(corDaCategoria('trabalho')).not.toBe(colors.orange);
+    expect(corDaCategoria('saude')).not.toBe(colors.orange);
+    expect(corDaCategoria('outro')).not.toBe(colors.orange);
   });
 });

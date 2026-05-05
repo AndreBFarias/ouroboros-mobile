@@ -88,6 +88,18 @@ export function ratioContraste(fg: string | CorRgb, bg: string | CorRgb): number
   return (claro + 0.05) / (escuro + 0.05);
 }
 
+// Converte hex (#rrggbb ou #rgb) para rgba(r,g,b,alpha) string.
+// Usado por componentes que querem aplicar cor accent com transparencia
+// (ex: borda Chip rest com 40% opacity para distinguir categoria sem
+// competir com selected). Alpha clampado em [0, 1]. Lanca Error se hex
+// invalido para evitar string fallback silenciosa em runtime.
+export function hexToRgba(hex: string, alpha: number): string {
+  const cor = parseCor(hex);
+  if (!cor) throw new Error(`hex invalido: ${hex}`);
+  const a = Math.max(0, Math.min(1, alpha));
+  return `rgba(${cor.r}, ${cor.g}, ${cor.b}, ${a})`;
+}
+
 // Atalhos semanticos.
 export const WCAG_AA_TEXTO_NORMAL = 4.5;
 export const WCAG_AA_TEXTO_GRANDE = 3.0;

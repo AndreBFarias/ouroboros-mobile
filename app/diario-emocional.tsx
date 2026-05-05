@@ -254,6 +254,8 @@ export default function DiarioEmocional() {
 
   // M26: sheet abre via index={0} direto. Ver humor-rapido.tsx para
   // racional completo (Armadilhas A17/A18).
+  // M-SHEET-MODAL-SNAP: DOM patch em Web no BottomSheet wrapper
+  // corrige snap inicial preso em y=windowH; ver humor-rapido.tsx.
 
   // Memoizado antes do early return para não quebrar regra dos hooks.
   const opcoesComQuem = useMemo<ChipOption[]>(

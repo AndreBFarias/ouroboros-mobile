@@ -99,6 +99,12 @@ export default function HumorRapido() {
   // Armadilha A17 (race entre montagem e expand) e A18 (tela preta se
   // expand falha). O Screen opaco por tras garante fundo Dracula
   // visivel mesmo se Reanimated falhar em algum dispositivo.
+  //
+  // M-SHEET-MODAL-SNAP (2026-05-05): em Web (Gauntlet) o BottomSheet
+  // wrapper aplica DOM patch automatico apos mount para corrigir o
+  // snap inicial que o gorhom deixa em y=windowH (Armadilha A17
+  // reincidente). Em mobile real (Android Expo Go/APK) o patch e
+  // no-op, e o gorhom anima normalmente para SHEET_70 = ['70%'].
 
   // Caso de borda: rota acessada sem onboarding concluido. M03 já
   // protege a Tela 01, mas se chegou aqui via deep link sem vault,

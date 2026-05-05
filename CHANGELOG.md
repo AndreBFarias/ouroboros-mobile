@@ -5,6 +5,93 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Pós-auditoria — 4 sprints fechadas (2026-05-05)
+
+#### D1 — M-DEV-CLIENT-DECISAO
+
+Decisão (a) registrada formalmente: v1.0 INCLUI as 4 features
+dev-client (M06.5 microfone, M07.x conquistas mídia, M11.5
+calendário conquistas, M09 scanner OCR) + 2 Google Calendar
+(M37.1 OAuth, M37.2 escrita). Sprint encerrada sem código —
+somente decisão durável documentada na spec + ROADMAP.
+
+#### M-SHEET-MODAL-SNAP
+
+**Diagnóstico empírico via Playwright** (descartou as 3 hipóteses
+do planejador): em RN-Web, gorhom v5 inicializa `animatedPosition
+= window.innerHeight` e depende de `useAnimatedReaction`
+(Reanimated 4 worklet) para posicionar no snap. **Worklet não
+dispara confiavelmente em web no mount** — sheet trava em
+`transform: matrix(1, 0, 0, 1, 0, 920)` (100% fora do viewport).
+Armadilha A17 reincidente, agora medida com precisão.
+
+**Fix**: `useEffect` Web-only em `src/components/ui/BottomSheet.tsx`
+que após 250/750/1500ms localiza o container DOM via
+`querySelectorAll('div')` + match `matrix(1, 0, 0, 1, 0, ty)`
+com `|ty - winH| < 24`, e seta transform direto para
+`(1 - snap%) * winH` + `transition: none`. **No-op em mobile**
+(Platform.OS check) — A18 não regride em RN nativo.
+
+`BottomSheet` também ganha prop `animateOnMount?: boolean` opcional
+(API extensível). Defesa contra Armadilha A24: regex via
+`new RegExp(...)` em vez de literal.
+
+**Validação numérica**:
+- Antes: `/humor-rapido` ty=920 (fora do viewport).
+- Depois: ty=276 (snap 70%), `/eventos` ty=184 (80%),
+  `/diario-emocional` ty=92 (90%) — **todos no snap correto**.
+
+**Validação visual confirmada**: humor-rapido mostra 4 sliders +
+Medicação + Horas de sono + Tags; diário emocional mostra Modo
+Trigger/Vitória + Emoções + Intensidade slider + Microfone +
+Textarea.
+
+**Arquivos modificados (5):** `BottomSheet.tsx`, 3 rotas modais
+(`humor-rapido.tsx`, `eventos.tsx`, `diario-emocional.tsx` com
+comentários explicativos), E2E novo
+`m-sheet-modal-snap.e2e.ts`.
+
+#### M-DEBITO-CATEGORIA-CORES-VISIBLE
+
+`Chip.tsx` em rest agora aplica accent **40% opacity** via novo
+helper `hexToRgba(hex, alpha)` em `src/lib/a11y/contraste.ts`.
+Ghost mantém `colors.muted` 5.30 ratio (fallback C2.x.1).
+Selected mantém accent 100% (sem regressão C2.x.1).
+
+**Aritmética**: +4 cases Jest (`Chip.test.tsx` describe
+`hexToRgba`). E2E `m-debito-categoria-cores-visible.e2e.ts`
+exige Set.size ≥ 7 borderColor distintos em rest.
+
+**Decisão WCAG**: 6/7 accents passam ratio 3:1 sobre bgElev.
+`red` em 40% sobre bgElev = 2.91 (abaixo de 3, mas borda 1dp
+não-texto e estado também comunicado por bg+label — exceção
+documentada).
+
+#### M-DEBITO-CATEGORIA-ICONE
+
+Helper `corDaCategoria(c: TarefaCategoria): string` exportado em
+`src/components/todo/SheetNovaTarefa.tsx` resolve
+`CATEGORIA_ACCENTS[c]` para hex via `colors[accent]`. Ícone
+Lucide do header agora reflete cor da categoria selecionada
+(cyan/red/etc). Ghost vira `colors.muted`.
+
+**Aritmética**: +6 cases Jest validando helper puro para 8
+categorias (incluindo regressão "não-laranja" para 3
+categorias). E2E `m-debito-categoria-icone.e2e.ts` valida
+`getComputedStyle.stroke` do svg para 3 categorias diferentes.
+
+#### Métricas batch pós-auditoria
+
+- Testes: 1502 → **1512** (+10 cases: 0 sheet snap + 4 cores +
+  6 ícone). E2E novos não contam no Jest.
+- Suítes: 167 mantidas.
+- Bundle Hermes: **7.19 MB** (mantido na faixa ~7 MB; +90 KB de
+  helpers mas dentro da margem 1,66 MB).
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet
+  leak 0/6.
+
+
+
 ### Bloco C FECHADO — C2.x.1 + C2.x.2 + C2.x.3 + C6 batch (2026-05-05)
 
 #### C2.x.1 — M-WCAG-CHIP

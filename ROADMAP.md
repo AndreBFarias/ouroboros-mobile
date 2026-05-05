@@ -118,9 +118,9 @@ spec PARA o ciclo e pede clarificação.
 | ~~C2.x.3~~ | ~~M-WCAG-MUTED-DECOR-TEXTO~~ | **fechada 2026-05-05** (14 muted + 8 decor via textPropsDecor helper) | `M-WCAG-MUTED-DECOR-TEXTO-spec.md` | — |
 | ~~C6~~ | ~~M38~~ | **fechada 2026-05-05** (1502/167, deviceId + colisão suffix + devicesIndex + Settings/dispositivos) | `M38-spec.md` | — |
 | C2.x.4 | **M-WCAG-MUTED-DECOR-TEXTO-V2** | 10 ocorrências mutedDecor fora lista canônica (achado pós-C2.x.3) | `M-WCAG-MUTED-DECOR-TEXTO-V2-spec.md` | 1-2h |
-| **AUDIT** | **M-SHEET-MODAL-SNAP** | Sheets modais (humor-rapido/eventos/diario-emocional) abrem em snap pequeno fora do viewport — descoberto na auditoria 2026-05-05 | `M-SHEET-MODAL-SNAP-spec.md` | 1-2h |
-| **AUDIT** | **M-DEBITO-CATEGORIA-CORES-VISIBLE** | Chips de categoria em rest visualmente similares — borda accent 40% opacity | `M-DEBITO-CATEGORIA-CORES-VISIBLE-spec.md` | 0,5-1h |
-| **AUDIT** | **M-DEBITO-CATEGORIA-ICONE** | Ícone Lucide header tarefa hardcoded laranja — refletir accent | `M-DEBITO-CATEGORIA-ICONE-spec.md` | 0,5h |
+| ~~AUDIT~~ | ~~M-SHEET-MODAL-SNAP~~ | **fechada 2026-05-05** (DOM patch web-only após mount via useEffect; ty=920→276/184/92 medido) | `M-SHEET-MODAL-SNAP-spec.md` | — |
+| ~~AUDIT~~ | ~~M-DEBITO-CATEGORIA-CORES-VISIBLE~~ | **fechada 2026-05-05** (hexToRgba 40% opacity em rest, +4 cases) | `M-DEBITO-CATEGORIA-CORES-VISIBLE-spec.md` | — |
+| ~~AUDIT~~ | ~~M-DEBITO-CATEGORIA-ICONE~~ | **fechada 2026-05-05** (helper corDaCategoria refletindo accent, +6 cases) | `M-DEBITO-CATEGORIA-ICONE-spec.md` | — |
 
 **BLOCO D — Decisão registrada (executar como pre-condição de E)**
 

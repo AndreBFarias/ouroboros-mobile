@@ -123,6 +123,18 @@ export const CATEGORIA_ACCENTS: Record<TarefaCategoria, ChipAccent> = {
   outro: 'ghost',
 };
 
+// M-DEBITO-CATEGORIA-ICONE: helper puro que resolve a cor accent de
+// uma categoria para uso direto em `color` de Lucide icon ou Text.
+// 'ghost' (categoria "outro") mapeia para colors.muted preservando a
+// semantica neutra; demais accents resolvem em colors[accent].
+// Fallback final colors.orange existe so para resiliencia (codigo
+// nunca passa accent fora do union ChipAccent, mas TS exige).
+export function corDaCategoria(c: TarefaCategoria): string {
+  const accent = CATEGORIA_ACCENTS[c] ?? 'orange';
+  if (accent === 'ghost') return colors.muted;
+  return colors[accent] ?? colors.orange;
+}
+
 const CATEGORIA_OPTIONS = TAREFA_CATEGORIAS.map((c) => ({
   value: c,
   label: TAREFA_CATEGORIA_LABELS[c],
@@ -295,6 +307,11 @@ export function SheetNovaTarefa({
 
   const IconeCategoriaAtiva = CATEGORIA_ICON[categoria];
 
+  // Cor accent dinamica do icone do header e do icone da categoria
+  // selecionada. Reflete a paleta Dracula mapeada em CATEGORIA_ACCENTS
+  // (M-DEBITO-CATEGORIA-ICONE).
+  const corCategoria = corDaCategoria(categoria);
+
   return (
     <BottomSheetView style={{ flex: 1 }}>
       <ScrollView
@@ -308,7 +325,7 @@ export function SheetNovaTarefa({
       >
         <Text
           style={{
-            color: colors.orange,
+            color: corCategoria,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: 18,
             lineHeight: 24,
@@ -383,7 +400,7 @@ export function SheetNovaTarefa({
             </Text>
             <IconeCategoriaAtiva
               size={16}
-              color={colors.orange}
+              color={corCategoria}
               strokeWidth={2}
               accessibilityLabel={`icone categoria ${categoria}`}
             />
