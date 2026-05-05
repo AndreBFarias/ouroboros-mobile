@@ -513,6 +513,12 @@ jest.mock('@react-native-community/netinfo', () => ({
 // react-native-calendars: stub minimo. O componente Calendar vira
 // View que expoe propriedades clicaveis via onDayPress no
 // accessibilityHint para testes acessarem interacao.
+//
+// M37.1.1: expoe LocaleConfig com objeto mutavel { locales, defaultLocale }
+// para que src/components/agenda/calendarLocalePtBr.ts registre o
+// locale pt-BR no boot dos testes (side-effect import em CalendarGrid).
+// Tests podem ler LocaleConfig.locales['pt-BR'].monthNames[4] para
+// asserir 'Maio'.
 jest.mock('react-native-calendars', () => {
   const React = require('react');
   const RN = require('react-native');
@@ -522,5 +528,15 @@ jest.mock('react-native-calendars', () => {
       accessibilityLabel: 'calendar-mock',
     });
   Calendar.displayName = 'MockCalendar';
-  return { __esModule: true, Calendar, CalendarList: Calendar, Agenda: Calendar };
+  const LocaleConfig = {
+    locales: {},
+    defaultLocale: '',
+  };
+  return {
+    __esModule: true,
+    Calendar,
+    CalendarList: Calendar,
+    Agenda: Calendar,
+    LocaleConfig,
+  };
 });

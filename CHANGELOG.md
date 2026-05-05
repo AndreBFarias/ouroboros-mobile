@@ -5,6 +5,56 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sub-sprints colaterais E5 (2026-05-05 noite) — M37.1.1 + M-BRIEF-A25
+
+#### E5.x.1 — M37.1.1 Calendar locale PT-BR
+
+`react-native-calendars` agora exibe o header como "Maio de 2026"
+em vez de "May 2026" e os dias da semana abreviados como
+"Dom Seg Ter Qua Qui Sex **Sáb**" (com acento agudo no sábado,
+preservando conformidade do PT-BR audit).
+
+Implementado em arquivo isolado
+`src/components/agenda/calendarLocalePtBr.ts` (side-effect
+idempotente em module-top-level via require cache) em vez de
+inline em `CalendarGrid.tsx` — facilita reuso futuro
+(`CalendarList`, `Agenda`) sem duplicar literais.
+`CalendarGrid.tsx` apenas importa o módulo e adiciona prop
+`monthFormat="MMMM 'de' yyyy"` para exibir a preposição "de"
+no header. Mock em `jest.setup.cjs` ampliado para expor
+`LocaleConfig`. Suíte nova
+`tests/components/agenda/calendarLocale.test.ts` com 6 cases
+cobrindo `monthNames[4] === 'Maio'`,
+`dayNamesShort[6] === 'Sáb'`, idempotência do registro,
+fallback do `defaultLocale`.
+
+**Métricas:** 1530 → 1536 testes (+6), 170 → 171 suítes (+1).
+Bundle Hermes mantém 7,7 MB. Leak Gauntlet 0/6. Validação
+visual Nível A capturada via Playwright em
+`docs/sprints/M37.1-screenshots/A-agenda-locale-ptbr.png`
+(824×1784 = 412×892@2x) — header "Maio de 2026" + grade 6×7
++ dia 5 selecionado + dots em datas com eventos mockados.
+
+#### E5.x.2 — M-BRIEF-A25 (local-only)
+
+Armadilha **A25 — Metro `unstable_enablePackageExports` vs
+imports relativos sem extensão em pacotes RN legados**
+documentada como entrada bullet em
+`VALIDATOR_BRIEF.md` §4 (formato canônico do brief, não
+heading). Cobre o sintoma `Unable to resolve "./X" from
+.../index.js`, causa raiz (resolver Metro com package exports
++ `.d.ts` colaterais), workaround canônico (`resolveRequest`
+custom em `metro.config.js` filtrado ao pacote) e cross-ref
+com A14. Pacote conhecido afetado:
+`react-native-calendars@1.x` (M37.1).
+
+**Decisão durável**: VALIDATOR_BRIEF.md permanece gitignored
+conforme política anti-IA do dono (commit `b9f48b9`
+2026-05-05) — A25 vive só localmente; sessões futuras
+re-bootstrapeiam o brief via skill `validador-sprint`. Não
+versionar é por design (Regra −1 estendida a artefatos de
+orquestração de IA).
+
 ### Sessão E5 (2026-05-05 tarde) — M37.1 entregue + MOTI-REPLACE descopada
 
 #### E5 — M37.1 Google Calendar OAuth + leitura de agenda

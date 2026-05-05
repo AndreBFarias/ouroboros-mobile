@@ -10,6 +10,9 @@ import { useMemo } from 'react';
 import { Calendar } from 'react-native-calendars';
 import type { EventoCalendar } from '@/lib/services/calendarApi';
 import { colors } from '@/theme/tokens';
+// Side-effect import: registra LocaleConfig['pt-BR'] no boot.
+// M37.1.1 — header passa a mostrar "Maio de 2026" e dias com acento.
+import './calendarLocalePtBr';
 
 interface CalendarGridProps {
   eventos: EventoCalendar[];
@@ -79,7 +82,7 @@ export function CalendarGrid({
       onDayPress={(day: { dateString: string }) => onDayPress(day.dateString)}
       enableSwipeMonths={true}
       firstDay={0}
-      monthFormat={'MMMM yyyy'}
+      monthFormat={"MMMM 'de' yyyy"}
     />
   );
 }

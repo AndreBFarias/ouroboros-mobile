@@ -138,10 +138,10 @@ spec PARA o ciclo e pede clarificação.
 | E2 | **M07.x** | Conquistas com mídia obrigatória | `M07.x-conquistas-com-midia.md` | 5-7h |
 | E3 | **M11.5** | Calendário visual de conquistas | `M11.5-spec.md` | 5-7h |
 | E4 | **M09** | Scanner OCR notas fiscais (paralelo a E3) | `M09-spec.md` | 7-9h |
-| E5 | **M37.1** | Google Calendar OAuth (entregue 2026-05-05, validado maestro, aguarda commit dono) | `M37.1-spec.md` | 6-7h |
-| E5.x.1 | **M37.1.1** | Calendar locale PT-BR (header "Maio de 2026" + dias acentuados) | `M37.1.1-spec.md` | 0,5-1h |
-| E5.x.2 | **M-BRIEF-A25** | Registrar A25 (Metro package exports vs imports relativos) no VALIDATOR_BRIEF §4 | `M-BRIEF-A25-METRO-PACKAGE-EXPORTS-spec.md` | 0,3h |
-| E5.B | **M37.1-checkpoint-nivel-B** | OAuth real no emulador (3 screenshots; depende APK dev-client fresh) | `M37.1-checkpoint-nivel-B-spec.md` | 0,5-1h |
+| ~~E5~~ | ~~M37.1~~ | **fechada 2026-05-05** Google Calendar OAuth + leitura agenda (1530/170, bundle 7,7 MB, 5 PNGs Nível A; commit `91710ab`) | `M37.1-spec.md` | — |
+| ~~E5.x.1~~ | ~~M37.1.1~~ | **fechada 2026-05-05** Calendar locale PT-BR ("Maio de 2026" + "Sáb"; 1536/171; +6 testes; PNG `A-agenda-locale-ptbr.png`) | `M37.1.1-spec.md` | — |
+| ~~E5.x.2~~ | ~~M-BRIEF-A25~~ | **fechada 2026-05-05 local-only** A25 registrada em VALIDATOR_BRIEF §4 (arquivo gitignored conforme política anti-IA — não versionado por design) | `M-BRIEF-A25-METRO-PACKAGE-EXPORTS-spec.md` | — |
+| E5.B | **M37.1-checkpoint-nivel-B** | OAuth real no emulador (3 screenshots; depende APK dev-client fresh — build `bcf57359` em curso) | `M37.1-checkpoint-nivel-B-spec.md` | 0,5-1h |
 | E6 | **M37.2** | Google Calendar escrita | `M37.2-spec.md` | 4-5h |
 
 **BLOCO F — Field test (humano-only, bloqueante para M41)**

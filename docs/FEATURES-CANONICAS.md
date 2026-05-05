@@ -443,10 +443,12 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   via `import env from '../../env.json'` — nunca hardcoded
   nem em env vars de bundle. Pacote `com.ouroboros.mobile`
   + SHA-1 cadastrado no Google Cloud Console.
-- **Sub-sprints colaterais ainda abertas**: M37.1.1 (calendar
-  locale PT-BR — `Maio de 2026` em vez de `May 2026`),
-  M37.1-checkpoint-nivel-B (OAuth real no emulador, 3
-  screenshots).
+- **Locale PT-BR completo (M37.1.1, fechada 2026-05-05)**:
+  header "Maio de 2026", dias "Dom Seg Ter Qua Qui Sex Sáb",
+  registro em `src/components/agenda/calendarLocalePtBr.ts`.
+- **Sub-sprint ainda aberta**: M37.1-checkpoint-nivel-B (OAuth
+  real no emulador, 3 screenshots — depende APK dev-client
+  fresh).
 
 ## 14. Compartilhamento via Syncthing — M38 (4 dispositivos)
 
