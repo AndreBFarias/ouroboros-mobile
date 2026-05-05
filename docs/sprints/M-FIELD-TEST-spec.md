@@ -1,4 +1,10 @@
-# Sprint M-FIELD-TEST — 7 dias de uso real (humano-only)
+# Sprint M-FIELD-TEST — Uso real contínuo durante Bloco E
+
+> **DECISÃO 2026-05-05:** modo CONTÍNUO em vez de "7 dias no
+> fim". Dono usa o app diariamente em paralelo com o Bloco E
+> (dev-client). Bugs reportados durante Bloco E viram sub-sprints
+> imediatas (não esperam fim). Reduz tempo total de release —
+> field test e implementação convergem.
 
 ```
 DEPENDE:    Bloco A + Bloco B + Bloco C completos

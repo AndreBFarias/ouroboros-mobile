@@ -25,6 +25,10 @@ android/
 .env
 .env.local
 .env.*.local
+# OAuth credentials (Google Cloud Console — M37.1)
+env.json
+google-services.json
+GoogleService-Info.plist
 
 # Identidade pessoal em runtime — única exceção autorizada para nomes reais
 src/config/pessoas.config.runtime.json

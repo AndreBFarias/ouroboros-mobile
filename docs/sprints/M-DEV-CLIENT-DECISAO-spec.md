@@ -22,6 +22,24 @@ iniciar E1: build EAS dev-client APK fresh (cota free 30/mês).
 Sprint encerrada sem necessidade de código — somente decisão
 durável documentada.
 
+## Decisões adicionais 2026-05-05 (registradas)
+
+1. **EAS dev-client APK fresh** será buildado pelo dono antes
+   de E1 começar (rebuild solicitado em 2026-05-05).
+2. **Google OAuth credentials prontas**: env.json (gitignored)
+   tem client_id. M37.1 pode iniciar sem nova pausa.
+3. **Field test em modo contínuo**: dono testa diariamente
+   durante Bloco E em paralelo (não esperar fim).
+4. **EAS production build**: sim, antes de M41.
+5. **Validação visual SOMENTE em emulador (Nível B)**: dono
+   decidiu que Gauntlet web cobre dev e emulador Android cobre
+   release. Celular físico (Nível C) não usado durante
+   desenvolvimento — reservado pra uso pessoal pós-release.
+6. **M19.x mockups**: paralelo ao Bloco E completo (toolchain
+   JSX→HTML).
+7. **M-BUNDLE-DIET-MOTI-REPLACE**: incluído em v1.0 como
+   sub-sprint dedicada (333 KB ganho potencial).
+
 ## 1. Achado / motivação
 
 4 sprints estão bloqueadas por **EAS dev-client APK** (não Expo Go):

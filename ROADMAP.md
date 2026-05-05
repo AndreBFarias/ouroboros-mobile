@@ -121,6 +121,8 @@ spec PARA o ciclo e pede clarificação.
 | ~~AUDIT~~ | ~~M-SHEET-MODAL-SNAP~~ | **fechada 2026-05-05** (DOM patch web-only após mount via useEffect; ty=920→276/184/92 medido) | `M-SHEET-MODAL-SNAP-spec.md` | — |
 | ~~AUDIT~~ | ~~M-DEBITO-CATEGORIA-CORES-VISIBLE~~ | **fechada 2026-05-05** (hexToRgba 40% opacity em rest, +4 cases) | `M-DEBITO-CATEGORIA-CORES-VISIBLE-spec.md` | — |
 | ~~AUDIT~~ | ~~M-DEBITO-CATEGORIA-ICONE~~ | **fechada 2026-05-05** (helper corDaCategoria refletindo accent, +6 cases) | `M-DEBITO-CATEGORIA-ICONE-spec.md` | — |
+| **PARALELO-E** | **M-BUNDLE-DIET-MOTI-REPLACE** | Substituir Moti por Reanimated puro (333 KB ganho; v1.0 conforme decisão dono 2026-05-05) | `M-BUNDLE-DIET-MOTI-REPLACE-spec.md` | 4-6h |
+| **PARALELO-E** | **M19.x** | Mockups toolchain JSX→HTML completa (decisão dono 2026-05-05: paralelo ao Bloco E) | `M19.x-spec.md` | 1,5-3h |
 
 **BLOCO D — Decisão registrada (executar como pre-condição de E)**
 
