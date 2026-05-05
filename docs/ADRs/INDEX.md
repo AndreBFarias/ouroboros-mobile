@@ -23,3 +23,4 @@ com referência "Supersedes ADR-NNNN" no cabeçalho.
 | 0016 | Vault Auto-criado em /sdcard/Documents/Ouroboros sem SAF | Aceito (estende ADR-0014) | M22 (refundação v1.0) |
 | 0017 | Mídia em Formato Original com .md Companion | Aceito | M39 (refundação v1.0) |
 | 0018 | OAuth Google: split clientId + cache em arquivo + escopo mínimo | Aceito (estende ADR-0007) | M37.1 + M37.2 (refundação v1.0) |
+| 0019 | Persistência canônica em `.md` individual no Vault | Aceito (estende ADR-0001 / 0014 / 0017) | M37.1.2 (refundação v1.0) |

@@ -774,11 +774,24 @@ vault/
 ├─ tarefas/                       ← v2 (F-16)
 ├─ alarmes/                       ← v2 (F-15)
 ├─ contadores/                    ← v2 (F-17)
+├─ agenda/                        ← M37.1.2 (Google Calendar espelhado)
+│  ├─ pessoa_a/
+│  │  └─ 2026-05-07-<eventId>.md
+│  └─ pessoa_b/
+├─ media/                         ← ADR-0017 (binários originais + companion)
+│  ├─ fotos/
+│  │  ├─ 2026-04-28-1430-abcd.jpg
+│  │  └─ 2026-04-28-1430-abcd.md
+│  ├─ audios/
+│  ├─ videos/
+│  ├─ scanner/
+│  └─ avatares/
 ├─ assets/
-│  └─ 2026-04-28-pix.jpg
+│  └─ exercicios/<slug>.gif
 └─ .ouroboros/
-   └─ cache/
-      └─ financas-cache.json     ← gerado pelo desktop
+   └─ cache/                      ← exceção: agregações readonly do backend
+      ├─ financas-cache.json      ← gerado pelo desktop (M14)
+      └─ humor-heatmap.json       ← gerado pelo desktop (M10)
 ```
 
 ### Schema · daily/YYYY-MM-DD.md (Humor do Dia)

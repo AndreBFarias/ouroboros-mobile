@@ -141,6 +141,7 @@ spec PARA o ciclo e pede clarificação.
 | ~~E5~~ | ~~M37.1~~ | **fechada 2026-05-05** Google Calendar OAuth + leitura agenda (1530/170, bundle 7,7 MB, 5 PNGs Nível A; commit `91710ab`) | `M37.1-spec.md` | — |
 | ~~E5.x.1~~ | ~~M37.1.1~~ | **fechada 2026-05-05** Calendar locale PT-BR ("Maio de 2026" + "Sáb"; 1536/171; +6 testes; PNG `A-agenda-locale-ptbr.png`) | `M37.1.1-spec.md` | — |
 | ~~E5.x.2~~ | ~~M-BRIEF-A25~~ | **fechada 2026-05-05 local-only** A25 registrada em VALIDATOR_BRIEF §4 (arquivo gitignored conforme política anti-IA — não versionado por design) | `M-BRIEF-A25-METRO-PACKAGE-EXPORTS-spec.md` | — |
+| E5.x.3 | **M37.1.2** | Cache de agenda em .md individual (alinhar ao padrão Vault — descobre que JSON único quebra invariante "tudo .md"; `agenda/<pessoa>/YYYY-MM-DD-<eventId>.md`) | `M37.1.2-cache-agenda-em-md-spec.md` | 1-2h |
 | E5.B | **M37.1-checkpoint-nivel-B** | OAuth real no emulador (3 screenshots; depende APK dev-client fresh — build `bcf57359` em curso) | `M37.1-checkpoint-nivel-B-spec.md` | 0,5-1h |
 | E6 | **M37.2** | Google Calendar escrita | `M37.2-spec.md` | 4-5h |
 

@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Decisão arquitetural (2026-05-05) — ADR-0019 + spec M37.1.2
+
+**ADR-0019 — Persistência canônica em `.md` individual no Vault.**
+Auditoria do Vault com o dono revelou que o cache de eventos do
+Google Calendar de M37.1 (`media/cache/agenda-<pessoa>.json`,
+JSON único de 30 dias) **quebra a invariante "tudo o que o
+usuário vê no app é `.md` individual no Vault"**. ADR-0019
+codifica a regra:
+
+1. **Dados primários do usuário** (criados ou espelhados) são
+   `.md` individual com frontmatter zod.
+2. **Binários originais** seguem ADR-0017 (`media/<tipo>/` com
+   `.md` companion).
+3. **Exceções legítimas**: agregações readonly geradas pelo
+   backend Python, em `.ouroboros/cache/*.json` (atualmente
+   apenas humor-heatmap M10 e financas-cache M14).
+
+`docs/BRIEFING.md` §7 (estrutura de pastas do Vault) atualizado
+para refletir `agenda/`, `media/<tipo>/`, e a pasta de cache
+oculta com as 2 exceções nominadas.
+
+**Sprint M37.1.2 enfileirada (E5.x.3, spec
+`docs/sprints/M37.1.2-cache-agenda-em-md-spec.md`, 1-2h):**
+migra `media/cache/agenda-<pessoa>.json` (JSON único introduzido
+por M37.1) para `agenda/<pessoa>/YYYY-MM-DD-<eventId>.md` (um
+arquivo por evento). Inclui boot hook idempotente que migra
+caches existentes ao primeiro boot pós-upgrade. Sem mudança de
+UX. Reduz risco de conflitos Syncthing, alinha ao padrão único
+e fecha o débito introduzido por M37.1.
+
 ### Sub-sprints colaterais E5 (2026-05-05 noite) — M37.1.1 + M-BRIEF-A25
 
 #### E5.x.1 — M37.1.1 Calendar locale PT-BR

@@ -446,6 +446,13 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - **Locale PT-BR completo (M37.1.1, fechada 2026-05-05)**:
   header "Maio de 2026", dias "Dom Seg Ter Qua Qui Sex Sáb",
   registro em `src/components/agenda/calendarLocalePtBr.ts`.
+- **Persistência canônica em `.md` individual (M37.1.2,
+  enfileirada — ADR-0019)**: cada evento espelhado do Google
+  Calendar vira um `.md` próprio em
+  `agenda/<pessoa>/YYYY-MM-DD-<eventId>.md` (em vez do JSON
+  único de M37.1). Alinhamento ao padrão Vault: tudo dado
+  primário do usuário é `.md`, exceções legítimas são apenas
+  caches readonly do backend Python.
 - **Sub-sprint ainda aberta**: M37.1-checkpoint-nivel-B (OAuth
   real no emulador, 3 screenshots — depende APK dev-client
   fresh).
