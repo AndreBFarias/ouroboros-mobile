@@ -85,3 +85,15 @@ HANDOFF-PROMPT.md
 HOW_TO_RESUME.md
 VALIDATOR_BRIEF.md
 STATE.md
+
+# --- anti-IA (anonimato local) ---
+AGENTS.md
+GEMINI.md
+COPILOT.md
+HANDOFF.md
+.cursorrules
+.windsurfrules
+.cursor/
+.aider*
+.continue/
+.github/copilot-instructions.md
