@@ -5,6 +5,87 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Bloco A FECHADO — A5 + A4.x batch paralelo (2026-05-04)
+
+#### A5 — M-EXPORT-COMPLETO
+
+Export ZIP + restore inverso simétrico com validação sha256.
+Backup local-to-local (ADR-0007 zero nuvem).
+
+**Arquivos novos:**
+- `src/lib/crypto/sha256.ts` (162L) — SHA-256 puro JS, vetores
+  NIST + paridade Node crypto. ~3 KB minified.
+- `src/lib/services/restaurarVault.ts` (232L) —
+  `restaurarVaultZip()` com validação sha256 por arquivo. Default
+  não-destrutivo (cria `restaurado-<data>/`).
+- `tests/lib/crypto/sha256.test.ts` — 7 cases (vetores oficiais +
+  paridade).
+- `tests/integration/export-restaure-roundtrip.test.ts` (382L) —
+  roundtrip 62 arquivos byte-a-byte + 3 edge cases.
+- `tests/e2e/playwright/m-export-completo.e2e.ts` — presença dos
+  botões.
+
+**Arquivos modificados:**
+- `src/lib/services/exportarVault.ts` (157→324L, +167L) — inclui
+  cache `.ouroboros/cache/`, snapshot settings em
+  `.ouroboros/snapshot-settings.json`, MANIFEST.json com sha256
+  por arquivo + versão schema + contagem por subpasta.
+- `app/settings/index.tsx` (+51L) — botão "Importar backup"
+  novo, abre document picker, chama `restaurarVaultZip()`.
+- `tests/app/settings/index.test.tsx` (+110L) — 3 cases novos
+  (botão importar / falhas / cancel).
+- `docs/FEATURES-CANONICAS.md` §11 expandida.
+
+**Decisão técnica:** companion `.md` é coletado naturalmente pelo
+ZIP (vive em `media/<sub>/` que já está em VAULT_FOLDERS). Não
+precisou chamar `lerCompanion` — ZIP captura o arquivo bruto.
+
+#### A4.x — M39.1 migrar 9 writers
+
+6 de 9 writers migrados para `escreverMidiaComCompanion`
+canônico, **net -55 LOCs** (refactor consolidador).
+
+**Migrados (6):** `capturarFoto`, `capturarMusica`, `capturarVideo`,
+`recordAudio`, `saveEvento.copiarFotos`, `medidas/novo`.
+
+**Não migrados (3 — exclusões deliberadas anti-débito):**
+- `salvarFrase.ts` — caso especial: `.md` puro sem binário.
+  Helper canônico exige `binarioUri`.
+- `adicionarFotoManual.ts` — único writer que NÃO escrevia
+  companion. Migrar mudaria comportamento observável (passaria a
+  gravar `.md`); seria feature, não refactor.
+- `saveNota.ts` — `tipo: midia_foto` em pasta `media/scanner/`
+  (não `media/fotos/`). Helper mapeia subpasta a partir do tipo
+  via `subpastaPara()`; sem override. Migração quebraria 5 testes.
+
+**Métricas batch A5+A4.x:**
+- Testes: 1349 → **1364** (+15 cases novos: 7 sha256 + 3 settings
+  + 5 roundtrip).
+- Suítes: 149 → **151** (+2: crypto/sha256 + integration/roundtrip).
+- Bundle Hermes: **7.08 → 6.77 MB** (sha256 ~3 KB; refactor
+  consolidador também reduziu LOCs líquidos). **Margem 2.08 MB
+  (24% folga)**.
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet
+  leak OK.
+
+### Bloco A — encerramento
+
+Fundação completa (9 sprints fechadas em sequência):
+
+- A1 — PT-BR auditoria automática (hook + dicionário 147)
+- A2 — Gauntlet dead code v2 (leak 0/6, bundle -350 KB)
+- A2.x — PT-BR retrofit (3 violações fixadas)
+- A3 — Vault MD audit (14 features auditadas)
+- A3.x.1-4 — 4 paralelas vault MD fix
+- A4 — M39 mídia companion oficial (schema zod + helpers)
+- A4.x — M39.1 migrar 9 writers (6 migrados, 3 documentados)
+- A5 — Export completo (ZIP + restore + MANIFEST sha256)
+- C1 — Bundle diet (-1.67 MB)
+
+**Métricas finais Bloco A:** 1300 → **1364** testes (+64), 145 →
+**151** suítes (+6), Hermes **8.5 → 6.77 MB** (-1.73 MB), margem
+2.08 MB. Próximo: Bloco B (polish UX).
+
 ### C1 — M-BUNDLE-DIET fechada (2026-05-04) — 8.84 → 7.08 MB
 
 Auditoria + remoção de gordura entregou **redução de 1.67 MB
