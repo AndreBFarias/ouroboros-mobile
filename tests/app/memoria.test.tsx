@@ -11,6 +11,10 @@ jest.mock('expo-router', () => ({
   __esModule: true,
   useFocusEffect: () => undefined,
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  // M-CAPTURA-UNIFICADA: MemoriasScreen passou a ler ?abrirCaptura=1
+  // via useLocalSearchParams. Mock devolve objeto vazio (sem query)
+  // para o caminho default (auto-abertura nao acionada).
+  useLocalSearchParams: () => ({}),
   Redirect: () => null,
 }));
 

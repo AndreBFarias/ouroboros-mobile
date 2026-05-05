@@ -233,6 +233,19 @@ export default function RootLayout() {
                 animation: 'fade_from_bottom',
               }}
             />
+            {/* M-CAPTURA-UNIFICADA: rota modal de decisao entre
+                "Registrar momento" e "Escanear documento". Mesmo
+                padrao M26 (transparentModal + bg Dracula opaco)
+                para mitigar Armadilha A18 (tela preta se sheet
+                falha em expand). */}
+            <Stack.Screen
+              name="captura"
+              options={{
+                presentation: 'transparentModal',
+                contentStyle: { backgroundColor: '#14151a' },
+                animation: 'fade_from_bottom',
+              }}
+            />
           </Stack>
           {/* M27: overlays globais. Ordem de zIndex declarada em
               CONTRACT secao 7.10 (Stack 0 -> FABMenu 10 ->

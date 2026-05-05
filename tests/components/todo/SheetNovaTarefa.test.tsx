@@ -45,7 +45,11 @@ jest.mock('@react-native-community/datetimepicker', () => ({
 }));
 
 import { render, fireEvent } from '@testing-library/react-native';
-import { SheetNovaTarefa } from '@/components/todo/SheetNovaTarefa';
+import {
+  SheetNovaTarefa,
+  CATEGORIA_ACCENTS,
+} from '@/components/todo/SheetNovaTarefa';
+import { TAREFA_CATEGORIAS } from '@/lib/schemas/tarefa';
 
 describe('SheetNovaTarefa', () => {
   it('renderiza header "Nova tarefa" no modo criar', () => {
@@ -194,6 +198,40 @@ describe('SheetNovaTarefa - M31 categoria', () => {
     expect(onSalvar).toHaveBeenCalledWith(
       expect.objectContaining({ categoria: 'saude' })
     );
+  });
+});
+
+describe('SheetNovaTarefa - M-DEBITO-CATEGORIA-CORES', () => {
+  it('cobre todas as 8 categorias canonicas no mapping de accents', () => {
+    for (const cat of TAREFA_CATEGORIAS) {
+      expect(CATEGORIA_ACCENTS[cat]).toBeDefined();
+    }
+  });
+
+  it('atribui cor semantica distinta a cada categoria (sem todas iguais)', () => {
+    const accents = TAREFA_CATEGORIAS.map((c) => CATEGORIA_ACCENTS[c]);
+    const unicos = new Set(accents);
+    // 8 categorias devem ter pelo menos 7 cores distintas (orange e ghost
+    // sao reservadas a obrigacoes e outro respectivamente; demais sao
+    // todas distintas). Antes do fix: todas 'orange' (1 unico).
+    expect(unicos.size).toBeGreaterThanOrEqual(7);
+  });
+
+  it('outro mantem accent ghost (neutro generico, M-DEBITO-UI-UX-SEED-DUO)', () => {
+    expect(CATEGORIA_ACCENTS.outro).toBe('ghost');
+  });
+
+  it('mapeamento canonico semantico Dracula', () => {
+    expect(CATEGORIA_ACCENTS).toEqual({
+      trabalho: 'cyan',
+      casa: 'pink',
+      rotina: 'purple',
+      financas: 'green',
+      desenvolvimento_pessoal: 'yellow',
+      obrigacoes: 'orange',
+      saude: 'red',
+      outro: 'ghost',
+    });
   });
 });
 

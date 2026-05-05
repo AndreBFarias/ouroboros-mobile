@@ -97,9 +97,9 @@ spec PARA o ciclo e pede clarificação.
 
 | # | Sprint | Título | Spec | Estim. |
 |---|---|---|---|---|
-| B1 | **M-CAPTURA-UNIFICADA** | Rota `/captura` ramifica Câmera | `M-CAPTURA-UNIFICADA-spec.md` | 2-3h |
-| B2 | **M11.4** | Evolução corporal em Marcos | `M11.4-spec.md` | 4-5h |
-| B3 | **M-DEBITO-CATEGORIA-CORES** | 8 chips com cores semânticas | `M-DEBITO-CATEGORIA-CORES-spec.md` | 0,5-1h |
+| ~~B1~~ | ~~M-CAPTURA-UNIFICADA~~ | **fechada 2026-05-05** (rota `/captura` modal + 2 cards + MenuLateral migrado + abrirNoMount) | `M-CAPTURA-UNIFICADA-spec.md` | — |
+| ~~B2~~ | ~~M11.4~~ | **fechada 2026-05-05** (SecaoEvolucaoCorporal + medidaRef + useMedidas hook, +11 cases) | `M11.4-spec.md` | — |
+| ~~B3~~ | ~~M-DEBITO-CATEGORIA-CORES~~ | **fechada 2026-05-05** (8 chips semânticos Dracula, +4 cases, AC-1 e AC-2 registrados) | `M-DEBITO-CATEGORIA-CORES-spec.md` | — |
 | B4 | **M40** | Tela Hoje v2 (Recap + para + próximos) | `M40-spec.md` | 4-5h |
 | B5 | **M36** | Tela Recap (Conquistas/Crises/Números) | `M36-spec.md` | 6-8h |
 | B6 | **M35** | Aba Finanças empty state honesto | `M35-spec.md` | 1-2h |

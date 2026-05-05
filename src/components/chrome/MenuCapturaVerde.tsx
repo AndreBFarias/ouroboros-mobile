@@ -24,7 +24,7 @@
 //    coerencia visual; o que diferencia e a posicao (1a) e o icone.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -74,6 +74,12 @@ export interface MenuCapturaVerdeProps {
   // acoes de captura. Quando vazio/undefined o sheet mantem layout M34
   // original (4 itens).
   acoesExtras?: ReadonlyArray<AcaoExtraCaptura>;
+  // M-CAPTURA-UNIFICADA: quando true, o sheet expande automaticamente
+  // 1 frame apos a montagem. Usado por MemoriasScreen quando a rota
+  // /memoria recebe ?abrirCaptura=1 (vinda de /captura -> "Registrar
+  // momento"). Sem isto, o usuario teria que tocar no FAB verde de
+  // novo. Acionado apenas uma vez por mount via ref interno.
+  abrirNoMount?: boolean;
 }
 
 interface AcaoMenuItemProps {
@@ -143,12 +149,17 @@ function AcaoMenuItem({
 export function MenuCapturaVerde({
   onCapturaConcluida,
   acoesExtras,
+  abrirNoMount,
 }: MenuCapturaVerdeProps): ReactNode {
   const sheetRef = useRef<BottomSheetRef>(null);
   const fraseRef = useRef<BottomSheetRef>(null);
   const [pressed, setPressed] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [resetFrase, setResetFrase] = useState(0);
+  // M-CAPTURA-UNIFICADA: lock para garantir que abrirNoMount dispare
+  // apenas uma vez por mount. Sem isto, mudancas de prop ou re-renders
+  // do MemoriasScreen poderiam reciclar o sheet involuntariamente.
+  const abriuAutomaticoRef = useRef<boolean>(false);
   const setSheetCapturaAberto = useNavegacao(
     (s) => s.setSheetCapturaAberto
   );
@@ -158,6 +169,21 @@ export function MenuCapturaVerde({
     haptics.fab();
     sheetRef.current?.expand();
   }, [setSheetCapturaAberto]);
+
+  // M-CAPTURA-UNIFICADA: dispara expand 1 frame apos mount quando
+  // abrirNoMount=true. setTimeout(0) garante que o sheet ja montou
+  // a arvore interna antes de tentar expandir (evita Armadilha A17:
+  // race com hidratacao + ref nula no primeiro render).
+  useEffect(() => {
+    if (!abrirNoMount) return;
+    if (abriuAutomaticoRef.current) return;
+    abriuAutomaticoRef.current = true;
+    const t = setTimeout(() => {
+      setSheetCapturaAberto(true);
+      sheetRef.current?.expand();
+    }, 0);
+    return () => clearTimeout(t);
+  }, [abrirNoMount, setSheetCapturaAberto]);
 
   const fecharMenu = useCallback(() => {
     setSheetCapturaAberto(false);

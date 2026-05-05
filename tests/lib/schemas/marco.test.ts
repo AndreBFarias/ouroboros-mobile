@@ -128,6 +128,27 @@ describe('MarcoSchema campo para (M33)', () => {
   });
 });
 
+describe('MarcoSchema campo medidaRef (M11.4)', () => {
+  it('aceita marco sem medidaRef (default omisso)', () => {
+    const out = MarcoSchema.parse(baseMarco);
+    expect(out.medidaRef).toBeUndefined();
+  });
+
+  it('aceita medidaRef em formato YYYY-MM-DD', () => {
+    const out = MarcoSchema.parse({ ...baseMarco, medidaRef: '2026-04-15' });
+    expect(out.medidaRef).toBe('2026-04-15');
+  });
+
+  it('rejeita medidaRef em formato invalido', () => {
+    expect(() =>
+      MarcoSchema.parse({ ...baseMarco, medidaRef: '2026/04/15' })
+    ).toThrow();
+    expect(() =>
+      MarcoSchema.parse({ ...baseMarco, medidaRef: 'abril-2026' })
+    ).toThrow();
+  });
+});
+
 describe('MarcoOrigemSchema', () => {
   it('aceita "backend" e "client"', () => {
     expect(MarcoOrigemSchema.parse('backend')).toBe('backend');

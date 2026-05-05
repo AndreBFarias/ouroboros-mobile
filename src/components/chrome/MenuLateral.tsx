@@ -98,7 +98,11 @@ export function MenuLateral() {
     const registrar: ItemMenu[] = [
       { label: 'Humor', a11yLabel: 'registrar humor', icone: Heart, route: rotaCaptura('humor'), cor: colors.pink },
       { label: 'Voz', a11yLabel: 'registrar voz', icone: Mic, route: rotaCaptura('voz'), cor: colors.cyan },
-      { label: 'Câmera', a11yLabel: 'registrar camera', icone: Camera, route: rotaCaptura('camera'), cor: colors.orange },
+      // M-CAPTURA-UNIFICADA: Camera passa a apontar para a rota
+      // /captura (transparentModal) que ramifica entre "Registrar
+      // momento" e "Escanear documento". Em vez do legado
+      // rotaCaptura('camera') -> /scanner, que pulava direto a decisao.
+      { label: 'Câmera', a11yLabel: 'registrar camera', icone: Camera, route: '/captura', cor: colors.orange },
       { label: 'Exercícios', a11yLabel: 'registrar exercicios', icone: Dumbbell, route: rotaCaptura('exercicio'), cor: colors.green },
       { label: 'Conquista', a11yLabel: 'registrar conquista', icone: Trophy, route: rotaCaptura('vitoria'), cor: colors.yellow },
       { label: 'Crise', a11yLabel: 'registrar crise', icone: AlertTriangle, route: rotaCaptura('trigger'), cor: colors.red },

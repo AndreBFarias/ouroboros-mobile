@@ -96,19 +96,30 @@ const CATEGORIA_ICON: Record<TarefaCategoria, LucideIcon> = {
   outro: HelpCircle,
 };
 
-// M-DEBITO-UI-UX-SEED-DUO: "outro" e' opcao neutra/generica e nao
-// deve competir visualmente com as categorias de cor semantica.
-// Aplica accent 'ghost' (muted-decor quando selected) para ele e
-// mantem 'orange' para o resto do grupo. Coerente com ADR-010
-// hierarquia por contraste.
-const CATEGORIA_ACCENTS: Record<TarefaCategoria, ChipAccent> = {
-  trabalho: 'orange',
-  casa: 'orange',
-  rotina: 'orange',
-  financas: 'orange',
-  desenvolvimento_pessoal: 'orange',
+// M-DEBITO-CATEGORIA-CORES: cada slug recebe uma cor semantica da
+// paleta Dracula para diferenciar visualmente as 8 categorias no
+// ChipGroup. Coerente com ADR-010 (hierarquia por contraste, nao
+// por borda). "outro" mantem 'ghost' (muted-decor quando selected)
+// herdado do M-DEBITO-UI-UX-SEED-DUO - opcao neutra que nao compete
+// visualmente com as categorias semanticas.
+//
+// Mapeamento:
+//   trabalho                -> cyan    (produtivo, profissional)
+//   casa                    -> pink    (domestico, ambiente intimo)
+//   rotina                  -> purple  (habito, automatico)
+//   financas                -> green   (dinheiro)
+//   desenvolvimento_pessoal -> yellow  (estudo, ideias)
+//   obrigacoes              -> orange  (urgente, atencao)
+//   saude                   -> red     (critico, alerta)
+//   outro                   -> ghost   (neutro generico)
+export const CATEGORIA_ACCENTS: Record<TarefaCategoria, ChipAccent> = {
+  trabalho: 'cyan',
+  casa: 'pink',
+  rotina: 'purple',
+  financas: 'green',
+  desenvolvimento_pessoal: 'yellow',
   obrigacoes: 'orange',
-  saude: 'orange',
+  saude: 'red',
   outro: 'ghost',
 };
 

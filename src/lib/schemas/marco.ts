@@ -43,6 +43,14 @@ export const MarcoSchema = z.object({
   // Destinatario / tema do marco (M33). Discriminado: mim /
   // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
   para: ParaSchema,
+  // M11.4: vinculo opcional Marco -> Medida. Quando presente, e o
+  // slug curto da medida (data YYYY-MM-DD em medidas/), permitindo
+  // ao Recap (M36) correlacionar conquista textual com snapshot
+  // corporal. Slug, nao path absoluto, para facilitar backup/restore.
+  medidaRef: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'medidaRef deve estar em YYYY-MM-DD')
+    .optional(),
 });
 
 export type Marco = z.infer<typeof MarcoSchema>;

@@ -19,6 +19,7 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
+import { useLocalSearchParams } from 'expo-router';
 import { Header, Screen } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
@@ -40,6 +41,15 @@ const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
 ];
 
 export function MemoriasScreen(): ReactNode {
+  // M-CAPTURA-UNIFICADA: query ?abrirCaptura=1 vinda de /captura ->
+  // "Registrar momento" sinaliza que o usuario ja escolheu abrir o
+  // MenuCapturaVerde. Repassamos como prop abrirNoMount para o sheet
+  // expandir 1 frame apos mount, evitando exigir um segundo toque.
+  // useLocalSearchParams devolve string | string[] | undefined;
+  // checamos === '1' explicitamente.
+  const params = useLocalSearchParams<{ abrirCaptura?: string }>();
+  const abrirCapturaAuto = params.abrirCaptura === '1';
+
   const [tab, setTab] = useState<TabKey>('treinos');
   // M34: nonce para forcar re-mount da tab ativa apos uma captura
   // bem-sucedida. useFotosAgregadas tem useFocusEffect mas o foco
@@ -147,6 +157,7 @@ export function MemoriasScreen(): ReactNode {
       <MenuCapturaVerde
         onCapturaConcluida={handleCapturaConcluida}
         acoesExtras={acaoExtra ? [acaoExtra] : undefined}
+        abrirNoMount={abrirCapturaAuto}
       />
     </Screen>
   );

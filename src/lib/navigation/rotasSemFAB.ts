@@ -17,6 +17,10 @@ export const ROTAS_SEM_FAB: ReadonlyArray<string> = [
   '/eventos',
   '/scanner',
   '/recap',
+  // M-CAPTURA-UNIFICADA: rota modal de escolha entre "Registrar
+  // momento" e "Escanear documento". FAB principal nao deve
+  // renderizar sobre o sheet de decisao.
+  '/captura',
 ] as const;
 
 export function rotaEsconderFAB(pathname: string | null): boolean {

@@ -5,6 +5,96 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Bloco B iniciado — B1 + B2 + B3 batch paralelo (2026-05-05)
+
+#### B1 — M-CAPTURA-UNIFICADA
+
+Rota `/captura` modal raiz com `<SheetEscolhaCaptura>`: 2 cards
+verticais "Registrar momento" (verde, → `/memoria?abrirCaptura=1`)
+e "Escanear documento" (cyan, → `/scanner`). Item "Câmera" do
+MenuLateral migrado do legado FABRadial.
+
+`MemoriasScreen` lê `?abrirCaptura=1` via `useLocalSearchParams` e
+propaga para `<MenuCapturaVerde abrirNoMount={true}>` que abre o
+sheet 1 frame após mount. `/captura` adicionado a `ROTAS_SEM_FAB`.
+
+**Arquivos novos (5):** `app/captura.tsx`, `SheetEscolhaCaptura.tsx`,
+`SheetEscolhaCaptura.test.tsx` (5 cases), E2E novo, screenshots dir.
+
+**Arquivos modificados (7):** `MenuLateral.tsx`, `MemoriasScreen.tsx`,
+`MenuCapturaVerde.tsx` (prop `abrirNoMount`), `rotasSemFAB.ts`,
+`icons.ts` (+ `ImagePlus`/`ScanLine`), `app/_layout.tsx`
+(Stack.Screen padrão M26), `tests/app/memoria.test.tsx` (mock
+`useLocalSearchParams`).
+
+`/scanner` já tinha M09 dev-client real — não modifiquei (empty
+state honesto pré-M09 não era necessário).
+
+#### B2 — M11.4 evolução corporal
+
+`<SecaoEvolucaoCorporal>` adicionada ANTES do timeline em
+MemoriasMarcosTab. Lê `useMedidas` (hook novo, padrão idêntico a
+`useMarcos`). ScrollView horizontal com cards mensais (foto frente +
+peso + delta numérico neutro ADR-0005). Botão "Registrar evolução"
+no header da seção (substitui o array `acoesExtras` do FAB que
+exigiria mexer em arquivo do B1).
+
+`MarcoSchema` ganha `medidaRef?: string` opcional (regex
+`^\d{4}-\d{2}-\d{2}$`). `<SheetNovoMarco>` ganha bloco "Anexar
+evolução corporal" listando 3 medidas mais recentes como chips
+single-select + opção "Nenhuma".
+
+**Arquivos novos (4):** `MemoriasMarcosTab/SecaoEvolucaoCorporal.tsx`
+(302L), `useMedidas.ts` (78L), test (8 cases), E2E.
+
+**Arquivos modificados (5):** `marco.ts` schema, `MemoriasMarcosTab.tsx`,
+`SheetNovoMarco.tsx`, `tests/lib/schemas/marco.test.ts` (+3 cases),
+`docs/FEATURES-CANONICAS.md` §3.4 nova.
+
+**Divergência consciente da spec:** "Registrar evolução" virou
+botão no header da seção (não item do FAB) porque
+`MemoriasScreen.handleRegistrarAcaoExtra` aceita 1 ação por tab —
+modificar para array exigia tocar arquivo do B1. Solução
+equivalente em UX (atalho contextual visível).
+
+#### B3 — M-DEBITO-CATEGORIA-CORES
+
+8 chips de categoria de tarefa agora com cores Dracula semânticas
+em vez de todas laranja:
+- `trabalho` → cyan (produtivo)
+- `casa` → pink (íntimo doméstico)
+- `rotina` → purple (hábito)
+- `financas` → green (dinheiro)
+- `desenvolvimento_pessoal` → yellow (estudo)
+- `obrigacoes` → orange (urgente)
+- `saude` → red (alerta)
+- `outro` → ghost (neutro, herdado de M-DEBITO-UI-UX-SEED-DUO)
+
+`ChipAccent` em `Chip.tsx` já suportava todos 8 variants — edição
+puramente em `CATEGORIA_ACCENTS` mapping.
+
+**Arquivos modificados (1):** `SheetNovaTarefa.tsx`.
+**Arquivos novos (2):** test (+4 cases), E2E.
+
+**Achados colaterais (não-corrigidos, anti-débito):**
+- AC-1: ícone Lucide do header ainda hardcoded `colors.orange` (não
+  reflete categoria selecionada). Sub-sprint sugerida
+  `M-DEBITO-CATEGORIA-CORES-FOLLOWUP`.
+- AC-2: conflito potencial `casa: pink` vs `pessoa_b: pink`
+  (identidade). Validar visual confirmará se há ambiguidade.
+
+#### Métricas batch B1+B2+B3
+
+- Testes: 1364 → **1384** (+20 cases novos: 5 SheetEscolhaCaptura
+  + 8 SecaoEvolucaoCorporal + 3 marcoSchema + 4 categoria cores).
+- Suítes: 151 → **153** (+2).
+- Bundle Hermes: **6.77 → 7.11 MB** (+340 KB — features novas
+  e schemas; margem 1.74 MB / 19.7% folga do limite 8.85 MB).
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet
+  leak OK.
+
+
+
 ### Bloco A FECHADO — A5 + A4.x batch paralelo (2026-05-04)
 
 #### A5 — M-EXPORT-COMPLETO

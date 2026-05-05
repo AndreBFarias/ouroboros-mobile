@@ -26,6 +26,7 @@ import {
 import { colors, spacing } from '@/theme/tokens';
 import { useMarcos } from '@/lib/hooks/useMarcos';
 import { SheetNovoMarco } from './SheetNovoMarco';
+import { SecaoEvolucaoCorporal } from './MemoriasMarcosTab/SecaoEvolucaoCorporal';
 import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { Marco } from '@/lib/schemas/marco';
 
@@ -202,6 +203,13 @@ export function MemoriasMarcosTab({
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* M11.4: subsecao "Evolucao corporal" antes do timeline de
+            marcos textuais. Faixa horizontal de cards mensais com
+            foto frontal + peso + delta. Tap abre /medidas. Botao
+            "Registrar evolucao" no header da secao aponta para
+            /medidas/novo. */}
+        <SecaoEvolucaoCorporal />
+
         {marcos.length === 0 ? (
           <EmptyState frase="Marcos vão aparecer com o tempo." />
         ) : (

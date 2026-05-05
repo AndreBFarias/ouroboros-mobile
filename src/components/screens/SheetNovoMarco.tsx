@@ -7,8 +7,8 @@
 // descritivo neutro.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useState, type ReactNode } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import {
   BottomSheetView,
   BottomSheetTextInput,
@@ -23,6 +23,7 @@ import {
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { saveMarco } from '@/lib/marcos/saveMarco';
+import { useMedidas } from '@/lib/hooks/useMedidas';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import type { Marco } from '@/lib/schemas/marco';
@@ -54,6 +55,15 @@ export function SheetNovoMarco({
   // M33: destinatario / tema do marco. Default {tipo:'mim'}.
   const [para, setPara] = useState<Para>({ tipo: 'mim' });
   const [salvando, setSalvando] = useState<boolean>(false);
+  // M11.4: vinculo opcional Marco -> Medida. Slug curto YYYY-MM-DD
+  // ou null quando o usuario nao quer anexar.
+  const [medidaRef, setMedidaRef] = useState<string | null>(null);
+
+  // M11.4: carrega ate 3 medidas mais recentes para oferecer como
+  // anexo. listarMedidas devolve desc por data; pegamos as 3
+  // primeiras. Quando vazio, o bloco nao renderiza.
+  const { medidas } = useMedidas({ periodo: 'tudo' });
+  const ultimasMedidas = useMemo(() => medidas.slice(0, 3), [medidas]);
 
   const podeSalvar = descricao.trim().length > 0;
 
@@ -81,6 +91,9 @@ export function SheetNovoMarco({
         tags,
         auto: false,
         para,
+        // M11.4: vinculo opcional com medida corporal (slug
+        // YYYY-MM-DD em medidas/). Omitido quando nada selecionado.
+        ...(medidaRef ? { medidaRef } : {}),
       };
 
       await saveMarco({ meta, vaultRoot });
@@ -95,7 +108,7 @@ export function SheetNovoMarco({
     } finally {
       setSalvando(false);
     }
-  }, [podeSalvar, vaultRoot, pessoaAtiva, descricao, tags, para, toast, onSalvo]);
+  }, [podeSalvar, vaultRoot, pessoaAtiva, descricao, tags, para, medidaRef, toast, onSalvo]);
 
   return (
     <BottomSheetView style={{ flex: 1 }}>
@@ -182,6 +195,95 @@ export function SheetNovoMarco({
             onChange={setTags}
           />
         </View>
+
+        {/* M11.4: bloco "Anexar evolucao corporal". Lista as 3
+            medidas mais recentes como chips selecionaveis (single).
+            Quando nenhuma escolhida, marco e gravado sem medidaRef.
+            Quando o usuario nao tem medidas registradas, o bloco
+            inteiro nao renderiza. */}
+        {ultimasMedidas.length > 0 ? (
+          <View
+            style={{ gap: spacing.sm }}
+            accessibilityLabel="bloco anexar evolucao corporal"
+          >
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 11,
+                lineHeight: 14,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+              }}
+            >
+              Anexar evolução corporal
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              <Pressable
+                onPress={() => {
+                  haptics.selection();
+                  setMedidaRef(null);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="nenhuma medida"
+                style={{
+                  paddingVertical: spacing.xs,
+                  paddingHorizontal: spacing.sm,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor:
+                    medidaRef === null ? colors.purple : colors.bgElev,
+                  backgroundColor:
+                    medidaRef === null ? colors.bgElev : 'transparent',
+                }}
+              >
+                <Text
+                  style={{
+                    color: medidaRef === null ? colors.purple : colors.muted,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 12,
+                    lineHeight: 16,
+                  }}
+                >
+                  Nenhuma
+                </Text>
+              </Pressable>
+              {ultimasMedidas.map((m) => {
+                const ativo = medidaRef === m.data;
+                return (
+                  <Pressable
+                    key={m.data}
+                    onPress={() => {
+                      haptics.selection();
+                      setMedidaRef(m.data);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`anexar medida ${m.data}`}
+                    style={{
+                      paddingVertical: spacing.xs,
+                      paddingHorizontal: spacing.sm,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: ativo ? colors.green : colors.bgElev,
+                      backgroundColor: ativo ? colors.bgElev : 'transparent',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: ativo ? colors.green : colors.muted,
+                        fontFamily: 'JetBrainsMono_400Regular',
+                        fontSize: 12,
+                        lineHeight: 16,
+                      }}
+                    >
+                      {m.data}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
 
         {/* M33: destinatario / tema do marco. Render dinamico via
             useSettings.pessoa.tipoCompanhia; em modo sozinho retorna

@@ -103,14 +103,26 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Triagem: salvar como evento / diário / conquista / inbox.
 - Persiste em `inbox/<data>-<slug>.md` + binário.
 
-### 2.8 Captura unificada — M-CAPTURA-UNIFICADA (proposta)
+### 2.8 Captura unificada — M-CAPTURA-UNIFICADA
 
-- Item "Câmera" do MenuLateral abre rota `/captura` modal com 2
-  ramos:
-  - **Registrar momento** → encaminha para `MenuCapturaVerde`
-    (M34) em Memórias.
-  - **Escanear documento** → encaminha para Scanner (M09) ou
-    empty state pré-M09.
+- Item "Câmera" do MenuLateral abre a rota `/captura` (modal raiz
+  `transparentModal`, padrão M26) com `<SheetEscolhaCaptura>`:
+  dois cards verticais grandes, área de toque ≥ 88dp, sem badge
+  e sem cor de festa.
+  - **Registrar momento** (`ImagePlus` verde, "Foto, música, vídeo
+    ou frase.") → dismissa o sheet e navega para
+    `/memoria?abrirCaptura=1`. `MemoriasScreen` lê a query via
+    `useLocalSearchParams` e expande o `<MenuCapturaVerde>`
+    automaticamente 1 frame após mount via prop `abrirNoMount`.
+  - **Escanear documento** (`ScanLine` cyan, "Nota fiscal,
+    comprovante.") → dismissa e navega para `/scanner`
+    (`<ScannerSheet>` M09 quando dev-client; em ambiente sem ML
+    Kit nativo o sheet mostra `EmptyState` honesto via
+    comportamento existente).
+- `<MenuCapturaVerde>` permanece em Memórias como atalho rápido
+  contextualizado; `/captura` é o ponto de decisão único do menu
+  lateral. Rota está na lista `ROTAS_SEM_FAB` para o `<FABMenu>`
+  não competir z-index com o sheet de decisão.
 
 ### 2.9 MenuCapturaVerde — M34 + M34.3 (em Memórias)
 
@@ -160,6 +172,26 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Marcos automáticos (MOB-bridge-3): 5 heurísticas (ex: 7 dias
   seguidos, primeira nota acima de 4) com dedup `sha256`.
 
+### 3.4 Evolução corporal — M11.4 (integração Marcos × Medidas)
+- Subseção "Evolução corporal" no topo da aba Marcos: faixa
+  horizontal de cards mensais com foto frontal + peso + delta vs
+  medida anterior. Tap em um card abre `/medidas` (Tela 13) com
+  hint `?focus=YYYY-MM-DD`.
+- Subtítulo "Última medida há N dias." em PT-BR (singular para
+  hoje/ontem).
+- Botão "Registrar evolução" no canto direito do header da seção
+  navega direto para `/medidas/novo` (atalho coexiste com FAB
+  verde unificado, que mantém "Adicionar marco" como ação
+  primária da tab — limite de 1 ação extra por tab no protocolo
+  M34.3).
+- `MarcoSchema` extendido com `medidaRef?: string` opcional
+  (slug `YYYY-MM-DD` em `medidas/`). `SheetNovoMarco` exibe
+  bloco "Anexar evolução corporal" listando as 3 medidas mais
+  recentes como chips selecionáveis (single, opcional). Marco
+  salvo carrega o `medidaRef` no frontmatter quando escolhido.
+- Recap (M36) consumirá esse vínculo agregando conquistas
+  textuais com snapshots corporais por período.
+
 ## 4. Exercícios — M13 (Telas 02, 07, 08)
 
 - Galeria de exercícios cadastrados (CRUD).
@@ -193,6 +225,9 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   cor).
 - Slider de fotos comparativas (frente / lado / costas).
 - Persiste em `medidas/YYYY-MM-DD.md`.
+- M11.4 expõe a faixa de evolução também na aba Marcos
+  (subseção 3.4) e permite vincular um marco a uma medida via
+  `medidaRef` opcional em `MarcoSchema`.
 
 ## 6. Mini-painéis de leitura
 
