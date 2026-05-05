@@ -5,6 +5,44 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### A3 — M-VAULT-MD-AUDIT fechada (2026-05-04)
+
+Auditoria completa de 14 features confirmou que a estrutura
+canônica do Vault está 95% correta, com **4 desvios reais
+documentados** e materializados como sub-sprints corretivas.
+
+**Entregas:**
+- `docs/auditoria-vault-2026-05-04/RELATORIO.md` — 225 linhas com
+  tabela por feature.
+- `tests/integration/vault-md-completo.test.ts` — 14 cases
+  zod-válidos via tmpdir real (1 por feature + áudio M34).
+- `scripts/check_vault_estrutura.sh` — 240 linhas. Varre vault
+  path e reporta órfãos, frontmatter quebrado, paths fora de
+  canônico.
+
+**4 desvios → 4 sub-sprints corretivas:**
+- **M-VAULT-MD-FIX-diario-audio** — áudio em `assets/` deveria
+  ser `media/audios/`.
+- **M-VAULT-MD-FIX-evento-fotos** — fotos em `assets/` deveriam
+  ser `media/fotos/`.
+- **M-VAULT-MD-FIX-medidas-fotos** — idem (bloqueia M11.4
+  evolução corporal).
+- **M-VAULT-MD-FIX-scanner** — futura M09 deve seguir companion
+  1:1 (poderá ser absorvido pela própria M09).
+
+**2 observações sem sprint** (decisão pendente):
+- `media/avatares` e `media/scanner` declaradas mas sem
+  consumidor — implementar ou remover do
+  `SUBPASTAS_CANONICAS`.
+- Vault desktop do dono `~/Protocolo-Ouroboros/` incompleto
+  (13/19 subpastas) — não é bug de código, é estado de uso.
+
+**Aritmética:** 1302 → **1316** testes (+14), 146 → **147**
+suítes (+1). TS strict 0, anonimato OK, smoke OK, PT-BR check OK,
+Gauntlet leak check OK. Bundle Hermes 8.5 MB mantido.
+
+
+
 ### Bloco A iniciado — A1 + A2 paralelas fechadas (2026-05-04)
 
 #### A1 — M-PT-BR-AUDIT
