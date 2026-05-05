@@ -5,7 +5,7 @@
 import { ReactNode, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Heart } from 'lucide-react-native';
+import { Heart } from '@/lib/icons';
 import {
   BottomSheet,
   type BottomSheetRef,

@@ -19,7 +19,7 @@ import { useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MotiView } from 'moti';
-import { Check } from 'lucide-react-native';
+import { Check } from '@/lib/icons';
 import { OuroborosLoader } from '@/components/brand';
 import {
   AvatarPicker,

@@ -16,7 +16,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { Plus } from '@/lib/icons';
 import {
   ChipGroup,
   EmptyState,

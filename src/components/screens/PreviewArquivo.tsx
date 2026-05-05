@@ -9,7 +9,7 @@
 // Não tenta carregar metadado pesado: tamanho em bytes vem do caller
 // como prop; aqui so renderizamos o que recebemos.
 import { Image, Text, View } from 'react-native';
-import { FileText, ImageIcon } from 'lucide-react-native';
+import { FileText, ImageIcon } from '@/lib/icons';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 export interface PreviewArquivoProps {

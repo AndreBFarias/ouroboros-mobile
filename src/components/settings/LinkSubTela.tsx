@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing, typography } from '@/theme/tokens';

@@ -11,7 +11,7 @@
 // sentence case.
 import { useEffect, useState } from 'react';
 import { Image, Text, View } from 'react-native';
-import { ImageOff, Music } from 'lucide-react-native';
+import { ImageOff, Music } from '@/lib/icons';
 import { colors } from '@/theme/tokens';
 import { youtubeThumbnailUrl } from '@/lib/midia/youtubeId';
 import { getSpotifyOEmbedCached } from '@/lib/midia/spotifyOEmbedCache';

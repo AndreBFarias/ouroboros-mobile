@@ -12,7 +12,7 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Check } from 'lucide-react-native';
+import { Check } from '@/lib/icons';
 import { Button, useToast } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';

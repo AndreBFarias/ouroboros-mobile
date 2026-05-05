@@ -3,7 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';

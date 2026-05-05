@@ -27,7 +27,7 @@
 import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Fingerprint } from 'lucide-react-native';
+import { Fingerprint } from '@/lib/icons';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';

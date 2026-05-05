@@ -108,7 +108,7 @@ spec PARA o ciclo e pede clarificação.
 
 | # | Sprint | Título | Spec | Estim. |
 |---|---|---|---|---|
-| C1 | **M-BUNDLE-DIET** | Reduzir bundle 300-500 KB (margem) | `M-BUNDLE-DIET-spec.md` | 2-3h |
+| ~~C1~~ | ~~M-BUNDLE-DIET~~ | **fechada 2026-05-04** (bundle 8.84→7.08 MB, -1.67 MB / -19.8%, 5x acima da meta; 5 deps removidas + lucide shim) | `M-BUNDLE-DIET-spec.md` | — |
 | C2 | **M-WCAG-COMPLETO** | Acessibilidade AA todas as telas | `M-WCAG-COMPLETO-spec.md` | 4-6h |
 | C3 | **M-RELEASE-ASSETS** | Ícone + splash + app name finais | `M-RELEASE-ASSETS-spec.md` | 3-4h |
 | C4 | **M-SOBRE-RELEASE-NOTES** | Settings → Sobre + changelog | `M-SOBRE-RELEASE-NOTES-spec.md` | 2-3h |

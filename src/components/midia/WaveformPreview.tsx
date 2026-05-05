@@ -9,7 +9,7 @@
 // botao fica inerte.
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Mic, Pause, Play } from 'lucide-react-native';
+import { Mic, Pause, Play } from '@/lib/icons';
 import { Audio } from 'expo-av';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';

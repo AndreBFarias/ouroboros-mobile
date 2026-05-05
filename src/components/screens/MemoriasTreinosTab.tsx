@@ -24,7 +24,7 @@ import {
 } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { Plus } from '@/lib/icons';
 import {
   BottomSheet,
   Button,

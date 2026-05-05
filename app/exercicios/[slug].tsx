@@ -20,7 +20,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Dumbbell } from 'lucide-react-native';
+import { Dumbbell } from '@/lib/icons';
 import {
   Button,
   Chip,

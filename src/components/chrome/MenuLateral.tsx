@@ -36,7 +36,7 @@ import {
   Trophy,
   Wallet,
   type LucideProps,
-} from 'lucide-react-native';
+} from '@/lib/icons';
 import type { ComponentType } from 'react';
 import { colors, spacing, typography } from '@/theme/tokens';
 import { springs } from '@/lib/motion';

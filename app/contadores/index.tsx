@@ -16,7 +16,7 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Sigma } from 'lucide-react-native';
+import { Sigma } from '@/lib/icons';
 import {
   EmptyState,
   FAB,

@@ -5,6 +5,48 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### C1 — M-BUNDLE-DIET fechada (2026-05-04) — 8.84 → 7.08 MB
+
+Auditoria + remoção de gordura entregou **redução de 1.67 MB
+(-19.8%)** no bundle Hermes Android. Margem de 1.77 MB do limite
+8.85 MB recuperada. Cobre próximas 3-4 features sem risco de
+estouro.
+
+**5 deps removidas:**
+- `@gluestack-ui/themed` (7.3 MB no node_modules) — legado M01
+  substituído por `src/components/ui/` próprio.
+- `@gluestack-style/react` (3.5 MB) — idem.
+- `expo-image-manipulator` (624 KB) — scanner usa pipeline
+  próprio com `@dariyd/react-native-document-scanner`.
+- `expo-blur` (384 KB) — design Dracula usa elevations sólidas
+  via `colors.bgElev`.
+- `expo-status-bar` — SDK 54 integra via `app.json`.
+
+**1 grande otimização**: `lucide-react-native` no bundle Hermes
+caiu de **1334.9 KB → ~30 KB** via shim local
+`src/lib/icons.ts`. Metro/Hermes não tree-shake barrel
+re-exports mesmo com `sideEffects: false`; o shim força import
+direto por arquivo `.mjs`, bypassando o barrel de 1712 linhas /
+1700+ ícones. **44 arquivos** migrados de
+`from 'lucide-react-native'` para `from '@/lib/icons'`.
+
+**Aritmética:** 1349 → **1349** testes (sprint zero-feature),
+149 suítes mantidas. TS strict 0, anonimato OK, smoke OK,
+PT-BR check OK, Gauntlet leak OK. Bundle Hermes
+**8.84 → 7.08 MB** (-1.67 MB).
+
+**3 sub-sprints sugeridas** (não dispatchadas — margem confortável):
+- `M-BUNDLE-DIET-MOTI-REPLACE` (333 KB de `framer-motion`
+  via Moti — substituir por Reanimated puro).
+- `M-BUNDLE-DIET-YAML-REPLACE` (272 KB de `yaml` via parser
+  custom).
+- `M-BUNDLE-DIET-DRAGGABLE-CUSTOM` (59 KB).
+
+Documentadas em `docs/auditoria-bundle-2026-05-04/RELATORIO.md`
+para retomada se margem voltar a ficar crítica.
+
+
+
 ### A4 — M39 mídia companion oficial fechada (2026-05-04)
 
 Schema zod canônico + helpers + boot hook idempotente para

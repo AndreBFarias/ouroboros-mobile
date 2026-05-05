@@ -19,7 +19,7 @@ import {
   BottomSheetView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
-import { Trash2 } from 'lucide-react-native';
+import { Trash2 } from '@/lib/icons';
 import {
   Button,
   ChipGroup,

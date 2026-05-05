@@ -17,7 +17,7 @@
 // ver opcao). Default true.
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { Music, Video, Image as ImageIcon, Mic, X } from 'lucide-react-native';
+import { Music, Video, Image as ImageIcon, Mic, X } from '@/lib/icons';
 import { Chip } from '@/components/ui';
 import { MidiaSpotifyTab } from '@/components/midia/MidiaSpotifyTab';
 import { MidiaYoutubeTab } from '@/components/midia/MidiaYoutubeTab';

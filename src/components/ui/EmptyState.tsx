@@ -4,7 +4,7 @@
 // custom, cai num icone neutro (Inbox).
 import { ComponentType } from 'react';
 import { Text, View } from 'react-native';
-import { Inbox, type LucideProps } from 'lucide-react-native';
+import { Inbox, type LucideProps } from '@/lib/icons';
 import { colors } from '@/theme/tokens';
 
 export type EmptyStateIcon = ComponentType<LucideProps>;

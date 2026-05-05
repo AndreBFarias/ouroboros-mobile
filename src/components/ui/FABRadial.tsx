@@ -14,7 +14,7 @@ import {
   Plus,
   Trophy,
   Zap,
-} from 'lucide-react-native';
+} from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';

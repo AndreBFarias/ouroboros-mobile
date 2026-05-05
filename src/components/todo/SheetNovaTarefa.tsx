@@ -37,7 +37,7 @@ import {
   Sparkles,
   Wallet,
   type LucideIcon,
-} from 'lucide-react-native';
+} from '@/lib/icons';
 import { Button, ChipGroup, Toggle } from '@/components/ui';
 import type { ChipAccent } from '@/components/ui/Chip';
 import { colors, radius, spacing } from '@/theme/tokens';

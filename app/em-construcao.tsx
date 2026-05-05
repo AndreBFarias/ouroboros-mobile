@@ -10,7 +10,7 @@
 // (convencao shell/CI).
 import { Header, Screen, EmptyState } from '@/components/ui';
 import { useLocalSearchParams } from 'expo-router';
-import { Hammer } from 'lucide-react-native';
+import { Hammer } from '@/lib/icons';
 import { ScrollView, View } from 'react-native';
 import { spacing } from '@/theme/tokens';
 

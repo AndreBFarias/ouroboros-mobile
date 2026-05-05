@@ -15,7 +15,7 @@
 // Estados externos são geridos pelo container (app/share-receive.tsx).
 // Esta tela so recebe props e dispara callbacks.
 import { ScrollView, Text, View } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft } from '@/lib/icons';
 import { Pressable } from 'react-native';
 import { Button, Chip, ChipGroup, type ChipOption } from '@/components/ui';
 import { PreviewArquivo } from './PreviewArquivo';

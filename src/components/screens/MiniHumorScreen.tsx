@@ -19,7 +19,7 @@ import {
 } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { CalendarRange } from 'lucide-react-native';
+import { CalendarRange } from '@/lib/icons';
 import {
   BottomSheet,
   Button,

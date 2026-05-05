@@ -14,7 +14,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { ChevronDown, ChevronRight } from 'lucide-react-native';
+import { ChevronDown, ChevronRight } from '@/lib/icons';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
 import { ItemTarefa } from '@/components/todo/ItemTarefa';

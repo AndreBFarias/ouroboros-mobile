@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { Plus } from '@/lib/icons';
 import {
   Header,
   Screen,

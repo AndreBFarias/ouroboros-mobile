@@ -18,7 +18,7 @@
 // acento. Comentarios sem acento (convencao shell/CI).
 import { Pressable, View } from 'react-native';
 import { MotiView } from 'moti';
-import { Menu } from 'lucide-react-native';
+import { Menu } from '@/lib/icons';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { colors, spacing } from '@/theme/tokens';

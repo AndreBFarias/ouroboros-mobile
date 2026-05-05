@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { MotiView } from 'moti';
-import { Search, X } from 'lucide-react-native';
+import { Search, X } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { colors, radius, spacing } from '@/theme/tokens';
 

@@ -6,7 +6,7 @@
 import { useState, type ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { MotiView } from 'moti';
-import { Plus } from 'lucide-react-native';
+import { Plus } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';

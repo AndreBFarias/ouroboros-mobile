@@ -18,7 +18,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Plus, Trash2 } from 'lucide-react-native';
+import { Plus, Trash2 } from '@/lib/icons';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   Button,

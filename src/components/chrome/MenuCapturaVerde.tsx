@@ -34,7 +34,7 @@ import {
   Music,
   Plus,
   Video,
-} from 'lucide-react-native';
+} from '@/lib/icons';
 import {
   BottomSheet,
   SHEET_60,

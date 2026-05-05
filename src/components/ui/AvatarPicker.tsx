@@ -8,7 +8,7 @@
 import { useState, useCallback } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
-import { Camera } from 'lucide-react-native';
+import { Camera } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { springs } from '@/lib/motion';

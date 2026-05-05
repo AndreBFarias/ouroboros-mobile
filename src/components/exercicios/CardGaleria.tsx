@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
-import { Dumbbell } from 'lucide-react-native';
+import { Dumbbell } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius } from '@/theme/tokens';

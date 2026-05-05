@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
-import { ChevronDown } from 'lucide-react-native';
+import { ChevronDown } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';

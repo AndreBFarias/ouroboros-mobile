@@ -13,7 +13,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import type { ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { Wallet } from 'lucide-react-native';
+import { Wallet } from '@/lib/icons';
 import { EmptyState, Header, Screen } from '@/components/ui';
 import { useFinancasCache } from '@/lib/hooks/useFinancasCache';
 import { colors, spacing } from '@/theme/tokens';

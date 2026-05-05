@@ -16,7 +16,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { Plus } from 'lucide-react-native';
+import { Plus } from '@/lib/icons';
 import {
   BottomSheet,
   EmptyState,

@@ -33,7 +33,7 @@ import {
   Sparkles,
   Wallet,
   type LucideIcon,
-} from 'lucide-react-native';
+} from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';

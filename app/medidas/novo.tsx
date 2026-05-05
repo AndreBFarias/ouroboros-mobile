@@ -26,7 +26,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Camera, X } from 'lucide-react-native';
+import { Camera, X } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import {

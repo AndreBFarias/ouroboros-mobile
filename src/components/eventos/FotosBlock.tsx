@@ -10,7 +10,7 @@
 // fica como lista de URIs locais (file://... ou content://...).
 import { useCallback } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { X } from 'lucide-react-native';
+import { X } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from '@/components/ui';
 import { haptics } from '@/lib/haptics';

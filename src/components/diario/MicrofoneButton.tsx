@@ -24,7 +24,7 @@ import {
   type GestureResponderEvent,
 } from 'react-native';
 import { MotiView } from 'moti';
-import { Mic } from 'lucide-react-native';
+import { Mic } from '@/lib/icons';
 import { useToast } from '@/components/ui';
 import { Waveform } from '@/components/diario/Waveform';
 import { colors, spacing } from '@/theme/tokens';

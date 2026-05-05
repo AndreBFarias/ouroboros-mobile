@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { Camera } from 'lucide-react-native';
+import { Camera } from '@/lib/icons';
 import { Button, EmptyState, useToast } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
 import { abrirScanner } from '@/lib/scanner/launch';

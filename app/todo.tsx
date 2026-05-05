@@ -22,7 +22,7 @@ import {
 } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { ListChecks } from 'lucide-react-native';
+import { ListChecks } from '@/lib/icons';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { MotiView } from 'moti';

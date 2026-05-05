@@ -10,7 +10,7 @@
 // Comentários em PT-BR com acentuação correta.
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import { ExternalLink, FileX, MapPin } from 'lucide-react-native';
+import { ExternalLink, FileX, MapPin } from '@/lib/icons';
 import { Screen, Header } from '@/components/ui';
 import { CoverMidia } from '@/components/data/CoverMidia';
 import { lerConquistas } from '@/lib/conquistas/loader';

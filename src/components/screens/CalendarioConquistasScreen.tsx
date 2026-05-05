@@ -6,7 +6,7 @@
 // Strings de UI em sentence case PT-BR com acentuação completa.
 // Comentários em PT-BR com acentuação correta.
 import { ScrollView, Text, View } from 'react-native';
-import { Calendar, Sparkles } from 'lucide-react-native';
+import { Calendar, Sparkles } from '@/lib/icons';
 import { Screen, Header, EmptyState } from '@/components/ui';
 import { useConquistas } from '@/lib/hooks/useConquistas';
 import { Timeline } from '@/components/calendario/Timeline';
