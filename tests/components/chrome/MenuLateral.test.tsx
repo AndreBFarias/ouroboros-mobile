@@ -33,13 +33,16 @@ describe('MenuLateral', () => {
 
   it('quando aberto, renderiza secoes Ver e Registrar com itens', () => {
     useNavegacao.setState({ menuAberto: true });
-    const { getByLabelText } = render(<MenuLateral />);
+    const { getByLabelText, queryByLabelText } = render(<MenuLateral />);
 
     // Ver
     expect(getByLabelText('item hoje')).toBeTruthy();
     expect(getByLabelText('item memorias')).toBeTruthy();
     expect(getByLabelText('item humor')).toBeTruthy();
-    expect(getByLabelText('item financas')).toBeTruthy();
+    // M35: item "financas" so aparece quando o toggle
+    // mostrarFinancasEmDesenvolvimento esta ON. Default OFF aqui
+    // (resetar() em beforeEach), entao o item nao deve aparecer.
+    expect(queryByLabelText('item financas')).toBeNull();
     // Registrar
     expect(getByLabelText('registrar humor')).toBeTruthy();
     expect(getByLabelText('registrar voz')).toBeTruthy();
@@ -47,6 +50,15 @@ describe('MenuLateral', () => {
     expect(getByLabelText('registrar exercicios')).toBeTruthy();
     expect(getByLabelText('registrar conquista')).toBeTruthy();
     expect(getByLabelText('registrar crise')).toBeTruthy();
+  });
+
+  it('M35: item "financas" aparece quando mostrarFinancasEmDesenvolvimento on', () => {
+    useSettings
+      .getState()
+      .setFeatureToggle('mostrarFinancasEmDesenvolvimento', true);
+    useNavegacao.setState({ menuAberto: true });
+    const { getByLabelText } = render(<MenuLateral />);
+    expect(getByLabelText('item financas')).toBeTruthy();
   });
 
   it('Opcionais nao aparece quando todos os toggles estao off', () => {

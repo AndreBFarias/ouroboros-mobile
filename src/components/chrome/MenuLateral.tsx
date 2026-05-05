@@ -86,14 +86,20 @@ export function MenuLateral() {
       return r.pathname;
     };
 
+    // M35: item "Financas" so aparece quando o toggle
+    // `mostrarFinancasEmDesenvolvimento` esta ON. Default OFF: a aba
+    // fica desligada na v1.0 enquanto o pipeline backend nao publicar
+    // o cache no Vault.
     const ver: ItemMenu[] = [
       { label: 'Hoje', a11yLabel: 'item hoje', icone: Home, route: '/' },
       { label: 'Recap', a11yLabel: 'item recap', icone: BarChart, route: '/recap' },
       { label: 'Memórias', a11yLabel: 'item memorias', icone: Layers, route: '/memoria' },
       { label: 'Humor', a11yLabel: 'item humor', icone: Heart, route: '/humor' },
       { label: 'Calendário', a11yLabel: 'item calendario', icone: Calendar, route: '/calendario' },
-      { label: 'Finanças', a11yLabel: 'item financas', icone: Wallet, route: '/financas' },
     ];
+    if (featureToggles.mostrarFinancasEmDesenvolvimento) {
+      ver.push({ label: 'Finanças', a11yLabel: 'item financas', icone: Wallet, route: '/financas' });
+    }
 
     const registrar: ItemMenu[] = [
       { label: 'Humor', a11yLabel: 'registrar humor', icone: Heart, route: rotaCaptura('humor'), cor: colors.pink },

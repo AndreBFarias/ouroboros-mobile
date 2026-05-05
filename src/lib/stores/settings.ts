@@ -50,6 +50,11 @@ export interface SettingsState {
     // aceita explicitamente, o widget pode mostrar nome completo ao
     // inves de apenas inicial. Default off (privacidade reforcada).
     widgetMostraNome: boolean;
+    // M35: aba Financas em modo "Em desenvolvimento". Default false:
+    // a aba fica desligada (item some do menu lateral) ate o pipeline
+    // backend publicar cache no Vault. Quando o usuario liga, o item
+    // aparece no menu e a tela renderiza um EmptyState honesto.
+    mostrarFinancasEmDesenvolvimento: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -116,6 +121,9 @@ const DEFAULT_STATE_V2: Omit<
     calendarioConquistas: true,
     widgetHomescreen: true,
     widgetMostraNome: false,
+    // M35: default OFF. v1.0 nao publica cache de financas; a aba so
+    // volta a aparecer quando o usuario liga este toggle conscientemente.
+    mostrarFinancasEmDesenvolvimento: false,
   },
   privacidade: {
     biometriaAbrir: false,

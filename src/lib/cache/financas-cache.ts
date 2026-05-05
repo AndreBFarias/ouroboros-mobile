@@ -29,6 +29,12 @@ export type LerFinancasCacheResult =
   | { tipo: 'ausente' }
   | { tipo: 'erro'; mensagem: string };
 
+/**
+ * @deprecated v1.0 (M35) -- nao consumido enquanto o pipeline backend
+ * nao publicar `financas-cache.json` no Vault. A `MiniFinanceiroScreen`
+ * renderiza apenas um EmptyState honesto. Mantido como codigo morto:
+ * reativar quando o cache estiver disponivel.
+ */
 // Le o cache de financas a partir de um URI absoluto resolvido pelo
 // caller. Encapsula tres ramos canonicos (ok, ausente, erro) num
 // discriminated union para o consumidor decidir UI sem catch tryHard.

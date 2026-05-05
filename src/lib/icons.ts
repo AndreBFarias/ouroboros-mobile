@@ -57,6 +57,7 @@ export { default as Settings } from 'lucide-react-native/dist/esm/icons/settings
 export { default as Sigma } from 'lucide-react-native/dist/esm/icons/sigma.mjs';
 export { default as Sparkles } from 'lucide-react-native/dist/esm/icons/sparkles.mjs';
 export { default as Trash2 } from 'lucide-react-native/dist/esm/icons/trash-2.mjs';
+export { default as TrendingUp } from 'lucide-react-native/dist/esm/icons/trending-up.mjs';
 export { default as Trophy } from 'lucide-react-native/dist/esm/icons/trophy.mjs';
 export { default as Video } from 'lucide-react-native/dist/esm/icons/video.mjs';
 export { default as Wallet } from 'lucide-react-native/dist/esm/icons/wallet.mjs';

@@ -100,9 +100,9 @@ spec PARA o ciclo e pede clarificação.
 | ~~B1~~ | ~~M-CAPTURA-UNIFICADA~~ | **fechada 2026-05-05** (rota `/captura` modal + 2 cards + MenuLateral migrado + abrirNoMount) | `M-CAPTURA-UNIFICADA-spec.md` | — |
 | ~~B2~~ | ~~M11.4~~ | **fechada 2026-05-05** (SecaoEvolucaoCorporal + medidaRef + useMedidas hook, +11 cases) | `M11.4-spec.md` | — |
 | ~~B3~~ | ~~M-DEBITO-CATEGORIA-CORES~~ | **fechada 2026-05-05** (8 chips semânticos Dracula, +4 cases, AC-1 e AC-2 registrados) | `M-DEBITO-CATEGORIA-CORES-spec.md` | — |
-| B4 | **M40** | Tela Hoje v2 (Recap + para + próximos) | `M40-spec.md` | 4-5h |
-| B5 | **M36** | Tela Recap (Conquistas/Crises/Números) | `M36-spec.md` | 6-8h |
-| B6 | **M35** | Aba Finanças empty state honesto | `M35-spec.md` | 1-2h |
+| ~~B4~~ | ~~M40~~ | **fechada 2026-05-05** (Tela Hoje v2 + status casal + próximos + jornada agrupada + filtro para; 8 arquivos novos) | `M40-spec.md` | — |
+| ~~B5~~ | ~~M36~~ | **fechada 2026-05-05** (RecapScreen + 5 seções + useRecap + 3 listadores Vault novos; 12 arquivos novos) | `M36-spec.md` | — |
+| ~~B6~~ | ~~M35~~ | **fechada 2026-05-05** (Finanças empty state + toggle Settings + MenuLateral condicional) | `M35-spec.md` | — |
 
 **BLOCO C — Release-readiness (NOVAS, propostas pela auditoria)**
 

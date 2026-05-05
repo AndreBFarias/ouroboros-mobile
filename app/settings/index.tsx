@@ -333,6 +333,15 @@ function SecaoFeatures() {
           a11y="toggle widget mostra nome"
         />
       ) : null}
+      <ToggleRow
+        label="Mostrar finanças em desenvolvimento"
+        subtitulo="Aba ainda incompleta. Ative para acompanhar o progresso."
+        valor={featureToggles.mostrarFinancasEmDesenvolvimento}
+        onChange={(v) =>
+          setFeatureToggle('mostrarFinancasEmDesenvolvimento', v)
+        }
+        a11y="toggle mostrar financas em desenvolvimento"
+      />
     </SecaoLista>
   );
 }

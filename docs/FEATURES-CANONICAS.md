@@ -240,20 +240,53 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Lê `humor-heatmap.json` gerado pelo backend (cache canônico).
 
 ### 6.2 Mini Financeiro — M14 + M35 (Tela 22, **DESLIGADO em v1.0**)
-- v1: Hero gasto da semana + top categorias + lista virtualizada
-  20 transações.
-- v1.0 release: M35 substitui por empty state honesto. Schemas e
-  cards preservados como código morto para retomada futura.
+- v1 (M14, mantido como código morto): Hero gasto da semana + top
+  categorias + lista virtualizada de 20 transações lendo
+  `financas-cache.json` gerado pelo backend.
+- v1.0 release (M35): a aba `MiniFinanceiroScreen` renderiza apenas um
+  EmptyState honesto com a frase **"Em desenvolvimento. Disponível em
+  versão futura."**. Não consome o cache backend (que ainda não é
+  publicado no Vault).
+- Item "Finanças" é removido do menu lateral por padrão. Volta a
+  aparecer quando o usuário liga o toggle **"Mostrar finanças em
+  desenvolvimento"** em Settings → Features opcionais (default OFF).
+- `useFinancasCache`, `lerFinancasCache` e
+  `src/lib/schemas/financas-cache.ts` ficam marcados como
+  `@deprecated v1.0 (M35)`. Os componentes `BannerLeitura`,
+  `CardHero`, `CardTopCategorias` e `ListaTransacoes` permanecem no
+  repositório, sem consumidores, prontos para retomada futura.
 
-## 7. Recap — M36 (proposta)
+## 7. Recap — M36 (entregue)
 
-- 4 seções:
-  - **Conquistas** (vitórias do diário + tarefas concluídas).
-  - **Crises** (triggers do diário).
-  - **Evoluções** (medidas + treinos).
-  - **Números** (humor médio, eventos, contadores resetados).
-- Períodos: 7 / 30 / 90 dias.
-- Push automático ao final de cada período (opt-in).
+- Rota modal raiz `/recap`, acessível via item "Recap" do menu
+  lateral (M27).
+- Períodos selecionáveis via `<ChipGroup mode="single">`: **Semana**
+  (últimos 7 dias), **Mês** (últimos 30 dias), **Ano** (últimos 365
+  dias) e **Personalizado** (dois inputs `AAAA-MM-DD`).
+- 5 seções:
+  - **Conquistas** — vitórias do diário (`modo='vitoria'`), eventos
+    positivos, marcos, contadores em sequência (≥ 7 dias) e tarefas
+    concluídas no período.
+  - **Crises** — triggers do diário e eventos negativos, ordenados
+    por intensidade desc. Microcopy: "Você passou por isso e está aqui."
+  - **Evoluções** — humor médio (a partir de 2 registros), treinos
+    concluídos no período (sessões + minutos totais), contadores em
+    alta (sequência ≥ 30 dias).
+  - **Tarefas concluídas** — detalhe agrupado por categoria
+    (Trabalho, Casa, Rotina, Finanças, etc.), com data abreviada
+    (`seg 28/04`). Subtotais por categoria. Pendentes ignoradas.
+  - **Números** — grid 2×3 de cards: registros, treinos, fotos,
+    eventos positivos, eventos difíceis, tarefas concluídas.
+- `<OuroborosLoader compacto />` durante agregação (vault grande pode
+  levar 1-3s para o período "Ano").
+- Empty state silencioso por seção; "Nenhum registro neste período."
+  quando o agregado total é zero.
+- Sem cache: cada abertura relê todo o vault dentro do período.
+- Tom esperançoso, ADR-0005 sem gamificação: nenhuma celebração,
+  nenhum badge, nenhum comparativo "X% melhor".
+- Filtro de tarefas: `feito === true && feito_em ∈ [de, ate]`.
+- Helpers de leitura novos: `listarHumor`, `listarDiarios`,
+  `listarEventos` (`src/lib/vault/`).
 
 ## 8. Calendário Visual de Conquistas — M11.5 (Tela 25)
 
@@ -267,11 +300,30 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 ### 9.1 v1 (M02)
 - Lista do dia: humor + diário + eventos.
 
-### 9.2 v2 — M40 (proposta)
-- **Recap** em destaque no topo.
-- **Status do casal** — usa campo `para` da M33.
-- **Próximos** — alarmes pendentes, tarefas próximas, eventos do
-  calendário.
+### 9.2 v2 — M40 (entregue)
+- **Header** com avatar(es) + botão "Recap" no canto superior
+  direito. Modo sozinho: 1 avatar (md). Modo casal: 2 avatares
+  pequenos lado a lado (purple e pink).
+- **Recap** abre rota `/recap` (criada pela M36).
+- **Status do casal** — só renderiza em modo casal/duo. Mostra 2
+  cards lado a lado com foto, nome (via `useNomeDe`), humor 1-5 ou
+  "—" e última atividade do dia ("Última: 14:30 evento" / "Última:
+  09:15 humor"). Sem comparativo, sem julgamento (ADR-0005).
+- **Próximos** — agrega alarmes pessoais (M16/M30) cujo próximo
+  disparo cai nas próximas 4h e tarefas (M17/M31) com alarme
+  vinculado ainda hoje. Lista compacta com hora à esquerda + título;
+  cor da borda diferencia alarme (cyan) de tarefa (purple).
+- **Humor do dia** — mantida.
+- **Esta jornada** — substitui as duas listas separadas
+  (Diário emocional + Eventos) por uma timeline cronológica única
+  ordenada por hora descendente. Cor da borda: vermelho para
+  trigger/negativo, verde para vitória/positivo.
+- **`useHoje` aceita filtro `para`** (`'todos'` | `'mim'` |
+  `'pessoa_a'` | `'pessoa_b'` | `'casal'`) para futuras telas que
+  precisem segmentar por destinatário emocional sem reescrever o
+  hook.
+- Botão "Ver storybook de componentes" gateado em `__DEV__` (some
+  no release APK).
 
 ## 10. Opt-ins (toggle on em Settings, default ON)
 

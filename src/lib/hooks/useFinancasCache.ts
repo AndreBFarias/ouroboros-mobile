@@ -8,6 +8,12 @@
 // real conforme ADR-0012.
 //
 // Comentarios sem acento (convencao shell/CI).
+//
+// Status v1.0 (M35): hook nao e consumido pela UI. A
+// `MiniFinanceiroScreen` renderiza apenas um EmptyState honesto
+// enquanto o pipeline backend nao publicar `financas-cache.json` no
+// Vault. Mantido como codigo morto -- reativar quando o cache estiver
+// disponivel. Veja JSDoc `@deprecated` em `useFinancasCache`.
 import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -45,6 +51,12 @@ function carregarFixtureWeb(): FinancasCache | null {
   }
 }
 
+/**
+ * @deprecated v1.0 (M35) -- nao consumido enquanto o pipeline backend
+ * nao publicar `financas-cache.json` no Vault. A `MiniFinanceiroScreen`
+ * renderiza apenas um EmptyState honesto. Mantido como codigo morto:
+ * reativar quando o cache estiver disponivel.
+ */
 export function useFinancasCache(): UseFinancasCacheResult {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const [cache, setCache] = useState<FinancasCache | null>(null);

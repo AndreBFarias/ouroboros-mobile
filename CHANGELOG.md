@@ -5,6 +5,91 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Bloco B FECHADO — B4 + B5 + B6 batch paralelo (2026-05-05)
+
+#### B4 — M40 Tela Hoje v2
+
+`app/index.tsx` reescrito v2 com header dual avatar + card Recap +
+seções Status do Casal, Próximos (alarmes 4h + tarefas com alarme
+hoje) e Jornada Agrupada (diários + eventos por intensidade).
+`useHoje` ganha opções objeto `{ ymdOverride?, filtroPara? }` —
+implementa filtro `para` adiado de M33.
+
+**Arquivos novos (8):** `useStatusCasal.ts`, `useProximos.ts`,
+`SecaoStatusCasal.tsx`, `SecaoProximos.tsx`,
+`SecaoDiariosEventosAgrupado.tsx`, 3 testes (3+6+8 cases), E2E.
+
+**Arquivos modificados (3):** `app/index.tsx`, `useHoje.ts`,
+`docs/FEATURES-CANONICAS.md` §9.2 reescrita "v2 entregue".
+
+#### B5 — M36 Recap
+
+`/recap` rota raiz modal com `<RecapScreen>`: ChipGroup período
+(Semana/Mês/Ano/Personalizado), 5 seções (Conquistas/Crises/
+Evoluções/Tarefas concluídas/Números). `useRecap({ de, ate })`
+agrega via 7 listadores Vault. ADR-0005 zero gamificação — números
+neutros, "Você passou por isso e está aqui." como tom único.
+
+**3 listadores Vault novos:** `listarHumor`, `listarDiarios`,
+`listarEventos` (não existiam; padrão idêntico a `listarMarcos`).
+
+**Arquivos novos (12):** `app/recap.tsx`, `RecapScreen.tsx`, 5
+seções (`RecapSecaoConquistas/Crises/Evolucoes/Numeros/Tarefas`),
+`useRecap.ts`, 3 listadores, 3 suítes de teste, E2E.
+
+**Arquivos modificados (4):** `app/_layout.tsx` (Stack.Screen recap),
+`src/lib/icons.ts` (+ TrendingUp), `src/lib/vault/index.ts` (3
+exports novos), `docs/FEATURES-CANONICAS.md` §7 "(entregue)".
+
+**Decisões técnicas:** `resolverPeriodo` usa "últimos N dias"
+(relativo a hoje); Personalizado com 2 `<TextInput>` simples
+`AAAA-MM-DD` (evita dep nova); contadores como conquista exigem
+`dias >= 7`; "em alta" em Evoluções exige `dias >= 30`.
+
+#### B6 — M35 Finanças empty state
+
+`MiniFinanceiroScreen` substituída por EmptyState honesto com
+`Wallet` + frase "Em desenvolvimento. Disponível em versão futura.".
+Toggle `mostrarFinancasEmDesenvolvimento` em Settings (default
+OFF). MenuLateral esconde item "Finanças" quando OFF.
+`useFinancasCache` e `lerFinancasCache` recebem JSDoc
+`@deprecated v1.0 (M35)` — schemas e cards M14 PRESERVADOS como
+código morto para retomada futura.
+
+**Arquivos novos (2):** test (5 cases) + E2E.
+
+**Arquivos modificados (7):** `MiniFinanceiroScreen.tsx`,
+`settings.ts` (+ campo featureToggle), `MenuLateral.tsx` (lê
+toggle), `app/settings/index.tsx` (+ ToggleRow), 2 helpers com
+JSDoc deprecated, `tests/components/chrome/MenuLateral.test.tsx`,
+`docs/FEATURES-CANONICAS.md` §6.2 atualizada.
+
+#### Métricas batch B4+B5+B6
+
+- Testes: 1384 → **1427** (+43 cases novos: 17 B4 + 20 B5 + 6 B6).
+- Suítes: 153 → **160** (+7).
+- Bundle Hermes: **7.11 → 7.14 MB** (+30 KB — Recap + status
+  casal). **Margem 1.71 MB** confortável.
+- TS strict 0, anonimato OK, smoke OK, PT-BR check OK, Gauntlet
+  leak OK.
+
+### Bloco B — encerramento
+
+Polish UX completo (6 sprints fechadas):
+- B1 — M-CAPTURA-UNIFICADA (rota `/captura` modal)
+- B2 — M11.4 (evolução corporal em Marcos)
+- B3 — M-DEBITO-CATEGORIA-CORES (8 chips Dracula)
+- B4 — M40 (Tela Hoje v2)
+- B5 — M36 (Recap completo)
+- B6 — M35 (Finanças empty honesto)
+
+**Métricas finais Bloco B:** 1364 → **1427** testes (+63), 151 →
+**160** suítes (+9), Hermes **6.77 → 7.14 MB** (+370 KB —
+features densas dentro do orçamento). Margem 1.71 MB. Próximo:
+Bloco C release-readiness.
+
+
+
 ### Bloco B iniciado — B1 + B2 + B3 batch paralelo (2026-05-05)
 
 #### B1 — M-CAPTURA-UNIFICADA

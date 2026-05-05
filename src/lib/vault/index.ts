@@ -107,6 +107,11 @@ export {
   registrarReset,
 } from './contadores';
 
+// M36: helpers de leitura agregada para o Recap.
+export { listarHumor } from './humor';
+export { listarDiarios } from './diario';
+export { listarEventos } from './eventos';
+
 export {
   escreverMidiaComCompanion,
   lerCompanion,

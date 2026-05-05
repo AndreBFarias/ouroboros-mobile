@@ -246,6 +246,18 @@ export default function RootLayout() {
                 animation: 'fade_from_bottom',
               }}
             />
+            {/* M36: rota modal /recap. Espelho otimista do Vault em
+                periodo selecionavel. Apresentacao modal padrao (slide
+                de baixo) com fundo opaco Dracula (#14151a) ja garantido
+                pelo Screen e pelo contentStyle do Stack raiz. */}
+            <Stack.Screen
+              name="recap"
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                contentStyle: { backgroundColor: '#14151a' },
+              }}
+            />
           </Stack>
           {/* M27: overlays globais. Ordem de zIndex declarada em
               CONTRACT secao 7.10 (Stack 0 -> FABMenu 10 ->

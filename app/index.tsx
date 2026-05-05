@@ -1,17 +1,27 @@
-// Tela 01 (hoje) — entrada do app. Le do Vault os registros do dia
-// (humor / diarios emocionais / eventos) e renderiza em sentence
-// case com acentuacao PT-BR completa. Se o onboarding não foi
-// concluido, redireciona para /onboarding (substituiu o
-// PermissaoVaultModal da M02 a partir da M03).
+// Tela 01 (hoje) — entrada do app v2 (M40). Le do Vault os registros
+// do dia e renderiza em sentence case com acentuacao PT-BR completa.
+// Se o onboarding não foi concluido, redireciona para /onboarding
+// (substituiu o PermissaoVaultModal da M02 a partir da M03).
 //
 // M27: a Tela Hoje deixou de hospedar FABRadial. O FAB principal
 // virou item global (FABMenu, canto inferior esquerdo) renderizado
 // no _layout raiz e o menu de captura migrou para o MenuLateral.
 //
+// M40: layout v2.
+//   - Header: avatar(es) + botao "Recap" -> /recap.
+//     -- sozinho: 1 avatar md.
+//     -- duo: 2 avatares sm lado a lado.
+//   - SecaoStatusCasal so em duo (humor + ultima atividade de cada).
+//   - SecaoProximos: alarmes 4h + tarefas com alarme hoje.
+//   - SecaoHumor: bloco do dia (humor/energia/ansiedade/foco).
+//   - SecaoDiariosEventosAgrupado: timeline cronologica unica
+//     substituindo as duas secoes separadas.
+//   - Botao storybook so em __DEV__.
+//
 // Fonte de verdade visual: docs/Ouroboros_24_telas-standalone.html
 // artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
-// docs/BRIEFING.md seção 7.
-import { useEffect, useMemo } from 'react';
+// docs/BRIEFING.md secao 7.
+import { useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import {
@@ -31,8 +41,9 @@ import { useOnboarding } from '@/lib/stores/onboarding';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { loadVaultRoot } from '@/lib/vault';
 import { useHoje } from '@/lib/hooks/useHoje';
-import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
-import type { EventoMeta } from '@/lib/schemas/evento';
+import { SecaoStatusCasal } from '@/components/screens/SecaoStatusCasal';
+import { SecaoProximos } from '@/components/screens/SecaoProximos';
+import { SecaoDiariosEventosAgrupado } from '@/components/screens/SecaoDiariosEventosAgrupado';
 
 export default function TelaHoje() {
   const router = useRouter();
@@ -65,22 +76,16 @@ export default function TelaHoje() {
     };
   }, [vaultRoot, setVaultRoot]);
 
-  // Splash silencioso enquanto persist carrega: tela de fundo bg-page
-  // sem texto, evitando que o usuario veja conteudo errado por uma
-  // fração de segundo.
+  // Splash silencioso enquanto persist carrega.
   if (!tudoHidratado) {
     return <Screen padded={false}><View style={{ flex: 1 }} /></Screen>;
   }
 
-  // Gate de onboarding: se não concluiu ou se não tem vaultRoot,
-  // redireciona para o fluxo de boas-vindas.
+  // Gate de onboarding.
   if (!onboardingDone || !vaultRoot) {
     return <Redirect href="/onboarding" />;
   }
 
-  // Toggle de pessoa so faz sentido se ha companhia configurada.
-  // Quando sozinho, avatar fica fixo na pessoa_a sem onPress.
-  // tipoCompanhia e lido no topo do componente (Rules of Hooks).
   const ehSozinho = tipoCompanhia === 'sozinho';
   const handleAvatarPress = ehSozinho
     ? undefined
@@ -88,24 +93,33 @@ export default function TelaHoje() {
 
   return (
     <TelaHojeConteudo
+      ehSozinho={ehSozinho}
       onAvatarPress={handleAvatarPress}
       onComponentsPress={() => router.push('/_components')}
+      // /recap criado em paralelo (M36/B5). Cast para evitar dependencia
+      // dura no tipo gerado pelo expo-router antes do paralelo fechar.
+      onRecapPress={() => router.push('/recap' as never)}
     />
   );
 }
 
 interface ConteudoProps {
+  ehSozinho: boolean;
   // undefined quando sozinho: avatar não tem toggle.
   onAvatarPress: (() => void) | undefined;
   onComponentsPress: () => void;
+  onRecapPress: () => void;
 }
 
 function TelaHojeConteudo({
+  ehSozinho,
   onAvatarPress,
   onComponentsPress,
+  onRecapPress,
 }: ConteudoProps) {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const fotoAtiva = usePessoa((s) => s.fotos[s.pessoaAtiva]);
+  const fotos = usePessoa((s) => s.fotos);
+  const fotoAtiva = fotos[pessoaAtiva];
   const { humor, diarios, eventos, loading, error } = useHoje();
 
   return (
@@ -113,12 +127,32 @@ function TelaHojeConteudo({
       <Header
         title="Hoje"
         right={
-          <PersonAvatar
-            pessoa={pessoaAtiva}
-            size="md"
-            onPress={onAvatarPress}
-            photoUri={fotoAtiva}
-          />
+          <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
+            {ehSozinho ? (
+              <PersonAvatar
+                pessoa={pessoaAtiva}
+                size="md"
+                onPress={onAvatarPress}
+                photoUri={fotoAtiva}
+              />
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                <PersonAvatar
+                  pessoa="pessoa_a"
+                  size="sm"
+                  onPress={onAvatarPress}
+                  photoUri={fotos.pessoa_a}
+                />
+                <PersonAvatar
+                  pessoa="pessoa_b"
+                  size="sm"
+                  onPress={onAvatarPress}
+                  photoUri={fotos.pessoa_b}
+                />
+              </View>
+            )}
+            <Button label="Recap" variant="ghost" onPress={onRecapPress} />
+          </View>
         }
       />
 
@@ -129,15 +163,22 @@ function TelaHojeConteudo({
       >
         {error ? <BannerErro mensagem={error} /> : null}
 
+        {!ehSozinho ? <SecaoStatusCasal /> : null}
+        <SecaoProximos />
         <SecaoHumor humor={humor} loading={loading} />
-        <SecaoDiarios diarios={diarios} loading={loading} />
-        <SecaoEventos eventos={eventos} loading={loading} />
-
-        <Button
-          variant="ghost"
-          onPress={onComponentsPress}
-          label="Ver storybook de componentes"
+        <SecaoDiariosEventosAgrupado
+          diarios={diarios}
+          eventos={eventos}
+          loading={loading}
         />
+
+        {__DEV__ ? (
+          <Button
+            variant="ghost"
+            onPress={onComponentsPress}
+            label="Ver storybook de componentes"
+          />
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -245,159 +286,6 @@ function SecaoHumor({ humor, loading }: SecaoHumorProps) {
           </View>
         </Card>
       )}
-    </View>
-  );
-}
-
-interface SecaoDiariosProps {
-  diarios: DiarioEmocionalMeta[];
-  loading: boolean;
-}
-
-function SecaoDiarios({ diarios, loading }: SecaoDiariosProps) {
-  const ordenados = useMemo(
-    () => [...diarios].sort((a, b) => a.data.localeCompare(b.data)),
-    [diarios]
-  );
-
-  return (
-    <View style={{ gap: spacing.md }}>
-      <Text
-        style={{
-          color: colors.orange,
-          fontFamily: 'JetBrainsMono_500Medium',
-          fontSize: 16,
-        }}
-      >
-        Diário emocional
-      </Text>
-      {loading ? null : ordenados.length === 0 ? (
-        <Card>
-          <EmptyState frase="Nada hoje. Tudo bem." />
-        </Card>
-      ) : (
-        ordenados.map((d, idx) => <ItemDiario key={`${d.data}-${idx}`} diario={d} />)
-      )}
-    </View>
-  );
-}
-
-interface ItemDiarioProps {
-  diario: DiarioEmocionalMeta;
-}
-
-function ItemDiario({ diario }: ItemDiarioProps) {
-  const corBorda = diario.modo === 'trigger' ? colors.red : colors.green;
-  const hora = diario.data.slice(11, 16);
-
-  return (
-    <View
-      style={{
-        backgroundColor: colors.bgAlt,
-        borderRadius: 12,
-        borderLeftWidth: 3,
-        borderLeftColor: corBorda,
-        padding: spacing.base,
-        gap: spacing.xs,
-      }}
-    >
-      <Text
-        style={{
-          color: colors.muted,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: 12,
-        }}
-      >
-        {hora}
-      </Text>
-      <Text
-        style={{
-          color: colors.fg,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: 14,
-          lineHeight: 22,
-        }}
-        numberOfLines={2}
-      >
-        {diario.texto}
-      </Text>
-    </View>
-  );
-}
-
-interface SecaoEventosProps {
-  eventos: EventoMeta[];
-  loading: boolean;
-}
-
-function SecaoEventos({ eventos, loading }: SecaoEventosProps) {
-  const ordenados = useMemo(
-    () => [...eventos].sort((a, b) => a.data.localeCompare(b.data)),
-    [eventos]
-  );
-
-  return (
-    <View style={{ gap: spacing.md }}>
-      <Text
-        style={{
-          color: colors.orange,
-          fontFamily: 'JetBrainsMono_500Medium',
-          fontSize: 16,
-        }}
-      >
-        Eventos
-      </Text>
-      {loading ? null : ordenados.length === 0 ? (
-        <Card>
-          <EmptyState frase="Sem eventos registrados hoje." />
-        </Card>
-      ) : (
-        ordenados.map((e, idx) => <ItemEvento key={`${e.data}-${idx}`} evento={e} />)
-      )}
-    </View>
-  );
-}
-
-interface ItemEventoProps {
-  evento: EventoMeta;
-}
-
-function ItemEvento({ evento }: ItemEventoProps) {
-  const corBorda = evento.modo === 'positivo' ? colors.green : colors.red;
-  const hora = evento.data.slice(11, 16);
-
-  return (
-    <View
-      style={{
-        backgroundColor: colors.bgAlt,
-        borderRadius: 12,
-        borderLeftWidth: 3,
-        borderLeftColor: corBorda,
-        padding: spacing.base,
-        gap: spacing.xs,
-      }}
-    >
-      <Text
-        style={{
-          color: colors.muted,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: 12,
-        }}
-      >
-        {hora}
-        {evento.lugar ? ` · ${evento.lugar}` : ''}
-        {evento.bairro ? ` · ${evento.bairro}` : ''}
-      </Text>
-      <Text
-        style={{
-          color: colors.fg,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: 14,
-          lineHeight: 22,
-        }}
-      >
-        {evento.categoria ?? 'Evento'}
-      </Text>
     </View>
   );
 }
