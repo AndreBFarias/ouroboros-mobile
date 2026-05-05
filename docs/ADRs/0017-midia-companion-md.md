@@ -117,8 +117,15 @@ arquivos duplicados.
 
 ## Estrutura de arquivos onde a decisão vive
 
-- `src/lib/vault/midiaCompanion.ts` — helpers canônicos.
-- `src/lib/schemas/midia.ts` — `MidiaCompanionMetaSchema` zod.
+- `src/lib/vault/midiaCompanion.ts` — helpers canônicos
+  (`escreverMidiaComCompanion`, `lerCompanion`,
+  `migrarAssetsLegacyParaMedia`).
+- `src/lib/schemas/midia-companion.ts` — `MidiaCompanionSchema` zod
+  canônico (M39); convive com `src/lib/schemas/midia.ts` (M07.x —
+  midia anexada a registros, schema diferente).
+- `src/lib/midia/companion.ts` — serializador determinístico legado
+  (`stringifyCompanionMidia`, M34 + extensões A3.x.3 / A3.x.4)
+  reaproveitado pelos helpers do M39 e pelos 9 writers existentes.
 - Captura: `app/eventos.tsx`, `app/diario-emocional.tsx`,
   `app/scanner.tsx`, `src/components/chrome/MenuCapturaVerde.tsx`,
   `src/components/ui/AvatarPicker.tsx` (avatar é exceção — sem

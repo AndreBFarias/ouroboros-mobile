@@ -5,6 +5,53 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### A4 — M39 mídia companion oficial fechada (2026-05-04)
+
+Schema zod canônico + helpers + boot hook idempotente para
+formalizar ADR-0017. **Decisão deliberada**: NÃO unificar com
+`stringifyCompanionMidia` legado nesta sprint para preservar
+backward-compat dos 7 testes M34 + 4 fixes A3.x.1-4. Migração dos
+9 writers fica para **M39.1** dedicada (anti-débito explícito).
+
+**Entregas:**
+- `src/lib/schemas/midia-companion.ts` (130L) — `MidiaCompanionSchema`
+  zod com `tipo` (5 enum), `arquivo`, `data`, `autor`, `duracao_seg?`,
+  `transcricao?`, `legenda?`, `para` (default `{tipo:'mim'}`),
+  `origem?`, `origem_ref?`. Helpers `subpastaPara`,
+  `tipoPorSubpasta`, `tipoPorExtensao`.
+- `src/lib/vault/midiaCompanion.ts` (235L) — 3 helpers:
+  - `escreverMidiaComCompanion(vaultRoot, binarioUri, meta)`.
+  - `lerCompanion(vaultRoot, binarioPath)`.
+  - `migrarAssetsLegacyParaMedia(vaultRoot)` — varre `assets/` e
+    migra para `media/<categoria>/`. Idempotente.
+- `src/lib/boot/reagendamento.ts` — adiciona `migrarAssetsHook` ao
+  fim de `BOOT_HOOKS`. Degrada silenciosamente se vault
+  indisponível.
+- `tests/lib/vault/midiaCompanion.test.ts` — 14 cases cobrindo
+  write/read/migrar.
+- `tests/e2e/playwright/m39-midia-companion.e2e.ts` — smoke
+  pós-boot (BOOT_HOOKS plugou sem travar; rota /memoria
+  acessível; FAB verde M34 não quebrado).
+- `docs/FEATURES-CANONICAS.md` §15 expandida.
+- `docs/ADRs/0017-midia-companion-md.md` atualizado com lista de
+  arquivos e separação `schemas/midia-companion.ts` (zod canônico)
+  vs `midia/companion.ts` (serializador determinístico legado) vs
+  `vault/midiaCompanion.ts` (helpers).
+
+**Aritmética:** 1335 → **1349** testes (+14), 148 → **149**
+suítes (+1). TS strict 0, anonimato OK, smoke OK, PT-BR check OK,
+Gauntlet leak OK. Bundle Hermes **8.5 → 8.84 MB** (+340 KB —
+schema zod + import top-level de `yaml`). **Margem 10 KB do teto
+8.85 MB — atenção crítica para próximas sprints.**
+
+**Sub-sprint gerada:** **M39.1** materializada para migrar os 9
+writers existentes (`capturarFoto/Musica/Video`, `salvarFrase`,
+`recordAudio`, `saveEvento.copiarFotos`, `medidas/novo`,
+`scanner/saveNota`, `adicionarFotoManual`) ao `escreverMidiaComCompanion`
+canônico.
+
+
+
 ### Batch A3.x — 4 sub-sprints corretivas paralelas fechadas (2026-05-04)
 
 Após auditoria A3 revelar 4 desvios estruturais (binários em

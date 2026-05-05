@@ -106,3 +106,13 @@ export {
   excluirContador,
   registrarReset,
 } from './contadores';
+
+export {
+  escreverMidiaComCompanion,
+  lerCompanion,
+  migrarAssetsLegacyParaMedia,
+} from './midiaCompanion';
+export type {
+  EscreverMidiaResultado,
+  MigracaoResultado,
+} from './midiaCompanion';

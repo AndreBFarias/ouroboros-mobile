@@ -328,16 +328,48 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 ## 15. Estrutura de mídia — M39 (formaliza ADR-0017)
 
 - Pasta canônica `media/<categoria>/<data-rand>.<ext>`.
-- Categorias: fotos / audios / videos / frases.
+- Categorias: `fotos` / `audios` / `videos` / `frases` / `scanner`
+  (PDFs multipágina, A3.x.4) / `avatares` (sem companion, exceção
+  ADR-0017).
 - **Companion `.md`** sempre acompanha o binário, com YAML
   frontmatter:
-  - `tipo` (midia_foto / midia_audio / midia_video /
-    midia_frase)
+  - `tipo` (`midia_foto` / `midia_audio` / `midia_video` /
+    `midia_frase` / `midia_pdf`)
   - `arquivo` (basename do binário)
   - `data` (ISO datetime)
-  - `autor` (pessoa_a / pessoa_b)
-  - `para` (mim / outra / casal)
-  - `legenda` (opcional)
+  - `autor` (`pessoa_a` / `pessoa_b`)
+  - `para` (`mim` / `outra:pessoa_<a|b>` / `casal`)
+  - `legenda` (opcional, texto livre)
+  - `transcricao` (opcional, áudio)
+  - `duracao_seg` (opcional, áudio/vídeo)
+  - `medida_ref` (opcional, reverse-link para `medidas/YYYY-MM-DD.md`)
+  - `origem` / `origem_ref` (opcionais, schema-mãe que originou o
+    binário — ex: `evento`, `diario_emocional`)
+- **Schema zod canônico:** `MidiaCompanionSchema` em
+  `src/lib/schemas/midia-companion.ts` (M39, ADR-0017). Reexportado
+  no barrel `src/lib/schemas/index.ts`.
+- **Helpers canônicos** em `src/lib/vault/midiaCompanion.ts` (M39):
+  - `escreverMidiaComCompanion(vaultRoot, binarioUri, meta)` —
+    grava par binário + companion `.md` 1:1, idempotente (não
+    sobrescreve se basename já existe).
+  - `lerCompanion(vaultRoot, binarioPath)` — lê e valida companion
+    via zod; retorna `null` quando ausente ou inválido.
+  - `migrarAssetsLegacyParaMedia(vaultRoot)` — varre `assets/` e
+    move binários legados para `media/<categoria>/`. Idempotente.
+    Plugado em `BOOT_HOOKS` (roda uma vez por boot).
+- **Serializador determinístico legado** em
+  `src/lib/midia/companion.ts` (M34 + extensões A3.x.3 / A3.x.4)
+  permanece como fonte do `.md` de saída — mantém ordem de chaves
+  e escape de aspas para snapshot tests. M39 reaproveita
+  internamente; consumidores existentes continuam funcionando sem
+  mudança de comportamento.
+- **Migração de writers para o helper canônico:** entrega
+  incremental. M39 entrega schema + helpers + boot hook + testes;
+  migração dos 9 writers existentes (`capturarFoto`,
+  `capturarMusica`, `capturarVideo`, `salvarFrase`, `recordAudio`,
+  `saveEvento.copiarFotos`, `medidas/novo`, `scanner/saveNota`,
+  `adicionarFotoManual`) fica para M39.1 dedicada (escopo
+  controlado, anti-débito).
 
 ## 16. Vault físico
 

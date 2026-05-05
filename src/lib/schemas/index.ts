@@ -122,6 +122,15 @@ export {
   type MidiaAudio,
 } from './midia';
 export {
+  MidiaCompanionSchema,
+  TipoMidiaSchema,
+  subpastaPara,
+  tipoPorSubpasta,
+  tipoPorExtensao,
+  type MidiaCompanion,
+  type TipoMidiaCanonico,
+} from './midia-companion';
+export {
   HumorHeatmapCacheSchema,
   HumorHeatmapCellSchema,
   HumorHeatmapEstatisticaSchema,

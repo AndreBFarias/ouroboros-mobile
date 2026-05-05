@@ -89,8 +89,9 @@ spec PARA o ciclo e pede clarificação.
 | ~~A3.x.2~~ | ~~M-VAULT-MD-FIX-evento-fotos~~ | **fechada 2026-05-04** (saveEvento.ts → media/fotos/eventos-*, +3 cases) | `M-VAULT-MD-FIX-evento-fotos-spec.md` | — |
 | ~~A3.x.3~~ | ~~M-VAULT-MD-FIX-medidas-fotos~~ | **fechada 2026-05-04** (medidasFotoPath + medida_ref, +9 cases, **desbloqueia M11.4**) | `M-VAULT-MD-FIX-medidas-fotos-spec.md` | — |
 | ~~A3.x.4~~ | ~~M-VAULT-MD-FIX-scanner~~ | **fechada 2026-05-04** (saveNota.ts → media/scanner/, midia_pdf adicionado, +10 cases) | `M-VAULT-MD-FIX-scanner-spec.md` | — |
-| A4 | **M39** | Mídia companion oficial (ADR-0017) — após A3.x.1-3 | `M39-spec.md` | 4-5h |
-| A5 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
+| ~~A4~~ | ~~M39~~ | **fechada 2026-05-04** (1349/149, schema zod + helpers + boot hook, M39.1 criada para migrar 9 writers) | `M39-spec.md` | — |
+| A4.x | **M39.1** | Migrar 9 writers para `escreverMidiaComCompanion` (incremental, 1 por commit) | `M39.1-spec.md` | 2-3h |
+| A5 | **M-EXPORT-COMPLETO** | Export ZIP + restore inverso (consome `lerCompanion` da M39) | `M-EXPORT-COMPLETO-spec.md` | 2-3h |
 
 **BLOCO B — Polish UX (corrige débitos visíveis)**
 

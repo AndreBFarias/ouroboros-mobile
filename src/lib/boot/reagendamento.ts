@@ -120,6 +120,23 @@ const reagendarLembretesHook: BootHook = async () => {
   await reagendarLembretes();
 };
 
+// M39: migra binarios de midia legados em assets/ para
+// media/<categoria>/. Idempotente: arquivos ja migrados sao ignorados.
+// Companions .md nao sao gerados aqui (writers cuidam ao salvar
+// proxima vez); arquivos legados ficam sem companion ate que o
+// usuario edite o registro mae. Roda no boot porque novas instalacoes
+// que importem Vault de instalacao antiga (Syncthing) podem trazer
+// assets/ com binarios pre-M22.
+const migrarAssetsHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { migrarAssetsLegacyParaMedia } = await import(
+    '@/lib/vault/midiaCompanion'
+  );
+  await migrarAssetsLegacyParaMedia(vaultRoot);
+};
+
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
@@ -131,5 +148,10 @@ BOOT_HOOKS.push(
   reagendarAlarmesHook,
   limparLixeiraTarefasHook,
   atualizarWidgetHomescreenHook,
-  reagendarLembretesHook
+  reagendarLembretesHook,
+  // M39: migra binarios assets/ para media/[categoria]/ uma vez por
+  // boot (idempotente). Roda por ultimo: nao depende de notificacoes
+  // nem de stores reagendados, e seu custo (readDirectory + N copies)
+  // nao deve atrasar arranque interativo do app.
+  migrarAssetsHook
 );
