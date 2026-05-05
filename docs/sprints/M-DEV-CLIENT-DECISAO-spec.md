@@ -5,7 +5,22 @@ DEPENDE:    decisão do dono
 BLOQUEIA:   M41 (define escopo final)
 ESTIMATIVA: 0,5h (decisão + atualização ROADMAP)
 PRIORIDADE: alta (define rumo do release)
+STATUS:     [ok] fechada 2026-05-05
 ```
+
+## 0. Resolução
+
+**Decisão (a) registrada formalmente** em 2026-05-04 e confirmada
+em 2026-05-05: v1.0 INCLUI as 4 features bloqueadas por EAS
+dev-client APK (M06.5, M07.x, M11.5, M09) + 2 features Google
+Calendar (M37.1, M37.2 com pausa para OAuth).
+
+ROADMAP atualizado (Bloco E com 6 sprints: E1=M06.5, E2=M07.x,
+E3=M11.5, E4=M09, E5=M37.1, E6=M37.2). Pré-requisito antes de
+iniciar E1: build EAS dev-client APK fresh (cota free 30/mês).
+
+Sprint encerrada sem necessidade de código — somente decisão
+durável documentada.
 
 ## 1. Achado / motivação
 
