@@ -282,7 +282,10 @@ export function OuroborosLoader({
             opacity={0.55}
           />
           <Circle cx={155} cy={40} r={6} fill={colors.purple} />
-          <G transform="translate(175, 40)">
+          {/* A27: x/y em vez de transform string para evitar
+              ClassCastException em New Arch (Fabric). rn-svg-web
+              converte x/y para transform="translate(x,y)" em web. */}
+          <G x={175} y={40}>
             <Path
               d="M 0 -2 C -4 -10, -16 -12, -24 -8 C -28 -6, -30 -2, -28 0 L -8 -1 Z"
               fill={colors.pink}

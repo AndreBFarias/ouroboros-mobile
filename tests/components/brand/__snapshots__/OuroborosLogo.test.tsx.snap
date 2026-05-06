@@ -127,7 +127,8 @@ exports[`OuroborosLogo renderiza com label de acessibilidade e wordmark por defa
       />
       <View
         accessibilityLabel="G"
-        transform="translate(175, 40)"
+        x={175}
+        y={40}
       >
         <View
           accessibilityLabel="Path"
