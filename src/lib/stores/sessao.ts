@@ -80,8 +80,12 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //   - canalV1Deletado: indica se a rotina de boot ja apagou o canal
 //     Android legado 'default' (gerado em v1.0-rc1 sem vibrationPattern,
 //     vide A30 e §4 do M30-spec).
+//   - cacheAgendaMigrado (M37.1.2): indica se a rotina ja migrou o
+//     cache de agenda do JSON unico (M37.1) para .md individual em
+//     agenda/<pessoa>/ (M37.1.2, ADR-0019).
 export interface FlagsBootState {
   canalV1Deletado: boolean;
+  cacheAgendaMigrado: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -122,6 +126,7 @@ const PERMISSOES_VAZIAS: PermissoesPedidasState = {
 
 const FLAGS_VAZIAS: FlagsBootState = {
   canalV1Deletado: false,
+  cacheAgendaMigrado: false,
 };
 
 const DEFAULT_STATE: Omit<

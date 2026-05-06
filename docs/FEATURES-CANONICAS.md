@@ -447,15 +447,19 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   header "Maio de 2026", dias "Dom Seg Ter Qua Qui Sex Sáb",
   registro em `src/components/agenda/calendarLocalePtBr.ts`.
 - **Persistência canônica em `.md` individual (M37.1.2,
-  enfileirada — ADR-0019)**: cada evento espelhado do Google
-  Calendar vira um `.md` próprio em
-  `agenda/<pessoa>/YYYY-MM-DD-<eventId>.md` (em vez do JSON
-  único de M37.1). Alinhamento ao padrão Vault: tudo dado
-  primário do usuário é `.md`, exceções legítimas são apenas
-  caches readonly do backend Python.
-- **Sub-sprint ainda aberta**: M37.1-checkpoint-nivel-B (OAuth
-  real no emulador, 3 screenshots — depende APK dev-client
-  fresh).
+  fechada 2026-05-05 — ADR-0019)**: cada evento espelhado do
+  Google Calendar é um `.md` próprio em
+  `agenda/<pessoa>/YYYY-MM-DD-<eventId>.md`, com frontmatter
+  zod (`AgendaEventoSchema`). Boot hook idempotente migra
+  caches JSON legados de M37.1 para o novo formato. Sem
+  mudança de UX.
+- **Sub-sprints ainda abertas**:
+  - M37.1.3 (bug-fix corretivo — mock dev-web de
+    `calendarApi.listarEventos` para o fluxo "Conectar"
+    funcionar end-to-end no Gauntlet).
+  - M37.1-checkpoint-nivel-B (OAuth real no emulador, 3
+    screenshots — APK fresh `dev-client-20260505-91710ab.apk`
+    pronto em `builds/`).
 
 ## 14. Compartilhamento via Syncthing — M38 (4 dispositivos)
 

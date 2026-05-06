@@ -5,6 +5,64 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint M37.1.2 fechada + bug M37.1.3 corretiva enfileirada (2026-05-05 noite tarde)
+
+#### E5.x.3 — M37.1.2 Cache de agenda em .md individual (ADR-0019)
+
+Refactor interno completo da persistência de eventos do Google
+Calendar: cada evento agora é um `.md` individual em
+`agenda/<pessoa>/YYYY-MM-DD-<eventId>.md` com frontmatter zod
+(`AgendaEventoSchema`, 7 campos), substituindo o JSON único
+`media/cache/agenda-<pessoa>.json` introduzido por M37.1.
+
+API pública de `calendarCache.ts` preservada
+(`salvarCacheEventos`/`lerCacheEventos`/`cacheEstaFresco`) para
+delegar internamente a `sincronizarSnapshotAgenda` em
+`src/lib/vault/agenda.ts`. **`app/agenda.tsx` permaneceu
+intocado** — refactor 100% transparente para UI.
+
+`sincronizarSnapshotAgenda` é o entry point: escreve cada evento
+e remove os `.md` cujo `sincronizado_em` é menor que o passado
+(diff por timestamp em vez de cursor externo). Idempotência
+empiricamente verificada: rodar 2× com mesma lista e mesmo
+timestamp resulta em `{adicionados: 0, atualizados: 0,
+removidos: 0}` + zero chamadas a `writeVaultFile`/`deleteAsync`.
+
+Boot hook `migrarCacheAgenda` plugado via `BOOT_HOOKS.push` em
+`reagendamento.ts` (padrão M30/M39 — não `useEffect` em
+`_layout.tsx`): detecta JSON legado, expande em N `.md`, deleta
+o JSON, marca flag `useSessao.flags.cacheAgendaMigrado` para
+skip rápido em boots futuros. Em web no-op.
+
+**Métricas:** 1536 → 1555 testes (+19 com nova suíte
+`tests/lib/vault/agenda.test.ts`); 171 → 172 suítes; bundle
+Hermes 7,7 MB **mantém** (refactor neutro); leak Gauntlet 0/6.
+
+**Validação visual Nível A:** `A-agenda-md-individual.png`
+mostra UI idêntica a `A-agenda-mes-com-dots.png` (sem
+diferença visual, apenas arquitetura interna).
+
+#### E5.x.4 — M37.1.3 (todo, corretiva — bug "Conectar trava em offline")
+
+Bug pré-existente desde M37.1 reproduzido pelo dono em
+2026-05-05 21:00: clicar "Conectar conta Google" no Gauntlet
+web trava o app em estado `offline` com banner "Sem conexão.
+Mostrando eventos do cache." em vez de ir para `online`.
+
+**Causa raiz:** `useGoogleAuth.autenticar()` tem branch
+`__DEV__ && Platform.OS === 'web'` que injeta token
+`'mock-access-token-dev-web'`. Mas `calendarApi.listarEventos()`
+**não tem branch mock equivalente** — chama `fetch` real contra
+`googleapis.com/calendar/v3` com token fake → 401/CORS → cai
+em `ApiError(code='rede')` → `setEstado('offline')`.
+
+Sprint M37.1.3 enfileirada (E5.x.4, spec
+`docs/sprints/M37.1.3-mock-dev-web-calendar-api-spec.md`,
+0,5h): adiciona branch `isMockMode() && token.startsWith('mock-')`
+em `listarEventos` retornando 5 eventos determinísticos com IDs
+estáveis (`mock-<pessoa>-<idx>`). Validação visual end-to-end
+do fluxo "Conectar" passa a funcionar.
+
 ### Decisão arquitetural (2026-05-05) — ADR-0019 + spec M37.1.2
 
 **ADR-0019 — Persistência canônica em `.md` individual no Vault.**

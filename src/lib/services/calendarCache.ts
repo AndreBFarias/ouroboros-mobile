@@ -1,79 +1,112 @@
-// Cache de eventos Calendar em arquivo no Vault. NAO usa SecureStore
-// (vide A20 do BRIEF: limite ~2KB por valor; 30 dias de eventos
-// estouram facilmente). Arquivo aparece no desktop via Syncthing,
-// bonus de introspeccao.
+// Cache de eventos Calendar (M37.1) refatorado em M37.1.2 para delegar
+// ao modulo de Vault (.md individual por evento, alinhado ao ADR-0019).
+// API publica (salvarCacheEventos, lerCacheEventos, cacheEstaFresco)
+// preservada para nao quebrar callers (app/agenda.tsx).
 //
-// Path canonico: <vaultRoot>/media/cache/agenda-<pessoa>.json.
-// Pasta media/cache nao esta na lista SUBPASTAS_CANONICAS de M22
-// (so 'media/scanner', 'media/fotos' etc.) — criamos sob demanda
-// via makeDirectoryAsync com intermediates: true.
+// Path canonico antigo: <vaultRoot>/media/cache/agenda-<pessoa>.json
+// (1 JSON unico por pessoa, ~30 dias de eventos).
+// Path canonico novo: <vaultRoot>/agenda/<pessoa>/YYYY-MM-DD-<eventId>.md
+// (N arquivos pequenos, sincing seletivo, conflito isolado, legivel).
 //
 // Em web (mock OAuth dev), vaultRoot pode ser 'web://mock-vault/...'
-// — fallback para in-memory por sessao via Map.
+// — fallback para in-memory via Map preservado para Nivel A sem rede
+// real. Mobile real usa SAF normalmente via agenda.ts.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { EventoCalendar } from '@/lib/services/calendarApi';
-
-interface CachePayload {
-  schema_version: 1;
-  geradoEm: number;
-  ttlMin: number;
-  eventos: EventoCalendar[];
-}
+import {
+  AgendaEventoSchema,
+  listarEventosAgenda,
+  sincronizarSnapshotAgenda,
+  type AgendaEvento,
+} from '@/lib/vault/agenda';
 
 const TTL_MIN_DEFAULT = 60;
 
-// Map em memoria para fallback web. Em mobile real, nao usado.
-const memoryCacheWeb = new Map<string, CachePayload>();
-
-function joinPath(root: string, rel: string): string {
-  const r = root.endsWith('/') ? root.slice(0, -1) : root;
-  const s = rel.startsWith('/') ? rel.slice(1) : rel;
-  return `${r}/${s}`;
+// Map em memoria para fallback web mock. Em mobile real, nao usado.
+// Estrutura: Map<pessoa, { eventos, geradoEm }>.
+interface MemoriaWebPayload {
+  eventos: EventoCalendar[];
+  geradoEm: number;
 }
+const memoryCacheWeb = new Map<string, MemoriaWebPayload>();
 
-function cachePathFor(pessoa: PessoaAutor): string {
-  return `media/cache/agenda-${pessoa}.json`;
+function memoryCacheKey(pessoa: PessoaAutor): string {
+  return `agenda-${pessoa}`;
 }
 
 function isWebMock(vaultRoot: string): boolean {
   return Platform.OS === 'web' || vaultRoot.startsWith('web://');
 }
 
-// Garante que <vaultRoot>/media/cache/ existe. Idempotente.
-async function garantirPastaCache(vaultRoot: string): Promise<void> {
-  const dir = joinPath(vaultRoot, 'media/cache');
-  try {
-    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
-  } catch {
-    // ja existe ou SAF interpretou — segue para writeAsString que
-    // dara erro real se houver problema.
+// Mapeia EventoCalendar (vindo do calendarApi) para AgendaEvento
+// (frontmatter canonico do .md). Os campos coincidem em significado;
+// preenchemos pessoa, fonte e sincronizado_em a nivel da sincronizacao.
+function eventoCalendarToAgenda(
+  ev: EventoCalendar,
+  pessoa: PessoaAutor,
+  sincronizadoEm: string
+): AgendaEvento | null {
+  const proposto: AgendaEvento = {
+    id: ev.id,
+    pessoa,
+    titulo: ev.titulo,
+    inicio: ev.inicio,
+    fim: ev.fim,
+    fonte: 'google_calendar',
+    sincronizado_em: sincronizadoEm,
+  };
+  if (typeof ev.local === 'string' && ev.local.length > 0) {
+    proposto.local = ev.local;
   }
+  const parsed = AgendaEventoSchema.safeParse(proposto);
+  return parsed.success ? parsed.data : null;
 }
 
+// Volta o AgendaEvento (frontmatter do .md) para EventoCalendar (shape
+// que app/agenda.tsx consome). Os campos coincidem; descartamos
+// metadados internos (pessoa, fonte, sincronizado_em).
+function agendaToEventoCalendar(ag: AgendaEvento): EventoCalendar {
+  const out: EventoCalendar = {
+    id: ag.id,
+    titulo: ag.titulo,
+    inicio: ag.inicio,
+    fim: ag.fim,
+  };
+  if (typeof ag.local === 'string' && ag.local.length > 0) {
+    out.local = ag.local;
+  }
+  return out;
+}
+
+// Persiste o snapshot completo de eventos para uma pessoa. Em mobile,
+// delega para sincronizarSnapshotAgenda (escreve N .md, remove stale).
+// Em web mock, fallback para Map em memoria preservando comportamento
+// pre-M37.1.2 (Nivel A sem rede real).
 export async function salvarCacheEventos(
   vaultRoot: string,
   pessoa: PessoaAutor,
   eventos: EventoCalendar[]
 ): Promise<void> {
-  const payload: CachePayload = {
-    schema_version: 1,
-    geradoEm: Date.now(),
-    ttlMin: TTL_MIN_DEFAULT,
-    eventos,
-  };
+  const agora = Date.now();
+  const sincronizadoEm = new Date(agora).toISOString();
+
   if (isWebMock(vaultRoot)) {
-    memoryCacheWeb.set(cachePathFor(pessoa), payload);
+    memoryCacheWeb.set(memoryCacheKey(pessoa), {
+      eventos,
+      geradoEm: agora,
+    });
     return;
   }
-  await garantirPastaCache(vaultRoot);
-  const uri = joinPath(vaultRoot, cachePathFor(pessoa));
-  await FileSystem.writeAsStringAsync(uri, JSON.stringify(payload), {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
+
+  const eventosAg: AgendaEvento[] = [];
+  for (const ev of eventos) {
+    const ag = eventoCalendarToAgenda(ev, pessoa, sincronizadoEm);
+    if (ag) eventosAg.push(ag);
+  }
+  await sincronizarSnapshotAgenda(vaultRoot, pessoa, eventosAg, sincronizadoEm);
 }
 
 export interface CacheLido {
@@ -81,33 +114,36 @@ export interface CacheLido {
   geradoEm: number;
 }
 
+// Le o snapshot de eventos para uma pessoa. Em mobile, delega para
+// listarEventosAgenda (le N .md, devolve lista). geradoEm e inferido
+// a partir do sincronizado_em mais recente (Date.parse). Em web mock,
+// le do Map em memoria. Retorna null se nao ha cache.
 export async function lerCacheEventos(
   vaultRoot: string,
   pessoa: PessoaAutor
 ): Promise<CacheLido | null> {
   if (isWebMock(vaultRoot)) {
-    const found = memoryCacheWeb.get(cachePathFor(pessoa));
-    if (!found) return null;
-    return { eventos: found.eventos, geradoEm: found.geradoEm };
+    const found = memoryCacheWeb.get(memoryCacheKey(pessoa));
+    return found ?? null;
   }
-  const uri = joinPath(vaultRoot, cachePathFor(pessoa));
-  try {
-    const raw = await FileSystem.readAsStringAsync(uri);
-    const json = JSON.parse(raw) as Partial<CachePayload>;
-    if (
-      typeof json !== 'object' ||
-      json === null ||
-      !Array.isArray(json.eventos) ||
-      typeof json.geradoEm !== 'number'
-    ) {
-      return null;
-    }
-    return { eventos: json.eventos as EventoCalendar[], geradoEm: json.geradoEm };
-  } catch {
-    return null;
-  }
+
+  const lista = await listarEventosAgenda(vaultRoot, pessoa);
+  if (lista.length === 0) return null;
+
+  const eventos = lista.map(agendaToEventoCalendar);
+  const sincronizadoMais = lista.reduce(
+    (acc, ev) => (ev.sincronizado_em > acc ? ev.sincronizado_em : acc),
+    lista[0].sincronizado_em
+  );
+  const geradoEm = Date.parse(sincronizadoMais);
+  return {
+    eventos,
+    geradoEm: Number.isFinite(geradoEm) ? geradoEm : Date.now(),
+  };
 }
 
+// Heuristica de TTL: cache fresco se geradoEm dentro da janela ttlMin.
+// Mantida sem mudanca em M37.1.2 (mesma assinatura, mesma semantica).
 export function cacheEstaFresco(
   geradoEm: number,
   ttlMin: number = TTL_MIN_DEFAULT

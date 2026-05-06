@@ -212,6 +212,27 @@ export function inboxFinanceiroNotaPath(date: Date, slug: string): string {
   return inboxFinanceiroPath('nota', date, { ext: 'md', slug });
 }
 
+// agenda/<pessoa>/ (M37.1.2). Pasta dedicada para cache de eventos do
+// Google Calendar persistidos como .md individual (1 arquivo por
+// evento), alinhada ao ADR-0019 (persistencia canonica .md no Vault).
+// Subpasta por pessoa permite sincing seletivo via Syncthing.
+export function agendaPessoaFolder(pessoa: 'pessoa_a' | 'pessoa_b'): string {
+  return `agenda/${pessoa}`;
+}
+
+// agenda/<pessoa>/<YYYY-MM-DD>-<eventId>.md (M37.1.2). Caller fornece
+// inicio (ISO 8601 com offset), eventId vem direto da resposta da
+// Google Calendar API (Base32hex slug-safe). Data prefixada permite
+// listagem ordenada cronologicamente sem ler frontmatter.
+export function agendaEventoPath(
+  pessoa: 'pessoa_a' | 'pessoa_b',
+  iso: string,
+  eventId: string
+): string {
+  const ymd = iso.slice(0, 10);
+  return `agenda/${pessoa}/${ymd}-${eventId}.md`;
+}
+
 // .ouroboros/cache/humor-heatmap.json (M10). Cache readonly gerado
 // pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012 fixa que
 // pipelines de agregacao rodam no desktop.
@@ -324,6 +345,8 @@ export const VAULT_FOLDERS = {
   mediaAvatares: 'media/avatares',
   mediaScanner: 'media/scanner',
   cache: '.ouroboros/cache',
+  agendaPessoaA: 'agenda/pessoa_a',
+  agendaPessoaB: 'agenda/pessoa_b',
 } as const;
 
 export type VaultFolderKey = keyof typeof VAULT_FOLDERS;

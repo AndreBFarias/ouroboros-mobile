@@ -137,6 +137,21 @@ const migrarAssetsHook: BootHook = async () => {
   await migrarAssetsLegacyParaMedia(vaultRoot);
 };
 
+// M37.1.2: migra cache de agenda do JSON unico (formato M37.1) para
+// .md individual em agenda/<pessoa>/ (alinhado ao ADR-0019).
+// Idempotente: flag useSessao.flags.cacheAgendaMigrado garante que
+// roda uma unica vez por instalacao. Em web no-op (Platform.OS check
+// interno). Roda depois de migrarAssets para nao competir por SAF.
+const migrarCacheAgendaHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { migrarCacheAgendaJsonParaMd } = await import(
+    '@/lib/boot/migrarCacheAgenda'
+  );
+  await migrarCacheAgendaJsonParaMd(vaultRoot);
+};
+
 // M38: registra/atualiza este dispositivo no inbox/_devices.md a cada
 // boot. Idempotente. Marca dispositivos antigos com mesma pessoa como
 // 'substituido_por: <novoId>' quando SecureStore foi zerado por
@@ -167,6 +182,9 @@ BOOT_HOOKS.push(
   // nem de stores reagendados, e seu custo (readDirectory + N copies)
   // nao deve atrasar arranque interativo do app.
   migrarAssetsHook,
+  // M37.1.2: migra cache de agenda JSON->.md uma unica vez por
+  // instalacao (idempotente via useSessao.flags.cacheAgendaMigrado).
+  migrarCacheAgendaHook,
   // M38: registra/atualiza dispositivo atual no devices index. Roda
   // depois de migrarAssets para nao competir por SAF de leitura no
   // arranque. Idempotente (so ultima_atividade muda em boot subsequente).
