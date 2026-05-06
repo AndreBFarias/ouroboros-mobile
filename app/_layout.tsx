@@ -49,7 +49,20 @@ SplashScreen.preventAutoHideAsync();
 // Suprime warning de SafeAreaView vindo de dependencia transitiva.
 // Migracao para react-native-safe-area-context já foi feita no código
 // proprio (ver Screen.tsx). Warning persiste por terceiros.
-LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
+LogBox.ignoreLogs([
+  'SafeAreaView has been deprecated',
+  // A28 (2026-05-06): suprime red box de autolinking RN para
+  // modulos nativos que so existem em dev-client/release APK
+  // (Expo Go tem set fixo de modulos pre-compilados). Wrappers
+  // em src/lib/diario/transcribe.ts, src/lib/scanner/launch.ts,
+  // src/lib/scanner/text-recognition.ts ja sao require lazy +
+  // safe stubs; em Expo Go retornam erro gracioso quando a
+  // funcao e chamada. O log ainda aparece via console.warn mas
+  // sem dialog vermelho bloqueante.
+  'Cannot find native module',
+  'expo-notifications',
+  'expo-av',
+]);
 
 // ADR-008: Dracula e identidade, não tema selecionavel. Forcamos dark
 // sempre em todas as plataformas.
@@ -172,6 +185,7 @@ export default function RootLayout() {
       <FrameMobileDev>
       <BiometriaGate bypass={MODO_DEV_WEB}>
         <ToastProvider>
+          <OnboardingGuard />
           <VaultBootGate />
           <SessaoBootGate />
           <PermissaoNotificacaoGate />
@@ -308,6 +322,30 @@ function FrameMobileDev({ children }: { children: React.ReactNode }) {
       </View>
     </View>
   );
+}
+
+// A28 (2026-05-06): guard global para forcar /onboarding como rota
+// raiz sempre que onboarding nao foi concluido. Sem este guard, em
+// cenarios de Expo Go com expo-router state stale, share intent OEM
+// ou deeplink residual, o app pode abrir direto em /share-receive
+// ou outra rota -- gerando "Vault nao autorizado" e POP_TO_TOP error
+// quando o usuario tenta voltar (Stack vazia). useEffect direto roda
+// apos mount; idempotente via verificacao de pathname atual.
+function OnboardingGuard() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const onboardingHidratado = useHasHydrated(useOnboarding);
+  const onboardingDone = useOnboarding((s) => s.done);
+
+  useEffect(() => {
+    if (!onboardingHidratado) return;
+    if (onboardingDone) return;
+    // ja esta em onboarding ou em algum subpath dele -> nao redireciona.
+    if (pathname?.startsWith('/onboarding')) return;
+    router.replace('/onboarding');
+  }, [onboardingHidratado, onboardingDone, pathname, router]);
+
+  return null;
 }
 
 // M-GAUNTLET: sincroniza routerRef + pathnameRef do modulo gauntlet

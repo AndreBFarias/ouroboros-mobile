@@ -5,7 +5,38 @@
 // O modulo nativo entrega imagens já retificadas (deskewed) via ML
 // Kit Document Scanner API no Android e VisionKit no iOS, entao o
 // caller recebe URIs prontas para OCR.
-import { launchScanner as nativeLaunch, type ScanResult } from '@dariyd/react-native-document-scanner';
+//
+// A28 (2026-05-06): require lazy + safe stub. O modulo nativo nao
+// existe em Expo Go; import top-level crashava o boot do bundle JS
+// quando a rota /scanner era pre-avaliada. Stub retorna falha
+// graciosa em Expo Go; APK preview/release carrega normal.
+
+// ScanResult: shape canonico do pacote nativo. Tipo local para
+// poder importar lazy sem dependencia top-level.
+interface ScanResult {
+  didCancel?: boolean;
+  error?: boolean;
+  errorMessage?: string;
+  images?: ReadonlyArray<{
+    uri: string;
+    width: number;
+    height: number;
+    fileSize: number;
+  }>;
+}
+
+type LaunchScannerFn = (config: { quality: number }) => Promise<ScanResult>;
+
+function carregarNativeLaunch(): LaunchScannerFn | null {
+  try {
+    const mod = require('@dariyd/react-native-document-scanner') as {
+      launchScanner?: LaunchScannerFn;
+    };
+    return mod.launchScanner ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // Sprint M29: tipo local (antes vinha de useSettings, removido em v2).
 // 'maxima' continua sendo o unico valor usado em runtime; demais
@@ -50,6 +81,16 @@ export type ScannerResultado = ScannerSucesso | ScannerFalha;
 export async function abrirScanner(
   qualidade: ScannerQualidade
 ): Promise<ScannerResultado> {
+  const nativeLaunch = carregarNativeLaunch();
+  if (!nativeLaunch) {
+    return {
+      ok: false,
+      erro: {
+        tipo: 'falha_nativa',
+        mensagem: 'Scanner disponível apenas no app instalado.',
+      },
+    };
+  }
   const quality = MAPA_QUALIDADE[qualidade];
   let resultado: ScanResult;
   try {

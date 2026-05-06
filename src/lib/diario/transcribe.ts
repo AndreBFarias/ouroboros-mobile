@@ -12,12 +12,48 @@
 // 'result' isFinal=true; rejeita com MicPermissionError em
 // 'not-allowed'/'service-not-allowed'. cancel limpa listeners e
 // aborta a sessão em curso (idempotente).
-import {
-  ExpoSpeechRecognitionModule,
-  type ExpoSpeechRecognitionResultEvent,
-  type ExpoSpeechRecognitionErrorEvent,
-} from 'expo-speech-recognition';
+// A28 (2026-05-06): require lazy + safe stub. expo-speech-recognition
+// e modulo nativo nao disponivel em Expo Go. Import top-level
+// crashava o boot do bundle ("Cannot find native module
+// 'ExpoSpeechRecognition'") em modo dev quando rotas eram pre-
+// avaliadas mesmo com lazy=true. Solucao: try/require dinamico que
+// retorna null em Expo Go; funcoes lancam erro claro se chamadas
+// sem o modulo presente. Em APK preview/release o modulo carrega
+// normal e a funcao opera como antes.
 import { MicPermissionError } from '@/lib/diario/permissions';
+
+interface ExpoSpeechRecognitionResultEvent {
+  isFinal?: boolean;
+  results?: Array<{ transcript?: string }>;
+}
+interface ExpoSpeechRecognitionErrorEvent {
+  error?: string;
+}
+interface SpeechRecognitionModule {
+  addListener: (
+    event: 'result' | 'error' | 'end',
+    cb: (e: ExpoSpeechRecognitionResultEvent | ExpoSpeechRecognitionErrorEvent | unknown) => void
+  ) => { remove: () => void };
+  start: (config: {
+    lang: string;
+    interimResults?: boolean;
+    continuous?: boolean;
+    requiresOnDeviceRecognition?: boolean;
+    addsPunctuation?: boolean;
+  }) => void;
+  abort: () => void;
+}
+
+function carregarModulo(): SpeechRecognitionModule | null {
+  try {
+    const mod = require('expo-speech-recognition') as {
+      ExpoSpeechRecognitionModule?: SpeechRecognitionModule;
+    };
+    return mod.ExpoSpeechRecognitionModule ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const IDIOMA = 'pt-BR';
 
@@ -38,6 +74,12 @@ const ERROS_PERMISSAO = new Set([
 export async function transcribeStream(
   onPartial: (texto: string) => void
 ): Promise<string> {
+  const ExpoSpeechRecognitionModule = carregarModulo();
+  if (!ExpoSpeechRecognitionModule) {
+    throw new Error(
+      'Microfone disponível apenas no app instalado. Em Expo Go, este recurso fica desativado.'
+    );
+  }
   return new Promise<string>((resolve, reject) => {
     let textoFinal = '';
     let parcialMaisRecente = '';
@@ -74,33 +116,29 @@ export async function transcribeStream(
     };
 
     subs.push(
-      ExpoSpeechRecognitionModule.addListener(
-        'result',
-        (e: ExpoSpeechRecognitionResultEvent) => {
-          if (!e.results || e.results.length === 0) return;
-          const transcript = e.results[0].transcript ?? '';
-          if (e.isFinal) {
-            textoFinal = transcript;
-          } else {
-            parcialMaisRecente = transcript;
-            onPartial(parcialMaisRecente);
-          }
+      ExpoSpeechRecognitionModule.addListener('result', (raw) => {
+        const e = raw as ExpoSpeechRecognitionResultEvent;
+        if (!e.results || e.results.length === 0) return;
+        const transcript = e.results[0].transcript ?? '';
+        if (e.isFinal) {
+          textoFinal = transcript;
+        } else {
+          parcialMaisRecente = transcript;
+          onPartial(parcialMaisRecente);
         }
-      )
+      })
     );
 
     subs.push(
-      ExpoSpeechRecognitionModule.addListener(
-        'error',
-        (e: ExpoSpeechRecognitionErrorEvent) => {
-          const code = e.error || '';
-          if (ERROS_PERMISSAO.has(code)) {
-            falhar(new MicPermissionError());
-            return;
-          }
-          falhar(new Error(`erro de voz: ${code || 'desconhecido'}`));
+      ExpoSpeechRecognitionModule.addListener('error', (raw) => {
+        const e = raw as ExpoSpeechRecognitionErrorEvent;
+        const code = e.error || '';
+        if (ERROS_PERMISSAO.has(code)) {
+          falhar(new MicPermissionError());
+          return;
         }
-      )
+        falhar(new Error(`erro de voz: ${code || 'desconhecido'}`));
+      })
     );
 
     // 'end' dispara depois de stop()/abort() ou silêncio prolongado.
@@ -136,10 +174,13 @@ export async function transcribeStream(
 
 // Aborta a sessão em curso e limpa listeners. Idempotente: chamar
 // duas vezes não quebra. Caller usa quando componente desmonta no
-// meio de uma transcrição (ex.: usuário fecha sheet).
+// meio de uma transcrição (ex.: usuário fecha sheet). No-op em Expo
+// Go (modulo nativo ausente).
 export async function cancel(): Promise<void> {
+  const mod = carregarModulo();
+  if (!mod) return;
   try {
-    ExpoSpeechRecognitionModule.abort();
+    mod.abort();
   } catch {
     // ignora: sessão pode já ter encerrado
   }

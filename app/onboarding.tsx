@@ -15,10 +15,21 @@
 // requestVaultPermission. Quem cuida do vaultRoot e
 // inicializarVaultCanonico(). M25 substitui o placeholder
 // ActivityIndicator pelo OuroborosLoader compacto.
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MotiView } from 'moti';
+// A27 (2026-05-06): substituir moti por Reanimated puro nos 2
+// componentes animados deste arquivo. Em New Arch (Fabric), moti +
+// Reanimated 4 emite transform como string interpolada em frames
+// iniciais, causando ClassCastException ("String cannot be cast to
+// ReadableArray") em RNSVG/View ManagerDelegate.setProperty. Solução
+// canônica: Animated.View do Reanimated puro com useSharedValue +
+// useAnimatedStyle + withSpring (transform sempre array).
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { Check } from '@/lib/icons';
 import { OuroborosLoader } from '@/components/brand';
 import {
@@ -30,7 +41,6 @@ import {
   Screen,
   useToast,
 } from '@/components/ui';
-import { springs } from '@/lib/motion';
 import { colors, spacing } from '@/theme/tokens';
 import { usePessoa } from '@/lib/stores/pessoa';
 import {
@@ -193,8 +203,9 @@ function Indicador({ frameAtivo }: { frameAtivo: FrameId }) {
 }
 
 // Anima cada troca de frame: o `frameKey` na key forca remontagem,
-// e o MotiView entra de translateX 60 + opacity 0 para 0 / 1 com
-// spring. Sem exit para evitar janela branca.
+// e o Animated.View entra de translateX 60 + opacity 0 para 0 / 1
+// com spring. Sem exit para evitar janela branca. A27: Reanimated
+// puro em vez de MotiView para compatibilidade New Arch (Fabric).
 function FrameAnim({
   frameKey,
   children,
@@ -202,15 +213,23 @@ function FrameAnim({
   frameKey: FrameId;
   children: ReactNode;
 }) {
+  const translateX = useSharedValue(60);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    translateX.value = withSpring(0, { damping: 18, stiffness: 200 });
+    opacity.value = withSpring(1, { damping: 18, stiffness: 200 });
+  }, [frameKey, translateX, opacity]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateX: translateX.value }],
+  }));
+
   return (
-    <MotiView
-      key={frameKey}
-      from={{ translateX: 60, opacity: 0 }}
-      animate={{ translateX: 0, opacity: 1 }}
-      transition={springs.default}
-    >
+    <Animated.View key={frameKey} style={style}>
       {children}
-    </MotiView>
+    </Animated.View>
   );
 }
 
@@ -337,51 +356,74 @@ function Frame1({
         </View>
       </View>
 
-      {duo === true ? (
-        <MotiView
-          from={{ opacity: 0, translateY: -8 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={springs.default}
-          style={{ gap: spacing.md }}
-        >
-          <Text
-            style={{
-              color: colors.muted,
-              fontFamily: 'JetBrainsMono_400Regular',
-              fontSize: 13,
-              marginTop: spacing.md,
-            }}
-          >
-            Vocês são…
-          </Text>
-          <ChipGroup
-            mode="single"
-            value={
-              tipoCompanhia === 'sozinho' ? null : tipoCompanhia
-            }
-            onChange={(next) => {
-              if (next === 'casal' || next === 'amigos') setTipo(next);
-            }}
-            options={[
-              { value: 'casal', label: 'Casal', accent: 'purple' },
-              { value: 'amigos', label: 'Amigos', accent: 'cyan' },
-            ]}
-          />
-          <Input
-            value={nomeB}
-            onChangeText={setNomeB}
-            placeholder="Como ela ou ele se chama?"
-            accessibilityLabel="campo nome segunda pessoa"
-          />
-          <View style={{ alignItems: 'center', marginTop: spacing.md }}>
-            <AvatarPicker pessoa="pessoa_b" size={96} />
-          </View>
-        </MotiView>
-      ) : null}
+      {duo === true ? <Frame1Expand tipoCompanhia={tipoCompanhia} setTipo={setTipo} nomeB={nomeB} setNomeB={setNomeB} /> : null}
 
       <View style={{ height: spacing.md }} />
       <Button label="Continuar" onPress={onContinue} />
     </View>
+  );
+}
+
+// A27: extraido para componente proprio para usar useSharedValue +
+// useAnimatedStyle (hooks nao podem condicionalmente rodar dentro
+// de Frame1). Anima opacidade e translateY ao mount com spring.
+function Frame1Expand({
+  tipoCompanhia,
+  setTipo,
+  nomeB,
+  setNomeB,
+}: {
+  tipoCompanhia: TipoCompanhia;
+  setTipo: (t: TipoCompanhia) => void;
+  nomeB: string;
+  setNomeB: (next: string) => void;
+}) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(-8);
+
+  useEffect(() => {
+    opacity.value = withSpring(1, { damping: 18, stiffness: 200 });
+    translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+  }, [opacity, translateY]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View style={[style, { gap: spacing.md }]}>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: 13,
+          marginTop: spacing.md,
+        }}
+      >
+        Vocês são…
+      </Text>
+      <ChipGroup
+        mode="single"
+        value={tipoCompanhia === 'sozinho' ? null : tipoCompanhia}
+        onChange={(next) => {
+          if (next === 'casal' || next === 'amigos') setTipo(next);
+        }}
+        options={[
+          { value: 'casal', label: 'Casal', accent: 'purple' },
+          { value: 'amigos', label: 'Amigos', accent: 'cyan' },
+        ]}
+      />
+      <Input
+        value={nomeB}
+        onChangeText={setNomeB}
+        placeholder="Como ela ou ele se chama?"
+        accessibilityLabel="campo nome segunda pessoa"
+      />
+      <View style={{ alignItems: 'center', marginTop: spacing.md }}>
+        <AvatarPicker pessoa="pessoa_b" size={96} />
+      </View>
+    </Animated.View>
   );
 }
 
