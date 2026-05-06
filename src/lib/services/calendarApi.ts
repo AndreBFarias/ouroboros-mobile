@@ -12,7 +12,9 @@
 //
 // Em web __DEV__ (Gauntlet), token comeca com "mock-access-token"
 // e listarEventos devolve eventos sinteticos para Nivel A — sem
-// rede real. Branch dead-code em release Android (Platform.OS !=
+// rede real. IDs estaveis por pessoa (mock-<pessoa>-<idx>) garantem
+// idempotencia da migracao M37.1.2: rodar 2x nao duplica entradas
+// no Vault. Branch dead-code em release Android (Platform.OS !=
 // 'web').
 //
 // Comentarios sem acento (convencao shell/CI).
@@ -93,36 +95,41 @@ interface ListarOpcoes {
 const sleepReal = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Eventos sinteticos para Nivel A em web dev. Distribuidos pelos
-// proximos 14 dias para gerar dots no CalendarGrid e itens na
-// lista do dia.
-function eventosMockDev(): EventoCalendar[] {
-  const base = new Date();
+// Eventos sinteticos para Nivel A em web dev. Distribuidos a cada 2
+// dias a partir de "de" (parametro do listarEventos), com IDs estaveis
+// por pessoa (mock-<pessoa>-<idx>) para idempotencia da migracao
+// M37.1.2 -- rodar 2x nao duplica entradas no Vault.
+function eventosMockados(
+  de: Date,
+  _ate: Date,
+  pessoa: PessoaAutor
+): EventoCalendar[] {
+  const base = new Date(de.getTime());
   base.setHours(10, 0, 0, 0);
-  const lista: EventoCalendar[] = [];
-  for (let i = 0; i < 6; i += 1) {
-    const inicio = new Date(base.getTime() + i * 86400_000 * 2);
+  const titulos = [
+    'Reunião com equipe',
+    'Consulta médica',
+    'Almoço de aniversário',
+    'Treino na academia',
+    'Estudo de mandarim',
+  ] as const;
+  const descricaoPrimeiro =
+    'Reunião semanal de status. Pauta no link do convite.';
+  return titulos.map((titulo, idx) => {
+    const inicio = new Date(base.getTime() + idx * 2 * 86400_000);
     const fim = new Date(inicio.getTime() + 3600_000);
-    lista.push({
-      id: `mock-${i}`,
-      titulo:
-        i === 0
-          ? 'Reunião com equipe'
-          : i === 1
-            ? 'Consulta médica'
-            : i === 2
-              ? 'Almoço de aniversário'
-              : i === 3
-                ? 'Treino na academia'
-                : i === 4
-                  ? 'Estudo de mandarim'
-                  : 'Café com amigos',
+    const evento: EventoCalendar = {
+      id: `mock-${pessoa}-${idx}`,
+      titulo,
       inicio: inicio.toISOString(),
       fim: fim.toISOString(),
-      local: i % 2 === 0 ? 'São Paulo' : undefined,
-    });
-  }
-  return lista;
+    };
+    if (idx === 0) {
+      evento.local = 'São Paulo';
+      evento.descricao = descricaoPrimeiro;
+    }
+    return evento;
+  });
 }
 
 function isMockToken(token: string): boolean {
@@ -141,7 +148,7 @@ export async function listarEventos(
   opcoes: ListarOpcoes = {}
 ): Promise<EventoCalendar[]> {
   if (isMockToken(token)) {
-    return eventosMockDev();
+    return eventosMockados(de, ate, pessoa);
   }
   const maxRetry = opcoes.maxRetry ?? 1;
   const delay = opcoes.delay ?? sleepReal;

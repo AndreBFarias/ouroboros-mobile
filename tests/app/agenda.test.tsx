@@ -9,12 +9,26 @@
 //
 // Comentarios sem acento.
 import * as React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { render, waitFor, fireEvent, act } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 
 jest.mock('expo-router', () => ({
   __esModule: true,
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
 }));
+
+// OuroborosLoader em web toca document.querySelector (animacao SVG
+// declarativa). No teste node, stub leve; o branch dead-code em
+// release Android continua valido (Platform.OS != 'web').
+jest.mock('@/components/brand', () => {
+  const ReactInner = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    OuroborosLoader: () =>
+      ReactInner.createElement(View, { accessibilityLabel: 'ouroboros loader stub' }),
+  };
+});
 
 import AgendaScreen from '../../app/agenda';
 import { ToastProvider } from '@/components/ui';
@@ -69,6 +83,43 @@ describe('AgendaScreen', () => {
       expect(getByLabelText('banner invalido')).toBeTruthy();
       expect(getByLabelText('reconectar conta google')).toBeTruthy();
     });
+  });
+
+  test('fluxo conectar em web __DEV__ vai para online sem chamar fetch', async () => {
+    // M37.1.3: token mock injetado por autenticar() em web __DEV__
+    // dispara branch isMockToken em listarEventos -> eventos sinteticos
+    // sem rede real. Estado final = online, banner offline ausente.
+    const platformOriginal = Platform.OS;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Platform as any).OS = 'web';
+    const fetchOriginal = global.fetch;
+    const fetchMock = jest.fn(async () => {
+      throw new Error('fetch nao deveria ser chamado em web __DEV__ com token mock');
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).fetch = fetchMock;
+
+    try {
+      const { getByLabelText, queryByLabelText } = renderComToast(<AgendaScreen />);
+      const botao = await waitFor(() => getByLabelText('conectar conta google'));
+      await act(async () => {
+        fireEvent.press(botao);
+      });
+      await waitFor(() => {
+        expect(getByLabelText('agenda root')).toBeTruthy();
+        expect(queryByLabelText('banner offline')).toBeNull();
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+      // token sintetico ficou no store
+      const tokenFinal =
+        useGoogleAuth.getState().contas.pessoa_a.accessToken ?? '';
+      expect(tokenFinal.startsWith('mock-access-token')).toBe(true);
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Platform as any).OS = platformOriginal;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global as any).fetch = fetchOriginal;
+    }
   });
 
   test('estado online com token valido renderiza calendar', async () => {
