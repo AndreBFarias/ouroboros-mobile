@@ -5,6 +5,48 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Auditoria do ROADMAP (M-ROADMAP-AUDIT 2026-05-05 noite)
+
+Auditoria via `git log --all --oneline --no-merges | grep "feat:"`
+revelou que **4 sprints do Bloco E (M06.5 microfone, M07.x
+conquistas mídia, M11.5 calendário conquistas, M09 scanner
+OCR) já estavam entregues no código** (commits `0138ecc`,
+`16005ef`, `dadbb62`, `c8e3304` respectivamente, com evoluções
+posteriores em `a856fe9`, `8c322fe`, `df34500`), mas a tabela
+"Linha do tempo" do `ROADMAP.md` marcava todas como `[todo]`.
+
+**Causa raiz**: durante a refundação v1.0 (2026-05-02), a
+retirada do release `v1.0-rc1` zerou os status no roadmap mas
+preservou o código. A tabela "Fila ativa reordenada por
+blocos" foi mantida atualizada conforme sprints fechavam, mas
+a "Linha do tempo" não acompanhou.
+
+**Consequência prática**: 2 dispatches de executor-sprint
+hoje (E1 M06.5 e E4 M09) consumiram ~125k tokens e foram
+**rejeitados formalmente pelos executores** ao detectar que
+os arquivos do spec já existiam em produção. Rejeição correta
+e valiosa — preveniu reescrita destrutiva de código já
+mergeado.
+
+**Correções aplicadas:**
+- Bloco "Estado real consolidado" adicionado ao topo do
+  `ROADMAP.md` enumerando o que está entregue (Bloco A 9/9,
+  B 6/6, C 10/10, D 1/1, E5 + 4 sub-paralelas + E1-E4) e o que
+  REALMENTE falta (E5.B checkpoint Nível B, E6 M37.2, F1 field
+  test, M41 release).
+- Nota histórica destacada no topo da "Linha do tempo"
+  marcando-a como **arquivo cronológico apenas** — fonte de
+  verdade canônica é a "Fila ativa por blocos" + "Estado real
+  consolidado".
+- Estimativa real até v1.0.0 revisada: **~8-10h ativas + 7
+  dias passivos field test + ~1 dia release = ~10 dias de
+  calendário** (não 30-39h ativas como o roadmap insinuava).
+
+**Aprendizado durável**: antes de dispatchar `executor-sprint`,
+rodar `git log --all --oneline | grep -iE "<sprint-id>|<feature>"`
+para detectar sprints "fantasmas" que estão entregues mas
+listadas como `[todo]`. Adicionado à memória do orquestrador.
+
 ### Sprint M37.1.2 fechada + bug M37.1.3 corretiva enfileirada (2026-05-05 noite tarde)
 
 #### E5.x.3 — M37.1.2 Cache de agenda em .md individual (ADR-0019)

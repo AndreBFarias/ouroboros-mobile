@@ -9,6 +9,74 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+## Estado real consolidado (M-ROADMAP-AUDIT 2026-05-05 noite)
+
+Auditoria via `git log --all --oneline --no-merges | grep "feat:"`
+revelou **divergência durável** entre a tabela "Linha do tempo"
+(seção histórica abaixo) e o código real. A "Linha do tempo"
+ficou herdada da pre-refundação v1.0-rc1 (2026-05-02) marcando
+sprints já implementadas como `[todo]` por causa da retirada do
+release que zerou status no roadmap mas preservou código.
+
+**Fonte de verdade canônica dos status:** a "Fila ativa
+reordenada por blocos" abaixo. A "Linha do tempo" passa a ser
+**arquivo cronológico apenas** — não confiar nela para
+priorização.
+
+### O que ESTÁ entregue (1556/172 testes verde, bundle 7,7 MB)
+
+- **Fundação** (Bloco A 9/9): PT-BR audit, Gauntlet dead-code,
+  Vault MD audit + 4 paralelas, M39 mídia companion, M39.1
+  writers migrados, M-EXPORT-COMPLETO, M-BUNDLE-DIET.
+- **Polish UX** (Bloco B 6/6): captura unificada, M11.4
+  evolução corporal, categoria cores, M40 Tela Hoje v2, M36
+  Recap, M35 Finanças empty.
+- **Release-readiness** (Bloco C 10/10): WCAG completo + 3
+  paralelas, release assets, sobre release notes, backup
+  automático, M38 deviceId.
+- **Bloco D** (1/1): dev-client decisão registrada.
+- **Bloco E parcial** (E5 + E5.x.1 + E5.x.2 + E5.x.3 + E5.x.4
+  fechadas hoje 2026-05-05; **E1, E2, E3, E4 fechadas nas
+  sessões anteriores** apesar do "Linha do tempo" abaixo
+  marcar como `[todo]` — git log confirma):
+  - **E1 M06.5** Microfone (commit `0138ecc`, evoluído por
+    `a856fe9` troca para `expo-speech-recognition`, `8c322fe`
+    path canônico `media/audios/<data>-<rand>.m4a` + companion
+    `.md` per ADR-0017, `df34500` M39.1 batch).
+  - **E2 M07.x** Conquistas com mídia obrigatória (commit
+    `16005ef`).
+  - **E3 M11.5** Calendário visual de conquistas (commit
+    `dadbb62`).
+  - **E4 M09** Scanner OCR (commit `c8e3304`, evoluído com
+    `@dariyd/react-native-document-scanner` em vez do
+    `@react-native-ml-kit/document-scanner` original do spec,
+    qualidade fixa `'maxima'` por M29).
+  - **E5 M37.1** Google Calendar OAuth + leitura agenda
+    (commit `91710ab`).
+  - **E5.x.1 M37.1.1** Calendar locale PT-BR (commit
+    `90643bb`).
+  - **E5.x.2 M-BRIEF-A25** Metro package exports (local-only).
+  - **E5.x.3 M37.1.2** Cache agenda em .md individual + ADR-0019
+    (commit `06095d0`).
+  - **E5.x.4 M37.1.3** Mock dev calendar API + bônus fix teste
+    isolation (commit `d4ea9ab`).
+
+### O que REALMENTE FALTA para v1.0.0
+
+| # | Sprint | Spec | Estim. | Tipo |
+|---|---|---|---|---|
+| 1 | **M-ROADMAP-CLOSEOUTS** (este) | inline | 0,5h | docs apenas — corrigir Linha do tempo + closeouts batch dos 4 fantasmas |
+| 2 | **E5.B M37.1-checkpoint-nivel-B** | `M37.1-checkpoint-nivel-B-spec.md` | 1h | dev-client real (você + emulador + login Google) |
+| 3 | **E6 M37.2** Google Calendar escrita | `M37.2-spec.md` | 4-5h | única dev-client real restante |
+| 4 | **F1 M-FIELD-TEST** 7 dias uso real | `M-FIELD-TEST-spec.md` | 7 dias passivos | humano-only |
+| 5 | **G1 M41** APK Release v1.0.0 final | `M41-spec.md` | 3-4h | PAUSA explícita |
+
+Não-bloqueantes (descopáveis para v1.1): M-WCAG-MUTED-DECOR-TEXTO-V2,
+M19.x mockups, M-BUNDLE-DIET-MOTI-REPLACE (já descopada).
+
+**Estimativa real até v1.0.0**: ~8-10h ativas + 7 dias passivos
+field test + ~1 dia release = **~10 dias de calendário**.
+
 ## Como ler este arquivo
 
 - **Status**:
@@ -194,6 +262,17 @@ prioridade, requerem emulador ou APK dev-client):
 | M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL | Acentuação PT-BR no Python | `M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL-spec.md` | 0,5h |
 
 ## Linha do tempo
+
+> **NOTA HISTÓRICA (M-ROADMAP-AUDIT 2026-05-05):** esta tabela é
+> arquivo cronológico apenas. **Fonte de verdade canônica dos
+> status atuais é a "Fila ativa reordenada por blocos" (acima)
+> + bloco "Estado real consolidado" no topo deste arquivo.**
+>
+> Vários `[todo]` abaixo estão **falsos** — sprint foi entregue
+> mas a linha não foi atualizada durante a refundação v1.0
+> (2026-05-02 retirou v1.0-rc1, zerando status mas preservando
+> código). Para qualquer status atual, **consultar o topo deste
+> arquivo, não esta tabela**.
 
 | Status | Sprint | Título | Telas | Schemas | Estimativa | Commit / Tag |
 |---|---|---|---|---|---|---|
