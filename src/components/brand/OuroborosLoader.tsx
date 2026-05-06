@@ -183,6 +183,14 @@ export function OuroborosLoader({
   // Pivot da rotacao vem do originX/originY estatico no
   // <AnimatedG> (so eficaz em native; web ignora porque a
   // string de transform ja inclui cx/cy).
+  // M25.1 + A27 (2026-05-06): em web, useAnimatedProps emite
+  // transform string "rotate(angle cx cy)" para o rn-svg-web
+  // converter em <g transform="..."> direto. Em native com New
+  // Arch (Fabric), passar string em transform de SVG quebra com
+  // "java.lang.String cannot be cast to ReadableArray" — Fabric
+  // exige array de operacoes ou usar a prop rotation nativa do
+  // react-native-svg. Solucao: ramificar por Platform via
+  // closure (booleano estatico capturado, fora do worklet).
   const isWeb = Platform.OS === 'web';
   const propsG1 = useAnimatedProps(
     () =>
@@ -242,7 +250,7 @@ export function OuroborosLoader({
             fill="none"
             stroke={colors.purple}
             strokeWidth={0.6}
-            strokeDasharray="1 8"
+            strokeDasharray={[1, 8]}
             opacity={0.35}
           />
         </AnimatedG>
@@ -256,7 +264,7 @@ export function OuroborosLoader({
             fill="none"
             stroke={colors.cyan}
             strokeWidth={1}
-            strokeDasharray="3 7"
+            strokeDasharray={[3, 7]}
             opacity={0.35}
             animatedProps={propsFlow}
             data-anim-id={idFlow}
@@ -278,7 +286,7 @@ export function OuroborosLoader({
             stroke={COR_ESCAMA}
             strokeWidth={11}
             strokeLinecap="round"
-            strokeDasharray="1.5 13"
+            strokeDasharray={[1.5, 13]}
             opacity={0.55}
           />
           <Circle cx={155} cy={40} r={6} fill={colors.purple} />

@@ -86,7 +86,7 @@ export function OuroborosLogo({
             fill="none"
             stroke={colors.purple}
             strokeWidth={0.6}
-            strokeDasharray="1 8"
+            strokeDasharray={[1, 8]}
             opacity={0.35}
           />
         </G>
@@ -100,7 +100,7 @@ export function OuroborosLogo({
             fill="none"
             stroke={colors.cyan}
             strokeWidth={1}
-            strokeDasharray="3 7"
+            strokeDasharray={[3, 7]}
             opacity={0.35}
           />
         </G>
@@ -122,7 +122,7 @@ export function OuroborosLogo({
             stroke={COR_ESCAMA}
             strokeWidth={11}
             strokeLinecap="round"
-            strokeDasharray="1.5 13"
+            strokeDasharray={[1.5, 13]}
             opacity={0.55}
           />
 

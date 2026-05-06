@@ -78,7 +78,12 @@ exports[`OuroborosLogo renderiza com label de acessibilidade e wordmark por defa
         opacity={0.35}
         r="142"
         stroke="#bd93f9"
-        strokeDasharray="1 8"
+        strokeDasharray={
+          [
+            1,
+            8,
+          ]
+        }
         strokeWidth={0.6}
       />
     </View>
@@ -93,7 +98,12 @@ exports[`OuroborosLogo renderiza com label de acessibilidade e wordmark por defa
         opacity={0.35}
         r="78"
         stroke="#8be9fd"
-        strokeDasharray="3 7"
+        strokeDasharray={
+          [
+            3,
+            7,
+          ]
+        }
         strokeWidth={1}
       />
     </View>
@@ -114,7 +124,12 @@ exports[`OuroborosLogo renderiza com label de acessibilidade e wordmark por defa
         fill="none"
         opacity={0.55}
         stroke="#0e0f15"
-        strokeDasharray="1.5 13"
+        strokeDasharray={
+          [
+            1.5,
+            13,
+          ]
+        }
         strokeLinecap="round"
         strokeWidth={11}
       />
