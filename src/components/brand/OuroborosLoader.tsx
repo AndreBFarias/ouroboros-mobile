@@ -172,15 +172,36 @@ export function OuroborosLoader({
     };
   }, [rotacaoG1, rotacaoG2, rotacaoG3, offsetFlow]);
 
-  const propsG1 = useAnimatedProps(() => ({
-    transform: `rotate(${rotacaoG1.value} ${PIVOT} ${PIVOT})`,
-  }));
-  const propsG2 = useAnimatedProps(() => ({
-    transform: `rotate(${rotacaoG2.value} ${PIVOT} ${PIVOT})`,
-  }));
-  const propsG3 = useAnimatedProps(() => ({
-    transform: `rotate(${rotacaoG3.value} ${PIVOT} ${PIVOT})`,
-  }));
+  // M25.1 + A27 (2026-05-06): em web, useAnimatedProps emite
+  // transform string "rotate(angle cx cy)" para o rn-svg-web
+  // converter em <g transform="..."> direto. Em native com New
+  // Arch (Fabric), passar string em transform de SVG quebra com
+  // "java.lang.String cannot be cast to ReadableArray" — Fabric
+  // exige array de operacoes ou usar a prop rotation nativa do
+  // react-native-svg. Solucao: ramificar por Platform via
+  // closure (booleano estatico capturado, fora do worklet).
+  // Pivot da rotacao vem do originX/originY estatico no
+  // <AnimatedG> (so eficaz em native; web ignora porque a
+  // string de transform ja inclui cx/cy).
+  const isWeb = Platform.OS === 'web';
+  const propsG1 = useAnimatedProps(
+    () =>
+      (isWeb
+        ? { transform: `rotate(${rotacaoG1.value} ${PIVOT} ${PIVOT})` }
+        : { rotation: rotacaoG1.value }) as Record<string, unknown>
+  );
+  const propsG2 = useAnimatedProps(
+    () =>
+      (isWeb
+        ? { transform: `rotate(${rotacaoG2.value} ${PIVOT} ${PIVOT})` }
+        : { rotation: rotacaoG2.value }) as Record<string, unknown>
+  );
+  const propsG3 = useAnimatedProps(
+    () =>
+      (isWeb
+        ? { transform: `rotate(${rotacaoG3.value} ${PIVOT} ${PIVOT})` }
+        : { rotation: rotacaoG3.value }) as Record<string, unknown>
+  );
   const propsFlow = useAnimatedProps(() => ({
     strokeDashoffset: offsetFlow.value,
   }));
@@ -213,7 +234,7 @@ export function OuroborosLoader({
         {/* outer dotted orbit (gs-2: 60s reverso). data-anim-id atravessa
             rn-svg-web e vira atributo no <g>; o RAF de M25.2 usa esse
             seletor para atualizar transform. */}
-        <AnimatedG animatedProps={propsG2} data-anim-id={idG2}>
+        <AnimatedG animatedProps={propsG2} originX={PIVOT} originY={PIVOT} data-anim-id={idG2}>
           <Circle
             cx={PIVOT}
             cy={PIVOT}
@@ -227,7 +248,7 @@ export function OuroborosLoader({
         </AnimatedG>
 
         {/* inner flow ring (gs-3: 30s; gs-flow: dashoffset 6s) */}
-        <AnimatedG animatedProps={propsG3} data-anim-id={idG3}>
+        <AnimatedG animatedProps={propsG3} originX={PIVOT} originY={PIVOT} data-anim-id={idG3}>
           <AnimatedCircle
             cx={PIVOT}
             cy={PIVOT}
@@ -243,7 +264,7 @@ export function OuroborosLoader({
         </AnimatedG>
 
         {/* main snake (gs-1: 90s) */}
-        <AnimatedG animatedProps={propsG1} data-anim-id={idG1}>
+        <AnimatedG animatedProps={propsG1} originX={PIVOT} originY={PIVOT} data-anim-id={idG1}>
           <Path
             d="M 155 40 A 120 120 0 0 0 40 160 A 120 120 0 0 0 160 280 A 120 120 0 0 0 280 160 A 120 120 0 0 0 175 40"
             fill="none"

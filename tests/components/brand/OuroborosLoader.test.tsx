@@ -74,24 +74,29 @@ describe('OuroborosLoader', () => {
     cancelSpy.mockRestore();
   });
 
-  // M25.1: confirma que useAnimatedProps emite transform string SVG
-  // nativo ("rotate(angle cx cy)") em vez de rotation+originX+originY
-  // numericos. Esse formato sobrevive a conversao do react-native-svg
-  // em web (que ignora origin null e rodava em torno de 0,0).
-  it('emite transform string rotate(N 160 160) para os 3 grupos rotativos', () => {
+  // M25.1 + A27 (2026-05-06): em web emite transform string ("rotate
+  // (angle cx cy)") para sobreviver ao parser do rn-svg-web. Em
+  // native (default do Jest), emite rotation numerica para evitar
+  // crash "java.lang.String cannot be cast to ReadableArray" na New
+  // Arch (Fabric espera array em transform de SVG, ou rotation prop
+  // do react-native-svg). Pivot vem de originX/originY estaticos no
+  // <AnimatedG>.
+  it('emite rotation numerica para os 3 grupos em native (Jest default)', () => {
     const propsSpy = jest.spyOn(Reanimated, 'useAnimatedProps');
     render(<OuroborosLoader />);
-    // Os 3 primeiros useAnimatedProps sao gs1, gs2, gs3 (rotativos).
-    // O quarto e o gs-flow (strokeDashoffset, sem rotate).
-    const cb1 = propsSpy.mock.calls[0][0] as () => { transform: string };
-    const cb2 = propsSpy.mock.calls[1][0] as () => { transform: string };
-    const cb3 = propsSpy.mock.calls[2][0] as () => { transform: string };
-    const out1 = cb1();
-    const out2 = cb2();
-    const out3 = cb3();
-    expect(out1.transform).toMatch(/^rotate\(360 160 160\)$/);
-    expect(out2.transform).toMatch(/^rotate\(-360 160 160\)$/);
-    expect(out3.transform).toMatch(/^rotate\(360 160 160\)$/);
+    const cb1 = propsSpy.mock.calls[0][0] as () => { rotation: number };
+    const cb2 = propsSpy.mock.calls[1][0] as () => { rotation: number };
+    const cb3 = propsSpy.mock.calls[2][0] as () => { rotation: number };
+    expect(cb1().rotation).toBe(360);
+    expect(cb2().rotation).toBe(-360);
+    expect(cb3().rotation).toBe(360);
     propsSpy.mockRestore();
   });
+
+  // Caminho web (transform string para rn-svg-web) coberto por
+  // E2E em tests/e2e/playwright/m25-1-* via Gauntlet — Jest aqui
+  // nao consegue exercitar requestAnimationFrame + document
+  // querySelector do useEffect web sem jsdom completo, e a logica
+  // de ramificacao isWeb e simples o suficiente para auditoria
+  // visual cobrir.
 });
