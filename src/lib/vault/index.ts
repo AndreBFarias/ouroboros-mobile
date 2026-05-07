@@ -1,5 +1,6 @@
 // Barrel do modulo vault. Importar via '@/lib/vault'.
 export {
+  vaultUriJoin,
   formatDateYmd,
   formatDateYmdHm,
   formatDateYmdHms,

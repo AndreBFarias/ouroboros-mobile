@@ -1,4 +1,5 @@
 import {
+  vaultUriJoin,
   formatDateYmd,
   formatDateYmdHm,
   formatDateYmdHms,
@@ -13,6 +14,55 @@ import {
   mediaScannerPath,
   VAULT_FOLDERS,
 } from '@/lib/vault/paths';
+
+describe('vaultUriJoin', () => {
+  it('concatena root + rel simples', () => {
+    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', 'humor.md'))
+      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+  });
+
+  it('remove trailing whitespace do root', () => {
+    expect(vaultUriJoin('content://...primary:Ouroboros ', 'tarefas/x.md'))
+      .toBe('content://...primary:Ouroboros/tarefas/x.md');
+  });
+
+  it('remove trailing %20 do root', () => {
+    expect(vaultUriJoin('content://...primary:Ouroboros%20', 'tarefas/x.md'))
+      .toBe('content://...primary:Ouroboros/tarefas/x.md');
+  });
+
+  it('remove trailing slashes do root', () => {
+    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros/', 'humor.md'))
+      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+  });
+
+  it('remove leading slashes do rel', () => {
+    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', '/humor.md'))
+      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+  });
+
+  it('remove leading whitespace do rel', () => {
+    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', ' humor.md'))
+      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+  });
+
+  it('lança erro com root vazio', () => {
+    expect(() => vaultUriJoin('', 'humor.md')).toThrow('vault não inicializado');
+  });
+
+  it('lança erro com rel vazio', () => {
+    expect(() => vaultUriJoin('file:///sdcard', '')).toThrow('rel vazio');
+  });
+
+  it('lança erro com root só whitespace', () => {
+    expect(() => vaultUriJoin('   ', 'humor.md')).toThrow('vault não inicializado');
+  });
+
+  it('preserva subpaths complexos com slashes intermediários', () => {
+    expect(vaultUriJoin('file:///vault', 'inbox/mente/diario/2026-05-06.md'))
+      .toBe('file:///vault/inbox/mente/diario/2026-05-06.md');
+  });
+});
 
 describe('formatDateYmd', () => {
   it('formata em UTC-3 a meia-noite local', () => {

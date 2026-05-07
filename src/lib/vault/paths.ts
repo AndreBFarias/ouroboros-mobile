@@ -11,6 +11,32 @@
 // - Todos os paths são relativos ao root do Vault (URI SAF resolvido
 //   em runtime). O caller concatena com a base.
 
+// Helper canonico para concatenacao de URIs do Vault. Resolve o
+// problema de trailing whitespace + barras duplas + percent-encoding
+// ofensivo (%20 no fim do tree URI SAF) que vinha contaminando saves
+// em OEMs MIUI/OneUI/HyperOS. Lanca erro claro se root ou rel
+// estiverem vazios - sinal de bug em estado anterior do app.
+//
+// Comentarios sem acento (convencao shell/CI).
+export function vaultUriJoin(root: string, rel: string): string {
+  const r = root
+    .trim()
+    .replace(/\s+$/, '')        // trim trailing whitespace
+    .replace(/%20+$/, '')       // trim trailing percent-encoded space
+    .replace(/\/+$/, '');       // trim trailing slashes
+  const s = rel
+    .trim()
+    .replace(/^\s+/, '')        // trim leading whitespace
+    .replace(/^\/+/, '');       // trim leading slashes
+  if (!r) {
+    throw new Error('vaultUriJoin: root vazio (vault não inicializado?)');
+  }
+  if (!s) {
+    throw new Error('vaultUriJoin: rel vazio');
+  }
+  return `${r}/${s}`;
+}
+
 const TZ_OFFSET_MIN = -180; // UTC-3 fixo (São Paulo, sem DST)
 const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
 

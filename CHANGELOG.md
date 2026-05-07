@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint H1 — `M-VAULT-URI-HELPER` (2026-05-06)
+
+Helper canônico `vaultUriJoin(root, rel)` em `src/lib/vault/paths.ts`
+faz trim agressivo (whitespace, `%20` percent-encoded, slashes
+duplicadas) antes de concatenar URIs do Vault, prevenindo a
+contaminação por trailing space que vinha quebrando saves em OEMs
+MIUI/OneUI/HyperOS (`Invalid URI` em writes, `directory cannot be
+created` em copies). Lança `Error` claro quando root ou rel vazios —
+bug-loud > bug-quiet, força chamadores a falharem cedo se o Vault
+não foi inicializado.
+
+Suite Jest cobre 10 casos em `tests/lib/vault/paths.test.ts`:
+concatenação simples, trim de whitespace/`%20`/slashes do root,
+trim de leading slashes/whitespace do rel, throws com root vazio, rel
+vazio, root só whitespace, e preservação de subpaths complexos.
+Re-exportado via `src/lib/vault/index.ts`.
+
+Sprint não toca writers/readers — migração canônica acontece em cada
+sprint do Bloco I (anti-débito). Bloqueia destravado para H2, H3 e
+todo Bloco I.
+
+Métricas: 1566 testes / 172 suítes (+10 contra 1556 baseline) · TS
+strict 0 · bundle Hermes intacto · Gauntlet leak 0/6 · anonimato OK ·
+PT-BR check OK.
+
 ### Plano end-to-end v1.0.0 — golden-zebra (2026-05-06)
 
 Field test do APK `v1.0.0-alpha` (commit `ada414e`) revelou problemas

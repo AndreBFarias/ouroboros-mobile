@@ -20,11 +20,11 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 
 ### Bloco H — Fundação Vault (sequencial)
 
-| # | Sprint | Spec | Estim. | ADR |
-|---|---|---|---|---|
-| H1 | `M-VAULT-URI-HELPER` | `M-VAULT-URI-HELPER-spec.md` | ~1h | — |
-| H2 | `M-VAULT-LAYOUT-POR-TIPO` | `M-VAULT-LAYOUT-POR-TIPO-spec.md` | ~4h | 0023 |
-| H3 | `M-VAULT-PASTA-NAO-HARDCODED` | `M-VAULT-PASTA-NAO-HARDCODED-spec.md` | ~3h | 0022 |
+| # | Sprint | Spec | Estim. | ADR | Status |
+|---|---|---|---|---|---|
+| H1 | `M-VAULT-URI-HELPER` | `M-VAULT-URI-HELPER-spec.md` | ~1h | — | `[ok]` |
+| H2 | `M-VAULT-LAYOUT-POR-TIPO` | `M-VAULT-LAYOUT-POR-TIPO-spec.md` | ~4h | 0023 | `[todo]` |
+| H3 | `M-VAULT-PASTA-NAO-HARDCODED` | `M-VAULT-PASTA-NAO-HARDCODED-spec.md` | ~3h | 0022 | `[todo]` |
 
 ### Bloco I — Saves específicos por feature (paralelo após H)
 
