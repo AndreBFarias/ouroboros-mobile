@@ -54,7 +54,7 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 | # | Sprint | Spec | Estim. |
 |---|---|---|---|
 | I2-OAUTH | `M-OAUTH-REDIRECT-URI-FIX` | `M-OAUTH-REDIRECT-URI-FIX-spec.md` | ~2h |
-| I2-AMIGOS | `M-AMIGOS-LABEL` | `M-AMIGOS-LABEL-spec.md` | ~1h |
+| I2-AMIGOS | `M-AMIGOS-LABEL` | `M-AMIGOS-LABEL-spec.md` | ~1h | `[ok]` |
 
 ### Bloco J — Permissões onboarding
 

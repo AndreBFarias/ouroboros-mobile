@@ -5,6 +5,32 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I2-AMIGOS — `M-AMIGOS-LABEL` (2026-05-07)
+
+`useNomeDe('ambos')` em `src/lib/stores/pessoa.ts` ramifica por
+`tipoCompanhia`: `'casal'` → `'Casal'`, `'amigos'` → `'Todos'`,
+`'sozinho'` → `'Ambos'` (fallback defensivo). Reatividade via
+`useOnboarding((s) => s.tipoCompanhia)`.
+
+Substituições: literal `'Sobreposto'` em `MiniHumorScreen.tsx:85`
++ hardcoded `'Casal'` em `ItemTarefa.tsx:89` migrados para
+`useNomeDe('ambos')`. `pessoas.config.ts` `ambos.nome: 'Casal'`
+mantido por consistência mas ignorado pelo hook.
+
+Tests: pessoa.test.ts reescrito de 4 para 11 casos (3 ramos
+tipoCompanhia + reatividade a `setTipoCompanhia` + nomes reais
+pessoa_a/pessoa_b).
+
+Screenshot Gauntlet: heatmap com `tipoCompanhia='casal'` mostra
+chip "Casal" reativo (era "Sobreposto" hardcoded).
+
+Achado registrado: Gauntlet API não tem cobertura para
+`tipoCompanhia='amigos'` — sprint nova `INFRA-GAUNTLET-AMIGOS-API`
+para expor `setTipoCompanhia` ou `SeedOpcoes.tipoCompanhia`.
+
+Métricas: 1677 testes / 173 suítes verde (+5) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-SCANNER + M-SCANNER-LAYOUT (consolidadas, 2026-05-07)
 
 `src/lib/scanner/saveNota.ts` migra helpers legados para layout-por-tipo:

@@ -1,5 +1,8 @@
 // Barra de filtros do calendário (M11.5). Cinco filtros (adendo A4):
-//   1. pessoa     — ChipGroup single (nome A / nome B / 'Casal').
+//   1. pessoa     — ChipGroup single (nome A / nome B / nome ambos).
+//                  O label do terceiro chip vem de useNomeDe('ambos')
+//                  e ramifica por tipoCompanhia ('Casal' / 'Todos' /
+//                  'Ambos').
 //   2. mês        — ChipGroup row ('Tudo', 'Este mês', 'Mês passado').
 //   3. tipo mídia — ChipGroup row ('Tudo', 'Foto', 'YouTube',
 //                  'Spotify', 'Áudio').
@@ -66,8 +69,8 @@ export function FiltrosBar({
   // re-filtrar a lista a cada caractere digitado.
   const [bairroLocal, setBairroLocal] = useState(filtros.bairro);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Lê privacidade do Vault para esconder opção 'Casal' quando
-  // pessoa.vaultCompartilhado=false.
+  // Lê privacidade do Vault para esconder opção 'ambos' (label
+  // ramificado por tipoCompanhia) quando pessoa.vaultCompartilhado=false.
   const vaultCompartilhado = useVaultCompartilhado();
   const nomeA = useNomeDe('pessoa_a');
   const nomeB = useNomeDe('pessoa_b');

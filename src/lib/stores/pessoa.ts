@@ -9,6 +9,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { PESSOAS_CONFIG } from '@/config/pessoas.config';
 import type { PessoaAutor, PessoaId } from '@/lib/schemas/pessoa';
 import { secureStorage } from '@/lib/stores/persist';
+import { useOnboarding } from '@/lib/stores/onboarding';
 
 interface PessoaStore {
   pessoaAtiva: PessoaAutor;
@@ -65,19 +66,40 @@ export const usePessoa = create<PessoaStore>()(
 );
 
 // Resolve nome de exibicao para qualquer PessoaId (inclui 'ambos').
-// Para autores (pessoa_a/b), pega do store; para 'ambos', pega do config.
+// Para autores (pessoa_a/b), pega do store; para 'ambos', ramifica por
+// tipoCompanhia: 'casal' -> 'Casal', 'amigos' -> 'Todos', fallback
+// defensivo 'Ambos' (sozinho nunca deveria pedir o label, mas mantem a
+// resposta sensata para nao quebrar UI). Versao sincrona usa getState
+// (nao reativa) — reservado para logging, sort e util fora de
+// componentes.
 export function nomeDe(pessoa: PessoaId): string {
-  if (pessoa === 'ambos') return PESSOAS_CONFIG.ambos.nome;
+  if (pessoa === 'ambos') {
+    const { tipoCompanhia } = useOnboarding.getState();
+    if (tipoCompanhia === 'casal') return 'Casal';
+    if (tipoCompanhia === 'amigos') return 'Todos';
+    return 'Ambos';
+  }
   const { nomes } = usePessoa.getState();
   return nomes[pessoa] ?? PESSOAS_CONFIG[pessoa].nome;
 }
 
 // Versao reativa de nomeDe(): usa o seletor zustand para que componentes
-// re-renderizem quando o nome muda (ex: usuario edita em Settings). Use
-// dentro de componentes; fora deles (logging, sort, util sincrono),
-// continue com nomeDe() puro.
+// re-renderizem quando o nome muda (ex: usuario edita em Settings) ou
+// quando tipoCompanhia muda em runtime (ex: troca de modo no
+// onboarding). Use dentro de componentes; fora deles (logging, sort,
+// util sincrono), continue com nomeDe() puro.
 export function useNomeDe(pessoa: PessoaId): string {
-  const nomes = usePessoa((s) => s.nomes);
-  if (pessoa === 'ambos') return PESSOAS_CONFIG.ambos.nome;
-  return nomes[pessoa] ?? PESSOAS_CONFIG[pessoa].nome;
+  const nomeA = usePessoa((s) => s.nomes.pessoa_a);
+  const nomeB = usePessoa((s) => s.nomes.pessoa_b);
+  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  if (pessoa === 'pessoa_a') {
+    return nomeA ?? PESSOAS_CONFIG.pessoa_a.nome;
+  }
+  if (pessoa === 'pessoa_b') {
+    return nomeB ?? PESSOAS_CONFIG.pessoa_b.nome;
+  }
+  // 'ambos':
+  if (tipoCompanhia === 'casal') return 'Casal';
+  if (tipoCompanhia === 'amigos') return 'Todos';
+  return 'Ambos';
 }

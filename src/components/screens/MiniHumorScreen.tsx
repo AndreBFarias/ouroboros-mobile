@@ -50,8 +50,8 @@ import type { ModoFiltroHumor } from '@/lib/hooks/useHumorHeatmap';
 
 // Labels dos chips sao montadas em runtime via useNomeDe() para refletir
 // nomes reais que o usuario configurou no onboarding/Settings (Regra -1:
-// nenhum nome real hardcoded). 'sobreposto' permanece literal pois e
-// rotulo do modo de visualizacao, nao de pessoa.
+// nenhum nome real hardcoded). O modo combinado usa useNomeDe('ambos')
+// que ramifica por tipoCompanhia ('Casal' / 'Todos' / 'Ambos').
 const DIA_MS = 24 * 60 * 60 * 1000;
 
 function formatarBannerData(geradoEm: string, agora: Date): {
@@ -77,14 +77,15 @@ export function MiniHumorScreen(): ReactNode {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const nomeA = useNomeDe('pessoa_a');
   const nomeB = useNomeDe('pessoa_b');
+  const nomeAmbos = useNomeDe('ambos');
 
   const chipOptionsCompartilhado = useMemo<ChipOption[]>(
     () => [
       { value: 'pessoa_a', label: nomeA, accent: 'purple' },
       { value: 'pessoa_b', label: nomeB, accent: 'pink' },
-      { value: 'sobreposto', label: 'Sobreposto', accent: 'cyan' },
+      { value: 'sobreposto', label: nomeAmbos, accent: 'cyan' },
     ],
-    [nomeA, nomeB]
+    [nomeA, nomeB, nomeAmbos]
   );
   const chipOptionsPrivado = useMemo<ChipOption[]>(
     () => [

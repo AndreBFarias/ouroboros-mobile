@@ -74,7 +74,9 @@ function formatarDataCurta(ymd: string): string {
 }
 
 // Resolve um label curto para o destino da tarefa. 'mim' nao mostra
-// chip (default implicito). Demais retornam string compacta.
+// chip (default implicito). Demais retornam string compacta. O label
+// 'casal' usa useNomeDe('ambos') para refletir tipoCompanhia em
+// runtime ('Casal' / 'Todos' / 'Ambos').
 function useLabelDestino(tarefa: Tarefa): string | null {
   // Hook sempre chamado para respeitar regras dos hooks; resultado
   // condicional via switch fora do bloco.
@@ -82,11 +84,12 @@ function useLabelDestino(tarefa: Tarefa): string | null {
   const nomeOutra = useNomeDe(
     destino.tipo === 'outra' ? destino.pessoa : 'pessoa_a'
   );
+  const nomeAmbos = useNomeDe('ambos');
   switch (destino.tipo) {
     case 'mim':
       return null;
     case 'casal':
-      return 'Casal';
+      return nomeAmbos;
     case 'outra':
       return nomeOutra;
     case 'terceiro':
