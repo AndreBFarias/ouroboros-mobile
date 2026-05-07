@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-VIDEO — `M-SAVE-VIDEO-VALIDA` (2026-05-07)
+
+`src/lib/midia/capturarVideo.ts` reescrito com writer inline
+usando `vaultUriJoin` + `videoPath` (`mp4/video-...mp4`) +
+`videoCompanionPath` (`markdown/video-...md`). vaultRoot vazio
+agora throw em vez de silêncio. `MenuCapturaVerde.handleVideo`
+envolve em `comTimeout(p, 15s)` (timeout maior para vídeo) +
+try/catch + toasts PT-BR `Vídeo salvo.` / `Não foi possível
+salvar: <msg>`.
+
+Decisão arquitetural: `escreverMidiaComCompanion` (helper compartilhado
+foto/áudio/scanner/medidas) NÃO migrado nesta sprint — aguarda fechar
+todas as I-* mídia antes de migração centralizada. I-VIDEO segue
+padrão `saveEvento`/`salvarFrase` (writer inline com vaultUriJoin).
+
+Tests: +2 casos em `tests/lib/midia/capturarVideo.test.ts` (vaultRoot
+null throw, path final via vaultUriJoin sem `%20`/barra dupla,
+companion frontmatter aponta para basename do binário). E2E novo
+`tests/e2e/playwright/m-save-video.e2e.ts` cobre tap menu (picker
+nativo não funciona em web — runtime real via Nível B/C).
+
+Métricas: 1629 testes / 173 suítes verde (+2 contra 1627 baseline) ·
+TS strict 0 · Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 ·
+anonimato OK · PT-BR check OK.
+
 ### Sprint I-EVENTO — `M-SAVE-EVENTO-VALIDA` (2026-05-07)
 
 `src/lib/eventos/saveEvento.ts` migra `joinUri` local (3

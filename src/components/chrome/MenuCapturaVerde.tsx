@@ -59,6 +59,12 @@ const FAB_SIZE = 56;
 // para @/lib/util/comTimeout (helper canonico do Bloco I). FRASE,
 // HUMOR e DIARIO importam daqui agora; o default 10s vive no helper.
 
+// I-VIDEO (M-SAVE-VIDEO-VALIDA, 2026-05-07): timeout de save de video
+// e' 15s (vs default 10s). Justificativa: copy de mp4 com 30-60s pode
+// passar de 5s em devices com /sdcard saturada; 15s cobre p99 sem
+// frustrar o usuario.
+const TIMEOUT_VIDEO_MS = 15_000;
+
 // M34.3: descricao de uma acao contextual injetada pela tab que
 // hospeda o MenuCapturaVerde. A tab fornece o conjunto que deve
 // aparecer ANTES das 4 acoes de captura no sheet. Permite que o FAB
@@ -247,13 +253,33 @@ export function MenuCapturaVerde({
     if (r.ok) tratarSucesso();
   }, [fecharMenu, tratarSucesso]);
 
+  // I-VIDEO (M-SAVE-VIDEO-VALIDA, 2026-05-07): handler com padrao
+  // canonico try/catch + comTimeout (15s para videos que podem ser
+  // longos) + toasts PT-BR. Vault nao conectado / erro de copy /
+  // timeout viram toast vermelho com mensagem clara em vez de
+  // silenciar. Cancel do picker (ok=false sem throw) nao mostra
+  // toast — usuario decidiu cancelar e nao precisa de feedback.
   const handleVideo = useCallback(async () => {
     fecharMenu();
     setSalvando(true);
-    const r = await capturarVideo({ origem: 'galeria' });
-    setSalvando(false);
-    if (r.ok) tratarSucesso();
-  }, [fecharMenu, tratarSucesso]);
+    try {
+      const r = await comTimeout(
+        capturarVideo({ origem: 'galeria' }),
+        TIMEOUT_VIDEO_MS
+      );
+      if (r.ok) {
+        toast.show('Vídeo salvo.', 'success');
+        tratarSucesso();
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save video fail', e);
+    } finally {
+      setSalvando(false);
+    }
+  }, [fecharMenu, toast, tratarSucesso]);
 
   const handleAbrirFrase = useCallback(() => {
     // Mantem flag sheetCapturaAberto=true durante a transicao
