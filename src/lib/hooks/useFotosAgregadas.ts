@@ -17,7 +17,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
-import { VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  MARKDOWN_FOLDER,
+  JPG_FOLDER,
+  PNG_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
@@ -69,8 +74,9 @@ async function lerEventos(
   vaultRoot: string,
   autor: string | null
 ): Promise<FotoAgregada[]> {
-  const folder = joinUri(vaultRoot, VAULT_FOLDERS.eventos);
-  const arquivos = await listVaultFolder(folder, '.md');
+  const folder = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folder, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'evento-'));
   const out: FotoAgregada[] = [];
 
   for (const uri of arquivos) {
@@ -86,14 +92,14 @@ async function lerEventos(
     const slug = slugDoArquivo(uri);
     const dataIso = parsed.meta.data;
     for (const fotoRel of parsed.meta.fotos ?? []) {
-      // Resolve URI absoluta. Path do meta vem como "assets/foto-x.jpg"
-      // (relativo a raiz do Vault).
+      // Resolve URI absoluta. Path do meta vem como "<ext>/foto-x.<ext>"
+      // (relativo a raiz do Vault, layout-por-tipo H2).
       const absUri = joinUri(vaultRoot, fotoRel);
       out.push({
         uri: absUri,
         data: dataIso,
         origem: 'evento',
-        origemPath: `eventos/${slug}.md`,
+        origemPath: `markdown/evento-${slug}.md`,
         origemSlug: slug,
       });
     }
@@ -108,8 +114,14 @@ async function lerMedidas(
   vaultRoot: string,
   autor: string | null
 ): Promise<FotoAgregada[]> {
-  const folder = joinUri(vaultRoot, VAULT_FOLDERS.medidas);
-  const arquivos = await listVaultFolder(folder, '.md');
+  const folder = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folder, '.md');
+  // Medidas: 'medidas-YYYY-MM-DD.md' (registro), excluindo
+  // 'medidas-foto-...md' (companion).
+  const arquivos = todos.filter(
+    (u) => matchesFeaturePrefix(u, 'medidas-') &&
+           !matchesFeaturePrefix(u, 'medidas-foto-')
+  );
   const out: FotoAgregada[] = [];
 
   for (const uri of arquivos) {
@@ -129,7 +141,7 @@ async function lerMedidas(
         uri: absUri,
         data: dataYmd,
         origem: 'medida',
-        origemPath: `medidas/${dataYmd}.md`,
+        origemPath: `markdown/medidas-${dataYmd}.md`,
         origemSlug: dataYmd,
       });
     }
@@ -145,37 +157,35 @@ async function lerMedidas(
 // .jpeg / .png para suportar pickers que devolvem PNG. Data extraida
 // do nome do arquivo (10 chars iniciais).
 async function lerGaleriaManual(vaultRoot: string): Promise<FotoAgregada[]> {
-  const folder = joinUri(vaultRoot, VAULT_FOLDERS.mediaFotos);
-  // Varre 3 extensoes em paralelo. listVaultFolder filtra por sufixo
-  // exato; para cobrir .jpg + .jpeg + .png chamamos 3 vezes e
-  // concatenamos. Em mobile real o picker padrao devolve .jpg; .png e
-  // .jpeg ficam como rede de seguranca.
+  // H2 layout-por-tipo: fotos em jpg/ ou png/, com prefixo 'foto-' no
+  // filename (ex: foto-2026-05-06-abcd.jpg). Medidas usam prefixo
+  // 'medidas-' (foto de medida corporal) e ficam em jpg/ tambem; sao
+  // filtradas via prefixo para nao duplicar na galeria.
+  const folderJpg = joinUri(vaultRoot, JPG_FOLDER);
+  const folderPng = joinUri(vaultRoot, PNG_FOLDER);
   const [jpg, jpeg, png] = await Promise.all([
-    listVaultFolder(folder, '.jpg'),
-    listVaultFolder(folder, '.jpeg'),
-    listVaultFolder(folder, '.png'),
+    listVaultFolder(folderJpg, '.jpg'),
+    listVaultFolder(folderJpg, '.jpeg'),
+    listVaultFolder(folderPng, '.png'),
   ]);
-  const arquivos = [...jpg, ...jpeg, ...png];
+  const arquivos = [...jpg, ...jpeg, ...png].filter((u) =>
+    matchesFeaturePrefix(u, 'foto-')
+  );
   const out: FotoAgregada[] = [];
   for (const uri of arquivos) {
     const nome = decodeURIComponent(uri).split('/').pop() ?? '';
     const semExt = nome.replace(/\.(jpg|jpeg|png)$/i, '');
-    // Espera padrao YYYY-MM-DD-<rand>. Se nao bater, ignora.
-    // Sprint M-VAULT-MD-FIX-medidas-fotos (2026-05-04): fotos de
-    // medidas vivem em media/fotos/medidas-YYYY-MM-DD-<lado>.jpg
-    // (prefixo 'medidas-' antes da data). Estas NAO casam com este
-    // regex (que exige inicio com YYYY-MM-DD), entao sao ignoradas
-    // aqui de proposito - lerMedidas ja as agrega via fotos[] do
-    // schema, evitando duplicata na galeria.
-    const match = semExt.match(/^(\d{4}-\d{2}-\d{2})(?:-(.+))?$/);
+    // Padrao novo: foto-YYYY-MM-DD-<rand>. Extrai data depois do prefixo.
+    const match = semExt.match(/^foto-(\d{4}-\d{2}-\d{2})(?:-(.+))?$/);
     if (!match) continue;
     const data = match[1];
     const slug = match[2] ?? semExt;
+    const ext = uri.toLowerCase().endsWith('.png') ? PNG_FOLDER : JPG_FOLDER;
     out.push({
       uri,
       data,
       origem: 'galeria-manual',
-      origemPath: `${VAULT_FOLDERS.mediaFotos}/${nome}`,
+      origemPath: `${ext}/${nome}`,
       origemSlug: slug,
     });
   }

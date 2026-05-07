@@ -16,7 +16,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { mediaFrasesPath } from '@/lib/vault/paths';
+import { frasePath } from '@/lib/vault/paths';
 import type { Para } from '@/lib/schemas/para';
 import {
   slugDeFrase,
@@ -61,7 +61,7 @@ export async function salvarFrase(
   try {
     const agora = new Date();
     const slug = slugDeFrase(frase);
-    const rel = mediaFrasesPath(agora, slug);
+    const rel = frasePath(agora, slug);
     const destino = joinUri(vaultRoot, rel);
     const autor = usePessoa.getState().pessoaAtiva;
     const basename = rel.split('/').pop() ?? rel;

@@ -83,9 +83,13 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //   - cacheAgendaMigrado (M37.1.2): indica se a rotina ja migrou o
 //     cache de agenda do JSON unico (M37.1) para .md individual em
 //     agenda/<pessoa>/ (M37.1.2, ADR-0019).
+//   - vaultLayoutMigrado (H2 ADR-0023): indica se a rotina ja migrou
+//     o Vault do layout legado por feature (daily/, eventos/, etc.)
+//     para o layout-por-tipo (markdown/, jpg/, m4a/, etc.).
 export interface FlagsBootState {
   canalV1Deletado: boolean;
   cacheAgendaMigrado: boolean;
+  vaultLayoutMigrado: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -127,6 +131,7 @@ const PERMISSOES_VAZIAS: PermissoesPedidasState = {
 const FLAGS_VAZIAS: FlagsBootState = {
   canalV1Deletado: false,
   cacheAgendaMigrado: false,
+  vaultLayoutMigrado: false,
 };
 
 const DEFAULT_STATE: Omit<

@@ -74,9 +74,9 @@ describe('listarAlarmes', () => {
 
   it('ordena por horario asc, depois titulo', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/alarmes/treino.md`,
-      `${VAULT_ROOT}/alarmes/agua.md`,
-      `${VAULT_ROOT}/alarmes/medicacao-manha.md`,
+      `${VAULT_ROOT}/markdown/alarme-treino.md`,
+      `${VAULT_ROOT}/markdown/alarme-agua.md`,
+      `${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`,
     ]);
     mockReadVaultFile.mockImplementation((uri: string) => {
       if (uri.endsWith('treino.md')) {
@@ -119,8 +119,8 @@ describe('listarAlarmes', () => {
 
   it('ignora arquivos malformados sem propagar erro', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/alarmes/ok.md`,
-      `${VAULT_ROOT}/alarmes/quebrado.md`,
+      `${VAULT_ROOT}/markdown/alarme-ok.md`,
+      `${VAULT_ROOT}/markdown/alarme-quebrado.md`,
     ]);
     mockReadVaultFile.mockImplementation((uri: string) => {
       if (uri.endsWith('quebrado.md')) {
@@ -155,25 +155,25 @@ describe('lerAlarme', () => {
     expect(out).toBeNull();
   });
 
-  it('chama reader com URI alarmes/<slug>.md', async () => {
+  it('chama reader com URI markdown/alarme-<slug>.md (H2 layout-por-tipo)', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
     await lerAlarme(VAULT_ROOT, 'meu-alarme');
     expect(mockReadVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/alarmes/meu-alarme.md`,
+      `${VAULT_ROOT}/markdown/alarme-meu-alarme.md`,
       expect.anything()
     );
   });
 });
 
 describe('escreverAlarme', () => {
-  it('grava em alarmes/<slug>.md', async () => {
+  it('grava em markdown/alarme-<slug>.md (H2 layout-por-tipo)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture();
     const { rel, uri } = await escreverAlarme(VAULT_ROOT, meta, '');
-    expect(rel).toBe('alarmes/medicacao-manha.md');
-    expect(uri).toBe(`${VAULT_ROOT}/alarmes/medicacao-manha.md`);
+    expect(rel).toBe('markdown/alarme-medicacao-manha.md');
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/alarmes/medicacao-manha.md`,
+      `${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`,
       expect.objectContaining({ slug: 'medicacao-manha' }),
       ''
     );
@@ -193,7 +193,7 @@ describe('excluirAlarme', () => {
     mockDeleteAsync.mockResolvedValueOnce(undefined);
     await excluirAlarme(VAULT_ROOT, 'teste');
     expect(mockDeleteAsync).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/alarmes/teste.md`
+      `${VAULT_ROOT}/markdown/alarme-teste.md`
     );
   });
 

@@ -11,7 +11,7 @@
 // numerico ('-1', '-2', ...) por '-<deviceId>' para alinhar com o
 // padrao de conflict resolution do Syncthing (4 nos).
 import {
-  diarioEmocionalPath,
+  diarioPath,
   readVaultFile,
   writeVaultFile,
 } from '@/lib/vault';
@@ -89,10 +89,10 @@ export async function saveDiario(
 
   const slug = slugDe(parsed.data);
   // O path canonico usa a hora local de São Paulo formatada por
-  // diarioEmocionalPath. Passamos `new Date()` para refletir o
-  // momento real do save; meta.data fica em ISO 8601 dentro do
-  // frontmatter para preservar fuso explicito.
-  const relCanonico = diarioEmocionalPath(new Date(), slug);
+  // diarioPath (H2 layout-por-tipo). Passamos `new Date()` para
+  // refletir o momento real do save; meta.data fica em ISO 8601 dentro
+  // do frontmatter para preservar fuso explicito.
+  const relCanonico = diarioPath(new Date(), slug);
   const rel = await resolvePath(vaultRoot, relCanonico);
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<DiarioEmocionalMeta>(uri, parsed.data, body);

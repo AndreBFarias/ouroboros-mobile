@@ -88,7 +88,7 @@ describe('AgendaEventoSchema', () => {
 describe('listarEventosAgenda', () => {
   it('lista eventos da pasta', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
     ]);
     mockReadVaultFile.mockResolvedValueOnce({ meta: eventoBase, body: '' });
     const lista = await listarEventosAgenda(VAULT_ROOT, 'pessoa_a');
@@ -98,8 +98,8 @@ describe('listarEventosAgenda', () => {
 
   it('ordena ascendente por inicio', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/a.md',
-      'content://test/vault/agenda/pessoa_a/b.md',
+      'content://test/vault/markdown/agenda-pessoa_a-a.md',
+      'content://test/vault/markdown/agenda-pessoa_a-b.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -119,8 +119,8 @@ describe('listarEventosAgenda', () => {
 
   it('ignora arquivos malformados', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/ok.md',
-      'content://test/vault/agenda/pessoa_a/ruim.md',
+      'content://test/vault/markdown/agenda-pessoa_a-ok.md',
+      'content://test/vault/markdown/agenda-pessoa_a-ruim.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -140,9 +140,9 @@ describe('listarEventosAgenda', () => {
 });
 
 describe('salvarEventoAgenda', () => {
-  it('escreve no path canonico agenda/<pessoa>/<YMD>-<id>.md', async () => {
+  it('escreve no path canonico markdown/agenda-<pessoa>-<YMD>-<id>.md (H2 layout-por-tipo)', async () => {
     const out = await salvarEventoAgenda(VAULT_ROOT, eventoBase);
-    expect(out.rel).toBe('agenda/pessoa_a/2026-05-07-abc123.md');
+    expect(out.rel).toBe('markdown/agenda-pessoa_a-2026-05-07-abc123.md');
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
   });
 
@@ -166,13 +166,13 @@ describe('salvarEventoAgenda', () => {
 describe('apagarEventoAgenda', () => {
   it('remove .md cujo basename termina em -<id>.md', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md',
-      'content://test/vault/agenda/pessoa_a/2026-05-08-xyz999.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-08-xyz999.md',
     ]);
     await apagarEventoAgenda(VAULT_ROOT, 'pessoa_a', 'abc123');
     expect(mockDeleteAsync).toHaveBeenCalledTimes(1);
     expect(mockDeleteAsync).toHaveBeenCalledWith(
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md'
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md'
     );
   });
 
@@ -200,7 +200,7 @@ describe('sincronizarSnapshotAgenda', () => {
 
   it('cenario 2: evento existente com mudanca -> atualizado=1', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
     ]);
     mockReadVaultFile.mockResolvedValueOnce({
       meta: { ...eventoBase, titulo: 'Antigo titulo' },
@@ -218,7 +218,7 @@ describe('sincronizarSnapshotAgenda', () => {
   it('cenario 3: evento removido remotamente -> removido=1', async () => {
     // Primeiro list call (em listarEventosAgenda interno do sincronizar)
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
     ]);
     mockReadVaultFile.mockResolvedValueOnce({
       meta: { ...eventoBase, sincronizado_em: '2026-05-04T20:00:00-03:00' },
@@ -226,7 +226,7 @@ describe('sincronizarSnapshotAgenda', () => {
     });
     // Segundo list call (em apagarEventoAgenda interno)
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
     ]);
 
     const r = await sincronizarSnapshotAgenda(
@@ -241,7 +241,7 @@ describe('sincronizarSnapshotAgenda', () => {
 
   it('idempotencia: rodar 2x com mesma lista e mesmo ts -> {0,0,0}', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-abc123.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
     ]);
     mockReadVaultFile.mockResolvedValueOnce({ meta: eventoBase, body: '' });
     const r = await sincronizarSnapshotAgenda(
@@ -273,8 +273,8 @@ describe('sincronizarSnapshotAgenda', () => {
 
     // Listar interno
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-07-ev_a.md',
-      'content://test/vault/agenda/pessoa_a/2026-05-08-ev_b.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-ev_a.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-08-ev_b.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -283,7 +283,7 @@ describe('sincronizarSnapshotAgenda', () => {
     });
     // Listar de novo dentro de apagarEventoAgenda(ev_b)
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/agenda/pessoa_a/2026-05-08-ev_b.md',
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-08-ev_b.md',
     ]);
 
     // Lista nova: ev_a atualizado + ev_c novo (ev_b sumiu)

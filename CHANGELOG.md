@@ -5,6 +5,54 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint H2 — `M-VAULT-LAYOUT-POR-TIPO` (2026-05-06)
+
+Reorganiza o Vault de layout por feature (`daily/`, `eventos/`,
+`marcos/`, `media/fotos/`, etc) para layout por tipo de arquivo:
+`markdown/` para todos os `.md` (incluindo companions de mídia),
+`png/`, `jpg/`, `m4a/`, `mp4/`, `pdf/`, `gif/` para binários
+separados por extensão, e `.ouroboros/cache/` mantido como exceção
+(ADR-0019). Filename incorpora feature como prefixo
+(`markdown/humor-2026-05-06.md`, `m4a/audio-2026-05-06-rand.m4a`).
+
+Ergonomia desktop: usuário que abre o Vault no file manager (via
+Syncthing) encontra todos os `.md` num lugar consumível por
+Obsidian/vim/qualquer editor; mídias binárias separadas facilitam
+backup e audit por tipo.
+
+`src/lib/vault/paths.ts` reescrito com 28 helpers novos retornando
+path relativo. Caller concatena com `vaultRoot` via `vaultUriJoin`
+(H1). `VAULT_FOLDERS` reduzido de 19 entradas para 8 canônicas
+(`markdown`, `png`, `jpg`, `m4a`, `mp4`, `pdf`, `gif`, `.ouroboros/cache`).
+
+Boot hook idempotente `migrarVaultLayoutPorTipo()` em
+`src/lib/boot/migrarVaultLayoutPorTipo.ts` detecta arquivos no
+layout antigo, calcula novo path conforme novos helpers e
+copia/renomeia. Flag `useSessao.flags.vaultLayoutMigrado` evita
+re-execução. No-op em web. Plugado em `BOOT_HOOKS` via padrão
+M30/M37.1.2/M39.
+
+ADR-0023 documenta a decisão (supersedes parte do ADR-0017
+"companion no mesmo diretório do binário"). `docs/ADRs/INDEX.md`,
+`docs/SMOKE-FIELD-TEST.md` e `docs/FEATURES-CANONICAS.md`
+atualizados.
+
+Migração afetou 12 writers do Vault, 10 callers de save de feature,
+1 boot hook hub, 1 store (sessao), 21 suites Jest dos writers/readers.
+Achados colaterais derivam 2 sprints novas: M-SCANNER-LAYOUT-POR-TIPO
+(`src/lib/scanner/saveNota.ts` ainda usa helpers legados) e
+M-SHARE-INTENT-LAYOUT (decisão dono A/B sobre subtipo virar prefixo
+ou pasta exceção).
+
+Métricas: 1593 testes / 172 suítes verde (+27 contra 1566 baseline,
+1 skip intencional contrato share-intent legado) · TS strict 0 ·
+Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 · anonimato OK ·
+PT-BR check OK (boot hook + reagendamento.ts em batch
+`.ptbr-violations.txt` por paths literais em comentários).
+
+Bloqueia destravado: H3 `M-VAULT-PASTA-NAO-HARDCODED` e todo Bloco I
+(15 saves específicos por feature).
+
 ### Sprint H1 — `M-VAULT-URI-HELPER` (2026-05-06)
 
 Helper canônico `vaultUriJoin(root, rel)` em `src/lib/vault/paths.ts`

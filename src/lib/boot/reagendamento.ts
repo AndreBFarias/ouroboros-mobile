@@ -152,6 +152,23 @@ const migrarCacheAgendaHook: BootHook = async () => {
   await migrarCacheAgendaJsonParaMd(vaultRoot);
 };
 
+// H2 (ADR-0023): migra Vault do layout legado por feature para
+// layout-por-tipo (markdown/, jpg/, m4a/, etc.). Idempotente: flag
+// useSessao.flags.vaultLayoutMigrado garante uma unica execucao por
+// instalacao. Em web no-op. Roda DEPOIS de migrarAssets e
+// migrarCacheAgenda para que essas migrations rodem no layout que
+// elas conheciam (assets/ -> media/<sub>/, agenda JSON -> agenda/.md);
+// H2 entao consolida tudo no novo layout-por-tipo.
+const migrarLayoutVaultHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { migrarVaultLayoutPorTipo } = await import(
+    '@/lib/boot/migrarVaultLayoutPorTipo'
+  );
+  await migrarVaultLayoutPorTipo(vaultRoot);
+};
+
 // M38: registra/atualiza este dispositivo no inbox/_devices.md a cada
 // boot. Idempotente. Marca dispositivos antigos com mesma pessoa como
 // 'substituido_por: <novoId>' quando SecureStore foi zerado por
@@ -185,6 +202,10 @@ BOOT_HOOKS.push(
   // M37.1.2: migra cache de agenda JSON->.md uma unica vez por
   // instalacao (idempotente via useSessao.flags.cacheAgendaMigrado).
   migrarCacheAgendaHook,
+  // H2 (ADR-0023): consolida Vault no layout-por-tipo. Roda depois das
+  // migrations M37.1.2 e M39 para que essas terminem no layout antigo
+  // antes de ser reorganizado por tipo (markdown/, jpg/, m4a/, etc.).
+  migrarLayoutVaultHook,
   // M38: registra/atualiza dispositivo atual no devices index. Roda
   // depois de migrarAssets para nao competir por SAF de leitura no
   // arranque. Idempotente (so ultima_atividade muda em boot subsequente).

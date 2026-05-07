@@ -13,7 +13,11 @@
 // inferirFase e função pura sem I/O, totalmente testavel.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { cicloPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  cicloPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import {
@@ -103,8 +107,9 @@ export async function listarRegistrosCiclo(
   autor: 'pessoa_a' | 'pessoa_b',
   filtros: ListarRegistrosCicloFiltros = {}
 ): Promise<CicloMenstrualMeta[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.inboxSaudeCiclo);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'ciclo-'));
 
   const lidas: CicloMenstrualMeta[] = [];
   for (const arquivoUri of arquivos) {

@@ -64,13 +64,15 @@ describe('escreverMidiaComCompanion (M39)', () => {
       meta
     );
 
-    expect(r.binarioPath.startsWith('media/fotos/')).toBe(true);
+    expect(r.binarioPath.startsWith('jpg/')).toBe(true);
     expect(r.binarioPath.endsWith('.jpg')).toBe(true);
-    expect(r.companionPath.startsWith('media/fotos/')).toBe(true);
+    expect(r.companionPath.startsWith('markdown/')).toBe(true);
     expect(r.companionPath.endsWith('.md')).toBe(true);
 
-    // Mesmo basename para binario e companion.
-    expect(r.binarioPath.replace(/\.jpg$/, '.md')).toBe(r.companionPath);
+    // Mesmo basename (sem ext) para binario e companion (H2 layout-por-tipo).
+    const basenameBin = r.binarioPath.replace(/^jpg\//, '').replace(/\.jpg$/, '');
+    const basenameCmp = r.companionPath.replace(/^markdown\//, '').replace(/\.md$/, '');
+    expect(basenameBin).toBe(basenameCmp);
 
     // copy chamado uma vez (binario novo).
     expect(mockCopyAsync).toHaveBeenCalledTimes(1);
@@ -79,12 +81,12 @@ describe('escreverMidiaComCompanion (M39)', () => {
       to: string;
     };
     expect(copyArg.from).toBe('file:///cache/foto-temp.jpg');
-    expect(copyArg.to).toContain('media/fotos/');
+    expect(copyArg.to).toContain('/jpg/');
 
     // writeAsString chamado uma vez (companion).
     expect(mockWriteAsStringAsync).toHaveBeenCalledTimes(1);
     const wArg = mockWriteAsStringAsync.mock.calls[0] as [string, string];
-    expect(wArg[0]).toContain('media/fotos/');
+    expect(wArg[0]).toContain('/markdown/');
     expect(wArg[0].endsWith('.md')).toBe(true);
     expect(wArg[1]).toContain('tipo: midia_foto');
     expect(wArg[1]).toContain('autor: pessoa_a');
@@ -106,15 +108,15 @@ describe('escreverMidiaComCompanion (M39)', () => {
       }
     );
 
-    expect(r.binarioPath).toBe('media/fotos/medidas-2026-05-04-frente.jpg');
-    expect(r.companionPath).toBe('media/fotos/medidas-2026-05-04-frente.md');
+    expect(r.binarioPath).toBe('jpg/medidas-2026-05-04-frente.jpg');
+    expect(r.companionPath).toBe('markdown/medidas-2026-05-04-frente.md');
 
     const wArg = mockWriteAsStringAsync.mock.calls[0] as [string, string];
     expect(wArg[1]).toContain('arquivo: medidas-2026-05-04-frente.jpg');
     expect(wArg[1]).toContain('medida_ref: 2026-05-04');
   });
 
-  it('roteia midia_audio para media/audios/, midia_video para media/videos/', async () => {
+  it('roteia midia_audio para m4a/, midia_video para mp4/ (H2 layout-por-tipo)', async () => {
     const rAudio = await escreverMidiaComCompanion(
       VAULT_ROOT,
       'file:///cache/a.m4a',
@@ -125,7 +127,7 @@ describe('escreverMidiaComCompanion (M39)', () => {
         para: { tipo: 'mim' },
       }
     );
-    expect(rAudio.binarioPath.startsWith('media/audios/')).toBe(true);
+    expect(rAudio.binarioPath.startsWith('m4a/')).toBe(true);
     expect(rAudio.binarioPath.endsWith('.m4a')).toBe(true);
 
     const rVideo = await escreverMidiaComCompanion(
@@ -138,7 +140,7 @@ describe('escreverMidiaComCompanion (M39)', () => {
         para: { tipo: 'casal' },
       }
     );
-    expect(rVideo.binarioPath.startsWith('media/videos/')).toBe(true);
+    expect(rVideo.binarioPath.startsWith('mp4/')).toBe(true);
     expect(rVideo.binarioPath.endsWith('.mp4')).toBe(true);
   });
 
@@ -222,7 +224,7 @@ describe('lerCompanion (M39)', () => {
 });
 
 describe('migrarAssetsLegacyParaMedia (M39)', () => {
-  it('move .jpg para media/fotos/, .m4a para media/audios/, .pdf para media/scanner/', async () => {
+  it('move .jpg para jpg/, .m4a para m4a/, .pdf para pdf/ (H2 layout-por-tipo)', async () => {
     mockSAFReadDirectoryAsync.mockResolvedValueOnce([
       'content://test/Vault/assets/2026-04-30-foto.jpg',
       'content://test/Vault/assets/2026-04-30-1430-audio.m4a',
@@ -240,9 +242,9 @@ describe('migrarAssetsLegacyParaMedia (M39)', () => {
     const destinos = mockCopyAsync.mock.calls.map(
       (c) => (c[0] as { to: string }).to
     );
-    expect(destinos.some((d) => d.includes('media/fotos/'))).toBe(true);
-    expect(destinos.some((d) => d.includes('media/audios/'))).toBe(true);
-    expect(destinos.some((d) => d.includes('media/scanner/'))).toBe(true);
+    expect(destinos.some((d) => /\/jpg\//.test(d))).toBe(true);
+    expect(destinos.some((d) => /\/m4a\//.test(d))).toBe(true);
+    expect(destinos.some((d) => /\/pdf\//.test(d))).toBe(true);
 
     // Apos copia, originais sao deletados.
     expect(mockDeleteAsync).toHaveBeenCalledTimes(3);

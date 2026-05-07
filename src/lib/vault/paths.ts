@@ -1,7 +1,8 @@
-// Paths canonicos do Vault. Mobile so escreve/le pastas que ele
-// proprio gera; o Vault humano (Diario/, Inbox/, Pessoal/) coexiste
-// intocado. Filesystem ext4 e case-sensitive: 'daily' e 'Diario'
-// não colidem.
+// Paths canonicos do Vault. Layout-por-tipo (ADR-0023, sprint H2 do
+// plano golden-zebra). Todos os .md vivem em markdown/ com prefixo
+// de feature embutido no filename. Binarios separados por extensao
+// (png/, jpg/, m4a/, mp4/, pdf/, gif/). Cache mantido em
+// .ouroboros/cache/ (excecao ADR-0019).
 //
 // Convencoes:
 // - Datas serializadas no fuso de São Paulo (UTC-3 fixo, sem DST a
@@ -9,15 +10,20 @@
 //   YYYY-MM-DD-HHmm para arquivos com hora.
 // - 'Slug' e o sufixo livre escolhido pelo usuario (kebab-case).
 // - Todos os paths são relativos ao root do Vault (URI SAF resolvido
-//   em runtime). O caller concatena com a base.
+//   em runtime). O caller concatena com a base via vaultUriJoin.
+// - Helpers legados (treinosPath, inboxFinanceiroPath, assetsPath etc.)
+//   permanecem para nao quebrar features fora do escopo da H2 (share
+//   intent receiver M08, treinos M11). Migracao formal dessas features
+//   fica para sprints derivadas (registradas como achado colateral em
+//   M-VAULT-LAYOUT-POR-TIPO).
+//
+// Comentarios sem acento (convencao shell/CI).
 
 // Helper canonico para concatenacao de URIs do Vault. Resolve o
 // problema de trailing whitespace + barras duplas + percent-encoding
 // ofensivo (%20 no fim do tree URI SAF) que vinha contaminando saves
 // em OEMs MIUI/OneUI/HyperOS. Lanca erro claro se root ou rel
 // estiverem vazios - sinal de bug em estado anterior do app.
-//
-// Comentarios sem acento (convencao shell/CI).
 export function vaultUriJoin(root: string, rel: string): string {
   const r = root
     .trim()
@@ -68,11 +74,6 @@ export function formatDateYmdHm(date: Date): string {
 }
 
 // Formata um Date para YYYY-MM-DD-HHmmss no fuso de São Paulo.
-// Granularidade adicional para o share intent (M08): dois shares
-// dentro do mesmo minuto colidiriam se usassemos so HHmm. O
-// resolvedor de conflito ainda lida com colisao residual via
-// sufixos -1, -2, mas comecar com segundos reduz drasticamente a
-// frequencia.
 export function formatDateYmdHms(date: Date): string {
   const local = toSaoPauloUtc(date);
   const y = local.getUTCFullYear();
@@ -84,136 +85,338 @@ export function formatDateYmdHms(date: Date): string {
   return `${y}-${m}-${d}-${hh}${mm}${ss}`;
 }
 
-// daily/YYYY-MM-DD.md (humor do dia).
-export function dailyPath(date: Date): string {
-  return `daily/${formatDateYmd(date)}.md`;
-}
-
-// eventos/YYYY-MM-DD-slug.md.
-export function eventosPath(date: Date, slug: string): string {
-  return `eventos/${formatDateYmd(date)}-${slug}.md`;
-}
-
-// inbox/mente/diario/YYYY-MM-DD-HHmm.md (diario emocional).
-export function diarioEmocionalPath(date: Date, slug: string): string {
-  return `inbox/mente/diario/${formatDateYmdHm(date)}-${slug}.md`;
-}
-
-// assets/<filename> (anexos: fotos, audio).
-export function assetsPath(filename: string): string {
-  return `assets/${filename}`;
-}
-
-// assets/<formatDateYmdHm>-<suffix>.m4a (anexo de audio do diario
-// emocional - M06.5). Sufixo aleatorio curto evita colisao quando
-// duas gravacoes acontecem dentro do mesmo minuto. O caller fornece
-// o sufixo (tipicamente 4 chars hex de Math.random); paths.ts so
-// monta a string canonica para reuso por recordAudio e por testes.
-export function assetsAudioPath(date: Date, suffix: string): string {
-  return `assets/${formatDateYmdHm(date)}-${suffix}.m4a`;
-}
-
-// exercicios/<slug>.md (biblioteca de exercícios da M13). Caller
-// fornece slug já em kebab-case ASCII (ver slugifyExercicio em
-// src/lib/exercicios/slug.ts).
-export function exerciciosPath(slug: string): string {
-  return `exercicios/${slug}.md`;
-}
-
-// assets/exercicios/<slug>.gif. GIFs ficam fora de assets/<filename>
-// para não misturar com fotos de eventos. Caller fornece slug igual
-// ao do .md companion.
-export function exerciciosGifPath(slug: string): string {
-  return `assets/exercicios/${slug}.gif`;
-}
-
-// treinos/draft/YYYY-MM-DD-<slug>.md (M13 cria sessao rapida quando
-// usuario toca "Adicionar a treino livre" no detalhe do exercício).
-// Migrado para schema TreinoSessao formal quando M11 chegar.
-export function treinosDraftPath(date: Date, slug: string): string {
-  return `treinos/draft/${formatDateYmd(date)}-${slug}.md`;
-}
-
-// treinos/YYYY-MM-DD-<slug>.md (sessao formal de treino - M11).
-// Caller fornece slug já em kebab-case ASCII.
-export function treinosPath(date: Date, slug: string): string {
-  return `treinos/${formatDateYmd(date)}-${slug}.md`;
-}
-
-// marcos/YYYY-MM-DD-<slug>.md (marco / conquista - M11). Slug em
-// kebab-case ASCII (helper slugifyMarco).
-export function marcosPath(date: Date, slug: string): string {
-  return `marcos/${formatDateYmd(date)}-${slug}.md`;
-}
-
-// medidas/YYYY-MM-DD.md (snapshot diario de medidas corporais - M12).
-// Sem slug porque o registro e unico por dia (sobrescreve o anterior
-// se o usuario salvar duas vezes no mesmo dia, comportamento
-// intencional do form Tela 12).
-export function medidasPath(date: Date): string {
-  return `medidas/${formatDateYmd(date)}.md`;
-}
-
-// media/fotos/medidas-YYYY-MM-DD-<lado>.jpg (foto de medida corporal).
-// Lado e uma das tres posicoes canonicas (frente, costas, lado).
-// Caller fornece lado em snake_case ASCII para não colidir com
-// encoding nem misturar acentos no filesystem (convencao do projeto).
+// =====================================================================
+// Helpers do novo layout-por-tipo (ADR-0023)
+// =====================================================================
 //
-// Sprint M-VAULT-MD-FIX-medidas-fotos (2026-05-04): migrado de
-// assets/m-<data>-<lado>.jpg para media/fotos/medidas-<data>-<lado>.jpg // ptbr-allow: 'media' aqui e nome de pasta literal do filesystem (path canonico), nao palavra PT-BR
-// alinhando com a convencao M22/M34 (pasta media/ dedicada). Caller
-// (app/medidas/novo.tsx) agora tambem escreve .md companion ao lado
-// (tipo: midia_foto, medida_ref: <YYYY-MM-DD>) para consumo da
-// SecaoEvolucaoCorporal (M11.4). Backward-compat para fotos antigas
-// em assets/m-* preservada via inferirLado em app/medidas/index.tsx
-// e via leitura direta do array fotos[] no MedidasSchema.
+// Convencao para .md: markdown/<feature>-<chave>.md
+// Convencao para binario: <ext>/<feature>-<chave>.<ext>
+// Companion .md sempre em markdown/<feature>-<chave>.md
+// Caller concatena com vaultRoot via vaultUriJoin.
+
+export const MARKDOWN_FOLDER = 'markdown';
+export const PNG_FOLDER = 'png';
+export const JPG_FOLDER = 'jpg';
+export const M4A_FOLDER = 'm4a';
+export const MP4_FOLDER = 'mp4';
+export const PDF_FOLDER = 'pdf';
+export const GIF_FOLDER = 'gif';
+export const CACHE_FOLDER = '.ouroboros/cache';
+
+// markdown/humor-YYYY-MM-DD.md
+export function humorPath(date: Date): string {
+  return `markdown/humor-${formatDateYmd(date)}.md`;
+}
+
+// markdown/diario-YYYY-MM-DD-HHmm-<slug>.md
+export function diarioPath(date: Date, slug: string): string {
+  return `markdown/diario-${formatDateYmdHm(date)}-${slug}.md`;
+}
+
+// markdown/evento-YYYY-MM-DD-<slug>.md
+export function eventoPath(date: Date, slug: string): string {
+  return `markdown/evento-${formatDateYmd(date)}-${slug}.md`;
+}
+
+// markdown/marco-YYYY-MM-DD-<slug>.md
+export function marcoPath(date: Date, slug: string): string {
+  return `markdown/marco-${formatDateYmd(date)}-${slug}.md`;
+}
+
+// markdown/medidas-YYYY-MM-DD.md
+export function medidasPath(date: Date): string {
+  return `markdown/medidas-${formatDateYmd(date)}.md`;
+}
+
+// jpg/medidas-YYYY-MM-DD-<lado>.jpg (foto de medida corporal)
 export function medidasFotoPath(
   date: Date,
   lado: 'frente' | 'costas' | 'lado'
 ): string {
-  return `media/fotos/medidas-${formatDateYmd(date)}-${lado}.jpg`;
+  return `jpg/medidas-${formatDateYmd(date)}-${lado}.jpg`;
 }
 
-// inbox/saude/ciclo/YYYY-MM-DD.md (acompanhamento de ciclo menstrual,
-// M14.5). Sem slug porque o registro e unico por dia: registrar duas
-// vezes no mesmo dia sobrescreve o anterior. Pasta dedicada para
-// isolar dos outros schemas mentais e financeiros (privacidade
-// reforcada, ADR-0007).
+// markdown/medidas-foto-YYYY-MM-DD-<lado>.md (companion da foto de medida)
+export function medidasFotoCompanionPath(
+  date: Date,
+  lado: 'frente' | 'costas' | 'lado'
+): string {
+  return `markdown/medidas-foto-${formatDateYmd(date)}-${lado}.md`;
+}
+
+// markdown/exercicio-<slug>.md
+export function exercicioPath(slug: string): string {
+  return `markdown/exercicio-${slug}.md`;
+}
+
+// gif/exercicio-<slug>.gif
+export function exercicioGifPath(slug: string): string {
+  return `gif/exercicio-${slug}.gif`;
+}
+
+// markdown/ciclo-YYYY-MM-DD.md
 export function cicloPath(date: Date): string {
-  return `inbox/saude/ciclo/${formatDateYmd(date)}.md`;
+  return `markdown/ciclo-${formatDateYmd(date)}.md`;
 }
 
-// alarmes/<slug>.md (alarme pessoal opt-in - M16). Slug em kebab-case
-// ASCII fornecido pelo usuario (titulo slugificado). Sem datas no path:
-// alarme e recorrente; o frontmatter guarda horario, dias_semana e
-// notification_ids. Pasta dedicada simplifica listagem e backup.
+// markdown/alarme-<slug>.md
+export function alarmePath(slug: string): string {
+  return `markdown/alarme-${slug}.md`;
+}
+
+// markdown/tarefa-<slug>.md
+// Decisao H2: tarefa nao usa data no path (somente slug). Slug ja
+// inclui sufixo random para deduplicar; data de criacao vive no
+// frontmatter. Quem listar por data le frontmatter.
+export function tarefaPath(slug: string): string {
+  return `markdown/tarefa-${slug}.md`;
+}
+
+// markdown/contador-<slug>.md
+export function contadorPath(slug: string): string {
+  return `markdown/contador-${slug}.md`;
+}
+
+// markdown/nota-YYYY-MM-DD-HHmmss-<slug>.md
+// Companion .md de uma nota fiscal capturada pelo scanner ou recebida
+// via share intent. Spec H2 §2: sempre em markdown/.
+export function notaPath(date: Date, slug: string): string {
+  return `markdown/nota-${formatDateYmdHms(date)}-${slug}.md`;
+}
+
+// <ext>/nota-YYYY-MM-DD-HHmmss-<slug>.<ext>
+// Binario da nota (pdf/jpg/png) recebido via share intent ou scanner.
+// Caller fornece ext sem o ponto (ex: 'pdf', 'jpg'); funcao roteia
+// para a pasta de tipo correta.
+export function notaArquivoPath(
+  date: Date,
+  slug: string,
+  ext: string
+): string {
+  const extLower = ext.toLowerCase();
+  return `${extLower}/nota-${formatDateYmdHms(date)}-${slug}.${extLower}`;
+}
+
+// <ext>/foto-YYYY-MM-DD-<rand>.<ext> (jpg ou png)
+export function fotoPath(date: Date, rand: string, ext: string): string {
+  const extLower = ext.toLowerCase();
+  return `${extLower}/foto-${formatDateYmd(date)}-${rand}.${extLower}`;
+}
+
+// markdown/foto-YYYY-MM-DD-<rand>.md (companion da foto)
+export function fotoCompanionPath(date: Date, rand: string): string {
+  return `markdown/foto-${formatDateYmd(date)}-${rand}.md`;
+}
+
+// m4a/audio-YYYY-MM-DD-<rand>.m4a
+export function audioPath(date: Date, rand: string): string {
+  return `m4a/audio-${formatDateYmd(date)}-${rand}.m4a`;
+}
+
+// markdown/audio-YYYY-MM-DD-<rand>.md (companion do audio)
+export function audioCompanionPath(date: Date, rand: string): string {
+  return `markdown/audio-${formatDateYmd(date)}-${rand}.md`;
+}
+
+// mp4/video-YYYY-MM-DD-<rand>.mp4
+export function videoPath(date: Date, rand: string): string {
+  return `mp4/video-${formatDateYmd(date)}-${rand}.mp4`;
+}
+
+// markdown/video-YYYY-MM-DD-<rand>.md (companion do video)
+export function videoCompanionPath(date: Date, rand: string): string {
+  return `markdown/video-${formatDateYmd(date)}-${rand}.md`;
+}
+
+// markdown/frase-YYYY-MM-DD-<slug>.md
+export function frasePath(date: Date, slug: string): string {
+  return `markdown/frase-${formatDateYmd(date)}-${slug}.md`;
+}
+
+// <ext>/scanner-<slug>.<ext> (jpg ou pdf)
+export function scannerPath(slug: string, ext: 'jpg' | 'pdf'): string {
+  return `${ext}/scanner-${slug}.${ext}`;
+}
+
+// markdown/scanner-<slug>.md (companion do scan)
+export function scannerCompanionPath(slug: string): string {
+  return `markdown/scanner-${slug}.md`;
+}
+
+// jpg/avatar-<pessoa>-<ts>.jpg (avatares usam .jpg fixo).
+// Timestamp evita cache do <Image> (Armadilha A6).
+export function avatarPath(
+  pessoa: 'pessoa_a' | 'pessoa_b',
+  ts: number
+): string {
+  return `jpg/avatar-${pessoa}-${ts}.jpg`;
+}
+
+// markdown/agenda-<pessoa>-YYYY-MM-DD-<eventId>.md
+// Caller fornece inicio (ISO 8601 com offset), eventId vem direto da
+// resposta da Google Calendar API (Base32hex slug-safe).
+export function agendaEventoPath(
+  pessoa: 'pessoa_a' | 'pessoa_b',
+  iso: string,
+  eventId: string
+): string {
+  const ymd = iso.slice(0, 10);
+  return `markdown/agenda-${pessoa}-${ymd}-${eventId}.md`;
+}
+
+// markdown/_devices.md (devices index, ADR-0023)
+export function devicesIndexPath(): string {
+  return 'markdown/_devices.md';
+}
+
+// .ouroboros/cache/humor-heatmap.json (M10). Cache readonly gerado
+// pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012.
+export function humorHeatmapCachePath(): string {
+  return '.ouroboros/cache/humor-heatmap.json';
+}
+
+// .ouroboros/cache/financas-cache.json (M14). Cache readonly.
+export function financasCachePath(): string {
+  return '.ouroboros/cache/financas-cache.json';
+}
+
+// =====================================================================
+// VAULT_FOLDERS canonico do novo layout (ADR-0023)
+// =====================================================================
+//
+// Exposto como tupla readonly para iteracao via for-of em
+// inicializarVaultCanonico e exportarVault. Callers que iteram com
+// Object.entries continuam funcionando: arrays expoem entries
+// numericas [indice, valor].
+
+export const VAULT_FOLDERS = [
+  'markdown',
+  'png',
+  'jpg',
+  'm4a',
+  'mp4',
+  'pdf',
+  'gif',
+  '.ouroboros/cache',
+] as const;
+
+export type VaultFolder = (typeof VAULT_FOLDERS)[number];
+
+// =====================================================================
+// Helpers de listagem (layout-por-tipo)
+// =====================================================================
+
+// Verifica se um nome de arquivo bate com o padrao YYYY-MM-DD em
+// alguma posicao do filename (legado: prefixo). No layout novo a data
+// vem apos o prefixo de feature (ex: humor-2026-05-06.md), entao a
+// busca e por inclusao em vez de prefixo.
+export function fileMatchesDate(filename: string, date: Date): boolean {
+  const ymd = formatDateYmd(date);
+  return filename.includes(ymd);
+}
+
+// Verifica se o basename de um arquivo bate com um prefixo de feature
+// no layout-por-tipo. Tolera caminhos completos: extrai a parte apos
+// a ultima barra. Ex: matchesFeaturePrefix(uri, 'humor-') => true se
+// arquivo se chama humor-2026-05-06.md.
+export function matchesFeaturePrefix(
+  filenameOrUri: string,
+  prefix: string
+): boolean {
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(filenameOrUri);
+    } catch {
+      return filenameOrUri;
+    }
+  })();
+  const last = decoded.split('/').pop() ?? decoded;
+  return last.startsWith(prefix);
+}
+
+// =====================================================================
+// Helpers legados (mantidos para compatibilidade fora do escopo H2)
+// =====================================================================
+//
+// Sprints futuras devem migrar consumidores para os helpers novos.
+// Documentado em ADR-0023: share intent receiver (M08), treinos
+// formais (M11) e share/path-resolver (M08) continuam usando esses
+// helpers ate sprint dedicada.
+
+// daily/YYYY-MM-DD.md (humor do dia, layout legado).
+// Usado por widget/atualizarWidgetHomescreen para compatibilidade
+// com saves anteriores ao layout-por-tipo. saveHumor canonico ja
+// usa humorPath.
+export function dailyPath(date: Date): string {
+  return `daily/${formatDateYmd(date)}.md`;
+}
+
+// eventos/YYYY-MM-DD-slug.md (eventos legado).
+export function eventosPath(date: Date, slug: string): string {
+  return `eventos/${formatDateYmd(date)}-${slug}.md`;
+}
+
+// inbox/mente/diario/YYYY-MM-DD-HHmm.md (diario emocional legado).
+export function diarioEmocionalPath(date: Date, slug: string): string {
+  return `inbox/mente/diario/${formatDateYmdHm(date)}-${slug}.md`;
+}
+
+// assets/<filename> (legado, usado apenas pelo MidiaFotoTab quando
+// le fotos antigas pre-M22).
+export function assetsPath(filename: string): string {
+  return `assets/${filename}`;
+}
+
+// assets/<formatDateYmdHm>-<suffix>.m4a (legado M06.5).
+export function assetsAudioPath(date: Date, suffix: string): string {
+  return `assets/${formatDateYmdHm(date)}-${suffix}.m4a`;
+}
+
+// exercicios/<slug>.md (layout legado de exercicios).
+// Mantido para callers que ainda referenciam esta convencao.
+export function exerciciosPath(slug: string): string {
+  return `exercicios/${slug}.md`;
+}
+
+// assets/exercicios/<slug>.gif (legado).
+export function exerciciosGifPath(slug: string): string {
+  return `assets/exercicios/${slug}.gif`;
+}
+
+// treinos/draft/YYYY-MM-DD-<slug>.md (legado M11).
+export function treinosDraftPath(date: Date, slug: string): string {
+  return `treinos/draft/${formatDateYmd(date)}-${slug}.md`;
+}
+
+// treinos/YYYY-MM-DD-<slug>.md (legado M11).
+export function treinosPath(date: Date, slug: string): string {
+  return `treinos/${formatDateYmd(date)}-${slug}.md`;
+}
+
+// marcos/YYYY-MM-DD-<slug>.md (legado, mantido para migrarVaultLayoutPorTipo).
+export function marcosPath(date: Date, slug: string): string {
+  return `marcos/${formatDateYmd(date)}-${slug}.md`;
+}
+
+// alarmes/<slug>.md (legado).
 export function alarmesPath(slug: string): string {
   return `alarmes/${slug}.md`;
 }
 
-// tarefas/YYYY-MM-DD-<slug>.md (to-do leve opt-in - M17). Slug em
-// kebab-case ASCII derivado do titulo + sufixo random para deduplicar.
-// Data e a de criacao (não se altera mesmo após marcar feito); o
-// frontmatter guarda feito + feito_em separadamente. Pasta dedicada
-// simplifica listagem e backup.
+// tarefas/YYYY-MM-DD-<slug>.md (legado, com data no path).
 export function tarefasPath(date: Date, slug: string): string {
   return `tarefas/${formatDateYmd(date)}-${slug}.md`;
 }
 
-// contadores/<slug>.md (contador "dias sem X" opt-in - M18). Slug em
-// kebab-case ASCII fornecido pelo caller. Sem datas no path: o
-// contador e persistente; o frontmatter guarda início (data atual de
-// início que muda em cada reset), recorde e histórico de resets.
-// Pasta dedicada simplifica listagem e backup.
+// contadores/<slug>.md (legado).
 export function contadoresPath(slug: string): string {
   return `contadores/${slug}.md`;
 }
 
 // inbox/financeiro/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.<ext>
-// Helper para o share intent receiver (M08). Subtipo vem de
-// src/lib/share/categorias.ts (pix, extrato, nota); a extensao
-// inclui o ponto se não vier vazia. Slug e opcional: quando ausente
-// o nome final fica somente com timestamp (ex: 2026-04-30-1530.pdf).
+// Helper para o share intent receiver (M08). Mantido em layout legado
+// porque share intent tem subtipos (pix/extrato/exame/...) que nao
+// foram cobertos pelo redesenho H2. Sprint dedicada migrara.
 export function inboxFinanceiroPath(
   subtipo: 'pix' | 'extrato' | 'nota',
   date: Date,
@@ -228,82 +431,32 @@ export function inboxFinanceiroPath(
   return `inbox/financeiro/${subtipo}/${ts}${slug}${ext}`;
 }
 
-// inbox/financeiro/nota/YYYY-MM-DD-HHmmss-<slug>.md
-// Helper especifico para o .md companion da nota fiscal capturada
-// pelo scanner (M09). Wrapper sobre inboxFinanceiroPath fixando o
-// subtipo 'nota' e a extensao 'md'. Caller fornece slug em
-// kebab-case ASCII (tipicamente derivado do estabelecimento ou
-// 'nota' generico quando nao da para inferir).
+// inbox/financeiro/nota/YYYY-MM-DD-HHmmss-<slug>.md (legado).
 export function inboxFinanceiroNotaPath(date: Date, slug: string): string {
   return inboxFinanceiroPath('nota', date, { ext: 'md', slug });
 }
 
-// agenda/<pessoa>/ (M37.1.2). Pasta dedicada para cache de eventos do
-// Google Calendar persistidos como .md individual (1 arquivo por
-// evento), alinhada ao ADR-0019 (persistencia canonica .md no Vault).
-// Subpasta por pessoa permite sincing seletivo via Syncthing.
-export function agendaPessoaFolder(pessoa: 'pessoa_a' | 'pessoa_b'): string {
-  return `agenda/${pessoa}`;
-}
-
-// agenda/<pessoa>/<YYYY-MM-DD>-<eventId>.md (M37.1.2). Caller fornece
-// inicio (ISO 8601 com offset), eventId vem direto da resposta da
-// Google Calendar API (Base32hex slug-safe). Data prefixada permite
-// listagem ordenada cronologicamente sem ler frontmatter.
-export function agendaEventoPath(
-  pessoa: 'pessoa_a' | 'pessoa_b',
-  iso: string,
-  eventId: string
-): string {
-  const ymd = iso.slice(0, 10);
-  return `agenda/${pessoa}/${ymd}-${eventId}.md`;
-}
-
-// .ouroboros/cache/humor-heatmap.json (M10). Cache readonly gerado
-// pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012 fixa que
-// pipelines de agregacao rodam no desktop.
-export function humorHeatmapCachePath(): string {
-  return '.ouroboros/cache/humor-heatmap.json';
-}
-
-// .ouroboros/cache/financas-cache.json (M14). Cache readonly gerado
-// pelo backend (sprint MOB-bridge-2). Mobile so le; ADR-0012 fixa que
-// pipelines de agregacao rodam no desktop. Contem gasto da semana,
-// top categorias e ultimas 20 transacoes.
-export function financasCachePath(): string {
-  return '.ouroboros/cache/financas-cache.json';
-}
-
-// media/fotos/YYYY-MM-DD-<rand>.jpg (M22 + M34). Pasta dedicada para
-// fotos capturadas via menu verde de captura. Caller fornece sufixo
-// random curto (4-6 chars) para deduplicar dentro do mesmo dia.
+// media/fotos/YYYY-MM-DD-<rand>.jpg (legado pre-H2).
 export function mediaFotosPath(date: Date, rand: string): string {
   return `media/fotos/${formatDateYmd(date)}-${rand}.jpg`;
 }
 
-// media/audios/YYYY-MM-DD-<rand>.m4a (M22 + M34). Idem fotos: pasta
-// dedicada para audio do diario emocional ou captura livre. M06.5 hoje
-// usa assets/<formatDateYmdHm>-<suffix>.m4a; migracao para media/audios
-// fica para M39 (assetsLegacy migrator).
+// media/audios/YYYY-MM-DD-<rand>.m4a (legado pre-H2).
 export function mediaAudiosPath(date: Date, rand: string): string {
   return `media/audios/${formatDateYmd(date)}-${rand}.m4a`;
 }
 
-// media/videos/YYYY-MM-DD-<rand>.mp4 (M22 + M34). Pasta nova para
-// videos curtos capturados pelo menu verde.
+// media/videos/YYYY-MM-DD-<rand>.mp4 (legado pre-H2).
 export function mediaVideosPath(date: Date, rand: string): string {
   return `media/videos/${formatDateYmd(date)}-${rand}.mp4`;
 }
 
-// media/frases/YYYY-MM-DD-<slug>.md (M22 + M34). Frase capturada como
-// .md curto: caller fornece slug derivado das primeiras palavras.
+// media/frases/YYYY-MM-DD-<slug>.md (legado pre-H2).
 export function mediaFrasesPath(date: Date, slug: string): string {
   return `media/frases/${formatDateYmd(date)}-${slug}.md`;
 }
 
-// media/avatares/<pessoa>-<ts>.jpg (M22 + M34). Avatares trocados ao
-// longo do tempo: o timestamp evita cache do <Image> (vide A6) e
-// preserva historico para o usuario voltar atras.
+// media/avatares/<pessoa>-<ts>.jpg (legado pre-H2).
 export function mediaAvataresPath(
   pessoa: 'pessoa_a' | 'pessoa_b',
   ts: number
@@ -311,19 +464,7 @@ export function mediaAvataresPath(
   return `media/avatares/${pessoa}-${ts}.jpg`;
 }
 
-// media/scanner/<slug>.<ext> (M22 + M34 + M-VAULT-MD-FIX-scanner).
-// Documentos digitalizados (notas, recibos) capturados pelo scanner.
-// Convencao 1:1: binario (.jpg/.pdf) e companion .md compartilham o
-// mesmo basename neste diretorio (ADR de companion 1:1 para midia,
-// auditado em M-VAULT-MD-AUDIT).
-//
-// Sobrecarga:
-//  - mediaScannerPath(slug) retorna media/scanner/[slug].jpg
-//    (legado M22).
-//  - mediaScannerPath(basename, ext) retorna media/scanner/[basename].[ext]
-//    (M-VAULT-MD-FIX-scanner: PDF multi-page, .md companion). Caller
-//    fornece basename ja serializado (ex: 2026-05-04-abcd) e ext sem
-//    o ponto (ex: 'pdf', 'md', 'jpg').
+// media/scanner/<slug>.<ext> (legado pre-H2).
 export function mediaScannerPath(slug: string): string;
 export function mediaScannerPath(basename: string, ext: string): string;
 export function mediaScannerPath(slugOrBasename: string, ext?: string): string {
@@ -333,53 +474,8 @@ export function mediaScannerPath(slugOrBasename: string, ext?: string): string {
   return `media/scanner/${slugOrBasename}.jpg`;
 }
 
-// Pasta-prefixos das pastas canonicas do mobile. Reader/lister deve
-// usar somente estes; nunca varrer raiz para não tocar dados humanos.
-//
-// Pastas inbox/<area>/<subtipo> são alimentadas pelo share intent
-// receiver (M08, Tela 17). Aqui ficam as 7 entradas adicionais alem
-// do inboxFinanceiroPix que já existia desde a M02.
-export const VAULT_FOLDERS = {
-  daily: 'daily',
-  eventos: 'eventos',
-  inboxMenteHumor: 'inbox/mente/humor',
-  inboxMenteDiario: 'inbox/mente/diario',
-  inboxFinanceiroPix: 'inbox/financeiro/pix',
-  inboxFinanceiroExtrato: 'inbox/financeiro/extrato',
-  inboxFinanceiroNota: 'inbox/financeiro/nota',
-  inboxSaudeExame: 'inbox/saude/exame',
-  inboxSaudeReceita: 'inbox/saude/receita',
-  inboxSaudeCiclo: 'inbox/saude/ciclo',
-  inboxCasaGarantia: 'inbox/casa/garantia',
-  inboxCasaContrato: 'inbox/casa/contrato',
-  inboxOutros: 'inbox/outros',
-  inboxArquivos: 'inbox/arquivos',
-  treinos: 'treinos',
-  treinosDraft: 'treinos/draft',
-  medidas: 'medidas',
-  marcos: 'marcos',
-  exercicios: 'exercicios',
-  alarmes: 'alarmes',
-  tarefas: 'tarefas',
-  contadores: 'contadores',
-  assets: 'assets',
-  assetsExercicios: 'assets/exercicios',
-  mediaFotos: 'media/fotos',
-  mediaAudios: 'media/audios',
-  mediaVideos: 'media/videos',
-  mediaFrases: 'media/frases',
-  mediaAvatares: 'media/avatares',
-  mediaScanner: 'media/scanner',
-  cache: '.ouroboros/cache',
-  agendaPessoaA: 'agenda/pessoa_a',
-  agendaPessoaB: 'agenda/pessoa_b',
-} as const;
-
-export type VaultFolderKey = keyof typeof VAULT_FOLDERS;
-
-// Verifica se um nome de arquivo bate com o padrao YYYY-MM-DD no
-// início (usado para listagens de daily/ e eventos/).
-export function fileMatchesDate(filename: string, date: Date): boolean {
-  const ymd = formatDateYmd(date);
-  return filename.startsWith(ymd);
+// agenda/<pessoa>/ (legado: caller previo de agenda M37.1.2).
+// Mantido apenas para a migration H2 referenciar o path antigo.
+export function agendaPessoaFolder(pessoa: 'pessoa_a' | 'pessoa_b'): string {
+  return `agenda/${pessoa}`;
 }

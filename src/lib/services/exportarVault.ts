@@ -237,13 +237,12 @@ export async function exportarVaultZip(): Promise<ExportarResultado> {
   const porSubpasta: Record<string, number> = {};
   let totalArquivos = 0;
 
-  // Pares [chaveSubpasta, pathRelativo]. Chave usada para contagem
-  // por subpasta no MANIFEST.
-  const pastas = Object.entries(VAULT_FOLDERS) as Array<
-    [string, (typeof VAULT_FOLDERS)[keyof typeof VAULT_FOLDERS]]
-  >;
-  for (const [chave, pasta] of pastas) {
+  // H2 layout-por-tipo (ADR-0023): VAULT_FOLDERS e tupla readonly de
+  // strings. Cada nome de pasta e usado como chave de contagem no
+  // MANIFEST (markdown, png, jpg, m4a, mp4, pdf, gif, .ouroboros/cache).
+  for (const pasta of VAULT_FOLDERS) {
     const arquivos = await listarRecursivo(vaultRoot, pasta);
+    const chave = pasta;
     porSubpasta[chave] = 0;
     for (const rel of arquivos) {
       const absoluto = `${vaultRoot.replace(/\/$/, '')}/${rel}`;

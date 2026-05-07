@@ -107,8 +107,8 @@ describe('listarRegistrosCiclo', () => {
 
   it('filtra por autor (privacidade visual)', async () => {
     mockListVaultFolder.mockResolvedValue([
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-04-10.md`,
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-04-12.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-04-10.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-04-12.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({
@@ -126,8 +126,8 @@ describe('listarRegistrosCiclo', () => {
 
   it('ordena asc por data', async () => {
     mockListVaultFolder.mockResolvedValue([
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-04-15.md`,
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-04-10.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-04-15.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-04-10.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({
@@ -144,8 +144,8 @@ describe('listarRegistrosCiclo', () => {
 
   it('aplica filtro de periodo 28d', async () => {
     mockListVaultFolder.mockResolvedValue([
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-01-01.md`,
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-04-29.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-01-01.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-04-29.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({
@@ -166,8 +166,8 @@ describe('listarRegistrosCiclo', () => {
 
   it('ignora arquivos malformados sem quebrar', async () => {
     mockListVaultFolder.mockResolvedValue([
-      `${VAULT_ROOT}/inbox/saude/ciclo/quebrado.md`,
-      `${VAULT_ROOT}/inbox/saude/ciclo/2026-04-10.md`,
+      `${VAULT_ROOT}/markdown/ciclo-quebrado.md`,
+      `${VAULT_ROOT}/markdown/ciclo-2026-04-10.md`,
     ]);
     mockReadVaultFile
       .mockRejectedValueOnce(new Error('yaml invalido'))
@@ -204,7 +204,7 @@ describe('escreverRegistroCiclo', () => {
     mockWriteVaultFile.mockResolvedValue(undefined);
     const meta = fixture({ data: '2026-04-29' });
     const out = await escreverRegistroCiclo(VAULT_ROOT, meta, '');
-    expect(out.rel).toBe('inbox/saude/ciclo/2026-04-29.md');
+    expect(out.rel).toBe('markdown/ciclo-2026-04-29.md');
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
   });
 

@@ -16,7 +16,7 @@
 // Importante: esta função não decide o que mostrar na UI quando ha
 // conflito; apenas grava na variante segura e devolve o flag para o
 // caller logar/avisar se desejar.
-import { dailyPath, readVaultFile, writeVaultFile } from '@/lib/vault';
+import { humorPath, readVaultFile, writeVaultFile } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { useSettings } from '@/lib/stores/settings';
 import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
@@ -81,7 +81,7 @@ export async function saveHumor(
     throw new Error(`humor invalido: ${parsed.error.message}`);
   }
 
-  const relCanonico = dailyPath(new Date());
+  const relCanonico = humorPath(new Date());
   const { rel, conflito } = await resolvePath(
     vaultRoot,
     relCanonico,

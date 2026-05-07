@@ -86,11 +86,11 @@ describe('saveEvento caminho feliz', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/eventos\/2026-04-29-vila-madalena\.md$/);
+    expect(out.uri).toMatch(/markdown\/evento-2026-04-29-vila-madalena\.md$/);
     expect(out.fotosGravadas).toEqual([]);
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('eventos/2026-04-29-vila-madalena.md');
+    expect(uri).toContain('markdown/evento-2026-04-29-vila-madalena.md');
     expect(meta).toMatchObject({
       tipo: 'evento',
       autor: 'pessoa_a',
@@ -111,7 +111,7 @@ describe('saveEvento caminho feliz', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/eventos\/2026-04-29-cafe-da-manha\.md$/);
+    expect(out.uri).toMatch(/markdown\/evento-2026-04-29-cafe-da-manha\.md$/);
   });
 
   it('usa slug da categoria quando bairro e texto vazios', async () => {
@@ -126,7 +126,7 @@ describe('saveEvento caminho feliz', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/eventos\/2026-04-29-evento-social\.md$/);
+    expect(out.uri).toMatch(/markdown\/evento-2026-04-29-evento-social\.md$/);
   });
 
   it('normaliza root com barra final na concatenacao', async () => {
@@ -137,13 +137,13 @@ describe('saveEvento caminho feliz', () => {
       fotos: [],
     });
     const [uri] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).not.toContain('//eventos/');
-    expect(uri).toMatch(/\/eventos\//);
+    expect(uri).not.toContain('//markdown/');
+    expect(uri).toMatch(/\/markdown\/evento-/);
   });
 });
 
 describe('saveEvento fotos copiadas', () => {
-  it('copia cada foto para media/fotos/ e atualiza meta.fotos', async () => {
+  it('copia cada foto para jpg/ e atualiza meta.fotos (H2 layout-por-tipo)', async () => {
     const out = await saveEvento({
       meta: baseMeta,
       body: '',
@@ -160,10 +160,10 @@ describe('saveEvento fotos copiadas', () => {
     // -> suffixCurto() = "0000". Data YYYY-MM-DD vem de formatDateYmd
     // que normaliza para Sao Paulo (UTC-3).
     expect(out.fotosGravadas[0]).toMatch(
-      /^media\/fotos\/2026-04-29-eventos-0000-1\.jpg$/
+      /^jpg\/2026-04-29-eventos-0000-1\.jpg$/
     );
     expect(out.fotosGravadas[1]).toMatch(
-      /^media\/fotos\/2026-04-29-eventos-0000-2\.jpg$/
+      /^jpg\/2026-04-29-eventos-0000-2\.jpg$/
     );
     // O meta gravado tem fotos com paths relativos (nao URIs locais).
     const [, metaGravado] = mockWriteVaultFile.mock.calls[0];
@@ -180,7 +180,7 @@ describe('saveEvento fotos copiadas', () => {
     const [arg] = mockCopyAsync.mock.calls[0];
     expect(arg.from).toBe('file:///cache/img.jpg');
     expect(arg.to).toMatch(
-      /Vault\/media\/fotos\/2026-04-29-eventos-0000-1\.jpg$/
+      /Vault\/jpg\/2026-04-29-eventos-0000-1\.jpg$/
     );
   });
 
@@ -198,7 +198,7 @@ describe('saveEvento fotos copiadas', () => {
     // Companion .md ao lado do binario: mesmo nome, extensao trocada.
     const [destino1, conteudo1] = mockWriteAsStringAsync.mock.calls[0];
     expect(destino1).toMatch(
-      /Vault\/media\/fotos\/2026-04-29-eventos-0000-1\.md$/
+      /Vault\/markdown\/2026-04-29-eventos-0000-1\.md$/
     );
     // Frontmatter canonico midia_foto com legenda referenciando o
     // evento de origem (rastreabilidade reversa galeria -> evento).
@@ -212,7 +212,7 @@ describe('saveEvento fotos copiadas', () => {
     );
     const [destino2] = mockWriteAsStringAsync.mock.calls[1];
     expect(destino2).toMatch(
-      /Vault\/media\/fotos\/2026-04-29-eventos-0000-2\.md$/
+      /Vault\/markdown\/2026-04-29-eventos-0000-2\.md$/
     );
   });
 

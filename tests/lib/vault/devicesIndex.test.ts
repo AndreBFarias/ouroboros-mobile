@@ -104,12 +104,12 @@ describe('lerDevicesIndex', () => {
 });
 
 describe('escreverDevicesIndex', () => {
-  it('escreve no path inbox/_devices.md', async () => {
+  it('escreve no path markdown/_devices.md (H2 layout-por-tipo)', async () => {
     const idx: DevicesIndex = { tipo: 'devices_index', registro: {} };
     await escreverDevicesIndex(VAULT_ROOT, idx);
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toBe(`${VAULT_ROOT}/inbox/_devices.md`);
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/_devices.md`);
   });
 
   it('rejeita index com tipo errado', async () => {

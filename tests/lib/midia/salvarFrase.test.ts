@@ -34,7 +34,7 @@ describe('salvarFrase (M34)', () => {
     expect(writeSpy).not.toHaveBeenCalled();
   });
 
-  it('escreve .md com path media/frases/<data>-<slug>.md em sucesso', async () => {
+  it('escreve .md com path markdown/frase-<data>-<slug>.md em sucesso (H2 layout-por-tipo)', async () => {
     writeSpy.mockResolvedValue(undefined);
     const r = await salvarFrase({
       frase: 'Tudo bem comigo hoje',
@@ -42,11 +42,11 @@ describe('salvarFrase (M34)', () => {
     });
     expect(r.ok).toBe(true);
     expect(r.arquivo).toMatch(
-      /^media\/frases\/\d{4}-\d{2}-\d{2}-tudo-bem-comigo-hoje\.md$/
+      /^markdown\/frase-\d{4}-\d{2}-\d{2}-tudo-bem-comigo-hoje\.md$/
     );
     expect(writeSpy).toHaveBeenCalledTimes(1);
     const writeArgs = writeSpy.mock.calls[0] as [string, string];
-    expect(writeArgs[0]).toContain('/mock/vault/media/frases/');
+    expect(writeArgs[0]).toContain('/mock/vault/markdown/frase-');
     expect(writeArgs[1]).toContain('tipo: midia_frase');
     expect(writeArgs[1]).toContain('autor: pessoa_a');
     expect(writeArgs[1]).toContain('para: casal');

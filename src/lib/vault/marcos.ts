@@ -8,7 +8,11 @@
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { marcosPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  marcoPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MarcoSchema, type Marco } from '@/lib/schemas/marco';
@@ -27,8 +31,9 @@ export async function listarMarcos(
   vaultRoot: string,
   filtros: ListarMarcosFiltros = {}
 ): Promise<Marco[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.marcos);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'marco-'));
 
   const lidos: Marco[] = [];
   for (const arquivoUri of arquivos) {
@@ -61,7 +66,7 @@ export async function escreverMarco(
     throw new Error(`marco invalido: ${parsed.error.message}`);
   }
   const dataDate = new Date(parsed.data.data);
-  const rel = marcosPath(dataDate, slug);
+  const rel = marcoPath(dataDate, slug);
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<Marco>(uri, parsed.data, body);
   return { uri, rel };

@@ -22,7 +22,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import {
   agendaEventoPath,
-  agendaPessoaFolder,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -63,15 +64,16 @@ function sanitizarEventoId(id: string): string {
   return id.replace(/[/\\:*?"<>|.]+/g, '_');
 }
 
-// Garante que <vaultRoot>/agenda/<pessoa>/ existe. Idempotente. SAF
+// Garante que <vaultRoot>/markdown/ existe. Idempotente. SAF
 // em mobile real ja cria pastas intermedias quando o caller escreve
 // arquivo; aqui apenas tentamos por defesa antes de write em massa
 // (alguns OEMs Android falham silencioso na criacao implicita).
 async function garantirPastaAgenda(
   vaultRoot: string,
-  pessoa: PessoaAutor
+  _pessoa: PessoaAutor
 ): Promise<void> {
-  const dir = joinUri(vaultRoot, agendaPessoaFolder(pessoa));
+  void _pessoa;
+  const dir = joinUri(vaultRoot, MARKDOWN_FOLDER);
   try {
     await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
   } catch {
@@ -79,16 +81,21 @@ async function garantirPastaAgenda(
   }
 }
 
-// Lista todos os eventos de uma pessoa no Vault. Pasta inexistente => [].
-// Arquivos malformados (yaml invalido, schema falho) sao ignorados via
-// safeParse implicito no readVaultFile (que lanca; aqui catch silencia).
-// Ordenacao final: ascendente por inicio (cronologica).
+// Lista todos os eventos de uma pessoa no Vault (H2 layout-por-tipo).
+// Le markdown/ filtrando por prefixo 'agenda-<pessoa>-'. Pasta
+// inexistente => []. Arquivos malformados (yaml invalido, schema falho)
+// sao ignorados via safeParse implicito no readVaultFile (que lanca;
+// aqui catch silencia). Ordenacao final: ascendente por inicio
+// (cronologica).
 export async function listarEventosAgenda(
   vaultRoot: string,
   pessoa: PessoaAutor
 ): Promise<AgendaEvento[]> {
-  const folderUri = joinUri(vaultRoot, agendaPessoaFolder(pessoa));
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) =>
+    matchesFeaturePrefix(u, `agenda-${pessoa}-`)
+  );
 
   const lidos: AgendaEvento[] = [];
   for (const arquivoUri of arquivos) {
@@ -152,8 +159,11 @@ export async function apagarEventoAgenda(
   pessoa: PessoaAutor,
   id: string
 ): Promise<void> {
-  const folderUri = joinUri(vaultRoot, agendaPessoaFolder(pessoa));
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) =>
+    matchesFeaturePrefix(u, `agenda-${pessoa}-`)
+  );
   const idSeguro = sanitizarEventoId(id);
   const sufixo = `-${idSeguro}.md`;
 

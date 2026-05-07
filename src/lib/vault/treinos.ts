@@ -13,7 +13,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { treinosPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import { treinosPath } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import {
@@ -39,7 +39,9 @@ export async function listarTreinos(
   vaultRoot: string,
   filtros: ListarTreinosFiltros = {}
 ): Promise<TreinoSessao[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.treinos);
+  // Treinos formais (M11) ainda em layout legado: pasta 'treinos/'.
+  // Migracao para layout-por-tipo H2 fica para sprint dedicada.
+  const folderUri = joinUri(vaultRoot, 'treinos');
   const arquivos = await listVaultFolder(folderUri, '.md');
 
   const lidos: TreinoSessao[] = [];

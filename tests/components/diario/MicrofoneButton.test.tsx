@@ -194,7 +194,7 @@ describe('MicrofoneButton ciclo press/release', () => {
     expect(mockStopAndUnloadAsync).toHaveBeenCalled();
     expect(mockCopyAsync).toHaveBeenCalled();
     expect(onAudioGravado).toHaveBeenCalledWith(
-      expect.stringMatching(/^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.m4a$/)
+      expect.stringMatching(/^m4a\/audio-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.m4a$/)
     );
     expect(onTextoTranscrito).toHaveBeenCalledWith('oi diario hoje foi bom');
   });

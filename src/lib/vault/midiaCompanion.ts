@@ -18,11 +18,19 @@ import YAML from 'yaml';
 import { stringifyCompanionMidia } from '@/lib/midia/companion';
 import {
   MidiaCompanionSchema,
-  subpastaPara,
   tipoPorExtensao,
   type MidiaCompanion,
+  type TipoMidiaCanonico,
 } from '@/lib/schemas/midia-companion';
-import { formatDateYmd } from '@/lib/vault/paths';
+import {
+  formatDateYmd,
+  MARKDOWN_FOLDER,
+  PNG_FOLDER,
+  JPG_FOLDER,
+  M4A_FOLDER,
+  MP4_FOLDER,
+  PDF_FOLDER,
+} from '@/lib/vault/paths';
 
 // Concatena root SAF e path relativo, normalizando barras. Idem
 // helpers locais espalhados (capturarFoto.joinUri etc); centralizado
@@ -59,6 +67,56 @@ function basenameSemExt(basename: string): string {
   return basename.slice(0, idx);
 }
 
+// H2 layout-por-tipo (ADR-0023): roteia binario para a pasta
+// canonica baseada na extensao concreta do arquivo, nao no tipo
+// semantico. Ex: midia_foto pode chegar como .jpg ou .png;
+// destino respectivo e' jpg/ ou png/.
+function pastaBinarioPorExt(
+  ext: string,
+  tipo: TipoMidiaCanonico
+): string {
+  const e = ext.toLowerCase().replace(/^\./, '');
+  if (e === 'jpg' || e === 'jpeg') return JPG_FOLDER;
+  if (e === 'png') return PNG_FOLDER;
+  if (e === 'm4a' || e === 'mp3' || e === 'wav' || e === 'ogg' || e === 'opus')
+    return M4A_FOLDER;
+  if (e === 'mp4' || e === 'mov' || e === 'webm') return MP4_FOLDER;
+  if (e === 'pdf') return PDF_FOLDER;
+  // Fallback conservador por tipo: midia_foto -> jpg, midia_audio -> m4a,
+  // midia_video -> mp4, midia_pdf -> pdf, midia_frase -> markdown (sem
+  // binario).
+  switch (tipo) {
+    case 'midia_foto':
+      return JPG_FOLDER;
+    case 'midia_audio':
+      return M4A_FOLDER;
+    case 'midia_video':
+      return MP4_FOLDER;
+    case 'midia_pdf':
+      return PDF_FOLDER;
+    case 'midia_frase':
+      return MARKDOWN_FOLDER;
+  }
+}
+
+// Prefixo de feature por tipo. H2: companion .md sempre em markdown/
+// e binario em <ext>/, ambos com mesmo basename comecando pelo
+// prefixo (foto-, audio-, video-, scanner-, frase-).
+function prefixoPorTipo(tipo: TipoMidiaCanonico): string {
+  switch (tipo) {
+    case 'midia_foto':
+      return 'foto-';
+    case 'midia_audio':
+      return 'audio-';
+    case 'midia_video':
+      return 'video-';
+    case 'midia_pdf':
+      return 'scanner-';
+    case 'midia_frase':
+      return 'frase-';
+  }
+}
+
 export interface EscreverMidiaResultado {
   // Path relativo ao Vault do binario gravado (media/<sub>/<basename>.<ext>).
   binarioPath: string;
@@ -82,20 +140,22 @@ export async function escreverMidiaComCompanion(
   binarioUri: string,
   meta: Omit<MidiaCompanion, 'arquivo'> & { arquivo?: string }
 ): Promise<EscreverMidiaResultado> {
-  const subpasta = subpastaPara(meta.tipo);
   const ext = extOf(binarioUri) || extOf(meta.arquivo ?? '') || 'bin';
+  const pastaBin = pastaBinarioPorExt(ext, meta.tipo);
+  const prefixo = prefixoPorTipo(meta.tipo);
 
-  // Basename: caller pode forcar via meta.arquivo (ex: matchar
-  // convencao especial como medidas-<data>-<lado>.jpg). Quando
-  // ausente, gera <YYYY-MM-DD>-<rand4>.<ext>.
+  // Basename: caller pode forcar via meta.arquivo (ex: 'medidas-2026-
+  // 05-04-frente.jpg'). Quando ausente, gera <prefixo><YYYY-MM-DD>-
+  // <rand4>.<ext>. H2 layout-por-tipo: binario em <ext>/<basename>,
+  // companion .md em markdown/<basename>.
   const basenameComExt =
     meta.arquivo && meta.arquivo.length > 0
       ? meta.arquivo
-      : `${formatDateYmd(new Date(meta.data))}-${suffixCurto()}.${ext}`;
+      : `${prefixo}${formatDateYmd(new Date(meta.data))}-${suffixCurto()}.${ext}`;
 
   const basename = basenameSemExt(basenameComExt);
-  const binarioPath = `media/${subpasta}/${basename}.${ext}`;
-  const companionPath = `media/${subpasta}/${basename}.md`;
+  const binarioPath = `${pastaBin}/${basename}.${ext}`;
+  const companionPath = `${MARKDOWN_FOLDER}/${basename}.md`;
 
   const destinoBin = joinUri(vaultRoot, binarioPath);
   const destinoCompanion = joinUri(vaultRoot, companionPath);
@@ -151,25 +211,8 @@ function deserializarPara(raw: unknown): unknown {
   return raw; // schema vai falhar; deixa erro emergir.
 }
 
-// Le o companion .md ao lado de um binario. Caller fornece
-// binarioPath relativo ao Vault (ex: 'media/fotos/2026-05-04-abcd.jpg').
-// Retorna o meta validado, ou null quando o companion nao existe ou
-// nao e' parseavel.
-export async function lerCompanion(
-  vaultRoot: string,
-  binarioPath: string
-): Promise<MidiaCompanion | null> {
-  const companionRel = binarioPath.replace(/\.[a-z0-9]+$/i, '.md');
-  const companionUri = joinUri(vaultRoot, companionRel);
-  let raw: string;
-  try {
-    raw = await StorageAccessFramework.readAsStringAsync(companionUri);
-  } catch {
-    return null;
-  }
-  // Parse YAML cru primeiro para conseguir pre-processar o campo
-  // `para` (string -> discriminada). Depois valida via
-  // MidiaCompanionSchema.
+// Helper: parseia conteudo bruto de companion .md, valida via schema.
+function parseCompanionRaw(raw: string): MidiaCompanion | null {
   try {
     const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!match) return null;
@@ -185,6 +228,41 @@ export async function lerCompanion(
   }
 }
 
+// Le o companion .md de um binario. Caller fornece binarioPath
+// relativo ao Vault (ex: 'jpg/foto-2026-05-04-abcd.jpg' no novo
+// layout, ou 'media/fotos/2026-05-04-abcd.jpg' no legado). H2
+// layout-por-tipo: companion fica em markdown/<basename>.md (binario
+// em <ext>/<basename>.<ext>). Tentativa #1: layout novo. Tentativa
+// #2: legado (companion ao lado do binario). Retorna meta validado
+// ou null.
+export async function lerCompanion(
+  vaultRoot: string,
+  binarioPath: string
+): Promise<MidiaCompanion | null> {
+  const basename = (binarioPath.split('/').pop() ?? '').replace(
+    /\.[a-z0-9]+$/i,
+    ''
+  );
+  // Tentativa #1: H2 layout-por-tipo.
+  try {
+    const novoUri = joinUri(vaultRoot, `${MARKDOWN_FOLDER}/${basename}.md`);
+    const raw = await StorageAccessFramework.readAsStringAsync(novoUri);
+    const meta = parseCompanionRaw(raw);
+    if (meta) return meta;
+  } catch {
+    // Cai em fallback legado.
+  }
+  // Tentativa #2: companion legado (mesma pasta do binario).
+  const companionLegadoRel = binarioPath.replace(/\.[a-z0-9]+$/i, '.md');
+  try {
+    const legadoUri = joinUri(vaultRoot, companionLegadoRel);
+    const raw = await StorageAccessFramework.readAsStringAsync(legadoUri);
+    return parseCompanionRaw(raw);
+  } catch {
+    return null;
+  }
+}
+
 export interface MigracaoResultado {
   // Quantos binarios foram movidos de assets/ para media/<categoria>/.
   migrados: number;
@@ -195,15 +273,14 @@ export interface MigracaoResultado {
 }
 
 // Varre assets/ e move binarios de midia (jpg/m4a/mp4/pdf) para
-// media/<categoria>/<basename>.<ext>. Idempotente: arquivos ja
-// migrados (com mesmo basename no destino) sao ignorados, nao
-// duplicados nem sobrescritos.
+// <ext>/<basename>.<ext> conforme H2 layout-por-tipo (ADR-0023).
+// Idempotente: arquivos ja migrados (com mesmo basename no destino)
+// sao ignorados, nao duplicados nem sobrescritos.
 //
 // Decisao: nao gera companion .md aqui (apenas move o binario).
 // Companions sao gerados pelos writers no proximo save; arquivos
 // legados ficam sem companion ate que o usuario edite o registro
-// mae. Alternativa (gerar companion stub) ficou para sprint futura
-// se houver demanda do ETL desktop.
+// mae.
 export async function migrarAssetsLegacyParaMedia(
   vaultRoot: string
 ): Promise<MigracaoResultado> {
@@ -246,8 +323,8 @@ export async function migrarAssetsLegacyParaMedia(
       result.pulados += 1;
       continue;
     }
-    const subpasta = subpastaPara(tipo);
-    const destinoRel = `media/${subpasta}/${basename}`;
+    const pastaBin = pastaBinarioPorExt(ext, tipo);
+    const destinoRel = `${pastaBin}/${basename}`;
     const destinoUri = joinUri(vaultRoot, destinoRel);
 
     // Idempotencia: pula se ja existe no destino.

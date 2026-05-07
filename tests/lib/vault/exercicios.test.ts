@@ -89,7 +89,7 @@ describe('lerExercicio', () => {
     const out = await lerExercicio(VAULT_ROOT, 'agachamento-livre');
     expect(out?.slug).toBe('agachamento-livre');
     expect(mockReadVaultFile).toHaveBeenCalledWith(
-      expect.stringContaining('exercicios/agachamento-livre.md'),
+      expect.stringContaining('markdown/exercicio-agachamento-livre.md'),
       expect.anything()
     );
   });
@@ -104,8 +104,8 @@ describe('lerExercicio', () => {
 describe('listarExercicios', () => {
   it('lista todos os exercicios sem filtros, ordenados por nome', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/exercicios/flexao-cruzada.md`,
-      `${VAULT_ROOT}/exercicios/agachamento-livre.md`,
+      `${VAULT_ROOT}/markdown/exercicio-flexao-cruzada.md`,
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({ meta: exercicioPeito, body: '' })
@@ -121,8 +121,8 @@ describe('listarExercicios', () => {
 
   it('filtra por grupo muscular', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/exercicios/flexao-cruzada.md`,
-      `${VAULT_ROOT}/exercicios/agachamento-livre.md`,
+      `${VAULT_ROOT}/markdown/exercicio-flexao-cruzada.md`,
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({ meta: exercicioPeito, body: '' })
@@ -135,8 +135,8 @@ describe('listarExercicios', () => {
 
   it('filtra por search case e accent insensitive', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/exercicios/flexao-cruzada.md`,
-      `${VAULT_ROOT}/exercicios/agachamento-livre.md`,
+      `${VAULT_ROOT}/markdown/exercicio-flexao-cruzada.md`,
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({ meta: exercicioPeito, body: '' })
@@ -149,8 +149,8 @@ describe('listarExercicios', () => {
 
   it('combina filtros grupo e search', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/exercicios/flexao-cruzada.md`,
-      `${VAULT_ROOT}/exercicios/agachamento-livre.md`,
+      `${VAULT_ROOT}/markdown/exercicio-flexao-cruzada.md`,
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({ meta: exercicioPeito, body: '' })
@@ -165,8 +165,8 @@ describe('listarExercicios', () => {
 
   it('ignora arquivos com schema invalido', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/exercicios/quebrado.md`,
-      `${VAULT_ROOT}/exercicios/agachamento-livre.md`,
+      `${VAULT_ROOT}/markdown/exercicio-quebrado.md`,
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`,
     ]);
     mockReadVaultFile
       .mockRejectedValueOnce(new Error('schema invalido'))
@@ -188,7 +188,7 @@ describe('escreverExercicio', () => {
   it('grava no path canonico do slug', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const { uri } = await escreverExercicio(VAULT_ROOT, exercicioPernas, '');
-    expect(uri).toContain('exercicios/agachamento-livre.md');
+    expect(uri).toContain('markdown/exercicio-agachamento-livre.md');
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
   });
 

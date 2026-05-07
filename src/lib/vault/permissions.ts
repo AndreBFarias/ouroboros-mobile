@@ -43,29 +43,21 @@ const VAULT_URI = `file://${VAULT_PATH}`;
 const PROBE_FILENAME = '.ouroboros-probe';
 const ANDROID_PACKAGE = 'com.ouroboros.mobile';
 
-// Subpastas canonicas criadas pela inicializacao. Sao 19 leaves: o
-// mkdir recursivo cria automaticamente os intermediarios (inbox/,
-// inbox/mente/, .ouroboros/ etc.). Lista alinhada com ADR-0016 e
-// VAULT_FOLDERS legado em paths.ts.
+// Subpastas canonicas criadas pela inicializacao (H2 layout-por-tipo,
+// ADR-0023). 8 leaves: o mkdir recursivo cria automaticamente os
+// intermediarios (.ouroboros/). Alinhada com VAULT_FOLDERS em paths.ts.
+//
+// Layout-por-tipo: todos os .md vivem em markdown/, binarios em
+// pastas por extensao (png/, jpg/, m4a/, mp4/, pdf/, gif/), cache
+// preservado em .ouroboros/cache (excecao ADR-0019).
 export const SUBPASTAS_CANONICAS: readonly string[] = [
-  'daily',
-  'eventos',
-  'marcos',
-  'treinos',
-  'exercicios',
-  'medidas',
-  'alarmes',
-  'tarefas',
-  'contadores',
-  'inbox/mente/diario',
-  'inbox/saude/ciclo',
-  'inbox/arquivos',
-  'media/fotos',
-  'media/audios',
-  'media/videos',
-  'media/frases',
-  'media/avatares',
-  'media/scanner',
+  'markdown',
+  'png',
+  'jpg',
+  'm4a',
+  'mp4',
+  'pdf',
+  'gif',
   '.ouroboros/cache',
 ] as const;
 

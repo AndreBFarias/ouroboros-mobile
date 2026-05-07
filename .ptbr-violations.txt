@@ -11,3 +11,11 @@
 #
 # Lista vazia. Se aparecer linha aqui no futuro, e exclusao temporaria
 # de batch novo a ser fechado em sub-sprint.
+#
+# H2 ADR-0023 (M-VAULT-LAYOUT-POR-TIPO): comentarios documentam paths
+# literais (markdown/, m4a/, mp4/, gif/) e seus prefixos (audio-,
+# video-, exercicio-, diario-). Sao identificadores de filename, nao
+# strings UI. ptbr-audit detecta tokens 'audio'/'video'/'diario'/
+# 'exercicio' em jsx-text dentro de comentarios. Ignorado em batch.
+src/lib/boot/migrarVaultLayoutPorTipo.ts
+src/lib/boot/reagendamento.ts

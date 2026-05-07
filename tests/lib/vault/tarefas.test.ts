@@ -88,10 +88,10 @@ describe('listarTarefas', () => {
 
   it('separa pendentes (data desc) e feitas (feito_em desc)', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/tarefas/2026-04-25-feita-antiga-aaaa.md`,
-      `${VAULT_ROOT}/tarefas/2026-04-29-pendente-bbbb.md`,
-      `${VAULT_ROOT}/tarefas/2026-04-28-pendente-cccc.md`,
-      `${VAULT_ROOT}/tarefas/2026-04-27-feita-recente-dddd.md`,
+      `${VAULT_ROOT}/markdown/tarefa-feita-antiga-aaaa.md`,
+      `${VAULT_ROOT}/markdown/tarefa-pendente-bbbb.md`,
+      `${VAULT_ROOT}/markdown/tarefa-pendente-cccc.md`,
+      `${VAULT_ROOT}/markdown/tarefa-feita-recente-dddd.md`,
     ]);
     mockReadVaultFile.mockImplementation((uri: string) => {
       if (uri.endsWith('feita-antiga-aaaa.md')) {
@@ -144,8 +144,8 @@ describe('listarTarefas', () => {
 
   it('ignora arquivos malformados sem propagar erro', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/tarefas/ok.md`,
-      `${VAULT_ROOT}/tarefas/quebrada.md`,
+      `${VAULT_ROOT}/markdown/tarefa-ok.md`,
+      `${VAULT_ROOT}/markdown/tarefa-quebrada.md`,
     ]);
     mockReadVaultFile.mockImplementation((uri: string) => {
       if (uri.endsWith('quebrada.md')) {
@@ -161,36 +161,36 @@ describe('listarTarefas', () => {
 
   it('expoe rel relativo ao vaultRoot', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/tarefas/2026-04-29-foo-bar.md`,
+      `${VAULT_ROOT}/markdown/tarefa-foo-bar.md`,
     ]);
     mockReadVaultFile.mockResolvedValueOnce({
       meta: fixture({ titulo: 'foo' }),
       body: '',
     });
     const out = await listarTarefas(VAULT_ROOT);
-    expect(out[0].rel).toBe('tarefas/2026-04-29-foo-bar.md');
+    expect(out[0].rel).toBe('markdown/tarefa-foo-bar.md');
   });
 });
 
 describe('lerTarefa', () => {
   it('chama reader com URI correto', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
-    await lerTarefa(VAULT_ROOT, 'tarefas/2026-04-29-foo.md');
+    await lerTarefa(VAULT_ROOT, 'markdown/tarefa-foo.md');
     expect(mockReadVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/tarefas/2026-04-29-foo.md`,
+      `${VAULT_ROOT}/markdown/tarefa-foo.md`,
       expect.anything()
     );
   });
 
   it('retorna meta quando existe', async () => {
     mockReadVaultFile.mockResolvedValueOnce({ meta: fixture(), body: '' });
-    const out = await lerTarefa(VAULT_ROOT, 'tarefas/qualquer.md');
+    const out = await lerTarefa(VAULT_ROOT, 'markdown/tarefa-qualquer.md');
     expect(out).not.toBeNull();
   });
 
   it('retorna null quando nao existe', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
-    const out = await lerTarefa(VAULT_ROOT, 'tarefas/inexistente.md');
+    const out = await lerTarefa(VAULT_ROOT, 'markdown/tarefa-inexistente.md');
     expect(out).toBeNull();
   });
 });
@@ -201,10 +201,10 @@ describe('escreverTarefa', () => {
     const meta = fixture();
     const { rel, uri } = await escreverTarefa(
       VAULT_ROOT,
-      'tarefas/2026-04-29-comprar-pao-7k2x.md',
+      'markdown/tarefa-comprar-pao-7k2x.md',
       meta
     );
-    expect(rel).toBe('tarefas/2026-04-29-comprar-pao-7k2x.md');
+    expect(rel).toBe('markdown/tarefa-comprar-pao-7k2x.md');
     expect(uri).toBe(`${VAULT_ROOT}/${rel}`);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
       `${VAULT_ROOT}/${rel}`,
@@ -216,17 +216,17 @@ describe('escreverTarefa', () => {
   it('rejeita meta invalido', async () => {
     const inv = fixture({ data: '29/04/2026' });
     await expect(
-      escreverTarefa(VAULT_ROOT, 'tarefas/x.md', inv)
+      escreverTarefa(VAULT_ROOT, 'markdown/tarefa-x.md', inv)
     ).rejects.toThrow(/tarefa invalida/);
   });
 });
 
 describe('criarTarefa', () => {
-  it('deriva path tarefas/YYYY-MM-DD-<slug>.md', async () => {
+  it('deriva path markdown/tarefa-<slug>.md (H2 layout-por-tipo)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture({ data: '2026-04-29' });
     const { rel } = await criarTarefa(VAULT_ROOT, meta, 'comprar-pao-7k2x');
-    expect(rel).toBe('tarefas/2026-04-29-comprar-pao-7k2x.md');
+    expect(rel).toBe('markdown/tarefa-comprar-pao-7k2x.md');
   });
 
   it('M31: nao cria alarme companion quando meta.alarme === null', async () => {
@@ -272,7 +272,7 @@ describe('criarTarefa', () => {
     expect(mockAgendarAlarme).toHaveBeenCalledTimes(1);
     // Tarefa final tem slug_vinculado canonico (<slug>-alarme).
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      expect.stringContaining('tarefas/2026-04-29-foo-1234.md'),
+      expect.stringContaining('markdown/tarefa-foo-1234.md'),
       expect.objectContaining({
         alarme: expect.objectContaining({
           slug_vinculado: 'foo-1234-alarme',
@@ -296,7 +296,7 @@ describe('criarTarefa', () => {
     await expect(
       criarTarefa(VAULT_ROOT, meta, 'foo-1234')
     ).resolves.toMatchObject({
-      rel: 'tarefas/2026-04-29-foo-1234.md',
+      rel: 'markdown/tarefa-foo-1234.md',
     });
     expect(mockWriteVaultFile).toHaveBeenCalled();
   });
@@ -313,12 +313,12 @@ describe('reabrirTarefa (M31)', () => {
 
     const out = await reabrirTarefa(
       VAULT_ROOT,
-      'tarefas/2026-04-29-foo.md'
+      'markdown/tarefa-foo.md'
     );
     expect(out.feito).toBe(false);
     expect(out.feito_em).toBeNull();
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/tarefas/2026-04-29-foo.md`,
+      `${VAULT_ROOT}/markdown/tarefa-foo.md`,
       expect.objectContaining({ feito: false, feito_em: null }),
       ''
     );
@@ -331,7 +331,7 @@ describe('reabrirTarefa (M31)', () => {
 
     const out = await reabrirTarefa(
       VAULT_ROOT,
-      'tarefas/2026-04-29-foo.md'
+      'markdown/tarefa-foo.md'
     );
     expect(out.feito).toBe(false);
   });
@@ -339,7 +339,7 @@ describe('reabrirTarefa (M31)', () => {
   it('lanca quando arquivo nao existe', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
     await expect(
-      reabrirTarefa(VAULT_ROOT, 'tarefas/inexistente.md')
+      reabrirTarefa(VAULT_ROOT, 'markdown/tarefa-inexistente.md')
     ).rejects.toThrow(/nao encontrada/);
   });
 });
@@ -353,14 +353,14 @@ describe('marcarFeito', () => {
     const agora = new Date('2026-04-29T15:30:00-03:00');
     const out = await marcarFeito(
       VAULT_ROOT,
-      'tarefas/2026-04-29-foo.md',
+      'markdown/tarefa-foo.md',
       true,
       agora
     );
     expect(out.feito).toBe(true);
     expect(out.feito_em).toBe(agora.toISOString());
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/tarefas/2026-04-29-foo.md`,
+      `${VAULT_ROOT}/markdown/tarefa-foo.md`,
       expect.objectContaining({ feito: true }),
       ''
     );
@@ -376,7 +376,7 @@ describe('marcarFeito', () => {
 
     const out = await marcarFeito(
       VAULT_ROOT,
-      'tarefas/2026-04-29-foo.md',
+      'markdown/tarefa-foo.md',
       false
     );
     expect(out.feito).toBe(false);
@@ -386,7 +386,7 @@ describe('marcarFeito', () => {
   it('lanca quando arquivo nao existe', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
     await expect(
-      marcarFeito(VAULT_ROOT, 'tarefas/inexistente.md', true)
+      marcarFeito(VAULT_ROOT, 'markdown/tarefa-inexistente.md', true)
     ).rejects.toThrow(/nao encontrada/);
   });
 });
@@ -400,16 +400,16 @@ describe('excluirTarefa', () => {
 
     const out = await excluirTarefa(
       VAULT_ROOT,
-      'tarefas/2026-04-29-foo-bar.md'
+      'markdown/tarefa-foo-bar.md'
     );
     expect(out.lixeiraPath).toMatch(
-      /^cache:\/\/test\/lixeira\/tarefas\/\d{8}-\d{6}-2026-04-29-foo-bar\.md$/
+      /^cache:\/\/test\/lixeira\/tarefas\/\d{8}-\d{6}-tarefa-foo-bar\.md$/
     );
     expect(mockReadAsString).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/tarefas/2026-04-29-foo-bar.md`
+      `${VAULT_ROOT}/markdown/tarefa-foo-bar.md`
     );
     expect(mockDeleteAsync).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/tarefas/2026-04-29-foo-bar.md`
+      `${VAULT_ROOT}/markdown/tarefa-foo-bar.md`
     );
   });
 
@@ -417,7 +417,7 @@ describe('excluirTarefa', () => {
     mockMakeDir.mockResolvedValueOnce(undefined);
     mockReadAsString.mockRejectedValueOnce(new Error('sem permissao'));
     await expect(
-      excluirTarefa(VAULT_ROOT, 'tarefas/2026-04-29-foo.md')
+      excluirTarefa(VAULT_ROOT, 'markdown/tarefa-foo.md')
     ).rejects.toThrow(/lixeira/);
   });
 });

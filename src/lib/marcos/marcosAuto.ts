@@ -22,7 +22,7 @@ import { listarMarcos } from '@/lib/vault/marcos';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { saveMarco } from '@/lib/marcos/saveMarco';
 import { hashMarcoConteudo } from '@/lib/marcos/hash';
-import { VAULT_FOLDERS } from '@/lib/vault/paths';
+import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import {
   DiarioEmocionalSchema,
   type DiarioEmocionalMeta,
@@ -187,11 +187,12 @@ async function lerSinaisDeAutor(
   humores: HumorMeta[];
   diarios: DiarioEmocionalMeta[];
 }> {
-  const humoresUri = joinUri(vaultRoot, VAULT_FOLDERS.daily);
-  const diariosUri = joinUri(vaultRoot, VAULT_FOLDERS.inboxMenteDiario);
-
-  const arquivosHumor = await listVaultFolder(humoresUri, '.md');
-  const arquivosDiario = await listVaultFolder(diariosUri, '.md');
+  // H2 layout-por-tipo: humor e diario coexistem em markdown/, filtro
+  // por prefixo separa as listagens.
+  const markdownUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(markdownUri, '.md');
+  const arquivosHumor = todos.filter((u) => matchesFeaturePrefix(u, 'humor-'));
+  const arquivosDiario = todos.filter((u) => matchesFeaturePrefix(u, 'diario-'));
 
   const humores: HumorMeta[] = [];
   for (const a of arquivosHumor) {

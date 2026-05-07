@@ -20,7 +20,7 @@ import type { WidgetData } from '../../../modules/widget-homescreen/src';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
-import { readVaultFile, dailyPath } from '@/lib/vault';
+import { readVaultFile, humorPath } from '@/lib/vault';
 import { HumorSchema } from '@/lib/schemas/humor';
 import { inicialDe, corDe } from '@/config/pessoas.config';
 
@@ -54,7 +54,7 @@ async function lerHumorDoDia(
   pessoaAtiva: 'pessoa_a' | 'pessoa_b'
 ): Promise<{ humor: number | null; frase: string | null }> {
   if (!vaultRoot) return { humor: null, frase: null };
-  const rel = dailyPath(new Date());
+  const rel = humorPath(new Date());
   const uri = joinUri(vaultRoot, rel);
   const parsed = await readVaultFile(uri, HumorSchema);
   if (!parsed) return { humor: null, frase: null };

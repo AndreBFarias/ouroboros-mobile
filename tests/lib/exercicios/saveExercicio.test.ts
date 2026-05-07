@@ -62,22 +62,22 @@ describe('saveExercicio', () => {
     expect(mockEscreverExercicio).toHaveBeenCalledTimes(1);
   });
 
-  it('copia GIF para assets/exercicios/<slug>.gif quando fornecido', async () => {
+  it('copia GIF para gif/exercicio-<slug>.gif quando fornecido (H2 layout-por-tipo)', async () => {
     const out = await saveExercicio({
       meta: exercicioBase,
       vaultRoot: VAULT_ROOT,
       gifTemporario: 'file:///tmp/agachamento.gif',
     });
-    expect(out.gifGravado).toBe('assets/exercicios/agachamento-livre.gif');
+    expect(out.gifGravado).toBe('gif/exercicio-agachamento-livre.gif');
     expect(mockCopyAsync).toHaveBeenCalledWith({
       from: 'file:///tmp/agachamento.gif',
-      to: expect.stringContaining('assets/exercicios/agachamento-livre.gif'),
+      to: expect.stringContaining('gif/exercicio-agachamento-livre.gif'),
     });
     // Meta passado a escreverExercicio inclui gif atualizado.
     expect(mockEscreverExercicio).toHaveBeenCalledWith(
       VAULT_ROOT,
       expect.objectContaining({
-        gif: 'assets/exercicios/agachamento-livre.gif',
+        gif: 'gif/exercicio-agachamento-livre.gif',
       }),
       ''
     );

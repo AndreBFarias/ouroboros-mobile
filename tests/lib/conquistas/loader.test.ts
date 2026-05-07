@@ -75,16 +75,22 @@ describe('lerConquistas', () => {
     });
   });
 
+  // H2 layout-por-tipo (ADR-0023): loader le markdown/ e filtra por
+  // prefixo (evento-, diario-) em vez de varrer pastas separadas.
+  // Mocks devolvem URIs com prefixo correto.
+
   it('filtra eventos por modo positivo', async () => {
-    mockListVaultFolder.mockImplementation(async (uri: string) => {
-      if (uri.includes('eventos')) return ['a.md', 'b.md'];
-      return [];
-    });
+    mockListVaultFolder.mockImplementation(async () =>
+      [
+        `${VAULT_ROOT}/markdown/evento-a.md`,
+        `${VAULT_ROOT}/markdown/evento-b.md`,
+      ]
+    );
     mockReadVaultFile.mockImplementation(async (uri: string) => {
-      if (uri.endsWith('a.md')) {
+      if (uri.endsWith('evento-a.md')) {
         return { meta: fakeEvento('2026-04-01', 'positivo', [midiaFoto('p1.jpg')]), body: '' };
       }
-      if (uri.endsWith('b.md')) {
+      if (uri.endsWith('evento-b.md')) {
         return { meta: fakeEvento('2026-04-02', 'negativo', [midiaFoto('p2.jpg')]), body: '' };
       }
       return null;
@@ -97,15 +103,17 @@ describe('lerConquistas', () => {
   });
 
   it('filtra eventos sem midia', async () => {
-    mockListVaultFolder.mockImplementation(async (uri: string) => {
-      if (uri.includes('eventos')) return ['a.md', 'b.md'];
-      return [];
-    });
+    mockListVaultFolder.mockImplementation(async () =>
+      [
+        `${VAULT_ROOT}/markdown/evento-a.md`,
+        `${VAULT_ROOT}/markdown/evento-b.md`,
+      ]
+    );
     mockReadVaultFile.mockImplementation(async (uri: string) => {
-      if (uri.endsWith('a.md')) {
+      if (uri.endsWith('evento-a.md')) {
         return { meta: fakeEvento('2026-04-01', 'positivo', []), body: '' };
       }
-      if (uri.endsWith('b.md')) {
+      if (uri.endsWith('evento-b.md')) {
         return { meta: fakeEvento('2026-04-02', 'positivo', [midiaFoto('p2.jpg')]), body: '' };
       }
       return null;
@@ -117,15 +125,17 @@ describe('lerConquistas', () => {
   });
 
   it('filtra diario por modo vitoria', async () => {
-    mockListVaultFolder.mockImplementation(async (uri: string) => {
-      if (uri.includes('inbox/mente/diario')) return ['v.md', 't.md'];
-      return [];
-    });
+    mockListVaultFolder.mockImplementation(async () =>
+      [
+        `${VAULT_ROOT}/markdown/diario-v.md`,
+        `${VAULT_ROOT}/markdown/diario-t.md`,
+      ]
+    );
     mockReadVaultFile.mockImplementation(async (uri: string) => {
-      if (uri.endsWith('v.md')) {
+      if (uri.endsWith('diario-v.md')) {
         return { meta: fakeDiario('2026-04-10', 'vitoria', [midiaFoto('v.jpg')]), body: '' };
       }
-      if (uri.endsWith('t.md')) {
+      if (uri.endsWith('diario-t.md')) {
         return { meta: fakeDiario('2026-04-11', 'trigger', [midiaFoto('t.jpg')]), body: '' };
       }
       return null;
@@ -137,19 +147,21 @@ describe('lerConquistas', () => {
   });
 
   it('ordena conquistas por data descendente', async () => {
-    mockListVaultFolder.mockImplementation(async (uri: string) => {
-      if (uri.includes('eventos')) return ['a.md', 'b.md'];
-      if (uri.includes('inbox/mente/diario')) return ['c.md'];
-      return [];
-    });
+    mockListVaultFolder.mockImplementation(async () =>
+      [
+        `${VAULT_ROOT}/markdown/evento-a.md`,
+        `${VAULT_ROOT}/markdown/evento-b.md`,
+        `${VAULT_ROOT}/markdown/diario-c.md`,
+      ]
+    );
     mockReadVaultFile.mockImplementation(async (uri: string) => {
-      if (uri.endsWith('a.md')) {
+      if (uri.endsWith('evento-a.md')) {
         return { meta: fakeEvento('2026-03-01', 'positivo', [midiaFoto('p1.jpg')]), body: '' };
       }
-      if (uri.endsWith('b.md')) {
+      if (uri.endsWith('evento-b.md')) {
         return { meta: fakeEvento('2026-04-15', 'positivo', [midiaFoto('p2.jpg')]), body: '' };
       }
-      if (uri.endsWith('c.md')) {
+      if (uri.endsWith('diario-c.md')) {
         return { meta: fakeDiario('2026-04-20', 'vitoria', [midiaFoto('v.jpg')]), body: '' };
       }
       return null;
@@ -165,10 +177,9 @@ describe('lerConquistas', () => {
   it('mantem conquista mesmo quando arquivo de midia esta ausente (decisao A5)', async () => {
     // Loader nao verifica existencia do arquivo de midia. O cover
     // cuida do fallback graciosamente (placeholder ImageOff).
-    mockListVaultFolder.mockImplementation(async (uri: string) => {
-      if (uri.includes('eventos')) return ['orf.md'];
-      return [];
-    });
+    mockListVaultFolder.mockImplementation(async () =>
+      [`${VAULT_ROOT}/markdown/evento-orf.md`]
+    );
     mockReadVaultFile.mockImplementation(async () => ({
       meta: fakeEvento('2026-04-01', 'positivo', [
         midiaFoto('content://does-not-exist.jpg'),
@@ -182,12 +193,14 @@ describe('lerConquistas', () => {
   });
 
   it('descarta arquivo cujo schema falha (read retorna null)', async () => {
-    mockListVaultFolder.mockImplementation(async (uri: string) => {
-      if (uri.includes('eventos')) return ['ok.md', 'broken.md'];
-      return [];
-    });
+    mockListVaultFolder.mockImplementation(async () =>
+      [
+        `${VAULT_ROOT}/markdown/evento-ok.md`,
+        `${VAULT_ROOT}/markdown/evento-broken.md`,
+      ]
+    );
     mockReadVaultFile.mockImplementation(async (uri: string) => {
-      if (uri.endsWith('ok.md')) {
+      if (uri.endsWith('evento-ok.md')) {
         return { meta: fakeEvento('2026-04-01', 'positivo', [midiaFoto('p1.jpg')]), body: '' };
       }
       // broken: simula schema invalido (reader retorna null)

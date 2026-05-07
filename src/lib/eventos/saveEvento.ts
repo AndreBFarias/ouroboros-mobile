@@ -17,7 +17,7 @@
 // relativo gravado em meta.fotos[]). Esta sprint so muda o destino
 // das fotos NOVAS; nada sobre fotos antigas no disco e' tocado.
 import {
-  eventosPath,
+  eventoPath,
   formatDateYmd,
   readVaultFile,
   writeVaultFile,
@@ -172,7 +172,7 @@ export async function saveEvento(
     fotos: fotosGravadas,
   };
 
-  const relCanonico = eventosPath(agora, slug);
+  const relCanonico = eventoPath(agora, slug);
   const rel = await resolvePath(vaultRoot, relCanonico);
   const uri = joinUri(vaultRoot, rel);
 

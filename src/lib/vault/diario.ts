@@ -7,7 +7,7 @@
 // pasta inexistente => [], arquivos malformados descartados em silencio.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { VAULT_FOLDERS } from '@/lib/vault/paths';
+import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import {
   DiarioEmocionalSchema,
@@ -19,17 +19,18 @@ function joinUri(root: string, rel: string): string {
   return `${trimmed}/${rel}`;
 }
 
-// Lista todos os registros de diario emocional do Vault. Pasta
-// inexistente => []. Ordenacao desc por data (ISO 8601 ordena
-// lexicograficamente). Caller filtra por modo conforme necessidade.
+// Lista todos os registros de diario emocional do Vault (H2 layout-
+// por-tipo). Le markdown/ filtrando por prefixo 'diario-'. Pasta
+// inexistente => []. Ordenacao desc por data (ISO 8601 lexicografica).
 export async function listarDiarios(
   vaultRoot: string
 ): Promise<DiarioEmocionalMeta[]> {
   if (!vaultRoot || vaultRoot.startsWith('web://')) {
     return [];
   }
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.inboxMenteDiario);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'diario-'));
 
   const lidos: DiarioEmocionalMeta[] = [];
   for (const arquivoUri of arquivos) {

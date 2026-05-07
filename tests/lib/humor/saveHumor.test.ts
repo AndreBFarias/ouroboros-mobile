@@ -51,10 +51,10 @@ describe('saveHumor', () => {
   it('caminho feliz: escreve no path canonico sem conflito', async () => {
     const out = await saveHumor(baseHumor, VAULT_ROOT);
     expect(out.conflito).toBe(false);
-    expect(out.uri).toMatch(/daily\/2026-04-29\.md$/);
+    expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('daily/2026-04-29.md');
+    expect(uri).toContain('markdown/humor-2026-04-29.md');
     expect(meta).toMatchObject({
       tipo: 'humor',
       data: '2026-04-29',
@@ -71,7 +71,7 @@ describe('saveHumor', () => {
     });
     const out = await saveHumor(baseHumor, VAULT_ROOT);
     expect(out.conflito).toBe(false);
-    expect(out.uri).toMatch(/daily\/2026-04-29\.md$/);
+    expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
   });
 
   it('outra instalacao ja gravou: aplica sufixo deviceId M38', async () => {
@@ -83,9 +83,9 @@ describe('saveHumor', () => {
     expect(out.conflito).toBe(true);
     // M38: suffix mudou de '-pessoa_<a|b>' para '-ouro-<6chars>' para
     // cobrir 4+ devices em vez de so 2.
-    expect(out.uri).toMatch(/daily\/2026-04-29-ouro-[a-z0-9]{6}\.md$/);
+    expect(out.uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
     const [uri] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toMatch(/daily\/2026-04-29-ouro-[a-z0-9]{6}\.md$/);
+    expect(uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
   });
 
   it('rejeita payload invalido (humor=0)', async () => {
@@ -100,7 +100,7 @@ describe('saveHumor', () => {
     await saveHumor(baseHumor, `${VAULT_ROOT}/`);
     const [uri] = mockWriteVaultFile.mock.calls[0];
     // Nao deve haver '//' antes de daily/.
-    expect(uri).not.toContain('//daily/');
-    expect(uri).toMatch(/\/daily\/2026-04-29\.md$/);
+    expect(uri).not.toContain('//markdown/');
+    expect(uri).toMatch(/\/markdown\/humor-2026-04-29\.md$/);
   });
 });

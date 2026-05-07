@@ -5,7 +5,7 @@
 // crises (modo='negativo') por periodo. Espelha padrao de listarMarcos.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { VAULT_FOLDERS } from '@/lib/vault/paths';
+import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 
@@ -14,7 +14,8 @@ function joinUri(root: string, rel: string): string {
   return `${trimmed}/${rel}`;
 }
 
-// Lista todos os eventos do Vault. Pasta inexistente => []. Ordenacao
+// Lista todos os eventos do Vault (H2 layout-por-tipo). Le markdown/
+// filtrando por prefixo 'evento-'. Pasta inexistente => []. Ordenacao
 // desc por data ISO 8601.
 export async function listarEventos(
   vaultRoot: string
@@ -22,8 +23,9 @@ export async function listarEventos(
   if (!vaultRoot || vaultRoot.startsWith('web://')) {
     return [];
   }
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.eventos);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'evento-'));
 
   const lidos: EventoMeta[] = [];
   for (const arquivoUri of arquivos) {

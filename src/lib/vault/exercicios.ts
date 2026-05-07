@@ -19,7 +19,11 @@ import { StorageAccessFramework } from 'expo-file-system/legacy';
 // re-exporta este arquivo, e tests que fazem
 // jest.mock('@/lib/vault') com requireActual perderiam o helper sem
 // este desvio.
-import { exerciciosPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  exercicioPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ExercicioSchema, type Exercicio } from '@/lib/schemas/exercicio';
@@ -50,7 +54,7 @@ export async function lerExercicio(
   vaultRoot: string,
   slug: string
 ): Promise<Exercicio | null> {
-  const uri = joinUri(vaultRoot, exerciciosPath(slug));
+  const uri = joinUri(vaultRoot, exercicioPath(slug));
   const result = await readVaultFile(uri, ExercicioSchema);
   if (!result) return null;
   return result.meta;
@@ -62,8 +66,9 @@ export async function listarExercicios(
   vaultRoot: string,
   filtros: ListarExerciciosFiltros = {}
 ): Promise<Exercicio[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.exercicios);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'exercicio-'));
 
   const lidos: Exercicio[] = [];
   for (const arquivoUri of arquivos) {
@@ -106,7 +111,7 @@ export async function escreverExercicio(
   if (!parsed.success) {
     throw new Error(`exercicio invalido: ${parsed.error.message}`);
   }
-  const rel = exerciciosPath(parsed.data.slug);
+  const rel = exercicioPath(parsed.data.slug);
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<Exercicio>(uri, parsed.data, body);
   return { uri };
@@ -119,7 +124,7 @@ export async function excluirExercicio(
   vaultRoot: string,
   slug: string
 ): Promise<{ lixeiraPath: string }> {
-  const origemUri = joinUri(vaultRoot, exerciciosPath(slug));
+  const origemUri = joinUri(vaultRoot, exercicioPath(slug));
 
   // cacheDirectory pode ser null em ambientes web. Usamos prefixo
   // mock para não quebrar testes; o caller real (Tela 08 botao

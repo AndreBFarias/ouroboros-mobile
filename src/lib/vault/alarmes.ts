@@ -4,7 +4,11 @@
 // sobrescreve (usado para edicao); slug novo cria arquivo novo.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { alarmesPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  alarmePath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
@@ -20,8 +24,9 @@ function joinUri(root: string, rel: string): string {
 // asc por horario (HH:MM lex), depois por titulo, para a tela de
 // listagem não mostrar ordem aleatoria de filesystem.
 export async function listarAlarmes(vaultRoot: string): Promise<Alarme[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.alarmes);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'alarme-'));
 
   const lidos: Alarme[] = [];
   for (const arquivoUri of arquivos) {
@@ -47,7 +52,7 @@ export async function lerAlarme(
   vaultRoot: string,
   slug: string
 ): Promise<Alarme | null> {
-  const rel = alarmesPath(slug);
+  const rel = alarmePath(slug);
   const uri = joinUri(vaultRoot, rel);
   const result = await readVaultFile(uri, AlarmeSchema);
   return result ? result.meta : null;
@@ -71,7 +76,7 @@ export async function escreverAlarme(
   if (!parsed.success) {
     throw new Error(`alarme invalido: ${parsed.error.message}`);
   }
-  const relCanonico = alarmesPath(parsed.data.slug);
+  const relCanonico = alarmePath(parsed.data.slug);
   let rel = relCanonico;
   if (modoCriacao) {
     const uriCanonico = joinUri(vaultRoot, relCanonico);
@@ -94,7 +99,7 @@ export async function excluirAlarme(
   vaultRoot: string,
   slug: string
 ): Promise<void> {
-  const rel = alarmesPath(slug);
+  const rel = alarmePath(slug);
   const uri = joinUri(vaultRoot, rel);
   try {
     await StorageAccessFramework.deleteAsync(uri);

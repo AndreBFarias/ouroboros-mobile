@@ -10,7 +10,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 // Imports diretos aos modulos finais (não ao barrel @/lib/vault)
 // para evitar ciclo de carregamento durante jest.requireActual nos
 // testes que mockam o barrel.
-import { exerciciosGifPath } from '@/lib/vault/paths';
+import { exercicioGifPath } from '@/lib/vault/paths';
 import { escreverExercicio } from '@/lib/vault/exercicios';
 import { ExercicioSchema, type Exercicio } from '@/lib/schemas/exercicio';
 
@@ -76,7 +76,7 @@ export async function saveExercicio(
 
   if (typeof gifTemporario === 'string' && gifTemporario.length > 0) {
     await validarGif(gifTemporario);
-    const relGif = exerciciosGifPath(parsed.data.slug);
+    const relGif = exercicioGifPath(parsed.data.slug);
     const destinoUri = joinUri(vaultRoot, relGif);
     await FileSystem.copyAsync({ from: gifTemporario, to: destinoUri });
     gifGravado = relGif;

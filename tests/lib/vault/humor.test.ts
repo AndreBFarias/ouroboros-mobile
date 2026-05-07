@@ -45,9 +45,9 @@ describe('listarHumor', () => {
 
   it('ordena desc por data', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/daily/2026-04-29.md`,
-      `${VAULT_ROOT}/daily/2026-05-01.md`,
-      `${VAULT_ROOT}/daily/2026-04-30.md`,
+      `${VAULT_ROOT}/markdown/humor-2026-04-29.md`,
+      `${VAULT_ROOT}/markdown/humor-2026-05-01.md`,
+      `${VAULT_ROOT}/markdown/humor-2026-04-30.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({ meta: { ...humorBase, data: '2026-04-29' } })
@@ -63,8 +63,8 @@ describe('listarHumor', () => {
 
   it('descarta arquivos malformados', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/daily/2026-05-01.md`,
-      `${VAULT_ROOT}/daily/quebrado.md`,
+      `${VAULT_ROOT}/markdown/humor-2026-05-01.md`,
+      `${VAULT_ROOT}/markdown/humor-quebrado.md`,
     ]);
     mockReadVaultFile
       .mockResolvedValueOnce({ meta: humorBase })

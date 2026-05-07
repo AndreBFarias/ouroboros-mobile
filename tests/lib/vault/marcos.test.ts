@@ -51,7 +51,7 @@ beforeEach(() => {
 describe('listarMarcos', () => {
   it('lista marcos do vault', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/marcos/2026-04-23-x.md',
+      'content://test/vault/markdown/marco-2026-04-23-x.md',
     ]);
     mockReadVaultFile.mockResolvedValueOnce({ meta: marcoBase, body: '' });
     const lista = await listarMarcos(VAULT_ROOT);
@@ -61,8 +61,8 @@ describe('listarMarcos', () => {
 
   it('filtra por autor', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/marcos/x.md',
-      'content://test/vault/marcos/y.md',
+      'content://test/vault/markdown/marco-x.md',
+      'content://test/vault/markdown/marco-y.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -82,8 +82,8 @@ describe('listarMarcos', () => {
 
   it('ordena desc por data', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/marcos/a.md',
-      'content://test/vault/marcos/b.md',
+      'content://test/vault/markdown/marco-a.md',
+      'content://test/vault/markdown/marco-b.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -101,7 +101,7 @@ describe('escreverMarco', () => {
   it('escreve no path canonico', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const out = await escreverMarco(VAULT_ROOT, 'algo', marcoBase);
-    expect(out.rel).toBe('marcos/2026-04-23-algo.md');
+    expect(out.rel).toBe('markdown/marco-2026-04-23-algo.md');
   });
 
   it('rejeita descricao vazia', async () => {

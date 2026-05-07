@@ -80,11 +80,11 @@ describe('saveDiario caminho feliz', () => {
       VAULT_ROOT
     );
     expect(out.uri).toMatch(
-      /inbox\/mente\/diario\/2026-04-29-0900-raiva\.md$/
+      /markdown\/diario-2026-04-29-0900-raiva\.md$/
     );
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('inbox/mente/diario/2026-04-29-0900-raiva.md');
+    expect(uri).toContain('markdown/diario-2026-04-29-0900-raiva.md');
     expect(meta).toMatchObject({
       tipo: 'diario_emocional',
       modo: 'trigger',
@@ -97,7 +97,7 @@ describe('saveDiario caminho feliz', () => {
     const sem: DiarioEmocionalMeta = { ...baseSucesso, emocoes: [] };
     const out = await saveDiario(sem, 'sem emocoes.', VAULT_ROOT);
     expect(out.uri).toMatch(
-      /inbox\/mente\/diario\/2026-04-29-0900-registro\.md$/
+      /markdown\/diario-2026-04-29-0900-registro\.md$/
     );
   });
 
@@ -111,8 +111,8 @@ describe('saveDiario caminho feliz', () => {
   it('normaliza root com barra final na concatenacao', async () => {
     await saveDiario(baseTrigger, '', `${VAULT_ROOT}/`);
     const [uri] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).not.toContain('//inbox/');
-    expect(uri).toMatch(/\/inbox\/mente\/diario\//);
+    expect(uri).not.toContain('//markdown/');
+    expect(uri).toMatch(/\/markdown\/diario-/);
   });
 });
 

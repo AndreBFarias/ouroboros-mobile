@@ -15,7 +15,7 @@ import {
   type DiarioEmocionalMeta,
 } from '@/lib/schemas/diario_emocional';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
-import { VAULT_FOLDERS } from '@/lib/vault/paths';
+import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import type {
   Conquista,
   ConquistaOrigem,
@@ -74,8 +74,9 @@ function conquistaIdDiario(meta: DiarioEmocionalMeta): string {
 async function lerEventosPositivos(
   vaultRoot: string
 ): Promise<Conquista[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.eventos);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'evento-'));
 
   const out: Conquista[] = [];
   for (const arquivoUri of arquivos) {
@@ -111,8 +112,9 @@ async function lerEventosPositivos(
 async function lerDiarioVitorias( // anonimato-allow: substantivo comum sucesso/conquista
   vaultRoot: string
 ): Promise<Conquista[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.inboxMenteDiario);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'diario-'));
 
   const out: Conquista[] = [];
   for (const arquivoUri of arquivos) {

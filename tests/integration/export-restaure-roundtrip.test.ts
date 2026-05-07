@@ -236,54 +236,56 @@ describe('export -> restaure roundtrip (M-EXPORT-COMPLETO A5)', () => {
     jest.clearAllMocks();
   });
 
-  it('seed completo (50+ md + 3 fotos + 1 audio + cache) faz roundtrip byte-a-byte', async () => {
-    // 1) Seed: 30 daily, 10 eventos, 5 marcos, 5 medidas, 2 contadores.
+  it('seed completo (50+ md + 3 fotos + 1 audio + cache) faz roundtrip byte-a-byte (H2 layout-por-tipo)', async () => {
+    // H2 ADR-0023: layout-por-tipo. Tudo .md em markdown/, binarios
+    // em <ext>/. Seed reflete novo formato.
+    // 30 humor + 10 evento + 5 marco + 5 medidas + 2 contador = 52 .md
     for (let d = 1; d <= 30; d++) {
       const dia = String(d).padStart(2, '0');
       escreverUtf8(
-        `daily/2026-04-${dia}.md`,
+        `markdown/humor-2026-04-${dia}.md`,
         `---\ndata: 2026-04-${dia}\nhumor: ${(d % 5) + 1}\n---\n\nDia ${d}.\n`
       );
     }
     for (let e = 1; e <= 10; e++) {
       escreverUtf8(
-        `eventos/2026-04-${String(e).padStart(2, '0')}-evento-${e}.md`,
+        `markdown/evento-2026-04-${String(e).padStart(2, '0')}-evento-${e}.md`,
         `---\ndata: 2026-04-${String(e).padStart(2, '0')}\ntitulo: Evento ${e}\n---\n`
       );
     }
     for (let m = 1; m <= 5; m++) {
-      escreverUtf8(`marcos/2026-04-${String(m).padStart(2, '0')}-marco-${m}.md`, `marco ${m}\n`);
+      escreverUtf8(`markdown/marco-2026-04-${String(m).padStart(2, '0')}-marco-${m}.md`, `marco ${m}\n`);
     }
     for (let me = 1; me <= 5; me++) {
       escreverUtf8(
-        `medidas/2026-04-${String(me).padStart(2, '0')}-medida.md`,
+        `markdown/medidas-2026-04-${String(me).padStart(2, '0')}.md`,
         `medida ${me}\n`
       );
     }
     for (let c = 1; c <= 2; c++) {
-      escreverUtf8(`contadores/contador-${c}.md`, `contador ${c}\n`);
+      escreverUtf8(`markdown/contador-c${c}.md`, `contador ${c}\n`);
     }
-    // 3 fotos mock (binarios)
-    escreverBase64('media/fotos/2026-04-01-aaaa.jpg', blobDeterministico(1, 256));
-    escreverBase64('media/fotos/2026-04-02-bbbb.jpg', blobDeterministico(2, 512));
-    escreverBase64('media/fotos/2026-04-03-cccc.jpg', blobDeterministico(3, 1024));
-    // Companions correspondentes.
+    // 3 fotos mock (binarios em jpg/, companions em markdown/).
+    escreverBase64('jpg/foto-2026-04-01-aaaa.jpg', blobDeterministico(1, 256));
+    escreverBase64('jpg/foto-2026-04-02-bbbb.jpg', blobDeterministico(2, 512));
+    escreverBase64('jpg/foto-2026-04-03-cccc.jpg', blobDeterministico(3, 1024));
+    // Companions correspondentes em markdown/.
     escreverUtf8(
-      'media/fotos/2026-04-01-aaaa.md',
+      'markdown/foto-2026-04-01-aaaa.md',
       '---\ntipo: foto\narquivo: 2026-04-01-aaaa.jpg\n---\n'
     );
     escreverUtf8(
-      'media/fotos/2026-04-02-bbbb.md',
+      'markdown/foto-2026-04-02-bbbb.md',
       '---\ntipo: foto\narquivo: 2026-04-02-bbbb.jpg\n---\n'
     );
     escreverUtf8(
-      'media/fotos/2026-04-03-cccc.md',
+      'markdown/foto-2026-04-03-cccc.md',
       '---\ntipo: foto\narquivo: 2026-04-03-cccc.jpg\n---\n'
     );
-    // 1 audio mock + companion.
-    escreverBase64('media/audios/2026-04-01-dddd.m4a', blobDeterministico(7, 2048));
+    // 1 audio mock + companion (binario em m4a/, companion em markdown/).
+    escreverBase64('m4a/audio-2026-04-01-dddd.m4a', blobDeterministico(7, 2048));
     escreverUtf8(
-      'media/audios/2026-04-01-dddd.md',
+      'markdown/audio-2026-04-01-dddd.md',
       '---\ntipo: audio\narquivo: 2026-04-01-dddd.m4a\n---\n'
     );
     // Cache JSON.
@@ -330,22 +332,22 @@ describe('export -> restaure roundtrip (M-EXPORT-COMPLETO A5)', () => {
     expect(snapAfter.has('.ouroboros/snapshot-settings.json')).toBe(true);
   });
 
-  it('restore default (sem sobrescrever) cria pasta restaurado-<data>/', async () => {
-    escreverUtf8('daily/2026-05-01.md', 'oi\n');
+  it('restore default (sem sobrescrever) cria pasta restaurado-<data>/ (H2 layout-por-tipo)', async () => {
+    escreverUtf8('markdown/humor-2026-05-01.md', 'oi\n');
 
     const res = await exportarVaultZip();
     expect(res.uri).not.toBeNull();
 
-    // Apaga so o conteudo de daily/, mantem outros para garantir
+    // Apaga so o conteudo do .md, mantem outros para garantir
     // append nao destrutivo.
-    fsMock.__arquivos.delete(`${VAULT}/daily/2026-05-01.md`);
+    fsMock.__arquivos.delete(`${VAULT}/markdown/humor-2026-05-01.md`);
 
     const restRes = await restaurarVaultZip(res.uri as string);
     expect(restRes.ok).toBe(true);
     expect(restRes.raizDestino).toMatch(/restaurado-\d{4}-\d{2}-\d{2}$/);
-    // O arquivo original NAO foi tocado em VAULT/daily; ele foi
-    // restaurado dentro de restaurado-<data>/daily/.
-    const dest = `${restRes.raizDestino}/daily/2026-05-01.md`;
+    // O arquivo original NAO foi tocado em VAULT/markdown; ele foi
+    // restaurado dentro de restaurado-<data>/markdown/.
+    const dest = `${restRes.raizDestino}/markdown/humor-2026-05-01.md`;
     expect(fsMock.__arquivos.has(dest)).toBe(true);
   });
 

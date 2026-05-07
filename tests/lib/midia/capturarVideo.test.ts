@@ -63,10 +63,10 @@ describe('capturarVideo (M34)', () => {
     });
     expect(r.ok).toBe(true);
     expect(r.arquivo).toMatch(
-      /^media\/videos\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.mp4$/
+      /^mp4\/video-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.mp4$/
     );
     expect(r.companion).toMatch(
-      /^media\/videos\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
+      /^markdown\/video-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
     );
     expect(copySpy).toHaveBeenCalledTimes(1);
     expect(writeSpy).toHaveBeenCalledTimes(1);

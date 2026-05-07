@@ -22,7 +22,7 @@ import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
-import { treinosPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import { treinosPath } from '@/lib/vault/paths';
 import {
   TreinoSessaoSchema,
   type TreinoSessao,
@@ -69,7 +69,8 @@ export async function migrarDraftsParaTreinoSessao(
       : useVault.getState().vaultRoot;
   if (!vaultRoot) return { migrados: 0, ignorados: 0 };
 
-  const draftsFolderUri = joinUri(vaultRoot, VAULT_FOLDERS.treinosDraft);
+  // Treinos drafts (M11) ainda em layout legado: pasta 'treinos/draft'.
+  const draftsFolderUri = joinUri(vaultRoot, 'treinos/draft');
   const arquivos = await listVaultFolder(draftsFolderUri, '.md');
 
   let migrados = 0;

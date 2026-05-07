@@ -13,7 +13,12 @@
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 // Imports apontam para modulos finais (não para o barrel @/lib/vault)
 // para evitar ciclo de carregamento.
-import { contadoresPath, VAULT_FOLDERS, formatDateYmd } from '@/lib/vault/paths';
+import {
+  contadorPath,
+  formatDateYmd,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ContadorSchema, type Contador } from '@/lib/schemas/contador';
@@ -31,8 +36,9 @@ function joinUri(root: string, rel: string): string {
 export async function listarContadores(
   vaultRoot: string
 ): Promise<Contador[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.contadores);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'contador-'));
 
   const lidos: Contador[] = [];
   for (const arquivoUri of arquivos) {
@@ -55,7 +61,7 @@ export async function lerContador(
   vaultRoot: string,
   slug: string
 ): Promise<Contador | null> {
-  const rel = contadoresPath(slug);
+  const rel = contadorPath(slug);
   const uri = joinUri(vaultRoot, rel);
   const result = await readVaultFile(uri, ContadorSchema);
   return result ? result.meta : null;
@@ -80,7 +86,7 @@ export async function escreverContador(
   if (!parsed.success) {
     throw new Error(`contador invalido: ${parsed.error.message}`);
   }
-  const relCanonico = contadoresPath(parsed.data.slug);
+  const relCanonico = contadorPath(parsed.data.slug);
   let rel = relCanonico;
   if (modoCriacao) {
     const uriCanonico = joinUri(vaultRoot, relCanonico);
@@ -101,7 +107,7 @@ export async function excluirContador(
   vaultRoot: string,
   slug: string
 ): Promise<void> {
-  const rel = contadoresPath(slug);
+  const rel = contadorPath(slug);
   const uri = joinUri(vaultRoot, rel);
   try {
     await StorageAccessFramework.deleteAsync(uri);

@@ -92,17 +92,17 @@ describe('capturarFoto (M34)', () => {
     });
     expect(r.ok).toBe(true);
     expect(r.arquivo).toMatch(
-      /^media\/fotos\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg$/
+      /^jpg\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg$/
     );
     expect(r.companion).toMatch(
-      /^media\/fotos\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
+      /^markdown\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
     );
     expect(copySpy).toHaveBeenCalledTimes(1);
     expect(writeSpy).toHaveBeenCalledTimes(1);
 
     const copyArgs = copySpy.mock.calls[0][0] as { from: string; to: string };
     expect(copyArgs.from).toBe('file:///origem/foto.jpg');
-    expect(copyArgs.to).toContain('/mock/vault/media/fotos/');
+    expect(copyArgs.to).toContain('/mock/vault/jpg/');
 
     const writeArgs = writeSpy.mock.calls[0] as [string, string];
     const conteudo = writeArgs[1];

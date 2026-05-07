@@ -21,7 +21,11 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 // Imports apontam diretamente para os modulos finais (não para o
 // barrel @/lib/vault) para evitar ciclo de carregamento.
-import { tarefasPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  tarefaPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
@@ -50,7 +54,10 @@ function uriParaRelativo(uri: string, root: string): string {
   if (uri.startsWith(`${trimmedRoot}/`)) {
     return uri.slice(trimmedRoot.length + 1);
   }
-  // Fallback: tenta achar 'tarefas/' no final.
+  // Fallback: tenta achar 'markdown/' no final (layout-por-tipo H2).
+  // Cai para 'tarefas/' como ultimo recurso (arquivos legados).
+  const idxMd = uri.lastIndexOf('markdown/');
+  if (idxMd >= 0) return uri.slice(idxMd);
   const idx = uri.lastIndexOf('tarefas/');
   return idx >= 0 ? uri.slice(idx) : uri;
 }
@@ -62,8 +69,9 @@ function uriParaRelativo(uri: string, root: string): string {
 export async function listarTarefas(
   vaultRoot: string
 ): Promise<TarefaListada[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.tarefas);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'tarefa-'));
 
   const lidos: TarefaListada[] = [];
   for (const arquivoUri of arquivos) {
@@ -173,8 +181,9 @@ export async function criarTarefa(
     }
   }
 
-  const dataDate = new Date(`${metaFinal.data}T00:00:00-03:00`);
-  const relCanonico = tarefasPath(dataDate, slug);
+  // H2 layout-por-tipo: tarefa nao usa data no path. Slug ja inclui
+  // sufixo random para deduplicar; data de criacao vive no frontmatter.
+  const relCanonico = tarefaPath(slug);
 
   // M38: conflict resolution. Se ja existe arquivo no path canonico
   // com autor diferente (outro device criou tarefa de mesmo dia/slug),

@@ -67,22 +67,22 @@ describe('listarContadores', () => {
 
   it('ordena por titulo asc com localeCompare PT-BR', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/contadores/c.md`,
-      `${VAULT_ROOT}/contadores/a.md`,
-      `${VAULT_ROOT}/contadores/b.md`,
+      `${VAULT_ROOT}/markdown/contador-c.md`,
+      `${VAULT_ROOT}/markdown/contador-a.md`,
+      `${VAULT_ROOT}/markdown/contador-b.md`,
     ]);
     mockReadVaultFile.mockImplementation((uri: string) => {
-      if (uri.endsWith('/a.md'))
+      if (uri.endsWith('contador-a.md'))
         return Promise.resolve({
           meta: fixture({ slug: 'a', titulo: 'Sem álcool' }),
           body: '',
         });
-      if (uri.endsWith('/b.md'))
+      if (uri.endsWith('contador-b.md'))
         return Promise.resolve({
           meta: fixture({ slug: 'b', titulo: 'Sem cigarro' }),
           body: '',
         });
-      if (uri.endsWith('/c.md'))
+      if (uri.endsWith('contador-c.md'))
         return Promise.resolve({
           meta: fixture({ slug: 'c', titulo: 'Sem rede social' }),
           body: '',
@@ -99,8 +99,8 @@ describe('listarContadores', () => {
 
   it('ignora arquivos malformados sem propagar erro', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      `${VAULT_ROOT}/contadores/ok.md`,
-      `${VAULT_ROOT}/contadores/quebrada.md`,
+      `${VAULT_ROOT}/markdown/contador-ok.md`,
+      `${VAULT_ROOT}/markdown/contador-quebrada.md`,
     ]);
     mockReadVaultFile.mockImplementation((uri: string) => {
       if (uri.endsWith('quebrada.md')) {
@@ -119,7 +119,7 @@ describe('lerContador', () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
     await lerContador(VAULT_ROOT, 'sem-cigarro');
     expect(mockReadVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/contadores/sem-cigarro.md`,
+      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`,
       expect.anything()
     );
   });
@@ -143,7 +143,7 @@ describe('escreverContador', () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture();
     const { rel, uri } = await escreverContador(VAULT_ROOT, meta);
-    expect(rel).toBe('contadores/sem-cigarro.md');
+    expect(rel).toBe('markdown/contador-sem-cigarro.md');
     expect(uri).toBe(`${VAULT_ROOT}/${rel}`);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
       `${VAULT_ROOT}/${rel}`,
@@ -165,7 +165,7 @@ describe('excluirContador', () => {
     mockDeleteAsync.mockResolvedValueOnce(undefined);
     await excluirContador(VAULT_ROOT, 'sem-cigarro');
     expect(mockDeleteAsync).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/contadores/sem-cigarro.md`
+      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`
     );
   });
 
@@ -194,7 +194,7 @@ describe('registrarReset', () => {
     expect(out.resets).toEqual([agora.toISOString()]);
     expect(out.inicio).toBe('2026-04-29');
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/contadores/sem-cigarro.md`,
+      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`,
       expect.objectContaining({ recorde: 28 }),
       ''
     );

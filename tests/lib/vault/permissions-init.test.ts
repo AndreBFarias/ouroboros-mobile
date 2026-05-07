@@ -117,14 +117,14 @@ describe('inicializarVaultCanonico', () => {
     expect(result.modo).toBe('auto');
   });
 
-  it('cria todas as 19 subpastas canonicas no boot', async () => {
+  it('cria todas as 8 subpastas canonicas no boot (H2 layout-por-tipo)', async () => {
     setPlatform('android', 33);
     await inicializarVaultCanonico();
     // garantirSubpastas chamou makeDirectoryAsync uma vez por subpasta
     // (intermediates: true). Pode ser >= se houve tentativa do fallback,
     // mas no caminho 'auto' espera-se exato a contagem da constante.
-    expect(SUBPASTAS_CANONICAS.length).toBe(19);
-    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(19);
+    expect(SUBPASTAS_CANONICAS.length).toBe(8);
+    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(8);
     SUBPASTAS_CANONICAS.forEach((sub) => {
       expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(
         `${VAULT_CANONICO_URI}${sub}`,
@@ -231,28 +231,17 @@ describe('pedirPermissaoStorage', () => {
   });
 });
 
-describe('SUBPASTAS_CANONICAS', () => {
-  it('inclui as pastas raiz, inbox e media canonicas', () => {
+describe('SUBPASTAS_CANONICAS (H2 layout-por-tipo, ADR-0023)', () => {
+  it('inclui as pastas canonicas por tipo de arquivo', () => {
     expect(SUBPASTAS_CANONICAS).toEqual(
       expect.arrayContaining([
-        'daily',
-        'eventos',
-        'marcos',
-        'treinos',
-        'exercicios',
-        'medidas',
-        'alarmes',
-        'tarefas',
-        'contadores',
-        'inbox/mente/diario',
-        'inbox/saude/ciclo',
-        'inbox/arquivos',
-        'media/fotos',
-        'media/audios',
-        'media/videos',
-        'media/frases',
-        'media/avatares',
-        'media/scanner',
+        'markdown',
+        'png',
+        'jpg',
+        'm4a',
+        'mp4',
+        'pdf',
+        'gif',
         '.ouroboros/cache',
       ])
     );

@@ -48,11 +48,11 @@ beforeEach(() => {
 });
 
 describe('saveRecordingToVault', () => {
-  it('gera path no formato media/audios/YYYY-MM-DD-<rand>.m4a', async () => {
+  it('gera path no formato m4a/audio-YYYY-MM-DD-<rand>.m4a (H2 layout-por-tipo)', async () => {
     // 2026-04-29 12:00 UTC = 09:00 em Sao Paulo (UTC-3) -> data 2026-04-29.
     const data = new Date('2026-04-29T12:00:00.000Z');
     const rel = await saveRecordingToVault(URI_TEMP, VAULT_ROOT, data);
-    expect(rel).toMatch(/^media\/audios\/2026-04-29-[0-9a-f]{4}\.m4a$/);
+    expect(rel).toMatch(/^m4a\/audio-2026-04-29-[0-9a-f]{4}\.m4a$/);
   });
 
   it('chama copyAsync com origem=URI temp e destino=vaultRoot+path', async () => {
@@ -70,13 +70,15 @@ describe('saveRecordingToVault', () => {
     expect(mockWriteAsStringAsync).toHaveBeenCalledTimes(1);
     const [destinoCompanion, conteudo] =
       mockWriteAsStringAsync.mock.calls[0];
-    // Companion fica no mesmo basename, extensao .md.
+    // H2 layout-por-tipo: companion em markdown/<basename>.md (mesmo
+    // basename do binario, mas em pasta diferente).
+    const basenameSemExt = (rel.split('/').pop() ?? '').replace(/\.m4a$/, '');
     expect(destinoCompanion).toBe(
-      `${VAULT_ROOT}/${rel.replace(/\.m4a$/, '.md')}`
+      `${VAULT_ROOT}/markdown/${basenameSemExt}.md`
     );
     // Frontmatter minimo esperado: tipo + arquivo + data + autor + para.
     expect(conteudo).toContain('tipo: midia_audio');
-    expect(conteudo).toMatch(/arquivo: 2026-04-29-[0-9a-f]{4}\.m4a/);
+    expect(conteudo).toMatch(/arquivo: audio-2026-04-29-[0-9a-f]{4}\.m4a/);
     expect(conteudo).toContain('data: 2026-04-29T12:00:00.000Z');
     expect(conteudo).toContain('autor: pessoa_a');
     expect(conteudo).toContain('para: mim');

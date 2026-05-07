@@ -65,7 +65,7 @@ describe('adicionarFotoManual (M11.1)', () => {
     expect(copySpy).not.toHaveBeenCalled();
   });
 
-  it('copia foto para media/fotos/ quando selecionada e retorna true', async () => {
+  it('copia foto para jpg/ (H2 layout-por-tipo) quando selecionada e retorna true', async () => {
     permSpy.mockResolvedValue({ granted: true });
     launchSpy.mockResolvedValue({
       canceled: false,
@@ -78,7 +78,7 @@ describe('adicionarFotoManual (M11.1)', () => {
     const call = copySpy.mock.calls[0][0] as { from: string; to: string };
     expect(call.from).toBe('file:///origem/foto.jpg');
     expect(call.to).toMatch(
-      /file:\/\/\/mock\/vault\/media\/fotos\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg/
+      /file:\/\/\/mock\/vault\/jpg\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg/
     );
   });
 

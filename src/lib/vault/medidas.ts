@@ -12,7 +12,11 @@
 // porque o picker pode rodar antes ou depois do submit.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { medidasPath, VAULT_FOLDERS } from '@/lib/vault/paths';
+import {
+  medidasPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
@@ -58,8 +62,14 @@ export async function listarMedidas(
   vaultRoot: string,
   filtros: ListarMedidasFiltros = {}
 ): Promise<Medida[]> {
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.medidas);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  // Filtro por prefixo evita confundir medidas-YYYY-MM-DD.md (registro
+  // diario) com medidas-foto-YYYY-MM-DD-<lado>.md (companion da foto).
+  const arquivos = todos.filter(
+    (u) => matchesFeaturePrefix(u, 'medidas-') &&
+           !matchesFeaturePrefix(u, 'medidas-foto-')
+  );
 
   const lidas: Medida[] = [];
   for (const arquivoUri of arquivos) {

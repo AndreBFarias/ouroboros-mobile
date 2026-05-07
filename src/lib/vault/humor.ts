@@ -8,7 +8,7 @@
 // arquivos malformados sao descartados silenciosamente.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { VAULT_FOLDERS } from '@/lib/vault/paths';
+import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 
@@ -17,15 +17,17 @@ function joinUri(root: string, rel: string): string {
   return `${trimmed}/${rel}`;
 }
 
-// Lista todos os registros de humor do Vault. Pasta ausente => [].
+// Lista todos os registros de humor do Vault (layout-por-tipo H2).
+// Le markdown/ e filtra por prefixo 'humor-'. Pasta ausente => [].
 // Ordenacao desc por data (mais recente primeiro), preservando ordem
 // de leitura dentro do mesmo dia (caso 2 pessoas tenham gravado).
 export async function listarHumor(vaultRoot: string): Promise<HumorMeta[]> {
   if (!vaultRoot || vaultRoot.startsWith('web://')) {
     return [];
   }
-  const folderUri = joinUri(vaultRoot, VAULT_FOLDERS.daily);
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'humor-'));
 
   const lidos: HumorMeta[] = [];
   for (const arquivoUri of arquivos) {

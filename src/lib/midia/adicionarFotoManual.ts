@@ -25,7 +25,7 @@ import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
-import { mediaFotosPath } from '@/lib/vault/paths';
+import { fotoPath } from '@/lib/vault/paths';
 import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 
 declare const __DEV__: boolean;
@@ -59,7 +59,7 @@ export async function adicionarFotoManual(): Promise<boolean> {
       galeria.useGaleriaMock.getState().adicionar({
         uri: `web://mock/foto-${ts}.jpg`,
         data,
-        origemPath: `media/fotos/mock-${ts}.jpg`,
+        origemPath: `jpg/foto-${data}-mock-${ts}.jpg`,
         origemSlug: slug,
       });
       return true;
@@ -82,7 +82,9 @@ export async function adicionarFotoManual(): Promise<boolean> {
     });
     if (result.canceled || result.assets.length === 0) return false;
     const origem = result.assets[0].uri;
-    const relPath = mediaFotosPath(new Date(), suffixCurto());
+    // H2: derive ext do origem (jpg ou png); fallback jpg.
+    const extDetectada = origem.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+    const relPath = fotoPath(new Date(), suffixCurto(), extDetectada);
     const destino = joinUri(vaultRoot, relPath);
     await FileSystem.copyAsync({ from: origem, to: destino });
     return true;

@@ -74,7 +74,7 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - ChipGroup multi de 8 tags fechadas (alegria / ansiedade / calma
   / cansaço / foco / irritação / tranquilidade + 1).
 - Textarea opcional de nota.
-- Persiste em `daily/YYYY-MM-DD.md`.
+- Persiste em `markdown/humor-YYYY-MM-DD.md` (H2 layout-por-tipo).
 - Detecção de colisão de pessoa (sufixo `-pessoa_<x>.md`).
 - Flow alvo <30s.
 
@@ -128,7 +128,8 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   texto / link / PDF / documento / arquivo genérico (8 subtipos
   canônicos).
 - Triagem: salvar como evento / diário / conquista / inbox.
-- Persiste em `inbox/<data>-<slug>.md` + binário.
+- Persiste em `inbox/<area>/<subtipo>/<data>-<slug>.md` + binário (legado
+  pré-H2; sprint dedicada migra share intent para layout-por-tipo).
 
 ### 2.8 Captura unificada — M-CAPTURA-UNIFICADA
 
@@ -498,7 +499,7 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   entender a transição em Settings.
 - **Conflict resolution via suffix de deviceId no slug do arquivo
   `.md`** — caminho feliz mantém nome canônico
-  (`daily/YYYY-MM-DD.md`); colisão real entre devices via Syncthing
+  (`markdown/humor-YYYY-MM-DD.md`); colisão real entre devices via Syncthing
   aplica `<canonico>-<deviceId>.md` (cobre 4 nós). Substitui o
   legado `-pessoa_<a|b>.md` (cobria só 2 devices) em humor / diário
   emocional / eventos / tarefas / contadores / alarmes.
@@ -506,7 +507,7 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `-pessoa_b.md` continuam sendo lidos pelos listers (filtram por
   basename data sem olhar suffix). M38 só altera o futuro padrão de
   naming.
-- **Devices index** em `inbox/_devices.md` — registra cada deviceId
+- **Devices index** em `markdown/_devices.md` — registra cada deviceId
   com `nome_amigavel` (editável), `pessoa`, `primeira_atividade`,
   `ultima_atividade`, `substituido_por`. Last-write-wins por subkey
   via Syncthing (cada device sobrescreve só sua própria entrada).
@@ -576,51 +577,63 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - **Android:** `/sdcard/Documents/Ouroboros/`
 - **Sync:** Syncthing (P2P, sem servidor central).
 
-### Estrutura canônica
+### Estrutura canônica (v1.0.0+, ADR-0023 layout-por-tipo)
 
 ```
-daily/YYYY-MM-DD.md                    # humor
-diario/YYYY-MM-DD/<slug>.md            # diário emocional
-eventos/YYYY-MM-DD/<slug>.md
-treinos/YYYY-MM-DD/<slug>.md
-marcos/<slug>.md
-medidas/YYYY-MM-DD.md
-tarefas/<slug>.md
-alarmes/<slug>.md
-contadores/<slug>.md
-ciclo/YYYY-MM-DD.md
-financas/notas/YYYY-MM-DD-<slug>.md
-exercicios/<slug>.md
-inbox/<data>-<slug>.md                 # share intent
-media/<categoria>/<arquivo>            # binário + companion
+markdown/                              # TODOS os .md de TODAS as features
+  humor-YYYY-MM-DD.md
+  diario-YYYY-MM-DD-HHmm-<slug>.md
+  evento-YYYY-MM-DD-<slug>.md
+  marco-YYYY-MM-DD-<slug>.md
+  medidas-YYYY-MM-DD.md
+  exercicio-<slug>.md
+  ciclo-YYYY-MM-DD.md
+  alarme-<slug>.md
+  tarefa-<slug>.md
+  contador-<slug>.md
+  nota-YYYY-MM-DD-HHmmss-<slug>.md     # nota financeira
+  foto-YYYY-MM-DD-<rand>.md            # companion de jpg/png
+  audio-YYYY-MM-DD-<rand>.md           # companion de m4a
+  video-YYYY-MM-DD-<rand>.md           # companion de mp4
+  frase-YYYY-MM-DD-<slug>.md
+  scanner-<slug>.md                    # companion de scan
+  agenda-<pessoa>-YYYY-MM-DD-<eventId>.md
+  _devices.md                          # devices index
+png/  jpg/  m4a/  mp4/  pdf/  gif/     # binários por extensão
 .ouroboros/cache/                      # gerados pelo backend
   humor-heatmap.json
   financas-cache.json
 ```
 
+> Layout legado pré-H2 (por feature: `daily/`, `eventos/`, `media/fotos/`,
+> `inbox/...`) está sendo migrado automaticamente pelo boot hook
+> `migrarVaultLayoutPorTipo` no primeiro boot pós-update.
+
 ## 17. Schemas YAML canônicos (19 ativos)
+
+Todos os paths abaixo são pós-H2 (ADR-0023 layout-por-tipo).
 
 | Schema | Sprint origem | Path típico |
 |---|---|---|
-| `alarme` | M16 + M30 v2 | `alarmes/<slug>.md` |
-| `ciclo_menstrual` | M14.5 | `ciclo/YYYY-MM-DD.md` |
-| `contador` | M18 + M32 + M33 | `contadores/<slug>.md` |
-| `diario_emocional` | M06 + M33 | `diario/YYYY-MM-DD/<slug>.md` |
-| `evento` | M07 + M33 | `eventos/YYYY-MM-DD/<slug>.md` |
-| `exercicio` | M13 | `exercicios/<slug>.md` |
+| `alarme` | M16 + M30 v2 | `markdown/alarme-<slug>.md` |
+| `ciclo_menstrual` | M14.5 | `markdown/ciclo-YYYY-MM-DD.md` |
+| `contador` | M18 + M32 + M33 | `markdown/contador-<slug>.md` |
+| `diario_emocional` | M06 + M33 | `markdown/diario-YYYY-MM-DD-HHmm-<slug>.md` |
+| `evento` | M07 + M33 | `markdown/evento-YYYY-MM-DD-<slug>.md` |
+| `exercicio` | M13 | `markdown/exercicio-<slug>.md` (+ `gif/exercicio-<slug>.gif`) |
 | `financas-cache` | M14 (backend) | `.ouroboros/cache/financas-cache.json` |
-| `financeiro_nota` | M09 | `financas/notas/YYYY-MM-DD-<slug>.md` |
-| `humor` | M05 | `daily/YYYY-MM-DD.md` |
+| `financeiro_nota` | M09 | `markdown/nota-YYYY-MM-DD-HHmmss-<slug>.md` (+ `<ext>/nota-...`) |
+| `humor` | M05 | `markdown/humor-YYYY-MM-DD.md` |
 | `humor_heatmap_cache` | M10 (backend) | `.ouroboros/cache/humor-heatmap.json` |
-| `inbox_arquivo` | M08 | `inbox/<data>-<slug>.md` |
-| `marco` | M11 + M33 | `marcos/<slug>.md` |
-| `medidas` | M12 | `medidas/YYYY-MM-DD.md` |
-| `midia` | M07.x + M34 + M39 | companion de binários |
+| `inbox_arquivo` | M08 | `inbox/<area>/<subtipo>/...md` (legado pré-H2; sprint dedicada migra) |
+| `marco` | M11 + M33 | `markdown/marco-YYYY-MM-DD-<slug>.md` |
+| `medidas` | M12 | `markdown/medidas-YYYY-MM-DD.md` |
+| `midia` | M07.x + M34 + M39 | companion em `markdown/<prefix>-<basename>.md`, binário em `<ext>/` |
 | `para` (componente) | M33 | discriminatedUnion compartilhada |
 | `pessoa` | M03 + M28 | SecureStore |
-| `rotina` | M-ROTINA-TREINO (proposta) | `rotinas/<slug>.md` |
-| `tarefa` | M17 + M31 v2 | `tarefas/<slug>.md` |
-| `treino_sessao` | M11 | `treinos/YYYY-MM-DD/<slug>.md` (com `rotina_slug` opcional pós-M-ROTINA-TREINO) |
+| `rotina` | M-ROTINA-TREINO (proposta) | `markdown/rotina-<slug>.md` |
+| `tarefa` | M17 + M31 v2 | `markdown/tarefa-<slug>.md` |
+| `treino_sessao` | M11 | `treinos/YYYY-MM-DD-<slug>.md` (legado pré-H2; sprint dedicada migra) |
 
 ## 18. Princípios invioláveis
 
@@ -669,7 +682,7 @@ natural:
 
 - `STATE.md` — onde estamos agora.
 - `ROADMAP.md` — fila de execução priorizada.
-- `CLAUDE.md` — regras invioláveis.
+- `GUIDE.md` — regras invioláveis.
 - `VALIDATOR_BRIEF.md` — invariantes do projeto.
 - `HOW_TO_RESUME.md` — guia de retomada em sessão fresh.
 - `docs/BRIEFING.md` — design system + 24 telas + schemas YAML

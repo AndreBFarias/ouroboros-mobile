@@ -314,7 +314,7 @@ describe('feature tarefa (M17 + M31)', () => {
 // 6. MEDIDAS (M12) - medidas/YYYY-MM-DD.md
 // ============================================================
 describe('feature medidas corporais (M12)', () => {
-  it('grava medidas/<data>.md zod-valido', () => {
+  it('grava markdown/medidas-<data>.md zod-valido (H2 layout-por-tipo)', () => {
     const vault = tmpVault();
     const meta: Medida = {
       tipo: 'medidas',
@@ -325,7 +325,7 @@ describe('feature medidas corporais (M12)', () => {
       fotos: [],
     };
     const rel = medidasPath(DATA_FIXA);
-    expect(rel).toBe('medidas/2026-05-04.md');
+    expect(rel).toBe('markdown/medidas-2026-05-04.md');
     checarCaracteres(rel);
     const full = escreverMd(vault, rel, meta, '');
 
@@ -428,7 +428,7 @@ describe('feature alarme (M16)', () => {
 // 10. CICLO MENSTRUAL (M14.5) - inbox/saude/ciclo/YYYY-MM-DD.md
 // ============================================================
 describe('feature ciclo menstrual (M14.5)', () => {
-  it('grava inbox/saude/ciclo/<data>.md zod-valido', () => {
+  it('grava markdown/ciclo-<data>.md zod-valido (H2 layout-por-tipo)', () => {
     const vault = tmpVault();
     const meta: CicloMenstrualMeta = {
       tipo: 'ciclo_menstrual',
@@ -442,7 +442,7 @@ describe('feature ciclo menstrual (M14.5)', () => {
       texto: null,
     };
     const rel = cicloPath(DATA_FIXA);
-    expect(rel).toBe('inbox/saude/ciclo/2026-05-04.md');
+    expect(rel).toBe('markdown/ciclo-2026-05-04.md');
     checarCaracteres(rel);
     const full = escreverMd(vault, rel, meta, '');
 

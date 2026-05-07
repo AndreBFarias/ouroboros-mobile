@@ -40,7 +40,7 @@ beforeEach(() => {
 describe('listarMedidas', () => {
   it('lista medidas do vault', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/2026-04-28.md',
+      'content://test/vault/markdown/medidas-2026-04-28.md',
     ]);
     mockReadVaultFile.mockResolvedValueOnce({ meta: medidaBase, body: '' });
     const lista = await listarMedidas(VAULT_ROOT);
@@ -56,8 +56,8 @@ describe('listarMedidas', () => {
 
   it('ordena desc por data', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/a.md',
-      'content://test/vault/medidas/b.md',
+      'content://test/vault/markdown/medidas-a.md',
+      'content://test/vault/markdown/medidas-b.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -72,8 +72,8 @@ describe('listarMedidas', () => {
 
   it('filtra periodo 30d (corta registros antigos)', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/jan.md',
-      'content://test/vault/medidas/abr.md',
+      'content://test/vault/markdown/medidas-jan.md',
+      'content://test/vault/markdown/medidas-abr.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -89,8 +89,8 @@ describe('listarMedidas', () => {
 
   it('filtra periodo 90d (mantem registro de 80 dias atras)', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/x.md',
-      'content://test/vault/medidas/y.md',
+      'content://test/vault/markdown/medidas-x.md',
+      'content://test/vault/markdown/medidas-y.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -106,8 +106,8 @@ describe('listarMedidas', () => {
 
   it('periodo tudo nao corta nada', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/antigo.md',
-      'content://test/vault/medidas/recente.md',
+      'content://test/vault/markdown/medidas-antigo.md',
+      'content://test/vault/markdown/medidas-recente.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -122,8 +122,8 @@ describe('listarMedidas', () => {
 
   it('ignora arquivos malformados sem quebrar', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/ok.md',
-      'content://test/vault/medidas/quebrado.md',
+      'content://test/vault/markdown/medidas-ok.md',
+      'content://test/vault/markdown/medidas-quebrado.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -139,8 +139,8 @@ describe('listarMedidas', () => {
 describe('lerUltimaMedida', () => {
   it('retorna a medida mais recente', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
-      'content://test/vault/medidas/a.md',
-      'content://test/vault/medidas/b.md',
+      'content://test/vault/markdown/medidas-a.md',
+      'content://test/vault/markdown/medidas-b.md',
     ]);
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
@@ -161,11 +161,11 @@ describe('lerUltimaMedida', () => {
 });
 
 describe('escreverMedida', () => {
-  it('escreve no path canonico medidas/YYYY-MM-DD.md', async () => {
+  it('escreve no path canonico markdown/medidas-YYYY-MM-DD.md (H2 layout-por-tipo)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const out = await escreverMedida(VAULT_ROOT, medidaBase);
-    expect(out.rel).toBe('medidas/2026-04-28.md');
-    expect(out.uri).toContain('medidas/2026-04-28.md');
+    expect(out.rel).toBe('markdown/medidas-2026-04-28.md');
+    expect(out.uri).toContain('markdown/medidas-2026-04-28.md');
   });
 
   it('rejeita medida invalida', async () => {
@@ -183,7 +183,7 @@ describe('escreverMedida', () => {
       fotos: [],
       reflexao: 'sem medidas hoje, so foto.',
     });
-    expect(out.rel).toBe('medidas/2026-04-28.md');
+    expect(out.rel).toBe('markdown/medidas-2026-04-28.md');
   });
 
   it('passa o meta validado para writeVaultFile', async () => {
@@ -191,7 +191,7 @@ describe('escreverMedida', () => {
     await escreverMedida(VAULT_ROOT, medidaBase, 'corpo livre');
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('medidas/2026-04-28.md');
+    expect(uri).toContain('markdown/medidas-2026-04-28.md');
     expect(meta.peso).toBe(78.4);
     expect(body).toBe('corpo livre');
   });
