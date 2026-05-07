@@ -17,13 +17,20 @@
 // Strings visiveis em PT-BR sentence case com acentuacao; a11y sem
 // acento. Comentarios sem acento (convencao shell/CI).
 import { Pressable, View } from 'react-native';
-import { MotiView } from 'moti';
+// N2 (M-MOTI-FIX-CRITICOS): FAB menu e overlay global montado em
+// _layout raiz com transform animado (scale). Substitui MotiView por
+// Animated.View do Reanimated puro. springs.snappy canonico
+// (damping 26, stiffness 320) reage ao state pressed via withSpring.
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Menu } from '@/lib/icons';
 import { usePathname } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { colors, spacing } from '@/theme/tokens';
-import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { rotaEsconderFAB } from '@/lib/navigation/rotasSemFAB';
@@ -42,6 +49,28 @@ export function FABMenu() {
   // condicionais (regra de hooks).
   const marginBottomCanonico = useSafeBottomMargin(insets.bottom);
   const [pressed, setPressed] = useState(false);
+
+  // N2: shared values + spring snappy canonico. Mount: scale 0.9 -> 1,
+  // opacity 0 -> 1. Press: scale 1 -> 0.94 (toggle pressed).
+  const scale = useSharedValue(0.9);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withSpring(1, { damping: 26, stiffness: 320 });
+    scale.value = withSpring(1, { damping: 26, stiffness: 320 });
+  }, [opacity, scale]);
+
+  useEffect(() => {
+    scale.value = withSpring(pressed ? 0.94 : 1, {
+      damping: 26,
+      stiffness: 320,
+    });
+  }, [pressed, scale]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   if (rotaEsconderFAB(pathname)) return null;
   if (sheetCapturaAberto) return null;
@@ -63,15 +92,15 @@ export function FABMenu() {
         zIndex: 10,
       }}
     >
-      <MotiView
-        from={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: pressed ? 0.94 : 1, opacity: 1 }}
-        transition={springs.snappy}
-        style={{
-          position: 'absolute',
-          left: spacing.lg,
-          bottom: marginBottomCanonico,
-        }}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            left: spacing.lg,
+            bottom: marginBottomCanonico,
+          },
+          animStyle,
+        ]}
       >
         <Pressable
           onPress={handlePress}
@@ -96,7 +125,7 @@ export function FABMenu() {
         >
           <Menu size={28} color={colors.bg} strokeWidth={1.8} />
         </Pressable>
-      </MotiView>
+      </Animated.View>
     </View>
   );
 }

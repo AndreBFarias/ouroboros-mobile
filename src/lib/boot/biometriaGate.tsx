@@ -28,8 +28,14 @@ import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Fingerprint } from '@/lib/icons';
-import { MotiView } from 'moti';
-import { springs } from '@/lib/motion';
+// N2 (M-MOTI-FIX-CRITICOS): substitui MotiView por Animated.View do
+// Reanimated puro. Boot path critico (gate de biometria monta antes
+// de qualquer rota) + transform animado (scale) = padrao A28.
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/stores/settings';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -120,26 +126,7 @@ export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) 
         paddingHorizontal: spacing.lg,
       }}
     >
-      <MotiView
-        from={{ opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={springs.default}
-        style={{
-          width: 96,
-          height: 96,
-          borderRadius: 48,
-          backgroundColor: colors.bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: spacing.xl,
-        }}
-      >
-        <Fingerprint
-          size={48}
-          color={colors.purple}
-          strokeWidth={1.5}
-        />
-      </MotiView>
+      <FingerprintAnim />
       <Text
         style={{
           color: colors.fg,
@@ -207,5 +194,47 @@ export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) 
         </Text>
       </Pressable>
     </View>
+  );
+}
+
+// N2 (M-MOTI-FIX-CRITICOS): sub-componente extraido para usar
+// useSharedValue + withSpring (Reanimated puro). Padrao A28: opacity
+// 0->1 e scale 0.94->1 no mount, springs.default canonico
+// (damping 18, stiffness 200).
+function FingerprintAnim() {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.94);
+
+  useEffect(() => {
+    opacity.value = withSpring(1, { damping: 18, stiffness: 200 });
+    scale.value = withSpring(1, { damping: 18, stiffness: 200 });
+  }, [opacity, scale]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: 96,
+          height: 96,
+          borderRadius: 48,
+          backgroundColor: colors.bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing.xl,
+        },
+        animStyle,
+      ]}
+    >
+      <Fingerprint
+        size={48}
+        color={colors.purple}
+        strokeWidth={1.5}
+      />
+    </Animated.View>
   );
 }

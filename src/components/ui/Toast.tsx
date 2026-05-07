@@ -11,8 +11,16 @@ import {
   type ReactNode,
 } from 'react';
 import { Text, View } from 'react-native';
-import { AnimatePresence, MotiView } from 'moti';
-import { springs, timings } from '@/lib/motion';
+// N2 (M-MOTI-FIX-CRITICOS): Toast e overlay global montado em
+// ToastProvider raiz. Substitui MotiView+AnimatePresence por
+// Animated.View com entering/exiting da Reanimated 4. Spring canonico
+// no entering (damping 20, stiffness 250 = timings.toastIn). Exit com
+// fadeOut + slide de 20dp.
+import Animated, {
+  SlideInDown,
+  SlideOutDown,
+} from 'react-native-reanimated';
+import { springs } from '@/lib/motion';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warn';
@@ -92,43 +100,38 @@ export function ToastProvider({ children }: ToastProviderProps) {
           bottom: 0,
         }}
       >
-        <AnimatePresence>
-          {toast && (
-            <MotiView
-              key={toast.id}
-              from={{ translateY: 80, opacity: 0 }}
-              animate={{ translateY: 0, opacity: 1 }}
-              exit={{ translateY: 20, opacity: 0 }}
-              transition={timings.toastIn}
-              exitTransition={timings.fadeOut}
-              accessibilityRole="alert"
-              accessibilityLabel={`toast ${toast.type}`}
+        {toast && (
+          <Animated.View
+            key={toast.id}
+            entering={SlideInDown.springify().damping(20).stiffness(250)}
+            exiting={SlideOutDown.duration(180)}
+            accessibilityRole="alert"
+            accessibilityLabel={`toast ${toast.type}`}
+            style={{
+              position: 'absolute',
+              bottom: 80,
+              left: spacing.lg,
+              right: spacing.lg,
+              backgroundColor: colors.bgElev,
+              borderLeftWidth: 3,
+              borderLeftColor: borderColorFor(toast.type),
+              borderRadius: radius.toast,
+              paddingVertical: spacing.base,
+              paddingHorizontal: spacing.base,
+            }}
+          >
+            <Text
               style={{
-                position: 'absolute',
-                bottom: 80,
-                left: spacing.lg,
-                right: spacing.lg,
-                backgroundColor: colors.bgElev,
-                borderLeftWidth: 3,
-                borderLeftColor: borderColorFor(toast.type),
-                borderRadius: radius.toast,
-                paddingVertical: spacing.base,
-                paddingHorizontal: spacing.base,
+                color: colors.fg,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 14,
+                lineHeight: 22,
               }}
             >
-              <Text
-                style={{
-                  color: colors.fg,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 14,
-                  lineHeight: 22,
-                }}
-              >
-                {toast.message}
-              </Text>
-            </MotiView>
-          )}
-        </AnimatePresence>
+              {toast.message}
+            </Text>
+          </Animated.View>
+        )}
       </View>
     </ToastContext.Provider>
   );

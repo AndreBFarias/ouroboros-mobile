@@ -3,9 +3,21 @@
 // abrir. Cada botao surge em sequência com 60ms delay (springs.bouncy).
 // Tap fora fecha. Ações: humor, voz, camera, exercício, vitoria, trigger.
 // onSelect recebe a key escolhida e o componente fecha automaticamente.
-import { useState, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
+// N2 (M-MOTI-FIX-CRITICOS): linhas 192 (acoes em arco com transform
+// + scale + stagger) e 296 (FAB principal rotate) migradas para
+// Animated.View. Linha 157 (opacity-only do overlay tap-to-close) e
+// risco BAIXO, mantida em moti. Springs canonicos:
+//   - bouncy: damping 12, stiffness 180 (acoes em arco com delay)
+//   - default: damping 18, stiffness 200 (rotate do FAB principal)
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+} from 'react-native-reanimated';
 import {
   Camera,
   Dumbbell,
@@ -186,100 +198,15 @@ export function FABRadial({
           height: ACTION_SIZE,
         }}
       >
-        {ACTIONS.map((action, idx) => {
-          const { dx, dy } = offsetFor(action.angleDeg);
-          return (
-            <MotiView
-              key={action.key}
-              animate={{
-                opacity: open ? 1 : 0,
-                translateX: open ? dx : 0,
-                translateY: open ? dy : 0,
-                scale: open ? 1 : 0.4,
-              }}
-              transition={{ ...springs.bouncy, delay: open ? idx * 60 : 0 }}
-              pointerEvents={open ? 'auto' : 'none'}
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: ACTION_SIZE,
-                height: ACTION_SIZE,
-              }}
-            >
-              {/* Label posicionado em duas estrategias:
-                   - Itens "laterais" (angleDeg < 240): label a esquerda
-                     do circulo, alinhado ao final do container 160dp.
-                   - Itens "superiores" (angleDeg >= 240, ou seja
-                     Exercícios, Conquista, Crise): label ACIMA do
-                     circulo, centralizado, evitando colisao entre
-                     labels próximos do extremo vertical (270 graus). */}
-              {(() => {
-                const labelAcima = action.angleDeg >= 240;
-                const containerStyle = labelAcima
-                  ? ({
-                      position: 'absolute' as const,
-                      bottom: ACTION_SIZE + 6,
-                      left: (ACTION_SIZE - 160) / 2,
-                      width: 160,
-                      height: 28,
-                      alignItems: 'center' as const,
-                      justifyContent: 'center' as const,
-                      opacity: open ? 1 : 0,
-                    })
-                  : ({
-                      position: 'absolute' as const,
-                      right: ACTION_SIZE + LABEL_GAP,
-                      top: (ACTION_SIZE - 28) / 2,
-                      width: 160,
-                      height: 28,
-                      alignItems: 'flex-end' as const,
-                      justifyContent: 'center' as const,
-                      opacity: open ? 1 : 0,
-                    });
-                return (
-                  <View pointerEvents="none" style={containerStyle}>
-                    <Text
-                      style={{
-                        color: colors.fg,
-                        fontFamily: 'JetBrainsMono_500Medium',
-                        fontSize: 14,
-                        lineHeight: 20,
-                        backgroundColor: colors.bgElev,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 8,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {action.label}
-                    </Text>
-                  </View>
-                );
-              })()}
-              <Pressable
-                onPress={() => handleSelect(action.key)}
-                accessibilityRole="button"
-                accessibilityLabel={action.acentLabel}
-                style={{
-                  width: ACTION_SIZE,
-                  height: ACTION_SIZE,
-                  borderRadius: ACTION_SIZE / 2,
-                  backgroundColor: action.color,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 10,
-                  elevation: 8,
-                }}
-              >
-                <action.Icon size={28} color={colors.bg} strokeWidth={2.2} />
-              </Pressable>
-            </MotiView>
-          );
-        })}
+        {ACTIONS.map((action, idx) => (
+          <ActionRadial
+            key={action.key}
+            action={action}
+            idx={idx}
+            open={open}
+            onSelect={handleSelect}
+          />
+        ))}
       </View>
 
       {/* FAB principal: rotaciona 45deg quando aberto (vira X) */}
@@ -293,26 +220,174 @@ export function FABRadial({
           bottom: spacing.xl,
         }}
       >
-        <MotiView
-          animate={{ rotate: open ? '45deg' : '0deg' }}
-          transition={springs.default}
-          style={{
-            width: FAB_SIZE,
-            height: FAB_SIZE,
-            borderRadius: FAB_SIZE / 2,
-            backgroundColor: colors.purple,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 16,
-            elevation: 8,
-          }}
-        >
-          <Plus size={32} color={colors.bg} strokeWidth={2.4} />
-        </MotiView>
+        <FabPrincipalRotate open={open} />
       </Pressable>
     </View>
+  );
+}
+
+// N2 (M-MOTI-FIX-CRITICOS): cada acao do arco vira sub-componente
+// Reanimated puro. Reage a `open` via useEffect: ao abrir, dispara
+// withDelay(idx * 60, withSpring(...)) replicando o stagger do moti.
+// Ao fechar, withSpring sem delay para colapsar imediatamente. Spring
+// canonico bouncy: damping 12, stiffness 180.
+interface ActionRadialProps {
+  action: ActionDescriptor;
+  idx: number;
+  open: boolean;
+  onSelect: (key: FABRadialKey) => void;
+}
+
+function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
+  const { dx, dy } = offsetFor(action.angleDeg);
+
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const scale = useSharedValue(0.4);
+
+  useEffect(() => {
+    const cfg = { damping: 12, stiffness: 180 };
+    if (open) {
+      const d = idx * 60;
+      opacity.value = withDelay(d, withSpring(1, cfg));
+      translateX.value = withDelay(d, withSpring(dx, cfg));
+      translateY.value = withDelay(d, withSpring(dy, cfg));
+      scale.value = withDelay(d, withSpring(1, cfg));
+    } else {
+      opacity.value = withSpring(0, cfg);
+      translateX.value = withSpring(0, cfg);
+      translateY.value = withSpring(0, cfg);
+      scale.value = withSpring(0.4, cfg);
+    }
+  }, [open, idx, dx, dy, opacity, translateX, translateY, scale]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
+  const labelAcima = action.angleDeg >= 240;
+  const containerStyle = labelAcima
+    ? ({
+        position: 'absolute' as const,
+        bottom: ACTION_SIZE + 6,
+        left: (ACTION_SIZE - 160) / 2,
+        width: 160,
+        height: 28,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        opacity: open ? 1 : 0,
+      })
+    : ({
+        position: 'absolute' as const,
+        right: ACTION_SIZE + LABEL_GAP,
+        top: (ACTION_SIZE - 28) / 2,
+        width: 160,
+        height: 28,
+        alignItems: 'flex-end' as const,
+        justifyContent: 'center' as const,
+        opacity: open ? 1 : 0,
+      });
+
+  return (
+    <Animated.View
+      pointerEvents={open ? 'auto' : 'none'}
+      style={[
+        {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: ACTION_SIZE,
+          height: ACTION_SIZE,
+        },
+        animStyle,
+      ]}
+    >
+      <View pointerEvents="none" style={containerStyle}>
+        <Text
+          style={{
+            color: colors.fg,
+            fontFamily: 'JetBrainsMono_500Medium',
+            fontSize: 14,
+            lineHeight: 20,
+            backgroundColor: colors.bgElev,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 8,
+            overflow: 'hidden',
+          }}
+        >
+          {action.label}
+        </Text>
+      </View>
+      <Pressable
+        onPress={() => onSelect(action.key)}
+        accessibilityRole="button"
+        accessibilityLabel={action.acentLabel}
+        style={{
+          width: ACTION_SIZE,
+          height: ACTION_SIZE,
+          borderRadius: ACTION_SIZE / 2,
+          backgroundColor: action.color,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 10,
+          elevation: 8,
+        }}
+      >
+        <action.Icon size={28} color={colors.bg} strokeWidth={2.2} />
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// N2 (M-MOTI-FIX-CRITICOS): FAB principal rotaciona 45deg quando
+// aberto (vira X). Spring canonico default: damping 18, stiffness 200.
+// Rotate como string e' o caso classico A28 que crashava no New Arch
+// com moti+Reanimated 4. Reanimated puro evita ao gerar string apenas
+// no useAnimatedStyle (worklet, pre-formado pelo runtime).
+function FabPrincipalRotate({ open }: { open: boolean }) {
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    rotation.value = withSpring(open ? 45 : 0, {
+      damping: 18,
+      stiffness: 200,
+    });
+  }, [open, rotation]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: FAB_SIZE,
+          height: FAB_SIZE,
+          borderRadius: FAB_SIZE / 2,
+          backgroundColor: colors.purple,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
+          elevation: 8,
+        },
+        animStyle,
+      ]}
+    >
+      <Plus size={32} color={colors.bg} strokeWidth={2.4} />
+    </Animated.View>
   );
 }

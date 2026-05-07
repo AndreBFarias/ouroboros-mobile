@@ -34,7 +34,15 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { MotiView } from 'moti';
+// N2 (M-MOTI-FIX-CRITICOS): drawer e overlay global montado em
+// _layout raiz com transform animado (translateX). Substitui MotiView
+// por Animated.View do Reanimated puro. springs.subtle canonico
+// (damping 22, stiffness 220).
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -56,9 +64,8 @@ import {
   Wallet,
   type LucideProps,
 } from '@/lib/icons';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { colors, spacing, typography } from '@/theme/tokens';
-import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { useSettings } from '@/lib/stores/settings';
@@ -268,21 +275,8 @@ export function MenuLateral() {
         }}
       />
 
-      <MotiView
-        from={{ translateX: -PAINEL_WIDTH }}
-        animate={{ translateX: 0 }}
-        transition={springs.subtle}
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: PAINEL_WIDTH,
-          backgroundColor: colors.bgPage,
-          borderRightWidth: 1,
-          borderRightColor: colors.bgElev,
-        }}
-      >
+      <PainelDrawer>
+
         <ScrollView
           ref={scrollRef}
           onScroll={aoRolar}
@@ -309,8 +303,43 @@ export function MenuLateral() {
           onPress={() => navegar('/settings')}
           insetsBottom={insets.bottom}
         />
-      </MotiView>
+      </PainelDrawer>
     </View>
+  );
+}
+
+// N2 (M-MOTI-FIX-CRITICOS): wrapper Animated.View que dispara slide
+// translateX(-PAINEL_WIDTH) -> 0 em mount via withSpring. springs.subtle
+// canonico (damping 22, stiffness 220) preserva intent visual K1.
+function PainelDrawer({ children }: { children: ReactNode }) {
+  const translateX = useSharedValue(-PAINEL_WIDTH);
+
+  useEffect(() => {
+    translateX.value = withSpring(0, { damping: 22, stiffness: 220 });
+  }, [translateX]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: PAINEL_WIDTH,
+          backgroundColor: colors.bgPage,
+          borderRightWidth: 1,
+          borderRightColor: colors.bgElev,
+        },
+        animStyle,
+      ]}
+    >
+      {children}
+    </Animated.View>
   );
 }
 

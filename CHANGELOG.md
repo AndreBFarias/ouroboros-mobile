@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint N2 — `M-MOTI-FIX-CRITICOS` (2026-05-07)
+
+**Bloco N FECHADO.** Os 6 motis classificados ALTO em N1 (boot path
++ overlays globais com transform animado) migrados para Reanimated
+puro:
+
+1. `BiometriaGate` (boot path crítico A28) — `<FingerprintAnim>`
+   sub-componente com useSharedValue + withSpring.
+2. `Toast` — `<Animated.View entering={SlideInDown.springify()}
+   exiting={SlideOutDown.duration(180)}>`. AnimatePresence eliminado.
+3. `MenuLateral` slide drawer — `<PainelDrawer>` sub-componente
+   com translateX shared value.
+4. `FABRadial` linha 192 (6 ações em arco) — `<ActionRadial>` com
+   4 shared values + withDelay stagger.
+5. `FABRadial` linha 296 (rotate +/45°) — `<FabPrincipalRotate>`
+   com rotate string em useAnimatedStyle worklet.
+6. `FABMenu` press scale — `<Animated.View>` com 2 shared values +
+   2 effects (mount + pressed).
+
+Springs canônicos preservados literalmente (subtle 22/220, default
+18/200, bouncy 12/180, snappy 26/320). `TOAST_SPRING` export
+público preservado para fixtures.
+
+**Não migrados** (escopo limitado): linha 157 FABRadial overlay
+opacity (BAIXO), 38 motis BAIXO + 18 MÉDIO ficam para v1.1.
+
+Métricas: 1742 testes / 176 suítes verde (zero regressão) · TS
+strict 0 · Hermes 7,7 MB intacto · Gauntlet leak 0/6 · anonimato
+OK · PT-BR OK.
+
 ### Sprint N1 — `M-MOTI-AUDIT-RUNTIME` (2026-05-07)
 
 Audit estática completa dos usos de `<MotiView>`/`<MotiText>`/

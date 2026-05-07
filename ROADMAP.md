@@ -84,7 +84,7 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
 | N1 | `M-MOTI-AUDIT-RUNTIME` | `M-MOTI-AUDIT-RUNTIME-spec.md` | ~1h | `[ok]` |
-| N2 | `M-MOTI-FIX-CRITICOS` | `M-MOTI-FIX-CRITICOS-spec.md` | ~3-5h | `[todo]` |
+| N2 | `M-MOTI-FIX-CRITICOS` | `M-MOTI-FIX-CRITICOS-spec.md` | ~3-5h | `[ok]` |
 
 ### Bloco O — Validação obrigatória (transversal)
 
