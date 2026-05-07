@@ -7,9 +7,9 @@
 //   - Backdrop preto 50% que fecha o menu ao tocar.
 //   - Painel 280dp da esquerda, ScrollView interno.
 //   - Header: avatar pessoa ativa + nome (via nomeDe).
-//   - Secao Ver: 6 itens fixos.
+//   - Secao Acesso Rapido: 6 itens fixos.
 //   - Secao Registrar: 6 itens de captura (cores variadas).
-//   - Secao Opcionais: itens condicionais por featureToggles.
+//   - Secao Utilitarios: itens condicionais por featureToggles.
 //   - Rodape fixo: link para Settings.
 //
 // K1 (M-MENU-LATERAL-LAYOUT, 2026-05-07): aplica
@@ -161,8 +161,9 @@ export function MenuLateral() {
       { label: 'Crise', a11yLabel: 'registrar crise', icone: AlertTriangle, route: rotaCaptura('trigger'), cor: colors.red },
     ];
 
-    // Secao "Opcionais": cada item so aparece se o toggle correspondente
-    // estiver on. Defaults sao todos off em M27; M29 vira para on.
+    // Secao "Utilitarios" (renomeada em K2; era "Opcionais"): cada
+    // item so aparece se o toggle correspondente estiver on. Defaults
+    // sao todos off em M27; M29 vira para on.
     const opcionais: ItemMenu[] = [];
     if (featureToggles.todoLeve) {
       opcionais.push({ label: 'Tarefas', a11yLabel: 'item tarefas', icone: ListChecks, route: '/todo' });
@@ -178,11 +179,11 @@ export function MenuLateral() {
     }
 
     const lista: SecaoMenu[] = [
-      { titulo: 'Ver', itens: ver },
+      { titulo: 'Acesso Rápido', itens: ver },
       { titulo: 'Registrar', itens: registrar },
     ];
     if (opcionais.length > 0) {
-      lista.push({ titulo: 'Opcionais', itens: opcionais });
+      lista.push({ titulo: 'Utilitários', itens: opcionais });
     }
     return lista;
   }, [featureToggles, mostrarCiclo]);
@@ -287,7 +288,11 @@ export function MenuLateral() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <CabecalhoPessoa pessoaFoto={fotoAtiva} pessoa={pessoaAtiva} />
+          <CabecalhoPessoa
+            pessoaFoto={fotoAtiva}
+            pessoa={pessoaAtiva}
+            onPress={() => navegar('/settings/editar-pessoa')}
+          />
 
           {secoes.map((secao) => (
             <Secao key={secao.titulo} secao={secao} onItemPress={navegar} />
@@ -306,12 +311,19 @@ export function MenuLateral() {
 interface CabecalhoProps {
   pessoa: 'pessoa_a' | 'pessoa_b';
   pessoaFoto: string | null;
+  onPress: () => void;
 }
 
-function CabecalhoPessoa({ pessoa, pessoaFoto }: CabecalhoProps) {
+// K3: CabecalhoPessoa vira Pressable. Tap em foto ou nome navega para
+// /settings/editar-pessoa. O onPress vem do MenuLateral que ja sabe
+// fechar o drawer + router.push (mesma logica da funcao navegar).
+function CabecalhoPessoa({ pessoa, pessoaFoto, onPress }: CabecalhoProps) {
   const nome = nomeDe(pessoa);
   return (
-    <View
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="editar nome e foto"
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -324,6 +336,7 @@ function CabecalhoPessoa({ pessoa, pessoaFoto }: CabecalhoProps) {
         paddingBottom: spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: colors.bgElev,
+        minHeight: 56,
       }}
     >
       <PersonAvatar pessoa={pessoa} size="md" photoUri={pessoaFoto} />
@@ -337,7 +350,7 @@ function CabecalhoPessoa({ pessoa, pessoaFoto }: CabecalhoProps) {
       >
         {nome}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

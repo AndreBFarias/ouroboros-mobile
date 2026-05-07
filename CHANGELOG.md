@@ -5,6 +5,27 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprints K2 + K3 — `M-MENU-NOMES` + `M-MENU-FOTO-EDITAVEL` (consolidadas, 2026-05-07)
+
+K2: labels do `MenuLateral` `'Ver'` → `'Acesso Rápido'` e `'Opcionais'`
+→ `'Utilitários'` (Sentence case + acento). Audit grep cobriu também
+`gauntletDashboard.tsx` (2 ocorrências).
+
+K3: `CabecalhoPessoa` em `MenuLateral.tsx` vira `<Pressable>` com
+`accessibilityLabel="editar nome e foto"` que navega para
+`/settings/editar-pessoa` (rota já existente — não criada nova,
+componente atende 100% do requisito com AvatarPicker + Input +
+Salvar + setNome + router.back, lida com ambas pessoas via
+`useSettings.tipoCompanhia`).
+
+Tests: +7 casos (K2 labels + ausência dos antigos, K3 tap
+CabecalhoPessoa navega + fecha menu, render editar-pessoa, salvar,
+modo sozinho, modo duo, nome vazio). +1 suite Jest. E2E novo cobre
+K2 labels + K3 navegação.
+
+Métricas: 1734 testes / 175 suítes verde (+7 / +1 suite) · TS strict
+0 · Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint K1 — `M-MENU-LATERAL-LAYOUT` (2026-05-07)
 
 `MenuLateral.tsx` ganha 4 melhorias UX: (1) safe-area-inset-bottom

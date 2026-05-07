@@ -1,9 +1,10 @@
 // Smoke do MenuLateral (M27). Verifica:
 //   - Quando fechado, nao renderiza nada.
-//   - Quando aberto, renderiza secoes Ver e Registrar.
-//   - Secao Opcionais aparece somente quando ao menos um toggle on.
+//   - Quando aberto, renderiza secoes Acesso Rapido e Registrar.
+//   - Secao Utilitarios aparece somente quando ao menos um toggle on.
 //   - Tap em item navega via router.push e fecha o menu.
 //   - Backdrop fecha o menu.
+//   - K3: tap no CabecalhoPessoa navega para /settings/editar-pessoa.
 //
 // K1 (M-MENU-LATERAL-LAYOUT, 2026-05-07) adiciona:
 //   - Scroll position salva em useNavegacao apos onScroll (debounce).
@@ -231,6 +232,30 @@ describe('MenuLateral', () => {
         jest.advanceTimersByTime(10);
       });
       expect(scrollToSpy).toHaveBeenCalledWith({ y: 240, animated: false });
+    });
+
+    // K2: labels das secoes renomeados. Garante PT-BR sentence case
+    // com acentuacao nos titulos exibidos no drawer.
+    it('K2 secoes exibem "Acesso Rápido" e "Utilitários" (com acento)', () => {
+      // Liga ao menos um toggle para que a secao Utilitarios apareca.
+      useSettings.getState().setFeatureToggle('todoLeve', true);
+      useNavegacao.setState({ menuAberto: true });
+      const { getByText, queryByText } = render(<MenuLateral />);
+      expect(getByText('Acesso Rápido')).toBeTruthy();
+      expect(getByText('Utilitários')).toBeTruthy();
+      // Labels antigos nao devem mais aparecer.
+      expect(queryByText('Ver')).toBeNull();
+      expect(queryByText('Opcionais')).toBeNull();
+    });
+
+    // K3: tap no cabecalho navega para tela de edicao de nomes/fotos
+    // e fecha o drawer (mesma logica do navegar() interno).
+    it('K3 tap no CabecalhoPessoa navega para /settings/editar-pessoa e fecha menu', () => {
+      useNavegacao.setState({ menuAberto: true });
+      const { getByLabelText } = render(<MenuLateral />);
+      fireEvent.press(getByLabelText('editar nome e foto'));
+      expect(mockPush).toHaveBeenCalledWith('/settings/editar-pessoa');
+      expect(useNavegacao.getState().menuAberto).toBe(false);
     });
 
     it('Rodape Configuracoes incorpora insets.bottom no paddingBottom', () => {

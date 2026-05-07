@@ -150,7 +150,7 @@ export default function GauntletDashboard() {
         </View>
       </Secao>
 
-      <Secao titulo="Ver">
+      <Secao titulo="Acesso Rápido">
         {ROTAS_VER.map((r) => (
           <LinhaRota key={r.rota} rota={r.rota} label={r.label} router={router} />
         ))}
@@ -162,7 +162,7 @@ export default function GauntletDashboard() {
         ))}
       </Secao>
 
-      <Secao titulo="Opcionais e settings">
+      <Secao titulo="Utilitários e settings">
         {ROTAS_OPCIONAIS.map((r) => (
           <LinhaRota key={r.rota} rota={r.rota} label={r.label} router={router} />
         ))}
