@@ -65,6 +65,14 @@ const FAB_SIZE = 56;
 // frustrar o usuario.
 const TIMEOUT_VIDEO_MS = 15_000;
 
+// I-FOTO (M-SAVE-FOTO-VALIDA, 2026-05-07): timeout de save de foto e'
+// 30s. Justificativa: copy SAF de jpg/png em OEMs MIUI/OneUI/HyperOS
+// pode passar de 10s quando o storage scoped esta saturado ou quando
+// o asset vem da nuvem (Google Photos sync); 30s cobre p99 sem
+// frustrar o usuario. Tambem cobre o tempo de pegar permissao na
+// primeira captura (J1) + abrir o picker + escolher.
+const TIMEOUT_FOTO_MS = 30_000;
+
 // M34.3: descricao de uma acao contextual injetada pela tab que
 // hospeda o MenuCapturaVerde. A tab fornece o conjunto que deve
 // aparecer ANTES das 4 acoes de captura no sheet. Permite que o FAB
@@ -237,13 +245,41 @@ export function MenuCapturaVerde({
     onCapturaConcluida?.();
   }, [onCapturaConcluida]);
 
+  // I-FOTO (M-SAVE-FOTO-VALIDA, 2026-05-07): handler com padrao
+  // canonico try/catch + comTimeout (30s para fotos que podem ser
+  // grandes ou vir do Google Photos sync) + toasts PT-BR. Vault nao
+  // conectado / erro de copy / timeout viram toast vermelho com
+  // mensagem clara em vez de silenciar. Cancel do picker (ok=false
+  // sem throw) nao mostra toast — usuario decidiu cancelar e nao
+  // precisa de feedback.
+  //
+  // Race fix obrigatorio (spec §7): o sheet so fecha APOS o save
+  // resolver (sucesso OU erro). Antes, fecharMenu() era chamado
+  // sincrono no onPress, e em devices lentos o sheet ja estava
+  // fechado quando o copy SAF falhava — usuario nao via o toast
+  // amarelado e ficava sem feedback. Custo: sheet fica aberto ~1-2s
+  // (mais quando o usuario interage com o picker). Aceito.
   const handleFoto = useCallback(async () => {
-    fecharMenu();
     setSalvando(true);
-    const r = await capturarFoto({ origem: 'galeria' });
-    setSalvando(false);
-    if (r.ok) tratarSucesso();
-  }, [fecharMenu, tratarSucesso]);
+    try {
+      const r = await comTimeout(
+        capturarFoto({ origem: 'galeria' }),
+        TIMEOUT_FOTO_MS
+      );
+      if (r.ok) {
+        toast.show('Foto salva.', 'success');
+        tratarSucesso();
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save foto fail', e);
+    } finally {
+      setSalvando(false);
+      fecharMenu();
+    }
+  }, [fecharMenu, toast, tratarSucesso]);
 
   const handleMusica = useCallback(async () => {
     fecharMenu();

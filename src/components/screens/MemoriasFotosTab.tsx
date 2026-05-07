@@ -123,10 +123,21 @@ export function MemoriasFotosTab({
   // do menu verde) com origem galeria. Em web/dev cai no caminho mock
   // do gauntlet; em mobile real, abre expo-image-picker e grava .md
   // companion preliminar junto com o binario.
+  // I-FOTO (2026-05-07): capturarFoto agora throws quando vaultRoot
+  // ausente (em vez de silenciar). Empty state so e' acessivel apos
+  // onboarding (vault sempre conectado), entao o catch e' defensivo;
+  // caso futuro de vault desconectado por reset cai aqui sem crashar
+  // a tab.
   const handleRegistrarFotoEmptyState = useCallback(async () => {
-    const r = await capturarFoto({ origem: 'galeria' });
-    if (r.ok) {
-      await recarregar();
+    try {
+      const r = await capturarFoto({ origem: 'galeria' });
+      if (r.ok) {
+        await recarregar();
+      }
+    } catch {
+      // Caller de empty state nao tem acesso direto ao toast (toast
+      // provider so monta no root). Falha silenciosa preserva UX —
+      // FAB+ verde no MenuCapturaVerde e' o caminho com feedback.
     }
   }, [recarregar]);
 

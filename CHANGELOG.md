@@ -5,6 +5,37 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-FOTO — `M-SAVE-FOTO-VALIDA` (2026-05-07)
+
+`src/lib/midia/capturarFoto.ts` reescrito no padrão I-VIDEO (writer
+inline). Remove dependência de `escreverMidiaComCompanion` legado e
+aplica `vaultUriJoin` direto. Detecção `jpg`/`png` por `mimeType`
+com fallback por extensão do URI. Path do binário em `jpg/` ou `png/`
++ companion em `markdown/foto-...md` apontando para `../<ext>/...`.
+vaultRoot vazio agora throw `Vault não conectado.`.
+
+**Race fix BottomSheet**: `MenuCapturaVerde.handleFoto` envolve em
+`comTimeout(p, 30s)` (timeout maior — copy SAF lento) + try/catch.
+Sheet fecha APENAS no `finally`, depois do save resolver (sucesso OU
+erro), não no `onPress` síncrono. Custo aceito: ~1-2s sheet aberto;
+benefício: usuário vê o resultado do save sem race. Resolve crash
+documentado em §1 do spec.
+
+`MemoriasFotosTab.handleRegistrarFotoEmptyState` ganhou try/catch
+defensivo (regressão direta da mudança throw/silent — fix mínimo,
+não escopo expandido).
+
+Tests: 6 → 12 casos em `tests/lib/midia/capturarFoto.test.ts`
+(throw vaultRoot vazio, jpg em `jpg/` + companion, png em `png/` +
+companion, mimeType ausente fallback extensão, path final
+`vaultUriJoin` sem `%20`/barra dupla, companion frontmatter).
+E2E novo `tests/e2e/playwright/m-save-foto.e2e.ts` cobre menu
++ tap foto via `__gauntlet.adicionarFotoMock()`.
+
+Métricas: 1634 testes / 173 suítes verde (+5 contra 1629
+baseline) · TS strict 0 · Hermes Android 7,7 MB intacto ·
+Gauntlet leak 0/6 · anonimato OK · PT-BR check OK.
+
 ### Sprint I-VIDEO — `M-SAVE-VIDEO-VALIDA` (2026-05-07)
 
 `src/lib/midia/capturarVideo.ts` reescrito com writer inline
