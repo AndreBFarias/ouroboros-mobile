@@ -41,6 +41,15 @@ export interface CompanionMidiaInput {
   // precisam reverse-link da media para a entrada-mae sem reparsear
   // todo o Vault.
   medida_ref?: string;
+  // I-AUDIO (M-SAVE-AUDIO-VALIDA, 2026-05-07): texto transcrito do
+  // audio (STT on-device via expo-speech-recognition). Best-effort:
+  // quando ausente/undefined, companion omite o campo (semantica
+  // canonica null no schema zod). Quando presente, vai como
+  // `transcricao: "<texto>"` no frontmatter + body com o texto
+  // integral apos os ---. Espelha midia_frase no comportamento de
+  // body. Schema canonico ja tem o campo (MidiaCompanionSchema
+  // §65 - transcricao opcional).
+  transcricao?: string;
 }
 
 // Serializa o destinatario em string canonica para frontmatter:
@@ -79,13 +88,34 @@ export function stringifyCompanionMidia(
     // espacos, seguro como YAML scalar simples.
     linhas.push(`medida_ref: ${input.medida_ref}`);
   }
+  if (
+    typeof input.transcricao === 'string' &&
+    input.transcricao.length > 0
+  ) {
+    // I-AUDIO: transcricao em uma unica linha YAML (escapando aspas
+    // como na legenda). Quando STT falhou ou foi pulado, o caller
+    // passa undefined e o campo simplesmente nao aparece no .md —
+    // semantica canonica null para quem le via MidiaCompanionSchema.
+    const escapada = input.transcricao.replace(/"/g, '\\"');
+    linhas.push(`transcricao: "${escapada}"`);
+  }
   linhas.push('---');
   // Body: para midia_frase, repete o texto integral apos o
   // frontmatter para legibilidade direta no Obsidian. Para os demais
   // tipos, body fica vazio (so frontmatter).
+  // I-AUDIO (2026-05-07): midia_audio com transcricao tambem replica
+  // o texto no body. Permite leitura direta no Obsidian sem clicar no
+  // .m4a. Quando transcricao ausente, body fica vazio (so frontmatter).
   if (input.tipo === 'midia_frase' && typeof input.legenda === 'string') {
     linhas.push('');
     linhas.push(input.legenda);
+  } else if (
+    input.tipo === 'midia_audio' &&
+    typeof input.transcricao === 'string' &&
+    input.transcricao.length > 0
+  ) {
+    linhas.push('');
+    linhas.push(input.transcricao);
   }
   // Termina com newline final para consistencia POSIX.
   linhas.push('');

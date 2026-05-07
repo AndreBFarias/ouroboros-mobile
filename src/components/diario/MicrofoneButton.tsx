@@ -36,6 +36,7 @@ import {
   startRecording,
   stopRecording,
   saveRecordingToVault,
+  atualizarCompanionAudioComTranscricao,
   discardRecording,
 } from '@/lib/diario/recordAudio';
 import {
@@ -46,6 +47,7 @@ import {
   requestMicPermission,
   MicPermissionError,
 } from '@/lib/diario/permissions';
+import { comTimeout } from '@/lib/util/comTimeout';
 import type { Audio } from 'expo-av';
 
 const LIMITE_MS = 60_000; // 60 segundos
@@ -185,37 +187,66 @@ export function MicrofoneButton({
     setEstado('transcribing');
     toast.show('Transcrevendo…', 'info');
 
-    // Salva audio em paralelo com transcricao - I/O e CPU sao
-    // independentes; ganho perceptivel de latencia em audios longos.
-    const salvarPromise = saveRecordingToVault(stopResult.uri, vaultRoot);
-    const transcreverPromise = transcribeStream(() => {
-      // Parciais ignorados aqui; UI atual nao mostra streaming
-      // por simplicidade. Caller recebe so o final via callback.
-    });
-
+    // I-AUDIO (M-SAVE-AUDIO-VALIDA, 2026-05-07): save com timeout 30s
+    // (SAF write em /sdcard/Documents/ pode levar mais em OEMs lentos
+    // tipo MIUI/HyperOS). Decisao de spec: audio salva ANTES de
+    // transcribe — transcribe e' best-effort e nao bloqueia save.
+    const dataCaptura = new Date();
+    let relPath: string | null = null;
     try {
-      const [relPath, texto] = await Promise.all([
-        salvarPromise,
-        transcreverPromise,
-      ]);
+      relPath = await comTimeout(
+        saveRecordingToVault(stopResult.uri, vaultRoot, dataCaptura),
+        30_000
+      );
       onAudioGravado(relPath);
-      // Privacidade: quando ocultarTranscricoes está ativo, o áudio
-      // continua sendo salvo no Vault (anexo legítimo) mas o texto
-      // transcrito não polui o textarea -- usuário escreve o que
-      // quiser por cima sem ver a transcrição automática.
-      if (
-        !ocultarTranscricoes &&
-        texto &&
-        texto.trim().length > 0
-      ) {
-        onTextoTranscrito(texto);
+      toast.show('Áudio salvo.', 'success');
+    } catch (err) {
+      void discardRecording(stopResult.uri);
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save audio fail', err);
+      setEstado('idle');
+      setTempoMs(0);
+      setAmplitudes([]);
+      return;
+    }
+
+    // Transcribe e' best-effort: roda apos save concluir, falhas nao
+    // bloqueiam o audio (ja persistido). Quando bem sucedido, regrava
+    // o companion .md com transcricao + chama callback. Quando falha
+    // (sem rede / modulo nativo ausente em Expo Go / silencio), audio
+    // permanece no Vault e companion fica com transcricao ausente
+    // (semantica null canonica do MidiaCompanionSchema).
+    try {
+      const texto = await transcribeStream(() => {
+        // Parciais ignorados aqui; UI atual nao mostra streaming
+        // por simplicidade. Caller recebe so o final via callback.
+      });
+      if (texto && texto.trim().length > 0) {
+        try {
+          await comTimeout(
+            atualizarCompanionAudioComTranscricao(
+              vaultRoot,
+              relPath,
+              dataCaptura,
+              texto
+            ),
+            30_000
+          );
+        } catch {
+          // Falha ao regravar companion com transcricao nao deve
+          // quebrar UX — audio ja esta salvo. Loga silenciosamente.
+        }
+        // Privacidade: quando ocultarTranscricoes está ativo, o áudio
+        // continua sendo salvo no Vault (anexo legítimo) mas o texto
+        // transcrito não polui o textarea -- usuário escreve o que
+        // quiser por cima sem ver a transcrição automática.
+        if (!ocultarTranscricoes) {
+          onTextoTranscrito(texto);
+        }
       }
     } catch (err) {
-      // Quando salvarPromise resolve mas transcreverPromise rejeita,
-      // o .m4a ja esta no Vault e e mantido (audio anexo e legitimo
-      // mesmo sem texto). Quando salvarPromise tambem falha, o cache
-      // pode ter sobrado -- limpa defensivamente (idempotente).
-      void discardRecording(stopResult.uri);
       if (err instanceof MicPermissionError) {
         negacoesRef.current += 1;
         if (negacoesRef.current >= 2) {
@@ -224,9 +255,11 @@ export function MicrofoneButton({
         } else {
           toast.show('Sem permissão de microfone.', 'error');
         }
-      } else {
-        toast.show('Microfone indisponível agora.', 'error');
       }
+      // Demais erros de transcribe sao silenciados na UI (audio ja
+      // salvo, toast de sucesso ja exibido). Log para diagnose.
+      // eslint-disable-next-line no-console
+      console.error('transcribe audio fail (best-effort)', err);
     }
     setEstado('idle');
     setTempoMs(0);

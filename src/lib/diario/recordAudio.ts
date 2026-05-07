@@ -7,15 +7,28 @@
 // suficiente para fala clara, ~50KB por 10 segundos. Compressao
 // Opus fica para sprint M15.1 caso o usuario reclame de tamanho.
 //
-// M-VAULT-MD-FIX-diario-audio (2026-05-04): destino canonico migrou
-// de assets/<HHmm>-<rand>.m4a para media/audios/<YYYY-MM-DD>-<rand>.m4a // ptbr-allow: nome de pasta canonica do Vault, nao palavra portuguesa
-// + companion .md 1:1 (formato unificado M34/M39, alinhado com
-// capturarMusica.ts). Arquivos antigos em assets/ permanecem legiveis;
-// so novos vao para o lugar canonico.
+// I-AUDIO (M-SAVE-AUDIO-VALIDA, 2026-05-07): writer reescrito inline
+// no padrao I-VIDEO/I-FOTO. Usa vaultUriJoin canonico (H1) +
+// audioPath/audioCompanionPath (H2 layout-por-tipo / ADR-0023).
+// Saiu do helper escreverMidiaComCompanion (que usa joinUri local
+// sem normalizacao H1, off-limits desta sprint). Comportamento
+// observavel:
+//   - vaultRoot vazio -> throw 'Vault não conectado.' (caller trata
+//     com toast PT-BR explicito).
+//   - sucesso -> path relativo m4a/audio-YYYY-MM-DD-<rand4>.m4a + // ptbr-allow: nome canonico de arquivo no Vault, nao palavra portuguesa
+//     companion markdown/audio-YYYY-MM-DD-<rand4>.md.
+//   - transcricao opcional (best-effort): quando string presente vai
+//     no frontmatter + body. Quando ausente (STT falhou ou foi
+//     pulado), companion ainda salva sem o campo — semantica
+//     canonica null no MidiaCompanionSchema.
+//
+// Comentarios sem acento (convencao shell/CI).
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system/legacy';
-import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { stringifyCompanionMidia } from '@/lib/midia/companion';
+import { audioPath, audioCompanionPath } from '@/lib/vault/paths';
+import { vaultUriJoin } from '@/lib/vault';
 import type { Para } from '@/lib/schemas/para';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
@@ -85,73 +98,122 @@ export async function discardRecording(uri: string): Promise<void> {
   }
 }
 
-// M39.1: helpers locais suffixCurto/joinUri removidos — escreverMidia
-// ComCompanion encapsula a geracao de basename canonico, joinUri e
-// idempotencia do binario.
+// Sufixo random curto (4 hex). Espelha o usado em capturarFoto/
+// capturarVideo para coerencia de basename.
+function suffixCurto(): string {
+  return Math.floor(Math.random() * 0xffff)
+    .toString(16)
+    .padStart(4, '0');
+}
 
 // Opcoes do companion .md gravado ao lado do binario. Todos os
 // campos sao opcionais: caller que nao informa cai em defaults
 // seguros (autor lido do store usePessoa, destinatario {tipo:'mim'},
 // sem legenda). Mantem assinatura antiga compativel para os callers
 // que so querem o binario salvo.
+//
+// I-AUDIO: novo campo `transcricao` (best-effort do STT).
+// MicrofoneButton passa apos transcribeStream resolver; quando
+// transcribeStream falha, passa undefined e o companion fica sem o
+// campo (interpretado como null pelo MidiaCompanionSchema).
 export interface SaveRecordingOpcoes {
   autor?: PessoaAutor;
   para?: Para;
   legenda?: string;
+  transcricao?: string;
 }
 
-// Copia o URI temporario para media/audios/<YYYY-MM-DD>-<suffix>.m4a
-// dentro do Vault e escreve o companion .md 1:1 ao lado (formato
-// unificado M34/M39 via stringifyCompanionMidia). Devolve o path
-// relativo do binario (string que o caller guarda em meta.audio do
-// diario emocional). O companion fica em
-// media/audios/<YYYY-MM-DD>-<suffix>.md, descoberto por convencao
-// (mesmo basename, extensao .md) - segue padrao do capturarMusica.
+// Copia o URI temporario para m4a/audio-YYYY-MM-DD-<suffix>.m4a (H2
+// layout-por-tipo / ADR-0023) dentro do Vault e escreve o companion
+// .md em markdown/audio-YYYY-MM-DD-<suffix>.md ao lado por convencao
+// (mesmo basename). Devolve o path relativo do binario (string que o
+// caller guarda em meta.audio do diario emocional).
+//
+// I-AUDIO: writer inline com vaultUriJoin canonico. Padrao espelha
+// capturarVideo (I-VIDEO) e capturarFoto (I-FOTO). vaultRoot vazio
+// agora throw em vez de silenciar — caller exibe toast PT-BR
+// explicito.
 export async function saveRecordingToVault(
   uri: string,
   vaultRoot: string,
   date: Date = new Date(),
   opcoes: SaveRecordingOpcoes = {}
 ): Promise<string> {
-  // M39.1: caminho consolidado via escreverMidiaComCompanion.
-  // Defensivo: se o helper falhar (por qualquer razao em mock parcial
-  // de testes), tentamos pelo menos copiar o binario para preservar a
-  // invariante "binario e' o ativo principal" — companion fica como
-  // best-effort historico.
+  // I-AUDIO: throw em vez de silenciar. Espelha I-VIDEO/I-FOTO.
+  if (!vaultRoot) {
+    throw new Error('Vault não conectado.');
+  }
+
   const autor = opcoes.autor ?? usePessoa.getState().pessoaAtiva;
   const para: Para = opcoes.para ?? { tipo: 'mim' };
-  try {
-    const r = await escreverMidiaComCompanion(vaultRoot, uri, {
-      tipo: 'midia_audio',
-      data: date.toISOString(),
-      autor,
-      para,
-      legenda: opcoes.legenda,
-    });
-    return r.binarioPath;
-  } catch {
-    // Best-effort: ainda copia o binario num path canonico minimo
-    // se o helper canonico estourar (ex.: getInfoAsync indisponivel).
-    // Garante que o caller sempre recebe um relBin utilizavel.
-    const rand = Math.floor(Math.random() * 0xffff)
-      .toString(16)
-      .padStart(4, '0');
-    const ymd = (() => {
-      const TZ_SHIFT_MS = -3 * 60 * 60 * 1000;
-      const local = new Date(date.getTime() + TZ_SHIFT_MS);
-      const y = local.getUTCFullYear();
-      const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-      const d = String(local.getUTCDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    })();
-    const relBin = `media/audios/${ymd}-${rand}.m4a`;
-    const trimmedRoot = vaultRoot.endsWith('/')
-      ? vaultRoot.slice(0, -1)
-      : vaultRoot;
-    await FileSystem.copyAsync({
-      from: uri,
-      to: `${trimmedRoot}/${relBin}`,
-    });
-    return relBin;
+
+  const rand = suffixCurto();
+  const binarioRel = audioPath(date, rand);
+  const companionRel = audioCompanionPath(date, rand);
+  const destinoBin = vaultUriJoin(vaultRoot, binarioRel);
+  const destinoCompanion = vaultUriJoin(vaultRoot, companionRel);
+
+  const basename = (binarioRel.split('/').pop() ?? binarioRel);
+
+  await FileSystem.copyAsync({ from: uri, to: destinoBin });
+
+  const conteudo = stringifyCompanionMidia({
+    tipo: 'midia_audio',
+    arquivo: basename,
+    data: date.toISOString(),
+    autor,
+    para,
+    legenda: opcoes.legenda,
+    transcricao: opcoes.transcricao,
+  });
+  await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+
+  return binarioRel;
+}
+
+// I-AUDIO: regrava o companion .md de um binario de audio ja salvo
+// adicionando a transcricao obtida via STT (best-effort, paralelo
+// ao save). Idempotente: se chamado duas vezes com o mesmo texto, o
+// companion fica identico. Caller (MicrofoneButton) chama apenas
+// quando transcribeStream resolve com texto nao-vazio.
+//
+// Por que regravar em vez de update parcial: stringifyCompanionMidia
+// e' deterministico e barato; regravar o frontmatter completo evita
+// estado intermediario inconsistente. Fica simples manter o body
+// (transcricao replicada apos os ---) em sync com o frontmatter.
+export interface AtualizarTranscricaoOpcoes {
+  autor?: PessoaAutor;
+  para?: Para;
+  legenda?: string;
+}
+
+export async function atualizarCompanionAudioComTranscricao(
+  vaultRoot: string,
+  audioRelPath: string,
+  date: Date,
+  texto: string,
+  opcoes: AtualizarTranscricaoOpcoes = {}
+): Promise<void> {
+  if (!vaultRoot) {
+    throw new Error('Vault não conectado.');
   }
+  // Espelha basename do binario para localizar companion correto.
+  const basename = audioRelPath.split('/').pop() ?? audioRelPath;
+  const basenameSemExt = basename.replace(/\.m4a$/, '');
+  const companionRel = `markdown/${basenameSemExt}.md`;
+  const destinoCompanion = vaultUriJoin(vaultRoot, companionRel);
+
+  const autor = opcoes.autor ?? usePessoa.getState().pessoaAtiva;
+  const para: Para = opcoes.para ?? { tipo: 'mim' };
+
+  const conteudo = stringifyCompanionMidia({
+    tipo: 'midia_audio',
+    arquivo: basename,
+    data: date.toISOString(),
+    autor,
+    para,
+    legenda: opcoes.legenda,
+    transcricao: texto,
+  });
+  await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
 }

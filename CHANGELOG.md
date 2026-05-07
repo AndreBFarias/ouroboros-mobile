@@ -5,6 +5,35 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-AUDIO — `M-SAVE-AUDIO-VALIDA` (2026-05-07)
+
+`src/lib/diario/recordAudio.ts` reescrito padrão I-VIDEO/I-FOTO
+(writer inline com `vaultUriJoin`). Path `m4a/audio-...m4a` +
+companion `markdown/audio-...md` apontando para `../m4a/...`.
+vaultRoot vazio throw. Nova função `atualizarCompanionAudioComTranscricao`
+regrava companion após STT sucesso (best-effort, separado do save).
+
+`src/components/diario/MicrofoneButton.tsx` aplica
+`comTimeout(p, 30s)` + try/catch. Toasts PT-BR `Áudio salvo.` /
+`Não foi possível salvar: <msg>`. **Save sequencial** (áudio
+garantido, transcribe em segundo plano) substitui `Promise.all`
+paralelo antigo.
+
+`src/lib/midia/companion.ts` `stringifyCompanionMidia` ganha campo
+opcional `transcricao`: presente → frontmatter + body integral
+(espelha `midia_frase`); ausente → omite (semântica null canônica).
+
+Tests: 11 casos em `tests/lib/diario/recordAudio.test.ts` (path
+canônico, `vaultUriJoin`, throw vaultRoot vazio, trailing space
+normalizado, companion frontmatter, transcricao presente/ausente,
+opções autor/para/legenda, atualizar companion com STT). E2E novo
+render-only (microfone real e STT impossíveis em web; validação
+adb humana obrigatória conforme A11/A28).
+
+Métricas: 1641 testes / 173 suítes verde (+7 contra 1634 baseline) ·
+TS strict 0 · Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 ·
+anonimato OK · PT-BR check OK.
+
 ### Sprint I-FOTO — `M-SAVE-FOTO-VALIDA` (2026-05-07)
 
 `src/lib/midia/capturarFoto.ts` reescrito no padrão I-VIDEO (writer
