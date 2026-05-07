@@ -26,6 +26,12 @@ interface ButtonProps {
   // Quando label e elemento React (e.g. <Text> custom), forneca aqui
   // um string sem acento para o screen reader.
   accessibilityLabel?: string;
+  // K5 (M-BOTOES-LARGURA, 2026-05-07): quando true, o botao ocupa 100%
+  // da largura disponivel do container. Default false mantem largura
+  // intrinseca do conteudo (chips, tags, header right). Aplicado em
+  // CTAs primarios de tela cheia ("Conectar conta Google", "Abrir
+  // agenda") onde a largura intrinseca era visualmente fraca.
+  fullWidth?: boolean;
 }
 
 interface VariantClasses {
@@ -72,6 +78,7 @@ export function Button({
   variant = 'primary',
   disabled = false,
   accessibilityLabel,
+  fullWidth = false,
 }: ButtonProps) {
   const [pressed, setPressed] = useState(false);
   const v = VARIANT_CLASSES[variant];
@@ -96,6 +103,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}
       accessibilityState={{ disabled }}
+      style={fullWidth ? { width: '100%' } : undefined}
     >
       <MotiView
         animate={{ scale: pressed ? 0.97 : 1 }}
@@ -109,6 +117,7 @@ export function Button({
           paddingVertical: 16,
           alignItems: 'center',
           justifyContent: 'center',
+          ...(fullWidth ? { width: '100%' as const } : {}),
           ...(v.borderColor
             ? { borderColor: v.borderColor, borderWidth: v.borderWidth }
             : {}),

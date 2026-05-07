@@ -221,6 +221,7 @@ export default function AgendaScreen() {
                 label="Conectar conta Google"
                 onPress={onConectar}
                 accessibilityLabel="conectar conta google"
+                fullWidth
               />
             </View>
           </View>

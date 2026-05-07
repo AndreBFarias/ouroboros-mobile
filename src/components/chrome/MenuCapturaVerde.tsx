@@ -27,6 +27,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import {
   Image as ImageIcon,
@@ -52,6 +53,7 @@ import { salvarFrase } from '@/lib/midia/salvarFrase';
 import type { Para } from '@/lib/schemas/para';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { comTimeout } from '@/lib/util/comTimeout';
+import { useSafeBottomMargin } from './safeBottom';
 
 const FAB_SIZE = 56;
 
@@ -188,6 +190,11 @@ export function MenuCapturaVerde({
   const setSheetCapturaAberto = useNavegacao(
     (s) => s.setSheetCapturaAberto
   );
+  const insets = useSafeAreaInsets();
+  // K4 (M-FAB-MENU-SAFE-BOTTOM, 2026-05-07): margem canonica = max(24dp,
+  // 10% da altura) + inset.bottom. Mesma regra do FABMenu roxo para
+  // garantir que ambos fiquem acima da nav bar Android.
+  const marginBottomCanonico = useSafeBottomMargin(insets.bottom);
 
   const abrirMenu = useCallback(() => {
     setSheetCapturaAberto(true);
@@ -377,7 +384,7 @@ export function MenuCapturaVerde({
         style={{
           position: 'absolute',
           right: spacing.lg,
-          bottom: spacing.xl,
+          bottom: marginBottomCanonico,
         }}
       >
         <MotiView

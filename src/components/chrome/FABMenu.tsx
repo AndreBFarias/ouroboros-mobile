@@ -18,6 +18,7 @@
 // acento. Comentarios sem acento (convencao shell/CI).
 import { Pressable, View } from 'react-native';
 import { MotiView } from 'moti';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Menu } from '@/lib/icons';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
@@ -26,6 +27,7 @@ import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { rotaEsconderFAB } from '@/lib/navigation/rotasSemFAB';
+import { useSafeBottomMargin } from './safeBottom';
 
 const FAB_SIZE = 72;
 
@@ -33,6 +35,12 @@ export function FABMenu() {
   const pathname = usePathname();
   const abrir = useNavegacao((s) => s.abrir);
   const sheetCapturaAberto = useNavegacao((s) => s.sheetCapturaAberto);
+  const insets = useSafeAreaInsets();
+  // K4 (M-FAB-MENU-SAFE-BOTTOM, 2026-05-07): margem canonica = max(24dp,
+  // 10% da altura) + inset.bottom. Evita overlap com nav bar Android
+  // (3-button) e com a barra de gestos. Hook fica antes dos returns
+  // condicionais (regra de hooks).
+  const marginBottomCanonico = useSafeBottomMargin(insets.bottom);
   const [pressed, setPressed] = useState(false);
 
   if (rotaEsconderFAB(pathname)) return null;
@@ -62,7 +70,7 @@ export function FABMenu() {
         style={{
           position: 'absolute',
           left: spacing.lg,
-          bottom: spacing.xl,
+          bottom: marginBottomCanonico,
         }}
       >
         <Pressable

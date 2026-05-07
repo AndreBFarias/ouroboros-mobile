@@ -67,4 +67,36 @@ describe('Button', () => {
     fireEvent.press(getByLabelText('botao foo'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  // K5 (M-BOTOES-LARGURA, 2026-05-07): prop fullWidth aplica
+  // width 100% tanto no Pressable externo quanto no estilo do
+  // MotiView interno. Sem a prop, o botao mantem largura
+  // intrinseca do conteudo (default false).
+  it('fullWidth=true aplica width 100% no estilo', () => {
+    const { getByLabelText } = render(
+      <Button label="Salvar" onPress={() => undefined} fullWidth />
+    );
+    const node = getByLabelText('Salvar');
+    const style = node.props.style;
+    if (Array.isArray(style)) {
+      const merged = Object.assign({}, ...style);
+      expect(merged.width).toBe('100%');
+    } else {
+      expect(style?.width).toBe('100%');
+    }
+  });
+
+  it('fullWidth default (omitido) nao define width', () => {
+    const { getByLabelText } = render(
+      <Button label="Salvar" onPress={() => undefined} />
+    );
+    const node = getByLabelText('Salvar');
+    const style = node.props.style;
+    if (Array.isArray(style)) {
+      const merged = Object.assign({}, ...style);
+      expect(merged.width).toBeUndefined();
+    } else {
+      expect(style?.width).toBeUndefined();
+    }
+  });
 });

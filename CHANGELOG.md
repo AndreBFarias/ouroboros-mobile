@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprints K4 + K5 — `M-FAB-MENU-SAFE-BOTTOM` + `M-BOTOES-LARGURA` (consolidadas, 2026-05-07)
+
+**Bloco K FECHADO (5/5).** K4: helper novo
+`src/components/chrome/safeBottom.ts` exporta
+`useSafeBottomMargin(insetBottom)` retornando
+`Math.max(spacing.xl, height × 0.10) + insetBottom` memoizado.
+`FABMenu.tsx` (esquerdo roxo) e `MenuCapturaVerde.tsx` (direito
+verde) substituem `bottom: spacing.xl` por `bottom: marginBottomCanonico`.
+Hook chamado antes de returns condicionais.
+
+K5: `Button.tsx` ganha prop `fullWidth?: boolean` (default false).
+Quando true, aplica `width: '100%'` tanto no Pressable externo
+quanto no MotiView interno. Aplicado em "Conectar conta Google"
+(`app/agenda.tsx`) e "Abrir agenda" (`app/settings/contas-google.tsx`).
+Botão Recap em `app/index.tsx:154` NÃO aplicado — está em flex-row
+com avatares no header; fullWidth quebraria hierarquia visual ADR-010 §3.
+
+Tests: +2 casos (Button.test.tsx fullWidth=true aplica width 100%).
+
+Métricas: 1736 testes / 175 suítes verde (+2) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprints K2 + K3 — `M-MENU-NOMES` + `M-MENU-FOTO-EDITAVEL` (consolidadas, 2026-05-07)
 
 K2: labels do `MenuLateral` `'Ver'` → `'Acesso Rápido'` e `'Opcionais'`

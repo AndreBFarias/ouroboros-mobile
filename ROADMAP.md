@@ -69,8 +69,8 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 | K1 | `M-MENU-LATERAL-LAYOUT` | `M-MENU-LATERAL-LAYOUT-spec.md` | ~2h | `[ok]` |
 | K2 | `M-MENU-NOMES` | `M-MENU-NOMES-spec.md` | ~0.5h | `[ok]` |
 | K3 | `M-MENU-FOTO-EDITAVEL` | `M-MENU-FOTO-EDITAVEL-spec.md` | ~1h | `[ok]` |
-| K4 | `M-FAB-MENU-SAFE-BOTTOM` | `M-FAB-MENU-SAFE-BOTTOM-spec.md` | ~1h | `[todo]` |
-| K5 | `M-BOTOES-LARGURA` | `M-BOTOES-LARGURA-spec.md` | ~1h | `[todo]` |
+| K4 | `M-FAB-MENU-SAFE-BOTTOM` | `M-FAB-MENU-SAFE-BOTTOM-spec.md` | ~1h | `[ok]` |
+| K5 | `M-BOTOES-LARGURA` | `M-BOTOES-LARGURA-spec.md` | ~1h | `[ok]` |
 
 ### Bloco L — Telas/Abas
 

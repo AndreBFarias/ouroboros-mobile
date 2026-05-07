@@ -186,6 +186,7 @@ export default function ContasGoogleScreen() {
             label="Abrir agenda"
             onPress={() => router.push('/agenda')}
             accessibilityLabel="abrir agenda"
+            fullWidth
           />
         </View>
       </ScrollView>
