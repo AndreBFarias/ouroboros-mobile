@@ -122,4 +122,58 @@ describe('saveExercicio', () => {
       'corpo livre em markdown.'
     );
   });
+
+  // I-EXERCICIO: vaultUriJoin canonico limpa trailing %20 do SAF root
+  // antes de copyAsync. Sem isso, copyAsync({ from, to }) lancava
+  // IOException com 'directory cannot be created' (screenshot empirico
+  // 466875db).
+  it('produz path final do GIF via vaultUriJoin (limpa trailing %20)', async () => {
+    const rootSujo = `${VAULT_ROOT}%20`;
+    await saveExercicio({
+      meta: exercicioBase,
+      vaultRoot: rootSujo,
+      gifTemporario: 'file:///tmp/agachamento.gif',
+    });
+    expect(mockCopyAsync).toHaveBeenCalledWith({
+      from: 'file:///tmp/agachamento.gif',
+      to: `${VAULT_ROOT}/gif/exercicio-agachamento-livre.gif`,
+    });
+    // Sem barras duplas no path final (so a do scheme content://).
+    const callArg = mockCopyAsync.mock.calls[0][0] as { to: string };
+    expect(callArg.to.split('//').length).toBe(2);
+  });
+
+  // I-EXERCICIO: cross-link frontmatter -- meta.gif aponta para o
+  // path relativo do binario (gif/exercicio-<slug>.gif). Garante que
+  // o leitor consegue achar o GIF a partir do .md.
+  it('linka frontmatter gif ao path relativo do binario gravado', async () => {
+    const out = await saveExercicio({
+      meta: exercicioBase,
+      vaultRoot: VAULT_ROOT,
+      gifTemporario: 'file:///tmp/x.gif',
+    });
+    // Path relativo retornado em gifGravado bate com o que vai no
+    // frontmatter (cross-link consistente).
+    expect(out.gifGravado).toBe('gif/exercicio-agachamento-livre.gif');
+    expect(mockEscreverExercicio).toHaveBeenCalledWith(
+      VAULT_ROOT,
+      expect.objectContaining({ gif: out.gifGravado }),
+      ''
+    );
+  });
+
+  // I-EXERCICIO: vaultUriJoin lanca erro claro quando root vazio
+  // (sentinel de bug em estado anterior do app, ADR-0023). Cobre o
+  // caso GIF -- vaultRoot vazio nao chega nem a tentar copy.
+  it('lanca erro quando vaultRoot vazio (com GIF)', async () => {
+    await expect(
+      saveExercicio({
+        meta: exercicioBase,
+        vaultRoot: '',
+        gifTemporario: 'file:///tmp/x.gif',
+      })
+    ).rejects.toThrow(/vaultUriJoin: root vazio/);
+    expect(mockCopyAsync).not.toHaveBeenCalled();
+    expect(mockEscreverExercicio).not.toHaveBeenCalled();
+  });
 });

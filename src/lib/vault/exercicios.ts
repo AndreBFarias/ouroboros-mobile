@@ -1,15 +1,26 @@
 // Helpers de leitura, listagem, escrita e exclusao de exercícios no
-// Vault (M13). Cada exercício vive em exercicios/<slug>.md com
+// Vault (M13). Cada exercício vive em markdown/exercicio-<slug>.md com
 // frontmatter validado pelo ExercicioSchema; o GIF associado fica em
-// assets/exercicios/<slug>.gif (path relativo).
+// gif/exercicio-<slug>.gif (path relativo, layout-por-tipo H2 do plano
+// golden-zebra; ADR-0023). Frontmatter linka via campo gif (cross-link
+// .md -> binario).
 //
 // Exclusao usa lixeira soft: move o .md para
 // cacheDirectory/lixeira/exercicios/<timestamp>-<slug>.md. O GIF
-// permanece em assets/ porque outro exercício pode referência-lo.
+// permanece em gif/ porque outro exercício pode referência-lo.
 // Limpeza automática acontece via boot hook (M00.5; cap de 30 dias).
 //
 // listarExercicios aplica filtros sequencialmente (grupo -> pessoa ->
 // search) e devolve a lista ordenada por nome em ordem alfabetica.
+//
+// I-EXERCICIO (M-SAVE-EXERCICIO-VALIDA, 2026-05-07): migra joinUri
+// local para vaultUriJoin canonico (H1 do plano golden-zebra). Helper
+// canonico (paths.ts:27) limpa trailing whitespace/%20/'/' que SAF
+// aplicava em runtime real (sintoma A29 em OEMs MIUI/OneUI/HyperOS).
+// Crash empirico do screenshot 466875db (IOException: directory cannot
+// be created) era causado por concatenacao ad-hoc de root contaminado
+// SAF + path antigo assets/exercicios/<slug>.gif (substituido por
+// gif/exercicio-<slug>.gif em H2).
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
@@ -23,6 +34,7 @@ import {
   exercicioPath,
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
+  vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -33,12 +45,6 @@ export interface ListarExerciciosFiltros {
   grupo?: string | null;
   // Texto livre para busca por nome (case-insensitive, accent-insensitive).
   search?: string;
-}
-
-// Concatena root SAF e path relativo, normalizando barras.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
 }
 
 // Normaliza string para busca: lowercase + remove diacriticos.
@@ -54,7 +60,7 @@ export async function lerExercicio(
   vaultRoot: string,
   slug: string
 ): Promise<Exercicio | null> {
-  const uri = joinUri(vaultRoot, exercicioPath(slug));
+  const uri = vaultUriJoin(vaultRoot, exercicioPath(slug));
   const result = await readVaultFile(uri, ExercicioSchema);
   if (!result) return null;
   return result.meta;
@@ -66,7 +72,7 @@ export async function listarExercicios(
   vaultRoot: string,
   filtros: ListarExerciciosFiltros = {}
 ): Promise<Exercicio[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'exercicio-'));
 
@@ -112,7 +118,7 @@ export async function escreverExercicio(
     throw new Error(`exercicio invalido: ${parsed.error.message}`);
   }
   const rel = exercicioPath(parsed.data.slug);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<Exercicio>(uri, parsed.data, body);
   return { uri };
 }
@@ -124,7 +130,7 @@ export async function excluirExercicio(
   vaultRoot: string,
   slug: string
 ): Promise<{ lixeiraPath: string }> {
-  const origemUri = joinUri(vaultRoot, exercicioPath(slug));
+  const origemUri = vaultUriJoin(vaultRoot, exercicioPath(slug));
 
   // cacheDirectory pode ser null em ambientes web. Usamos prefixo
   // mock para não quebrar testes; o caller real (Tela 08 botao

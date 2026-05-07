@@ -200,6 +200,73 @@ describe('escreverExercicio', () => {
       })
     ).rejects.toThrow(/exercicio invalido/);
   });
+
+  // I-EXERCICIO: vaultUriJoin canonico (paths.ts:27) faz, em ordem:
+  //  1. trim() externo,
+  //  2. replace(/\s+$/, '') trailing whitespace,
+  //  3. replace(/%20+$/, '') trailing %20 percent-encoded,
+  //  4. replace(/\/+$/, '') trailing slashes.
+  //
+  // Para um root tipico SAF contaminado com trailing %20 (sintoma A29
+  // em OEMs MIUI/OneUI/HyperOS), o path final do .md fica limpo.
+  // Cobertura aqui garante que escreverExercicio realmente roteia pelo
+  // helper canonico, e nao mais pelo joinUri local que existia antes
+  // desta sprint.
+  it('produz path final via vaultUriJoin (limpa trailing %20 do SAF)', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const rootSujo = `${VAULT_ROOT}%20`;
+    const { uri } = await escreverExercicio(rootSujo, exercicioPernas, '');
+    expect(uri).toBe(
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`
+    );
+    // Sem barras duplas no path final (so a do scheme content://).
+    expect(uri.split('//').length).toBe(2);
+  });
+
+  it('produz path final via vaultUriJoin (limpa trailing slashes)', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const rootSujo = `${VAULT_ROOT}//`;
+    const { uri } = await escreverExercicio(rootSujo, exercicioPernas, '');
+    expect(uri).toBe(
+      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`
+    );
+  });
+
+  // I-EXERCICIO: vaultUriJoin lanca erro claro quando root vazio
+  // (sentinel de bug em estado anterior do app, ADR-0023).
+  it('lanca erro quando vaultRoot vazio', async () => {
+    await expect(escreverExercicio('', exercicioPernas, '')).rejects.toThrow(
+      /vaultUriJoin: root vazio/
+    );
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  // I-EXERCICIO: schema permite multiplas dicas em array. Garantir que
+  // o writer preserva a lista intacta no payload entregue ao
+  // writeVaultFile (sintoma do screenshot empirico: dica 'Costinha
+  // Lisa' precisa chegar ao .md).
+  it('preserva lista de dicas no meta gravado', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const dicas = [
+      'Costinha lisa.',
+      'Cotovelo proximo ao corpo.',
+      'Inspire na descida.',
+    ];
+    const meta = {
+      ...exercicioPernas,
+      slug: 'triceps-rosca',
+      nome: 'Tríceps rosca',
+      grupo_muscular: ['triceps'],
+      equipamento: 'tríceps rosca',
+      dicas,
+    };
+    await escreverExercicio(VAULT_ROOT, meta, '');
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      `${VAULT_ROOT}/markdown/exercicio-triceps-rosca.md`,
+      expect.objectContaining({ dicas }),
+      ''
+    );
+  });
 });
 
 describe('excluirExercicio', () => {

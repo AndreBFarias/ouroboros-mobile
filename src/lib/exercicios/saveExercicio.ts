@@ -1,16 +1,26 @@
 // Salva um exercício no Vault (criacao ou edicao). Quando o caller
 // fornece um URI temporario de GIF (do expo-document-picker), copia
-// o arquivo para assets/exercicios/<slug>.gif e atualiza meta.gif
-// com o path relativo. Em edicao, se o usuario não trocou o GIF, o
-// caller passa gifTemporario=null e o meta.gif preserva o valor
-// anterior.
+// o arquivo para gif/exercicio-<slug>.gif (layout-por-tipo H2,
+// ADR-0023) e atualiza meta.gif com o path relativo (cross-link
+// frontmatter). Em seguida escreve o companion .md em
+// markdown/exercicio-<slug>.md. Em edicao, se o usuario não trocou
+// o GIF, o caller passa gifTemporario=null e o meta.gif preserva o
+// valor anterior.
+//
+// I-EXERCICIO (M-SAVE-EXERCICIO-VALIDA, 2026-05-07): migra joinUri
+// local para vaultUriJoin canonico (H1 do plano golden-zebra). Helper
+// canonico (paths.ts:27) limpa trailing whitespace/%20/'/' que SAF
+// aplicava em runtime real (sintoma A29 em OEMs MIUI/OneUI/HyperOS).
+// Sem essa limpeza, copyAsync({ from, to }) lancava IOException no
+// destino corrompido (`/tree/primary:Protocolo-Ouroboros /assets/...
+// directory cannot be created` -- screenshot empirico 466875db).
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
 // Imports diretos aos modulos finais (não ao barrel @/lib/vault)
 // para evitar ciclo de carregamento durante jest.requireActual nos
 // testes que mockam o barrel.
-import { exercicioGifPath } from '@/lib/vault/paths';
+import { exercicioGifPath, vaultUriJoin } from '@/lib/vault/paths';
 import { escreverExercicio } from '@/lib/vault/exercicios';
 import { ExercicioSchema, type Exercicio } from '@/lib/schemas/exercicio';
 
@@ -29,12 +39,6 @@ export interface SaveExercicioResult {
   // Path relativo ao Vault que foi efetivamente escrito em
   // assets/exercicios/. null quando nenhum GIF novo foi gravado.
   gifGravado: string | null;
-}
-
-// Concatena root SAF e path relativo, normalizando barras.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
 }
 
 // Limit de 5MB para o GIF (decisão do spec). Caller mostra toast de
@@ -77,7 +81,7 @@ export async function saveExercicio(
   if (typeof gifTemporario === 'string' && gifTemporario.length > 0) {
     await validarGif(gifTemporario);
     const relGif = exercicioGifPath(parsed.data.slug);
-    const destinoUri = joinUri(vaultRoot, relGif);
+    const destinoUri = vaultUriJoin(vaultRoot, relGif);
     await FileSystem.copyAsync({ from: gifTemporario, to: destinoUri });
     gifGravado = relGif;
     metaFinal = { ...parsed.data, gif: relGif };

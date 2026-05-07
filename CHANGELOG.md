@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-EXERCICIO — `M-SAVE-EXERCICIO-VALIDA` (2026-05-07)
+
+`src/lib/vault/exercicios.ts` migra `joinUri` local (4 callsites:
+ler, listar, escrever, excluir) para `vaultUriJoin`. Path .md
+`markdown/exercicio-<slug>.md` + GIF binário separado em
+`gif/exercicio-<slug>.gif` (cross-link via frontmatter `gif`).
+
+`src/lib/exercicios/saveExercicio.ts` migra `joinUri` local para
+`vaultUriJoin` no destino do GIF (`copyAsync` URI temp → `gif/...`).
+
+`app/exercicios/novo.tsx` envolve `saveExercicio` em
+`comTimeout(p, 30s)` (timeout maior — copy SAF de GIF até 5MB em
+OEM lentos) + try/catch. Toasts PT-BR `Exercício salvo.` / `Não
+foi possível salvar: <msg>`.
+
+Tests: +7 casos (.md trailing `%20`/`//`/vaultRoot vazio/dicas[]
+preservadas + GIF trailing `%20`/cross-link frontmatter/vaultRoot
+vazio com GIF). E2E novo cobre fluxo via Gauntlet.
+
+Métricas: 1668 testes / 173 suítes verde (+7) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-CONTADOR — `M-SAVE-CONTADOR-VALIDA` (2026-05-07)
 
 `src/lib/vault/contadores.ts` migra `joinUri` local (4 callsites) para
