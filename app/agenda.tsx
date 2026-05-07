@@ -35,6 +35,12 @@ import {
   lerCacheEventos,
   salvarCacheEventos,
 } from '@/lib/services/calendarCache';
+import { comTimeout } from '@/lib/util/comTimeout';
+
+// Timeout maior para sync agenda: snapshot pode ter ate 30 dias de
+// eventos e cada um vira um .md no Vault SAF (write em massa em
+// OEMs lentos chega em 20s+). Pattern Bloco I do plano golden-zebra.
+const AGENDA_SYNC_TIMEOUT_MS = 30_000;
 
 type EstadoAgenda =
   | 'nao-conectado'
@@ -89,9 +95,20 @@ export default function AgendaScreen() {
       setEventos(lista);
       if (typeof vaultRoot === 'string' && vaultRoot.length > 0) {
         try {
-          await salvarCacheEventos(vaultRoot, pessoaAtiva, lista);
-        } catch {
-          // best-effort
+          await comTimeout(
+            salvarCacheEventos(vaultRoot, pessoaAtiva, lista),
+            AGENDA_SYNC_TIMEOUT_MS
+          );
+          toast.show('Agenda atualizada.', 'success');
+        } catch (err) {
+          // Save resiliente (Bloco I do plano golden-zebra): travar
+          // por timeout em SAF lento (MIUI/HyperOS/OneUI) ou erro de
+          // schema nao deve quebrar a UI — eventos seguem em memoria.
+          const msg =
+            err instanceof Error && err.message.length > 0
+              ? err.message
+              : 'erro desconhecido';
+          toast.show(`Não foi possível atualizar: ${msg}`, 'error');
         }
       }
       setEstado('online');

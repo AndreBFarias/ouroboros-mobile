@@ -161,6 +161,42 @@ describe('salvarEventoAgenda', () => {
       'Pauta no link'
     );
   });
+
+  it('vaultRoot vazio dispara erro de vaultUriJoin (defesa A29)', async () => {
+    await expect(salvarEventoAgenda('', eventoBase)).rejects.toThrow(
+      /vault.*nao inicializado|root vazio/i
+    );
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  it('vaultRoot SAF com trailing slash usa vaultUriJoin canonico (sem barras duplas)', async () => {
+    // vaultUriJoin (paths.ts) normaliza trailing slashes do root,
+    // garantindo que a URI final nao tem '//' no meio. Test de
+    // contrato: agenda.ts agora delega para o helper canonico
+    // (substituiu joinUri local em I-AGENDA).
+    const rootComBarra =
+      'content://com.android.externalstorage.documents/tree/primary%3AProtocolo-Ouroboros/';
+    const out = await salvarEventoAgenda(rootComBarra, eventoBase);
+    expect(out.uri).toBe(
+      'content://com.android.externalstorage.documents/tree/primary%3AProtocolo-Ouroboros/markdown/agenda-pessoa_a-2026-05-07-abc123.md'
+    );
+    expect(out.uri).not.toContain('//markdown');
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('vaultRoot SAF com trailing %20 e barra usa vaultUriJoin (defesa A29)', async () => {
+    // Caso especifico de OEM com SAF retornando %20 colado ao slug
+    // (Armadilha A29). vaultUriJoin remove na ordem: trim, \s+$,
+    // %20+$, /+$. Ate uma barra final precede o %20, mas nao o
+    // contrario — entao testamos a forma realista pos-trim.
+    const rootComPercent =
+      'content://com.android.externalstorage.documents/tree/primary%3AProtocolo-Ouroboros%20';
+    const out = await salvarEventoAgenda(rootComPercent, eventoBase);
+    expect(out.uri).toBe(
+      'content://com.android.externalstorage.documents/tree/primary%3AProtocolo-Ouroboros/markdown/agenda-pessoa_a-2026-05-07-abc123.md'
+    );
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('apagarEventoAgenda', () => {
@@ -196,6 +232,29 @@ describe('sincronizarSnapshotAgenda', () => {
     );
     expect(r).toEqual({ adicionados: 1, atualizados: 0, removidos: 0 });
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('sincronizacao inicial com N eventos cria N arquivos .md', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([]); // pasta vazia
+    const eventos: AgendaEvento[] = Array.from({ length: 5 }, (_, i) => ({
+      ...eventoBase,
+      id: `ev_${i}`,
+      titulo: `Evento ${i}`,
+      inicio: `2026-05-${String(7 + i).padStart(2, '0')}T10:00:00-03:00`,
+    }));
+    const r = await sincronizarSnapshotAgenda(
+      VAULT_ROOT,
+      'pessoa_a',
+      eventos,
+      TS_BASE
+    );
+    expect(r).toEqual({ adicionados: 5, atualizados: 0, removidos: 0 });
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(5);
+    // Cada chamada deve ter URI canonica via vaultUriJoin.
+    for (let i = 0; i < 5; i++) {
+      const uriArg = mockWriteVaultFile.mock.calls[i][0] as string;
+      expect(uriArg).toContain(`markdown/agenda-pessoa_a-2026-05-${String(7 + i).padStart(2, '0')}-ev_${i}.md`);
+    }
   });
 
   it('cenario 2: evento existente com mudanca -> atualizado=1', async () => {

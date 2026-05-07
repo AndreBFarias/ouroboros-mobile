@@ -5,6 +5,26 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-AGENDA — `M-SAVE-AGENDA-VALIDA` (2026-05-07)
+
+**Bloco I FECHADO (15/15 sprints).** `src/lib/vault/agenda.ts`
+remove `joinUri` local (6 callsites) e migra para `vaultUriJoin`.
+Path `markdown/agenda-pessoa_a-YYYY-MM-DD-eventId.md` (H2). Caller
+`app/agenda.tsx` envolve `salvarCacheEventos` em
+`comTimeout(p, 30s)` + try/catch. Toasts PT-BR `Agenda atualizada.`
+/ `Não foi possível atualizar: <msg>`.
+
+Tests: 19 → 23 casos (vaultRoot vazio throw, SAF trailing slash sem
+barras duplas, SAF `%20` defesa A29, sincronização inicial cria N
+arquivos). E2E novo cobre `agenda root` presente + `agenda
+carregando` ausente.
+
+Validação adb humana fica pendente até I2-OAUTH (sprint separada,
+decisão dono — código de I-AGENDA não depende de OAuth funcionando).
+
+Métricas: 1724 testes / 174 suítes verde (+4) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-CICLO — `M-SAVE-CICLO-VALIDA` (2026-05-07)
 
 `src/lib/vault/ciclo.ts` migra `joinUri` local (3 callsites) para

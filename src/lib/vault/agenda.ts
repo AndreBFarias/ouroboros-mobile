@@ -16,6 +16,12 @@
 // release Android). Idempotencia garantida por igualdade estrutural
 // no parse + comparacao de sincronizado_em.
 //
+// Concatenacao de URI usa vaultUriJoin canonico (paths.ts) — trim
+// agressivo de trailing whitespace, %20 ofensivo e barras duplas
+// que vinham contaminando saves em OEMs MIUI/OneUI/HyperOS
+// (Armadilha A29). Substituiu o helper local joinUri legado em
+// I-AGENDA (M-SAVE-AGENDA-VALIDA).
+//
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -24,6 +30,7 @@ import {
   agendaEventoPath,
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
+  vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -51,12 +58,6 @@ export interface SincronizacaoResultado {
   removidos: number;
 }
 
-// Concatena root SAF e path relativo, normalizando barras.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
 // Sanea o eventId para uso seguro como nome de arquivo. Google Calendar
 // IDs usam Base32hex (a-v + 0-9) na pratica; defesa em profundidade
 // remove qualquer separador de path ou caractere proibido.
@@ -73,7 +74,7 @@ async function garantirPastaAgenda(
   _pessoa: PessoaAutor
 ): Promise<void> {
   void _pessoa;
-  const dir = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const dir = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   try {
     await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
   } catch {
@@ -91,7 +92,7 @@ export async function listarEventosAgenda(
   vaultRoot: string,
   pessoa: PessoaAutor
 ): Promise<AgendaEvento[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) =>
     matchesFeaturePrefix(u, `agenda-${pessoa}-`)
@@ -121,7 +122,7 @@ export async function lerEventoAgenda(
   id: string
 ): Promise<AgendaEvento | null> {
   const rel = agendaEventoPath(pessoa, iso, sanitizarEventoId(id));
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   try {
     const result = await readVaultFile(uri, AgendaEventoSchema);
     return result ? result.meta : null;
@@ -145,7 +146,7 @@ export async function salvarEventoAgenda(
   await garantirPastaAgenda(vaultRoot, parsed.data.pessoa);
   const idSeguro = sanitizarEventoId(parsed.data.id);
   const rel = agendaEventoPath(parsed.data.pessoa, parsed.data.inicio, idSeguro);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<AgendaEvento>(uri, parsed.data, descricao);
   return { uri, rel };
 }
@@ -159,7 +160,7 @@ export async function apagarEventoAgenda(
   pessoa: PessoaAutor,
   id: string
 ): Promise<void> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) =>
     matchesFeaturePrefix(u, `agenda-${pessoa}-`)
