@@ -168,3 +168,70 @@ describe('saveDiario conflito de path', () => {
     expect(out.uri).toMatch(/-raiva-ouro-[a-z0-9]{6}-\d{10,}\.md$/);
   });
 });
+
+// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): cobertura explicita
+// dos 2 modos canonicos do schema (trigger, vitoria), edge case
+// vaultRoot vazio, path final via vaultUriJoin (sem trailing space,
+// sem %20 ofensivo, sem barras duplas) e save com audio companion
+// presente (campo audio: string apontando para m4a/...).
+describe('I-DIARIO modos canonicos', () => {
+  it('modo trigger gera path com slug da emocao primaria', async () => {
+    const out = await saveDiario(baseTrigger, 'corpo trigger.', VAULT_ROOT);
+    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-raiva\.md$/);
+    const [uri, meta] = mockWriteVaultFile.mock.calls[0];
+    expect(uri).toContain('markdown/diario-2026-04-29-0900-raiva.md');
+    expect(meta).toMatchObject({ modo: 'trigger', funcionou: true });
+  });
+
+  it('modo vitoria gera path com slug da emocao primaria', async () => {
+    const out = await saveDiario(baseSucesso, 'corpo vitoria.', VAULT_ROOT);
+    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-gratidao\.md$/);
+    const [, meta] = mockWriteVaultFile.mock.calls[0];
+    expect(meta).toMatchObject({ modo: 'vitoria' });
+    // funcionou nao se aplica em vitoria; nao deve aparecer.
+    expect((meta as DiarioEmocionalMeta).funcionou).toBeUndefined();
+  });
+});
+
+describe('I-DIARIO audio companion', () => {
+  it('persiste o campo audio quando microfone gravou (path m4a)', async () => {
+    const comAudio: DiarioEmocionalMeta = {
+      ...baseTrigger,
+      audio: 'm4a/audio-2026-04-29-1530-abc123.m4a',
+    };
+    await saveDiario(comAudio, 'corpo com audio.', VAULT_ROOT);
+    const [, meta] = mockWriteVaultFile.mock.calls[0];
+    expect((meta as DiarioEmocionalMeta).audio).toBe(
+      'm4a/audio-2026-04-29-1530-abc123.m4a'
+    );
+  });
+
+  it('mantem audio=null quando microfone nao foi usado', async () => {
+    await saveDiario(baseTrigger, 'corpo sem audio.', VAULT_ROOT);
+    const [, meta] = mockWriteVaultFile.mock.calls[0];
+    expect((meta as DiarioEmocionalMeta).audio).toBeNull();
+  });
+});
+
+describe('I-DIARIO vaultRoot e path canonico', () => {
+  it('vaultRoot vazio propaga erro claro do vaultUriJoin', async () => {
+    await expect(saveDiario(baseTrigger, 'x', '')).rejects.toThrow(
+      /root vazio/
+    );
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  it('vaultRoot SAF com trailing space e %20 ofensivo limpa antes de concatenar', async () => {
+    // Caso real: tree URI SAF do MIUI/HyperOS as vezes vem com
+    // trailing %20 (espaco da pasta original). vaultUriJoin trata.
+    const ROOT_SUJO =
+      'content://com.android.externalstorage/tree/primary:Test%20';
+    const out = await saveDiario(baseTrigger, 'corpo.', ROOT_SUJO);
+    expect(out.uri).toBe(
+      'content://com.android.externalstorage/tree/primary:Test/markdown/diario-2026-04-29-0900-raiva.md'
+    );
+    const [uri] = mockWriteVaultFile.mock.calls[0];
+    expect(uri).not.toMatch(/%20\/markdown/);
+    expect(uri).not.toContain('//markdown');
+  });
+});

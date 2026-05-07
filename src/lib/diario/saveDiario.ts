@@ -1,18 +1,28 @@
 // Persiste um registro de diario emocional (Tela 18) em
-// inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md no Vault. Função pura:
-// recebe meta validado, body livre e vaultRoot; devolve URI final.
+// markdown/diario-YYYY-MM-DD-HHmm-<slug>.md no Vault (layout H2 por
+// tipo). Funcao pura: recebe meta validado, body livre e vaultRoot;
+// devolve URI final.
 //
 // Slug do nome de arquivo: deriva da primeira emocao da lista (ou
 // 'registro' se vazia). Em colisao improvavel (mesmo arquivo no
-// mesmo minuto e mesmo slug), aplica sufixo numerico crescente.
+// mesmo minuto e mesmo slug), aplica sufixo de deviceId.
 //
 // Diferenca para saveHumor: o path já contem hora e minuto, dificultando
 // colisao real entre devices. Quando ha colisao, M38 troca o sufixo
-// numerico ('-1', '-2', ...) por '-<deviceId>' para alinhar com o
-// padrao de conflict resolution do Syncthing (4 nos).
+// numerico antigo ('-1', '-2', ...) por '-<deviceId>' para alinhar
+// com o padrao de conflict resolution do Syncthing (4 nos).
+//
+// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): substitui joinUri local
+// pelo helper canonico vaultUriJoin de @/lib/vault, eliminando
+// trailing space, %20 ofensivo e barras duplas em URIs SAF (causa
+// raiz parcial dos saves silenciosos no APK alpha em OEMs MIUI/
+// OneUI/HyperOS, vide A29). Auditoria: 100% das concatenacoes ad-hoc
+// substituidas; vaultRoot vazio agora propaga erro claro do helper
+// em vez de gerar URI invalida silenciosa.
 import {
   diarioPath,
   readVaultFile,
+  vaultUriJoin,
   writeVaultFile,
 } from '@/lib/vault';
 import {
@@ -23,12 +33,6 @@ import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 export interface SaveDiarioResult {
   uri: string;
-}
-
-// Concatena root SAF e path relativo, normalizando barras.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
 }
 
 // Monta o slug do nome de arquivo a partir da primeira emocao do
@@ -56,7 +60,7 @@ async function resolvePath(
   vaultRoot: string,
   relCanonico: string
 ): Promise<string> {
-  const uriCanonico = joinUri(vaultRoot, relCanonico);
+  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
   const existente = await readVaultFile(
     uriCanonico,
     DiarioEmocionalSchema
@@ -65,7 +69,7 @@ async function resolvePath(
 
   const deviceId = await getDeviceId();
   const relComDevice = applyDeviceIdSuffix(relCanonico, deviceId);
-  const uriComDevice = joinUri(vaultRoot, relComDevice);
+  const uriComDevice = vaultUriJoin(vaultRoot, relComDevice);
   const jaComDevice = await readVaultFile(uriComDevice, DiarioEmocionalSchema);
   if (!jaComDevice) return relComDevice;
 
@@ -94,7 +98,7 @@ export async function saveDiario(
   // do frontmatter para preservar fuso explicito.
   const relCanonico = diarioPath(new Date(), slug);
   const rel = await resolvePath(vaultRoot, relCanonico);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<DiarioEmocionalMeta>(uri, parsed.data, body);
   return { uri };
 }

@@ -61,6 +61,13 @@ import { saveDiario } from '@/lib/diario/saveDiario';
 import { formatEmocao } from '@/lib/diario/emocoes';
 import type { Midia } from '@/lib/schemas/midia';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+import { comTimeout } from '@/lib/util/comTimeout';
+
+// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): aplica padrao canonico
+// de save resilient do template Bloco I (§2.2): try/catch + timeout
+// 10s + toast PT-BR sentence case com acentuacao completa. comTimeout
+// agora vive em @/lib/util/comTimeout (helper compartilhado entre
+// FRASE, HUMOR e DIARIO).
 
 type ModoParam = DiarioEmocionalModo | 'audio';
 
@@ -351,7 +358,7 @@ export default function DiarioEmocional() {
     });
 
     try {
-      await saveDiario(validacao.data, body, vaultRoot);
+      await comTimeout(saveDiario(validacao.data, body, vaultRoot));
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('diarioEmocional');
       sheetRef.current?.close();
@@ -359,17 +366,20 @@ export default function DiarioEmocional() {
         // anonimato-allow: substantivo comum (conquista) na frase abaixo.
         // Conquista registrada — respeita Settings.somVibracao.vitoria.
         await haptics.vitoria();
-        toast.show('Anotado.', 'success');
+        toast.show('Diário salvo.', 'success');
       } else if (ehTrigger) {
         // Gatilho emocional — respeita Settings.somVibracao.trigger.
         await haptics.trigger();
-        toast.show('Registrado.', 'success');
+        toast.show('Diário salvo.', 'success');
       } else {
-        toast.show('Registrado.', 'success');
+        toast.show('Diário salvo.', 'success');
       }
       router.back();
-    } catch {
-      toast.show('Falha ao salvar. Verifique a pasta do Vault.', 'error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save diario fail', e);
       setSalvando(false);
     }
   };

@@ -44,31 +44,14 @@ import { formatDateYmd } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { TAGS_RAPIDAS } from '@/lib/humor/tagsRapidas';
 import { saveHumor } from '@/lib/humor/saveHumor';
+import { comTimeout } from '@/lib/util/comTimeout';
 
 const SLIDER_DEFAULT = 3;
 
-// I-HUMOR (M-SAVE-HUMOR-VALIDA): timeout default para SAF write em
-// /sdcard/Documents/. Em devices saudaveis o write leva <500ms; 10s
-// cobre OEMs lentos sem frustrar. Em caso de timeout, caller exibe
-// toast 'Não foi possível salvar: timeout salvando' (PT-BR sentence
-// case + acentuacao completa).
-const SAVE_TIMEOUT_MS = 10_000;
-
-// Promise race com timeout. Padrao ja replicado em MenuCapturaVerde
-// (I-FRASE); helper compartilhado fica para sprint futura quando o
-// pattern aparecer no terceiro caller. Local mantem o caller auto-
-// contido.
-async function comTimeout<T>(
-  p: Promise<T>,
-  ms = SAVE_TIMEOUT_MS
-): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout salvando')), ms)
-    ),
-  ]);
-}
+// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): comTimeout extraido
+// para @/lib/util/comTimeout (helper canonico do Bloco I). Default
+// 10s mora no helper. Toast permanece 'Não foi possível salvar:
+// timeout salvando' (PT-BR sentence case + acentuacao completa).
 
 export default function HumorRapido() {
   const router = useRouter();

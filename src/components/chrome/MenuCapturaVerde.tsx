@@ -51,27 +51,13 @@ import { capturarVideo } from '@/lib/midia/capturarVideo';
 import { salvarFrase } from '@/lib/midia/salvarFrase';
 import type { Para } from '@/lib/schemas/para';
 import { useNavegacao } from '@/lib/stores/navegacao';
+import { comTimeout } from '@/lib/util/comTimeout';
 
 const FAB_SIZE = 56;
 
-// I-FRASE (M-SAVE-FRASE-VALIDA): timeout default para SAF write em
-// /sdcard/Documents/. Em devices saudaveis o write leva <500ms; 10s
-// cobre OEMs lentos sem frustrar. Em caso de timeout, caller exibe
-// toast 'Não foi possível salvar: timeout salvando' (PT-BR sentence
-// case + acentuacao completa).
-const SAVE_TIMEOUT_MS = 10_000;
-
-// Promise race com timeout. Sem helper compartilhado no projeto ainda
-// (MenuCapturaVerde e o primeiro caller a precisar; sprints I futuras
-// vao extrair se virar pattern). Local mantem o caller auto-contido.
-async function comTimeout<T>(p: Promise<T>, ms = SAVE_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout salvando')), ms)
-    ),
-  ]);
-}
+// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): comTimeout extraido
+// para @/lib/util/comTimeout (helper canonico do Bloco I). FRASE,
+// HUMOR e DIARIO importam daqui agora; o default 10s vive no helper.
 
 // M34.3: descricao de uma acao contextual injetada pela tab que
 // hospeda o MenuCapturaVerde. A tab fornece o conjunto que deve

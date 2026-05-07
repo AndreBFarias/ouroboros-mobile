@@ -31,7 +31,7 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
 | I-HUMOR | `M-SAVE-HUMOR-VALIDA` | `M-SAVE-HUMOR-VALIDA-spec.md` | ~1.5h | `[ok]` |
-| I-DIARIO | `M-SAVE-DIARIO-VALIDA` | `M-SAVE-DIARIO-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-DIARIO | `M-SAVE-DIARIO-VALIDA` | `M-SAVE-DIARIO-VALIDA-spec.md` | ~1.5h | `[ok]` |
 | I-EVENTO | `M-SAVE-EVENTO-VALIDA` | `M-SAVE-EVENTO-VALIDA-spec.md` | ~1.5h | `[todo]` |
 | I-FOTO | `M-SAVE-FOTO-VALIDA` | `M-SAVE-FOTO-VALIDA-spec.md` | ~2h | `[todo]` |
 | I-AUDIO | `M-SAVE-AUDIO-VALIDA` | `M-SAVE-AUDIO-VALIDA-spec.md` | ~2h | `[todo]` |

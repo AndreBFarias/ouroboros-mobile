@@ -5,6 +5,37 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-DIARIO — `M-SAVE-DIARIO-VALIDA` (2026-05-07)
+
+`src/lib/diario/saveDiario.ts` migra `joinUri` local para
+`vaultUriJoin` (H1) com path `markdown/diario-YYYY-MM-DD-HHmm-slug.md`
+(H2). `app/diario-emocional.tsx` envolve save em try/catch+timeout
+com toasts PT-BR `Diário salvo.` / `Não foi possível salvar: <msg>`.
+
+**`comTimeout` extraído para `src/lib/util/comTimeout.ts`** (zero
+deps, função pura) com 6 testes em
+`tests/lib/util/comTimeout.test.ts`. 3 callers migrados:
+`MenuCapturaVerde.tsx`, `app/humor-rapido.tsx`,
+`app/diario-emocional.tsx`. Resolve achado registrado em I-HUMOR.
+
+Tests: +6 casos em `tests/lib/diario/saveDiario.test.ts`
+(modo trigger, modo vitória, audio companion presente, audio null,
+vaultRoot vazio throw, normalização SAF tree URI com `%20` ofensivo).
+E2E novo `tests/e2e/playwright/m-save-diario.e2e.ts` cobre 2 modos
+canônicos (trigger + vitória) via Gauntlet seed.
+
+Achados registrados:
+- Schema `DiarioEmocionalModoSchema` aceita só `trigger|vitoria`,
+  não `reflexao`. Sprint nova `I-DIARIO-REFLEXAO` para extender.
+- Audio companion file separado (`markdown/audio-...md`) fica para
+  sprint `I-AUDIO` que ainda não foi entregue.
+- `check_test_data.sh` não respeita marker `anonimato-allow:` —
+  sprint `INFRA-CHECK-TEST-DATA-ALLOW` para alinhar.
+
+Métricas: 1621 testes / 173 suítes verde (+12 contra 1609 baseline,
++1 suíte do helper) · TS strict 0 · Hermes Android 7,7 MB intacto ·
+Gauntlet leak 0/6 · anonimato OK · PT-BR check OK.
+
 ### Sprint I-HUMOR — `M-SAVE-HUMOR-VALIDA` (2026-05-07)
 
 `src/lib/humor/saveHumor.ts` migra `joinUri` local para `vaultUriJoin`
