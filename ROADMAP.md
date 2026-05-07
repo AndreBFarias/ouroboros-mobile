@@ -24,7 +24,7 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 |---|---|---|---|---|---|
 | H1 | `M-VAULT-URI-HELPER` | `M-VAULT-URI-HELPER-spec.md` | ~1h | — | `[ok]` |
 | H2 | `M-VAULT-LAYOUT-POR-TIPO` | `M-VAULT-LAYOUT-POR-TIPO-spec.md` | ~4h | 0023 | `[ok]` |
-| H3 | `M-VAULT-PASTA-NAO-HARDCODED` | `M-VAULT-PASTA-NAO-HARDCODED-spec.md` | ~3h | 0022 | `[todo]` |
+| H3 | `M-VAULT-PASTA-NAO-HARDCODED` | `M-VAULT-PASTA-NAO-HARDCODED-spec.md` | ~3h | 0022 | `[ok]` |
 
 ### Bloco I — Saves específicos por feature (paralelo após H)
 

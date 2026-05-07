@@ -1,18 +1,24 @@
-// Testes de inicializarVaultCanonico (M22). Cobre:
+// Testes de inicializarVaultEscolhido (H3, M-VAULT-PASTA-NAO-HARDCODED,
+// ADR-0022). Cobre:
 //  - Web cai em no-op produtivo (URI mock + criado=false + modo 'web').
-//  - Android API <30: pede WRITE_EXTERNAL_STORAGE via PermissionsAndroid.
-//  - Android API >=30: dispara Intent MANAGE_APP_ALL_FILES_ACCESS_PERMISSION.
-//  - garantirSubpastas e idempotente: chamar duas vezes nao falha.
-//  - probe write+read+delete confirma permissao funcional (modo 'auto').
-//  - probe falhando cai em fallback SAF (modo 'saf-fallback').
-//  - SAF tambem negado lanca erro.
+//  - Android: URI sugestao default (file://) cria 8 subpastas e
+//    reporta modo 'auto'.
+//  - Android: URI SAF (content://) cria 8 subpastas e reporta modo
+//    'saf-fallback'.
+//  - URI vazia lanca erro descritivo.
+//  - Idempotencia: chamar 2x com mesma URI nao quebra (probe + dirs
+//    se mantem).
+//  - probe escreve, le e deleta o arquivo .ouroboros-probe.
+//  - probe falhando lanca erro descritivo (caller decide proximo
+//    passo: SAF picker em fluxo H3 separado).
+//  - garantirSubpastas em web vira no-op silencioso.
+//
+// pedirPermissaoStorage continua identico ao M22 (sem alteracoes em
+// H3); cobertura de iOS/web/android/erro mantida.
 //
 // Mocks: react-native (Platform), PermissionsAndroid, expo-intent-launcher,
 // expo-file-system/legacy. Defaults vem de jest.setup.cjs; cada teste
 // sobrescreve so o que precisa via jest.requireMock + mockImplementationOnce.
-// O preset jest-expo intercepta react-native; PermissionsAndroid e
-// resolvido pelo mock interno do preset, entao importamos via require()
-// no momento do teste para pegar a referencia atual ja decorada.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
@@ -20,11 +26,12 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import * as FileSystem from 'expo-file-system/legacy';
 
 import {
-  inicializarVaultCanonico,
+  inicializarVaultEscolhido,
   garantirSubpastas,
   pedirPermissaoStorage,
+  sugestaoVaultPathDefault,
+  sugestaoVaultUriDefault,
   SUBPASTAS_CANONICAS,
-  VAULT_CANONICO_URI,
 } from '@/lib/vault/permissions';
 import { useVault } from '@/lib/stores/vault';
 
@@ -70,7 +77,23 @@ function setPlatform(os: 'web' | 'android' | 'ios', version: number) {
 const ORIGINAL_OS = Platform.OS;
 const ORIGINAL_VERSION = Platform.Version;
 
-describe('inicializarVaultCanonico', () => {
+const SUGESTAO_URI = sugestaoVaultUriDefault();
+const SAF_URI =
+  'content://com.android.externalstorage.documents/tree/primary%3ADownload';
+
+describe('sugestaoVaultPathDefault / sugestaoVaultUriDefault', () => {
+  it('path default e /sdcard/Documents/Ouroboros/', () => {
+    expect(sugestaoVaultPathDefault()).toBe('/sdcard/Documents/Ouroboros/');
+  });
+
+  it('uri default e file://${path}', () => {
+    expect(sugestaoVaultUriDefault()).toBe(
+      'file:///sdcard/Documents/Ouroboros/'
+    );
+  });
+});
+
+describe('inicializarVaultEscolhido (H3)', () => {
   beforeEach(() => {
     getFsMemory().clear();
     getFsDirs().clear();
@@ -82,9 +105,9 @@ describe('inicializarVaultCanonico', () => {
     setPlatform(ORIGINAL_OS as 'web' | 'android' | 'ios', ORIGINAL_VERSION as number);
   });
 
-  it('em web devolve mock URI sem tocar FileSystem', async () => {
+  it('em web devolve mock URI sem tocar FileSystem (uri parametro ignorada)', async () => {
     setPlatform('web', 0);
-    const result = await inicializarVaultCanonico();
+    const result = await inicializarVaultEscolhido(SUGESTAO_URI);
     expect(result.modo).toBe('web');
     expect(result.criado).toBe(false);
     expect(result.vaultRoot).toMatch(/^web:\/\/mock-vault\//);
@@ -93,101 +116,114 @@ describe('inicializarVaultCanonico', () => {
     expect(FileSystem.writeAsStringAsync).not.toHaveBeenCalled();
   });
 
-  it('em Android API >=30 dispara Intent MANAGE_EXTERNAL_STORAGE e cria subpastas', async () => {
+  it('Android com URI sugestao default cria 8 subpastas e modo auto', async () => {
     setPlatform('android', 33);
-    const result = await inicializarVaultCanonico();
-    expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith(
-      'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
-      expect.objectContaining({ data: 'package:com.ouroboros.mobile' })
-    );
-    expect(getPermissionsAndroid().request).not.toHaveBeenCalled();
-    expect(result.modo).toBe('auto');
-    expect(result.criado).toBe(true);
-    expect(result.vaultRoot).toBe(VAULT_CANONICO_URI);
-    expect(useVault.getState().vaultRoot).toBe(VAULT_CANONICO_URI);
-  });
-
-  it('em Android API <30 pede WRITE_EXTERNAL_STORAGE via PermissionsAndroid', async () => {
-    setPlatform('android', 28);
-    const result = await inicializarVaultCanonico();
-    expect(getPermissionsAndroid().request).toHaveBeenCalledWith(
-      'android.permission.WRITE_EXTERNAL_STORAGE'
-    );
-    expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
-    expect(result.modo).toBe('auto');
-  });
-
-  it('cria todas as 8 subpastas canonicas no boot (H2 layout-por-tipo)', async () => {
-    setPlatform('android', 33);
-    await inicializarVaultCanonico();
-    // garantirSubpastas chamou makeDirectoryAsync uma vez por subpasta
-    // (intermediates: true). Pode ser >= se houve tentativa do fallback,
-    // mas no caminho 'auto' espera-se exato a contagem da constante.
+    const result = await inicializarVaultEscolhido(SUGESTAO_URI);
     expect(SUBPASTAS_CANONICAS.length).toBe(8);
     expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(8);
     SUBPASTAS_CANONICAS.forEach((sub) => {
+      // vaultUriJoin remove a barra final do root antes de juntar.
+      const expected = `file:///sdcard/Documents/Ouroboros/${sub}`;
       expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(
-        `${VAULT_CANONICO_URI}${sub}`,
+        expected,
         { intermediates: true }
       );
     });
+    expect(result.modo).toBe('auto');
+    expect(result.criado).toBe(true);
+    expect(result.vaultRoot).toBe(SUGESTAO_URI);
+    expect(useVault.getState().vaultRoot).toBe(SUGESTAO_URI);
   });
 
-  it('garantirSubpastas e idempotente: rodar duas vezes nao lanca', async () => {
+  it('Android com URI SAF (content://...) cria 8 subpastas e modo saf-fallback', async () => {
     setPlatform('android', 33);
-    await garantirSubpastas(VAULT_CANONICO_URI);
-    await expect(
-      garantirSubpastas(VAULT_CANONICO_URI)
-    ).resolves.toBeUndefined();
-  });
-
-  it('garantirSubpastas em web vira no-op silencioso', async () => {
-    setPlatform('web', 0);
-    await garantirSubpastas('web://mock/');
-    expect(FileSystem.makeDirectoryAsync).not.toHaveBeenCalled();
-  });
-
-  it('quando probe falha cai em fallback SAF e marca modo saf-fallback', async () => {
-    setPlatform('android', 33);
-    const writeMock = FileSystem.writeAsStringAsync as jest.Mock;
-    // Primeira tentativa: probe write em /sdcard/ falha (OEM agressivo).
-    // Demais escritas (no SAF URI) seguem o default e gravam em memoria.
-    writeMock.mockImplementationOnce(() => Promise.reject(new Error('EACCES')));
-
-    const result = await inicializarVaultCanonico();
+    const result = await inicializarVaultEscolhido(SAF_URI);
+    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(8);
+    SUBPASTAS_CANONICAS.forEach((sub) => {
+      expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(
+        `${SAF_URI}/${sub}`,
+        { intermediates: true }
+      );
+    });
     expect(result.modo).toBe('saf-fallback');
     expect(result.criado).toBe(true);
-    expect(result.vaultRoot).toMatch(/^content:\/\/com\.android\.externalstorage/);
-    expect(useVault.getState().vaultRoot).toBe(result.vaultRoot);
+    expect(result.vaultRoot).toBe(SAF_URI);
+    expect(useVault.getState().vaultRoot).toBe(SAF_URI);
   });
 
-  it('quando probe falha e SAF e cancelado lanca erro descritivo', async () => {
+  it('URI vazia lanca erro descritivo', async () => {
+    setPlatform('android', 33);
+    await expect(inicializarVaultEscolhido('')).rejects.toThrow(
+      /uri vazia/
+    );
+    await expect(inicializarVaultEscolhido('   ')).rejects.toThrow(
+      /uri vazia/
+    );
+    expect(useVault.getState().vaultRoot).toBeNull();
+  });
+
+  it('idempotencia: chamar 2x com mesma URI nao lanca e mantem subpastas', async () => {
+    setPlatform('android', 33);
+    await inicializarVaultEscolhido(SUGESTAO_URI);
+    await expect(
+      inicializarVaultEscolhido(SUGESTAO_URI)
+    ).resolves.toEqual(
+      expect.objectContaining({
+        modo: 'auto',
+        vaultRoot: SUGESTAO_URI,
+        criado: true,
+      })
+    );
+    // makeDirectoryAsync chamado 8x na primeira + 8x na segunda = 16.
+    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(16);
+  });
+
+  it('probe falha (OEM agressivo) lanca erro storage permission denied', async () => {
     setPlatform('android', 33);
     const writeMock = FileSystem.writeAsStringAsync as jest.Mock;
     writeMock.mockImplementationOnce(() => Promise.reject(new Error('EACCES')));
-    // SAF tambem negado pelo usuario.
-    (FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync as jest.Mock).mockResolvedValueOnce({
-      granted: false,
-      directoryUri: '',
-    });
-
-    await expect(inicializarVaultCanonico()).rejects.toThrow(
+    await expect(inicializarVaultEscolhido(SUGESTAO_URI)).rejects.toThrow(
       /storage permission denied/
     );
     expect(useVault.getState().vaultRoot).toBeNull();
   });
 
-  it('probe escreve, le e deleta o arquivo .ouroboros-probe', async () => {
+  it('probe escreve, le e deleta .ouroboros-probe sob a URI escolhida', async () => {
     setPlatform('android', 33);
-    await inicializarVaultCanonico();
-    const probeUri = `${VAULT_CANONICO_URI}.ouroboros-probe`;
+    await inicializarVaultEscolhido(SUGESTAO_URI);
+    const probeUri = `file:///sdcard/Documents/Ouroboros/.ouroboros-probe`;
     expect(FileSystem.writeAsStringAsync).toHaveBeenCalledWith(probeUri, 'ok');
     expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith(probeUri);
     expect(FileSystem.deleteAsync).toHaveBeenCalledWith(probeUri, {
       idempotent: true,
     });
-    // Memoria nao deve manter o probe apos o ciclo.
     expect(getFsMemory().has(probeUri)).toBe(false);
+  });
+});
+
+describe('garantirSubpastas (H3)', () => {
+  beforeEach(() => {
+    getFsMemory().clear();
+    getFsDirs().clear();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    setPlatform(ORIGINAL_OS as 'web' | 'android' | 'ios', ORIGINAL_VERSION as number);
+  });
+
+  it('idempotente: rodar 2x nao lanca', async () => {
+    setPlatform('android', 33);
+    await garantirSubpastas(SUGESTAO_URI);
+    await expect(
+      garantirSubpastas(SUGESTAO_URI)
+    ).resolves.toBeUndefined();
+  });
+
+  it('em web vira no-op silencioso', async () => {
+    setPlatform('web', 0);
+    await garantirSubpastas('web://mock/');
+    expect(FileSystem.makeDirectoryAsync).not.toHaveBeenCalled();
   });
 });
 
@@ -214,6 +250,25 @@ describe('pedirPermissaoStorage', () => {
     expect(getPermissionsAndroid().request).not.toHaveBeenCalled();
   });
 
+  it('Android API >=30 dispara Intent MANAGE_APP_ALL_FILES_ACCESS_PERMISSION', async () => {
+    setPlatform('android', 33);
+    await pedirPermissaoStorage();
+    expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith(
+      'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
+      expect.objectContaining({ data: 'package:com.ouroboros.mobile' })
+    );
+    expect(getPermissionsAndroid().request).not.toHaveBeenCalled();
+  });
+
+  it('Android API <30 pede WRITE_EXTERNAL_STORAGE via PermissionsAndroid', async () => {
+    setPlatform('android', 28);
+    await pedirPermissaoStorage();
+    expect(getPermissionsAndroid().request).toHaveBeenCalledWith(
+      'android.permission.WRITE_EXTERNAL_STORAGE'
+    );
+    expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
+  });
+
   it('engole erro do IntentLauncher e nao propaga', async () => {
     setPlatform('android', 33);
     (IntentLauncher.startActivityAsync as jest.Mock).mockRejectedValueOnce(
@@ -232,7 +287,8 @@ describe('pedirPermissaoStorage', () => {
 });
 
 describe('SUBPASTAS_CANONICAS (H2 layout-por-tipo, ADR-0023)', () => {
-  it('inclui as pastas canonicas por tipo de arquivo', () => {
+  it('inclui as 8 pastas canonicas por tipo de arquivo', () => {
+    expect(SUBPASTAS_CANONICAS.length).toBe(8);
     expect(SUBPASTAS_CANONICAS).toEqual(
       expect.arrayContaining([
         'markdown',

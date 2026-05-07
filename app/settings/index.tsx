@@ -39,7 +39,6 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { exportarVaultZip } from '@/lib/services/exportarVault';
 import { restaurarVaultZip } from '@/lib/services/restaurarVault';
 import { limparCache } from '@/lib/services/limparCache';
-import { inicializarVaultCanonico } from '@/lib/vault/permissions';
 import {
   APP_GITHUB_LABEL,
   APP_LICENSE,
@@ -117,7 +116,6 @@ function SecaoSomVibracao() {
 
 function SecaoPessoa() {
   const router = useRouter();
-  const toast = useToast();
   const pessoa = useSettings((s) => s.pessoa);
   const setPessoa = useSettings((s) => s.setPessoa);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
@@ -128,16 +126,6 @@ function SecaoPessoa() {
   const trocar = (next: PessoaAutor) => {
     setPessoaAtiva(next);
     setPessoa('ativa', next);
-  };
-
-  const reinicializarVault = async () => {
-    haptics.medium();
-    try {
-      await inicializarVaultCanonico();
-      toast.show('Pasta verificada.', 'success');
-    } catch {
-      toast.show('Falha ao verificar a pasta.', 'error');
-    }
   };
 
   return (
@@ -193,10 +181,10 @@ function SecaoPessoa() {
       />
 
       <LinkSubTela
-        titulo="Reinicializar pasta do Vault"
-        subtitulo="Verifica e recria a pasta canônica do Mobile."
-        onPress={() => void reinicializarVault()}
-        accessibilityLabel="reinicializar pasta do vault"
+        titulo="Vault"
+        subtitulo="Pasta atual, trocar local, reinicializar subpastas."
+        onPress={() => router.push('/settings/vault')}
+        accessibilityLabel="vault"
       />
 
       <LinkSubTela

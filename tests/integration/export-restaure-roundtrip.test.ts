@@ -140,9 +140,16 @@ jest.mock('expo-file-system/legacy', () => {
 jest.mock('@/lib/vault/permissions', () => ({
   __esModule: true,
   loadVaultRoot: jest.fn(() => Promise.resolve('file:///mock/vault')),
-  inicializarVaultCanonico: jest.fn(() =>
-    Promise.resolve({ ok: true, vaultRoot: 'file:///mock/vault' })
+  inicializarVaultEscolhido: jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      vaultRoot: 'file:///mock/vault',
+      criado: true,
+      modo: 'auto',
+    })
   ),
+  sugestaoVaultPathDefault: () => '/sdcard/Documents/Ouroboros/',
+  sugestaoVaultUriDefault: () => 'file:///sdcard/Documents/Ouroboros/',
 }));
 
 // Mock de Platform como Android (loadVaultRoot ja esta mockado mas

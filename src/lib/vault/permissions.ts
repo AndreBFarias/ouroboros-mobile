@@ -1,19 +1,29 @@
 // Helpers de permissao e inicializacao do Vault.
 //
-// Camada nova (M22): inicializarVaultCanonico() cria a estrutura
-// completa em /sdcard/Documents/Ouroboros/ na primeira execucao.
-// Pede permissao de armazenamento sem SAF (PermissionsAndroid em
-// Android <11; Intent MANAGE_EXTERNAL_STORAGE em Android >=11).
-// Probe write+read+delete e a unica fonte de verdade sobre permissao
-// funcional (vide armadilha A19 no VALIDATOR_BRIEF.md).
+// H3 (M-VAULT-PASTA-NAO-HARDCODED, ADR-0022): a pasta deixa de ser
+// hardcoded. O onboarding pergunta ao usuario, oferecendo uma sugestao
+// default (/sdcard/Documents/Ouroboros/) ou um SAF picker para escolha
+// manual. Em ambos os casos o caller ja chega aqui com a URI definida
+// e chama inicializarVaultEscolhido(uri). Esta funcao apenas cria a
+// estrutura canonica (8 subpastas via H2) e persiste o vaultRoot.
 //
 // Camada legada (mantida): requestVaultPermission() ainda existe para
-// servir como fallback SAF quando o probe falha em OEMs agressivos
-// (MIUI, OneUI etc.). M23 cuidara de remover o uso direto no
-// onboarding; aqui o helper segue como recurso ultimo.
+// disparar o SAF picker; pedirPermissaoStorageDefault() ainda existe
+// para pedir permissao de armazenamento na pasta sugerida default.
 //
 // Armadilha A2: Android 13+ exige requestDirectoryPermissionsAsync;
-// pedidos so podem partir de gesto do usuario (botao na tela 01).
+// pedidos so podem partir de gesto do usuario (botao na tela do
+// onboarding).
+//
+// Armadilha A19: scoped storage Android 11+ + OEMs agressivos podem
+// negar write em /sdcard/Documents/<app>/ mesmo com permissao
+// concedida. Probe write+read+delete e a unica fonte de verdade. Se o
+// probe falha na pasta sugerida default, lancamos erro claro e o
+// caller cai em fluxo de SAF picker (decisao do usuario).
+//
+// Armadilha A29: trailing space e percent-encoding ofensivo no URI
+// SAF retornado por OEMs MIUI/OneUI/HyperOS. Tudo passa por
+// vaultUriJoin (H1) que ja saneia.
 //
 // O API legacy do expo-file-system continua sendo o canal
 // suportado para SAF na SDK 54 (entry point: 'expo-file-system/legacy').
@@ -27,6 +37,7 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
+import { vaultUriJoin } from './paths';
 
 const VAULT_ROOT_KEY = 'ouroboros.vault.root.v1';
 // Avaliado por chamada (nao na carga do modulo) para que testes possam
@@ -36,12 +47,29 @@ function isWeb(): boolean {
   return Platform.OS === 'web';
 }
 
-// Path canonico do Vault no Android. ADR-0016: pasta visivel em
-// qualquer file manager, facil de pareear no Syncthing externo.
-const VAULT_PATH = '/sdcard/Documents/Ouroboros/';
-const VAULT_URI = `file://${VAULT_PATH}`;
+// Sugestao default de pasta para o Vault no Android. Visivel em
+// qualquer file manager, facil de pareear no Syncthing externo. NAO e
+// hardcode: o usuario pode escolher outra via SAF picker no
+// onboarding (ADR-0022). Mantida como funcao para nao virar constante
+// global de modulo (impede testes de monkeypatch, mantem clareza de
+// intencao: e uma sugestao, nao a verdade).
+const SUGESTAO_VAULT_PATH = '/sdcard/Documents/Ouroboros/';
+const SUGESTAO_VAULT_URI = `file://${SUGESTAO_VAULT_PATH}`;
 const PROBE_FILENAME = '.ouroboros-probe';
 const ANDROID_PACKAGE = 'com.ouroboros.mobile';
+
+// Retorna a sugestao default de path para a pasta do Vault. NAO
+// implica que o vault esta nesse path; e apenas o que o onboarding
+// oferece como atalho. ADR-0022.
+export function sugestaoVaultPathDefault(): string {
+  return SUGESTAO_VAULT_PATH;
+}
+
+// Retorna a sugestao default ja em forma de URI file://. Usado pelo
+// caminho "Usar essa" do onboarding e pela sub-tela de Settings.
+export function sugestaoVaultUriDefault(): string {
+  return SUGESTAO_VAULT_URI;
+}
 
 // Subpastas canonicas criadas pela inicializacao (H2 layout-por-tipo,
 // ADR-0023). 8 leaves: o mkdir recursivo cria automaticamente os
@@ -124,11 +152,14 @@ export async function pedirPermissaoStorage(): Promise<void> {
 // makeDirectoryAsync com intermediates: true nao falha quando a pasta
 // ja existe; capturamos qualquer erro residual em silencio para
 // permitir auto-cura em saves subsequentes (Syncthing pode apagar).
+//
+// H3: usa vaultUriJoin (H1) para evitar trailing space + barras
+// duplas + percent-encoding ofensivo (A29) que vinha contaminando
+// saves em OEMs MIUI/OneUI/HyperOS.
 export async function garantirSubpastas(vaultRoot: string): Promise<void> {
   if (isWeb()) return;
-  const base = vaultRoot.endsWith('/') ? vaultRoot : `${vaultRoot}/`;
   for (const sub of SUBPASTAS_CANONICAS) {
-    const uri = `${base}${sub}`;
+    const uri = vaultUriJoin(vaultRoot, sub);
     try {
       await FileSystem.makeDirectoryAsync(uri, { intermediates: true });
     } catch {
@@ -140,8 +171,7 @@ export async function garantirSubpastas(vaultRoot: string): Promise<void> {
 // Probe write+read+delete. Unica fonte de verdade sobre permissao
 // funcional (vide A19). Falha silenciosa se qualquer passo cair.
 async function probeVaultWritable(vaultRoot: string): Promise<boolean> {
-  const base = vaultRoot.endsWith('/') ? vaultRoot : `${vaultRoot}/`;
-  const probe = `${base}${PROBE_FILENAME}`;
+  const probe = vaultUriJoin(vaultRoot, PROBE_FILENAME);
   try {
     await FileSystem.writeAsStringAsync(probe, 'ok');
     const back = await FileSystem.readAsStringAsync(probe);
@@ -160,46 +190,56 @@ export interface ResultadoInicializacao {
   modo: ModoInicializacao;
 }
 
-// Inicializa o Vault canonico. Cria estrutura, persiste vaultRoot no
-// store global. Em caso de probe falhar (OEM agressivo bloqueando
-// write em /sdcard/Documents/), cai em SAF interativo via
-// requestVaultPermission(). Em web e no-op produtivo: apenas devolve
-// um URI mock para manter Tela 01 e seeds rodando no Chrome.
-export async function inicializarVaultCanonico(): Promise<ResultadoInicializacao> {
+// Inicializa o Vault na URI escolhida pelo usuario (H3, ADR-0022). O
+// caller (onboarding ou Settings) ja decidiu onde salvar via
+// sugestao default ou SAF picker; aqui apenas:
+//   1. Cria a estrutura canonica de 8 subpastas (H2).
+//   2. Roda probe write+read+delete para confirmar permissao real
+//      (A19).
+//   3. Persiste o vaultRoot no store global.
+//
+// Em web e no-op produtivo: apenas devolve um URI mock para manter
+// Tela 01 e seeds rodando no Chrome.
+//
+// Lanca erro descritivo se uri vazia (sinal de bug do caller) ou se
+// o probe falhar (caller exibe toast e oferece outra opcao).
+export async function inicializarVaultEscolhido(
+  uri: string
+): Promise<ResultadoInicializacao> {
   if (isWeb()) {
     const mockUri = 'web://mock-vault/Protocolo-Ouroboros';
     await writeKey(VAULT_ROOT_KEY, mockUri);
     useVault.getState().setVaultRoot(mockUri);
     return { vaultRoot: mockUri, criado: false, modo: 'web' };
   }
-  await pedirPermissaoStorage();
-  await garantirSubpastas(VAULT_URI);
-  const writable = await probeVaultWritable(VAULT_URI);
-  if (!writable) {
-    // Armadilha A19: scoped storage ou OEM bloqueou write mesmo com
-    // permissao concedida via Intent. Cai em SAF interativo: usuario
-    // escolhe a pasta uma vez e o app aceita o URI SAF retornado.
-    const safUri = await requestVaultPermission();
-    if (!safUri) {
-      throw new Error(
-        'storage permission denied (saf fallback also denied)'
-      );
-    }
-    await garantirSubpastas(safUri);
-    await writeKey(VAULT_ROOT_KEY, safUri);
-    useVault.getState().setVaultRoot(safUri);
-    return { vaultRoot: safUri, criado: true, modo: 'saf-fallback' };
+  const trimmed = uri.trim();
+  if (!trimmed) {
+    throw new Error('inicializarVaultEscolhido: uri vazia');
   }
-  await writeKey(VAULT_ROOT_KEY, VAULT_URI);
-  useVault.getState().setVaultRoot(VAULT_URI);
-  return { vaultRoot: VAULT_URI, criado: true, modo: 'auto' };
+  await garantirSubpastas(trimmed);
+  const writable = await probeVaultWritable(trimmed);
+  if (!writable) {
+    throw new Error(
+      'storage permission denied (probe write failed na pasta escolhida)'
+    );
+  }
+  // Detecta se a URI veio do SAF picker (content://) ou de uma pasta
+  // file:// concedida via MANAGE_EXTERNAL_STORAGE. So afeta o telemetry
+  // do retorno (modo); pode ser util para o caller decidir copy/UX.
+  const modo: ModoInicializacao = trimmed.startsWith('content://')
+    ? 'saf-fallback'
+    : 'auto';
+  await writeKey(VAULT_ROOT_KEY, trimmed);
+  useVault.getState().setVaultRoot(trimmed);
+  return { vaultRoot: trimmed, criado: true, modo };
 }
 
 // Pede permissao SAF e retorna URI da pasta selecionada, ou null se
 // o usuario cancelar. Persiste o URI. No web devolve URI mock para
 // permitir validacao visual do app sem precisar de SAF.
 //
-// Mantida apos M23 como fallback SAF de inicializarVaultCanonico
+// H3: o caller (onboarding "Outra pasta" ou Settings "Trocar pasta")
+// e responsavel por chamar inicializarVaultEscolhido(uri) em seguida.
 export async function requestVaultPermission(): Promise<string | null> {
   if (isWeb()) {
     const mockUri = 'web://mock-vault/Protocolo-Ouroboros';
@@ -226,5 +266,3 @@ export async function clearVaultRootStorage(): Promise<void> {
 }
 
 export const VAULT_ROOT_STORAGE_KEY = VAULT_ROOT_KEY;
-export const VAULT_CANONICO_PATH = VAULT_PATH;
-export const VAULT_CANONICO_URI = VAULT_URI;

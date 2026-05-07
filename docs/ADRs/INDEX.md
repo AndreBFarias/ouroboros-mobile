@@ -24,4 +24,5 @@ com referência "Supersedes ADR-NNNN" no cabeçalho.
 | 0017 | Mídia em Formato Original com .md Companion | Aceito | M39 (refundação v1.0) |
 | 0018 | OAuth Google: split clientId + cache em arquivo + escopo mínimo | Aceito (estende ADR-0007) | M37.1 + M37.2 (refundação v1.0) |
 | 0019 | Persistência canônica em `.md` individual no Vault | Aceito (estende ADR-0001 / 0014 / 0017) | M37.1.2 (refundação v1.0) |
+| 0022 | Vault em pasta escolhida pelo usuário (onboarding pergunta) | Aceito (substitui parte de ADR-0014 / 0016) | M-VAULT-PASTA-NAO-HARDCODED / H3 (golden-zebra v1.0.0) |
 | 0023 | Vault organizado por tipo de arquivo (`markdown/`, `jpg/`, `m4a/`, …) | Aceito (substitui parte de ADR-0017) | M-VAULT-LAYOUT-POR-TIPO / H2 (golden-zebra v1.0.0) |

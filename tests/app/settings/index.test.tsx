@@ -70,9 +70,11 @@ jest.mock('expo-document-picker', () => ({
 
 jest.mock('@/lib/vault/permissions', () => ({
   __esModule: true,
-  inicializarVaultCanonico: jest.fn(() =>
-    Promise.resolve({ ok: true, vaultRoot: '/tmp/vault' })
+  inicializarVaultEscolhido: jest.fn(() =>
+    Promise.resolve({ ok: true, vaultRoot: '/tmp/vault', criado: true, modo: 'auto' })
   ),
+  sugestaoVaultPathDefault: () => '/sdcard/Documents/Ouroboros/',
+  sugestaoVaultUriDefault: () => 'file:///sdcard/Documents/Ouroboros/',
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -177,22 +179,14 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
     expect(tree.getByLabelText('adicionar segunda pessoa')).toBeTruthy();
   });
 
-  it('link "Reinicializar pasta do Vault" chama o servico e mostra toast', async () => {
-    // require sincrono evita TypeError do dynamic import sem
-    // --experimental-vm-modules.
-    const {
-      inicializarVaultCanonico,
-    } = require('@/lib/vault/permissions') as {
-      inicializarVaultCanonico: jest.Mock;
-    };
+  it('link "Vault" navega para sub-tela /settings/vault', () => {
     const tree = render(
       <ToastProvider>
         <SettingsTela />
       </ToastProvider>
     );
-    fireEvent.press(tree.getByLabelText('reinicializar pasta do vault'));
-    await waitFor(() => expect(inicializarVaultCanonico).toHaveBeenCalled());
-    expect(await tree.findByText('Pasta verificada.')).toBeTruthy();
+    expect(tree.getByLabelText('vault')).toBeTruthy();
+    expect(tree.getByText('Vault')).toBeTruthy();
   });
 
   it('versao da Sobre exibe valor de Constants', () => {

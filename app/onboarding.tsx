@@ -1,30 +1,33 @@
-// Onboarding inicial em 3 frames (M23). Substitui o fluxo de 5
-// frames anterior. Coleta nome do usuario primario e companhia
-// (sozinho/duo + nome do parceiro). Frame final dispara
-// inicializarVaultCanonico() (M22) que cuida sozinho de pedir
-// permissao de armazenamento, criar a estrutura de pastas e
-// persistir o vaultRoot. Em caso de OEM agressivo o helper cai em
-// SAF interativo (modo saf-fallback) e retorna sucesso; o usuario
-// recebe toast amarelo informando.
+// Onboarding inicial em 4 frames (H3 / M-VAULT-PASTA-NAO-HARDCODED).
+// Versoes anteriores tinham 3 frames (M23) com a inicializacao do
+// Vault implicita ao final. ADR-0022 introduz a pergunta explicita
+// "Onde salvar?" como Frame 2, deixando "Tudo pronto" como Frame 3.
+//
+// Frame 0: Como voce se chama?
+// Frame 1: Mais alguem usa este Vault com voce?
+// Frame 2: Onde salvar seus dados? (sugestao Documents/Ouroboros vs
+//          escolher manual via SAF picker)
+// Frame 3: Tudo pronto, <nome>.
+//
+// O Frame 2 substitui o tap implicito de "Comecar" como gatilho do
+// SAF picker. Agora o caminho A (sugestao default) chama
+// pedirPermissaoStorage + inicializarVaultEscolhido(sugestao); o
+// caminho B (Outra pasta) chama requestVaultPermission para abrir o
+// SAF picker e em seguida inicializarVaultEscolhido(uri retornada).
+// Em web ambos os caminhos caem no mesmo no-op (URI mock) para nao
+// bloquear validacao Gauntlet.
 //
 // Decisao M03: Sentence case + acentuacao PT-BR completa nas strings
 // de UI. accessibilityLabel sem acento. Comentarios sem acento
 // (convencao shell).
 //
-// Decisao M23: nao toca mais em useVault diretamente, nem em
-// requestVaultPermission. Quem cuida do vaultRoot e
-// inicializarVaultCanonico(). M25 substitui o placeholder
-// ActivityIndicator pelo OuroborosLoader compacto.
+// A28: animacao do FrameAnim usa Reanimated puro (Animated.View +
+// useSharedValue + withSpring) em vez de moti porque moti+Reanimated 4
+// emite transform como string em frames iniciais e crasha New Arch
+// (Fabric) com ClassCastException.
 import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-// A27 (2026-05-06): substituir moti por Reanimated puro nos 2
-// componentes animados deste arquivo. Em New Arch (Fabric), moti +
-// Reanimated 4 emite transform como string interpolada em frames
-// iniciais, causando ClassCastException ("String cannot be cast to
-// ReadableArray") em RNSVG/View ManagerDelegate.setProperty. Solução
-// canônica: Animated.View do Reanimated puro com useSharedValue +
-// useAnimatedStyle + withSpring (transform sempre array).
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -47,9 +50,15 @@ import {
   useOnboarding,
   type TipoCompanhia,
 } from '@/lib/stores/onboarding';
-import { inicializarVaultCanonico } from '@/lib/vault';
+import {
+  inicializarVaultEscolhido,
+  pedirPermissaoStorage,
+  requestVaultPermission,
+  sugestaoVaultPathDefault,
+  sugestaoVaultUriDefault,
+} from '@/lib/vault';
 
-type FrameId = 0 | 1 | 2;
+type FrameId = 0 | 1 | 2 | 3;
 
 export default function Onboarding() {
   const router = useRouter();
@@ -67,9 +76,10 @@ export default function Onboarding() {
   const [nomeBInput, setNomeBInput] = useState('');
   const [tipoSelecionado, setTipoSelecionado] = useState(false);
   const [iniciando, setIniciando] = useState(false);
+  const [escolhendoPasta, setEscolhendoPasta] = useState(false);
 
   const avancar = () =>
-    setFrame((f) => (f >= 2 ? 2 : ((f + 1) as FrameId)));
+    setFrame((f) => (f >= 3 ? 3 : ((f + 1) as FrameId)));
 
   const handleFrame0 = () => {
     const nome = nomeInput.trim();
@@ -103,31 +113,67 @@ export default function Onboarding() {
     avancar();
   };
 
+  // Caminho A do Frame 2: usuario aceitou a sugestao
+  // /sdcard/Documents/Ouroboros/. Pede permissao de armazenamento
+  // (Intent ALL_FILES em Android >=11; PermissionsAndroid em <11) e
+  // inicializa direto na URI sugerida. Se o probe falhar (OEM
+  // agressivo), exibe toast e mantem usuario no Frame 2 para tentar
+  // "Outra pasta".
+  const handleUsarSugestao = async () => {
+    if (escolhendoPasta) return;
+    setEscolhendoPasta(true);
+    try {
+      await pedirPermissaoStorage();
+      await inicializarVaultEscolhido(sugestaoVaultUriDefault());
+      avancar();
+    } catch {
+      toast.show(
+        'Não foi possível usar essa pasta. Tente "Outra pasta".',
+        'error'
+      );
+    } finally {
+      setEscolhendoPasta(false);
+    }
+  };
+
+  // Caminho B do Frame 2: usuario escolheu "Outra pasta" via SAF
+  // picker. requestVaultPermission abre o picker; ao receber a URI,
+  // chamamos inicializarVaultEscolhido(uri) que cria as 8 subpastas
+  // (H2) e persiste o vaultRoot.
+  const handleEscolherOutra = async () => {
+    if (escolhendoPasta) return;
+    setEscolhendoPasta(true);
+    try {
+      const uri = await requestVaultPermission();
+      if (!uri) {
+        // Usuario cancelou o picker: mantem Frame 2 sem mensagem.
+        return;
+      }
+      await inicializarVaultEscolhido(uri);
+      avancar();
+    } catch {
+      toast.show(
+        'Não foi possível usar essa pasta. Tente novamente.',
+        'error'
+      );
+    } finally {
+      setEscolhendoPasta(false);
+    }
+  };
+
   const handleConcluir = async () => {
     if (iniciando) return;
     setIniciando(true);
     try {
-      const res = await inicializarVaultCanonico();
-      if (res.modo === 'saf-fallback') {
-        toast.show('Pasta criada em local alternativo.', 'warn');
-      }
       marcarConcluido();
       router.replace('/');
-    } catch {
-      toast.show(
-        'Não foi possível criar a pasta. Tente novamente.',
-        'error'
-      );
     } finally {
       setIniciando(false);
     }
   };
 
-  // Renderiza apenas o frame ativo. O conteudo de cada frame entra
-  // com translate da direita; nao usamos AnimatePresence/exit para
-  // evitar tela em branco enquanto o exit do frame anterior anima.
-  // ScrollView envolve o conteudo para caber forms longos (Frame 1
-  // com avatar do parceiro).
+  // Renderiza apenas o frame ativo. ScrollView envolve o conteudo
+  // para caber forms longos.
   return (
     <Screen>
       <View style={{ flex: 1, paddingTop: spacing.xl }}>
@@ -165,6 +211,13 @@ export default function Onboarding() {
             )}
             {frame === 2 && (
               <Frame2
+                ocupado={escolhendoPasta}
+                onUsarSugestao={handleUsarSugestao}
+                onEscolherOutra={handleEscolherOutra}
+              />
+            )}
+            {frame === 3 && (
+              <Frame3
                 nomeA={nomeA}
                 nomeB={duo ? nomeB : null}
                 iniciando={iniciando}
@@ -187,7 +240,7 @@ function Indicador({ frameAtivo }: { frameAtivo: FrameId }) {
         alignSelf: 'center',
       }}
     >
-      {[0, 1, 2].map((i) => (
+      {[0, 1, 2, 3].map((i) => (
         <View
           key={i}
           style={{
@@ -204,7 +257,7 @@ function Indicador({ frameAtivo }: { frameAtivo: FrameId }) {
 
 // Anima cada troca de frame: o `frameKey` na key forca remontagem,
 // e o Animated.View entra de translateX 60 + opacity 0 para 0 / 1
-// com spring. Sem exit para evitar janela branca. A27: Reanimated
+// com spring. Sem exit para evitar janela branca. A28: Reanimated
 // puro em vez de MotiView para compatibilidade New Arch (Fabric).
 function FrameAnim({
   frameKey,
@@ -364,7 +417,7 @@ function Frame1({
   );
 }
 
-// A27: extraido para componente proprio para usar useSharedValue +
+// Extraido para componente proprio para usar useSharedValue +
 // useAnimatedStyle (hooks nao podem condicionalmente rodar dentro
 // de Frame1). Anima opacidade e translateY ao mount com spring.
 function Frame1Expand({
@@ -453,13 +506,130 @@ function CardEscolha({ ativo, label, onPress }: CardEscolhaProps) {
 }
 
 interface Frame2Props {
+  ocupado: boolean;
+  onUsarSugestao: () => void;
+  onEscolherOutra: () => void;
+}
+
+// Frame 2 (H3, ADR-0022): pergunta onde salvar os dados. Dois cards
+// empilhados verticalmente, cada um com titulo + descricao + botao.
+// Ocupado bloqueia ambos enquanto a permissao/SAF picker esta em
+// andamento.
+function Frame2({
+  ocupado,
+  onUsarSugestao,
+  onEscolherOutra,
+}: Frame2Props) {
+  return (
+    <View style={{ gap: spacing.lg }}>
+      <MicroOrange>Pasta do Vault</MicroOrange>
+      <Heading>Onde salvar seus dados?</Heading>
+      <Sub>
+        Tudo o que você registrar fica em arquivos de texto numa pasta
+        do seu celular. Você decide onde.
+      </Sub>
+
+      <CardPasta
+        titulo="Sugestão: Documents/Ouroboros"
+        descricao="Pasta dedicada visível no seu file manager. Fácil de sincronizar com Obsidian ou Syncthing."
+        path={sugestaoVaultPathDefault()}
+        botaoLabel="Usar essa"
+        accessibilityLabel="usar sugestao documents ouroboros"
+        onPress={onUsarSugestao}
+        ocupado={ocupado}
+      />
+
+      <CardPasta
+        titulo="Outra pasta"
+        descricao="Escolher manualmente onde salvar (por exemplo, a pasta de outro Vault Obsidian que você já usa)."
+        botaoLabel="Escolher"
+        accessibilityLabel="escolher outra pasta"
+        onPress={onEscolherOutra}
+        ocupado={ocupado}
+      />
+    </View>
+  );
+}
+
+interface CardPastaProps {
+  titulo: string;
+  descricao: string;
+  path?: string;
+  botaoLabel: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+  ocupado: boolean;
+}
+
+function CardPasta({
+  titulo,
+  descricao,
+  path,
+  botaoLabel,
+  accessibilityLabel,
+  onPress,
+  ocupado,
+}: CardPastaProps) {
+  return (
+    <View
+      accessibilityLabel={`card ${accessibilityLabel}`}
+      style={{
+        backgroundColor: colors.bgAlt,
+        borderRadius: 16,
+        padding: spacing.lg,
+        gap: spacing.md,
+      }}
+    >
+      <Text
+        style={{
+          color: colors.fg,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: 16,
+          lineHeight: 24,
+        }}
+      >
+        {titulo}
+      </Text>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: 13,
+          lineHeight: 22,
+        }}
+      >
+        {descricao}
+      </Text>
+      {path ? (
+        <Text
+          style={{
+            color: colors.mutedDecor,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: 12,
+            lineHeight: 18,
+          }}
+        >
+          {path}
+        </Text>
+      ) : null}
+      <Button
+        label={botaoLabel}
+        onPress={onPress}
+        disabled={ocupado}
+        accessibilityLabel={accessibilityLabel}
+      />
+    </View>
+  );
+}
+
+interface Frame3Props {
   nomeA: string;
   nomeB: string | null;
   iniciando: boolean;
   onConcluir: () => void;
 }
 
-function Frame2({ nomeA, nomeB, iniciando, onConcluir }: Frame2Props) {
+function Frame3({ nomeA, nomeB, iniciando, onConcluir }: Frame3Props) {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.lg }}>
       <View

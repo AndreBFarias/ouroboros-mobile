@@ -26,7 +26,12 @@ import { useSessao } from '@/lib/stores/sessao';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { useUltimaRota, isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
 import { useBootStatus, selectBootPronto } from '@/lib/boot/useBootStatus';
-import { inicializarVaultCanonico } from '@/lib/vault/permissions';
+import {
+  inicializarVaultEscolhido,
+  loadVaultRoot,
+  pedirPermissaoStorage,
+  sugestaoVaultUriDefault,
+} from '@/lib/vault/permissions';
 // M-GAUNTLET-DEAD-CODE-V2: imports diretos de @/lib/dev/gauntlet
 // vazavam 5 markers no bytecode Hermes Android (__gauntlet,
 // instalarGauntlet, useGaleriaMock, MODO_DEV_WEB, adicionarFotoMock).
@@ -441,12 +446,29 @@ function VaultBootGate() {
     const onboardingDone = useOnboarding.getState().done;
     const vaultRoot = useVault.getState().vaultRoot;
     if (!onboardingDone || vaultRoot) return;
-    inicializarVaultCanonico().catch(() => {
-      toast.show(
-        'Não foi possível acessar a pasta do Vault. Verifique as permissões em Configurações.',
-        'error'
-      );
-    });
+    // H3 (ADR-0022): a URI nao e mais hardcoded. Tentativa de
+    // recuperacao em ordem:
+    //   1. Le do SecureStore (pode estar persistida mas o store em
+    //      memoria foi limpo).
+    //   2. Cai na sugestao default (/sdcard/Documents/Ouroboros/) +
+    //      pedido de permissao. Se o probe falhar, exibe toast e o
+    //      usuario re-escolhe via Settings/Vault.
+    (async () => {
+      try {
+        const persisted = await loadVaultRoot();
+        if (persisted && persisted.trim().length > 0) {
+          await inicializarVaultEscolhido(persisted);
+          return;
+        }
+        await pedirPermissaoStorage();
+        await inicializarVaultEscolhido(sugestaoVaultUriDefault());
+      } catch {
+        toast.show(
+          'Não foi possível acessar a pasta do Vault. Verifique as permissões em Configurações.',
+          'error'
+        );
+      }
+    })();
     // toast trocaria identidade entre renders; usamos snapshot via
     // useEffect uma unica vez na mount do gate. Plugin react-hooks
     // nao habilitado no eslint config do projeto.

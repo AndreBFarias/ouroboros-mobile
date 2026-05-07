@@ -83,13 +83,13 @@ export {
   requestVaultPermission,
   loadVaultRoot,
   clearVaultRootStorage,
-  inicializarVaultCanonico,
+  inicializarVaultEscolhido,
   garantirSubpastas,
   pedirPermissaoStorage,
+  sugestaoVaultPathDefault,
+  sugestaoVaultUriDefault,
   SUBPASTAS_CANONICAS,
   VAULT_ROOT_STORAGE_KEY,
-  VAULT_CANONICO_PATH,
-  VAULT_CANONICO_URI,
 } from './permissions';
 export type {
   ModoInicializacao,

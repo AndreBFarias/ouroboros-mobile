@@ -5,6 +5,59 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint H3 — `M-VAULT-PASTA-NAO-HARDCODED` (2026-05-06)
+
+Onboarding ganha quarto frame "Pasta do Vault — Onde salvar seus
+dados?" entre Companhia e Tudo pronto, com dois cards: "Sugestão:
+Documents/Ouroboros" (botão "Usar essa", chama `pedirPermissaoStorage()`
++ `inicializarVaultEscolhido(sugestaoVaultUriDefault())`) e "Outra
+pasta" (botão "Escolher", chama `requestVaultPermission()` SAF picker
++ `inicializarVaultEscolhido(uriEscolhida)`). Indicador de progresso
+passa de 3 para 4 segmentos.
+
+`src/lib/vault/permissions.ts` refatorado:
+`inicializarVaultCanonico()` removido (e suas constantes globais
+hardcode `VAULT_PATH`/`VAULT_URI`). Substituído por
+`inicializarVaultEscolhido(uri)` que aceita URI já escolhida pelo
+caller, derivando modo `auto`/`saf-fallback` por inspeção de prefixo
+da URI (`content://` → SAF, demais → auto). `garantirSubpastas`
+sanitiza URI via `vaultUriJoin` (H1). Novos getters
+`sugestaoVaultPathDefault()` e `sugestaoVaultUriDefault()` retornam
+`/sdcard/Documents/Ouroboros/` como sugestão pura.
+
+`VaultBootGate` em `app/_layout.tsx` ganha fallback de 2 níveis:
+`loadVaultRoot()` (SecureStore) → sugestão default + permissão.
+Hardcode silencioso eliminado.
+
+Sub-tela nova `app/settings/vault.tsx` mostra path atual e oferece
+duas ações: "Trocar pasta do Vault" (diálogo inline com confirmação,
+explica que dados ficam na pasta antiga e devem ser movidos
+manualmente, depois SAF picker) e "Reinicializar pasta" (recria 8
+subpastas canônicas H2 na pasta atual). Plug em `app/settings/index.tsx`
+substitui o link inline antigo "Reinicializar pasta do Vault" por
+`<LinkSubTela>` "Vault" → `/settings/vault`.
+
+ADR-0022 documenta a decisão (supersedes parcialmente ADR-0014 que
+assumia pasta dedicada hardcoded). Justificativa: respeitar
+autonomia do usuário, permitir Vault Obsidian compartilhado.
+Decisão arquitetural durável: trocar pasta NÃO move dados —
+complexidade de migração SAF↔SAF é alta, usuário pode preferir
+manter histórico antigo, fluxo manual via export ZIP/import recomendado.
+
+Métricas: 1598 testes / 172 suítes verde (+5 contra 1593 baseline,
+1 skip intencional preservado) · TS strict 0 · Hermes Android 7,7 MB
+intacto · Gauntlet leak 0/6 · anonimato OK · PT-BR check OK.
+
+Validação Gauntlet manual pelo orquestrador: 4-frame onboarding
+navegado completo via playwright MCP, novo Frame 3 "Pasta do Vault"
+renderizou cards corretamente, "Usar essa" propagou
+`vaultRoot=web://mock-vault/Protocolo-Ouroboros`, console
+`__gauntlet.consoleErros()` vazio. Sub-tela `/settings/vault`
+renderizou path atual + 2 ações (trocar/reinicializar) corretamente.
+
+Bloco H FECHADO. Bloco I (15 saves específicos por feature)
+totalmente destravado.
+
 ### Sprint H2 — `M-VAULT-LAYOUT-POR-TIPO` (2026-05-06)
 
 Reorganiza o Vault de layout por feature (`daily/`, `eventos/`,
