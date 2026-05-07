@@ -18,12 +18,14 @@ jest.mock('expo-router', () => ({
 import { MenuLateral } from '@/components/chrome/MenuLateral';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { useSettings } from '@/lib/stores/settings';
+import { useOnboarding } from '@/lib/stores/onboarding';
 
 describe('MenuLateral', () => {
   beforeEach(() => {
     mockPush.mockClear();
     useNavegacao.setState({ menuAberto: false });
     useSettings.getState().resetar();
+    useOnboarding.getState().resetar();
   });
 
   it('quando fechado, nao renderiza secoes', () => {
@@ -106,5 +108,49 @@ describe('MenuLateral', () => {
     const { getByLabelText } = render(<MenuLateral />);
     fireEvent.press(getByLabelText('fechar menu lateral'));
     expect(useNavegacao.getState().menuAberto).toBe(false);
+  });
+
+  // I-CICLO (M-SAVE-CICLO-VALIDA): item Ciclo segue feature toggle
+  // E o sexoDeclarado das duas pessoas. Ambos masculino esconde
+  // mesmo com toggle on.
+  describe('I-CICLO visibilidade do item Ciclo', () => {
+    beforeEach(() => {
+      // Garante toggle on para isolar o efeito de sexoDeclarado.
+      useSettings.getState().setFeatureToggle('cicloMenstrual', true);
+      useNavegacao.setState({ menuAberto: true });
+    });
+
+    it('esconde Ciclo quando ambos masculino', () => {
+      useOnboarding.getState().setSexoDeclarado('pessoa_a', 'masculino');
+      useOnboarding.getState().setSexoDeclarado('pessoa_b', 'masculino');
+      const { queryByLabelText } = render(<MenuLateral />);
+      expect(queryByLabelText('item ciclo')).toBeNull();
+    });
+
+    it('mostra Ciclo quando uma e feminina', () => {
+      useOnboarding.getState().setSexoDeclarado('pessoa_a', 'masculino');
+      useOnboarding.getState().setSexoDeclarado('pessoa_b', 'feminino');
+      const { getByLabelText } = render(<MenuLateral />);
+      expect(getByLabelText('item ciclo')).toBeTruthy();
+    });
+
+    it('mostra Ciclo quando ambas femininas', () => {
+      useOnboarding.getState().setSexoDeclarado('pessoa_a', 'feminino');
+      useOnboarding.getState().setSexoDeclarado('pessoa_b', 'feminino');
+      const { getByLabelText } = render(<MenuLateral />);
+      expect(getByLabelText('item ciclo')).toBeTruthy();
+    });
+
+    it('mostra Ciclo quando ainda nao declarou (default null)', () => {
+      const { getByLabelText } = render(<MenuLateral />);
+      expect(getByLabelText('item ciclo')).toBeTruthy();
+    });
+
+    it('respeita feature toggle off mesmo se sexo permite', () => {
+      useSettings.getState().setFeatureToggle('cicloMenstrual', false);
+      useOnboarding.getState().setSexoDeclarado('pessoa_a', 'feminino');
+      const { queryByLabelText } = render(<MenuLateral />);
+      expect(queryByLabelText('item ciclo')).toBeNull();
+    });
   });
 });

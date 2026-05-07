@@ -214,6 +214,36 @@ describe('escreverRegistroCiclo', () => {
       escreverRegistroCiclo(VAULT_ROOT, meta, '')
     ).rejects.toThrow(/invalido/);
   });
+
+  // I-CICLO (M-SAVE-CICLO-VALIDA): vaultUriJoin canonico cobre os
+  // bugs de URI SAF do APK alpha (A29).
+  it('compoe URI canonica via vaultUriJoin (sem trailing/double slash)', async () => {
+    mockWriteVaultFile.mockResolvedValue(undefined);
+    const rootComBarra = `${VAULT_ROOT}/`;
+    const meta = fixture({ data: '2026-04-29' });
+    await escreverRegistroCiclo(rootComBarra, meta, '');
+    const [uriArg] = mockWriteVaultFile.mock.calls[0];
+    expect(uriArg).toBe(`${VAULT_ROOT}/markdown/ciclo-2026-04-29.md`);
+    expect(uriArg).not.toContain('//markdown');
+  });
+
+  it('vaultRoot vazio propaga erro claro do vaultUriJoin', async () => {
+    const meta = fixture({ data: '2026-04-29' });
+    await expect(escreverRegistroCiclo('', meta, '')).rejects.toThrow(
+      /root vazio/
+    );
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  it('vaultRoot com %20 ofensivo no fim e' + ' limpado pelo helper', async () => {
+    mockWriteVaultFile.mockResolvedValue(undefined);
+    const rootSujo = `${VAULT_ROOT}%20`;
+    const meta = fixture({ data: '2026-04-29' });
+    await escreverRegistroCiclo(rootSujo, meta, '');
+    const [uriArg] = mockWriteVaultFile.mock.calls[0];
+    expect(uriArg).toBe(`${VAULT_ROOT}/markdown/ciclo-2026-04-29.md`);
+    expect(uriArg).not.toContain('%20/markdown');
+  });
 });
 
 describe('duracaoCicloDetectada', () => {

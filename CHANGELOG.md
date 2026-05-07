@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-CICLO — `M-SAVE-CICLO-VALIDA` (2026-05-07)
+
+`src/lib/vault/ciclo.ts` migra `joinUri` local (3 callsites) para
+`vaultUriJoin`. Path canônico `markdown/ciclo-YYYY-MM-DD.md`.
+Caller `app/ciclo/registrar.tsx` (não `app/ciclo/novo.tsx` como
+o spec especulava — auditoria empírica) envolve em
+`comTimeout(p, 10s)` + try/catch. Toasts PT-BR `Ciclo registrado.`
+/ `Não foi possível salvar: <msg>`.
+
+Helper novo `src/lib/ciclo/inferencia.ts` (módulo puro) com
+`autorPadrao(tipoCompanhia, sexoA, sexoB)` retorna autor inferido
+ou `null` (ambíguo). Solo M/PNB → null; solo F/NB → pessoa_a.
+Casal/amigos: 1 feminina não-feminina → autor é a feminina;
+ambas femininas ou ambos masculinos → null (pede seleção
+manual). `deveMostrarItemCiclo(sexoA, sexoB)` esconde ciclo só
+se ambos `'masculino'`.
+
+Caller pré-seleciona via `autorPadrao`; se null, mostra seletor
+explícito. `MenuLateral` oculta item "Ciclo" se ambos masculino
+(combinado com feature toggle `cicloMenstrual`).
+
+Tests: +30 casos / +1 suite (`inferencia.test.ts` 27 cenários
+canônicos sozinho M/F/NB/PND/null + casal/amigos 8 combinações;
+`ciclo.test.ts` +3 vaultUriJoin/throw/`%20`; `MenuLateral.test.tsx`
++5 esconde/mostra). E2E novo cobre fluxo completo.
+
+Métricas: 1720 testes / 174 suítes verde (+30 / +1 suite contra
+1690 / 173 baseline) · TS strict 0 · Hermes 7,7 MB · Gauntlet
+leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint J1 — `M-ONBOARDING-PERMISSOES` (2026-05-07)
 
 Onboarding passa de 4 frames (H3) para 5 frames com nova arquitetura:

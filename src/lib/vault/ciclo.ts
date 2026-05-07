@@ -1,22 +1,30 @@
 // Helpers de leitura, listagem e escrita de registros de ciclo
-// menstrual no Vault (M14.5). Cada registro vive em
-// inbox/saude/ciclo/YYYY-MM-DD.md com frontmatter validado pelo
+// menstrual no Vault (M14.5, layout-por-tipo H2 -> markdown/ciclo-
+// YYYY-MM-DD.md). Cada registro vive com frontmatter validado pelo
 // CicloMenstrualSchema. Sem slug: a chave e a data; salvar duas vezes
 // no mesmo dia sobrescreve o registro anterior (mesmo padrao das
 // medidas corporais).
 //
 // Privacidade reforcada (M14.5 spec, ADR-0007):
-//  - Dados ficam apenas no Vault local; não ha cache backend.
-//  - Pasta dedicada inbox/saude/ciclo/ separa dos outros schemas
-//    mentais e financeiros.
+//  - Dados ficam apenas no Vault local; nao ha cache backend.
+//  - Pasta dedicada markdown/ separa por prefixo de feature.
 //
-// inferirFase e função pura sem I/O, totalmente testavel.
+// inferirFase e' funcao pura sem I/O, totalmente testavel.
+//
+// I-CICLO (M-SAVE-CICLO-VALIDA, 2026-05-07): substitui joinUri local
+// pelo helper canonico vaultUriJoin de @/lib/vault, eliminando
+// trailing space, %20 ofensivo e barras duplas em URIs SAF (causa
+// raiz parcial dos saves silenciosos no APK alpha em OEMs MIUI/
+// OneUI/HyperOS, vide A29). Auditoria: 100% das concatenacoes ad-hoc
+// substituidas; vaultRoot vazio agora propaga erro claro do helper
+// em vez de gerar URI invalida silenciosa.
 //
 // Comentarios sem acento (convencao shell/CI).
 import {
   cicloPath,
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
+  vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -35,11 +43,6 @@ export interface ListarRegistrosCicloFiltros {
   // Data de referência para calcular janela. Default new Date(). Útil
   // para testes deterministicos.
   hoje?: Date;
-}
-
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
 }
 
 // Calcula data limite (ISO YYYY-MM-DD) baseado em período. Para 'tudo'
@@ -107,7 +110,7 @@ export async function listarRegistrosCiclo(
   autor: 'pessoa_a' | 'pessoa_b',
   filtros: ListarRegistrosCicloFiltros = {}
 ): Promise<CicloMenstrualMeta[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'ciclo-'));
 
@@ -142,7 +145,7 @@ export async function lerRegistroCiclo(
 ): Promise<CicloMenstrualMeta | null> {
   const dataDate = new Date(`${data}T12:00:00Z`);
   const rel = cicloPath(dataDate);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   const result = await readVaultFile(uri, CicloMenstrualSchema);
   return result ? result.meta : null;
 }
@@ -163,7 +166,7 @@ export async function escreverRegistroCiclo(
   // em BRT; anexamos T12 antes do parse para preservar o dia exato.
   const dataDate = new Date(`${parsed.data.data}T12:00:00Z`);
   const rel = cicloPath(dataDate);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<CicloMenstrualMeta>(uri, parsed.data, body);
   return { uri, rel };
 }

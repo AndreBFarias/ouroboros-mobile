@@ -40,7 +40,7 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 | I-TAREFA | `M-SAVE-TAREFA-VALIDA` | `M-SAVE-TAREFA-VALIDA-spec.md` | ~1.5h | `[ok]` |
 | I-ALARME | `M-SAVE-ALARME-VALIDA` | `M-SAVE-ALARME-VALIDA-spec.md` | ~1.5h | `[ok]` |
 | I-CONTADOR | `M-SAVE-CONTADOR-VALIDA` | `M-SAVE-CONTADOR-VALIDA-spec.md` | ~1.5h | `[ok]` |
-| I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h | `[todo]` |
+| I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h | `[ok]` |
 | I-EXERCICIO | `M-SAVE-EXERCICIO-VALIDA` | `M-SAVE-EXERCICIO-VALIDA-spec.md` | ~2h | `[ok]` |
 | I-SCANNER | `M-SAVE-SCANNER-VALIDA` | `M-SAVE-SCANNER-VALIDA-spec.md` | ~2h | `[ok]` |
 | I-DEVICES | `M-SAVE-DEVICES-INDEX-VALIDA` | `M-SAVE-DEVICES-INDEX-VALIDA-spec.md` | ~1h | `[ok]` |

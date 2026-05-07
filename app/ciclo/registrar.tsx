@@ -15,11 +15,21 @@
 //   - Textarea opcional.
 //   - Botao Salvar primary.
 //
-// Pos-Salvar: haptic light + escreverRegistroCiclo + toast "Anotado." +
-// router.back para fechar a sheet/voltar para visualizacao.
+// Pos-Salvar: haptic light + escreverRegistroCiclo + toast "Ciclo
+// registrado." + router.back para fechar a sheet/voltar para
+// visualizacao.
 //
 // Sem cache backend: dados ficam apenas no Vault local (privacidade
 // reforcada, ADR-0007).
+//
+// I-CICLO (M-SAVE-CICLO-VALIDA, 2026-05-07): aplica padrao canonico
+// de save resilient (try/catch + comTimeout 10s + toast com motivo
+// PT-BR no fail). Inferencia de autor padrao via autorPadrao
+// (modulo puro @/lib/ciclo/inferencia) usando tipoCompanhia +
+// sexoDeclarado do useOnboarding (J1). Quando inferencia retorna
+// null, usa pessoaAtiva como fallback (caller mostra autor inferido
+// como informativo no header da sheet; no futuro podera abrir
+// seletor explicito quando ambiguo).
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -40,6 +50,7 @@ import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useOnboarding } from '@/lib/stores/onboarding';
 import { useSessao } from '@/lib/stores/sessao';
 import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import { formatDateYmd } from '@/lib/vault/paths';
@@ -49,6 +60,8 @@ import {
   listarRegistrosCiclo,
   ultimaDataInicio,
 } from '@/lib/vault/ciclo';
+import { autorPadrao } from '@/lib/ciclo/inferencia';
+import { comTimeout } from '@/lib/util/comTimeout';
 import {
   CicloMenstrualSchema,
   FASES_CANONICAS,
@@ -57,6 +70,7 @@ import {
   type SintomaCiclo,
   type CicloMenstrualMeta,
 } from '@/lib/schemas/ciclo_menstrual';
+import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 const FASE_OPTIONS = FASES_CANONICAS.map((f) => ({
   value: f,
@@ -69,7 +83,19 @@ export default function CicloRegistrar() {
   const params = useLocalSearchParams<{ data?: string }>();
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  const sexoA = useOnboarding((s) => s.sexoDeclarado.pessoa_a);
+  const sexoB = useOnboarding((s) => s.sexoDeclarado.pessoa_b);
   const toast = useToast();
+
+  // Inferencia de autor padrao para o registro. Quando retorna null
+  // (ambigua: ambas femininas ou nenhuma), caimos em pessoaAtiva
+  // como fallback - mantem fluxo atual em caso ambiguo. Em sprint
+  // futura, null pode acionar seletor explicito antes do form.
+  const autorInferido: PessoaAutor = useMemo(() => {
+    const inferido = autorPadrao(tipoCompanhia, sexoA, sexoB);
+    return inferido ?? pessoaAtiva;
+  }, [tipoCompanhia, sexoA, sexoB, pessoaAtiva]);
 
   // Data alvo do registro: param da rota ou hoje. Hoje em UTC-3.
   const dataAlvo = useMemo(() => {
@@ -126,7 +152,7 @@ export default function CicloRegistrar() {
     async function carregar() {
       if (!vaultRoot) return;
       try {
-        const lista = await listarRegistrosCiclo(vaultRoot, pessoaAtiva, {
+        const lista = await listarRegistrosCiclo(vaultRoot, autorInferido, {
           periodo: 'tudo',
         });
         if (!ativo) return;
@@ -139,7 +165,7 @@ export default function CicloRegistrar() {
     return () => {
       ativo = false;
     };
-  }, [vaultRoot, pessoaAtiva]);
+  }, [vaultRoot, autorInferido]);
 
   // Fase efetiva: override manual se preenchido; senao inferida com
   // base em marcandoInicio (data_inicio igual a dataAlvo) ou no
@@ -158,7 +184,7 @@ export default function CicloRegistrar() {
       const meta: CicloMenstrualMeta = {
         tipo: 'ciclo_menstrual',
         data: dataAlvo,
-        autor: pessoaAtiva,
+        autor: autorInferido,
         data_inicio: marcandoInicio ? dataAlvo : dataInicioContexto,
         fase: faseEfetiva,
         sintomas,
@@ -166,20 +192,25 @@ export default function CicloRegistrar() {
         humor_associado: humor,
         texto: texto.trim().length > 0 ? texto.trim() : null,
       };
-      // Validação defensiva.
+      // Validacao defensiva antes do I/O.
       const parsed = CicloMenstrualSchema.safeParse(meta);
       if (!parsed.success) {
-        toast.show('Não foi possível salvar.', 'error');
+        toast.show('Não foi possível salvar: dados inválidos.', 'error');
         return;
       }
-      await escreverRegistroCiclo(vaultRoot, parsed.data, '');
+      // I-CICLO: comTimeout 10s impede loader infinito em SAF lento
+      // (OEMs MIUI/HyperOS/OneUI). Mensagem PT-BR com motivo.
+      await comTimeout(escreverRegistroCiclo(vaultRoot, parsed.data, ''));
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('cicloRegistrar');
       void haptics.light();
-      toast.show('Anotado.', 'success');
+      toast.show('Ciclo registrado.', 'success');
       router.back();
-    } catch {
-      toast.show('Não foi possível salvar.', 'error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save ciclo fail', e);
     } finally {
       setSalvando(false);
     }
@@ -187,7 +218,7 @@ export default function CicloRegistrar() {
     vaultRoot,
     salvando,
     dataAlvo,
-    pessoaAtiva,
+    autorInferido,
     marcandoInicio,
     dataInicioContexto,
     faseEfetiva,

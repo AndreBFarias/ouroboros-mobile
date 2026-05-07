@@ -46,6 +46,8 @@ import { useNavegacao } from '@/lib/stores/navegacao';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { nomeDe } from '@/lib/stores/pessoa';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { deveMostrarItemCiclo } from '@/lib/ciclo/inferencia';
 import { PersonAvatar } from '@/components/ui';
 import { routeForCapture } from '@/lib/navigation/captureRoutes';
 import type { FABRadialKey } from '@/components/ui';
@@ -74,6 +76,13 @@ export function MenuLateral() {
   const featureToggles = useSettings((s) => s.featureToggles);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const fotoAtiva = usePessoa((s) => s.fotos[s.pessoaAtiva]);
+  // I-CICLO: item "Ciclo" nao faz sentido quando ambas as pessoas se
+  // declararam masculino no onboarding (J1). Em qualquer outro caso
+  // (ao menos uma feminina, nao-binaria, prefere-nao-dizer ou null
+  // ainda nao declarado) o item permanece. Mantem autonomia.
+  const sexoA = useOnboarding((s) => s.sexoDeclarado.pessoa_a);
+  const sexoB = useOnboarding((s) => s.sexoDeclarado.pessoa_b);
+  const mostrarCiclo = deveMostrarItemCiclo(sexoA, sexoB);
 
   const secoes: SecaoMenu[] = useMemo(() => {
     // Secao "Registrar" reusa routeForCapture para garantir paridade
@@ -129,7 +138,7 @@ export function MenuLateral() {
     if (featureToggles.contadorDiasSem) {
       opcionais.push({ label: 'Contadores', a11yLabel: 'item contadores', icone: Hash, route: '/contadores' });
     }
-    if (featureToggles.cicloMenstrual) {
+    if (featureToggles.cicloMenstrual && mostrarCiclo) {
       opcionais.push({ label: 'Ciclo', a11yLabel: 'item ciclo', icone: Moon, route: '/ciclo' });
     }
 
@@ -141,7 +150,7 @@ export function MenuLateral() {
       lista.push({ titulo: 'Opcionais', itens: opcionais });
     }
     return lista;
-  }, [featureToggles]);
+  }, [featureToggles, mostrarCiclo]);
 
   const navegar = (rota: string) => {
     haptics.light();
