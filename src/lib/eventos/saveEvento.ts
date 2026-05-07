@@ -1,25 +1,35 @@
 // Persiste um registro de evento (Tela 20) em
-// eventos/YYYY-MM-DD-<slug>.md no Vault. Função pura: recebe meta
-// validado, body livre, vaultRoot e lista de URIs locais de fotos;
-// devolve URI final. Antes de chamar writeVaultFile, copia cada foto
-// para media/fotos/eventos-<YYYY-MM-DD>-<rand>-<idx>.jpg e grava
-// um companion .md ao lado (frontmatter midia_foto). Atualiza
-// meta.fotos com os paths relativos do Vault para o frontmatter
-// canonico apontar para os arquivos novos.
+// markdown/evento-YYYY-MM-DD-<slug>.md no Vault (layout H2 por tipo).
+// Funcao pura: recebe meta validado, body livre, vaultRoot e lista
+// de URIs locais de fotos; devolve URI final. Antes de chamar
+// writeVaultFile, copia cada foto para
+// jpg/<YYYY-MM-DD>-eventos-<rand>-<idx>.jpg e grava um companion
+// markdown/<YYYY-MM-DD>-eventos-<rand>-<idx>.md ao lado (frontmatter
+// midia_foto). Atualiza meta.fotos com os paths relativos do Vault
+// para o frontmatter canonico apontar para os arquivos novos.
 //
 // Slug do nome do arquivo: deriva do bairro detectado, do texto
-// livre ou da categoria via slugifyEvento. Em colisao improvavel
-// (mesmo dia, mesmo slug, mesmo autor), aplica sufixo numerico
-// crescente.
+// livre ou da categoria via slugifyEvento. Em colisao real entre
+// devices via Syncthing (M38), aplica suffix '-<deviceId>' alinhado
+// com saveHumor/saveDiario (cobre 4 nos sem perder dado).
 //
 // Backward-compat: arquivos legados sob assets/ continuam visiveis
 // na galeria via useFotosAgregadas (que resolve qualquer path
 // relativo gravado em meta.fotos[]). Esta sprint so muda o destino
 // das fotos NOVAS; nada sobre fotos antigas no disco e' tocado.
+//
+// I-EVENTO (M-SAVE-EVENTO-VALIDA, 2026-05-07): substitui joinUri
+// local pelo helper canonico vaultUriJoin de @/lib/vault, eliminando
+// trailing space, %20 ofensivo e barras duplas em URIs SAF (causa
+// raiz parcial dos saves silenciosos no APK alpha em OEMs MIUI/
+// OneUI/HyperOS, vide A29). Auditoria: 100% das concatenacoes ad-hoc
+// substituidas; vaultRoot vazio agora propaga erro claro do helper
+// em vez de gerar URI invalida silenciosa.
 import {
   eventoPath,
   formatDateYmd,
   readVaultFile,
+  vaultUriJoin,
   writeVaultFile,
 } from '@/lib/vault';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
@@ -43,12 +53,6 @@ export interface SaveEventoResult {
   fotosGravadas: string[];
 }
 
-// Concatena root SAF e path relativo, normalizando barras.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
 // Tenta gravar no path canonico. Se ja existir (colisao real entre
 // devices via Syncthing), aplica suffix '-<deviceId>' M38 alinhado
 // com saveHumor/saveDiario; cobre 4 nos sem perder dado.
@@ -59,13 +63,13 @@ async function resolvePath(
   vaultRoot: string,
   relCanonico: string
 ): Promise<string> {
-  const uriCanonico = joinUri(vaultRoot, relCanonico);
+  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
   const existente = await readVaultFile(uriCanonico, EventoSchema);
   if (!existente) return relCanonico;
 
   const deviceId = await getDeviceId();
   const relComDevice = applyDeviceIdSuffix(relCanonico, deviceId);
-  const uriComDevice = joinUri(vaultRoot, relComDevice);
+  const uriComDevice = vaultUriJoin(vaultRoot, relComDevice);
   const jaComDevice = await readVaultFile(uriComDevice, EventoSchema);
   if (!jaComDevice) return relComDevice;
 
@@ -174,7 +178,7 @@ export async function saveEvento(
 
   const relCanonico = eventoPath(agora, slug);
   const rel = await resolvePath(vaultRoot, relCanonico);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
 
   await writeVaultFile<EventoMeta>(uri, metaComFotos, body);
 

@@ -65,6 +65,7 @@ import {
 } from '@/lib/eventos/categorias';
 import { getBairroAtual } from '@/lib/eventos/localizacao';
 import { saveEvento } from '@/lib/eventos/saveEvento';
+import { comTimeout } from '@/lib/util/comTimeout';
 import type { Midia } from '@/lib/schemas/midia';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
@@ -259,29 +260,35 @@ export default function Eventos() {
     try {
       // O body do .md contem o texto livre. saveEvento usa esse
       // texto também para derivar o slug do nome de arquivo
-      // quando bairro estiver vazio.
-      await saveEvento({
-        meta: validacao.data,
-        body: texto.trim(),
-        vaultRoot,
-        fotos,
-      });
+      // quando bairro estiver vazio. comTimeout (canonico,
+      // @/lib/util/comTimeout) impede loader infinito caso SAF
+      // write trave em OEMs lentos (MIUI/HyperOS/OneUI - vide A29).
+      await comTimeout(
+        saveEvento({
+          meta: validacao.data,
+          body: texto.trim(),
+          vaultRoot,
+          fotos,
+        })
+      );
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('eventos');
       sheetRef.current?.close();
       if (modo === 'positivo') {
         // Evento positivo é vitória — respeita Settings.somVibracao.vitoria.
         await haptics.vitoria();
-        toast.show('Anotado.', 'success');
       } else {
         // Evento negativo é trigger emocional — respeita
         // Settings.somVibracao.trigger.
         await haptics.trigger();
-        toast.show('Registrado.', 'success');
       }
+      toast.show('Evento salvo.', 'success');
       router.back();
-    } catch {
-      toast.show('Falha ao salvar.', 'error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save evento fail', e);
       setSalvando(false);
     }
   };

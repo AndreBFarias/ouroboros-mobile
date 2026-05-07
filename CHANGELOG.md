@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-EVENTO — `M-SAVE-EVENTO-VALIDA` (2026-05-07)
+
+`src/lib/eventos/saveEvento.ts` migra `joinUri` local (3
+concatenações) para `vaultUriJoin` (H1) com path
+`markdown/evento-YYYY-MM-DD-slug.md` (H2). `app/eventos.tsx`
+consome `comTimeout` do util canônico (4º caller migrado). Toasts
+PT-BR `Evento salvo.` / `Não foi possível salvar: <msg>`.
+
+Schema real `evento.ts` usa `modo: positivo|negativo` (não
+"polaridade") + body livre (não "descricao") — implementação seguiu
+schema canônico, não terminologia do spec. Inconsistência de spec
+documentada como achado, não bloqueia.
+
+Tests: +6 casos em `tests/lib/eventos/saveEvento.test.ts`
+(vaultRoot vazio throw, `%20` trailing eliminado, modo positivo,
+modo negativo, foto cross-link companion `markdown/` + binário
+`jpg/`, sem bairro com slug derivado). E2E novo
+`tests/e2e/playwright/m-save-evento.e2e.ts` cobre 2 modos.
+
+Métricas: 1627 testes / 173 suítes verde (+6 contra 1621
+baseline) · TS strict 0 · Hermes Android 7,7 MB intacto ·
+Gauntlet leak 0/6 · anonimato OK · PT-BR check OK.
+
 ### Sprint I-DIARIO — `M-SAVE-DIARIO-VALIDA` (2026-05-07)
 
 `src/lib/diario/saveDiario.ts` migra `joinUri` local para

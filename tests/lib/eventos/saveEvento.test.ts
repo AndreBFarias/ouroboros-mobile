@@ -258,6 +258,108 @@ describe('saveEvento validacao', () => {
   });
 });
 
+describe('saveEvento I-EVENTO vaultUriJoin canonico', () => {
+  it('rejeita save quando vaultRoot vazio (helper canonico vaultUriJoin)', async () => {
+    await expect(
+      saveEvento({
+        meta: baseMeta,
+        body: 'cafe da manha gostoso.',
+        vaultRoot: '',
+        fotos: [],
+      })
+    ).rejects.toThrow(/vaultUriJoin/);
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  it('elimina trailing whitespace e %20 ofensivo no root SAF', async () => {
+    // Cenario A29: tree URI SAF com trailing space (MIUI/OneUI/HyperOS).
+    await saveEvento({
+      meta: baseMeta,
+      body: '',
+      vaultRoot: `${VAULT_ROOT}%20`,
+      fotos: [],
+    });
+    const [uri] = mockWriteVaultFile.mock.calls[0];
+    expect(uri).not.toMatch(/%20\//);
+    expect(uri).toMatch(/Vault\/markdown\/evento-/);
+  });
+
+  it('salva modo positivo no path canonico via vaultUriJoin', async () => {
+    const out = await saveEvento({
+      meta: { ...baseMeta, modo: 'positivo' },
+      body: '',
+      vaultRoot: VAULT_ROOT,
+      fotos: [],
+    });
+    expect(out.uri).toBe(
+      `${VAULT_ROOT}/markdown/evento-2026-04-29-vila-madalena.md`
+    );
+    const [, metaGravado] = mockWriteVaultFile.mock.calls[0];
+    expect((metaGravado as EventoMeta).modo).toBe('positivo');
+  });
+
+  it('salva modo negativo no path canonico via vaultUriJoin', async () => {
+    const negativo: EventoMeta = {
+      ...baseMeta,
+      modo: 'negativo',
+      // Em negativo, midia nao e' obrigatoria pelo refine; mantemos
+      // vazio para refletir caminho real do caller (FotosBlock + sem
+      // MidiaPicker preenchido).
+      midia: [],
+    };
+    const out = await saveEvento({
+      meta: negativo,
+      body: 'discussao desagradavel.',
+      vaultRoot: VAULT_ROOT,
+      fotos: [],
+    });
+    expect(out.uri).toBe(
+      `${VAULT_ROOT}/markdown/evento-2026-04-29-vila-madalena.md`
+    );
+    const [, metaGravado] = mockWriteVaultFile.mock.calls[0];
+    expect((metaGravado as EventoMeta).modo).toBe('negativo');
+    expect((metaGravado as EventoMeta).midia).toEqual([]);
+  });
+
+  it('positivo com foto cross-link: companion .md em markdown/<basename>.md e binario em jpg/<basename>.jpg', async () => {
+    const out = await saveEvento({
+      meta: baseMeta,
+      body: 'almoco no lugar novo.',
+      vaultRoot: VAULT_ROOT,
+      fotos: ['file:///cache/foto.jpg'],
+    });
+    // Binario sob jpg/.
+    expect(out.fotosGravadas[0]).toBe('jpg/2026-04-29-eventos-0000-1.jpg');
+    // Companion .md ao lado, mesmo basename, em markdown/.
+    const [companionUri] = mockWriteAsStringAsync.mock.calls[0];
+    expect(companionUri).toBe(
+      `${VAULT_ROOT}/markdown/2026-04-29-eventos-0000-1.md`
+    );
+    // copyAsync recebe URI completo do binario montado via vaultUriJoin.
+    const [{ to: copyTo }] = mockCopyAsync.mock.calls[0];
+    expect(copyTo).toBe(
+      `${VAULT_ROOT}/jpg/2026-04-29-eventos-0000-1.jpg`
+    );
+  });
+
+  it('sem bairro: slug deriva do texto livre via vaultUriJoin', async () => {
+    const semBairro: EventoMeta = { ...baseMeta, bairro: undefined };
+    const out = await saveEvento({
+      meta: semBairro,
+      body: 'rolezinho no parque.',
+      vaultRoot: VAULT_ROOT,
+      fotos: [],
+    });
+    // Slug deriva do texto via slugifyEvento (kebab-case ASCII).
+    expect(out.uri).toMatch(
+      new RegExp(
+        `^${VAULT_ROOT.replace(/[/.]/g, '\\$&')}/markdown/evento-2026-04-29-[a-z0-9-]+\\.md$`
+      )
+    );
+    expect(out.uri).not.toContain('//markdown/');
+  });
+});
+
 describe('saveEvento conflito de path', () => {
   it('M38: aplica suffix deviceId quando arquivo canonico ja existe', async () => {
     mockReadVaultFile.mockImplementation((uri) => {
