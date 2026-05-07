@@ -1,13 +1,20 @@
 // Helpers de leitura, listagem e escrita de alarmes pessoais no Vault
-// (M16). Cada alarme vive em alarmes/<slug>.md com frontmatter validado
-// pelo AlarmeSchema. Slug e a chave: salvar duas vezes com mesmo slug
-// sobrescreve (usado para edicao); slug novo cria arquivo novo.
+// (M16). Cada alarme vive em markdown/alarme-<slug>.md com frontmatter
+// validado pelo AlarmeSchema (H2 layout-por-tipo, ADR-0023). Slug e a
+// chave: salvar duas vezes com mesmo slug sobrescreve (usado para
+// edicao); slug novo cria arquivo novo.
+//
+// I-ALARME (M-SAVE-ALARME-VALIDA, 2026-05-07): migrou de joinUri local
+// para vaultUriJoin canonico (H1 do plano golden-zebra). Helper canonico
+// trata trailing whitespace + barras duplas + percent-encoding ofensivo
+// (%20) que vinha contaminando saves em OEMs MIUI/OneUI/HyperOS (A29).
 //
 // Comentarios sem acento (convencao shell/CI).
 import {
   alarmePath,
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
+  vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -15,16 +22,11 @@ import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
 import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
 // Lista todos os alarmes do Vault. Pasta inexistente => []. Retorna
 // asc por horario (HH:MM lex), depois por titulo, para a tela de
 // listagem não mostrar ordem aleatoria de filesystem.
 export async function listarAlarmes(vaultRoot: string): Promise<Alarme[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'alarme-'));
 
@@ -53,7 +55,7 @@ export async function lerAlarme(
   slug: string
 ): Promise<Alarme | null> {
   const rel = alarmePath(slug);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   const result = await readVaultFile(uri, AlarmeSchema);
   return result ? result.meta : null;
 }
@@ -79,14 +81,14 @@ export async function escreverAlarme(
   const relCanonico = alarmePath(parsed.data.slug);
   let rel = relCanonico;
   if (modoCriacao) {
-    const uriCanonico = joinUri(vaultRoot, relCanonico);
+    const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
     const existente = await readVaultFile(uriCanonico, AlarmeSchema);
     if (existente) {
       const deviceId = await getDeviceId();
       rel = applyDeviceIdSuffix(relCanonico, deviceId);
     }
   }
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<Alarme>(uri, parsed.data, body);
   return { uri, rel };
 }
@@ -100,7 +102,7 @@ export async function excluirAlarme(
   slug: string
 ): Promise<void> {
   const rel = alarmePath(slug);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   try {
     await StorageAccessFramework.deleteAsync(uri);
   } catch {

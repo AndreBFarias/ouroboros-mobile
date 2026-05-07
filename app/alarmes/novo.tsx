@@ -47,6 +47,7 @@ import {
   agendarAlarme,
   cancelarAlarme,
 } from '@/lib/services/alarmesNotificacoes';
+import { comTimeout } from '@/lib/util/comTimeout';
 import {
   AlarmeSchema,
   RECORRENCIAS_CANONICAS,
@@ -328,8 +329,10 @@ export default function AlarmesNovoOuEditar() {
       }
 
       // Cancela schedules antigos (edicao). Novo alarme não tem nada
-      // a cancelar mas o helper e idempotente.
-      await cancelarAlarme(slug);
+      // a cancelar mas o helper e idempotente. Envolvido em comTimeout
+      // para impedir loader infinito caso expo-notifications trave em
+      // OEMs com Doze agressivo (I-ALARME).
+      await comTimeout(cancelarAlarme(slug));
 
       const proposto: Alarme = {
         tipo: 'alarme',
@@ -365,9 +368,12 @@ export default function AlarmesNovoOuEditar() {
       }
 
       // Agenda primeiro: precisamos dos ids pra salvar no .md.
+      // I-ALARME: agendarAlarme sob comTimeout - APIs nativas de
+      // notif podem travar em OEMs MIUI/OneUI quando o channel ainda
+      // nao foi criado.
       let notificationIds: string[] = [];
       if (parsed.data.ativo) {
-        const res = await agendarAlarme(parsed.data);
+        const res = await comTimeout(agendarAlarme(parsed.data));
         if (res.estourou) {
           toast.show(
             'Limite de 64 alarmes atingido. Desative algum antes de criar.',
@@ -385,7 +391,9 @@ export default function AlarmesNovoOuEditar() {
       // M38: passa modoCriacao=!editando para que escreverAlarme
       // aplique suffix '-<deviceId>' caso outro device ja tenha
       // criado alarme com mesmo slug (conflict resolution Syncthing).
-      await escreverAlarme(vaultRoot, persistido, '', !editando);
+      // I-ALARME: comTimeout impede loader infinito quando SAF write
+      // trava (A29 - URI corrupta em OEMs).
+      await comTimeout(escreverAlarme(vaultRoot, persistido, '', !editando));
       // M24: limpa rascunho de criacao pos-save bem-sucedido. Em
       // modo edicao tambem limpamos para nao recarregar dados antigos
       // se o usuario abrir /alarmes/novo depois.
@@ -393,8 +401,14 @@ export default function AlarmesNovoOuEditar() {
       void haptics.light();
       toast.show('Alarme salvo.', 'success');
       router.back();
-    } catch {
-      toast.show('Não foi possível salvar.', 'error');
+    } catch (e) {
+      // I-ALARME: expoe a causa raiz no toast (timeout salvando, URI
+      // invalida, permission denied) para suportar diagnose pelo
+      // usuario sem precisar de adb.
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save alarme fail', e);
     } finally {
       setSalvando(false);
     }

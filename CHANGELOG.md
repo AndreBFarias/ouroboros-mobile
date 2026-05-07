@@ -5,6 +5,21 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-ALARME — `M-SAVE-ALARME-VALIDA` (2026-05-07)
+
+`src/lib/vault/alarmes.ts` migra `joinUri` local para `vaultUriJoin`
+canônico. Path `markdown/alarme-<slug>.md`. `app/alarmes/novo.tsx`
+envolve 3 awaits (cancelarAlarme, agendarAlarme, escreverAlarme)
+em `comTimeout(p, 10s)`. Toasts PT-BR canônicos.
+
+Tests: 11 → 17 casos em `tests/lib/vault/alarmes.test.ts` (4
+recorrências única/diária/semanal/mensal + vaultRoot vazio throw +
+trailing `%20` normalizado). E2E novo cobre fluxo até tap Salvar
+(channel notif é no-op em web).
+
+Métricas: 1656 testes / 173 suítes verde (+7) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-TAREFA — `M-SAVE-TAREFA-VALIDA` (2026-05-07)
 
 `src/lib/vault/tarefas.ts` migra `joinUri` local para `vaultUriJoin`

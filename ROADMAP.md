@@ -38,7 +38,7 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 | I-VIDEO | `M-SAVE-VIDEO-VALIDA` | `M-SAVE-VIDEO-VALIDA-spec.md` | ~1.5h | `[ok]` |
 | I-FRASE | `M-SAVE-FRASE-VALIDA` | `M-SAVE-FRASE-VALIDA-spec.md` | ~1h | `[ok]` |
 | I-TAREFA | `M-SAVE-TAREFA-VALIDA` | `M-SAVE-TAREFA-VALIDA-spec.md` | ~1.5h | `[ok]` |
-| I-ALARME | `M-SAVE-ALARME-VALIDA` | `M-SAVE-ALARME-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-ALARME | `M-SAVE-ALARME-VALIDA` | `M-SAVE-ALARME-VALIDA-spec.md` | ~1.5h | `[ok]` |
 | I-CONTADOR | `M-SAVE-CONTADOR-VALIDA` | `M-SAVE-CONTADOR-VALIDA-spec.md` | ~1.5h | `[todo]` |
 | I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h | `[todo]` |
 | I-EXERCICIO | `M-SAVE-EXERCICIO-VALIDA` | `M-SAVE-EXERCICIO-VALIDA-spec.md` | ~2h | `[todo]` |
