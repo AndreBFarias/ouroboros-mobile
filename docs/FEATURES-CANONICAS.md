@@ -309,14 +309,37 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `CardHero`, `CardTopCategorias` e `ListaTransacoes` permanecem no
   repositório, sem consumidores, prontos para retomada futura.
 
-## 7. Recap — M36 (entregue)
+## 7. Recap (Lista + Calendário) — M36 + L2 (entregue)
+
+> Unificado em L2 (`M-RECAP-CALENDARIO-UNIFICAR`, ADR-0021,
+> 2026-05-07): a antiga seção 8 ("Calendário Visual de Conquistas
+> — M11.5 / Tela 25") foi consolidada aqui como **modo Calendário**
+> do Recap. A rota top-level `/calendario` foi apagada; o item
+> "Calendário" do menu lateral foi removido. Subrota
+> `/calendario/[id]` (detalhe individual da conquista) permanece
+> intacta, acessada via tap em `<ConquistaCard>` dentro do modo
+> Calendário.
 
 - Rota modal raiz `/recap`, acessível via item "Recap" do menu
   lateral (M27).
-- Períodos selecionáveis via `<ChipGroup mode="single">`: **Semana**
-  (últimos 7 dias), **Mês** (últimos 30 dias), **Ano** (últimos 365
-  dias) e **Personalizado** (dois inputs `AAAA-MM-DD`).
-- 5 seções:
+- **Toggle de modo no header** (L2): par de botões pill
+  alternando entre **Lista** (default) e **Calendário**.
+  Animação de fade do conteúdo via Reanimated puro
+  (`useSharedValue` + `withTiming`) — não Moti, mitigando A28.
+- **Modo Lista** — comportamento M36 preservado: chips de período
+  + 5 seções empilhadas em ScrollView.
+- **Modo Calendário** — calendário mensal
+  (`react-native-calendars` com locale PT-BR registrado em
+  M37.1.1) com dots roxos nos dias que têm conquistas. Tap em um
+  dia mostra a lista vertical de `<ConquistaCard>` daquele dia
+  abaixo do calendário. Reusa `useConquistas` (loader do Vault +
+  filtros — os 5 filtros M11.5 ficam no estado, exposição visual
+  embutida volta em sprint subsequente).
+- Períodos selecionáveis (modo Lista) via `<ChipGroup mode="single">`:
+  **Semana** (últimos 7 dias), **Mês** (últimos 30 dias), **Ano**
+  (últimos 365 dias) e **Personalizado** (dois inputs
+  `AAAA-MM-DD`).
+- 5 seções no modo Lista:
   - **Conquistas** — vitórias do diário (`modo='vitoria'`), eventos
     positivos, marcos, contadores em sequência (≥ 7 dias) e tarefas
     concluídas no período.
@@ -341,12 +364,17 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Helpers de leitura novos: `listarHumor`, `listarDiarios`,
   `listarEventos` (`src/lib/vault/`).
 
-## 8. Calendário Visual de Conquistas — M11.5 (Tela 25)
+## 8. Calendário Visual de Conquistas — consolidado em §7 (L2)
 
-- Grid mensal estilo "calendário de heatmap" mas com mídia.
-- Cada dia com conquista mostra thumbnail (foto/vídeo) ou ícone.
-- Tap abre detalhe + oEmbed inline (Spotify/YouTube).
-- Filtros: por tipo / por pessoa / por tag.
+> **Histórico:** M11.5 / Tela 25 entregou esta tela como rota
+> top-level `/calendario` com grid mensal, filtros e timeline
+> horizontal de cards. ADR-0021 (L2, 2026-05-07) consolidou a
+> ideia em **modo Calendário do Recap** (§7 acima). A subrota
+> `/calendario/[id]` (detalhe individual) permanece como destino
+> de `<ConquistaCard>`. O componente legacy
+> `CalendarioConquistasScreen` foi removido. A `<Timeline>`
+> horizontal foi substituída pela visão calendário mensal +
+> lista vertical do dia selecionado.
 
 ## 9. Tela Hoje — M02 → M40 (Tela 01)
 

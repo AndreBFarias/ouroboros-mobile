@@ -42,7 +42,6 @@ import {
   AlertTriangle,
   BarChart,
   BellRing,
-  Calendar,
   CalendarRange,
   Camera,
   Hash,
@@ -139,7 +138,10 @@ export function MenuLateral() {
       { label: 'Recap', a11yLabel: 'item recap', icone: BarChart, route: '/recap' },
       { label: 'Saúde Física', a11yLabel: 'item saude fisica', icone: Layers, route: '/saude-fisica' },
       { label: 'Humor', a11yLabel: 'item humor', icone: Heart, route: '/humor' },
-      { label: 'Calendário', a11yLabel: 'item calendario', icone: Calendar, route: '/calendario' },
+      // L2 (M-RECAP-CALENDARIO-UNIFICAR, 2026-05-07): item "Calendario"
+      // removido. Recap (toggle modo Lista/Calendario) absorveu a tela.
+      // ADR-0021. Subrota /calendario/[id] (detalhe da conquista)
+      // continua acessivel via tap no ConquistaCard dentro do Recap.
       // M37.1: item "Agenda" (Google Calendar leitura).
       { label: 'Agenda', a11yLabel: 'item agenda', icone: CalendarRange, route: '/agenda' },
     ];

@@ -5,6 +5,42 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint L2 — `M-RECAP-CALENDARIO-UNIFICAR` (2026-05-07)
+
+**Bloco L FECHADO.** Recap (`/recap`) e Calendário de Conquistas
+(`/calendario`) unificados em uma única tela com toggle modo
+Lista/Calendário no header. ADR-0021 documenta a decisão.
+
+`RecapScreen.tsx` ganha state `modo: 'lista' | 'calendario'` +
+toggle pill no header (Reanimated puro: `useSharedValue` +
+`withTiming` em `Animated.View`, evita risco residual A28).
+ChipGroup + inputs de período só no modo Lista.
+
+Novo `src/components/screens/RecapModoCalendario.tsx` migra lógica
+de `app/calendario.tsx`: `react-native-calendars` (locale PT-BR
+M37.1.1) + heatmap mensal + lista de `<ConquistaCard>` do dia
+selecionado. Reusa `useConquistas`.
+
+Removido: `app/calendario.tsx` (rota top-level apagada; subrota
+`app/calendario/[id].tsx` permanece para detalhe). Componente
+`CalendarioConquistasScreen.tsx` deletado (sem consumidores). Item
+"Calendário" removido do MenuLateral. Showcase + gauntletDashboard
+atualizam rotas.
+
+ADR-0021 `docs/ADRs/0021-recap-calendario-unificado.md` criado +
+`docs/ADRs/INDEX.md` + `docs/FEATURES-CANONICAS.md` §7 reescrita.
+
+Tests: +3 casos em `RecapScreen.test.tsx` (toggle render, default
+Lista, alternância). E2E novo cobre ausência item no menu + toggle.
+
+Achado documentado em ADR-0021: `featureToggles.calendarioConquistas`
+em settings.ts ficou órfão; sprint subsequente para limpeza
+opcional.
+
+Métricas: 1742 testes / 176 suítes verde (+3 contra 1739) · TS
+strict 0 · Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 ·
+anonimato OK · PT-BR OK.
+
 ### Sprint L1 — `M-MEMORIAS-PARA-SAUDE-FISICA` (2026-05-07)
 
 Aba "Memórias" renomeada para "Saúde Física" com 3 tabs reorganizadas:

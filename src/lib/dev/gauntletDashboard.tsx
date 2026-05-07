@@ -22,7 +22,7 @@ const ROTAS_VER = [
   { rota: '/', label: 'Hoje' },
   { rota: '/saude-fisica', label: 'Saude Fisica' },
   { rota: '/humor', label: 'Humor' },
-  { rota: '/calendario', label: 'Calendario' },
+  { rota: '/recap', label: 'Recap' },
   { rota: '/financas', label: 'Financas' },
 ];
 

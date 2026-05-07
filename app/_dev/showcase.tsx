@@ -40,7 +40,7 @@ const TELAS: ItemTela[] = [
   { numero: '22', rota: '/financas', nome: 'Mini Financeiro' },
   { numero: '23', rota: '/settings', nome: 'Settings 7 grupos' },
   { numero: '24', rota: '/onboarding', nome: 'Onboarding' },
-  { numero: '25', rota: '/calendario', nome: 'Calendario conquistas' },
+  { numero: '25', rota: '/recap', nome: 'Recap (Lista + Calendario)' },
   { numero: '26', rota: '/settings', nome: 'Widget toggle (settings)' },
 ];
 
