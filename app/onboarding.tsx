@@ -1,21 +1,21 @@
-// Onboarding inicial em 4 frames (H3 / M-VAULT-PASTA-NAO-HARDCODED).
-// Versoes anteriores tinham 3 frames (M23) com a inicializacao do
-// Vault implicita ao final. ADR-0022 introduz a pergunta explicita
-// "Onde salvar?" como Frame 2, deixando "Tudo pronto" como Frame 3.
+// Onboarding inicial em 5 frames (J1 / M-ONBOARDING-PERMISSOES).
+// Versoes anteriores: 3 frames (M23) -> 4 frames (H3, ADR-0022).
+// J1 introduz seletor de sexo no Frame 0/1 e novo Frame 3
+// "Permissoes" entre Pasta (antigo Frame 2) e "Tudo pronto"
+// (antigo Frame 3, agora Frame 4).
 //
-// Frame 0: Como voce se chama?
-// Frame 1: Mais alguem usa este Vault com voce?
-// Frame 2: Onde salvar seus dados? (sugestao Documents/Ouroboros vs
-//          escolher manual via SAF picker)
-// Frame 3: Tudo pronto, <nome>.
+// Frame 0: Como voce se chama? + foto + sexo (pessoa_a)
+// Frame 1: Mais alguem usa? (companhia + nome/foto/sexo da pessoa_b
+//          quando duo)
+// Frame 2: Onde salvar? (sugestao Documents/Ouroboros vs SAF picker)
+// Frame 3: Permissoes (4 toggles: camera/microfone/notificacoes/
+//          localizacao). Continuar pede cada toggle ON em sequencia.
+// Frame 4: Tudo pronto, <nome>. Mostra resumo "N permissoes
+//          concedidas".
 //
-// O Frame 2 substitui o tap implicito de "Comecar" como gatilho do
-// SAF picker. Agora o caminho A (sugestao default) chama
-// pedirPermissaoStorage + inicializarVaultEscolhido(sugestao); o
-// caminho B (Outra pasta) chama requestVaultPermission para abrir o
-// SAF picker e em seguida inicializarVaultEscolhido(uri retornada).
-// Em web ambos os caminhos caem no mesmo no-op (URI mock) para nao
-// bloquear validacao Gauntlet.
+// Storage e implicito em Frame 2 (caminho A pede pedirPermissaoStorage,
+// caminho B abre SAF picker). Outras 4 permissoes sao opt-in com
+// defaults sensatos: camera/microfone/notificacoes ON, localizacao OFF.
 //
 // Decisao M03: Sentence case + acentuacao PT-BR completa nas strings
 // de UI. accessibilityLabel sem acento. Comentarios sem acento
@@ -42,12 +42,14 @@ import {
   ChipGroup,
   Input,
   Screen,
+  Toggle,
   useToast,
 } from '@/components/ui';
-import { colors, spacing } from '@/theme/tokens';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { usePessoa } from '@/lib/stores/pessoa';
 import {
   useOnboarding,
+  type SexoDeclarado,
   type TipoCompanhia,
 } from '@/lib/stores/onboarding';
 import {
@@ -57,8 +59,21 @@ import {
   sugestaoVaultPathDefault,
   sugestaoVaultUriDefault,
 } from '@/lib/vault';
+import {
+  requestCameraPermission,
+  requestLocalizacaoPermission,
+  requestMicrofonePermission,
+  requestNotificacoesPermission,
+} from '@/lib/permissoes/requestOnboarding';
 
-type FrameId = 0 | 1 | 2 | 3;
+type FrameId = 0 | 1 | 2 | 3 | 4;
+
+const SEXO_OPTIONS: ReadonlyArray<{ value: NonNullable<SexoDeclarado>; label: string }> = [
+  { value: 'masculino', label: 'Masculino' },
+  { value: 'feminino', label: 'Feminino' },
+  { value: 'nao-binario', label: 'Não-binário' },
+  { value: 'prefiro-nao-dizer', label: 'Prefiro não dizer' },
+];
 
 export default function Onboarding() {
   const router = useRouter();
@@ -68,6 +83,10 @@ export default function Onboarding() {
   const nomeB = usePessoa((s) => s.nomes.pessoa_b);
   const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
   const setTipoCompanhia = useOnboarding((s) => s.setTipoCompanhia);
+  const sexoDeclarado = useOnboarding((s) => s.sexoDeclarado);
+  const setSexoDeclarado = useOnboarding((s) => s.setSexoDeclarado);
+  const permissoes = useOnboarding((s) => s.permissoes);
+  const setPermissao = useOnboarding((s) => s.setPermissao);
   const marcarConcluido = useOnboarding((s) => s.marcarConcluido);
 
   const [frame, setFrame] = useState<FrameId>(0);
@@ -77,14 +96,26 @@ export default function Onboarding() {
   const [tipoSelecionado, setTipoSelecionado] = useState(false);
   const [iniciando, setIniciando] = useState(false);
   const [escolhendoPasta, setEscolhendoPasta] = useState(false);
+  const [pedindoPermissoes, setPedindoPermissoes] = useState(false);
+
+  // Toggles locais do Frame 3 antes de chamar request*. Defaults
+  // canonicos: camera/microfone/notificacoes ON, localizacao OFF.
+  const [togCamera, setTogCamera] = useState(true);
+  const [togMicrofone, setTogMicrofone] = useState(true);
+  const [togNotificacoes, setTogNotificacoes] = useState(true);
+  const [togLocalizacao, setTogLocalizacao] = useState(false);
 
   const avancar = () =>
-    setFrame((f) => (f >= 3 ? 3 : ((f + 1) as FrameId)));
+    setFrame((f) => (f >= 4 ? 4 : ((f + 1) as FrameId)));
 
   const handleFrame0 = () => {
     const nome = nomeInput.trim();
     if (nome.length < 1) {
       toast.show('Por favor, digite um nome.', 'error');
+      return;
+    }
+    if (sexoDeclarado.pessoa_a === null) {
+      toast.show('Escolha uma das opções de sexo.', 'error');
       return;
     }
     setNome('pessoa_a', nome);
@@ -106,6 +137,10 @@ export default function Onboarding() {
         toast.show('Por favor, digite o nome da segunda pessoa.', 'error');
         return;
       }
+      if (sexoDeclarado.pessoa_b === null) {
+        toast.show('Escolha o sexo da segunda pessoa.', 'error');
+        return;
+      }
       setNome('pessoa_b', nome);
     } else {
       setTipoCompanhia('sozinho');
@@ -125,6 +160,7 @@ export default function Onboarding() {
     try {
       await pedirPermissaoStorage();
       await inicializarVaultEscolhido(sugestaoVaultUriDefault());
+      setPermissao('storage', true);
       avancar();
     } catch {
       toast.show(
@@ -150,6 +186,7 @@ export default function Onboarding() {
         return;
       }
       await inicializarVaultEscolhido(uri);
+      setPermissao('storage', true);
       avancar();
     } catch {
       toast.show(
@@ -158,6 +195,44 @@ export default function Onboarding() {
       );
     } finally {
       setEscolhendoPasta(false);
+    }
+  };
+
+  // Continuar do Frame 3: para cada toggle ON, chama o request
+  // correspondente em sequencia (camera -> microfone -> notif ->
+  // location). Persiste cada resultado em useOnboarding.permissoes.
+  // Toggle OFF persiste false direto (usuario escolheu nao pedir).
+  const handlePermissoes = async () => {
+    if (pedindoPermissoes) return;
+    setPedindoPermissoes(true);
+    try {
+      if (togCamera) {
+        const ok = await requestCameraPermission();
+        setPermissao('camera', ok);
+      } else {
+        setPermissao('camera', false);
+      }
+      if (togMicrofone) {
+        const ok = await requestMicrofonePermission();
+        setPermissao('microfone', ok);
+      } else {
+        setPermissao('microfone', false);
+      }
+      if (togNotificacoes) {
+        const ok = await requestNotificacoesPermission();
+        setPermissao('notificacoes', ok);
+      } else {
+        setPermissao('notificacoes', false);
+      }
+      if (togLocalizacao) {
+        const ok = await requestLocalizacaoPermission();
+        setPermissao('localizacao', ok);
+      } else {
+        setPermissao('localizacao', false);
+      }
+      avancar();
+    } finally {
+      setPedindoPermissoes(false);
     }
   };
 
@@ -171,6 +246,15 @@ export default function Onboarding() {
       setIniciando(false);
     }
   };
+
+  // Resumo "N permissoes concedidas" no Frame final. Conta storage
+  // + camera + microfone + notificacoes + localizacao (max 5).
+  const permissoesConcedidas =
+    (permissoes.storage ? 1 : 0) +
+    (permissoes.camera ? 1 : 0) +
+    (permissoes.microfone ? 1 : 0) +
+    (permissoes.notificacoes ? 1 : 0) +
+    (permissoes.localizacao ? 1 : 0);
 
   // Renderiza apenas o frame ativo. ScrollView envolve o conteudo
   // para caber forms longos.
@@ -192,6 +276,8 @@ export default function Onboarding() {
               <Frame0
                 nome={nomeInput}
                 onChange={setNomeInput}
+                sexo={sexoDeclarado.pessoa_a}
+                onSexoChange={(next) => setSexoDeclarado('pessoa_a', next)}
                 onContinue={handleFrame0}
               />
             )}
@@ -206,6 +292,8 @@ export default function Onboarding() {
                 }}
                 nomeB={nomeBInput}
                 setNomeB={setNomeBInput}
+                sexoB={sexoDeclarado.pessoa_b}
+                onSexoBChange={(next) => setSexoDeclarado('pessoa_b', next)}
                 onContinue={handleFrame1}
               />
             )}
@@ -217,9 +305,24 @@ export default function Onboarding() {
               />
             )}
             {frame === 3 && (
-              <Frame3
+              <Frame3Permissoes
+                togCamera={togCamera}
+                togMicrofone={togMicrofone}
+                togNotificacoes={togNotificacoes}
+                togLocalizacao={togLocalizacao}
+                setTogCamera={setTogCamera}
+                setTogMicrofone={setTogMicrofone}
+                setTogNotificacoes={setTogNotificacoes}
+                setTogLocalizacao={setTogLocalizacao}
+                ocupado={pedindoPermissoes}
+                onContinue={handlePermissoes}
+              />
+            )}
+            {frame === 4 && (
+              <Frame4
                 nomeA={nomeA}
                 nomeB={duo ? nomeB : null}
+                permissoesConcedidas={permissoesConcedidas}
                 iniciando={iniciando}
                 onConcluir={handleConcluir}
               />
@@ -240,11 +343,11 @@ function Indicador({ frameAtivo }: { frameAtivo: FrameId }) {
         alignSelf: 'center',
       }}
     >
-      {[0, 1, 2, 3].map((i) => (
+      {[0, 1, 2, 3, 4].map((i) => (
         <View
           key={i}
           style={{
-            width: 32,
+            width: 28,
             height: 4,
             borderRadius: 2,
             backgroundColor: i <= frameAtivo ? colors.purple : colors.bgElev,
@@ -335,13 +438,60 @@ function MicroOrange({ children }: { children: ReactNode }) {
   );
 }
 
+interface SeletorSexoProps {
+  valor: SexoDeclarado;
+  onChange: (next: SexoDeclarado) => void;
+  pessoa: 'pessoa_a' | 'pessoa_b';
+}
+
+function SeletorSexo({ valor, onChange, pessoa }: SeletorSexoProps) {
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: 13,
+        }}
+      >
+        Sexo
+      </Text>
+      <ChipGroup
+        mode="single"
+        value={valor}
+        onChange={(next) => {
+          if (next === null) {
+            onChange(null);
+            return;
+          }
+          if (
+            next === 'masculino' ||
+            next === 'feminino' ||
+            next === 'nao-binario' ||
+            next === 'prefiro-nao-dizer'
+          ) {
+            onChange(next);
+          }
+        }}
+        options={SEXO_OPTIONS.map((opt) => ({
+          value: opt.value,
+          label: opt.label,
+          accent: pessoa === 'pessoa_a' ? 'purple' : 'pink',
+        }))}
+      />
+    </View>
+  );
+}
+
 interface Frame0Props {
   nome: string;
   onChange: (next: string) => void;
+  sexo: SexoDeclarado;
+  onSexoChange: (next: SexoDeclarado) => void;
   onContinue: () => void;
 }
 
-function Frame0({ nome, onChange, onContinue }: Frame0Props) {
+function Frame0({ nome, onChange, sexo, onSexoChange, onContinue }: Frame0Props) {
   return (
     <View style={{ gap: spacing.lg }}>
       <MicroOrange>Antes de começar</MicroOrange>
@@ -359,6 +509,7 @@ function Frame0({ nome, onChange, onContinue }: Frame0Props) {
         placeholder="Seu nome"
         accessibilityLabel="campo nome"
       />
+      <SeletorSexo valor={sexo} onChange={onSexoChange} pessoa="pessoa_a" />
       <View style={{ height: spacing.md }} />
       <Button label="Continuar" onPress={onContinue} />
     </View>
@@ -372,6 +523,8 @@ interface Frame1Props {
   setTipo: (t: TipoCompanhia) => void;
   nomeB: string;
   setNomeB: (next: string) => void;
+  sexoB: SexoDeclarado;
+  onSexoBChange: (next: SexoDeclarado) => void;
   onContinue: () => void;
 }
 
@@ -382,6 +535,8 @@ function Frame1({
   setTipo,
   nomeB,
   setNomeB,
+  sexoB,
+  onSexoBChange,
   onContinue,
 }: Frame1Props) {
   return (
@@ -409,7 +564,16 @@ function Frame1({
         </View>
       </View>
 
-      {duo === true ? <Frame1Expand tipoCompanhia={tipoCompanhia} setTipo={setTipo} nomeB={nomeB} setNomeB={setNomeB} /> : null}
+      {duo === true ? (
+        <Frame1Expand
+          tipoCompanhia={tipoCompanhia}
+          setTipo={setTipo}
+          nomeB={nomeB}
+          setNomeB={setNomeB}
+          sexoB={sexoB}
+          onSexoBChange={onSexoBChange}
+        />
+      ) : null}
 
       <View style={{ height: spacing.md }} />
       <Button label="Continuar" onPress={onContinue} />
@@ -425,11 +589,15 @@ function Frame1Expand({
   setTipo,
   nomeB,
   setNomeB,
+  sexoB,
+  onSexoBChange,
 }: {
   tipoCompanhia: TipoCompanhia;
   setTipo: (t: TipoCompanhia) => void;
   nomeB: string;
   setNomeB: (next: string) => void;
+  sexoB: SexoDeclarado;
+  onSexoBChange: (next: SexoDeclarado) => void;
 }) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-8);
@@ -476,6 +644,7 @@ function Frame1Expand({
       <View style={{ alignItems: 'center', marginTop: spacing.md }}>
         <AvatarPicker pessoa="pessoa_b" size={96} />
       </View>
+      <SeletorSexo valor={sexoB} onChange={onSexoBChange} pessoa="pessoa_b" />
     </Animated.View>
   );
 }
@@ -622,14 +791,162 @@ function CardPasta({
   );
 }
 
-interface Frame3Props {
+interface Frame3PermissoesProps {
+  togCamera: boolean;
+  togMicrofone: boolean;
+  togNotificacoes: boolean;
+  togLocalizacao: boolean;
+  setTogCamera: (v: boolean) => void;
+  setTogMicrofone: (v: boolean) => void;
+  setTogNotificacoes: (v: boolean) => void;
+  setTogLocalizacao: (v: boolean) => void;
+  ocupado: boolean;
+  onContinue: () => void;
+}
+
+// Frame 3 (J1): cards com toggle para cada permissao opcional.
+// Storage e implicito (Frame 2 ja pediu). Ordem fixa pelo spec
+// canonico: camera -> microfone -> notificacoes -> localizacao.
+function Frame3Permissoes({
+  togCamera,
+  togMicrofone,
+  togNotificacoes,
+  togLocalizacao,
+  setTogCamera,
+  setTogMicrofone,
+  setTogNotificacoes,
+  setTogLocalizacao,
+  ocupado,
+  onContinue,
+}: Frame3PermissoesProps) {
+  return (
+    <View style={{ gap: spacing.lg }}>
+      <MicroOrange>Permissões</MicroOrange>
+      <Heading>Permissões</Heading>
+      <Sub>Para a melhor experiência, libere o acesso a:</Sub>
+
+      <CardPermissao
+        titulo="Câmera"
+        descricao="Para tirar fotos e escanear documentos."
+        valor={togCamera}
+        onChange={setTogCamera}
+        accessibilityLabel="toggle permissao camera"
+      />
+      <CardPermissao
+        titulo="Microfone"
+        descricao="Para gravar áudios no diário."
+        valor={togMicrofone}
+        onChange={setTogMicrofone}
+        accessibilityLabel="toggle permissao microfone"
+      />
+      <CardPermissao
+        titulo="Notificações"
+        descricao="Para alarmes e lembretes."
+        valor={togNotificacoes}
+        onChange={setTogNotificacoes}
+        accessibilityLabel="toggle permissao notificacoes"
+      />
+      <CardPermissao
+        titulo="Localização"
+        descricao="Para detectar bairro nos eventos."
+        valor={togLocalizacao}
+        onChange={setTogLocalizacao}
+        accessibilityLabel="toggle permissao localizacao"
+      />
+
+      <View style={{ height: spacing.md }} />
+      <Button
+        label={ocupado ? 'Pedindo…' : 'Continuar'}
+        onPress={onContinue}
+        disabled={ocupado}
+      />
+    </View>
+  );
+}
+
+interface CardPermissaoProps {
+  titulo: string;
+  descricao: string;
+  valor: boolean;
+  onChange: (next: boolean) => void;
+  accessibilityLabel: string;
+}
+
+function CardPermissao({
+  titulo,
+  descricao,
+  valor,
+  onChange,
+  accessibilityLabel,
+}: CardPermissaoProps) {
+  return (
+    <View
+      accessibilityLabel={`linha ${accessibilityLabel}`}
+      style={{
+        backgroundColor: colors.bgAlt,
+        borderRadius: radius.card,
+        padding: spacing.base,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        minHeight: 56,
+        gap: spacing.md,
+      }}
+    >
+      <View style={{ flex: 1, paddingRight: spacing.md }}>
+        <Text
+          style={{
+            color: colors.fg,
+            fontFamily: 'JetBrainsMono_500Medium',
+            fontSize: typography.body.size,
+            lineHeight: typography.body.size * typography.body.lineHeight,
+          }}
+        >
+          {titulo}
+        </Text>
+        <Text
+          style={{
+            color: colors.muted,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: typography.caption.size,
+            lineHeight: typography.caption.size * typography.caption.lineHeight,
+            marginTop: 2,
+          }}
+        >
+          {descricao}
+        </Text>
+      </View>
+      <Toggle
+        value={valor}
+        onChange={onChange}
+        accessibilityLabel={accessibilityLabel}
+      />
+    </View>
+  );
+}
+
+interface Frame4Props {
   nomeA: string;
   nomeB: string | null;
+  permissoesConcedidas: number;
   iniciando: boolean;
   onConcluir: () => void;
 }
 
-function Frame3({ nomeA, nomeB, iniciando, onConcluir }: Frame3Props) {
+function Frame4({
+  nomeA,
+  nomeB,
+  permissoesConcedidas,
+  iniciando,
+  onConcluir,
+}: Frame4Props) {
+  // Plural cuidado: 1 -> "1 permissão concedida", 0 ou >1 ->
+  // "N permissões concedidas". 0 e exibido com mesma forma.
+  const resumoPermissoes =
+    permissoesConcedidas === 1
+      ? '1 permissão concedida.'
+      : `${permissoesConcedidas} permissões concedidas.`;
+
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.lg }}>
       <View
@@ -649,6 +966,18 @@ function Frame3({ nomeA, nomeB, iniciando, onConcluir }: Frame3Props) {
         )}
       </View>
       <Heading>Tudo pronto, {nomeA}.</Heading>
+      <Text
+        accessibilityLabel="resumo permissoes onboarding"
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: 13,
+          lineHeight: 22,
+          textAlign: 'center',
+        }}
+      >
+        {resumoPermissoes}
+      </Text>
       <Text
         style={{
           color: colors.muted,

@@ -1,16 +1,20 @@
-// Smoke do onboarding 4 frames (H3 / M-VAULT-PASTA-NAO-HARDCODED).
+// Smoke do onboarding 5 frames (J1 / M-ONBOARDING-PERMISSOES).
 // Cobre:
-//  - Render inicial no Frame 0 (Como voce se chama?)
-//  - Validacao de nome vazio dispara toast.error
-//  - Avanco Frame 0 -> Frame 1 -> Frame 2 (Onde salvar?) -> Frame 3
-//    (Tudo pronto)
+//  - Render inicial no Frame 0 (Como voce se chama?) com seletor de sexo
+//  - Frame 0: nome vazio dispara toast e nao avanca
+//  - Frame 0: sem sexo selecionado dispara toast e nao avanca
+//  - Frame 0 -> 1 -> 2 -> 3 (Permissoes) -> 4 (Tudo pronto)
 //  - Frame 2 caminho A "Usar essa": chama pedirPermissaoStorage +
-//    inicializarVaultEscolhido(sugestao), avanca para Frame 3
+//    inicializarVaultEscolhido(sugestao), avanca
 //  - Frame 2 caminho B "Escolher": chama requestVaultPermission +
-//    inicializarVaultEscolhido(uri), avanca para Frame 3
-//  - Frame 3 Comecar marca onboarding concluido e router.replace
-//  - Erro de inicializarVaultEscolhido mantem usuario no Frame 2 e
-//    onboarding nao concluido
+//    inicializarVaultEscolhido(uri), avanca
+//  - Frame 3 Permissoes: 4 cards renderizam com toggles default
+//    canonicos (camera/microfone/notif ON, localizacao OFF)
+//  - Frame 3 "Continuar": chama mocks request* na ordem para toggles
+//    ON, persiste em useOnboarding.permissoes
+//  - Frame 4: Comecar marca onboarding concluido e router.replace
+//  - Frame 4: resumo "N permissoes concedidas" reflete contagem real
+//  - Erro de inicializarVaultEscolhido mantem usuario no Frame 2
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 const mockReplace = jest.fn();
@@ -45,6 +49,23 @@ jest.mock('@/lib/vault', () => {
   };
 });
 
+const mockReqCamera = jest.fn<Promise<boolean>, []>();
+const mockReqMicrofone = jest.fn<Promise<boolean>, []>();
+const mockReqNotificacoes = jest.fn<Promise<boolean>, []>();
+const mockReqLocalizacao = jest.fn<Promise<boolean>, []>();
+
+jest.mock('@/lib/permissoes/requestOnboarding', () => ({
+  __esModule: true,
+  requestCameraPermission: () => mockReqCamera(),
+  requestMicrofonePermission: () => mockReqMicrofone(),
+  requestNotificacoesPermission: () => mockReqNotificacoes(),
+  requestLocalizacaoPermission: () => mockReqLocalizacao(),
+  getCameraStatus: jest.fn(),
+  getMicrofoneStatus: jest.fn(),
+  getNotificacoesStatus: jest.fn(),
+  getLocalizacaoStatus: jest.fn(),
+}));
+
 import Onboarding from '../../app/onboarding';
 import { ToastProvider } from '@/components/ui';
 import { useOnboarding } from '@/lib/stores/onboarding';
@@ -73,6 +94,10 @@ beforeEach(() => {
   mockRequestVaultPermission.mockResolvedValue(
     'content://com.android.externalstorage.documents/tree/primary%3ADownload'
   );
+  mockReqCamera.mockResolvedValue(true);
+  mockReqMicrofone.mockResolvedValue(true);
+  mockReqNotificacoes.mockResolvedValue(true);
+  mockReqLocalizacao.mockResolvedValue(true);
 });
 
 afterEach(() => {
@@ -82,11 +107,29 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('Onboarding H3 - 4 frames', () => {
-  it('renderiza Frame 0 com heading e botao Continuar', () => {
+// Helper: avanca do Frame 0 ate o Frame 2 (pasta), preenchendo
+// nome+sexo da pessoa_a e escolhendo sozinho.
+function avancarAtePasta(api: {
+  getByText: (t: string) => unknown;
+  getByLabelText: (l: string) => unknown;
+}) {
+  const { getByText, getByLabelText } = api;
+  fireEvent.changeText(getByLabelText('campo nome') as never, 'Teste');
+  fireEvent.press(getByLabelText('chip Masculino') as never);
+  fireEvent.press(getByText('Continuar') as never);
+  fireEvent.press(getByLabelText('escolher sozinho') as never);
+  fireEvent.press(getByText('Continuar') as never);
+}
+
+describe('Onboarding J1 - 5 frames com permissoes', () => {
+  it('renderiza Frame 0 com heading, campo nome e seletor de sexo', () => {
     const { getByText, getByLabelText } = renderTela();
     expect(getByText('Como você se chama?')).toBeTruthy();
     expect(getByLabelText('campo nome')).toBeTruthy();
+    expect(getByLabelText('chip Masculino')).toBeTruthy();
+    expect(getByLabelText('chip Feminino')).toBeTruthy();
+    expect(getByLabelText('chip Não-binário')).toBeTruthy();
+    expect(getByLabelText('chip Prefiro não dizer')).toBeTruthy();
     expect(getByText('Continuar')).toBeTruthy();
   });
 
@@ -97,32 +140,34 @@ describe('Onboarding H3 - 4 frames', () => {
     expect(usePessoa.getState().nomes.pessoa_a).toBe('');
   });
 
-  it('Frame 0 -> Frame 1: nome valido salva pessoa_a e avanca', () => {
-    const { getByText, getByLabelText } = renderTela();
+  it('Frame 0: sexo nao escolhido bloqueia avanco', () => {
+    const { getByText, getByLabelText, queryByText } = renderTela();
     fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
     fireEvent.press(getByText('Continuar'));
+    expect(queryByText('Mais alguém usa este Vault com você?')).toBeNull();
+    expect(usePessoa.getState().nomes.pessoa_a).toBe('');
+  });
+
+  it('Frame 0 -> Frame 1: nome+sexo validos persistem e avancam', () => {
+    const { getByText, getByLabelText } = renderTela();
+    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
+    fireEvent.press(getByLabelText('chip Feminino'));
+    fireEvent.press(getByText('Continuar'));
     expect(usePessoa.getState().nomes.pessoa_a).toBe('Teste');
+    expect(useOnboarding.getState().sexoDeclarado.pessoa_a).toBe('feminino');
     expect(getByText('Mais alguém usa este Vault com você?')).toBeTruthy();
   });
 
-  it('Frame 1 -> Frame 2: sozinho avanca para Onde salvar', () => {
-    const { getByText, getByLabelText } = renderTela();
-    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher sozinho'));
-    fireEvent.press(getByText('Continuar'));
-    expect(getByText('Onde salvar seus dados?')).toBeTruthy();
-    expect(getByLabelText('usar sugestao documents ouroboros')).toBeTruthy();
-    expect(getByLabelText('escolher outra pasta')).toBeTruthy();
+  it('Frame 1 sozinho -> Frame 2 (pasta)', () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    expect(api.getByText('Onde salvar seus dados?')).toBeTruthy();
   });
 
-  it('Frame 2 caminho A: "Usar essa" chama pedirPermissao + inicializarVaultEscolhido(sugestao) e avanca', async () => {
-    const { getByText, getByLabelText } = renderTela();
-    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher sozinho'));
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('usar sugestao documents ouroboros'));
+  it('Frame 2 caminho A -> Frame 3 Permissoes', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
     await waitFor(() => {
       expect(mockPedirPermissaoStorage).toHaveBeenCalledTimes(1);
     });
@@ -132,17 +177,15 @@ describe('Onboarding H3 - 4 frames', () => {
       );
     });
     await waitFor(() => {
-      expect(getByText('Tudo pronto, Teste.')).toBeTruthy();
+      expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
     });
+    expect(useOnboarding.getState().permissoes.storage).toBe(true);
   });
 
-  it('Frame 2 caminho B: "Escolher" chama requestVaultPermission + inicializarVaultEscolhido(uri) e avanca', async () => {
-    const { getByText, getByLabelText } = renderTela();
-    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher sozinho'));
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher outra pasta'));
+  it('Frame 2 caminho B -> Frame 3 Permissoes', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('escolher outra pasta'));
     await waitFor(() => {
       expect(mockRequestVaultPermission).toHaveBeenCalledTimes(1);
     });
@@ -152,54 +195,140 @@ describe('Onboarding H3 - 4 frames', () => {
       );
     });
     await waitFor(() => {
-      expect(getByText('Tudo pronto, Teste.')).toBeTruthy();
+      expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
     });
   });
 
   it('Frame 2 caminho B cancelado: usuario fica no Frame 2', async () => {
     mockRequestVaultPermission.mockResolvedValueOnce(null);
-    const { getByText, getByLabelText, queryByText } = renderTela();
-    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher sozinho'));
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher outra pasta'));
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('escolher outra pasta'));
     await waitFor(() => {
       expect(mockRequestVaultPermission).toHaveBeenCalledTimes(1);
     });
     expect(mockInicializarEscolhido).not.toHaveBeenCalled();
-    expect(getByText('Onde salvar seus dados?')).toBeTruthy();
-    expect(queryByText('Tudo pronto, Teste.')).toBeNull();
+    expect(api.getByText('Onde salvar seus dados?')).toBeTruthy();
   });
 
-  it('Frame 2 erro de probe na sugestao: mantem usuario no Frame 2', async () => {
+  it('Frame 2 erro probe: mantem usuario no Frame 2', async () => {
     mockInicializarEscolhido.mockRejectedValueOnce(
       new Error('storage permission denied (probe write failed)')
     );
-    const { getByText, getByLabelText, queryByText } = renderTela();
-    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher sozinho'));
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('usar sugestao documents ouroboros'));
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
     await waitFor(() => {
       expect(mockInicializarEscolhido).toHaveBeenCalledTimes(1);
     });
-    expect(getByText('Onde salvar seus dados?')).toBeTruthy();
-    expect(queryByText('Tudo pronto, Teste.')).toBeNull();
+    expect(api.getByText('Onde salvar seus dados?')).toBeTruthy();
   });
 
-  it('Frame 3: Comecar marca concluido e redireciona', async () => {
-    const { getByText, getByLabelText } = renderTela();
-    fireEvent.changeText(getByLabelText('campo nome'), 'Teste');
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('escolher sozinho'));
-    fireEvent.press(getByText('Continuar'));
-    fireEvent.press(getByLabelText('usar sugestao documents ouroboros'));
+  it('Frame 3 Permissoes: 4 cards renderizam com toggles default', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
     await waitFor(() => {
-      expect(getByText('Tudo pronto, Teste.')).toBeTruthy();
+      expect(api.getByText('Câmera')).toBeTruthy();
     });
-    fireEvent.press(getByText('Começar'));
+    expect(api.getByText('Microfone')).toBeTruthy();
+    expect(api.getByText('Notificações')).toBeTruthy();
+    expect(api.getByText('Localização')).toBeTruthy();
+    expect(api.getByLabelText('toggle permissao camera')).toBeTruthy();
+    expect(api.getByLabelText('toggle permissao microfone')).toBeTruthy();
+    expect(api.getByLabelText('toggle permissao notificacoes')).toBeTruthy();
+    expect(api.getByLabelText('toggle permissao localizacao')).toBeTruthy();
+  });
+
+  it('Frame 3 "Continuar": chama request* para toggles ON, persiste em store, avanca para Frame 4', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(api.getByText('Câmera')).toBeTruthy();
+    });
+    fireEvent.press(api.getByText('Continuar'));
+    await waitFor(() => {
+      expect(mockReqCamera).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(mockReqMicrofone).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(mockReqNotificacoes).toHaveBeenCalledTimes(1);
+    });
+    // Localizacao default OFF nao chama request.
+    expect(mockReqLocalizacao).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(api.getByText('Tudo pronto, Teste.')).toBeTruthy();
+    });
+    const p = useOnboarding.getState().permissoes;
+    expect(p.camera).toBe(true);
+    expect(p.microfone).toBe(true);
+    expect(p.notificacoes).toBe(true);
+    expect(p.localizacao).toBe(false);
+  });
+
+  it('Frame 3: toggle camera OFF nao chama requestCamera', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(api.getByText('Câmera')).toBeTruthy();
+    });
+    // Desliga camera com tap no Pressable do Toggle (alterna ON->OFF).
+    fireEvent.press(api.getByLabelText('toggle permissao camera'));
+    fireEvent.press(api.getByText('Continuar'));
+    await waitFor(() => {
+      expect(mockReqMicrofone).toHaveBeenCalledTimes(1);
+    });
+    expect(mockReqCamera).not.toHaveBeenCalled();
+    expect(useOnboarding.getState().permissoes.camera).toBe(false);
+  });
+
+  it('Frame 3: requestCamera retorna false persiste false', async () => {
+    mockReqCamera.mockResolvedValueOnce(false);
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(api.getByText('Câmera')).toBeTruthy();
+    });
+    fireEvent.press(api.getByText('Continuar'));
+    await waitFor(() => {
+      expect(api.getByText('Tudo pronto, Teste.')).toBeTruthy();
+    });
+    const p = useOnboarding.getState().permissoes;
+    expect(p.camera).toBe(false);
+    expect(p.microfone).toBe(true);
+  });
+
+  it('Frame 4: resumo mostra contagem singular/plural correto', async () => {
+    // Tudo concedido: storage + camera + microfone + notificacoes = 4.
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(api.getByText('Câmera')).toBeTruthy();
+    });
+    fireEvent.press(api.getByText('Continuar'));
+    await waitFor(() => {
+      expect(api.getByText('4 permissões concedidas.')).toBeTruthy();
+    });
+  });
+
+  it('Frame 4: Comecar marca concluido e redireciona', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(api.getByText('Câmera')).toBeTruthy();
+    });
+    fireEvent.press(api.getByText('Continuar'));
+    await waitFor(() => {
+      expect(api.getByText('Tudo pronto, Teste.')).toBeTruthy();
+    });
+    fireEvent.press(api.getByText('Começar'));
     await waitFor(() => {
       expect(useOnboarding.getState().done).toBe(true);
     });

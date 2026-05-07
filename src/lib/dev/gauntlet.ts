@@ -219,6 +219,8 @@ function aplicarReset(): void {
   if (typeof window !== 'undefined') {
     try {
       window.localStorage?.removeItem('ouroboros.onboarding');
+      window.localStorage?.removeItem('ouroboros.onboarding.v2');
+      window.localStorage?.removeItem('ouroboros.onboarding.v3');
       window.localStorage?.removeItem('ouroboros.vault');
       window.localStorage?.removeItem('ouroboros.pessoa');
       window.localStorage?.removeItem('ouroboros.sessao.v1');

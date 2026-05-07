@@ -353,6 +353,7 @@ function SecaoFeatures() {
 // === Secao 4: Privacidade ===
 
 function SecaoPrivacidade() {
+  const router = useRouter();
   const privacidade = useSettings((s) => s.privacidade);
   const setPrivacidade = useSettings((s) => s.setPrivacidade);
   const toast = useToast();
@@ -447,6 +448,13 @@ function SecaoPrivacidade() {
         valor={privacidade.ocultarTranscricoes}
         onChange={(v) => setPrivacidade('ocultarTranscricoes', v)}
         a11y="toggle ocultar transcricoes"
+      />
+
+      <LinkSubTela
+        titulo="Permissões"
+        subtitulo="Câmera, microfone, notificações, localização."
+        onPress={() => router.push('/settings/permissoes')}
+        accessibilityLabel="permissoes"
       />
 
       <Button

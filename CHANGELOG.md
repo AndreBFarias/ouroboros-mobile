@@ -5,6 +5,50 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint J1 — `M-ONBOARDING-PERMISSOES` (2026-05-07)
+
+Onboarding passa de 4 frames (H3) para 5 frames com nova arquitetura:
+Frame 1 ganha seletor de Sexo (chips Masculino/Feminino/Não-binário/
+Prefiro não dizer); Frame 4 NOVO "Permissões" entre pasta e tudo pronto
+com 4 toggles (Câmera ON / Microfone ON / Notificações ON / Localização
+OFF); Frame final 5 mostra resumo "N permissões concedidas". Indicador
+progresso 4 → 5 segmentos.
+
+`useOnboarding` (`src/lib/stores/onboarding.ts`) bump v2 → v3 com
+campos novos: `sexoDeclarado: SexoPorPessoa` (mais coeso com store
+existente que já delega nome/foto para `usePessoa`) +
+`permissoes: PermissoesOnboarding` (storage/camera/microfone/
+notificacoes/localizacao). Setters reativos
+`setSexoDeclarado(pessoa, sexo)` + `setPermissao(key, granted)`.
+`gauntlet.ts` `reset()` limpa v2 legacy também para determinismo.
+
+Helper novo `src/lib/permissoes/requestOnboarding.ts` com
+`requestPermissao(tipo)` + `getPermissaoStatus(tipo)`. Botão Continuar
+do Frame Permissões dispara request em sequência (câmera → mic →
+notif → location), persiste em store, segue para Frame final.
+
+Sub-tela nova `app/settings/permissoes.tsx` mostra status atual
+(concedida/negada/não pedida) + botão "Abrir configurações do
+sistema" (`Linking.openSettings()`) por permissão negada. Plug em
+`app/settings/index.tsx` via `<LinkSubTela>` "Permissões" →
+`/settings/permissoes`.
+
+Tests: +13 casos (onboarding store sexoDeclarado/permissoes setters
++ reatividade; onboarding.tsx 5 frames com toggles funcionando +
+Continuar chama requestPermissions). E2E novo
+`tests/e2e/playwright/m-onboarding-permissoes.e2e.ts` com mock
+granted.
+
+Validação Gauntlet pelo orquestrador: 5-frame navegado completo,
+captura 3 PNGs (Frame 1 nome+sexo, Frame Permissões cards, Frame
+final resumo). `useNomeDe` reativo confirma nome "Andre" propagando.
+
+Métricas: 1690 testes / 173 suítes verde (+13 contra 1677 baseline) ·
+TS strict 0 · Hermes 7,7 MB intacto · Gauntlet leak 0/6 · anonimato
+OK · PT-BR check OK.
+
+I-CICLO destravada (sexoDeclarado disponível para inferência).
+
 ### Sprint I2-AMIGOS — `M-AMIGOS-LABEL` (2026-05-07)
 
 `useNomeDe('ambos')` em `src/lib/stores/pessoa.ts` ramifica por

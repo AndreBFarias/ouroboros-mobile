@@ -60,7 +60,7 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 
 | # | Sprint | Spec | Estim. |
 |---|---|---|---|
-| J1 | `M-ONBOARDING-PERMISSOES` | `M-ONBOARDING-PERMISSOES-spec.md` | ~3h |
+| J1 | `M-ONBOARDING-PERMISSOES` | `M-ONBOARDING-PERMISSOES-spec.md` | ~3h | `[ok]` |
 
 ### Bloco K — UX Chrome (paralelo)
 
