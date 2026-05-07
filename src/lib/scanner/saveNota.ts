@@ -2,29 +2,40 @@
 // validado, body livre, vaultRoot e a fonte de imagem (single .jpg
 // ou multi-page .pdf ja consolidado pelo expo-print).
 //
-// M-VAULT-MD-FIX-scanner (2026-05-04): refatorado para respeitar a
-// convencao de companion 1:1 da pasta media/. Antes:
-//   - binario .jpg/.pdf -> assets/<ts>-nota[-multipagina].<ext>
-//   - md unico -> inbox/financeiro/nota/<ts>-<slug>.md (apontava o
-//     binario por path absoluto, sem companion ao lado)
+// I-SCANNER (M-SAVE-SCANNER-VALIDA + M-SCANNER-LAYOUT-POR-TIPO,
+// 2026-05-07): migrado para layout-por-tipo (H2). Antes (path legado): // ptbr-allow: comentario tecnico, path
+//   - binario .jpg/.pdf -> media/scanner/<basename>.<ext> // ptbr-allow: comentario tecnico, path
+//   - md companion 1:1 -> media/scanner/<basename>.md // ptbr-allow: comentario tecnico, path
+//   - md semantico -> inbox/financeiro/nota/<ts>-<slug>.md
+//   - concatenacao via joinUri local (sem trim agressivo de
+//     trailing whitespace e %20 ofensivo do SAF MIUI/HyperOS).
 // Agora:
-//   - binario para media/scanner/<basename>.<ext> (jpg ou pdf)
-//   - md companion 1:1 ao lado em media/scanner/<basename>.md
-//     (frontmatter midia_pdf ou midia_foto, padrao M34)
-//   - md semantico permanece em inbox/financeiro/nota/<ts>-<slug>.md
-//     (schema FinanceiroNotaMeta), agora com wikilink ao binario no
-//     body e campo `imagem` apontando para o path canonico real.
+//   - binario -> <ext>/scanner-<slug>.<ext> (jpg ou pdf), via
+//     scannerPath(slug, ext).
+//   - md companion 1:1 -> markdown/scanner-<slug>.md, via
+//     scannerCompanionPath(slug).
+//   - md semantico -> markdown/nota-YYYY-MM-DD-HHmmss-<slug>.md,
+//     via notaPath(date, slug). Wikilink no body aponta o binario
+//     em <ext>/scanner-<slug>.<ext>.
+//   - vaultUriJoin (H1) substitui joinUri local: trata trailing
+//     whitespace, %20 ofensivo, barras duplas + lanca erro claro
+//     quando vaultRoot vazio.
 //
-// Backward-compat: arquivos antigos em assets/ continuam acessiveis
-// no vault. Esta sprint apenas redireciona escritas novas.
+// Slug unico por captura: timestamp YYYY-MM-DD-HHmmss + descricao
+// kebab-case ASCII. Garante que multiplas notas no mesmo segundo
+// nao colidam binario/companion. Fallback 'nota' quando descricao
+// vazia/curta.
 //
-// Slug do .md semantico continua vindo da descricao (kebab-case
-// ASCII) ou 'nota' generico quando vazio / muito curto.
+// ML Kit OCR fica no caller (ScannerPreview); aqui so persistimos
+// o binario + companion + md semantico ja com texto OCR no body e
+// ocr_confianca + revisar no frontmatter (FinanceiroNotaSchema).
 import * as FileSystem from 'expo-file-system/legacy';
 import {
-  formatDateYmdHm,
-  inboxFinanceiroNotaPath,
-  mediaScannerPath,
+  formatDateYmdHms,
+  notaPath,
+  scannerPath,
+  scannerCompanionPath,
+  vaultUriJoin,
   writeVaultFile,
 } from '@/lib/vault';
 import {
@@ -45,28 +56,23 @@ export interface SaveNotaArgs {
 
 // Sentinela usado pelo caller no campo `meta.imagem` para passar a
 // validacao do schema (min(1)). saveNota sobrescreve com o path
-// relativo real apos copiar o binario para media/scanner/. Exportar
-// esta constante elimina a string magica espalhada e documenta o
-// contrato.
+// relativo real apos copiar o binario para <ext>/scanner-<slug>.<ext>.
+// Exportar esta constante elimina a string magica espalhada e
+// documenta o contrato.
 export const IMAGEM_PENDENTE = 'pendente-copia.jpg' as const;
 
 export interface SaveNotaResult {
-  // Path absoluto do .md semantico em inbox/financeiro/nota/.
+  // Path absoluto do .md semantico em markdown/nota-...md.
   uri: string;
-  // Path relativo ao Vault do binario gravado em media/scanner/.
+  // Path relativo ao Vault do binario em <ext>/scanner-<slug>.<ext>.
   imagemRelativa: string;
   // Path relativo ao Vault do .md companion 1:1 ao binario, em
-  // media/scanner/<basename>.md (M-VAULT-MD-FIX-scanner).
+  // markdown/scanner-<slug>.md.
   companionRelativo: string;
 }
 
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
 // Slug minimal: pega as primeiras 2 palavras do texto, lowercase, sem
-// acento, removendo não-alfanumericos. Cai em 'nota' se sobrar vazio.
+// acento, removendo nao-alfanumericos. Cai em 'nota' se sobrar vazio.
 function slugifyDescricao(s: string): string {
   const norm = s
     .toLowerCase()
@@ -80,12 +86,13 @@ function slugifyDescricao(s: string): string {
   return norm.length > 0 ? norm : 'nota';
 }
 
-// Wikilink do md semantico para o binario em media/scanner/. Formato
-// Obsidian-friendly sem extensao (Obsidian resolve por basename
-// global) e com path relativo legivel para humanos abrindo o md em
-// outro editor.
-function wikilinkParaBinario(basename: string): string {
-  return `[[../../../media/scanner/${basename}]]`;
+// Wikilink do md semantico para o binario em <ext>/scanner-<slug>.<ext>.
+// Formato Obsidian-friendly sem extensao (Obsidian resolve por
+// basename global) e com path relativo legivel para humanos abrindo
+// o md em outro editor. md semantico vive em markdown/, binario em
+// <ext>/, entao subimos um nivel via '../<ext>/scanner-<slug>'.
+function wikilinkParaBinario(ext: 'jpg' | 'pdf', slug: string): string {
+  return `[[../${ext}/scanner-${slug}]]`;
 }
 
 export async function saveNota(args: SaveNotaArgs): Promise<SaveNotaResult> {
@@ -97,31 +104,31 @@ export async function saveNota(args: SaveNotaArgs): Promise<SaveNotaResult> {
   }
 
   const agora = new Date();
-  const prefixo = formatDateYmdHm(agora);
+  const ts = formatDateYmdHms(agora);
+  const slugDescricao = slugifyDescricao(parsed.data.descricao);
 
-  // Basename canonico compartilhado entre binario e companion .md
-  // (regra companion 1:1 da pasta media/scanner/).
-  const ext = isPdf ? 'pdf' : 'jpg';
-  const basename = isPdf
-    ? `${prefixo}-nota-multipagina`
-    : `${prefixo}-nota`;
-  const basenameComExt = `${basename}.${ext}`;
+  // Slug unico por captura: timestamp + descricao. Garante que
+  // multiplas notas no mesmo segundo nao colidam binario/companion.
+  const slugScanner = `${ts}-${slugDescricao}`;
+  const ext: 'jpg' | 'pdf' = isPdf ? 'pdf' : 'jpg';
 
-  // Copia o binário primeiro: se a cópia falhar, não gravamos o .md
-  // apontando para arquivo inexistente.
-  const imagemRelativa = mediaScannerPath(basename, ext);
-  const imagemDestino = joinUri(vaultRoot, imagemRelativa);
+  // 1. Copia o binário primeiro: se a copia falhar, nao gravamos
+  //    nem companion nem md semantico apontando para arquivo
+  //    inexistente. Path canonico: <ext>/scanner-<slug>.<ext>.
+  const imagemRelativa = scannerPath(slugScanner, ext);
+  const imagemDestino = vaultUriJoin(vaultRoot, imagemRelativa);
   await FileSystem.copyAsync({ from: imagemUri, to: imagemDestino });
 
-  // Companion 1:1 ao lado do binario, mesmo basename. Frontmatter
-  // padrao M34 via stringifyCompanionMidia. Tipo midia_pdf para multi
-  // page (M-VAULT-MD-FIX-scanner extendeu TipoMidia); midia_foto para
-  // single page mantem o tipo canonico.
-  const companionRelativo = mediaScannerPath(basename, 'md');
-  const companionDestino = joinUri(vaultRoot, companionRelativo);
+  // 2. Companion .md 1:1 ao lado em markdown/. Mesmo slug do
+  //    binario (regra layout-por-tipo). Frontmatter padrao M34 via
+  //    stringifyCompanionMidia. Tipo midia_pdf para multi page,
+  //    midia_foto para single page.
+  const companionRelativo = scannerCompanionPath(slugScanner);
+  const companionDestino = vaultUriJoin(vaultRoot, companionRelativo);
+  const basenameBin = `scanner-${slugScanner}.${ext}`;
   const companionConteudo = stringifyCompanionMidia({
     tipo: isPdf ? 'midia_pdf' : 'midia_foto',
-    arquivo: basenameComExt,
+    arquivo: basenameBin,
     data: agora.toISOString(),
     autor: parsed.data.autor,
     para: { tipo: 'mim' },
@@ -132,7 +139,9 @@ export async function saveNota(args: SaveNotaArgs): Promise<SaveNotaResult> {
   });
   await FileSystem.writeAsStringAsync(companionDestino, companionConteudo);
 
-  // Atualiza meta.imagem com path relativo real ao Vault.
+  // 3. Md semantico em markdown/nota-YYYY-MM-DD-HHmmss-<slug>.md
+  //    (FinanceiroNotaMeta com OCR + revisar). Atualiza meta.imagem
+  //    com path relativo real ao Vault.
   const metaFinal: FinanceiroNotaMeta = {
     ...parsed.data,
     imagem: imagemRelativa,
@@ -140,12 +149,11 @@ export async function saveNota(args: SaveNotaArgs): Promise<SaveNotaResult> {
 
   // Body do md semantico: prepende wikilink legivel para o binario
   // (Obsidian renderiza inline) e mantem o texto OCR/livre original.
-  const wikilink = wikilinkParaBinario(basenameComExt);
+  const wikilink = wikilinkParaBinario(ext, slugScanner);
   const bodyComLink = body.length > 0 ? `${wikilink}\n\n${body}` : wikilink;
 
-  const slug = slugifyDescricao(metaFinal.descricao);
-  const relCanonico = inboxFinanceiroNotaPath(agora, slug);
-  const uri = joinUri(vaultRoot, relCanonico);
+  const relCanonico = notaPath(agora, slugDescricao);
+  const uri = vaultUriJoin(vaultRoot, relCanonico);
 
   await writeVaultFile<FinanceiroNotaMeta>(uri, metaFinal, bodyComLink);
 

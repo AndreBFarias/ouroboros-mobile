@@ -36,8 +36,16 @@ import {
 import { consolidarPdf } from '@/lib/scanner/multipage-pdf';
 import { saveNota, IMAGEM_PENDENTE } from '@/lib/scanner/saveNota';
 import { getBairroAtual } from '@/lib/eventos/localizacao';
+import { comTimeout } from '@/lib/util/comTimeout';
 import type { FinanceiroNotaMeta } from '@/lib/schemas/financeiro_nota';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+
+// I-SCANNER (M-SAVE-SCANNER-VALIDA, 2026-05-07): timeout 30s
+// cobre consolidacao PDF multipagina + copy binario para SAF +
+// 2 writes (.md companion + .md semantico). Devices saudaveis
+// completam tudo em <2s; 30s da margem para OEMs MIUI/HyperOS
+// sem frustrar o usuario.
+const SAVE_SCANNER_TIMEOUT_MS = 30_000;
 
 const CATEGORIAS: ReadonlyArray<{ value: CategoriaCanonica; label: string }> = [
   { value: 'mercado', label: 'Mercado' },
@@ -143,7 +151,9 @@ export function ScannerPreview() {
     }
     setSalvando(true);
     try {
-      // Multi-page: consolida em PDF único via expo-print.
+      // Multi-page: consolida em PDF unico via expo-print. Tambem
+      // dentro do try/catch: se consolidarPdf falhar (memoria,
+      // expo-print indisponivel em Expo Go), toast de erro claro.
       let imagemUri = uris[0];
       let isPdf = false;
       if (uris.length > 1) {
@@ -165,8 +175,8 @@ export function ScannerPreview() {
         valor: valorNumero,
         descricao: descricao.trim(),
         categoria,
-        // Sentinela: saveNota copia o binario para assets/ e sobrescreve
-        // este campo com o path real antes de gravar o .md.
+        // Sentinela: saveNota copia o binario para <ext>/scanner-<slug>.<ext>
+        // e sobrescreve este campo com o path real antes de gravar o .md.
         imagem: IMAGEM_PENDENTE,
         ocr_confianca: confianca,
         revisar: confianca < THRESHOLD_REVISAR,
@@ -175,20 +185,30 @@ export function ScannerPreview() {
           : {}),
       };
 
-      await saveNota({
-        meta,
-        body: textoOcr,
-        vaultRoot,
-        imagemUri,
-        isPdf,
-      });
+      // comTimeout 30s impede loader infinito quando SAF write trava
+      // em devices com OEMs lentos (MIUI/HyperOS/OneUI). Se estourar,
+      // toast 'Não foi possível salvar: timeout salvando' e usuario
+      // pode tentar de novo (sheet/preview ainda aberto).
+      await comTimeout(
+        saveNota({
+          meta,
+          body: textoOcr,
+          vaultRoot,
+          imagemUri,
+          isPdf,
+        }),
+        SAVE_SCANNER_TIMEOUT_MS
+      );
 
       await haptics.light();
-      toast.show('Salvo em alta resolução.', 'success');
+      toast.show('Nota salva.', 'success');
       router.back();
       router.back();
-    } catch {
-      toast.show('Falha ao salvar.', 'error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save scanner fail', e);
     } finally {
       setSalvando(false);
     }

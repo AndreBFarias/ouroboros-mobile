@@ -5,6 +5,38 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-SCANNER + M-SCANNER-LAYOUT (consolidadas, 2026-05-07)
+
+`src/lib/scanner/saveNota.ts` migra helpers legados para layout-por-tipo:
+- `mediaScannerPath(slug, ext)` → `scannerPath(slug, ext)` →
+  `<ext>/scanner-<slug>.<ext>` (jpg ou pdf).
+- `mediaScannerPath(basename, 'md')` → `scannerCompanionPath(slug)` →
+  `markdown/scanner-<slug>.md`.
+- `inboxFinanceiroNotaPath(date, slug)` → `notaPath(date, slug)` →
+  `markdown/nota-YYYY-MM-DD-HHmmss-<slug>.md`.
+- `joinUri` local → `vaultUriJoin` canônico (H1).
+
+Slug `${formatDateYmdHms(agora)}-${slugifyDescricao}` garante
+unicidade. Wikilink ajustado para `[[../<ext>/scanner-<slug>]]`.
+
+`src/components/screens/ScannerPreview.tsx` envolve `saveNota` em
+`comTimeout(p, 30s)` (cobre consolidarPdf + 3 writes SAF + ML Kit).
+Toasts PT-BR `Nota salva.` / `Não foi possível salvar: <msg>`.
+
+Tests: 15 → 19 casos (1 página jpg+md, multi-página pdf+md,
+md semântico nota financeira, vaultRoot vazio throw, trailing
+whitespace+`%20` saneado, OCR confiança baixa propaga revisar=true).
+E2E novo cobre tap "Escanear documento" via Gauntlet.
+
+Resolve achado M-SCANNER-LAYOUT-POR-TIPO registrado em H2 (saveNota.ts
+ainda usava helpers legados). Helpers `mediaScannerPath` e
+`inboxFinanceiroNotaPath` permanecem em paths.ts apenas para
+preservar tests legados; remoção fica para sprint que migra share
+intent (M-SHARE-INTENT-LAYOUT).
+
+Métricas: 1672 testes / 173 suítes verde (+4) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-EXERCICIO — `M-SAVE-EXERCICIO-VALIDA` (2026-05-07)
 
 `src/lib/vault/exercicios.ts` migra `joinUri` local (4 callsites:
