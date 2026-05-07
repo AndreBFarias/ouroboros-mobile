@@ -28,23 +28,23 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 
 ### Bloco I — Saves específicos por feature (paralelo após H)
 
-| # | Sprint | Spec | Estim. |
-|---|---|---|---|
-| I-HUMOR | `M-SAVE-HUMOR-VALIDA` | `M-SAVE-HUMOR-VALIDA-spec.md` | ~1.5h |
-| I-DIARIO | `M-SAVE-DIARIO-VALIDA` | `M-SAVE-DIARIO-VALIDA-spec.md` | ~1.5h |
-| I-EVENTO | `M-SAVE-EVENTO-VALIDA` | `M-SAVE-EVENTO-VALIDA-spec.md` | ~1.5h |
-| I-FOTO | `M-SAVE-FOTO-VALIDA` | `M-SAVE-FOTO-VALIDA-spec.md` | ~2h |
-| I-AUDIO | `M-SAVE-AUDIO-VALIDA` | `M-SAVE-AUDIO-VALIDA-spec.md` | ~2h |
-| I-VIDEO | `M-SAVE-VIDEO-VALIDA` | `M-SAVE-VIDEO-VALIDA-spec.md` | ~1.5h |
-| I-FRASE | `M-SAVE-FRASE-VALIDA` | `M-SAVE-FRASE-VALIDA-spec.md` | ~1h |
-| I-TAREFA | `M-SAVE-TAREFA-VALIDA` | `M-SAVE-TAREFA-VALIDA-spec.md` | ~1.5h |
-| I-ALARME | `M-SAVE-ALARME-VALIDA` | `M-SAVE-ALARME-VALIDA-spec.md` | ~1.5h |
-| I-CONTADOR | `M-SAVE-CONTADOR-VALIDA` | `M-SAVE-CONTADOR-VALIDA-spec.md` | ~1.5h |
-| I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h |
-| I-EXERCICIO | `M-SAVE-EXERCICIO-VALIDA` | `M-SAVE-EXERCICIO-VALIDA-spec.md` | ~2h |
-| I-SCANNER | `M-SAVE-SCANNER-VALIDA` | `M-SAVE-SCANNER-VALIDA-spec.md` | ~2h |
-| I-DEVICES | `M-SAVE-DEVICES-INDEX-VALIDA` | `M-SAVE-DEVICES-INDEX-VALIDA-spec.md` | ~1h |
-| I-AGENDA | `M-SAVE-AGENDA-VALIDA` | `M-SAVE-AGENDA-VALIDA-spec.md` | ~1h |
+| # | Sprint | Spec | Estim. | Status |
+|---|---|---|---|---|
+| I-HUMOR | `M-SAVE-HUMOR-VALIDA` | `M-SAVE-HUMOR-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-DIARIO | `M-SAVE-DIARIO-VALIDA` | `M-SAVE-DIARIO-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-EVENTO | `M-SAVE-EVENTO-VALIDA` | `M-SAVE-EVENTO-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-FOTO | `M-SAVE-FOTO-VALIDA` | `M-SAVE-FOTO-VALIDA-spec.md` | ~2h | `[todo]` |
+| I-AUDIO | `M-SAVE-AUDIO-VALIDA` | `M-SAVE-AUDIO-VALIDA-spec.md` | ~2h | `[todo]` |
+| I-VIDEO | `M-SAVE-VIDEO-VALIDA` | `M-SAVE-VIDEO-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-FRASE | `M-SAVE-FRASE-VALIDA` | `M-SAVE-FRASE-VALIDA-spec.md` | ~1h | `[ok]` |
+| I-TAREFA | `M-SAVE-TAREFA-VALIDA` | `M-SAVE-TAREFA-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-ALARME | `M-SAVE-ALARME-VALIDA` | `M-SAVE-ALARME-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-CONTADOR | `M-SAVE-CONTADOR-VALIDA` | `M-SAVE-CONTADOR-VALIDA-spec.md` | ~1.5h | `[todo]` |
+| I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h | `[todo]` |
+| I-EXERCICIO | `M-SAVE-EXERCICIO-VALIDA` | `M-SAVE-EXERCICIO-VALIDA-spec.md` | ~2h | `[todo]` |
+| I-SCANNER | `M-SAVE-SCANNER-VALIDA` | `M-SAVE-SCANNER-VALIDA-spec.md` | ~2h | `[todo]` |
+| I-DEVICES | `M-SAVE-DEVICES-INDEX-VALIDA` | `M-SAVE-DEVICES-INDEX-VALIDA-spec.md` | ~1h | `[todo]` |
+| I-AGENDA | `M-SAVE-AGENDA-VALIDA` | `M-SAVE-AGENDA-VALIDA-spec.md` | ~1h | `[todo]` |
 
 Padrão comum: usar `vaultUriJoin` (H1) + try/catch+timeout no caller +
 E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.

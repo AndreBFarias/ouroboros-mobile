@@ -38,6 +38,7 @@ import {
 import {
   BottomSheet,
   SHEET_60,
+  useOptionalToast,
   type BottomSheetRef,
 } from '@/components/ui';
 import { SheetFrase } from '@/components/midia/SheetFrase';
@@ -52,6 +53,25 @@ import type { Para } from '@/lib/schemas/para';
 import { useNavegacao } from '@/lib/stores/navegacao';
 
 const FAB_SIZE = 56;
+
+// I-FRASE (M-SAVE-FRASE-VALIDA): timeout default para SAF write em
+// /sdcard/Documents/. Em devices saudaveis o write leva <500ms; 10s
+// cobre OEMs lentos sem frustrar. Em caso de timeout, caller exibe
+// toast 'Não foi possível salvar: timeout salvando' (PT-BR sentence
+// case + acentuacao completa).
+const SAVE_TIMEOUT_MS = 10_000;
+
+// Promise race com timeout. Sem helper compartilhado no projeto ainda
+// (MenuCapturaVerde e o primeiro caller a precisar; sprints I futuras
+// vao extrair se virar pattern). Local mantem o caller auto-contido.
+async function comTimeout<T>(p: Promise<T>, ms = SAVE_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) =>
+      setTimeout(() => rej(new Error('timeout salvando')), ms)
+    ),
+  ]);
+}
 
 // M34.3: descricao de uma acao contextual injetada pela tab que
 // hospeda o MenuCapturaVerde. A tab fornece o conjunto que deve
@@ -156,6 +176,11 @@ export function MenuCapturaVerde({
   const [pressed, setPressed] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [resetFrase, setResetFrase] = useState(0);
+  // I-FRASE: useOptionalToast em vez de useToast porque tests/app
+  // renderizam MenuCapturaVerde sem ToastProvider. Em runtime real
+  // (root layout monta ToastProvider) o comportamento e identico ao
+  // useToast; em testes isolados retorna no-op em vez de throw.
+  const toast = useOptionalToast();
   // M-CAPTURA-UNIFICADA: lock para garantir que abrirNoMount dispare
   // apenas uma vez por mount. Sem isto, mudancas de prop ou re-renders
   // do MemoriasScreen poderiam reciclar o sheet involuntariamente.
@@ -254,15 +279,34 @@ export function MenuCapturaVerde({
     setTimeout(() => fraseRef.current?.expand(), 200);
   }, [setSheetCapturaAberto]);
 
+  // I-FRASE: handler do botao "Salvar" do SheetFrase. Padrao canonico
+  // try/catch + timeout + toast. Em sucesso, fecha sheet e exibe toast
+  // verde "Frase salva." (PT-BR sentence case + acentuacao). Em falha,
+  // mantem sheet aberto e exibe toast vermelho com a mensagem do erro.
   const handleSalvarFrase = useCallback(
     async (payload: { frase: string; para: Para }) => {
       setSalvando(true);
-      const r = await salvarFrase({ frase: payload.frase, para: payload.para });
-      setSalvando(false);
-      fraseRef.current?.close();
-      if (r.ok) tratarSucesso();
+      try {
+        const r = await comTimeout(
+          salvarFrase({ frase: payload.frase, para: payload.para })
+        );
+        if (r.ok) {
+          toast.show('Frase salva.', 'success');
+          fraseRef.current?.close();
+          tratarSucesso();
+        } else {
+          toast.show('Não foi possível salvar a frase.', 'error');
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        toast.show(`Não foi possível salvar: ${msg}`, 'error');
+        // eslint-disable-next-line no-console
+        console.error('save frase fail', e);
+      } finally {
+        setSalvando(false);
+      }
     },
-    [tratarSucesso]
+    [toast, tratarSucesso]
   );
 
   return (

@@ -5,6 +5,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-FRASE — `M-SAVE-FRASE-VALIDA` (2026-05-07)
+
+Save de frase texto-livre (FAB+ verde → "Frase") ganha resiliência:
+`src/lib/midia/salvarFrase.ts` remove `joinUri()` local e usa
+`vaultUriJoin` (H1) com path `markdown/frase-YYYY-MM-DD-slug.md`
+(layout H2). Adiciona `resolverColisao()` (sufixo `-2`...`-99`)
+para frases com mesmo prefixo no mesmo dia. Erro com vault
+ausente / write fail agora é throw, não silêncio (bug-loud >
+bug-quiet, alinhado com filosofia H1).
+
+`MenuCapturaVerde.handleSalvarFrase` envolve `salvarFrase` em
+`comTimeout(p, 10s)` + try/catch. Toasts PT-BR `Frase salva.` no
+sucesso e `Não foi possível salvar: <msg>` no erro.
+
+Tests: 5 → 7 casos em `tests/lib/midia/salvarFrase.test.ts`
+(SAF tree URI com `%20` trailing + colisão de slug). E2E novo
+em `tests/e2e/playwright/m-save-frase.e2e.ts` cobre fluxo
+golden via Gauntlet seed.
+
+Métricas: 1600 testes / 172 suítes verde (+2 contra 1598
+baseline) · TS strict 0 · Hermes Android 7,7 MB intacto ·
+Gauntlet leak 0/6 · anonimato OK · PT-BR check OK.
+
+Primeira sprint do Bloco I (saves específicos por feature).
+Padrão canônico do `_TEMPLATE-SAVE-FEATURE.md` aplicado pela
+primeira vez — referência para as próximas 14 sprints I-*.
+
 ### Sprint H3 — `M-VAULT-PASTA-NAO-HARDCODED` (2026-05-06)
 
 Onboarding ganha quarto frame "Pasta do Vault — Onde salvar seus
