@@ -60,12 +60,44 @@ Cite paths exatos para evitar reimplementação:
 - Não tocar em arquivos fechados de sprints anteriores sem permissão
   explícita do planejador.
 
-## 5. Procedimento sugerido
+## 5. Validação Gauntlet OU validação humana adb
+
+**Obrigatório:** toda sprint que toca UI ou runtime nativo entrega
+evidência ANTES de gerar APK preview/release.
+
+**Gauntlet (Nível A+, default):** PNGs em
+`docs/sprints/<id>-screenshots-gauntlet/`. Caso E2E em
+`tests/e2e/playwright/<id>.e2e.ts` rodado via playwright MCP no
+Gauntlet (`./gauntlet.sh` + `localhost:8081/_dev/gauntlet`).
+
+**Validação humana adb (quando Gauntlet impossível):** se feature
+exige runtime nativo (modal nativo, OAuth real, microfone, scanner
+ML Kit, push notif, SAF picker), declarar:
+
+1. **"Validação Gauntlet impossível para X, Y, Z"** — listar
+   funcionalidades que exigem nativo.
+2. **Passos exatos:**
+   \`\`\`bash
+   adb shell pm clear com.ouroboros.mobile
+   adb shell am start --action android.intent.action.VIEW \\
+     -d "<deeplink ouroboros://...>" com.ouroboros.mobile
+   adb logcat -d -v threadtime | grep -Ei '<padroes>'
+   adb exec-out screencap -p > docs/sprints/<id>-screenshots/<n>.png
+   adb shell run-as com.ouroboros.mobile cat <vault path>
+   \`\`\`
+
+**APK preview NÃO é gerado se a sprint não cumpre essa regra.**
+
+Sprints puramente documentais (sem toque em UI ou runtime nativo)
+podem registrar nesta seção apenas: "Sprint documental — sem
+validação Gauntlet/adb."
+
+## 6. Procedimento sugerido
 
 1. <passo numerado, com decisão concreta>
 2. ...
 
-## 6. Verificação runtime-real
+## 7. Verificação runtime-real
 
 \`\`\`bash
 cd ~/Desenvolvimento/Protocolo-Mob-Ouroboros
@@ -79,7 +111,7 @@ npx expo export --platform android --output-dir /tmp/m<NN>-export && rm -rf /tmp
 
 Todos exit 0. Se algum quebrar, parar e reportar.
 
-## 7. Commit
+## 8. Commit
 
 \`\`\`
 <tipo>: m<NN> <mensagem PT-BR sem acento, imperativo>
@@ -88,7 +120,7 @@ Todos exit 0. Se algum quebrar, parar e reportar.
 Tipos válidos: `feat` | `fix` | `refactor` | `docs` | `perf` | `test`
 | `style` | `chore` | `ci`.
 
-## 8. Checkpoint visual (apenas se a sprint toca UI)
+## 9. Checkpoint visual (apenas se a sprint toca UI)
 
 Política de 3 níveis (`VALIDATOR_BRIEF.md` §1.9):
 
@@ -118,7 +150,7 @@ implementar uma das 22 telas core.
 - [ ] `VALIDATOR_BRIEF.md` §1.9 atualizado (se sprint mudou
   política de validação).
 
-## 9. Dúvidas em aberto
+## 10. Dúvidas em aberto
 
 <perguntas pendentes que precisam ser resolvidas com o humano antes
  de executar. Se não houver, escrever "Nenhuma.">

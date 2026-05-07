@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint O1 — `M-GAUNTLET-PADRAO-VALIDATION` (2026-05-07)
+
+**Bloco O FECHADO. Plano golden-zebra principal entregue (exceto
+I2-OAUTH e Bloco P APK).**
+
+`docs/sprints/_template-spec.md` ganha §5 obrigatória "Validação
+Gauntlet OU validação humana adb" — toda sprint nova que toca UI ou
+runtime nativo entrega evidência ANTES de gerar APK preview/release.
+Fallback explícito para sprint puramente documental ("Sprint
+documental — sem validação Gauntlet/adb.").
+
+VALIDATOR_BRIEF §1.9.1 já tinha a regra completa (registrada
+2026-05-06); audit confirmou.
+
+Achados colaterais registrados:
+- `M-GAUNTLET-RETROATIVO-AUDIT`: 22 sprints fechadas sem PNG
+  Gauntlet (a maioria do Bloco I + algumas K/L). Sprint futura
+  captura PNGs ou declara impossibilidade.
+- `M-DOCS-PATH-FIX`: VALIDATOR_BRIEF e spec O1 referenciam
+  `TEMPLATE-spec.md` (caps + hífen) mas arquivo real é
+  `_template-spec.md` (underscore). Ajuste cosmético futuro.
+
+Métricas: 1742 testes / 176 suítes verde (zero regressão) · TS
+strict 0 · Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint N2 — `M-MOTI-FIX-CRITICOS` (2026-05-07)
 
 **Bloco N FECHADO.** Os 6 motis classificados ALTO em N1 (boot path
