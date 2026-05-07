@@ -90,7 +90,7 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 
 | # | Sprint | Spec | Estim. |
 |---|---|---|---|
-| O1 | `M-GAUNTLET-PADRAO-VALIDATION` | `M-GAUNTLET-PADRAO-VALIDATION-spec.md` | ~1h |
+| O1 | `M-GAUNTLET-PADRAO-VALIDATION` | `M-GAUNTLET-PADRAO-VALIDATION-spec.md` | ~1h | `[ok]` |
 
 ### Bloco P — Field test e release final
 
