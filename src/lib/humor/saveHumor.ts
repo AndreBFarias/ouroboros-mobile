@@ -16,7 +16,15 @@
 // Importante: esta função não decide o que mostrar na UI quando ha
 // conflito; apenas grava na variante segura e devolve o flag para o
 // caller logar/avisar se desejar.
-import { humorPath, readVaultFile, writeVaultFile } from '@/lib/vault';
+//
+// I-HUMOR (M-SAVE-HUMOR-VALIDA, 2026-05-07): substitui joinUri local
+// pelo helper canonico vaultUriJoin de @/lib/vault, eliminando
+// trailing space, %20 ofensivo e barras duplas em URIs SAF (causa
+// raiz parcial dos saves silenciosos no APK alpha em OEMs MIUI/
+// OneUI/HyperOS, vide A29). Auditoria: 100% das concatenacoes ad-hoc
+// substituidas; vaultRoot vazio agora propaga erro claro do helper
+// em vez de gerar URI invalida silenciosa.
+import { humorPath, readVaultFile, vaultUriJoin, writeVaultFile } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { useSettings } from '@/lib/stores/settings';
 import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
@@ -24,14 +32,6 @@ import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 export interface SaveHumorResult {
   uri: string;
   conflito: boolean;
-}
-
-// Concatena root SAF e path relativo. Detalhe: o root pode terminar
-// ou não com '/', e o path e sempre 'daily/...'. Normalizamos para
-// um unico '/'.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
 }
 
 // Monta o corpo .md a partir do meta. Hoje colocamos a frase apenas
@@ -52,7 +52,7 @@ async function resolvePath(
   relCanonico: string,
   autor: HumorMeta['autor']
 ): Promise<{ rel: string; conflito: boolean }> {
-  const uriCanonico = joinUri(vaultRoot, relCanonico);
+  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
   const existente = await readVaultFile<HumorMeta>(uriCanonico, HumorSchema);
   if (!existente) {
     return { rel: relCanonico, conflito: false };
@@ -87,7 +87,7 @@ export async function saveHumor(
     relCanonico,
     parsed.data.autor
   );
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   const body = buildBody(parsed.data);
   await writeVaultFile<HumorMeta>(uri, parsed.data, body);
 

@@ -5,6 +5,39 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-HUMOR — `M-SAVE-HUMOR-VALIDA` (2026-05-07)
+
+`src/lib/humor/saveHumor.ts` migra `joinUri` local para `vaultUriJoin`
+(H1) com path `markdown/humor-YYYY-MM-DD.md` (H2). Todas as
+concatenações ad-hoc auditadas e substituídas. Schema `HumorSchema`
+mantido como está (rejeita `autor: 'ambos'` — bug deliberado de
+I2-AMIGOS, sprint dedicada futura).
+
+`app/humor-rapido.tsx` aplica `comTimeout(p, 10s)` + try/catch.
+Toasts PT-BR `Humor salvo.` / `Não foi possível salvar: <msg>`.
+
+Tests: +6 casos em `tests/lib/humor/saveHumor.test.ts` (cenários
+pessoa_a/pessoa_b/rejeição 'ambos', vaultRoot vazio throw,
+normalização SAF tree URI com `%20` trailing, payload sem campo
+obrigatório). E2E novo `tests/e2e/playwright/m-save-humor.e2e.ts`
+cobre 3 seeds (pessoa_a sozinho, casal, pessoa_b sozinho) com
+screenshots Gauntlet.
+
+Achado 1 (sprint I2-AMIGOS): schema `HumorSchema.autor` rejeita
+`'ambos'` deliberadamente; quando I2-AMIGOS estender `useNomeDe`
+para retornar 'Casal'/'Todos' dinamicamente, schemas humor/diário/
+evento/marco precisam aceitar autor coletivo. Mantido como bug
+documentado.
+
+Achado 2 (sprint UTIL-COMTIMEOUT opcional): helper `comTimeout`
+agora replicado em 2 callers (`MenuCapturaVerde.tsx` + `humor-rapido.tsx`).
+Ao aparecer 3º caller (provável I-DIARIO ou I-EVENTO), extrair
+para `src/lib/util/comTimeout.ts`.
+
+Métricas: 1609 testes / 172 suítes verde (+6 contra 1603 baseline) ·
+TS strict 0 · Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 ·
+anonimato OK · PT-BR check OK.
+
 ### Sprint I-DEVICES — `M-SAVE-DEVICES-INDEX-VALIDA` (2026-05-07)
 
 `src/lib/vault/devicesIndex.ts` migra de `joinUri/INBOX_DEVICES_REL`

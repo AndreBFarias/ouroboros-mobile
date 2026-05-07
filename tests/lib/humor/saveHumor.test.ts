@@ -103,4 +103,85 @@ describe('saveHumor', () => {
     expect(uri).not.toContain('//markdown/');
     expect(uri).toMatch(/\/markdown\/humor-2026-04-29\.md$/);
   });
+
+  // I-HUMOR (M-SAVE-HUMOR-VALIDA): cobertura explicita dos 3 cenarios
+  // de autor + edge case vaultRoot vazio + path final via vaultUriJoin
+  // canonico (sem trailing space, sem %20 ofensivo, sem barras duplas).
+  describe('I-HUMOR cenarios de autor', () => {
+    it('autor pessoa_a grava no path canonico do dia', async () => {
+      const out = await saveHumor(
+        { ...baseHumor, autor: 'pessoa_a' },
+        VAULT_ROOT
+      );
+      expect(out.conflito).toBe(false);
+      expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
+      const [uri, meta] = mockWriteVaultFile.mock.calls[0];
+      expect(uri).toContain('markdown/humor-2026-04-29.md');
+      expect(meta).toMatchObject({ autor: 'pessoa_a' });
+    });
+
+    it('autor pessoa_b grava no path canonico do dia', async () => {
+      const out = await saveHumor(
+        { ...baseHumor, autor: 'pessoa_b' },
+        VAULT_ROOT
+      );
+      expect(out.conflito).toBe(false);
+      expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
+      const [uri, meta] = mockWriteVaultFile.mock.calls[0];
+      expect(uri).toContain('markdown/humor-2026-04-29.md');
+      expect(meta).toMatchObject({ autor: 'pessoa_b' });
+    });
+
+    it("autor 'ambos' rejeitado pelo schema (canonico atual: novo registro tem autor unico)", async () => {
+      // PessoaAutorSchema (z.enum(['pessoa_a','pessoa_b'])) restringe
+      // autor a um dos dois individuos. Sprint I2-AMIGOS define se/
+      // como label "Casal"/"Todos" passa a entrar no autor; ate la,
+      // saveHumor recusa 'ambos' com erro claro vindo do safeParse.
+      const invalido = { ...baseHumor, autor: 'ambos' } as unknown as HumorMeta;
+      await expect(saveHumor(invalido, VAULT_ROOT)).rejects.toThrow(
+        /humor invalido/
+      );
+      expect(mockWriteVaultFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('I-HUMOR vaultRoot e path canonico', () => {
+    it('vaultRoot vazio propaga erro claro do vaultUriJoin', async () => {
+      await expect(saveHumor(baseHumor, '')).rejects.toThrow(/root vazio/);
+      expect(mockWriteVaultFile).not.toHaveBeenCalled();
+    });
+
+    it('vaultRoot SAF com trailing space e %20 ofensivo limpa antes de concatenar', async () => {
+      // Caso real: tree URI SAF do MIUI/HyperOS as vezes vem com
+      // trailing %20 (espaco da pasta original do nome de pasta com
+      // espaco). vaultUriJoin trata; saveHumor passa a contar com.
+      const ROOT_SUJO =
+        'content://com.android.externalstorage/tree/primary:Test%20';
+      const out = await saveHumor(baseHumor, ROOT_SUJO);
+      expect(out.uri).toBe(
+        'content://com.android.externalstorage/tree/primary:Test/markdown/humor-2026-04-29.md'
+      );
+      const [uri] = mockWriteVaultFile.mock.calls[0];
+      expect(uri).not.toMatch(/%20\/markdown/);
+      expect(uri).not.toContain('//markdown');
+    });
+
+    it('rejeita payload sem campos obrigatorios (energia ausente)', async () => {
+      // Sem energia o HumorSchema lanca; saveHumor propaga em
+      // 'humor invalido: ...' antes de tocar I/O.
+      const semEnergia = {
+        tipo: 'humor',
+        data: '2026-04-29',
+        autor: 'pessoa_a',
+        humor: 4,
+        ansiedade: 2,
+        foco: 4,
+        tags: [],
+      } as unknown as HumorMeta;
+      await expect(saveHumor(semEnergia, VAULT_ROOT)).rejects.toThrow(
+        /humor invalido/
+      );
+      expect(mockWriteVaultFile).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -11,6 +11,13 @@
 // Conflito A5 (Syncthing entre celulares no mesmo dia): tratado
 // dentro de saveHumor; aqui apenas mostramos toast diferenciado se
 // retornar conflito=true.
+//
+// I-HUMOR (M-SAVE-HUMOR-VALIDA, 2026-05-07): aplica padrao canonico
+// de save resilient do template Bloco I (§2.2): try/catch + timeout
+// 10s + toast PT-BR sentence case com acentuacao completa. Botao
+// 'Salvar' continua desabilitado durante I/O via prop disabled. Em
+// timeout, toast 'Não foi possível salvar: timeout salvando' libera
+// o usuario sem loader infinito.
 import { useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
@@ -39,6 +46,29 @@ import { TAGS_RAPIDAS } from '@/lib/humor/tagsRapidas';
 import { saveHumor } from '@/lib/humor/saveHumor';
 
 const SLIDER_DEFAULT = 3;
+
+// I-HUMOR (M-SAVE-HUMOR-VALIDA): timeout default para SAF write em
+// /sdcard/Documents/. Em devices saudaveis o write leva <500ms; 10s
+// cobre OEMs lentos sem frustrar. Em caso de timeout, caller exibe
+// toast 'Não foi possível salvar: timeout salvando' (PT-BR sentence
+// case + acentuacao completa).
+const SAVE_TIMEOUT_MS = 10_000;
+
+// Promise race com timeout. Padrao ja replicado em MenuCapturaVerde
+// (I-FRASE); helper compartilhado fica para sprint futura quando o
+// pattern aparecer no terceiro caller. Local mantem o caller auto-
+// contido.
+async function comTimeout<T>(
+  p: Promise<T>,
+  ms = SAVE_TIMEOUT_MS
+): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) =>
+      setTimeout(() => rej(new Error('timeout salvando')), ms)
+    ),
+  ]);
+}
 
 export default function HumorRapido() {
   const router = useRouter();
@@ -147,21 +177,26 @@ export default function HumorRapido() {
     }
 
     try {
-      const { conflito } = await saveHumor(validacao.data, vaultRoot);
+      const { conflito } = await comTimeout(
+        saveHumor(validacao.data, vaultRoot)
+      );
       // M24: limpa o rascunho pos-save para nao restaurar dados ja
       // persistidos no Vault no proximo boot.
       useSessao.getState().limparRascunho('humorRapido');
       sheetRef.current?.close();
       toast.show(
-        conflito ? 'Salvo com sufixo de pessoa.' : 'Salvo.',
+        conflito ? 'Salvo com sufixo de pessoa.' : 'Humor salvo.',
         'success'
       );
       // Contextual: respeita Settings.somVibracao.humor. Registro de
       // humor é a interação central da Tela 16, tem toggle dedicado.
       await haptics.humor();
       router.back();
-    } catch {
-      toast.show('Falha ao salvar. Verifique a pasta do Vault.', 'error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save humor fail', e);
       setSalvando(false);
     }
   };
