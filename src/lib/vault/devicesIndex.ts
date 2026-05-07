@@ -1,6 +1,9 @@
 // M38 -- index de dispositivos pareados (Syncthing 4 nos).
 //
-// Arquivo canonico: 'inbox/_devices.md' no Vault. Formato:
+// Arquivo canonico: 'markdown/_devices.md' no Vault (ADR-0023, sprint
+// H2: layout-por-tipo). Caller concatena com vaultRoot via vaultUriJoin
+// (trim agressivo de trailing whitespace + %20 contra URIs SAF
+// corruptas). Formato:
 //
 //   ---
 //   tipo: devices_index
@@ -31,7 +34,7 @@
 //
 // Comentarios sem acento.
 import { z } from 'zod';
-import { joinUri, INBOX_DEVICES_REL } from '@/lib/vault/devicesPath';
+import { vaultUriJoin, devicesIndexPath } from '@/lib/vault/paths';
 import { readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { getDeviceId } from '@/lib/util/deviceId';
@@ -64,7 +67,7 @@ export type DevicesIndex = z.infer<typeof DevicesIndexSchema>;
 export async function lerDevicesIndex(
   vaultRoot: string
 ): Promise<DevicesIndex> {
-  const uri = joinUri(vaultRoot, INBOX_DEVICES_REL);
+  const uri = vaultUriJoin(vaultRoot, devicesIndexPath());
   try {
     const result = await readVaultFile(uri, DevicesIndexSchema);
     if (result) return result.meta;
@@ -84,7 +87,7 @@ export async function escreverDevicesIndex(
   if (!parsed.success) {
     throw new Error(`devices index invalido: ${parsed.error.message}`);
   }
-  const uri = joinUri(vaultRoot, INBOX_DEVICES_REL);
+  const uri = vaultUriJoin(vaultRoot, devicesIndexPath());
   await writeVaultFile<DevicesIndex>(uri, parsed.data, '');
 }
 

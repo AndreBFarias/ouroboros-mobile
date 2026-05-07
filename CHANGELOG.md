@@ -5,6 +5,30 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-DEVICES — `M-SAVE-DEVICES-INDEX-VALIDA` (2026-05-07)
+
+`src/lib/vault/devicesIndex.ts` migra de `joinUri/INBOX_DEVICES_REL`
+(módulo local `devicesPath.ts` legado, sem trim de `%20`) para
+`vaultUriJoin` + `devicesIndexPath()` (`markdown/_devices.md`
+após H2). Boot hook `atualizarDeviceIndex` continua plugado em
+`BOOT_HOOKS` via `reagendamento.ts` linha 212, idempotente, atualiza
+`ultima_atividade` do device atual a cada boot.
+
+`src/lib/vault/devicesPath.ts` removido (órfão, zero importadores).
+
+Tests: 17 → 20 casos em `tests/lib/vault/devicesIndex.test.ts`
+(SAF tree URI MIUI/OneUI com `%20` trailing + throws com vaultRoot
+vazio em escreverDevicesIndex e lerDevicesIndex).
+
+Achado documentado: ~38 callers ainda usam `joinUri` legado sem
+trim agressivo. Cada um migra na sprint Bloco I dedicada (humor,
+diário, evento, foto, áudio, vídeo, tarefa, alarme, contador, ciclo,
+exercício, scanner, agenda).
+
+Métricas: 1603 testes / 172 suítes verde (+3 contra 1600 baseline) ·
+TS strict 0 · Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 ·
+anonimato OK · PT-BR check OK.
+
 ### Sprint I-FRASE — `M-SAVE-FRASE-VALIDA` (2026-05-07)
 
 Save de frase texto-livre (FAB+ verde → "Frase") ganha resiliência:

@@ -118,6 +118,30 @@ describe('escreverDevicesIndex', () => {
       /devices index invalido/
     );
   });
+
+  it('limpa trailing %20 e whitespace via vaultUriJoin (URI SAF MIUI/OneUI)', async () => {
+    const idx: DevicesIndex = { tipo: 'devices_index', registro: {} };
+    const dirty = 'content://com.android.externalstorage.documents/tree/primary:Test%20';
+    await escreverDevicesIndex(dirty, idx);
+    const [uri] = mockWriteVaultFile.mock.calls[0];
+    // %20 trailing no root foi removido por vaultUriJoin.
+    expect(uri).toBe(
+      'content://com.android.externalstorage.documents/tree/primary:Test/markdown/_devices.md'
+    );
+  });
+
+  it('throw com vaultRoot vazio (vault nao inicializado)', async () => {
+    const idx: DevicesIndex = { tipo: 'devices_index', registro: {} };
+    await expect(escreverDevicesIndex('', idx)).rejects.toThrow(
+      /vault nao inicializado|root vazio/
+    );
+  });
+
+  it('throw em lerDevicesIndex com vaultRoot vazio', async () => {
+    await expect(lerDevicesIndex('')).rejects.toThrow(
+      /vault nao inicializado|root vazio/
+    );
+  });
 });
 
 describe('atualizarDeviceIndex', () => {

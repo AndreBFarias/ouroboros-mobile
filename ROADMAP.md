@@ -43,7 +43,7 @@ anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
 | I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h | `[todo]` |
 | I-EXERCICIO | `M-SAVE-EXERCICIO-VALIDA` | `M-SAVE-EXERCICIO-VALIDA-spec.md` | ~2h | `[todo]` |
 | I-SCANNER | `M-SAVE-SCANNER-VALIDA` | `M-SAVE-SCANNER-VALIDA-spec.md` | ~2h | `[todo]` |
-| I-DEVICES | `M-SAVE-DEVICES-INDEX-VALIDA` | `M-SAVE-DEVICES-INDEX-VALIDA-spec.md` | ~1h | `[todo]` |
+| I-DEVICES | `M-SAVE-DEVICES-INDEX-VALIDA` | `M-SAVE-DEVICES-INDEX-VALIDA-spec.md` | ~1h | `[ok]` |
 | I-AGENDA | `M-SAVE-AGENDA-VALIDA` | `M-SAVE-AGENDA-VALIDA-spec.md` | ~1h | `[todo]` |
 
 Padrão comum: usar `vaultUriJoin` (H1) + try/catch+timeout no caller +
