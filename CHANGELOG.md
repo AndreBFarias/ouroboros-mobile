@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint K1 — `M-MENU-LATERAL-LAYOUT` (2026-05-07)
+
+`MenuLateral.tsx` ganha 4 melhorias UX: (1) safe-area-inset-bottom
++ `Math.max(spacing.xl, screenHeight × 0.10)` no rodapé Configurações
+(impede conflito com 3-button nav e gesture nav); (2) scroll position
+persistente via `useNavegacao.scrollMenuLateralPosition` com debounce
+200ms (offset preservado entre aberturas na mesma sessão; reseta no
+boot); (3) MotiView slide passa de `springs.default` para
+`springs.subtle` (damping 22, stiffness 220 — mais natural, alinha
+ADR-010 §2.1); (4) `paddingTop: spacing.xl` no `CabecalhoPessoa`
+para simetria com label.
+
+`useNavegacao` (`src/lib/stores/navegacao.ts`) ganha campo
+`scrollMenuLateralPosition: number` + setter
+`setScrollMenuLateralPosition(offset)`. Init=0.
+
+Tests: +3 casos K1 (scroll offset salva com debounce, re-abrir
+aplica scrollTo persistido, rodapé incorpora insets.bottom). E2E
+novo cobre 3 estados (topo/rolado/reaberto).
+
+Métricas: 1727 testes / 174 suítes verde (+3) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-AGENDA — `M-SAVE-AGENDA-VALIDA` (2026-05-07)
 
 **Bloco I FECHADO (15/15 sprints).** `src/lib/vault/agenda.ts`

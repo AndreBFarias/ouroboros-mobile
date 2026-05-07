@@ -10,6 +10,11 @@
 // stacking contexts comparam direto e o FAB vence — a flag aqui
 // permite o FAB se desmontar enquanto o sheet esta aberto.
 //
+// K1 (M-MENU-LATERAL-LAYOUT): adiciona scrollMenuLateralPosition
+// para preservar a posicao de rolagem do drawer entre aberturas
+// dentro da mesma sessao. Boot reseta para zero (decisao §7 da spec).
+// Setter usa debounce 200ms aplicado no consumidor (MenuLateral).
+//
 // Comentarios sem acento (convencao shell/CI).
 import { create } from 'zustand';
 
@@ -20,6 +25,8 @@ export interface NavegacaoState {
   alternar: () => void;
   sheetCapturaAberto: boolean;
   setSheetCapturaAberto: (v: boolean) => void;
+  scrollMenuLateralPosition: number;
+  setScrollMenuLateralPosition: (offset: number) => void;
 }
 
 export const useNavegacao = create<NavegacaoState>((set) => ({
@@ -29,4 +36,7 @@ export const useNavegacao = create<NavegacaoState>((set) => ({
   alternar: () => set((s) => ({ menuAberto: !s.menuAberto })),
   sheetCapturaAberto: false,
   setSheetCapturaAberto: (v) => set({ sheetCapturaAberto: v }),
+  scrollMenuLateralPosition: 0,
+  setScrollMenuLateralPosition: (offset) =>
+    set({ scrollMenuLateralPosition: offset }),
 }));

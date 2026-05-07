@@ -12,12 +12,32 @@
 //   - Secao Opcionais: itens condicionais por featureToggles.
 //   - Rodape fixo: link para Settings.
 //
+// K1 (M-MENU-LATERAL-LAYOUT, 2026-05-07): aplica
+//   1. Safe area no rodape (RodapeSettings) usando insets.bottom para
+//      garantir distancia minima dos botoes nav Android (3-button +
+//      gesture). Formula: max(spacing.xl, screenHeight * 0.10) + insets.bottom.
+//   2. Scroll position persistente entre aberturas via campo
+//      scrollMenuLateralPosition em useNavegacao (debounce 200ms).
+//   3. Animacao de slide trocada de springs.default para springs.subtle
+//      (damping 22, stiffness 220) para reduzir balanco residual.
+//   4. paddingTop: spacing.xl no CabecalhoPessoa para simetria com
+//      paddingBottom do label de secao.
+//
 // Strings PT-BR sentence case com acentuacao; a11y sem acento.
 // Comentarios sem acento (convencao shell/CI).
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  Dimensions,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   AlertTriangle,
   BarChart,
@@ -54,6 +74,10 @@ import type { FABRadialKey } from '@/components/ui';
 
 const PAINEL_WIDTH = 280;
 
+// K1: debounce do salvamento do scroll offset. 200ms balanceia
+// responsividade percebida e custo de re-render no zustand.
+const SCROLL_DEBOUNCE_MS = 200;
+
 interface ItemMenu {
   label: string;
   a11yLabel: string;
@@ -72,10 +96,21 @@ interface SecaoMenu {
 export function MenuLateral() {
   const aberto = useNavegacao((s) => s.menuAberto);
   const fechar = useNavegacao((s) => s.fechar);
+  const scrollPos = useNavegacao((s) => s.scrollMenuLateralPosition);
+  const setScrollPos = useNavegacao((s) => s.setScrollMenuLateralPosition);
   const router = useRouter();
   const featureToggles = useSettings((s) => s.featureToggles);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const fotoAtiva = usePessoa((s) => s.fotos[s.pessoaAtiva]);
+  const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // K1: ref-mirror do offset persistido para o useEffect de
+  // restauracao. Lido apenas quando o drawer abre — usar o valor do
+  // store via closure renderizaria o ScrollView com offset 0 antes
+  // do scrollTo, causando flicker.
+  const scrollPosRef = useRef<number>(scrollPos);
+  scrollPosRef.current = scrollPos;
   // I-CICLO: item "Ciclo" nao faz sentido quando ambas as pessoas se
   // declararam masculino no onboarding (J1). Em qualquer outro caso
   // (ao menos uma feminina, nao-binaria, prefere-nao-dizer ou null
@@ -160,6 +195,42 @@ export function MenuLateral() {
     router.push(rota as Parameters<typeof router.push>[0]);
   };
 
+  // K1: salva offset com debounce de 200ms. Evita pressao no zustand
+  // a cada frame de scroll. O valor e gravado no scrollPosRef em todo
+  // render via mirror acima, entao o useEffect le sempre atualizado.
+  const aoRolar = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offset = e.nativeEvent.contentOffset.y;
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setScrollPos(offset);
+    }, SCROLL_DEBOUNCE_MS);
+  };
+
+  // K1: ao abrir o drawer, restaura o offset persistido. animated:false
+  // para evitar animacao concorrente com o slide do MotiView.
+  useEffect(() => {
+    if (!aberto) {
+      // Limpa timer pendente ao fechar para nao gravar offset velho.
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      return;
+    }
+    const offset = scrollPosRef.current;
+    if (offset > 0) {
+      // Atraso minimo para garantir que o ScrollView ja medio o
+      // contentSize. Sem isso o scrollTo no primeiro frame e ignorado.
+      const t = setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: offset, animated: false });
+      }, 0);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [aberto]);
+
   // Quando fechado, nao renderiza nada (libera area para o resto).
   // Quando aberto, ocupa a tela inteira em overlay (zIndex 20).
   if (!aberto) return null;
@@ -193,7 +264,7 @@ export function MenuLateral() {
       <MotiView
         from={{ translateX: -PAINEL_WIDTH }}
         animate={{ translateX: 0 }}
-        transition={springs.default}
+        transition={springs.subtle}
         style={{
           position: 'absolute',
           left: 0,
@@ -206,6 +277,9 @@ export function MenuLateral() {
         }}
       >
         <ScrollView
+          ref={scrollRef}
+          onScroll={aoRolar}
+          scrollEventThrottle={16}
           contentContainerStyle={{
             paddingTop: spacing.xl,
             paddingBottom: spacing.lg,
@@ -220,7 +294,10 @@ export function MenuLateral() {
           ))}
         </ScrollView>
 
-        <RodapeSettings onPress={() => navegar('/settings')} />
+        <RodapeSettings
+          onPress={() => navegar('/settings')}
+          insetsBottom={insets.bottom}
+        />
       </MotiView>
     </View>
   );
@@ -240,6 +317,10 @@ function CabecalhoPessoa({ pessoa, pessoaFoto }: CabecalhoProps) {
         alignItems: 'center',
         gap: spacing.md,
         paddingHorizontal: spacing.lg,
+        // K1: paddingTop simetrico ao paddingBottom dos labels de secao
+        // para evitar a sensacao de "cabecalho colado" ao topo do
+        // drawer. Valor canonico: spacing.xl.
+        paddingTop: spacing.xl,
         paddingBottom: spacing.md,
         borderBottomWidth: 1,
         borderBottomColor: colors.bgElev,
@@ -325,9 +406,17 @@ function ItemBotao({ item, onPress }: ItemProps) {
 
 interface RodapeProps {
   onPress: () => void;
+  insetsBottom: number;
 }
 
-function RodapeSettings({ onPress }: RodapeProps) {
+function RodapeSettings({ onPress, insetsBottom }: RodapeProps) {
+  // K1: distancia minima entre o botao Configuracoes e a borda
+  // inferior. max(spacing.xl, 10% da altura da tela) + insets.bottom.
+  // Garante que o botao nunca colida com a barra de gestos / 3-button
+  // nav do Android, independente do device.
+  const screenHeight = Dimensions.get('window').height;
+  const paddingBottomCanonico =
+    Math.max(spacing.xl, screenHeight * 0.1) + insetsBottom;
   return (
     <Pressable
       onPress={onPress}
@@ -337,7 +426,8 @@ function RodapeSettings({ onPress }: RodapeProps) {
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.md,
-        paddingVertical: spacing.md,
+        paddingTop: spacing.md,
+        paddingBottom: paddingBottomCanonico,
         paddingHorizontal: spacing.lg,
         borderTopWidth: 1,
         borderTopColor: colors.bgElev,

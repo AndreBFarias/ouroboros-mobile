@@ -5,15 +5,36 @@
 //   - Tap em item navega via router.push e fecha o menu.
 //   - Backdrop fecha o menu.
 //
+// K1 (M-MENU-LATERAL-LAYOUT, 2026-05-07) adiciona:
+//   - Scroll position salva em useNavegacao apos onScroll (debounce).
+//   - Re-abrir drawer aplica scrollTo com offset persistido.
+//   - Rodape recebe paddingBottomCanonico considerando insets.bottom.
+//
 // Mocks: expo-router (router.push spiavel) + useSettings e useNavegacao
-// via getState().setState para simular variantes.
-import { fireEvent, render } from '@testing-library/react-native';
+// via getState().setState para simular variantes. K1: mock local de
+// react-native-safe-area-context com insets.bottom = 24 sobrescreve o
+// default global (jest.setup.cjs retorna 0 em todos os insets).
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
 }));
+
+// K1: insets.bottom = 24 simula um device com barra de gestos. O
+// RodapeSettings deve incorporar esse valor no paddingBottom.
+jest.mock('react-native-safe-area-context', () => {
+  const ReactLocal = require('react');
+  const RNLocal = require('react-native');
+  return {
+    SafeAreaProvider: ({ children }: { children: unknown }) =>
+      ReactLocal.createElement(RNLocal.View, null, children),
+    SafeAreaView: ({ children, ...rest }: { children: unknown }) =>
+      ReactLocal.createElement(RNLocal.View, rest, children),
+    useSafeAreaInsets: () => ({ top: 0, bottom: 24, left: 0, right: 0 }),
+  };
+});
 
 import { MenuLateral } from '@/components/chrome/MenuLateral';
 import { useNavegacao } from '@/lib/stores/navegacao';
@@ -23,9 +44,13 @@ import { useOnboarding } from '@/lib/stores/onboarding';
 describe('MenuLateral', () => {
   beforeEach(() => {
     mockPush.mockClear();
-    useNavegacao.setState({ menuAberto: false });
+    useNavegacao.setState({
+      menuAberto: false,
+      scrollMenuLateralPosition: 0,
+    });
     useSettings.getState().resetar();
     useOnboarding.getState().resetar();
+    jest.useRealTimers();
   });
 
   it('quando fechado, nao renderiza secoes', () => {
@@ -151,6 +176,77 @@ describe('MenuLateral', () => {
       useOnboarding.getState().setSexoDeclarado('pessoa_a', 'feminino');
       const { queryByLabelText } = render(<MenuLateral />);
       expect(queryByLabelText('item ciclo')).toBeNull();
+    });
+  });
+
+  // K1 (M-MENU-LATERAL-LAYOUT): scroll persistente, safe area no rodape
+  // e padding simetrico. Cobre os tres pontos exigidos pela spec.
+  describe('K1 layout do drawer', () => {
+    it('salva scroll offset em useNavegacao apos onScroll com debounce', () => {
+      jest.useFakeTimers();
+      useNavegacao.setState({ menuAberto: true });
+      const { UNSAFE_getAllByType } = render(<MenuLateral />);
+      const RNLocal = require('react-native');
+      const scrollViews = UNSAFE_getAllByType(RNLocal.ScrollView);
+      const drawerScroll = scrollViews[0];
+      expect(drawerScroll).toBeTruthy();
+
+      // Dispara onScroll com offset 120. Debounce de 200ms — antes
+      // disso o offset nao deve estar no store.
+      act(() => {
+        drawerScroll.props.onScroll({
+          nativeEvent: {
+            contentOffset: { x: 0, y: 120 },
+            contentSize: { width: 280, height: 1200 },
+            layoutMeasurement: { width: 280, height: 600 },
+          },
+        });
+      });
+      expect(useNavegacao.getState().scrollMenuLateralPosition).toBe(0);
+
+      // Avanca o timer para alem do debounce. Agora o offset persiste.
+      act(() => {
+        jest.advanceTimersByTime(250);
+      });
+      expect(useNavegacao.getState().scrollMenuLateralPosition).toBe(120);
+    });
+
+    it('re-abrir drawer aplica scrollTo com posicao persistida', () => {
+      jest.useFakeTimers();
+      useNavegacao.setState({
+        menuAberto: true,
+        scrollMenuLateralPosition: 240,
+      });
+      const { UNSAFE_getAllByType } = render(<MenuLateral />);
+      const RNLocal = require('react-native');
+      const drawerScroll = UNSAFE_getAllByType(RNLocal.ScrollView)[0];
+      const scrollToSpy = jest.fn();
+      // O ref do ScrollView e instalado pelo React; em jest com mock
+      // do RN, a instancia e o proprio host. Substitui scrollTo.
+      const refCurrent = drawerScroll.instance ?? drawerScroll;
+      refCurrent.scrollTo = scrollToSpy;
+
+      // useEffect agendou setTimeout(0) para escalonar o scrollTo.
+      act(() => {
+        jest.advanceTimersByTime(10);
+      });
+      expect(scrollToSpy).toHaveBeenCalledWith({ y: 240, animated: false });
+    });
+
+    it('Rodape Configuracoes incorpora insets.bottom no paddingBottom', () => {
+      useNavegacao.setState({ menuAberto: true });
+      const { getByLabelText } = render(<MenuLateral />);
+      const rodape = getByLabelText('abrir configuracoes');
+      // styles podem ser array; achatar para inspecao.
+      const rawStyle = rodape.props.style;
+      const style = Array.isArray(rawStyle)
+        ? Object.assign({}, ...rawStyle)
+        : rawStyle;
+      // Mock declara insets.bottom = 24. O paddingBottom canonico e
+      // max(spacing.xl=24, screenHeight*0.10) + 24. Em qualquer device
+      // o resultado e >= 48 (24 + 24).
+      expect(typeof style.paddingBottom).toBe('number');
+      expect(style.paddingBottom).toBeGreaterThanOrEqual(48);
     });
   });
 });
