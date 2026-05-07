@@ -5,6 +5,72 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Plano end-to-end v1.0.0 — golden-zebra (2026-05-06)
+
+Field test do APK `v1.0.0-alpha` (commit `ada414e`) revelou problemas
+heterogêneos: causa raiz parcial em path/URI corruption + hardcode da
+pasta canônica do Vault, mais bugs específicos por feature, decisões
+arquiteturais novas (Vault layout por tipo, Recap+Calendário
+unificados, sexo declarado no onboarding, permissões pró-ativas),
+dívida UX/visual (menu lateral, FABs, botões), e risco residual de
+38 motis não migrados em A28.
+
+Plano `tem-muita-coisa-zoada-golden-zebra` aprovado pelo dono
+2026-05-06 organiza correção em **31 sprints atômicas** distribuídas
+em 8 blocos (H–P). Cada sprint com spec auto-contido em
+`docs/sprints/<id>-spec.md`, executável sem contexto por outro Claude
+lendo apenas `CLAUDE.md` + `VALIDATOR_BRIEF.md` + spec + `STATE.md`.
+
+**Diretiva durável do dono**: "nunca é só isso" — cada feature ganha
+sprint própria de validação isolada (15 sprints I-* só para saves),
+sem promessa de "1 fix resolve N features".
+
+**Causa raiz lida no código** (`src/lib/vault/permissions.ts:41-42`):
+
+```ts
+const VAULT_PATH = '/sdcard/Documents/Ouroboros/';
+const VAULT_URI = `file://${VAULT_PATH}`;
+```
+
+Hardcoded. `inicializarVaultCanonico()` força `/sdcard/Documents/Ouroboros/`,
+cai em SAF picker em OEMs MIUI/OneUI/HyperOS. URI SAF retornado pode
+ter trailing space (`primary:Protocolo-Ouroboros%20`) que vaza para
+todas as URIs filhas via `garantirSubpastas` linha 137 (sem trim).
+Resultado: `Invalid URI` em writes, `directory cannot be created` em
+copies, loaders travados em "carregando eternamente" para 10+ features.
+
+**31 specs materializadas em `docs/sprints/`**:
+
+- 3 sprints H — fundação Vault (helper canônico, layout por tipo,
+  pasta escolhida) + ADRs 0022 e 0023.
+- 15 sprints I — saves específicos por feature (humor, diário,
+  evento, foto, áudio, vídeo, frase, tarefa, alarme, contador, ciclo,
+  exercício, scanner, devices index, agenda) seguindo template comum
+  `_TEMPLATE-SAVE-FEATURE.md`.
+- 2 sprints I2 — OAuth redirect_uri fix + label dinâmico amigos/casal/todos.
+- 1 sprint J — onboarding pede 5 permissões + sexoDeclarado para
+  inferência ciclo.
+- 5 sprints K — chrome UX (menu lateral layout, nomes seções, foto
+  editável, FAB safe bottom, botões largura).
+- 2 sprints L — telas/abas (Memórias→Saúde Física com 3 abas;
+  Recap+Calendário unificados via toggle modo) + ADR-0021.
+- 2 sprints N — moti audit runtime + fix dirigido apenas dos críticos.
+- 1 sprint O — `VALIDATOR_BRIEF.md` §1.9 ganha regra obrigatória de
+  validação Gauntlet OU validação humana adb antes de gerar APK.
+
+**ADRs novos a criar durante execução**:
+
+- ADR-0021 Recap e Calendário unificados em uma tela com toggle modo
+- ADR-0022 Vault: pasta escolhida pelo usuário no onboarding
+- ADR-0023 Vault: layout por tipo de arquivo (markdown/, png/, etc)
+
+**Estimativa**: ~50-60h código ativo + 7 dias passivos field test +
+~1 dia release = **~15-16 dias de calendário até v1.0.0**.
+
+**Cota EAS preservada**: 15 builds restantes de 30/mês. Plano usa 2
+(1 preview após blocos H–O fechados; 1 production após F1 field
+test verde).
+
 ### Auditoria do ROADMAP (M-ROADMAP-AUDIT 2026-05-05 noite)
 
 Auditoria via `git log --all --oneline --no-merges | grep "feat:"`

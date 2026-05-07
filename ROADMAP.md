@@ -9,7 +9,104 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
-## Estado real consolidado (M-ROADMAP-AUDIT 2026-05-05 noite)
+## Estado real consolidado (planejamento end-to-end v1.0.0 — 2026-05-06)
+
+Plano `tem-muita-coisa-zoada-golden-zebra` (aprovado 2026-05-06):
+após field test do APK `v1.0.0-alpha` (commit `ada414e`), reorganização
+das sprints abertas em **31 sprints atômicas** distribuídas nos blocos
+H–P. Cada sprint tem spec auto-contido em `docs/sprints/<id>-spec.md`,
+executável sem contexto por outro Claude. Substitui sprints abertas
+anteriores (`E5.B`, `E6 M37.2`, `M-WCAG-MUTED-DECOR-TEXTO-V2`).
+
+### Bloco H — Fundação Vault (sequencial)
+
+| # | Sprint | Spec | Estim. | ADR |
+|---|---|---|---|---|
+| H1 | `M-VAULT-URI-HELPER` | `M-VAULT-URI-HELPER-spec.md` | ~1h | — |
+| H2 | `M-VAULT-LAYOUT-POR-TIPO` | `M-VAULT-LAYOUT-POR-TIPO-spec.md` | ~4h | 0023 |
+| H3 | `M-VAULT-PASTA-NAO-HARDCODED` | `M-VAULT-PASTA-NAO-HARDCODED-spec.md` | ~3h | 0022 |
+
+### Bloco I — Saves específicos por feature (paralelo após H)
+
+| # | Sprint | Spec | Estim. |
+|---|---|---|---|
+| I-HUMOR | `M-SAVE-HUMOR-VALIDA` | `M-SAVE-HUMOR-VALIDA-spec.md` | ~1.5h |
+| I-DIARIO | `M-SAVE-DIARIO-VALIDA` | `M-SAVE-DIARIO-VALIDA-spec.md` | ~1.5h |
+| I-EVENTO | `M-SAVE-EVENTO-VALIDA` | `M-SAVE-EVENTO-VALIDA-spec.md` | ~1.5h |
+| I-FOTO | `M-SAVE-FOTO-VALIDA` | `M-SAVE-FOTO-VALIDA-spec.md` | ~2h |
+| I-AUDIO | `M-SAVE-AUDIO-VALIDA` | `M-SAVE-AUDIO-VALIDA-spec.md` | ~2h |
+| I-VIDEO | `M-SAVE-VIDEO-VALIDA` | `M-SAVE-VIDEO-VALIDA-spec.md` | ~1.5h |
+| I-FRASE | `M-SAVE-FRASE-VALIDA` | `M-SAVE-FRASE-VALIDA-spec.md` | ~1h |
+| I-TAREFA | `M-SAVE-TAREFA-VALIDA` | `M-SAVE-TAREFA-VALIDA-spec.md` | ~1.5h |
+| I-ALARME | `M-SAVE-ALARME-VALIDA` | `M-SAVE-ALARME-VALIDA-spec.md` | ~1.5h |
+| I-CONTADOR | `M-SAVE-CONTADOR-VALIDA` | `M-SAVE-CONTADOR-VALIDA-spec.md` | ~1.5h |
+| I-CICLO | `M-SAVE-CICLO-VALIDA` | `M-SAVE-CICLO-VALIDA-spec.md` | ~2h |
+| I-EXERCICIO | `M-SAVE-EXERCICIO-VALIDA` | `M-SAVE-EXERCICIO-VALIDA-spec.md` | ~2h |
+| I-SCANNER | `M-SAVE-SCANNER-VALIDA` | `M-SAVE-SCANNER-VALIDA-spec.md` | ~2h |
+| I-DEVICES | `M-SAVE-DEVICES-INDEX-VALIDA` | `M-SAVE-DEVICES-INDEX-VALIDA-spec.md` | ~1h |
+| I-AGENDA | `M-SAVE-AGENDA-VALIDA` | `M-SAVE-AGENDA-VALIDA-spec.md` | ~1h |
+
+Padrão comum: usar `vaultUriJoin` (H1) + try/catch+timeout no caller +
+E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
+
+### Bloco I2 — Bugs específicos não-save
+
+| # | Sprint | Spec | Estim. |
+|---|---|---|---|
+| I2-OAUTH | `M-OAUTH-REDIRECT-URI-FIX` | `M-OAUTH-REDIRECT-URI-FIX-spec.md` | ~2h |
+| I2-AMIGOS | `M-AMIGOS-LABEL` | `M-AMIGOS-LABEL-spec.md` | ~1h |
+
+### Bloco J — Permissões onboarding
+
+| # | Sprint | Spec | Estim. |
+|---|---|---|---|
+| J1 | `M-ONBOARDING-PERMISSOES` | `M-ONBOARDING-PERMISSOES-spec.md` | ~3h |
+
+### Bloco K — UX Chrome (paralelo)
+
+| # | Sprint | Spec | Estim. |
+|---|---|---|---|
+| K1 | `M-MENU-LATERAL-LAYOUT` | `M-MENU-LATERAL-LAYOUT-spec.md` | ~2h |
+| K2 | `M-MENU-NOMES` | `M-MENU-NOMES-spec.md` | ~0.5h |
+| K3 | `M-MENU-FOTO-EDITAVEL` | `M-MENU-FOTO-EDITAVEL-spec.md` | ~1h |
+| K4 | `M-FAB-MENU-SAFE-BOTTOM` | `M-FAB-MENU-SAFE-BOTTOM-spec.md` | ~1h |
+| K5 | `M-BOTOES-LARGURA` | `M-BOTOES-LARGURA-spec.md` | ~1h |
+
+### Bloco L — Telas/Abas
+
+| # | Sprint | Spec | Estim. | ADR |
+|---|---|---|---|---|
+| L1 | `M-MEMORIAS-PARA-SAUDE-FISICA` | `M-MEMORIAS-PARA-SAUDE-FISICA-spec.md` | ~3h | — |
+| L2 | `M-RECAP-CALENDARIO-UNIFICAR` | `M-RECAP-CALENDARIO-UNIFICAR-spec.md` | ~3h | 0021 |
+
+### Bloco N — Risco residual moti
+
+| # | Sprint | Spec | Estim. |
+|---|---|---|---|
+| N1 | `M-MOTI-AUDIT-RUNTIME` | `M-MOTI-AUDIT-RUNTIME-spec.md` | ~1h |
+| N2 | `M-MOTI-FIX-CRITICOS` | `M-MOTI-FIX-CRITICOS-spec.md` | ~3-5h |
+
+### Bloco O — Validação obrigatória (transversal)
+
+| # | Sprint | Spec | Estim. |
+|---|---|---|---|
+| O1 | `M-GAUNTLET-PADRAO-VALIDATION` | `M-GAUNTLET-PADRAO-VALIDATION-spec.md` | ~1h |
+
+### Bloco P — Field test e release final
+
+| # | Sprint | Pré-condição |
+|---|---|---|
+| F1 | `M-FIELD-TEST` (7 dias passivos) | Blocos H+I+I2+J+K+L+N+O fechados, APK preview |
+| G1 | `M41` Release v1.0.0 production | F1 verde + PAUSA explícita do dono |
+
+**Estimativa total:** ~50-60h código ativo + 7 dias passivos field test + 1 dia release = **~15-16 dias até v1.0.0**.
+
+**Cota EAS preservada:** 15 builds restantes (de 30/mês). Plano usa 2:
+1 preview (após blocos H–O fechados) + 1 production (após F1 verde).
+
+---
+
+## Estado herdado (M-ROADMAP-AUDIT 2026-05-05 noite)
 
 Auditoria via `git log --all --oneline --no-merges | grep "feat:"`
 revelou **divergência durável** entre a tabela "Linha do tempo"
