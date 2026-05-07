@@ -5,6 +5,30 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint N1 — `M-MOTI-AUDIT-RUNTIME` (2026-05-07)
+
+Audit estática completa dos usos de `<MotiView>`/`<MotiText>`/
+`<AnimatePresence>`/`MotiTransitionProp` em `src/` e `app/`. Achado
+real: 40 arquivos / 47 usos (não 38 como estimativa do plano original).
+
+Output em `docs/sprints/M-MOTI-AUDIT-RUNTIME-output.md` (276
+linhas) com inventário path:linha + componente + prop animada +
+trigger + risco. Classificação:
+- **6 ALTO**: BiometriaGate, Toast, MenuLateral, FABRadial (linhas
+  192+296), FABMenu — boot path e overlays globais com transform.
+- **18 MÉDIO**: UI universal e rotas específicas com transform tardio.
+- **20 BAIXO**: apenas opacity/color/backgroundColor/width(%) ou
+  scale press tardio.
+
+Recomendação N2: escopo `M-MOTI-MIGRATE-HOTPATH` migra os 6 ALTO
+para Reanimated puro (`useSharedValue` + `withSpring` +
+`useAnimatedStyle`).
+
+Sprint não toca código de produção. 1 arquivo novo.
+
+Métricas: 1742 testes / 176 suítes verde (idêntico) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint L2 — `M-RECAP-CALENDARIO-UNIFICAR` (2026-05-07)
 
 **Bloco L FECHADO.** Recap (`/recap`) e Calendário de Conquistas

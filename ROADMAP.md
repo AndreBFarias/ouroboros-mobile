@@ -81,10 +81,10 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 
 ### Bloco N — Risco residual moti
 
-| # | Sprint | Spec | Estim. |
-|---|---|---|---|
-| N1 | `M-MOTI-AUDIT-RUNTIME` | `M-MOTI-AUDIT-RUNTIME-spec.md` | ~1h |
-| N2 | `M-MOTI-FIX-CRITICOS` | `M-MOTI-FIX-CRITICOS-spec.md` | ~3-5h |
+| # | Sprint | Spec | Estim. | Status |
+|---|---|---|---|---|
+| N1 | `M-MOTI-AUDIT-RUNTIME` | `M-MOTI-AUDIT-RUNTIME-spec.md` | ~1h | `[ok]` |
+| N2 | `M-MOTI-FIX-CRITICOS` | `M-MOTI-FIX-CRITICOS-spec.md` | ~3-5h | `[todo]` |
 
 ### Bloco O — Validação obrigatória (transversal)
 
