@@ -745,7 +745,51 @@ registro vira `.md` com YAML frontmatter + corpo em Markdown.
 **Importante:** o campo `autor` sempre usa `pessoa_a` ou `pessoa_b`,
 **nunca nomes reais**. Ver `CONTEXTO.md` Seção 3.
 
-### Estrutura de Pastas do Vault
+> **Atualização 2026-05-06 (plano golden-zebra, ADR-0022 + ADR-0023):**
+> - **Pasta do Vault escolhida pelo usuário** no onboarding (não mais
+>   hardcoded `/sdcard/Documents/Ouroboros/`).
+> - **Layout por tipo de arquivo** (não por feature) — todos os `.md`
+>   ficam em `markdown/`, binários em `png/`/`jpg/`/`m4a/`/`mp4/`/
+>   `pdf/`/`gif/`. Filename incorpora feature como prefixo.
+> - Estrutura antiga (por feature) listada abaixo está sendo **migrada
+>   automaticamente** via boot hook `migrarVaultLayoutPorTipo`
+>   (sprint H2).
+
+### Estrutura de Pastas do Vault — v1.0.0+ (por tipo)
+
+```
+vault/
+├─ markdown/                       ← TODOS os .md de TODAS as features
+│  ├─ humor-2026-04-28.md
+│  ├─ evento-2026-04-28-cafe.md
+│  ├─ diario-2026-04-28-1430-conflito.md
+│  ├─ marco-2026-04-28-tres-treinos.md
+│  ├─ medidas-2026-04-28.md
+│  ├─ exercicio-triceps-rosca.md
+│  ├─ ciclo-2026-04-28.md
+│  ├─ alarme-acordar.md
+│  ├─ tarefa-limpar-gatos.md
+│  ├─ contador-dias-sem-x.md
+│  ├─ nota-2026-04-28-1430-mercado.md
+│  ├─ foto-2026-04-28-1430-abcd.md     ← companion da foto
+│  ├─ audio-2026-04-28-1430-xyz.md     ← companion do audio
+│  ├─ video-2026-04-28-1430-qrs.md     ← companion do video
+│  ├─ frase-2026-04-28-frase-dia.md
+│  ├─ scanner-recibo-2026-04-28.md     ← companion do scan
+│  ├─ agenda-pessoa_a-2026-05-07-eventId.md
+│  └─ _devices.md                      ← devices index
+├─ png/                            ← imagens PNG
+├─ jpg/                            ← imagens JPG (fotos câmera, medidas)
+├─ m4a/                            ← áudios (microfone do diário)
+├─ mp4/                            ← vídeos
+├─ pdf/                            ← PDFs (scanner multi-página)
+├─ gif/                            ← GIFs (demonstrativo de exercícios)
+└─ .ouroboros/cache/               ← exceção legítima ADR-0019
+   ├─ humor-heatmap.json           ← gerado pelo desktop (M10)
+   └─ financas-cache.json          ← gerado pelo desktop (M14)
+```
+
+### Estrutura de Pastas do Vault — pré-v1.0.0 (legado, por feature)
 
 ```
 vault/

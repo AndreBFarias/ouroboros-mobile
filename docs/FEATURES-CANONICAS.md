@@ -3,6 +3,33 @@
 Mapa funcional consolidado do projeto. **Fonte de verdade única
 sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 
+> **Atualização 2026-05-06 — plano golden-zebra v1.0.0:** após field
+> test do APK `v1.0.0-alpha` (commit `ada414e`), 31 sprints atômicas
+> dos blocos H–P são executadas até v1.0.0. Decisões durá­veis novas
+> documentadas neste arquivo:
+>
+> - **Vault layout por tipo de arquivo** (não por feature) —
+>   `markdown/`, `png/`, `jpg/`, `m4a/`, `mp4/`, `pdf/`, `gif/`. ADR-0023.
+> - **Pasta do Vault escolhida pelo usuário** no onboarding (não
+>   hardcoded `/sdcard/Documents/Ouroboros/`). ADR-0022.
+> - **Onboarding pede 5 permissões** (storage, câmera, microfone,
+>   notificações, localização) + `sexoDeclarado` para inferência ciclo.
+> - **Aba Memórias renomeada para "Saúde Física"** com 3 abas
+>   (Treinos, Evolução Corporal, Exercícios). Aba "Fotos" removida —
+>   FAB+ verde cobre.
+> - **Recap + Calendário Conquistas unificados** em uma tela só com
+>   toggle modo (Lista/Calendário). ADR-0021.
+> - **`useNomeDe('ambos')` ramificado**: retorna "Casal" para
+>   `tipoCompanhia==='casal'`, "Todos" para `'amigos'`, fallback
+>   "Ambos".
+> - **Saves resilientes**: cada feature ganha `try/catch + timeout
+>   10s` no caller + helper canônico `vaultUriJoin` no writer (impede
+>   loader infinito + URI corruption).
+> - **Menu lateral**: seção "Ver" → "Acesso Rápido", "Opcionais" →
+>   "Utilitários". Foto/nome no cabeçalho clicáveis abrem edição.
+>   Scroll position persistente. Botão Configurações com safe-area
+>   adequada.
+
 > **Importante — manutenção obrigatória:** este arquivo deve ser
 > atualizado **junto com o commit que introduz, modifica ou remove
 > uma feature**. Sprints novas devem incluir checklist na seção 8
