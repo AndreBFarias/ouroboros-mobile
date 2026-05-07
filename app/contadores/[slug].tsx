@@ -41,6 +41,7 @@ import {
 import { diasEntre } from '@/lib/util/diasEntre';
 import { mensagemApoio, marcoAtingido } from '@/lib/contadores/mensagens';
 import type { Contador } from '@/lib/schemas/contador';
+import { comTimeout } from '@/lib/util/comTimeout';
 
 // Formata ISO datetime para "DD/MM/YYYY HH:MM" (UTC-3 implicito; o
 // ISO já vem com offset).
@@ -126,14 +127,23 @@ export default function ContadorDetalhe() {
     if (!vaultRoot || !contador || enviandoReset) return;
     setEnviandoReset(true);
     try {
-      const atualizado = await registrarReset(vaultRoot, contador.slug);
+      // I-CONTADOR: registrarReset sob comTimeout 10s default. Reset
+      // preserva todos os timestamps anteriores em resets[] (decisão
+      // durável dono 2026-05-03 BRIEF §1.8) e recorde so sobe via
+      // Math.max - nunca diminui, nunca apaga historico.
+      const atualizado = await comTimeout(
+        registrarReset(vaultRoot, contador.slug)
+      );
       void haptics.medium();
-      toast.show('Reset registrado.', 'info');
+      toast.show('Contador resetado.', 'info');
       setContador(atualizado);
       setModalReset(false);
-    } catch {
+    } catch (e) {
       void haptics.error();
-      toast.show('Não foi possível registrar o reset.', 'error');
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('reset contador fail', e);
     } finally {
       setEnviandoReset(false);
     }
@@ -155,14 +165,18 @@ export default function ContadorDetalhe() {
     setSalvandoEdicao(true);
     try {
       const atualizado: Contador = { ...contador, titulo: limpo };
-      await escreverContador(vaultRoot, atualizado);
+      // I-CONTADOR: edicao de titulo sob comTimeout 10s default.
+      await comTimeout(escreverContador(vaultRoot, atualizado));
       void haptics.light();
       toast.show('Título atualizado.', 'success');
       setContador(atualizado);
       setModalEditar(false);
-    } catch {
+    } catch (e) {
       void haptics.error();
-      toast.show('Não foi possível salvar.', 'error');
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('edicao contador fail', e);
     } finally {
       setSalvandoEdicao(false);
     }

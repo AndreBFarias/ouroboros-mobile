@@ -1,5 +1,5 @@
 // Helpers de leitura, listagem, escrita e exclusao de contadores no
-// Vault (M18). Cada contador vive em contadores/<slug>.md com
+// Vault (M18). Cada contador vive em markdown/contador-<slug>.md com
 // frontmatter validado pelo ContadorSchema. Slug e a chave: salvar
 // duas vezes com mesmo slug sobrescreve (usado para edicao); slug
 // novo cria arquivo novo.
@@ -7,7 +7,16 @@
 // registrarReset coordena: ler contador atual -> calcular dias atuais
 // via diasEntre(início, agora) -> comparar com recorde -> atualizar
 // recorde se atual > recorde -> adicionar timestamp ao array resets
-// -> atualizar início = today() -> reescrever .md.
+// -> atualizar início = today() -> reescrever .md. Histórico nunca
+// e' apagado (decisão durável dono 2026-05-03 BRIEF §1.8): reset
+// preserva todos os timestamps anteriores em resets[] e recorde so
+// sobe (Math.max), nunca diminui. Apagar definitivo so via
+// excluirContador (long-press + confirm explicito na UI).
+//
+// I-CONTADOR (M-SAVE-CONTADOR-VALIDA, 2026-05-07): migra joinUri
+// local para vaultUriJoin canonico (H1 do plano golden-zebra).
+// Helper canonico (paths.ts:27) limpa trailing whitespace/%20/'/'
+// que SAF aplicava em runtime real (sintoma A29 em OEMs MIUI/OneUI).
 //
 // Comentarios sem acento (convencao shell/CI).
 import { StorageAccessFramework } from 'expo-file-system/legacy';
@@ -18,6 +27,7 @@ import {
   formatDateYmd,
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
+  vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -25,18 +35,13 @@ import { ContadorSchema, type Contador } from '@/lib/schemas/contador';
 import { diasEntre } from '@/lib/util/diasEntre';
 import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
 // Lista todos os contadores do Vault. Pasta inexistente => []. Retorna
 // asc por titulo (localeCompare PT-BR) para a tela de listagem não
 // mostrar ordem aleatoria de filesystem.
 export async function listarContadores(
   vaultRoot: string
 ): Promise<Contador[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'contador-'));
 
@@ -62,7 +67,7 @@ export async function lerContador(
   slug: string
 ): Promise<Contador | null> {
   const rel = contadorPath(slug);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   const result = await readVaultFile(uri, ContadorSchema);
   return result ? result.meta : null;
 }
@@ -89,14 +94,14 @@ export async function escreverContador(
   const relCanonico = contadorPath(parsed.data.slug);
   let rel = relCanonico;
   if (modoCriacao) {
-    const uriCanonico = joinUri(vaultRoot, relCanonico);
+    const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
     const existente = await readVaultFile(uriCanonico, ContadorSchema);
     if (existente) {
       const deviceId = await getDeviceId();
       rel = applyDeviceIdSuffix(relCanonico, deviceId);
     }
   }
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<Contador>(uri, parsed.data, body);
   return { uri, rel };
 }
@@ -108,7 +113,7 @@ export async function excluirContador(
   slug: string
 ): Promise<void> {
   const rel = contadorPath(slug);
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   try {
     await StorageAccessFramework.deleteAsync(uri);
   } catch {

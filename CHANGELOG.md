@@ -5,6 +5,27 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-CONTADOR — `M-SAVE-CONTADOR-VALIDA` (2026-05-07)
+
+`src/lib/vault/contadores.ts` migra `joinUri` local (4 callsites) para
+`vaultUriJoin`. Path `markdown/contador-<slug>.md`. `app/contadores/novo.tsx`
+e `app/contadores/[slug].tsx` envolvem awaits em `comTimeout(p, 10s)`.
+Toasts PT-BR `Contador salvo.` / `Contador resetado.` / `Não foi
+possível salvar: <msg>`.
+
+Schema atual `resets[]` + `recorde` MANTIDO (já cumpre BRIEF §1.8
+preservação de histórico — não regredido). Rename para
+`historico_resets`/`{data_reset, dias_acumulados}` que o spec sugeria
+ficaria breaking change em .md de produção alpha; sprint dedicada
+M-SCHEMA-CONTADOR-V2 registrada se o dono decidir mais tarde.
+
+Tests: +5 casos (vaultRoot vazio throw, trailing `%20`, trailing
+slashes, histórico preservado BRIEF §1.8, reset via vaultUriJoin).
+E2E novo cobre fluxo "Sem cigarro" → criar.
+
+Métricas: 1661 testes / 173 suítes verde (+5) · TS strict 0 ·
+Hermes 7,7 MB · Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprint I-ALARME — `M-SAVE-ALARME-VALIDA` (2026-05-07)
 
 `src/lib/vault/alarmes.ts` migra `joinUri` local para `vaultUriJoin`

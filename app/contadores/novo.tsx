@@ -46,6 +46,7 @@ import {
 } from '@/lib/schemas/contador';
 import type { Para } from '@/lib/schemas/para';
 import { formatDateYmd } from '@/lib/vault/paths';
+import { comTimeout } from '@/lib/util/comTimeout';
 
 function nowIso(): string {
   // toISOString retorna 'Z' que e aceito pelo IsoDatetime do schema.
@@ -149,9 +150,11 @@ export default function ContadoresNovo() {
         toast.show('Título inválido.', 'error');
         return;
       }
-      const slug = await resolverSlugUnico(vaultRoot, baseSlug);
+      // I-CONTADOR: listarContadores envolto em comTimeout 10s para
+      // impedir loader infinito quando SAF list trava em OEMs lentos.
+      const slug = await comTimeout(resolverSlugUnico(vaultRoot, baseSlug));
       if (!slug) {
-        toast.show('Não foi possível salvar.', 'error');
+        toast.show('Não foi possível salvar: slug em uso.', 'error');
         return;
       }
 
@@ -174,14 +177,20 @@ export default function ContadoresNovo() {
 
       // M38: criacao -> aplica suffix '-<deviceId>' se outro device
       // ja criou contador com mesmo slug (conflict resolution Syncthing).
-      await escreverContador(vaultRoot, parsed.data, '', true);
+      // I-CONTADOR: escreverContador sob comTimeout 10s default
+      // (helper canonico @/lib/util/comTimeout). Em web mock vira no-op
+      // rapido; em SAF Android cobre p99 de write em /sdcard/Documents/.
+      await comTimeout(escreverContador(vaultRoot, parsed.data, '', true));
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('contadoresNovo');
       void haptics.light();
-      toast.show('Contador criado.', 'success');
+      toast.show('Contador salvo.', 'success');
       router.back();
-    } catch {
-      toast.show('Não foi possível salvar.', 'error');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      // eslint-disable-next-line no-console
+      console.error('save contador fail', e);
     } finally {
       setSalvando(false);
     }

@@ -139,7 +139,7 @@ describe('lerContador', () => {
 });
 
 describe('escreverContador', () => {
-  it('grava em path canonico contadores/<slug>.md', async () => {
+  it('grava em path canonico markdown/contador-<slug>.md (H2 layout-por-tipo)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture();
     const { rel, uri } = await escreverContador(VAULT_ROOT, meta);
@@ -157,6 +157,45 @@ describe('escreverContador', () => {
     await expect(escreverContador(VAULT_ROOT, inv)).rejects.toThrow(
       /contador invalido/
     );
+  });
+
+  // I-CONTADOR: vaultUriJoin lanca erro claro quando root vazio
+  // (sentinel de bug em estado anterior do app, ADR-0023).
+  it('lanca erro quando vaultRoot vazio', async () => {
+    const meta = fixture();
+    await expect(escreverContador('', meta)).rejects.toThrow(
+      /vaultUriJoin: root vazio/
+    );
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  // I-CONTADOR: vaultUriJoin canonico (paths.ts:27) faz, em ordem:
+  //  1. trim() externo,
+  //  2. replace(/\s+$/, '') trailing whitespace,
+  //  3. replace(/%20+$/, '') trailing %20 percent-encoded,
+  //  4. replace(/\/+$/, '') trailing slashes.
+  //
+  // Para um root tipico SAF contaminado com trailing %20 (sintoma A29
+  // em OEMs MIUI/OneUI), o path final fica limpo. Cobertura aqui
+  // garante que o caller (escreverContador) realmente roteia pelo
+  // helper canonico, e nao mais pelo joinUri local que existia antes
+  // desta sprint.
+  it('produz path final via vaultUriJoin (limpa trailing %20 do SAF)', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const rootSujo = `${VAULT_ROOT}%20`;
+    const meta = fixture();
+    const { uri } = await escreverContador(rootSujo, meta);
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/contador-sem-cigarro.md`);
+    // Sem barras duplas no path final (so a do scheme content://).
+    expect(uri.split('//').length).toBe(2);
+  });
+
+  it('produz path final via vaultUriJoin (limpa trailing slashes)', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    const rootSujo = `${VAULT_ROOT}//`;
+    const meta = fixture();
+    const { uri } = await escreverContador(rootSujo, meta);
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/contador-sem-cigarro.md`);
   });
 });
 
@@ -268,5 +307,59 @@ describe('registrarReset', () => {
     const out = await registrarReset(VAULT_ROOT, 'sem-cigarro', agora);
     expect(out.resets).toHaveLength(3);
     expect(out.resets[2]).toBe(agora.toISOString());
+  });
+
+  // I-CONTADOR: BRIEF §1.8 (decisão durável dono 2026-05-03) -- reset
+  // preserva historico de resets anteriores, NUNCA apaga. Recorde so
+  // sobe via Math.max. Apagar definitivo so via excluirContador
+  // (long-press + confirm explicito na UI).
+  it('preserva historico de resets anteriores (BRIEF §1.8)', async () => {
+    const resetsAnteriores = [
+      '2026-01-15T08:00:00Z',
+      '2026-02-20T18:30:00Z',
+      '2026-03-10T12:00:00Z',
+    ];
+    const atual = fixture({
+      inicio: '2026-04-01',
+      recorde: 50,
+      resets: resetsAnteriores,
+    });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const agora = new Date('2026-04-29T15:30:00Z');
+    const out = await registrarReset(VAULT_ROOT, 'sem-cigarro', agora);
+
+    // Historico preservado: 3 anteriores + 1 novo = 4 entradas.
+    expect(out.resets).toHaveLength(4);
+    // Os 3 timestamps originais permanecem na mesma ordem.
+    expect(out.resets.slice(0, 3)).toEqual(resetsAnteriores);
+    // Novo reset fica no fim.
+    expect(out.resets[3]).toBe(agora.toISOString());
+    // Recorde nao diminui mesmo com dias atuais (28) < recorde (50).
+    expect(out.recorde).toBe(50);
+    // Inicio atualiza para hoje.
+    expect(out.inicio).toBe('2026-04-29');
+  });
+
+  // I-CONTADOR: registrarReset usa vaultUriJoin canonico via
+  // escreverContador. Path final correto mesmo com root sujo.
+  it('produz path final via vaultUriJoin no reset', async () => {
+    const atual = fixture();
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const rootSujo = `${VAULT_ROOT}%20`;
+    await registrarReset(
+      rootSujo,
+      'sem-cigarro',
+      new Date('2026-04-29T15:30:00Z')
+    );
+    // O write final usa path limpo, mesmo o root tendo trailing %20.
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`,
+      expect.anything(),
+      ''
+    );
   });
 });
