@@ -421,3 +421,139 @@ describe('excluirTarefa', () => {
     ).rejects.toThrow(/lixeira/);
   });
 });
+
+// I-TAREFA (M-SAVE-TAREFA-VALIDA, 2026-05-07): cobertura do path
+// canonico via vaultUriJoin (H1). vaultRoot vazio throw + %20
+// ofensivo normalizado + trailing whitespace tratado. Espelha o
+// padrao de M-SAVE-AUDIO-VALIDA (I-AUDIO).
+describe('vaultUriJoin canonico (I-TAREFA)', () => {
+  it('criarTarefa monta uri via markdown/tarefa-<slug>.md e vaultUriJoin', async () => {
+    mockReadVaultFile.mockResolvedValueOnce(null);
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const meta = fixture({ titulo: 'Limpar gatos', categoria: 'saude' });
+    const { uri, rel } = await criarTarefa(
+      VAULT_ROOT,
+      meta,
+      'limpar-gatos-7k2x'
+    );
+
+    expect(rel).toBe('markdown/tarefa-limpar-gatos-7k2x.md');
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/tarefa-limpar-gatos-7k2x.md`);
+  });
+
+  it('escreverTarefa lanca quando vaultRoot vazio', async () => {
+    const meta = fixture();
+    await expect(
+      escreverTarefa('', 'markdown/tarefa-x.md', meta)
+    ).rejects.toThrow(/vaultUriJoin: root vazio/);
+  });
+
+  it('criarTarefa lanca quando vaultRoot vazio (sem silenciar)', async () => {
+    const meta = fixture();
+    await expect(
+      criarTarefa('', meta, 'foo-1234')
+    ).rejects.toThrow(/vaultUriJoin: root vazio/);
+  });
+
+  it('lerTarefa lanca quando vaultRoot vazio', async () => {
+    await expect(
+      lerTarefa('', 'markdown/tarefa-x.md')
+    ).rejects.toThrow(/vaultUriJoin: root vazio/);
+  });
+
+  it('normaliza trailing %20 + whitespace no vaultRoot SAF (A29)', async () => {
+    // Origem A29: tree URI SAF do MIUI vinha com '%20' ofensivo
+    // no fim, vazando para todas URIs filhas via concat ad-hoc.
+    // vaultUriJoin agora trata trim antes de concatenar.
+    const VAULT_SUJO = `${VAULT_ROOT}%20 `;
+    mockReadVaultFile.mockResolvedValueOnce(null);
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const meta = fixture({ titulo: 'Comprar pão' });
+    const { uri } = await criarTarefa(VAULT_SUJO, meta, 'comprar-pao-7k2x');
+
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/tarefa-comprar-pao-7k2x.md`);
+    expect(uri).not.toMatch(/%20/);
+    expect(uri).not.toMatch(/\s/);
+  });
+
+  it('normaliza trailing slashes no vaultRoot', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const meta = fixture();
+    const { uri } = await escreverTarefa(
+      `${VAULT_ROOT}//`,
+      'markdown/tarefa-foo.md',
+      meta
+    );
+
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/tarefa-foo.md`);
+    // Sem barra dupla logo antes do segmento markdown.
+    expect(uri).not.toMatch(/\/\/markdown/);
+  });
+
+  it('listarTarefas usa vaultUriJoin e expoe rel correto pos-trim', async () => {
+    // Mesmo com vaultRoot sujo, o rel devolvido fica enxuto.
+    const VAULT_SUJO = `${VAULT_ROOT} `;
+    mockListVaultFolder.mockResolvedValueOnce([
+      `${VAULT_ROOT}/markdown/tarefa-foo-bar.md`,
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({
+      meta: fixture({ titulo: 'foo' }),
+      body: '',
+    });
+    const out = await listarTarefas(VAULT_SUJO);
+    expect(out[0].rel).toBe('markdown/tarefa-foo-bar.md');
+  });
+});
+
+// I-TAREFA: edge case de marcarFeito preservar resto do meta. Garante
+// que ao concluir uma tarefa nao perdemos categoria, pessoa_destino
+// nem alarme companion vinculado (regra M31 de historico preservado).
+describe('marcarFeito preserva campos M31 (I-TAREFA)', () => {
+  it('atualiza feito + feito_em sem perder categoria/destino/alarme', async () => {
+    const atual = fixture({
+      titulo: 'Reuniao',
+      categoria: 'trabalho',
+      pessoa_destino: { tipo: 'casal' },
+      alarme: {
+        ativo: true,
+        data_hora_iso: '2026-05-08T09:00:00-03:00',
+        recorrencia: 'unica',
+        slug_vinculado: 'reuniao-1234-alarme',
+      },
+    });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const agora = new Date('2026-05-08T10:30:00-03:00');
+    const out = await marcarFeito(
+      VAULT_ROOT,
+      'markdown/tarefa-reuniao-1234.md',
+      true,
+      agora
+    );
+
+    expect(out.feito).toBe(true);
+    expect(out.feito_em).toBe(agora.toISOString());
+    expect(out.titulo).toBe('Reuniao');
+    expect(out.categoria).toBe('trabalho');
+    expect(out.pessoa_destino).toEqual({ tipo: 'casal' });
+    expect(out.alarme).toEqual({
+      ativo: true,
+      data_hora_iso: '2026-05-08T09:00:00-03:00',
+      recorrencia: 'unica',
+      slug_vinculado: 'reuniao-1234-alarme',
+    });
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      `${VAULT_ROOT}/markdown/tarefa-reuniao-1234.md`,
+      expect.objectContaining({
+        feito: true,
+        categoria: 'trabalho',
+        pessoa_destino: { tipo: 'casal' },
+      }),
+      ''
+    );
+  });
+});

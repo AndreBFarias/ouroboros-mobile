@@ -5,6 +5,37 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint I-TAREFA — `M-SAVE-TAREFA-VALIDA` (2026-05-07)
+
+`src/lib/vault/tarefas.ts` migra `joinUri` local para `vaultUriJoin`
+canônico (5 callsites: listar, ler, escrever, criar com conflict
+resolution, excluir). `uriParaRelativo` ganha trim espelhando
+`vaultUriJoin` (whitespace/`%20`/barras) para devolver rel limpo
+mesmo com vaultRoot sujo. Path canônico
+`markdown/tarefa-<slug>.md` (sem date prefix — schema guarda
+`criada_em` no frontmatter, tarefa é persistente).
+
+`app/todo.tsx` envolve `handleSalvarSheet` em `comTimeout(p, 10s)`.
+Toasts PT-BR `Tarefa salva.` / `Não foi possível salvar: <msg>`
+substituem strings antigas (`Tarefa anotada.` / `Falha ao salvar`).
+
+Schema `tarefa.ts` v2 M31 (categoria + pessoa_destino + alarme +
+slug_vinculado) preservado — não regredido para campos que o spec
+sugeria. Auditoria empírica identificou caller real `app/todo.tsx`
++ `SheetNovaTarefa.tsx` (não `app/tarefas/novo.tsx` como o spec
+especulava).
+
+Tests: +8 casos em `tests/lib/vault/tarefas.test.ts` (path canônico
+`vaultUriJoin`, throw vaultRoot vazio em escrever/criar/ler,
+normalização `%20`+whitespace A29, barras duplas, listar com root
+sujo, marcarFeito preservando categoria/destino/alarme). E2E novo
+`tests/e2e/playwright/m-save-tarefa.e2e.ts` cobre fluxo "Limpar
+gatos" + categoria Saúde.
+
+Métricas: 1649 testes / 173 suítes verde (+8 contra 1641 baseline) ·
+TS strict 0 · Hermes Android 7,7 MB intacto · Gauntlet leak 0/6 ·
+anonimato OK · PT-BR check OK.
+
 ### Sprint I-AUDIO — `M-SAVE-AUDIO-VALIDA` (2026-05-07)
 
 `src/lib/diario/recordAudio.ts` reescrito padrão I-VIDEO/I-FOTO

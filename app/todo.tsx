@@ -61,6 +61,7 @@ import {
   type TarefaListada,
 } from '@/lib/vault/tarefas';
 import { ItemTarefa } from '@/components/todo/ItemTarefa';
+import { comTimeout } from '@/lib/util/comTimeout';
 import {
   SheetNovaTarefa,
   type SheetNovaTarefaPayload,
@@ -269,12 +270,16 @@ export default function TelaTarefas() {
       }
       setSalvando(true);
       try {
+        // I-TAREFA: comTimeout 10s impede loader infinito quando SAF
+        // write trava em OEMs lentos (MIUI/HyperOS/OneUI). Mensagem
+        // de erro fica em 'timeout salvando' (PT-BR sem acento) e
+        // vira suffix do toast 'Não foi possível salvar: <msg>'.
         if (modoSheet === 'criar') {
           const { meta, slug } = novaTarefa(pessoaAtiva, payload);
           const parsed = TarefaSchema.parse(meta);
-          await criarTarefa(vaultRoot, parsed, slug);
+          await comTimeout(criarTarefa(vaultRoot, parsed, slug));
           haptics.success();
-          toast.show('Tarefa anotada.', 'success');
+          toast.show('Tarefa salva.', 'success');
         } else if (relEditando) {
           // Re-ler atual para preservar feito/feito_em durante edicao.
           // M31: tambem aplica categoria/destino/alarme do payload.
@@ -287,7 +292,9 @@ export default function TelaTarefas() {
               pessoa_destino: payload.pessoa_destino,
               alarme: payload.alarme,
             };
-            await escreverTarefa(vaultRoot, relEditando, atualizado);
+            await comTimeout(
+              escreverTarefa(vaultRoot, relEditando, atualizado)
+            );
             haptics.success();
             toast.show('Tarefa atualizada.', 'success');
           }
@@ -297,7 +304,7 @@ export default function TelaTarefas() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'falha desconhecida';
         haptics.error();
-        toast.show(`Falha ao salvar: ${msg}`, 'error');
+        toast.show(`Não foi possível salvar: ${msg}`, 'error');
       } finally {
         setSalvando(false);
       }

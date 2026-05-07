@@ -1,20 +1,30 @@
 // Helpers de leitura, listagem, escrita e exclusao de tarefas no
-// Vault (M17). Cada tarefa vive em tarefas/YYYY-MM-DD-<slug>.md com
-// frontmatter validado pelo TarefaSchema. Path inclui data de criacao
-// (estavel por toda a vida da tarefa, mesmo após marcar feito).
+// Vault (M17 + M31). Cada tarefa vive em markdown/tarefa-<slug>.md
+// (layout-por-tipo H2 / ADR-0023) com frontmatter validado pelo
+// TarefaSchema. Path nao inclui data: tarefa e persistente; data de
+// criacao vive no frontmatter (campo `data`).
 //
 // Exclusao usa lixeira soft: move o .md para
 // cacheDirectory/lixeira/tarefas/<timestamp>-<basename>.md. Limpeza
-// automática via boot hook limparLixeiraExpirada (cap de 30 dias).
+// automatica via boot hook limparLixeiraExpirada (cap de 30 dias).
 //
 // listarTarefas devolve a lista ordenada com pendentes (data desc) e
 // feitas (feito_em desc) intercaladas; o caller separa em grupos.
 //
 // M31: criarTarefa ganha branch para alarme vinculado. Quando
 // meta.alarme.ativo === true, escreve antes uma entry em
-// alarmes/<slug-tarefa>-alarme.md via escreverAlarme + agendarAlarme,
-// e popula meta.alarme.slug_vinculado para cancelamento idempotente
-// posterior. reabrirTarefa inverte marcarFeito (concluida -> pendente).
+// markdown/alarme-<slug-tarefa>-alarme.md via escreverAlarme +
+// agendarAlarme, e popula meta.alarme.slug_vinculado para cancelamento
+// idempotente posterior. reabrirTarefa inverte marcarFeito (concluida
+// -> pendente).
+//
+// I-TAREFA (M-SAVE-TAREFA-VALIDA, 2026-05-07): writer migrado do
+// joinUri local (so trim de barras) para vaultUriJoin canonico do
+// modulo paths.ts. vaultUriJoin trata trailing whitespace, %20
+// ofensivo e barras duplas em URIs SAF de OEMs MIUI/HyperOS/OneUI
+// (origem: armadilha A29 do BRIEF). vaultRoot vazio agora throw em
+// vez de silenciar — caller (app/todo.tsx) trata com toast PT-BR
+// explicito + comTimeout 10s para impedir loader infinito.
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
@@ -23,6 +33,7 @@ import { StorageAccessFramework } from 'expo-file-system/legacy';
 // barrel @/lib/vault) para evitar ciclo de carregamento.
 import {
   tarefaPath,
+  vaultUriJoin,
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
 } from '@/lib/vault/paths';
@@ -42,15 +53,15 @@ export interface TarefaListada {
   rel: string;
 }
 
-// Concatena root SAF e path relativo, normalizando barras.
-function joinUri(root: string, rel: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
-  return `${trimmedRoot}/${rel}`;
-}
-
-// Extrai path relativo a partir de uma URI absoluta (root + 'tarefas/...').
+// Extrai path relativo a partir de uma URI absoluta. Espelha o trim
+// canonico de vaultUriJoin (trailing whitespace, %20 ofensivo, barras
+// duplas) antes de remover o prefixo do root.
 function uriParaRelativo(uri: string, root: string): string {
-  const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
+  const trimmedRoot = root
+    .trim()
+    .replace(/\s+$/, '')
+    .replace(/%20+$/, '')
+    .replace(/\/+$/, '');
   if (uri.startsWith(`${trimmedRoot}/`)) {
     return uri.slice(trimmedRoot.length + 1);
   }
@@ -69,7 +80,7 @@ function uriParaRelativo(uri: string, root: string): string {
 export async function listarTarefas(
   vaultRoot: string
 ): Promise<TarefaListada[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'tarefa-'));
 
@@ -114,7 +125,7 @@ export async function lerTarefa(
   vaultRoot: string,
   rel: string
 ): Promise<Tarefa | null> {
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   const result = await readVaultFile(uri, TarefaSchema);
   return result ? result.meta : null;
 }
@@ -131,7 +142,7 @@ export async function escreverTarefa(
   if (!parsed.success) {
     throw new Error(`tarefa invalida: ${parsed.error.message}`);
   }
-  const uri = joinUri(vaultRoot, rel);
+  const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<Tarefa>(uri, parsed.data, body);
   return { uri, rel };
 }
@@ -189,7 +200,7 @@ export async function criarTarefa(
   // com autor diferente (outro device criou tarefa de mesmo dia/slug),
   // aplica suffix '-<deviceId>' pra evitar overwrite cego em sync.
   // Mesmo autor regravando = edicao legitima -> mantem canonico.
-  const uriCanonico = joinUri(vaultRoot, relCanonico);
+  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
   const existente = await readVaultFile(uriCanonico, TarefaSchema);
   let rel = relCanonico;
   if (existente && existente.meta.autor !== metaFinal.autor) {
@@ -301,7 +312,7 @@ export async function excluirTarefa(
   vaultRoot: string,
   rel: string
 ): Promise<{ lixeiraPath: string }> {
-  const origemUri = joinUri(vaultRoot, rel);
+  const origemUri = vaultUriJoin(vaultRoot, rel);
   const cacheBase = FileSystem.cacheDirectory ?? 'cache://';
   const lixeiraDir = `${cacheBase}lixeira/tarefas/`;
   try {
