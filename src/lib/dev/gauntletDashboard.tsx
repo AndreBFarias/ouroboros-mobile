@@ -20,7 +20,7 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const ROTAS_VER = [
   { rota: '/', label: 'Hoje' },
-  { rota: '/memoria', label: 'Memorias' },
+  { rota: '/saude-fisica', label: 'Saude Fisica' },
   { rota: '/humor', label: 'Humor' },
   { rota: '/calendario', label: 'Calendario' },
   { rota: '/financas', label: 'Financas' },

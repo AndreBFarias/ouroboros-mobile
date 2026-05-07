@@ -1,6 +1,15 @@
-// Tela 11 - Aba Marcos. Timeline vertical com linha bg-elev 1px a
-// esquerda, dot 12dp green em cada item, card a direita com data
-// muted + descricao fg + tags (chips minimos). Mais recente primeiro.
+// Tela 11 - Aba Evolucao Corporal (sprint L1 renomeou de "Marcos").
+// Timeline vertical com linha bg-elev 1px a esquerda, dot 12dp green
+// em cada item, card a direita com data muted + descricao fg + tags
+// (chips minimos). Mais recente primeiro.
+//
+// O nome interno "Marcos" no schema (Marco, useMarcos, SheetNovoMarco)
+// foi PRESERVADO para evitar regressao em vault/storage existente; a
+// label da aba e o conceito UX viraram "Evolucao Corporal" porque o
+// usuario percebe o conjunto como evolucao do corpo (treinos +
+// medidas + fotos formam o trajeto, nao apenas anota momentos).
+// Subsecao SecaoEvolucaoCorporal (M11.4) continua sendo o destaque
+// visual: faixa horizontal de cards mensais com foto frontal + peso.
 //
 // Sem hierarquia visual de níveis ou ranking (ADR-0005). Marcos auto-
 // gerados marcam um indicador discreto "auto" muted.
@@ -11,7 +20,7 @@
 // onRegistrarAcaoExtra; o MenuCapturaVerde unificado renderiza
 // "Adicionar marco" como primeiro item do sheet. Sheet interno
 // SheetNovoMarco preservado para que a tab continue funcionando
-// isoladamente caso seja reusada fora de MemoriasScreen.
+// isoladamente caso seja reusada fora de SaudeFisicaScreen.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
@@ -27,7 +36,7 @@ import { colors, spacing } from '@/theme/tokens';
 import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import { useMarcos } from '@/lib/hooks/useMarcos';
 import { SheetNovoMarco } from './SheetNovoMarco';
-import { SecaoEvolucaoCorporal } from './MemoriasMarcosTab/SecaoEvolucaoCorporal';
+import { SecaoEvolucaoCorporal } from './EvolucaoCorporalTab/SecaoEvolucaoCorporal';
 import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { Marco } from '@/lib/schemas/marco';
 
@@ -156,17 +165,18 @@ function ItemTimeline({ marco }: { marco: Marco }) {
   );
 }
 
-// M34.3: prop opcional usada pela MemoriasScreen para coletar a acao
-// contextual da tab e injetar no MenuCapturaVerde. Quando undefined a
-// tab funciona isoladamente (sem FAB visivel — em runtime fora da
-// MemoriasScreen o consumidor deve providenciar outro disparador).
-export interface MemoriasMarcosTabProps {
+// M34.3: prop opcional usada pela SaudeFisicaScreen para coletar a
+// acao contextual da tab e injetar no MenuCapturaVerde. Quando
+// undefined a tab funciona isoladamente (sem FAB visivel — em runtime
+// fora da SaudeFisicaScreen o consumidor deve providenciar outro
+// disparador).
+export interface EvolucaoCorporalTabProps {
   onRegistrarAcaoExtra?: (acao: AcaoExtraCaptura | null) => void;
 }
 
-export function MemoriasMarcosTab({
+export function EvolucaoCorporalTab({
   onRegistrarAcaoExtra,
-}: MemoriasMarcosTabProps = {}): ReactNode {
+}: EvolucaoCorporalTabProps = {}): ReactNode {
   const { marcos, recarregar } = useMarcos();
   const novoRef = useRef<BottomSheetRef>(null);
 

@@ -269,9 +269,11 @@ export const useSessao = create<SessaoState>()(
       // tem ultimaRota no SecureStore com prefixo /(tabs)/...; sem
       // migrate, qualquer boot tenta router.replace para rota
       // inexistente e quebra. Normalizamos no carregamento do
-      // persist removendo o prefixo (e.g. /(tabs)/memoria -> /memoria;
-      // /(tabs) -> /).
-      version: 2,
+      // persist removendo o prefixo (e.g. /(tabs)/saude-fisica ->
+      // /saude-fisica; /(tabs) -> /). Sprint L1 renomeou /memoria
+      // para /saude-fisica; ultimaRota=/memoria persistido pre-L1
+      // e' migrado abaixo na v3.
+      version: 3,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       migrate: (state: any, version: number) => {
         if (version < 2 && state && typeof state.ultimaRota === 'string') {
@@ -279,6 +281,20 @@ export const useSessao = create<SessaoState>()(
             state.ultimaRota = state.ultimaRota.replace('/(tabs)', '') || '/';
           } else if (state.ultimaRota === '/(tabs)') {
             state.ultimaRota = '/';
+          }
+        }
+        // L1: rota /memoria foi renomeada para /saude-fisica. Sem
+        // migrate, usuarios com ultimaRota='/memoria' persistido cairiam
+        // em rota inexistente no boot e o expo-router faria fallback
+        // para '/'.
+        if (version < 3 && state && typeof state.ultimaRota === 'string') {
+          if (state.ultimaRota === '/memoria') {
+            state.ultimaRota = '/saude-fisica';
+          } else if (state.ultimaRota.startsWith('/memoria?')) {
+            state.ultimaRota = state.ultimaRota.replace(
+              /^\/memoria/,
+              '/saude-fisica'
+            );
           }
         }
         // M30: garante flags ausentes em estados pre-M30 (v2 sem flags).

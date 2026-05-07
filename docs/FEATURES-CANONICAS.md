@@ -139,36 +139,48 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   e sem cor de festa.
   - **Registrar momento** (`ImagePlus` verde, "Foto, música, vídeo
     ou frase.") → dismissa o sheet e navega para
-    `/memoria?abrirCaptura=1`. `MemoriasScreen` lê a query via
-    `useLocalSearchParams` e expande o `<MenuCapturaVerde>`
-    automaticamente 1 frame após mount via prop `abrirNoMount`.
+    `/saude-fisica?abrirCaptura=1` (sprint L1 renomeou `/memoria`).
+    `SaudeFisicaScreen` lê a query via `useLocalSearchParams` e
+    expande o `<MenuCapturaVerde>` automaticamente 1 frame após
+    mount via prop `abrirNoMount`.
   - **Escanear documento** (`ScanLine` cyan, "Nota fiscal,
     comprovante.") → dismissa e navega para `/scanner`
     (`<ScannerSheet>` M09 quando dev-client; em ambiente sem ML
     Kit nativo o sheet mostra `EmptyState` honesto via
     comportamento existente).
-- `<MenuCapturaVerde>` permanece em Memórias como atalho rápido
-  contextualizado; `/captura` é o ponto de decisão único do menu
-  lateral. Rota está na lista `ROTAS_SEM_FAB` para o `<FABMenu>`
+- `<MenuCapturaVerde>` permanece em Saúde Física como atalho
+  rápido contextualizado; `/captura` é o ponto de decisão único do
+  menu lateral. Rota está na lista `ROTAS_SEM_FAB` para o `<FABMenu>`
   não competir z-index com o sheet de decisão.
 
-### 2.9 MenuCapturaVerde — M34 + M34.3 (em Memórias)
+### 2.9 MenuCapturaVerde — M34 + M34.3 (em Saúde Física)
 
-- **FAB verde único** no canto direito da tela Memórias (substituiu
-  os FABs próprios das tabs em M34.3, que colidiam em z-order com
-  o FAB verde nas mesmas coordenadas).
+- **FAB verde único** no canto direito da tela Saúde Física
+  (substituiu os FABs próprios das tabs em M34.3, que colidiam em
+  z-order com o FAB verde nas mesmas coordenadas).
 - Sheet "Registrar" mostra 5 ações: **1 ação contextual da tab
-  ativa** (Novo treino / Adicionar foto / Adicionar marco) + 4
-  ações de captura (Foto / Música / Vídeo / Frase).
+  ativa** (Novo treino / Adicionar marco / Adicionar exercício) +
+  4 ações de captura (Foto / Música / Vídeo / Frase).
+- Após L1 a aba "Fotos" foi removida; "Adicionar foto" continua
+  acessível via as 4 ações de captura padrão (Foto / Música /
+  Vídeo / Frase) — não precisa de aba dedicada.
 - Cada captura salva binário em `media/<categoria>/<data-rand>.<ext>`
   + companion `.md` com `tipo`, `arquivo`, `data`, `autor`,
   `para`, `legenda`.
 - Item contextual delega para o sheet interno da tab
-  (`SheetNovoTreino`, `expo-image-picker`, `SheetNovoMarco`).
+  (`SheetNovoTreino`, `SheetNovoMarco`) ou para a rota de cadastro
+  (`/exercicios/novo` para a aba Exercícios).
 
-## 3. Memórias e Marcos — M11 + M11.1 (Telas 09, 10, 11)
+## 3. Saúde Física — M11 + L1 (Telas 09, 10, 11)
 
-3 abas: **Treinos / Fotos / Marcos**.
+> **Sprint L1 (M-MEMORIAS-PARA-SAUDE-FISICA, 2026-05-07):** a aba
+> "Memórias" foi renomeada para **"Saúde Física"** (rota `/memoria`
+> → `/saude-fisica`). As 3 abas atuais são **Treinos /
+> Evolução Corporal / Exercícios**. A aba "Fotos" foi REMOVIDA — o
+> FAB+ verde do MenuCapturaVerde já cobre "Adicionar foto" sem
+> exigir aba dedicada. A aba "Exercícios" foi MOVIDA para dentro
+> de `/saude-fisica` (antes era item da seção "Registrar" do menu
+> lateral apontando para `/exercicios/novo`).
 
 ### 3.1 Treinos
 - Heatmap 13×7 (91 dias) com paleta verde, **centralizado
@@ -177,34 +189,47 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Tap em célula abre detalhe da sessão.
 - CRUD de sessão de treino: rotina, duração, observações,
   exercícios feitos, peso/reps.
-- "Novo treino" agora é item do MenuCapturaVerde unificado
-  (M34.3); abre `SheetNovoTreino` interno.
+- "Novo treino" é item do MenuCapturaVerde unificado (M34.3);
+  abre `SheetNovoTreino` interno.
 - Atalho ghost "Cadastrar exercícios na Galeria" no empty state
   (M11.1) navega para `/exercicios`.
 
-### 3.2 Fotos
-- Galeria agregada que varre todas as fotos do Vault (eventos +
-  marcos + medidas + galeria-manual).
-- Grid 3 colunas. Tap abre detalhe + atalho para registro de
-  origem.
-- "Adicionar foto" agora é item do MenuCapturaVerde unificado
-  (M34.3); helper `expo-image-picker` continua o motor (M11.1).
-- Empty state mantém botão inline "Registrar foto" para
-  descoberta.
-
-### 3.3 Marcos
-- Lista de marcos manuais + auto-gerados.
+### 3.2 Evolução Corporal (renomeada de "Marcos" em L1)
+- Subseção "Evolução corporal" no topo: faixa horizontal de cards
+  mensais com foto frontal + peso + delta vs medida anterior. Tap
+  abre `/medidas` (Tela 13) com hint `?focus=YYYY-MM-DD`.
+- Botão "Registrar evolução" no header da seção navega direto para
+  `/medidas/novo`.
+- Timeline de marcos manuais + auto-gerados abaixo da subseção.
 - Tags: treino / consistência / emocional / vitória / retomada.
-- "Adicionar marco" agora é item do MenuCapturaVerde unificado
-  (M34.3); abre `SheetNovoMarco` interno.
+- "Adicionar marco" é item do MenuCapturaVerde unificado (M34.3);
+  abre `SheetNovoMarco` interno.
 - Marcos automáticos (MOB-bridge-3): 5 heurísticas (ex: 7 dias
   seguidos, primeira nota acima de 4) com dedup `sha256`.
+- Componente interno: `<EvolucaoCorporalTab>` (renomeado de
+  `<MemoriasMarcosTab>` em L1).
 
-### 3.4 Evolução corporal — M11.4 (integração Marcos × Medidas)
-- Subseção "Evolução corporal" no topo da aba Marcos: faixa
-  horizontal de cards mensais com foto frontal + peso + delta vs
-  medida anterior. Tap em um card abre `/medidas` (Tela 13) com
-  hint `?focus=YYYY-MM-DD`.
+### 3.3 Exercícios (movida em L1 para dentro de Saúde Física)
+- Galeria reusada da rota `/exercicios` (Tela 07): filtro por
+  grupo muscular, campo de busca, grid 2 colunas com GIF preview.
+- "Adicionar exercício" é item do MenuCapturaVerde unificado
+  (M34.3); navega para `/exercicios/novo`.
+- Tap em card abre `/exercicios/[slug]`; long-press abre edição
+  em `/exercicios/[slug]/editar`.
+- Componente interno: `<MemoriasExerciciosTab>`. A rota standalone
+  `/exercicios` continua existindo (mantém o FAB+ verde próprio
+  para fluxo direto sem passar por Saúde Física).
+
+### 3.4 ~~Fotos~~ (REMOVIDA em L1)
+- Aba removida porque o FAB+ verde do MenuCapturaVerde já oferece
+  "Foto" como ação de captura padrão, com mesma cobertura. Reduz
+  superfície e mantém o átomo de UX.
+
+### 3.5 Evolução corporal interna — M11.4 (integração Marcos × Medidas)
+- Subseção "Evolução corporal" no topo da aba Evolução Corporal
+  (3.2): faixa horizontal de cards mensais com foto frontal +
+  peso + delta vs medida anterior. Tap em um card abre `/medidas`
+  (Tela 13) com hint `?focus=YYYY-MM-DD`.
 - Subtítulo "Última medida há N dias." em PT-BR (singular para
   hoje/ontem).
 - Botão "Registrar evolução" no canto direito do header da seção

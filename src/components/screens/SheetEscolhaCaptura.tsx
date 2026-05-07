@@ -27,7 +27,7 @@ import { haptics } from '@/lib/haptics';
 export interface SheetEscolhaCapturaProps {
   // Disparado quando o usuario escolhe "Registrar momento". O caller
   // (app/captura.tsx) e' responsavel por dismissar a rota e navegar
-  // para /memoria?abrirCaptura=1.
+  // para /saude-fisica?abrirCaptura=1 (sprint L1 renomeou /memoria).
   onRegistrarMomento: () => void;
   // Disparado quando o usuario escolhe "Escanear documento". O caller
   // dismissa e navega para /scanner.

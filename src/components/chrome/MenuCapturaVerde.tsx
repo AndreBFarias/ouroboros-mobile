@@ -97,10 +97,10 @@ export interface MenuCapturaVerdeProps {
   // original (4 itens).
   acoesExtras?: ReadonlyArray<AcaoExtraCaptura>;
   // M-CAPTURA-UNIFICADA: quando true, o sheet expande automaticamente
-  // 1 frame apos a montagem. Usado por MemoriasScreen quando a rota
-  // /memoria recebe ?abrirCaptura=1 (vinda de /captura -> "Registrar
-  // momento"). Sem isto, o usuario teria que tocar no FAB verde de
-  // novo. Acionado apenas uma vez por mount via ref interno.
+  // 1 frame apos a montagem. Usado por SaudeFisicaScreen quando a
+  // rota /saude-fisica recebe ?abrirCaptura=1 (vinda de /captura ->
+  // "Registrar momento"). Sem isto, o usuario teria que tocar no FAB
+  // verde de novo. Acionado apenas uma vez por mount via ref interno.
   abrirNoMount?: boolean;
 }
 

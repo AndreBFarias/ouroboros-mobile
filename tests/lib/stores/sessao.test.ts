@@ -53,11 +53,12 @@ describe('useSessao', () => {
 
   describe('setUltimaRota', () => {
     it('grava a rota e bumpa atualizadoEm', () => {
-      // M27: paths migraram de /(tabs)/* para raiz.
+      // M27: paths migraram de /(tabs)/* para raiz. Sprint L1
+      // renomeou /memoria para /saude-fisica.
       const antes = useSessao.getState().atualizadoEm;
-      useSessao.getState().setUltimaRota('/memoria');
+      useSessao.getState().setUltimaRota('/saude-fisica');
       const depois = useSessao.getState().ultimaRota;
-      expect(depois).toBe('/memoria');
+      expect(depois).toBe('/saude-fisica');
       // atualizadoEm deve ser maior (epoch -> agora).
       expect(useSessao.getState().atualizadoEm > antes).toBe(true);
     });

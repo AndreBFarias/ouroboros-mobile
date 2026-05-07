@@ -1,19 +1,26 @@
-// Container da aba Memórias. Renderiza 3 tabs internas (Treinos /
-// Fotos / Marcos) via pager custom: barra de tabs no topo + view
-// condicional. Spring suave ao trocar via tap (sem swipe horizontal
-// para reduzir conflito com o gesto de fechar BottomSheet em sub-
-// componentes).
+// Container da tela Saude Fisica (sprint L1 renomeou de
+// MemoriasScreen). Renderiza 3 tabs internas via pager custom: barra
+// de tabs no topo + view condicional. Spring suave ao trocar via tap
+// (sem swipe horizontal para reduzir conflito com o gesto de fechar
+// BottomSheet em sub-componentes).
+//
+// Tabs apos L1:
+//   - Treinos (mantida)
+//   - Evolucao Corporal (renomeada de "Marcos")
+//   - Exercicios (movida de Registrar -> nova aba dedicada)
+//
+// Aba "Fotos" REMOVIDA — FAB+ verde do MenuCapturaVerde ja oferece
+// "Adicionar foto" com mesma cobertura, sem precisar de aba dedicada.
 //
 // Pager custom evita adicionar react-native-tab-view + pager-view
-// como dependencias novas (a spec da abertura para essa decisão na
-// seção 5).
+// como dependencias novas (decisao herdada do M11).
 //
 // M34.3: o MenuCapturaVerde unificado absorveu o papel dos FABs
-// proprios das tabs (que colidiam em z-order com ele). Cada tab
-// registra uma acao contextual ("Adicionar marco", "Adicionar foto",
-// "Novo treino") via prop onRegistrarAcaoExtra; a screen agrega a
-// acao da tab ativa em acoesExtras do MenuCapturaVerde, que renderiza
-// como primeiro item do sheet "Registrar".
+// proprios das tabs. Cada tab registra uma acao contextual ("Novo
+// treino", "Adicionar marco", "Adicionar exercicio") via prop
+// onRegistrarAcaoExtra; a screen agrega a acao da tab ativa em
+// acoesExtras do MenuCapturaVerde, que renderiza como primeiro item
+// do sheet "Registrar".
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useState, type ReactNode } from 'react';
@@ -25,22 +32,22 @@ import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { MemoriasTreinosTab } from './MemoriasTreinosTab';
-import { MemoriasFotosTab } from './MemoriasFotosTab';
-import { MemoriasMarcosTab } from './MemoriasMarcosTab';
+import { EvolucaoCorporalTab } from './EvolucaoCorporalTab';
+import { MemoriasExerciciosTab } from './MemoriasExerciciosTab';
 import {
   MenuCapturaVerde,
   type AcaoExtraCaptura,
 } from '@/components/chrome/MenuCapturaVerde';
 
-type TabKey = 'treinos' | 'fotos' | 'marcos';
+type TabKey = 'treinos' | 'evolucao' | 'exercicios';
 
 const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
   { key: 'treinos', label: 'Treinos' },
-  { key: 'fotos', label: 'Fotos' },
-  { key: 'marcos', label: 'Marcos' },
+  { key: 'evolucao', label: 'Evolução Corporal' },
+  { key: 'exercicios', label: 'Exercícios' },
 ];
 
-export function MemoriasScreen(): ReactNode {
+export function SaudeFisicaScreen(): ReactNode {
   // M-CAPTURA-UNIFICADA: query ?abrirCaptura=1 vinda de /captura ->
   // "Registrar momento" sinaliza que o usuario ja escolheu abrir o
   // MenuCapturaVerde. Repassamos como prop abrirNoMount para o sheet
@@ -82,7 +89,7 @@ export function MemoriasScreen(): ReactNode {
   return (
     <Screen padded={false}>
       <View style={{ paddingHorizontal: spacing.lg }}>
-        <Header title="Memórias" />
+        <Header title="Saúde Física" />
       </View>
 
       <View
@@ -146,11 +153,15 @@ export function MemoriasScreen(): ReactNode {
             onRegistrarAcaoExtra={handleRegistrarAcaoExtra}
           />
         ) : null}
-        {tab === 'fotos' ? (
-          <MemoriasFotosTab onRegistrarAcaoExtra={handleRegistrarAcaoExtra} />
+        {tab === 'evolucao' ? (
+          <EvolucaoCorporalTab
+            onRegistrarAcaoExtra={handleRegistrarAcaoExtra}
+          />
         ) : null}
-        {tab === 'marcos' ? (
-          <MemoriasMarcosTab onRegistrarAcaoExtra={handleRegistrarAcaoExtra} />
+        {tab === 'exercicios' ? (
+          <MemoriasExerciciosTab
+            onRegistrarAcaoExtra={handleRegistrarAcaoExtra}
+          />
         ) : null}
       </View>
 

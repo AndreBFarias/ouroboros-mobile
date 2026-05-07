@@ -78,7 +78,7 @@ export default async function caseM341SheetAcimaFab(
       const w = globalThis as unknown as {
         __gauntlet: { abrir: (rota: string) => Promise<void> };
       };
-      await w.__gauntlet.abrir('/memoria');
+      await w.__gauntlet.abrir('/saude-fisica');
     });
     await page.waitForTimeout(1500);
 

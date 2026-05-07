@@ -54,7 +54,7 @@ async function abrirMemorias(page: PlaywrightPageLike): Promise<void> {
     const w = globalThis as unknown as {
       __gauntlet: { abrir: (r: string) => Promise<void> };
     };
-    return w.__gauntlet.abrir('/memoria');
+    return w.__gauntlet.abrir('/saude-fisica');
   });
   await page.waitForTimeout(1500);
 }

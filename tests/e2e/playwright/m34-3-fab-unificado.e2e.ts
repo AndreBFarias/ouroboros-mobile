@@ -64,7 +64,7 @@ export default async function caseM343FABUnificado(
       const w = globalThis as unknown as {
         __gauntlet: { abrir: (rota: string) => Promise<void> };
       };
-      await w.__gauntlet.abrir('/memoria');
+      await w.__gauntlet.abrir('/saude-fisica');
     });
     await page.waitForTimeout(1500);
 
@@ -214,7 +214,7 @@ export default async function caseM343FABUnificado(
       const w = globalThis as unknown as {
         __gauntlet: { abrir: (rota: string) => Promise<void> };
       };
-      await w.__gauntlet.abrir('/memoria');
+      await w.__gauntlet.abrir('/saude-fisica');
     });
     await page.waitForTimeout(1200);
     await page.evaluate(() => {

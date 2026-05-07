@@ -7,8 +7,9 @@ import { isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
 describe('isRotaRestauravel', () => {
   it('rota de visualizacao e restauravel', () => {
     // M27: rotas migraram de /(tabs)/* para raiz; fixtures
-    // refletem o novo path canonico.
-    expect(isRotaRestauravel('/memoria')).toBe(true);
+    // refletem o novo path canonico. Sprint L1 renomeou /memoria
+    // para /saude-fisica.
+    expect(isRotaRestauravel('/saude-fisica')).toBe(true);
     expect(isRotaRestauravel('/humor')).toBe(true);
     expect(isRotaRestauravel('/exercicios/lista')).toBe(true);
   });

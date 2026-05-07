@@ -45,7 +45,6 @@ import {
   Calendar,
   CalendarRange,
   Camera,
-  Dumbbell,
   Hash,
   Heart,
   Home,
@@ -138,7 +137,7 @@ export function MenuLateral() {
     const ver: ItemMenu[] = [
       { label: 'Hoje', a11yLabel: 'item hoje', icone: Home, route: '/' },
       { label: 'Recap', a11yLabel: 'item recap', icone: BarChart, route: '/recap' },
-      { label: 'Memórias', a11yLabel: 'item memorias', icone: Layers, route: '/memoria' },
+      { label: 'Saúde Física', a11yLabel: 'item saude fisica', icone: Layers, route: '/saude-fisica' },
       { label: 'Humor', a11yLabel: 'item humor', icone: Heart, route: '/humor' },
       { label: 'Calendário', a11yLabel: 'item calendario', icone: Calendar, route: '/calendario' },
       // M37.1: item "Agenda" (Google Calendar leitura).
@@ -156,7 +155,12 @@ export function MenuLateral() {
       // momento" e "Escanear documento". Em vez do legado
       // rotaCaptura('camera') -> /scanner, que pulava direto a decisao.
       { label: 'Câmera', a11yLabel: 'registrar camera', icone: Camera, route: '/captura', cor: colors.orange },
-      { label: 'Exercícios', a11yLabel: 'registrar exercicios', icone: Dumbbell, route: rotaCaptura('exercicio'), cor: colors.green },
+      // L1 (M-MEMORIAS-PARA-SAUDE-FISICA, 2026-05-07): item
+      // "Exercícios" foi movido daqui para a aba Exercicios dentro de
+      // /saude-fisica (a galeria fica naturalmente agrupada com
+      // Treinos e Evolucao Corporal). MenuLateral seca "Registrar"
+      // perde uma entrada — o caminho de cadastro continua acessivel
+      // via FAB+ verde dentro da aba.
       { label: 'Conquista', a11yLabel: 'registrar conquista', icone: Trophy, route: rotaCaptura('vitoria'), cor: colors.yellow },
       { label: 'Crise', a11yLabel: 'registrar crise', icone: AlertTriangle, route: rotaCaptura('trigger'), cor: colors.red },
     ];

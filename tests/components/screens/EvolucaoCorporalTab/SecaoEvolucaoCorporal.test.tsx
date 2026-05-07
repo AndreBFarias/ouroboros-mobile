@@ -7,7 +7,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { render, fireEvent } from '@testing-library/react-native';
-import { SecaoEvolucaoCorporal } from '@/components/screens/MemoriasMarcosTab/SecaoEvolucaoCorporal';
+import { SecaoEvolucaoCorporal } from '@/components/screens/EvolucaoCorporalTab/SecaoEvolucaoCorporal';
 import type { Medida } from '@/lib/schemas/medidas';
 
 // Mock do useRouter para capturar navegacao sem montar o expo stack.

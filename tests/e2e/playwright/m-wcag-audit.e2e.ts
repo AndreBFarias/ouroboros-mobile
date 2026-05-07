@@ -31,7 +31,7 @@ interface Violacao {
   fontSize: number;
 }
 
-const ROTAS = ['/memoria', '/humor', '/eventos', '/todo', '/financas'];
+const ROTAS = ['/saude-fisica', '/humor', '/eventos', '/todo', '/financas'];
 
 export default async function caseWcagAudit(
   page: PlaywrightPageLike,

@@ -5,6 +5,38 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint L1 — `M-MEMORIAS-PARA-SAUDE-FISICA` (2026-05-07)
+
+Aba "Memórias" renomeada para "Saúde Física" com 3 tabs reorganizadas:
+Treinos (mantém), Evolução Corporal (renomeada de Marcos), Exercícios
+(movida de Registrar). Aba "Fotos" REMOVIDA (FAB+ verde já permite
+captura contextual).
+
+Renames principais via `git mv`:
+- `app/memoria.tsx` → `app/saude-fisica.tsx`
+- `MemoriasScreen.tsx` → `SaudeFisicaScreen.tsx`
+- `MemoriasMarcosTab.tsx` → `EvolucaoCorporalTab.tsx`
+- 15 E2E e diversos callsites (`router.push('/memoria')` →
+  `'/saude-fisica'`) auto-replaced.
+
+Novidades: `MemoriasExerciciosTab.tsx` reusa lógica de
+`app/exercicios/index.tsx` + ação contextual no MenuCapturaVerde
+("Adicionar exercício" via `onRegistrarAcaoExtra` M34.3). E2E novo
+`m-saude-fisica.e2e.ts`.
+
+Remoções: `MemoriasFotosTab.tsx` (243 linhas) + E2E
+`m11-1-memorias-usavel.e2e.ts` (asseravava aba removida) +
+item "Exercícios" da seção "Registrar" do MenuLateral.
+
+Migration `useSessao` v2→v3: ultimaRota `/memoria` → `/saude-fisica`
+automático no boot pós-update.
+
+`docs/FEATURES-CANONICAS.md` seção 3 reescrita.
+
+Métricas: 1739 testes / 176 suítes verde (+3 / +1 suite contra
+1736 / 175 baseline) · TS strict 0 · Hermes Android 7,7 MB intacto ·
+Gauntlet leak 0/6 · anonimato OK · PT-BR OK.
+
 ### Sprints K4 + K5 — `M-FAB-MENU-SAFE-BOTTOM` + `M-BOTOES-LARGURA` (consolidadas, 2026-05-07)
 
 **Bloco K FECHADO (5/5).** K4: helper novo

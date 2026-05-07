@@ -98,7 +98,7 @@ export default async function caseMCapturaUnificada(
       const w = globalThis as unknown as {
         __gauntlet?: { abrir: (rota: string) => Promise<void> };
       };
-      await w.__gauntlet?.abrir('/memoria?abrirCaptura=1');
+      await w.__gauntlet?.abrir('/saude-fisica?abrirCaptura=1');
     });
     await page.waitForTimeout(2500);
 

@@ -1,6 +1,8 @@
-// Smoke da rota app/memoria.tsx (M27 moveu de (tabs)/memoria para
-// raiz). Verifica que MemoriasScreen renderiza header, tabs e que
-// a aba inicial e Treinos.
+// Smoke da rota app/saude-fisica.tsx (sprint L1 renomeou de
+// app/memoria.tsx). Verifica que SaudeFisicaScreen renderiza header,
+// as 3 tabs corretas (Treinos / Evolucao Corporal / Exercicios) e que
+// a aba inicial e Treinos. Aba Fotos foi removida; a verificacao
+// explicita garante regressao.
 //
 // Mocka os hooks de dados para nao depender de SAF/file system real,
 // e mocka @gorhom/bottom-sheet usando require dentro do factory para
@@ -11,7 +13,7 @@ jest.mock('expo-router', () => ({
   __esModule: true,
   useFocusEffect: () => undefined,
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  // M-CAPTURA-UNIFICADA: MemoriasScreen passou a ler ?abrirCaptura=1
+  // M-CAPTURA-UNIFICADA: SaudeFisicaScreen passou a ler ?abrirCaptura=1
   // via useLocalSearchParams. Mock devolve objeto vazio (sem query)
   // para o caminho default (auto-abertura nao acionada).
   useLocalSearchParams: () => ({}),
@@ -40,6 +42,15 @@ jest.mock('@/lib/hooks/useFotosAgregadas', () => ({
   __esModule: true,
   useFotosAgregadas: () => ({
     fotos: [],
+    loading: false,
+    error: null,
+    recarregar: () => Promise.resolve(),
+  }),
+}));
+jest.mock('@/lib/hooks/useMedidas', () => ({
+  __esModule: true,
+  useMedidas: () => ({
+    medidas: [],
     loading: false,
     error: null,
     recarregar: () => Promise.resolve(),
@@ -77,19 +88,23 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
-import MemoriaTab from '@/../app/memoria';
+import SaudeFisicaTab from '@/../app/saude-fisica';
 
-describe('app/memoria.tsx', () => {
-  it('renderiza header Memorias e tabs Treinos/Fotos/Marcos', () => {
-    const { getByText } = render(<MemoriaTab />);
-    expect(getByText('Memórias')).toBeTruthy();
+describe('app/saude-fisica.tsx', () => {
+  it('renderiza header "Saude Fisica" e as 3 tabs (Treinos / Evolucao Corporal / Exercicios)', () => {
+    const { getByText, queryByText } = render(<SaudeFisicaTab />);
+    expect(getByText('Saúde Física')).toBeTruthy();
     expect(getByText('Treinos')).toBeTruthy();
-    expect(getByText('Fotos')).toBeTruthy();
-    expect(getByText('Marcos')).toBeTruthy();
+    expect(getByText('Evolução Corporal')).toBeTruthy();
+    expect(getByText('Exercícios')).toBeTruthy();
+    // Regressao: aba Fotos e label antigo "Memorias" foram removidos.
+    expect(queryByText('Fotos')).toBeNull();
+    expect(queryByText('Memórias')).toBeNull();
+    expect(queryByText('Marcos')).toBeNull();
   });
 
-  it('mostra empty state quando nao ha treinos', () => {
-    const { getByText } = render(<MemoriaTab />);
+  it('mostra empty state quando nao ha treinos (aba inicial)', () => {
+    const { getByText } = render(<SaudeFisicaTab />);
     expect(
       getByText('Vai aparecer aqui assim que você treinar.')
     ).toBeTruthy();

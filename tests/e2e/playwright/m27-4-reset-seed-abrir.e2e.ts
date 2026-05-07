@@ -1,11 +1,11 @@
-// E2E M27.4 -- valida que reset() + seed() + abrir('/memoria') em
+// E2E M27.4 -- valida que reset() + seed() + abrir('/saude-fisica') em
 // sequencia rapida (<2s) NAO produz "Maximum update depth exceeded"
 // no console. Bug pre-existente desde M24, fix em M27.4 via latch
 // persistente do useBootStatus em SessaoBootGate.
 //
 // Sequencia:
 //   1. Bootstrap inicial (espera latch useBootStatus.pronto = true).
-//   2. reset() + seed() + abrir('/memoria') sem awaits intermediarios.
+//   2. reset() + seed() + abrir('/saude-fisica') sem awaits intermediarios.
 //   3. Verifica console.error capturado pelo gauntlet -- nenhum
 //      'Maximum update depth' deve aparecer.
 //
@@ -56,7 +56,7 @@ export default async function caseM27_4(
       };
     }
 
-    // 3. Sequencia rapida reset + seed + abrir('/memoria') sem
+    // 3. Sequencia rapida reset + seed + abrir('/saude-fisica') sem
     //    intervalos. Esta e a reproducao do bug original.
     const sequenciaOk = await page.evaluate(async () => {
       const w = globalThis as unknown as { __gauntlet?: GauntletParaTeste };
@@ -64,7 +64,7 @@ export default async function caseM27_4(
       try {
         w.__gauntlet.reset();
         w.__gauntlet.seed();
-        await w.__gauntlet.abrir('/memoria');
+        await w.__gauntlet.abrir('/saude-fisica');
         return { ok: true, motivo: '' };
       } catch (err) {
         return { ok: false, motivo: (err as Error).message };
@@ -117,12 +117,12 @@ export default async function caseM27_4(
       const w = globalThis as unknown as { __gauntlet?: GauntletParaTeste };
       return w.__gauntlet?.estado().rota ?? '';
     });
-    if (!rotaAtual.startsWith('/memoria')) {
+    if (!rotaAtual.startsWith('/saude-fisica')) {
       return {
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: `rota apos abrir('/memoria') ficou em "${rotaAtual}"`,
+        detalhe: `rota apos abrir('/saude-fisica') ficou em "${rotaAtual}"`,
         screenshots,
       };
     }
@@ -131,7 +131,7 @@ export default async function caseM27_4(
       sprint,
       aspecto,
       status: 'PASS',
-      detalhe: `reset+seed+abrir('/memoria') sem "Maximum update depth"; ${erros.length} erros totais no buffer (nenhum bate). Rota final: ${rotaAtual}`,
+      detalhe: `reset+seed+abrir('/saude-fisica') sem "Maximum update depth"; ${erros.length} erros totais no buffer (nenhum bate). Rota final: ${rotaAtual}`,
       screenshots,
     };
   } catch (err) {

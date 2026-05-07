@@ -1,4 +1,4 @@
-// E2E M24 -- resume state. Apos setUltimaRota('/memoria') + reload,
+// E2E M24 -- resume state. Apos setUltimaRota('/saude-fisica') + reload,
 // app deveria abrir em /memoria. Bug descoberto: abre em '/'.
 //
 // Comentarios sem acento.
@@ -18,7 +18,7 @@ export default async function caseM24(page: PlaywrightPageLike): Promise<Resulta
       };
       w.__gauntlet.reset();
       w.__gauntlet.seed();
-      w.__gauntlet.setUltimaRota('/memoria');
+      w.__gauntlet.setUltimaRota('/saude-fisica');
     });
     await page.goto('http://localhost:8081/');
     await page.waitForTimeout(15000);
@@ -28,7 +28,7 @@ export default async function caseM24(page: PlaywrightPageLike): Promise<Resulta
     await page.screenshot({ path });
     screenshots.push(path);
 
-    if (url !== '/memoria') {
+    if (url !== '/saude-fisica') {
       return {
         sprint,
         aspecto,

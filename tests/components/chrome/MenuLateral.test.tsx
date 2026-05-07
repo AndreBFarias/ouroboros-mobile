@@ -65,7 +65,9 @@ describe('MenuLateral', () => {
 
     // Ver
     expect(getByLabelText('item hoje')).toBeTruthy();
-    expect(getByLabelText('item memorias')).toBeTruthy();
+    // L1: item "Memórias" -> "Saúde Física" (a11yLabel mudou).
+    expect(getByLabelText('item saude fisica')).toBeTruthy();
+    expect(queryByLabelText('item memorias')).toBeNull();
     expect(getByLabelText('item humor')).toBeTruthy();
     // M35: item "financas" so aparece quando o toggle
     // mostrarFinancasEmDesenvolvimento esta ON. Default OFF aqui
@@ -75,7 +77,9 @@ describe('MenuLateral', () => {
     expect(getByLabelText('registrar humor')).toBeTruthy();
     expect(getByLabelText('registrar voz')).toBeTruthy();
     expect(getByLabelText('registrar camera')).toBeTruthy();
-    expect(getByLabelText('registrar exercicios')).toBeTruthy();
+    // L1: item "Exercícios" foi REMOVIDO da secao Registrar (movido
+    // para a aba Exercicios em /saude-fisica).
+    expect(queryByLabelText('registrar exercicios')).toBeNull();
     expect(getByLabelText('registrar conquista')).toBeTruthy();
     expect(getByLabelText('registrar crise')).toBeTruthy();
   });
@@ -124,8 +128,9 @@ describe('MenuLateral', () => {
   it('tap em item Ver navega via router.push e fecha o menu', () => {
     useNavegacao.setState({ menuAberto: true });
     const { getByLabelText } = render(<MenuLateral />);
-    fireEvent.press(getByLabelText('item memorias'));
-    expect(mockPush).toHaveBeenCalledWith('/memoria');
+    // L1: item Memorias virou Saude Fisica; rota /memoria -> /saude-fisica.
+    fireEvent.press(getByLabelText('item saude fisica'));
+    expect(mockPush).toHaveBeenCalledWith('/saude-fisica');
     expect(useNavegacao.getState().menuAberto).toBe(false);
   });
 

@@ -74,10 +74,10 @@ E2E Gauntlet + validação humana adb. Template: `_TEMPLATE-SAVE-FEATURE.md`.
 
 ### Bloco L — Telas/Abas
 
-| # | Sprint | Spec | Estim. | ADR |
-|---|---|---|---|---|
-| L1 | `M-MEMORIAS-PARA-SAUDE-FISICA` | `M-MEMORIAS-PARA-SAUDE-FISICA-spec.md` | ~3h | — |
-| L2 | `M-RECAP-CALENDARIO-UNIFICAR` | `M-RECAP-CALENDARIO-UNIFICAR-spec.md` | ~3h | 0021 |
+| # | Sprint | Spec | Estim. | ADR | Status |
+|---|---|---|---|---|---|
+| L1 | `M-MEMORIAS-PARA-SAUDE-FISICA` | `M-MEMORIAS-PARA-SAUDE-FISICA-spec.md` | ~3h | — | `[ok]` |
+| L2 | `M-RECAP-CALENDARIO-UNIFICAR` | `M-RECAP-CALENDARIO-UNIFICAR-spec.md` | ~3h | 0021 | `[todo]` |
 
 ### Bloco N — Risco residual moti
 

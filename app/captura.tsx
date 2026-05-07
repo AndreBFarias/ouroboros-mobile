@@ -1,7 +1,8 @@
 // Sprint M-CAPTURA-UNIFICADA. Rota raiz transparentModal que ramifica
 // o item "Camera" do MenuLateral em duas escolhas semanticas:
-//   - Registrar momento -> /memoria?abrirCaptura=1 (MenuCapturaVerde
-//     abre automaticamente em Memorias).
+//   - Registrar momento -> /saude-fisica?abrirCaptura=1
+//     (MenuCapturaVerde abre automaticamente em Saude Fisica). Sprint
+//     L1 renomeou /memoria -> /saude-fisica.
 //   - Escanear documento -> /scanner (ScannerSheet M09; em ambiente
 //     sem dev-client mostra empty state honesto via comportamento
 //     existente).
@@ -32,9 +33,10 @@ export default function Captura() {
     sheetRef.current?.close();
     // Replace evita acumular entrada de historico que volte ao /captura
     // (modal one-shot ja consumido). Cast template literal -- a query
-    // ?abrirCaptura=1 e' lida em MemoriasScreen via useLocalSearchParams.
+    // ?abrirCaptura=1 e' lida em SaudeFisicaScreen via
+    // useLocalSearchParams.
     router.replace(
-      '/memoria?abrirCaptura=1' as Parameters<typeof router.replace>[0]
+      '/saude-fisica?abrirCaptura=1' as Parameters<typeof router.replace>[0]
     );
   }, [router]);
 
