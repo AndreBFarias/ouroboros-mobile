@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Gauntlet Ouroboros
+Comment=Sobe Metro web e abre Chrome em /_dev/gauntlet
+Icon=utilities-terminal
+Exec=bash -c "cd /home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros && ./gauntlet.sh --quiet"
+Terminal=false
+Categories=Development;
+StartupNotify=true

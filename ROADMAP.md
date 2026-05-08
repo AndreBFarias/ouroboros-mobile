@@ -48,6 +48,7 @@ bloqueia APK preview.
 | V4.0 | `INFRA-VAULT-WEB-MOCK` (pré-requisito V4) | `INFRA-VAULT-WEB-MOCK-spec.md` | ~2h | `[ok]` |
 | V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~1h | `[ok]` (escopo expandido absorveu disparaBootHooks) |
 | W2.1 | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS` (achado V4 v2) | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS-spec.md` | ~0.3h | `[ok]` |
+| V4.0.1 | `INFRA-VAULT-MOCK-CONVERGENCIA` (achado pós-validação) | `INFRA-VAULT-MOCK-CONVERGENCIA-spec.md` | ~2-3h | `[todo]` (mobile real não bloqueia) |
 
 ### Bloco W — Patches visuais consolidados
 
