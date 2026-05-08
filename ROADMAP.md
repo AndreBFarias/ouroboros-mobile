@@ -46,7 +46,8 @@ bloqueia APK preview.
 | V2 | `M-AUDIT-E2E-MENU-NOMES` | `M-AUDIT-E2E-MENU-NOMES-spec.md` | ~0.3h | `[ok]` |
 | V3 | `M-AUDIT-E2E-BOTOES-LARGURA` | `M-AUDIT-E2E-BOTOES-LARGURA-spec.md` | ~0.5h | `[ok]` |
 | V4.0 | `INFRA-VAULT-WEB-MOCK` (pré-requisito V4) | `INFRA-VAULT-WEB-MOCK-spec.md` | ~2h | `[ok]` |
-| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~0.5h | `[todo]` (destravada por V4.0) |
+| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~1h | `[ok]` (escopo expandido absorveu disparaBootHooks) |
+| W2.1 | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS` (achado V4 v2) | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS-spec.md` | ~0.3h | `[todo]` |
 
 ### Bloco W — Patches visuais consolidados
 

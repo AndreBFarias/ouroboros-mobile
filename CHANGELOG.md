@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda B parte 1 (2026-05-08): V4 v2 escopo expandido + spec W2.1 colateral
+
+- **V4 v2 `M-AUDIT-E2E-SAVE-DEVICES-INDEX` (escopo expandido)** — V4 v1
+  rejeitada por boot hook não re-disparar pós-seed. Solução: opção (b)
+  absorve `disparaBootHooks` na mesma sprint:
+  - `src/lib/dev/gauntlet.ts` ganha `disparaBootHooks(): Promise<void>`
+    com guard explícito (não comGuard porque é async). Import dinâmico
+    de `@/lib/boot/reagendamento` para evitar ciclo. No-op em mobile.
+  - `tests/lib/dev/gauntlet-disparaBootHooks.test.ts` 3 casos.
+  - `tests/e2e/playwright/m-save-devices-index.e2e.ts` (235L) 5
+    cenários: sanity API + reset+seed+disparaBootHooks +
+    lerVaultMock(_devices.md) + asserts frontmatter M38 (8 checks)
+    + idempotência byte-a-byte ignorando `ultima_atividade`.
+  - `docs/GAUNTLET.md` documenta padrão "reset → seed → disparaBootHooks".
+- **Spec colateral W2.1 `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS`** —
+  achado executor V4: `aplicarReset` em gauntlet.ts:251-258 limpa
+  chaves desatualizadas (`ouroboros.vault` em vez de `ouroboros.vault.v1`).
+  Sprint nova materializada para sincronizar 1:1 com chaves canônicas
+  das stores zustand persist.
+
+Smoke: 184 suites / 1794 testes verde (+3 vs 1791).
+
 ### Onda A (2026-05-08): V4.0 + W1.1 + G2.1 colaterais paralelos
 
 - **V4.0 `INFRA-VAULT-WEB-MOCK`** — mock store SAF web em `src/lib/dev/vaultMockStore.ts`

@@ -288,6 +288,35 @@ Use estes helpers em E2Es para validar **conteúdo** dos arquivos
 gravados (devicesIndex, frases, humores, eventos, etc), não só
 "não crashou".
 
+### Re-disparo dos BOOT_HOOKS (V4 v2, 2026-05-08)
+
+`BOOT_HOOKS` (em `src/lib/boot/reagendamento.ts`) rodam uma única
+vez no mount do `RootLayout`, e isso acontece **antes** de
+`__gauntlet.seed()` definir `vaultRoot`. Hooks que dependem de
+`vaultRoot` (`atualizarDeviceIndexHook`, `migrarLembretesHook`,
+`migrarAssetsHook`, `migrarCacheAgendaHook`, `migrarLayoutVaultHook`)
+fazem early return no boot inicial — e nada é gravado no
+`useVaultMock` mesmo após `seed`.
+
+Para E2Es que validam efeitos de boot (ex: `markdown/_devices.md`
+escrito pelo M38), use:
+
+```js
+window.__gauntlet.reset();
+window.__gauntlet.seed();
+await window.__gauntlet.disparaBootHooks();
+// Agora atualizarDeviceIndexHook rodou com vaultRoot definido
+// e gravou markdown/_devices.md no useVaultMock.
+const md = window.__gauntlet.lerVaultMock(
+  'web://mock-vault/Ouroboros/markdown/_devices.md'
+);
+```
+
+`disparaBootHooks()` é idempotente: chamadas repetidas produzem o
+mesmo conteúdo (cada hook já é `last-write-wins` ou guarda flag de
+execução). Usar antes de cada batch de assertions que dependa de
+boot effect.
+
 ## Próximos passos
 
 - M-GAUNTLET-DEAD-CODE-V2 — refactor para tornar gauntlet

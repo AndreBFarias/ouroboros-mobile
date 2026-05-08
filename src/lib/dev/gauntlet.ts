@@ -135,6 +135,16 @@ export interface GauntletAPI {
   // V4.0: lista todas as URIs gravadas no Vault mock. Ordenado
   // alfabeticamente. Retorna [] em mobile.
   listarVaultMock(): string[];
+  // V4 v2 (escopo expandido pos-rejeicao formal V4 v1, 2026-05-08):
+  // re-dispara todos os BOOT_HOOKS registrados em
+  // @/lib/boot/reagendamento.ts. Necessario porque BOOT_HOOKS rodam
+  // uma unica vez no mount do RootLayout (atraves do hook React de
+  // boot), e isso ocorre ANTES de __gauntlet.seed() definir vaultRoot.
+  // Hooks que dependem de vaultRoot (atualizarDeviceIndexHook,
+  // migrarLembretesHook, migrarAssetsHook, etc) fazem early return
+  // no boot inicial. E2Es que validam efeitos de boot precisam
+  // re-disparar a fila apos seed. No-op em mobile (guard ja filtra).
+  disparaBootHooks(): Promise<void>;
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -488,6 +498,16 @@ const api: GauntletAPI = {
     null as string | null
   ),
   listarVaultMock: comGuard(() => useVaultMock.getState().listar(), [] as string[]),
+  disparaBootHooks: async () => {
+    if (!GAUNTLET_ATIVO) return;
+    // Import dinamico para evitar ciclo: gauntlet.ts e leve em
+    // tempo de require, e reagendamento.ts ja importa varios
+    // modulos de feature lazy. Em web/dev o bundle ja inclui ambos.
+    const { reagendarTodosBootHooks } = await import(
+      '@/lib/boot/reagendamento'
+    );
+    await reagendarTodosBootHooks();
+  },
 };
 
 // Auditoria 2026-05-04 (item 27): captura console.error para o
