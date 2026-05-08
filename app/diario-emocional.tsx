@@ -378,7 +378,6 @@ export default function DiarioEmocional() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save diario fail', e);
       setSalvando(false);
     }

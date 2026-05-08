@@ -90,7 +90,6 @@ export default function Showcase() {
           onPress={() => {
             // Apenas navegacao direta; sheets devem abrir via
             // __gauntlet.abrirSheet pelo console (requer estado seed).
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             router.push(tela.rota as any);
           }}
           accessibilityRole="button"

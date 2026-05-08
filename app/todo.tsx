@@ -15,7 +15,6 @@
 // Comentarios sem acento (convencao shell/CI).
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,

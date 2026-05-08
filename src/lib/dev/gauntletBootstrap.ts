@@ -33,28 +33,24 @@ interface RouterMinimo {
 
 export function iniciarModoDev(): void {
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/dev/gauntlet').instalarGauntlet();
   }
 }
 
 export function sinalizarBootDev(): void {
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/dev/gauntlet').marcarBootCompleto();
   }
 }
 
 export function registrarRouterDev(router: RouterMinimo): void {
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/dev/gauntlet').setRouterRef(router);
   }
 }
 
 export function registrarPathnameDev(pathname: string): void {
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@/lib/dev/gauntlet').setPathnameRef(pathname);
   }
 }

@@ -82,7 +82,6 @@ export function useHumorHeatmap(): UseHumorHeatmapResult {
     // estatica a useHumorMock e mantendo o modulo fora do bundle.
     if (__DEV__) {
       if (!MODO_DEV_WEB) return;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const humor = require('@/lib/dev/humorMock') as typeof import('@/lib/dev/humorMock');
       setCelulasMock(humor.useHumorMock.getState().celulas);
       return humor.useHumorMock.subscribe((s) => setCelulasMock(s.celulas));

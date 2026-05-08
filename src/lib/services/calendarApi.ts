@@ -133,7 +133,6 @@ function eventosMockados(
 }
 
 function isMockToken(token: string): boolean {
-  // eslint-disable-next-line no-undef
   const dev = typeof __DEV__ !== 'undefined' && __DEV__ === true;
   return dev && Platform.OS === 'web' && token.startsWith('mock-access-token');
 }

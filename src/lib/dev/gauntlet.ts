@@ -37,8 +37,6 @@ import { useEventosMock } from '@/lib/dev/eventosMock';
 // modulo pesado.
 import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 
-declare const __DEV__: boolean;
-
 export const GAUNTLET_ATIVO: boolean = MODO_DEV_WEB;
 
 export interface GauntletEstado {
@@ -373,7 +371,6 @@ const api: GauntletAPI = {
     // Auditoria 2026-05-04 (item 14): aviso explicito da limitacao
     // @gorhom/bottom-sheet em web.
     if (typeof console !== 'undefined' && typeof window !== 'undefined') {
-      // eslint-disable-next-line no-console
       console.warn(
         '[gauntlet] abrirSheet em web pode redirecionar para chrome-error pela limitacao @gorhom/bottom-sheet. Use Nivel B para sheets.'
       );

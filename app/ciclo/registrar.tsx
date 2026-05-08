@@ -209,7 +209,6 @@ export default function CicloRegistrar() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save ciclo fail', e);
     } finally {
       setSalvando(false);

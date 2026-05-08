@@ -407,7 +407,6 @@ export default function AlarmesNovoOuEditar() {
       // usuario sem precisar de adb.
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save alarme fail', e);
     } finally {
       setSalvando(false);

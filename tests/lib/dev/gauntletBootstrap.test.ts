@@ -30,7 +30,6 @@ describe('gauntletBootstrap (M-GAUNTLET-DEAD-CODE-V2)', () => {
       setPathnameRef: setPathSpy,
     }));
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const bootstrap = require('@/lib/dev/gauntletBootstrap');
     const router = { replace: jest.fn(), push: jest.fn() };
     bootstrap.iniciarModoDev();
@@ -45,7 +44,6 @@ describe('gauntletBootstrap (M-GAUNTLET-DEAD-CODE-V2)', () => {
   });
 
   test('exporta as 4 funcoes esperadas', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const bootstrap = require('@/lib/dev/gauntletBootstrap');
     expect(typeof bootstrap.iniciarModoDev).toBe('function');
     expect(typeof bootstrap.sinalizarBootDev).toBe('function');

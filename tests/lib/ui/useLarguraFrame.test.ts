@@ -10,7 +10,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { renderHook } from '@testing-library/react-native';
-import { Platform, useWindowDimensions } from 'react-native';
+import { Platform } from 'react-native';
 import { useLarguraFrame, FRAME_W } from '@/lib/ui/useLarguraFrame';
 
 const ORIGINAL_OS = Platform.OS;

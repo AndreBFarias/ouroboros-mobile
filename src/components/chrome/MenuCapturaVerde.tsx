@@ -280,7 +280,6 @@ export function MenuCapturaVerde({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save foto fail', e);
     } finally {
       setSalvando(false);
@@ -317,7 +316,6 @@ export function MenuCapturaVerde({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save video fail', e);
     } finally {
       setSalvando(false);
@@ -355,7 +353,6 @@ export function MenuCapturaVerde({
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         toast.show(`Não foi possível salvar: ${msg}`, 'error');
-        // eslint-disable-next-line no-console
         console.error('save frase fail', e);
       } finally {
         setSalvando(false);

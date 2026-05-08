@@ -187,7 +187,7 @@ describe('SheetNovaTarefa - M31 categoria', () => {
 
   it('inicia categoria com categoriaInicial em modo editar', () => {
     const onSalvar = jest.fn();
-    const { getByLabelText, getByText } = render(
+    const { getByText } = render(
       <SheetNovaTarefa
         modo="editar"
         tituloInicial="x"

@@ -14,7 +14,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Sigma } from '@/lib/icons';
 import {

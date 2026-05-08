@@ -2,8 +2,6 @@
 // e o dedupe via hash.
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 import type { Marco } from '@/lib/schemas/marco';
-import type { HumorMeta } from '@/lib/schemas/humor';
-import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 
 const mockListarTreinos = jest.fn();
 const mockListarMarcos = jest.fn();
@@ -44,39 +42,6 @@ function fakeTreino(data: string, autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'): 
     duracao_min: 30,
     exercicios: [{ nome: 'x', series: 1, reps: 1 }],
   };
-}
-
-function fakeHumor(data: string, autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'): HumorMeta {
-  return {
-    tipo: 'humor',
-    data,
-    autor,
-    humor: 4,
-    energia: 4,
-    ansiedade: 2,
-    foco: 4,
-    tags: [],
-  } as HumorMeta;
-}
-
-function fakeDiario(
-  data: string,
-  modo: 'trigger' | 'vitoria',
-  autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'
-): DiarioEmocionalMeta {
-  return {
-    tipo: 'diario_emocional',
-    data,
-    autor,
-    modo,
-    emocoes: [],
-    intensidade: 3,
-    com: [],
-    contexto_social: [],
-    texto: 'algo.',
-    midia: [],
-    para: { tipo: 'mim' },
-  } as DiarioEmocionalMeta;
 }
 
 beforeEach(() => {

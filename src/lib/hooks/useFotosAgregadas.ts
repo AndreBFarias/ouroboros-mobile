@@ -223,7 +223,6 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     // a useGaleriaMock) do bundle release.
     if (__DEV__) {
       if (!MODO_DEV_WEB) return;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
       setFotosMock(galeria.useGaleriaMock.getState().fotos);
       return galeria.useGaleriaMock.subscribe((s) => setFotosMock(s.fotos));

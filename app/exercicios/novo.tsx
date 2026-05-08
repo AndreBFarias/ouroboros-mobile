@@ -60,7 +60,6 @@ export default function NovoExercicio() {
         const msg = err instanceof Error ? err.message : 'falha desconhecida';
         haptics.error();
         toast.show(`Não foi possível salvar: ${msg}`, 'error');
-        // eslint-disable-next-line no-console
         console.error('save exercicio fail', err);
       }
     },

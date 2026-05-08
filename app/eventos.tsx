@@ -287,7 +287,6 @@ export default function Eventos() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save evento fail', e);
       setSalvando(false);
     }

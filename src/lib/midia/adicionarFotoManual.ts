@@ -54,7 +54,6 @@ export async function adicionarFotoManual(): Promise<boolean> {
       const ts = Date.now();
       const data = new Date(ts).toISOString().slice(0, 10);
       const slug = `mock-${ts}`;
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
       galeria.useGaleriaMock.getState().adicionar({
         uri: `web://mock/foto-${ts}.jpg`,

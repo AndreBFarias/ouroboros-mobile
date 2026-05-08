@@ -90,13 +90,11 @@ describe('AgendaScreen', () => {
     // dispara branch isMockToken em listarEventos -> eventos sinteticos
     // sem rede real. Estado final = online, banner offline ausente.
     const platformOriginal = Platform.OS;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (Platform as any).OS = 'web';
     const fetchOriginal = global.fetch;
     const fetchMock = jest.fn(async () => {
       throw new Error('fetch nao deveria ser chamado em web __DEV__ com token mock');
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).fetch = fetchMock;
 
     try {
@@ -115,9 +113,7 @@ describe('AgendaScreen', () => {
         useGoogleAuth.getState().contas.pessoa_a.accessToken ?? '';
       expect(tokenFinal.startsWith('mock-access-token')).toBe(true);
     } finally {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (Platform as any).OS = platformOriginal;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global as any).fetch = fetchOriginal;
     }
   });
@@ -138,7 +134,6 @@ describe('AgendaScreen', () => {
     });
     // mock global fetch para retornar lista vazia (200)
     const fetchOriginal = global.fetch;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).fetch = jest.fn(async () => ({
       status: 200,
       ok: true,
@@ -153,7 +148,6 @@ describe('AgendaScreen', () => {
     });
 
     // restore
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).fetch = fetchOriginal;
   });
 });

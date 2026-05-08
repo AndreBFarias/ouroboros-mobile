@@ -196,7 +196,6 @@ function checarCanario(state: SessaoState): void {
     if (tamanho > CANARY_SOFT_LIMIT) {
       // Mensagem instrumentada para captura em telemetria local. Plano-B
       // documentado no spec: split em multiplas chaves SecureStore.
-      // eslint-disable-next-line no-console
       console.warn(
         `[sessao] snapshot ${tamanho}B excede ${CANARY_SOFT_LIMIT}B. ` +
           'Considere limpar rascunhos antigos ou planejar split de chaves.'
@@ -274,7 +273,6 @@ export const useSessao = create<SessaoState>()(
       // para /saude-fisica; ultimaRota=/memoria persistido pre-L1
       // e' migrado abaixo na v3.
       version: 3,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       migrate: (state: any, version: number) => {
         if (version < 2 && state && typeof state.ultimaRota === 'string') {
           if (state.ultimaRota.startsWith('/(tabs)/')) {

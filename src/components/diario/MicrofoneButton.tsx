@@ -204,7 +204,6 @@ export function MicrofoneButton({
       void discardRecording(stopResult.uri);
       const msg = err instanceof Error ? err.message : String(err);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('save audio fail', err);
       setEstado('idle');
       setTempoMs(0);
@@ -258,7 +257,6 @@ export function MicrofoneButton({
       }
       // Demais erros de transcribe sao silenciados na UI (audio ja
       // salvo, toast de sucesso ja exibido). Log para diagnose.
-      // eslint-disable-next-line no-console
       console.error('transcribe audio fail (best-effort)', err);
     }
     setEstado('idle');

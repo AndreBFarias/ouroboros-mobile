@@ -5,6 +5,14 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint M-LINT-CLEANUP (2026-05-07)
+
+- style: zera warnings ESLint (50 → 0) em escopo full `eslint .`
+  (M-LINT-CLEANUP). Remove 31 diretivas `eslint-disable` orfas em
+  `app/` e `src/`, 5 imports/variaveis nao-usadas e 14 warnings
+  residuais em `tests/`. Sem mudanca de comportamento de runtime;
+  baseline Jest preservado em 1742 passed / 1 skipped / 176 suites.
+
 ### Sprint O1 — `M-GAUNTLET-PADRAO-VALIDATION` (2026-05-07)
 
 **Bloco O FECHADO. Plano golden-zebra principal entregue (exceto

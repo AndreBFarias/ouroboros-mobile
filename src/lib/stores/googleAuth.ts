@@ -17,7 +17,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { secureStorage } from '@/lib/stores/persist';
 import {
@@ -85,7 +84,6 @@ const REFRESH_MARGEM_MS = 60_000;
 // apenas quando __DEV__ === true e Platform.OS === 'web'. Em
 // release Android/iOS, dead-code (Platform.OS != 'web').
 function isMockMode(): boolean {
-  // eslint-disable-next-line no-undef
   const dev = typeof __DEV__ !== 'undefined' && __DEV__ === true;
   return dev && Platform.OS === 'web';
 }
@@ -305,8 +303,7 @@ function decodeEmailDoIdToken(idToken: string): string | null {
     const raw =
       typeof atob === 'function'
         ? atob(padded)
-        : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (globalThis as any).Buffer?.from(padded, 'base64').toString('utf8') ??
+        : (globalThis as any).Buffer?.from(padded, 'base64').toString('utf8') ??
           '';
     const json = JSON.parse(raw) as { email?: unknown };
     return typeof json.email === 'string' ? json.email : null;

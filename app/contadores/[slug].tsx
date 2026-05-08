@@ -15,7 +15,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Modal,
-  Pressable,
   ScrollView,
   Text,
   View,
@@ -142,7 +141,6 @@ export default function ContadorDetalhe() {
       void haptics.error();
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('reset contador fail', e);
     } finally {
       setEnviandoReset(false);
@@ -175,7 +173,6 @@ export default function ContadorDetalhe() {
       void haptics.error();
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
-      // eslint-disable-next-line no-console
       console.error('edicao contador fail', e);
     } finally {
       setSalvandoEdicao(false);

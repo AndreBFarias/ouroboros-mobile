@@ -47,8 +47,8 @@ interface SeedFn {
 
 async function aplicarSeed(
   page: PlaywrightPageLike,
-  nomeA: string,
-  nomeB: string | null
+  _nomeA: string,
+  _nomeB: string | null
 ): Promise<boolean> {
   return page.evaluate(() => {
     const w = globalThis as unknown as { __gauntlet?: SeedFn };

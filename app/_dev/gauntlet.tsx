@@ -23,7 +23,6 @@ export default function RotaModoDev() {
   // require lazy guardado por __DEV__: Metro DCE elimina este branch
   // em release Android, e o painel pesado nao entra no bundle.
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Painel = require('@/lib/dev/gauntletDashboard')
       .default as ComponentType;
     return <Painel />;
