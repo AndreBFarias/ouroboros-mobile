@@ -22,8 +22,8 @@ bloqueia APK preview.
 | S1 | `M-AUDIT-MIGUE-FRASE-WEB-MOCK` | `M-AUDIT-MIGUE-FRASE-WEB-MOCK-spec.md` | ~1h | `[todo]` |
 | S2 | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR` | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR-spec.md` | ~2h | `[todo]` |
 | S3 | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT` | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT-spec.md` | ~3h | `[todo]` |
-| S4 | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD-spec.md` | ~0.5h | `[todo]` |
-| S5 | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL` | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL-spec.md` | ~0.5h | `[todo]` |
+| S4 | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD-spec.md` | ~1h | `[wip]` (escopo expandido — regex object literal + 2 linhas) |
+| S5 | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL` | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL-spec.md` | ~0.5h | `[ok]` |
 
 ### Bloco G — Materializar achados colaterais (anti-débito)
 
@@ -31,10 +31,10 @@ bloqueia APK preview.
 |---|---|---|---|---|
 | G1 | `M-SHARE-INTENT-LAYOUT` | `M-SHARE-INTENT-LAYOUT-spec.md` | ~2h | `[todo]` |
 | G2 | `I-DIARIO-REFLEXAO` | `I-DIARIO-REFLEXAO-spec.md` | ~1.5h | `[todo]` |
-| G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[todo]` |
-| G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[todo]` |
+| G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[ok]` |
+| G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[ok]` |
 | G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[todo]` |
-| G6 | `M-DOCS-PATH-FIX` | `M-DOCS-PATH-FIX-spec.md` | ~0.3h | `[todo]` |
+| G6 | `M-DOCS-PATH-FIX` | `M-DOCS-PATH-FIX-spec.md` | ~0.3h | `[ok]` |
 | G7 | `M-SCHEMA-CONTADOR-V2` | `M-SCHEMA-CONTADOR-V2-spec.md` | ~1h | `[v2]` (descopada pré-v1.0.0) |
 
 ### Bloco V — Cobertura E2E faltante

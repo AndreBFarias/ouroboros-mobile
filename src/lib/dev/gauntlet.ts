@@ -82,6 +82,10 @@ export interface GauntletAPI {
   setVaultRoot(root: string): void;
   setOnboardingDone(done: boolean): void;
   setUltimaRota(rota: string | null): void;
+  // G4 (INFRA-GAUNTLET-AMIGOS-API): muda useOnboarding.tipoCompanhia
+  // em runtime para o E2E exercer ramificacao de useNomeDe('ambos')
+  // (retorna 'Casal' / 'Todos' / 'Ambos' conforme modo).
+  setTipoCompanhia(modo: 'sozinho' | 'casal' | 'amigos'): void;
   abrir(rota: string): Promise<void>;
   abrirMenu(): void;
   fecharMenu(): void;
@@ -352,6 +356,11 @@ const api: GauntletAPI = {
   ),
   setUltimaRota: comGuard(
     (rota: string | null) => useSessao.setState({ ultimaRota: rota }),
+    undefined as void
+  ),
+  setTipoCompanhia: comGuard(
+    (modo: 'sozinho' | 'casal' | 'amigos') =>
+      useOnboarding.setState({ tipoCompanhia: modo }),
     undefined as void
   ),
   abrir: async (rota) => {

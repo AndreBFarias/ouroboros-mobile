@@ -40,7 +40,7 @@ APK.
    >
    > APK preview NÃO é gerado se a sprint não cumpre essa regra.
 
-2. **`docs/sprints/TEMPLATE-spec.md`** ganha §5 obrigatória "Validação
+2. **`docs/sprints/_template-spec.md`** ganha §5 obrigatória "Validação
    Gauntlet OU motivo da impossibilidade + passos validação humana".
    Se template não existe, criar baseado em
    `_TEMPLATE-SAVE-FEATURE.md`.
@@ -63,7 +63,7 @@ APK.
 ```bash
 grep -c "REGRA OBRIGATORIA" VALIDATOR_BRIEF.md   # esperado >= 1
 grep -c "Gauntlet ANTES de APK" VALIDATOR_BRIEF.md # esperado >= 1
-ls docs/sprints/TEMPLATE-spec.md
+ls docs/sprints/_template-spec.md
 ```
 
 ## §5 Validação

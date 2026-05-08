@@ -822,7 +822,7 @@ function Frame3Permissoes({
   return (
     <View style={{ gap: spacing.lg }}>
       <MicroOrange>Permissões</MicroOrange>
-      <Heading>Permissões</Heading>
+      <Heading>Libere o que faz sentido pra você.</Heading>
       <Sub>Para a melhor experiência, libere o acesso a:</Sub>
 
       <CardPermissao

@@ -5,6 +5,42 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 1 fase 1 (2026-05-08): S5 + G6 + G3 + G4
+
+- **S5 `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL`** — Frame 3 do onboarding
+  ganha H1 contextual. Eyebrow continua `Permissoes`; H1 muda de
+  `Permissoes` (redundante) para `Libere o que faz sentido pra voce.`
+  em `app/onboarding.tsx:825` (componente `Frame3Permissoes`). Caso de
+  teste em `tests/app/onboarding.test.tsx` cobre o novo H1 + preserva
+  o eyebrow. Baseline jest 1742 -> 1743 (+1 caso, +0 suites).
+- **G6 `M-DOCS-PATH-FIX`** — Refs incorretas a `TEMPLATE-spec.md`
+  (caps + hifen) corrigidas para `_template-spec.md` (underscore +
+  lowercase) em `VALIDATOR_BRIEF.md:266` (gitignored, edicao local) e
+  `docs/sprints/M-GAUNTLET-PADRAO-VALIDATION-spec.md:43,66`. 3
+  ocorrencias intactas como meta-textuais (CHANGELOG.md historico,
+  ORDEM-EXECUCAO.md descreve a sprint, propria spec G6 descreve o bug).
+- **G3 `INFRA-CHECK-TEST-DATA-ALLOW`** — `scripts/check_test_data.sh`
+  ganha filtro `grep -v 'test-data-allow'` no pipeline, replicando
+  padrao do `check_anonimato.sh:27`. Smoke unit em
+  `tests/scripts/check_test_data.test.sh` valida 2 casos (sem marker
+  detecta + com marker autoriza). Backwards-compat (sem marker =
+  comportamento atual).
+- **G4 `INFRA-GAUNTLET-AMIGOS-API`** — `__gauntlet.setTipoCompanhia(modo)`
+  exposto em `src/lib/dev/gauntlet.ts` seguindo padrao 1:1 dos outros
+  setters (`setNomes`, `setVaultRoot`, `setOnboardingDone`,
+  `setUltimaRota`) com `comGuard(GAUNTLET_ATIVO)`. `docs/GAUNTLET.md`
+  atualizado. Destrava V1 (`M-AUDIT-E2E-AMIGOS-LABEL`).
+
+S4 `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` REJEITADA pelo executor com
+hipotese do planejador invalida: scan ja cobre `src/lib/dev/`, fix real
+e estender regex para object literals (linha 43 + linha 23 ambas
+escapam por `prop: 'X'` vs `prop="X"` JSX). Re-despachada com escopo
+expandido para Batch 1.5.
+
+Metricas pos-batch: 1743 testes / 176 suites Jest verde · TS strict 0
+· Hermes 7,7 MB intacto · Gauntlet leak 0/6 · anonimato OK · PT-BR
+check OK.
+
 ### Auditoria pré-APK 2026-05-08 (relatório + 17 specs corretivas)
 
 - docs: relatorio consolidado em `docs/auditoria-2026-05-08/RELATORIO.md`

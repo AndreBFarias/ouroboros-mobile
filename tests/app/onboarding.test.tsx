@@ -240,6 +240,17 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     expect(api.getByLabelText('toggle permissao localizacao')).toBeTruthy();
   });
 
+  it('Frame 3 Permissoes: H1 contextual (eyebrow Permissoes + frase distinta)', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(api.getByText('Libere o que faz sentido pra você.')).toBeTruthy();
+    });
+    // Eyebrow continua "Permissoes" (consistencia com outros 4 frames).
+    expect(api.getByText('Permissões')).toBeTruthy();
+  });
+
   it('Frame 3 "Continuar": chama request* para toggles ON, persiste em store, avanca para Frame 4', async () => {
     const api = renderTela();
     avancarAtePasta(api);

@@ -96,6 +96,9 @@ window.__gauntlet.setNomes('Carol', 'Dan');
 window.__gauntlet.setVaultRoot('web://mock-vault/Outros');
 window.__gauntlet.setOnboardingDone(true);
 window.__gauntlet.setUltimaRota('/memoria');
+// G4 (INFRA-GAUNTLET-AMIGOS-API): muda modo de companhia para
+// E2E exercer label de useNomeDe('ambos').
+window.__gauntlet.setTipoCompanhia('amigos'); // 'sozinho' | 'casal' | 'amigos'
 ```
 
 ### Navegação

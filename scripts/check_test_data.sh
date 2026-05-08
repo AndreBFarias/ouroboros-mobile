@@ -11,7 +11,10 @@ if [[ ! -d tests ]]; then
   exit 0
 fi
 
-VIOLACOES=$(grep -rE "$NOMES|$PATHS" tests/ 2>/dev/null || true)
+# Exclui linhas com marker 'test-data-allow:' (autorizacao explicita
+# por linha, mesmo padrao de 'anonimato-allow:' do check_anonimato.sh).
+VIOLACOES=$(grep -rE "$NOMES|$PATHS" tests/ 2>/dev/null \
+  | grep -v 'test-data-allow' || true)
 
 if [[ -n "$VIOLACOES" ]]; then
   echo "ERRO: testes com dados pessoais:"
