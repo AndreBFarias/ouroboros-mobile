@@ -91,11 +91,14 @@ jest.mock('@gorhom/bottom-sheet', () => {
 import SaudeFisicaTab from '@/../app/saude-fisica';
 
 describe('app/saude-fisica.tsx', () => {
-  it('renderiza header "Saude Fisica" e as 3 tabs (Treinos / Evolucao Corporal / Exercicios)', () => {
+  it('renderiza header "Saude Fisica" e as 3 tabs (Treinos / Evolucao / Exercicios)', () => {
     const { getByText, queryByText } = render(<SaudeFisicaTab />);
     expect(getByText('Saúde Física')).toBeTruthy();
     expect(getByText('Treinos')).toBeTruthy();
-    expect(getByText('Evolução Corporal')).toBeTruthy();
+    // W3 (M-AUDIT-VISUAL-WARNS): label da tab encurtada para 'Evolucao',
+    // consistente com 'Treinos' e 'Exercicios' (1 palavra cada).
+    expect(getByText('Evolução')).toBeTruthy();
+    expect(queryByText('Evolução Corporal')).toBeNull();
     expect(getByText('Exercícios')).toBeTruthy();
     // Regressao: aba Fotos e label antigo "Memorias" foram removidos.
     expect(queryByText('Fotos')).toBeNull();

@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 2 (2026-05-08): W1 7 patches visuais consolidados
+
+- **W1 `M-AUDIT-VISUAL-WARNS`** entregou os 7 patches do RELATORIO:
+  - W1 onboarding chips Frame 1 (Sozinho/Com mais alguém): substitui
+    Card por Pressable com borderWidth 1 + borderColor bgElev em default
+    e purple em ativo. bg purple30 quando selecionado. Affordance
+    consistente com chips do Frame 0.
+  - W2 botão Recap header em app/index.tsx:154: wrapper externo com
+    paddingHorizontal spacing.base (16dp). Patch parcial — padding
+    interno do pill ghost continua sendo achado colateral compartilhado.
+  - W3 tab "Evolução Corporal" -> "Evolução" em SaudeFisicaScreen.tsx
+    (consistência com Treinos/Exercícios). Teste atualizado.
+  - W4 botão "Usar localização atual" em LocalizacaoBlock.tsx:
+    flexShrink 0 + paddingHorizontal spacing.sm no wrapper. Igual W2,
+    é patch externo.
+  - W5 loader Ouroboros em scanner: MANTIDO. Investigação git
+    confirmou que loader foi adicionado por commit `7e62f5e` (M26
+    sheets de captura com screen opaco) como mitigação A17/A18 gorhom.
+    NÃO é ornamento — é proteção contra "tela infinita preta".
+  - W6 "fab" -> "FAB" no subtítulo settings (acrônimo CAPS).
+  - W7 paddingBottom dinâmico em settings: substitui hardcoded 120
+    por useSafeBottomMargin(insets.bottom) + spacing.xl. FAB
+    hambúrguer não cobre mais "Dispositivos pareados" / "Contas Google".
+- 6 arquivos tocados, +65/-17 linhas.
+- Smoke 1743/1/176 verde mantido. tsc 0. ptbr OK.
+- Achado colateral: padding interno de `<Button variant="ghost">` em
+  `src/components/ui/Button.tsx:108-124` afeta 4+ instâncias
+  compartilhadas. Sprint nova `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING`
+  (W1.1) materializada para fix raiz + remoção dos wrappers W2/W4.
+
 ### Batch 1 fase 1.5 (2026-05-08): S4 v2 + colateral marcosAuto
 
 - **S4 v2 `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` (escopo expandido,

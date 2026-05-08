@@ -50,7 +50,8 @@ bloqueia APK preview.
 
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
-| W1 | `M-AUDIT-VISUAL-WARNS` (7 patches em batch) | `M-AUDIT-VISUAL-WARNS-spec.md` | ~3-4h | `[todo]` |
+| W1 | `M-AUDIT-VISUAL-WARNS` (7 patches em batch) | `M-AUDIT-VISUAL-WARNS-spec.md` | ~3-4h | `[ok]` |
+| W1.1 | `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING` (achado colateral W1) | `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING-spec.md` | ~0.5h | `[todo]` |
 
 **Total bloco S+G+V+W:** ~21-23h ativas.
 

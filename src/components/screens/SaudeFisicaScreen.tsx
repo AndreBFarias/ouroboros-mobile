@@ -43,7 +43,10 @@ type TabKey = 'treinos' | 'evolucao' | 'exercicios';
 
 const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
   { key: 'treinos', label: 'Treinos' },
-  { key: 'evolucao', label: 'Evolução Corporal' },
+  // W3 (M-AUDIT-VISUAL-WARNS): label encurtada para 1 palavra,
+  // consistente com 'Treinos' e 'Exercicios'. Titulo da tela
+  // 'Saude Fisica' + icone dao contexto suficiente.
+  { key: 'evolucao', label: 'Evolução' },
   { key: 'exercicios', label: 'Exercícios' },
 ];
 

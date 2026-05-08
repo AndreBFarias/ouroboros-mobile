@@ -77,12 +77,18 @@ export function LocalizacaoBlock({
           flexWrap: 'wrap',
         }}
       >
-        <Button
-          variant="ghost"
-          label={detectando ? 'Detectando...' : 'Usar localização atual'}
-          onPress={handleDetectar}
-          disabled={disabled || detectando}
-        />
+        {/* W4 (M-AUDIT-VISUAL-WARNS): flexShrink 0 + paddingHorizontal
+            externo evitam que o texto longo vaze do pill quando o chip
+            de bairro divide a linha. Ghost button nao tem padding
+            horizontal interno; o wrapper compensa. */}
+        <View style={{ flexShrink: 0, paddingHorizontal: spacing.sm }}>
+          <Button
+            variant="ghost"
+            label={detectando ? 'Detectando...' : 'Usar localização atual'}
+            onPress={handleDetectar}
+            disabled={disabled || detectando}
+          />
+        </View>
         {bairro ? (
           <Chip
             label={bairro}

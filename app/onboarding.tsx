@@ -26,7 +26,7 @@
 // emite transform como string em frames iniciais e crasha New Arch
 // (Fabric) com ClassCastException.
 import { useEffect, useState, type ReactNode } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -38,7 +38,6 @@ import { OuroborosLoader } from '@/components/brand';
 import {
   AvatarPicker,
   Button,
-  Card,
   ChipGroup,
   Input,
   Screen,
@@ -46,6 +45,8 @@ import {
   useToast,
 } from '@/components/ui';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { hexToRgba } from '@/lib/a11y/contraste';
 import { usePessoa } from '@/lib/stores/pessoa';
 import {
   useOnboarding,
@@ -655,10 +656,32 @@ interface CardEscolhaProps {
   onPress: () => void;
 }
 
+// W1 (M-AUDIT-VISUAL-WARNS): outline 1px bgElev em default, fundo
+// purple30 + borda purple em selected. Padroniza affordance com
+// chips do Frame 0 (ChipGroup) sem alterar o componente Card global.
 function CardEscolha({ ativo, label, onPress }: CardEscolhaProps) {
   return (
-    <Card variant={ativo ? 'active' : 'default'} onPress={onPress} accessibilityLabel={`escolher ${label.toLowerCase()}`}>
-      <View style={{ minHeight: 80, justifyContent: 'center', alignItems: 'center' }}>
+    <Pressable
+      onPress={() => {
+        haptics.light();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`escolher ${label.toLowerCase()}`}
+      accessibilityState={{ selected: ativo }}
+    >
+      <View
+        style={{
+          backgroundColor: ativo ? hexToRgba(colors.purple, 0.3) : colors.bgAlt,
+          borderRadius: radius.card,
+          padding: spacing.base,
+          borderWidth: 1,
+          borderColor: ativo ? colors.purple : colors.bgElev,
+          minHeight: 80,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <Text
           style={{
             color: ativo ? colors.purple : colors.fg,
@@ -670,7 +693,7 @@ function CardEscolha({ ativo, label, onPress }: CardEscolhaProps) {
           {label}
         </Text>
       </View>
-    </Card>
+    </Pressable>
   );
 }
 

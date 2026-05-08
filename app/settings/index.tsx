@@ -18,6 +18,7 @@
 // Toda a UI e reativa ao useSettings (zustand). Persistencia via
 // SecureStore (web cai em localStorage).
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
@@ -29,6 +30,7 @@ import {
   Toggle,
   useToast,
 } from '@/components/ui';
+import { useSafeBottomMargin } from '@/components/chrome/safeBottom';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { LinkSubTela } from '@/components/settings/LinkSubTela';
 import { SecaoBackupAutomatico } from '@/components/settings/SecaoBackupAutomatico';
@@ -48,6 +50,12 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 export default function SettingsTela() {
   const router = useRouter();
+  // W7 (M-AUDIT-VISUAL-WARNS): paddingBottom dinamico via
+  // useSafeBottomMargin + spacing.xl evita que o FAB hamburguer cubra
+  // as ultimas secoes (Sobre / Privacidade) em telas com nav bar de
+  // 3 botoes ou barra de gestos.
+  const insets = useSafeAreaInsets();
+  const bottomFab = useSafeBottomMargin(insets.bottom);
   return (
     <Screen>
       <Header title="Configurações" onBack={() => router.back()} />
@@ -55,7 +63,7 @@ export default function SettingsTela() {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: spacing.sm,
-          paddingBottom: 120,
+          paddingBottom: bottomFab + spacing.xl,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -102,7 +110,7 @@ function SecaoSomVibracao() {
       />
       <ToggleRow
         label="Vibrar em botões e gestos"
-        subtitulo="Humor, fab, registros rápidos."
+        subtitulo="Humor, FAB, registros rápidos."
         valor={somVibracao.botoes}
         onChange={(v) => setSomVibracao('botoes', v)}
         a11y="toggle vibrar botoes"

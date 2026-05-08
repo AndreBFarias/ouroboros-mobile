@@ -151,7 +151,12 @@ function TelaHojeConteudo({
                 />
               </View>
             )}
-            <Button label="Recap" variant="ghost" onPress={onRecapPress} />
+            {/* W2 (M-AUDIT-VISUAL-WARNS): wrapper com paddingHorizontal
+                base (16dp) garante respiracao entre avatar e o pill ghost,
+                que era 0/0 no header. */}
+            <View style={{ paddingHorizontal: spacing.base }}>
+              <Button label="Recap" variant="ghost" onPress={onRecapPress} />
+            </View>
           </View>
         }
       />
