@@ -29,7 +29,7 @@ bloqueia APK preview.
 
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
-| G1 | `M-SHARE-INTENT-LAYOUT` | `M-SHARE-INTENT-LAYOUT-spec.md` | ~2h | `[todo]` |
+| G1 | `M-SHARE-INTENT-LAYOUT` | `M-SHARE-INTENT-LAYOUT-spec.md` | ~2h | `[ok]` (ADR-0024) |
 | G2 | `I-DIARIO-REFLEXAO` | `I-DIARIO-REFLEXAO-spec.md` | ~1.5h | `[ok]` |
 | G2.1 | `I-DIARIO-REFLEXAO-RECAP` (colateral G2) | `I-DIARIO-REFLEXAO-RECAP-spec.md` | ~1.5h | `[todo]` |
 | G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[ok]` |

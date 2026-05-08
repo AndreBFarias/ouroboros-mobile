@@ -128,8 +128,11 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   texto / link / PDF / documento / arquivo genérico (8 subtipos
   canônicos).
 - Triagem: salvar como evento / diário / conquista / inbox.
-- Persiste em `inbox/<area>/<subtipo>/<data>-<slug>.md` + binário (legado
-  pré-H2; sprint dedicada migra share intent para layout-por-tipo).
+- Persiste em `inbox/<area>/<subtipo>/<data>-<slug>.md` + binário ao
+  lado. Pasta `inbox/` é **exceção parcial** ao layout-por-tipo
+  (ADR-0024, sprint G1) — preserva semântica de triagem temporária;
+  arquivos saem do `inbox/` quando classificados como evento, diário
+  ou conquista (sprint de triagem futura).
 
 ### 2.8 Captura unificada — M-CAPTURA-UNIFICADA
 

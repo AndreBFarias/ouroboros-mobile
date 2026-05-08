@@ -5,6 +5,26 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 5 (2026-05-08): G1 share intent ADR-0024
+
+- **G1 `M-SHARE-INTENT-LAYOUT`** — opção B (pasta exceção) materializada:
+  - `docs/ADRs/0024-share-intent-layout-pasta-excecao.md` novo,
+    documenta decisão B + alternativa A rejeitada + supersedes parcial
+    do ADR-0023.
+  - `docs/ADRs/INDEX.md` ganha entry.
+  - `src/lib/boot/migrarVaultLayoutPorTipo.ts` ganha comentário canônico
+    explicitando whitelist de `inbox/` (boot hook só itera 3 subpaths
+    legados; arquivos de share intent permanecem em `inbox/<area>/<subtipo>/`).
+  - `src/lib/schemas/inbox_arquivo.ts` ganha nota ref ADR-0024.
+  - `docs/FEATURES-CANONICAS.md` §2.7 atualizado.
+  - Novo: `tests/lib/boot/migrarVaultLayoutPorTipo-inbox-whitelist.test.ts`
+    com 6 casos cobrindo regressão (vault com `inbox/...` boot hook
+    NÃO move para `markdown/`).
+- Achados na execução: `saveShareReceived.ts` não existia — save inline
+  em `app/share-receive.tsx` via `path-resolver.ts`. Schema é
+  `inbox_arquivo.ts` (underscore), não kebab-case. Executor adaptou.
+- Smoke: 181 suites / 1781 testes verde (+6 vs 1775).
+
 ### Batch 4 (2026-05-08): G2 diario reflexao
 
 - **G2 `I-DIARIO-REFLEXAO`** — modo "Reflexão" implementado:

@@ -32,6 +32,15 @@
 //   - Se destino ja existe, nao sobrescreve (best-effort delete origem).
 //   - Em web (mock vault), no-op.
 //
+// Whitelist `inbox/` (ADR-0024, sprint G1): apenas os subpaths
+// listados acima sao migrados. Arquivos do share intent receiver
+// (M08) que vivem em `inbox/financeiro/{pix,extrato,nota}/`,
+// `inbox/saude/{exame,receita}/`, `inbox/casa/{garantia,contrato}/`
+// e `inbox/outros/` NAO sao tocados; permanecem em `inbox/` como
+// triagem temporaria, exceao parcial ao layout-por-tipo (ADR-0023).
+// Cobertura por regressao em
+// tests/lib/boot/migrarVaultLayoutPorTipo-inbox-whitelist.test.ts.
+//
 // Comportamento de erro: tolera falha de I/O por arquivo individual
 // (Syncthing concorrente, OEM bloqueando arquivo); proxima execucao
 // re-tenta porque a flag so sobe se TODOS os arquivos do diretorio

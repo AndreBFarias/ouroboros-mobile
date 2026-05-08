@@ -3,6 +3,14 @@
 // inbox/<area>/<subtipo>/YYYY-MM-DD-HHmmss-<slug>.md, onde os 8
 // subtipos são discriminados pelo campo `subtipo`.
 //
+// IMPORTANTE (ADR-0024, sprint G1): a pasta `inbox/` e EXCECAO
+// PARCIAL ao layout-por-tipo do ADR-0023. Arquivos recebidos via
+// share intent NAO vao para `markdown/<prefix><stem>.md`; eles
+// permanecem em `inbox/<area>/<subtipo>/` como triagem temporaria.
+// O boot hook `migrarVaultLayoutPorTipo` NAO migra esta pasta para
+// `markdown/`, e essa whitelist e coberta por
+// tests/lib/boot/migrarVaultLayoutPorTipo-inbox-whitelist.test.ts.
+//
 // Schemas especificos (PIX com valor, nota com OCR) ficam para
 // sprints sucessoras (ex.: M09 com FinanceiroNotaSchema). Aqui o
 // objetivo e capturar metadado minimo + ponteiro para o binario
