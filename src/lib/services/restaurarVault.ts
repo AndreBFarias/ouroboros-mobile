@@ -9,10 +9,10 @@
 //      (nao destrutivo). Se sobrescrever=true, escreve direto em
 //      <vaultRoot>/. Cabe a' UI confirmar antes de chamar com
 //      sobrescrever=true.
-//   5. Snapshot de settings (.ouroboros/snapshot-settings.json) NAO
-//      e' aplicado automaticamente: o caller decide via opcao
-//      `aplicarSnapshot` (futuro). Por ora a entrega A5 grava o
-//      arquivo no destino mas nao toca os stores.
+//   5. Snapshot de settings (.ouroboros/snapshot-settings.json) e'
+//      gravado no destino e, quando o caller passa
+//      `aplicarSnapshotSettings: true`, tambem e' aplicado nos stores
+//      via aplicarSnapshot() abaixo (M-AUDIT-MIGUE-RESTORE-SNAPSHOT).
 //
 // Decisoes (spec §6):
 //   - MANIFEST.json e fonte de verdade: arquivo sem entrada no
@@ -30,7 +30,11 @@ import {
   EXPORT_SCHEMA_VERSION,
   type Manifest,
   type ManifestEntry,
+  type SnapshotSettings,
 } from '@/lib/services/exportarVault';
+import { useSettings } from '@/lib/stores/settings';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { usePessoa } from '@/lib/stores/pessoa';
 
 export interface RestauracaoFalha {
   path: string;
@@ -48,16 +52,28 @@ export interface RestauracaoResultado {
   totalIgnorados: number; // arquivos no zip sem entry no manifest.
   falhas: RestauracaoFalha[];
   motivo?: string; // motivo de falha global (zip ilegivel, manifest ausente).
+  // Resultado do aplicarSnapshot quando solicitado. Ausente se
+  // aplicarSnapshotSettings nao foi passado.
+  snapshotAplicado?: AplicarSnapshotResultado;
 }
 
 export interface RestauracaoOpcoes {
   // Quando true, escreve direto em <vaultRoot>/. Default false:
   // cria <vaultRoot>/restaurado-<YYYY-MM-DD>/ e popula la.
   sobrescrever?: boolean;
-  // Quando true, aplica snapshot de settings nos stores zustand.
-  // Default false (entrega A5 nao mexe em stores). Reservado para
-  // sprint futura A5.1.
-  aplicarSnapshot?: boolean;
+  // Quando true, le .ouroboros/snapshot-settings.json do zip e aplica
+  // nos stores zustand (useSettings/useOnboarding/usePessoa) via
+  // aplicarSnapshot({ confirmado: true }). Default false. A UI deve
+  // confirmar com o usuario antes de passar true (Q1 spec).
+  aplicarSnapshotSettings?: boolean;
+}
+
+// Resultado da aplicacao do snapshot. Separado do RestauracaoResultado
+// porque aplicarSnapshot e' chamada standalone tambem (UI pode optar
+// por aplicar so o snapshot sem restaurar arquivos).
+export interface AplicarSnapshotResultado {
+  ok: boolean;
+  motivo?: string; // 'nao-confirmado' | 'schema-incompativel' | 'snapshot-invalido'.
 }
 
 // Helper local: garante que a pasta exista. Idempotente.
@@ -222,11 +238,101 @@ export async function restaurarVaultZip(
     }
   });
 
+  // Se solicitado, aplica snapshot de settings nos stores. Le do zip
+  // (nao do destino) para nao depender de qual pasta o restore usou.
+  let snapshotAplicado: AplicarSnapshotResultado | undefined;
+  if (opcoes.aplicarSnapshotSettings) {
+    const snapEntry = zip.file('.ouroboros/snapshot-settings.json');
+    if (!snapEntry) {
+      snapshotAplicado = { ok: false, motivo: 'snapshot-ausente' };
+    } else {
+      try {
+        const raw = await snapEntry.async('string');
+        const parsed = JSON.parse(raw) as SnapshotSettings;
+        snapshotAplicado = aplicarSnapshot(parsed, { confirmado: true });
+      } catch {
+        snapshotAplicado = { ok: false, motivo: 'snapshot-invalido' };
+      }
+    }
+  }
+
   return {
     ok: falhas.length === 0,
     raizDestino,
     totalEscritos,
     totalIgnorados,
     falhas,
+    snapshotAplicado,
   };
+}
+
+// Aplica um snapshot serializado (gerado por gerarSnapshotSettings()
+// no momento do export) sobre os stores zustand do app:
+// useSettings + useOnboarding + usePessoa.
+//
+// Decisoes durables (spec §10 M-AUDIT-MIGUE-RESTORE-SNAPSHOT):
+//   - Q1: precisa confirmacao explicita. Default `confirmado=false`
+//     aborta sem mexer em nada e devolve motivo 'nao-confirmado'.
+//     UI sempre passa `{ confirmado: true }` apos diálogo.
+//   - Q2: schema diferente do EXPORT_SCHEMA_VERSION aborta com
+//     motivo 'schema-incompativel'. Nao tenta migrar.
+//   - Q3: o campo onboarding/settings/pessoa do snapshot NAO inclui
+//     vaultRoot — preserva o vaultRoot atual do dispositivo (esta
+//     informacao vive em SecureStore separado, nao no snapshot).
+//
+// Sem efeito colateral em filesystem; so toca stores em memoria.
+// Persistencia automatica fica por conta do middleware `persist` de
+// cada store (zustand reage ao setState e grava no SecureStore).
+export function aplicarSnapshot(
+  snap: SnapshotSettings,
+  opts: { confirmado: boolean }
+): AplicarSnapshotResultado {
+  if (!opts.confirmado) {
+    return { ok: false, motivo: 'nao-confirmado' };
+  }
+  if (!snap || typeof snap !== 'object') {
+    return { ok: false, motivo: 'snapshot-invalido' };
+  }
+  if (snap.schema !== EXPORT_SCHEMA_VERSION) {
+    // eslint-disable-next-line no-console
+    console.error(
+      `[aplicarSnapshot] schema incompativel: esperado ${EXPORT_SCHEMA_VERSION}, recebido ${snap.schema}`
+    );
+    return { ok: false, motivo: 'schema-incompativel' };
+  }
+  if (!snap.settings || !snap.onboarding || !snap.pessoa) {
+    return { ok: false, motivo: 'snapshot-invalido' };
+  }
+
+  // Aplica em ordem: settings -> onboarding -> pessoa. setState
+  // recebe shape parcial; zustand mescla com mutators existentes.
+  useSettings.setState({
+    somVibracao: snap.settings.somVibracao,
+    pessoa: snap.settings.pessoa,
+    featureToggles: snap.settings.featureToggles,
+    privacidade: snap.settings.privacidade,
+    midia: snap.settings.midia,
+  });
+  // sexoDeclarado e permissoes opcionais (campo aditivo: snaps antigos
+  // exportados antes do patch nao tem). Quando ausente, mantem o que
+  // ja esta no store em vez de zerar.
+  const onboardingPatch: Partial<ReturnType<typeof useOnboarding.getState>> = {
+    done: snap.onboarding.done,
+    tipoCompanhia: snap.onboarding.tipoCompanhia,
+  };
+  if (snap.onboarding.sexoDeclarado) {
+    onboardingPatch.sexoDeclarado = snap.onboarding.sexoDeclarado;
+  }
+  if (snap.onboarding.permissoes) {
+    onboardingPatch.permissoes = snap.onboarding.permissoes;
+  }
+  useOnboarding.setState(onboardingPatch);
+  usePessoa.setState({
+    pessoaAtiva: snap.pessoa.pessoaAtiva,
+    filtroPessoa: snap.pessoa.filtroPessoa,
+    nomes: snap.pessoa.nomes,
+    fotos: snap.pessoa.fotos,
+  });
+
+  return { ok: true };
 }

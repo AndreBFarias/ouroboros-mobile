@@ -29,6 +29,9 @@ import { useGaleriaMock } from '@/lib/dev/galeriaMock';
 import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock } from '@/lib/dev/diarioMock';
 import { useEventosMock } from '@/lib/dev/eventosMock';
+import { useFrasesMock } from '@/lib/dev/frasesMock';
+import { slugDeFrase, stringifyCompanionMidia } from '@/lib/midia/companion';
+import type { Para } from '@/lib/schemas/para';
 // M-GAUNTLET-DEAD-CODE-V2: a flag canonica vive em gauntletAtivo (micro-
 // modulo zero-deps). Reexportamos como GAUNTLET_ATIVO aqui para back-compat
 // de testes existentes (jest mocks de '@/lib/dev/gauntlet') e do
@@ -105,6 +108,17 @@ export interface GauntletAPI {
   // entrada in-memory na useGaleriaMock que o useFotosAgregadas
   // mescla quando GAUNTLET_ATIVO. No-op em mobile (guard ja filtra).
   adicionarFotoMock(): Promise<void>;
+  // M-AUDIT-MIGUE-FRASE-WEB-MOCK (2026-05-08): mock determiniscico do
+  // salvarFrase em web/dev. Gera companion .md identico ao mobile real
+  // (mesmo path canonico H2 markdown/frase-YYYY-MM-DD-<slug>.md, mesmo
+  // frontmatter via stringifyCompanionMidia) e empilha em useFrasesMock.
+  // Caller (salvarFrase em web __DEV__) recebe { ok: true, arquivo: rel }
+  // e o MenuCapturaVerde dispara o toast verde "Frase salva." normal.
+  // No-op em mobile (guard ja filtra).
+  salvarFraseMock(
+    texto: string,
+    meta: { autor: 'pessoa_a' | 'pessoa_b'; para: Para }
+  ): { ok: boolean; arquivo: string | null };
   // M-GAUNTLET-SEED-V2: popula stores mock com fixtures realistas.
   // 'humores-30d' alimenta useHumorMock (heatmap colorido).
   // 'diarios-3' alimenta useDiarioMock (3 entradas: trigger + vitoria
@@ -215,6 +229,8 @@ function aplicarReset(): void {
   useHumorMock.getState().limpar();
   useDiarioMock.getState().limpar();
   useEventosMock.getState().limpar();
+  // M-AUDIT-MIGUE-FRASE-WEB-MOCK: zera frases mock para isolar E2E.
+  useFrasesMock.getState().limpar();
   // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
   // em web para que reload nao re-hidrate estado anterior. Em mobile,
   // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
@@ -342,6 +358,58 @@ async function aplicarAdicionarFotoMock(): Promise<void> {
   });
 }
 
+// M-AUDIT-MIGUE-FRASE-WEB-MOCK: gera companion .md determiniscico
+// (mesmo path H2, mesmo frontmatter que o mobile real) e empilha em
+// useFrasesMock. Resolucao de colisao simples: se ja existe entrada
+// com mesmo `arquivo`, sufixa -2, -3, ... (max 99) ate achar livre.
+// Espelha resolverColisao do salvarFrase mas em memoria.
+function aplicarSalvarFraseMock(
+  texto: string,
+  meta: { autor: 'pessoa_a' | 'pessoa_b'; para: Para }
+): { ok: boolean; arquivo: string | null } {
+  const trimmed = texto.trim();
+  if (trimmed.length === 0) return { ok: false, arquivo: null };
+  const agora = new Date();
+  const data = agora.toISOString().slice(0, 10);
+  const slug = slugDeFrase(trimmed);
+  const baseRel = `markdown/frase-${data}-${slug}.md`;
+  const existentes = useFrasesMock.getState().frases.map((f) => f.arquivo);
+  let rel = baseRel;
+  if (existentes.includes(baseRel)) {
+    const m = baseRel.match(/^(.*)(\.md)$/);
+    const prefix = m ? (m[1] as string) : baseRel;
+    const ext = m ? (m[2] as string) : '';
+    let achou = false;
+    for (let i = 2; i <= 99; i += 1) {
+      const cand = `${prefix}-${i}${ext}`;
+      if (!existentes.includes(cand)) {
+        rel = cand;
+        achou = true;
+        break;
+      }
+    }
+    if (!achou) rel = `${prefix}-${Date.now()}${ext}`;
+  }
+  const basename = rel.split('/').pop() ?? rel;
+  const companion = stringifyCompanionMidia({
+    tipo: 'midia_frase',
+    arquivo: basename,
+    data: agora.toISOString(),
+    autor: meta.autor,
+    para: meta.para,
+    legenda: trimmed,
+  });
+  useFrasesMock.getState().adicionar({
+    arquivo: rel,
+    texto: trimmed,
+    autor: meta.autor,
+    para: meta.para,
+    companion,
+    data: agora.toISOString(),
+  });
+  return { ok: true, arquivo: rel };
+}
+
 const api: GauntletAPI = {
   seed: comGuard(aplicarSeed, undefined as void),
   reset: comGuard(aplicarReset, undefined as void),
@@ -393,6 +461,10 @@ const api: GauntletAPI = {
   adicionarFotoMock: async () => {
     if (!GAUNTLET_ATIVO) return;
     await aplicarAdicionarFotoMock();
+  },
+  salvarFraseMock: (texto, meta) => {
+    if (!GAUNTLET_ATIVO) return { ok: false, arquivo: null };
+    return aplicarSalvarFraseMock(texto, meta);
   },
   seedComDados: async (fixture) => {
     if (!GAUNTLET_ATIVO) return;

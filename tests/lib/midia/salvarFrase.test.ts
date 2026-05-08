@@ -130,3 +130,56 @@ describe('salvarFrase (M34 / I-FRASE)', () => {
     );
   });
 });
+
+// M-AUDIT-MIGUE-FRASE-WEB-MOCK (2026-05-08): branch web __DEV__ delega
+// para __gauntlet.salvarFraseMock quando exposto. Sem o mock exposto,
+// retorna ok=false (release web continua no-op). Saneamento de debito
+// I-FRASE: antes desta sprint o E2E nao podia exercer o fluxo completo.
+describe('salvarFrase web Gauntlet (M-AUDIT-MIGUE-FRASE-WEB-MOCK)', () => {
+  const RN = require('react-native') as { Platform: { OS: string } };
+  const platformOriginal = RN.Platform.OS;
+
+  beforeEach(() => {
+    writeSpy.mockReset();
+    infoSpy.mockReset();
+    infoSpy.mockResolvedValue({ exists: false });
+    useVault.setState({ vaultRoot: 'web://mock-vault/Test' });
+    usePessoa.setState({ pessoaAtiva: 'pessoa_a' });
+    RN.Platform.OS = 'web';
+    // Sem __gauntlet exposto por default (cada caso decide).
+    delete (globalThis as { __gauntlet?: unknown }).__gauntlet;
+  });
+
+  afterEach(() => {
+    RN.Platform.OS = platformOriginal;
+    delete (globalThis as { __gauntlet?: unknown }).__gauntlet;
+  });
+
+  it('web sem __gauntlet.salvarFraseMock exposto retorna ok=false', async () => {
+    const r = await salvarFrase({ frase: 'sem mock disponivel' });
+    expect(r.ok).toBe(false);
+    expect(r.arquivo).toBeNull();
+    expect(writeSpy).not.toHaveBeenCalled();
+  });
+
+  it('web com __gauntlet.salvarFraseMock delega e retorna ok=true', async () => {
+    const mockFn = jest
+      .fn()
+      .mockReturnValue({ ok: true, arquivo: 'markdown/frase-2026-05-08-x.md' });
+    (globalThis as { __gauntlet?: unknown }).__gauntlet = {
+      salvarFraseMock: mockFn,
+    };
+    const r = await salvarFrase({
+      frase: 'olá pessoal',
+      para: { tipo: 'casal' },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.arquivo).toBe('markdown/frase-2026-05-08-x.md');
+    expect(mockFn).toHaveBeenCalledTimes(1);
+    expect(mockFn).toHaveBeenCalledWith('olá pessoal', {
+      autor: 'pessoa_a',
+      para: { tipo: 'casal' },
+    });
+    expect(writeSpy).not.toHaveBeenCalled();
+  });
+});

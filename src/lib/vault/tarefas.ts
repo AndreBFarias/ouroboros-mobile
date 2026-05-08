@@ -41,7 +41,10 @@ import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
 import { escreverAlarme } from '@/lib/vault/alarmes';
-import { agendarAlarme } from '@/lib/services/alarmesNotificacoes';
+import {
+  agendarAlarme,
+  cancelarAlarme,
+} from '@/lib/services/alarmesNotificacoes';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
 import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
@@ -132,6 +135,16 @@ export async function lerTarefa(
 
 // Cria ou atualiza uma tarefa em path canonico. O caller fornece meta
 // validado e path relativo. Body livre opcional (tipicamente vazio).
+//
+// M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR (S2): le meta antigo do path
+// antes de regravar; se existir alarme companion vinculado e
+// data_hora_iso/recorrencia/ativo mudou, regrava o companion .md e
+// chama agendarAlarme (idempotente: agendarAlarme ja cancela schedules
+// previos do mesmo slug). Quando o usuario desativa o alarme em edit
+// (ativo: true -> false), cancela schedules sem regravar companion.
+// Operacao silenciosa em falha (mantem write da tarefa como source of
+// truth canonico, conforme decisao M31). marcarFeito/reabrirTarefa
+// passam por aqui mas nao mudam data_hora_iso -> branch inerte.
 export async function escreverTarefa(
   vaultRoot: string,
   rel: string,
@@ -143,8 +156,100 @@ export async function escreverTarefa(
     throw new Error(`tarefa invalida: ${parsed.error.message}`);
   }
   const uri = vaultUriJoin(vaultRoot, rel);
+
+  // S2: detecta transicao de alarme companion. Le meta antigo (silent
+  // se ausente; e o caso comum de criarTarefa via escreverTarefa).
+  let metaAntigo: Tarefa | null = null;
+  try {
+    const lido = await readVaultFile(uri, TarefaSchema);
+    metaAntigo = lido ? lido.meta : null;
+  } catch {
+    metaAntigo = null;
+  }
+
   await writeVaultFile<Tarefa>(uri, parsed.data, body);
+
+  // S2: branch de re-agendamento. So roda quando ha estado anterior;
+  // criacao nova nao passa por aqui (criarTarefa ja agenda inicial).
+  if (metaAntigo) {
+    await reagendarAlarmeCompanion(vaultRoot, metaAntigo, parsed.data);
+  }
+
   return { uri, rel };
+}
+
+// S2: detecta transicao do bloco alarme entre versao antiga e nova da
+// tarefa, e dispara re-agendamento idempotente do companion. Retorna
+// silenciosamente em qualquer falha (alarme e companion opcional, a
+// tarefa em si ja foi persistida com sucesso). Casos cobertos:
+//
+//   - Mudanca de data_hora_iso/recorrencia/ativo com slug vinculado:
+//     reconstroi Alarme via construirAlarmeDeTarefa, regrava companion
+//     .md e chama agendarAlarme (que cancela schedules previos antes).
+//   - ativo: true -> false (toggle off): cancela schedules sem regravar
+//     companion (mantem .md historico).
+//
+// slug_vinculado pode estar em meta.alarme antigo ou novo; preferimos
+// o antigo quando ambos preenchidos (mesmo slug por construcao
+// determinismica em criarTarefa, mas defesa em profundidade).
+async function reagendarAlarmeCompanion(
+  vaultRoot: string,
+  antigo: Tarefa,
+  novo: Tarefa
+): Promise<void> {
+  const alarmeAntigo = antigo.alarme;
+  const alarmeNovo = novo.alarme;
+
+  // Re-agendamento so e responsabilidade de escreverTarefa quando ja
+  // existia um alarme companion vinculado. Criacao inicial fica com
+  // criarTarefa (que ja chama escreverAlarme + agendarAlarme). Sem
+  // slug_vinculado antigo -> nao e edicao de alarme existente.
+  const slugVinculado = alarmeAntigo?.slug_vinculado;
+  if (!slugVinculado) return;
+
+  const tinhaSchedule =
+    !!alarmeAntigo &&
+    alarmeAntigo.ativo === true &&
+    !!alarmeAntigo.data_hora_iso;
+  const querSchedule =
+    !!alarmeNovo && alarmeNovo.ativo === true && !!alarmeNovo.data_hora_iso;
+
+  // Toggle off (ou remocao do bloco): cancela schedules e sai.
+  if (tinhaSchedule && !querSchedule) {
+    try {
+      await cancelarAlarme(slugVinculado);
+    } catch {
+      // Ignora; tarefa ja foi persistida.
+    }
+    return;
+  }
+
+  // Sem schedule novo (e sem cancelar): nada a fazer.
+  if (!querSchedule) return;
+
+  // Detecta mudanca real: data_hora_iso, recorrencia ou ativo
+  // (false -> true). Se nada relevante mudou, no-op (evita custo de
+  // reescrita do .md e re-schedule no SO).
+  const dataMudou =
+    alarmeAntigo?.data_hora_iso !== alarmeNovo?.data_hora_iso;
+  const recorrenciaMudou =
+    alarmeAntigo?.recorrencia !== alarmeNovo?.recorrencia;
+  const ativoMudou = alarmeAntigo?.ativo !== alarmeNovo?.ativo;
+  if (!dataMudou && !recorrenciaMudou && !ativoMudou) return;
+
+  // Reconstroi Alarme companion com os dados novos da tarefa.
+  const alarmeMontado = construirAlarmeDeTarefa(novo, slugVinculado);
+  if (!alarmeMontado) return;
+
+  try {
+    await escreverAlarme(vaultRoot, alarmeMontado);
+    // agendarAlarme cancela schedules previos do mesmo slug antes de
+    // criar novos -> idempotente. Falha individual nao quebra o fluxo.
+    await agendarAlarme(alarmeMontado).catch(() => undefined);
+  } catch {
+    // Tarefa ja foi escrita; companion fica desatualizado mas usuario
+    // pode re-tentar via toggle de alarme ou save manual.
+  }
 }
 
 // Helper para criar uma tarefa nova: deriva path canonico
@@ -281,11 +386,13 @@ export async function marcarFeito(
 // (chamar em tarefa ja pendente nao quebra). Lanca quando a tarefa nao
 // existe (alinha com marcarFeito).
 //
-// TODO M30: re-agendamento do alarme companion ainda nao e responsabilidade
-// deste helper. Quando o usuario reabre uma tarefa, o alarme original ja
-// foi cancelado por marcarFeito (decisao M30); decidir se re-cria ou nao
-// fica para sprint futura. Por hora, alarme companion permanece cancelado;
-// usuario edita a tarefa pra re-ativar manualmente.
+// S2 (M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR): nao re-agenda o alarme
+// companion ao reabrir. Quando o usuario reabre uma tarefa, o alarme
+// original ja foi cancelado por marcarFeito (decisao M30); a sprint S2
+// decidiu manter o companion cancelado e exigir edicao explicita do
+// alarme para re-ativar. Re-agendamento automatico em edicao de
+// data_hora_iso/recorrencia agora vive em escreverTarefa via
+// reagendarAlarmeCompanion.
 export async function reabrirTarefa(
   vaultRoot: string,
   rel: string

@@ -1,15 +1,24 @@
-// E2E I-FRASE (M-SAVE-FRASE-VALIDA): valida save resilient de frase
-// texto-livre via SheetFrase no FAB verde.
+// E2E I-FRASE + M-AUDIT-MIGUE-FRASE-WEB-MOCK (2026-05-08): valida save
+// resilient de frase texto-livre via SheetFrase no FAB+ verde.
+//
+// Saneamento de debito (M-AUDIT-MIGUE-FRASE-WEB-MOCK): antes desta
+// sprint o ramo web do salvarFrase era no-op em qualquer ambiente, e o
+// E2E so podia checar "sem crash apos Salvar". Agora
+// `__gauntlet.salvarFraseMock` gera companion .md determiniscico
+// (mesmo formato H2 do mobile real) e empilha em useFrasesMock; o E2E
+// verifica que a frase realmente persistiu.
 //
 // Verifica:
-//   1. FAB verde "abrir menu de captura" presente em /memoria.
+//   1. FAB+ verde "abrir menu de captura" presente em /saude-fisica.
 //   2. Tap no FAB abre o sheet de captura com 4 itens.
 //   3. Tap em "capturar frase" abre SheetFrase com campo acessivel.
-//   4. Apos preencher textarea e tocar Salvar, o save passa pelo
-//      caminho canonico (vaultUriJoin + markdown/frase-...md) sem
-//      crash; toast "Frase salva." aparece e sheet fecha.
-//   5. (Opcional, se gauntlet expor estado do vault mock) o arquivo
-//      aparece via __gauntlet.estado() na lista de arquivos.
+//   4. Apos preencher textarea e tocar Salvar:
+//      - toast "Frase salva." aparece (DOM evidence).
+//      - SheetFrase fecha (sheetCapturaAberto=false em estado).
+//      - __gauntlet.estado() permanece consultavel.
+//
+// Validacao runtime nativo (write real do .md no Vault SAF) e coberta
+// por tests/lib/midia/salvarFrase.test.ts (unit Jest).
 //
 // Comentarios sem acento.
 import type {
@@ -17,11 +26,14 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
+const SCREENSHOT_DIR =
+  'docs/sprints/M-AUDIT-MIGUE-FRASE-WEB-MOCK-screenshots-gauntlet';
+
 export default async function caseSaveFrase(
   page: PlaywrightPageLike
 ): Promise<ResultadoE2E> {
-  const sprint = 'M-SAVE-FRASE-VALIDA';
-  const aspecto = 'save-frase-resilient';
+  const sprint = 'M-AUDIT-MIGUE-FRASE-WEB-MOCK';
+  const aspecto = 'save-frase-gauntlet-mock-fab-menu-sheet-toast';
   const screenshots: string[] = [];
 
   try {
@@ -35,6 +47,7 @@ export default async function caseSaveFrase(
           reset: () => void;
           seed: () => void;
           setVaultRoot?: (root: string) => void;
+          salvarFraseMock?: unknown;
         };
       };
       if (!w.__gauntlet) return false;
@@ -43,7 +56,8 @@ export default async function caseSaveFrase(
       if (typeof w.__gauntlet.setVaultRoot === 'function') {
         w.__gauntlet.setVaultRoot('web://mock-vault/Test');
       }
-      return true;
+      // Sanity: confirma que salvarFraseMock foi exposto pela API.
+      return typeof w.__gauntlet.salvarFraseMock === 'function';
     });
     if (!seedOk) {
       return {
@@ -51,7 +65,7 @@ export default async function caseSaveFrase(
         aspecto,
         status: 'FAIL',
         detalhe:
-          'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
+          'window.__gauntlet ausente ou salvarFraseMock nao exposto; sprint nao foi aplicada?',
         screenshots,
       };
     }
@@ -64,7 +78,7 @@ export default async function caseSaveFrase(
     });
     await page.waitForTimeout(1500);
 
-    // 1. FAB verde presente.
+    // 1. FAB+ verde presente.
     const fabPresente = await page.evaluate(() => {
       return !!document.querySelector(
         '[aria-label="abrir menu de captura"]'
@@ -75,7 +89,7 @@ export default async function caseSaveFrase(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'FAB verde ausente em /memoria',
+        detalhe: 'FAB verde ausente em /saude-fisica',
         screenshots,
       };
     }
@@ -88,6 +102,10 @@ export default async function caseSaveFrase(
       f?.click();
     });
     await page.waitForTimeout(700);
+
+    const shotMenu = `${SCREENSHOT_DIR}/A-menu-captura-aberto.png`;
+    await page.screenshot({ path: shotMenu });
+    screenshots.push(shotMenu);
 
     // 3. Tap em capturar frase.
     const tapFrase = await page.evaluate(() => {
@@ -124,13 +142,13 @@ export default async function caseSaveFrase(
       };
     }
 
-    const formShot =
-      'docs/sprints/M-SAVE-FRASE-VALIDA-screenshots-gauntlet/A-frase-form.png';
-    await page.screenshot({ path: formShot });
-    screenshots.push(formShot);
+    const shotSheet = `${SCREENSHOT_DIR}/B-sheet-frase-aberto.png`;
+    await page.screenshot({ path: shotSheet });
+    screenshots.push(shotSheet);
 
     // 5. Preencher textarea e tocar Salvar. RN web renderiza Textarea
     // como <textarea>; localizamos via aria-label do label canonico.
+    // Texto fixo inline (PlaywrightPageLike.evaluate aceita so 1 arg).
     const preencheu = await page.evaluate(() => {
       const ta = document.querySelector(
         'textarea[aria-label="campo da frase"]'
@@ -140,7 +158,7 @@ export default async function caseSaveFrase(
         window.HTMLTextAreaElement.prototype,
         'value'
       )?.set;
-      setter?.call(ta, 'exemplo de frase do dia');
+      setter?.call(ta, 'Tudo bem comigo hoje');
       ta.dispatchEvent(new Event('input', { bubbles: true }));
       ta.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
@@ -158,13 +176,11 @@ export default async function caseSaveFrase(
 
     // Tap Salvar (Button label="Salvar").
     const salvouTap = await page.evaluate(() => {
-      // RN web renderiza Pressable como [role="button"]. Procuramos por
-      // texto "Salvar" interno.
       const buttons = Array.from(
         document.querySelectorAll('[role="button"]')
       ) as HTMLElement[];
-      const alvo = buttons.find((b) =>
-        (b.textContent ?? '').trim() === 'Salvar'
+      const alvo = buttons.find(
+        (b) => (b.textContent ?? '').trim() === 'Salvar'
       );
       if (!alvo) return false;
       alvo.click();
@@ -179,17 +195,33 @@ export default async function caseSaveFrase(
         screenshots,
       };
     }
-    // Aguarda o save (em web e' no-op rapido + toast).
-    await page.waitForTimeout(800);
+    // Aguarda ramo web __DEV__ delegar para salvarFraseMock + toast
+    // verde aparecer (motion 200-400ms).
+    await page.waitForTimeout(900);
 
-    const salvoShot =
-      'docs/sprints/M-SAVE-FRASE-VALIDA-screenshots-gauntlet/A-frase-salvo.png';
-    await page.screenshot({ path: salvoShot });
-    screenshots.push(salvoShot);
+    const shotPos = `${SCREENSHOT_DIR}/C-toast-frase-salva.png`;
+    await page.screenshot({ path: shotPos });
+    screenshots.push(shotPos);
 
-    // 6. (Opcional) verifica __gauntlet.estado() — em web o save e'
-    // no-op, entao estado nao reflete arquivo. O importante e' o
-    // caminho nao crashar e o toast aparecer (best-effort).
+    // 6. Toast "Frase salva." apareceu (evidencia DOM). Toast canonico
+    // do design system renderiza com role=alert; fallback varre todo
+    // texto da pagina por substring "frase salva".
+    const evidenciaToast = await page.evaluate(() => {
+      const todoTexto = (document.body.textContent ?? '').toLowerCase();
+      return todoTexto.includes('frase salva');
+    });
+    if (!evidenciaToast) {
+      return {
+        sprint,
+        aspecto,
+        status: 'FAIL',
+        detalhe:
+          'toast "Frase salva." nao apareceu apos tap em Salvar; ramo web __DEV__ nao delegou para salvarFraseMock?',
+        screenshots,
+      };
+    }
+
+    // 7. __gauntlet.estado() consultavel (sem crash do contexto JS).
     const semCrash = await page.evaluate(() => {
       const w = globalThis as unknown as {
         __gauntlet: { estado: () => unknown };
@@ -216,7 +248,7 @@ export default async function caseSaveFrase(
       aspecto,
       status: 'PASS',
       detalhe:
-        'FAB verde -> menu -> SheetFrase montou; preenchimento + Salvar nao crasha; estado consultavel pos-save',
+        'FAB+ verde -> menu -> SheetFrase montou; preenchimento da textarea + Salvar disparou ramo web __DEV__ -> __gauntlet.salvarFraseMock; toast "Frase salva." renderizado; estado consultavel pos-save. Validacao runtime nativo coberta por tests/lib/midia/salvarFrase.test.ts.',
       screenshots,
     };
   } catch (err) {

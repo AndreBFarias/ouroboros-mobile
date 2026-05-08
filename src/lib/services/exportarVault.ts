@@ -78,6 +78,12 @@ export interface SnapshotSettings {
   onboarding: {
     done: boolean;
     tipoCompanhia: ReturnType<typeof useOnboarding.getState>['tipoCompanhia'];
+    // sexoDeclarado e permissoes incluidos em
+    // M-AUDIT-MIGUE-RESTORE-SNAPSHOT (campo aditivo, schema=1 mantem).
+    // Opcional para tolerar snapshots antigos exportados antes do
+    // patch (parser do restore aceita ausencia).
+    sexoDeclarado?: ReturnType<typeof useOnboarding.getState>['sexoDeclarado'];
+    permissoes?: ReturnType<typeof useOnboarding.getState>['permissoes'];
   };
   pessoa: {
     pessoaAtiva: ReturnType<typeof usePessoa.getState>['pessoaAtiva'];
@@ -194,6 +200,8 @@ export function gerarSnapshotSettings(): SnapshotSettings {
     onboarding: {
       done: o.done,
       tipoCompanhia: o.tipoCompanhia,
+      sexoDeclarado: o.sexoDeclarado,
+      permissoes: o.permissoes,
     },
     pessoa: {
       pessoaAtiva: p.pessoaAtiva,

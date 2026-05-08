@@ -19,9 +19,9 @@ bloqueia APK preview.
 
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
-| S1 | `M-AUDIT-MIGUE-FRASE-WEB-MOCK` | `M-AUDIT-MIGUE-FRASE-WEB-MOCK-spec.md` | ~1h | `[todo]` |
-| S2 | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR` | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR-spec.md` | ~2h | `[todo]` |
-| S3 | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT` | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT-spec.md` | ~3h | `[todo]` |
+| S1 | `M-AUDIT-MIGUE-FRASE-WEB-MOCK` | `M-AUDIT-MIGUE-FRASE-WEB-MOCK-spec.md` | ~1h | `[ok]` |
+| S2 | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR` | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR-spec.md` | ~2h | `[ok]` |
+| S3 | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT` | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT-spec.md` | ~3h | `[ok]` |
 | S4 | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD-spec.md` | ~1h | `[ok]` (regex object literal + 5 strings dev + colateral marcosAuto) |
 | S5 | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL` | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL-spec.md` | ~0.5h | `[ok]` |
 

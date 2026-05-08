@@ -17,7 +17,15 @@
 // Comportamento por ambiente:
 //   - mobile real: grava .md no Vault. Erros propagam para caller via
 //     throw; caller exibe toast.
-//   - web: no-op (retorna ok=false). Gauntlet usa mock vault futuro.
+//   - web release: no-op (retorna ok=false). Vault SAF nao existe em
+//     web, sem caminho viavel.
+//   - web __DEV__ (Gauntlet): delega para
+//     globalThis.__gauntlet.salvarFraseMock(texto, { autor, para }) quando
+//     a API esta exposta. Permite E2E e auditoria visual exercerem o
+//     fluxo completo (toast verde "Frase salva.", reset/seed, etc.) sem
+//     depender de FileSystem nativo. Saneamento de debito M-AUDIT-MIGUE-
+//     FRASE-WEB-MOCK (2026-05-08): antes desta sprint o ramo web era
+//     no-op em qualquer ambiente, e o E2E tinha que stubar manualmente.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { Platform } from 'react-native';
@@ -86,6 +94,26 @@ export async function salvarFrase(
   const para: Para = opcoes.para ?? { tipo: 'mim' };
 
   if (Platform.OS === 'web') {
+    if (__DEV__) {
+      // Gauntlet: delega para mock in-memory quando exposto. Mantem a
+      // assinatura original do helper (frase + para + arquivo) mas o
+      // mock devolve um path web:// e o caller (MenuCapturaVerde) ja
+      // dispara o toast verde "Frase salva." em ramo r.ok=true.
+      const gauntletApi = (
+        globalThis as unknown as {
+          __gauntlet?: {
+            salvarFraseMock?: (
+              texto: string,
+              meta: { autor: 'pessoa_a' | 'pessoa_b'; para: Para }
+            ) => { ok: boolean; arquivo: string | null };
+          };
+        }
+      ).__gauntlet;
+      if (typeof gauntletApi?.salvarFraseMock === 'function') {
+        const autorWeb = usePessoa.getState().pessoaAtiva;
+        return gauntletApi.salvarFraseMock(frase, { autor: autorWeb, para });
+      }
+    }
     return { ok: false, arquivo: null };
   }
 

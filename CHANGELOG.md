@@ -5,6 +5,52 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 3 (2026-05-08): S1 + S2 + S3 migues codigo paralelos
+
+- **S1 `M-AUDIT-MIGUE-FRASE-WEB-MOCK`** — `src/lib/midia/salvarFrase.ts`
+  ganha branch `Platform.OS === 'web' && __DEV__` que delega para
+  `__gauntlet.salvarFraseMock(texto, meta)` quando exposto. Release web
+  continua no-op. Mock implementado em `src/lib/dev/gauntlet.ts` com
+  guard `GAUNTLET_ATIVO`, gerador de slug + companion via
+  `stringifyCompanionMidia`, store zustand novo `useFrasesMock` em
+  `src/lib/dev/frasesMock.ts`. `aplicarReset` limpa o mock. E2E
+  `tests/e2e/playwright/m-save-frase.e2e.ts` atualizado para validar
+  toast no DOM. +2 casos jest em `salvarFrase.test.ts`.
+  Divergência menor de spec: nome real é `stringifyCompanionMidia`, não
+  `serializarCompanionDeterministico`.
+
+- **S2 `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR`** — TODO M30 fechado em
+  `src/lib/vault/tarefas.ts:284`. `escreverTarefa` agora lê metaAntigo
+  via `readVaultFile`, e após write delega para `reagendarAlarmeCompanion`
+  que detecta toggles (data_hora_iso / recorrencia / ativo) e chama
+  `cancelarAlarme` + `agendarAlarme` conforme transição. Idempotência
+  preservada (cancelarAlarme já era silencioso em falha). +7 casos em
+  `tests/lib/vault/tarefas-reagendar.test.ts` (cenários: data muda,
+  recorrencia muda, desativacao, no-op trivial, criacao inicial,
+  resiliencia em falha de agendar/cancelar).
+  Divergência menor de spec: arquivo real do serviço é
+  `alarmesNotificacoes.ts`, não `notificacoesLembretes.ts`. Inferido
+  empiricamente.
+
+- **S3 `M-AUDIT-MIGUE-RESTORE-SNAPSHOT`** — `aplicarSnapshot` implementado
+  em `src/lib/services/restaurarVault.ts`. Q1/Q2/Q3 fechadas:
+  - Q1 confirm dialog: default `confirmado=false` aborta com motivo
+    `nao-confirmado`. UI sempre passa via Dialog (futuro).
+  - Q2 schema diff: aborta com `console.error` + retorno
+    `schema-incompativel`. Não migra.
+  - Q3 vaultRoot: snapshot inclui mas `aplicarSnapshot` ignora
+    (preserva o atual do dispositivo).
+  - Aditivo: `SnapshotSettings.onboarding` ganha `sexoDeclarado` e
+    `permissoes` opcionais (schema=1 mantido, snapshots antigos
+    continuam carregaveis).
+  - +11 casos jest (8 em `restaurarVault.test.ts` + 3 em
+    `snapshot-symmetry.test.ts` provando export -> reset -> import casa
+    byte-a-byte). UI integration (ConfirmDialog em settings) fica para
+    sprint futura.
+
+Smoke verde combinado: 179 suites / 1763 passed (+20 vs baseline 1743).
+TS strict 0. PT-BR check OK. anonimato OK.
+
 ### Batch 2 (2026-05-08): W1 7 patches visuais consolidados
 
 - **W1 `M-AUDIT-VISUAL-WARNS`** entregou os 7 patches do RELATORIO:
