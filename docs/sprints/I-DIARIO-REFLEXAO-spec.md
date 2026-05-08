@@ -77,7 +77,25 @@ PNGs Gauntlet do fluxo Reflexão.
 
 - [ ] `STATE.md`, `ROADMAP.md`, `CHANGELOG.md`, `FEATURES-CANONICAS.md` §2.2.
 
-## 10. Dúvidas em aberto
+## 10. Decisão resolvida
 
-Set de tags emoções para Reflexão — confirmar com dono. Proposta:
-`pensativo / curioso / gratidão / surpresa / contemplação / aceitação`.
+Set de tags emoções para modo Reflexão (6 chips, alinhados com os outros
+modos):
+- pensativo
+- curioso
+- gratidão
+- aceitação
+- silêncio
+- contemplação
+
+Justificativa: cobrem o espectro contemplativo sem polaridade
+(trigger=negativo, vitória=positivo, reflexão=neutro). Chips
+ordenados do mais leve ("pensativo") ao mais profundo ("contemplação")
+para permitir varredura intuitiva.
+
+**Path do arquivo `.md` no Vault**: `markdown/diario-YYYY-MM-DD-HHmm-<slug>.md`
+com `modo: reflexao` no frontmatter (sem polaridade).
+**No Recap (M36)**: modo Reflexão **não** entra em "Conquistas" nem
+"Crises" — entra em uma **nova seção "Reflexões"** ou na seção genérica
+"Esta jornada" da Tela Hoje. Confirmar com sub-sprint dedicada de
+Recap quando dispatchar I-DIARIO-REFLEXAO.

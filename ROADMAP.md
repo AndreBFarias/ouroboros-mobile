@@ -35,7 +35,7 @@ bloqueia APK preview.
 | G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[todo]` |
 | G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[todo]` |
 | G6 | `M-DOCS-PATH-FIX` | `M-DOCS-PATH-FIX-spec.md` | ~0.3h | `[todo]` |
-| G7 | `M-SCHEMA-CONTADOR-V2` | `M-SCHEMA-CONTADOR-V2-spec.md` | ~1h | `[todo]` |
+| G7 | `M-SCHEMA-CONTADOR-V2` | `M-SCHEMA-CONTADOR-V2-spec.md` | ~1h | `[v2]` (descopada pré-v1.0.0) |
 
 ### Bloco V — Cobertura E2E faltante
 

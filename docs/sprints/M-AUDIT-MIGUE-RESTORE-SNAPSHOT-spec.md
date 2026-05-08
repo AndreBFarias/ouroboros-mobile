@@ -80,9 +80,19 @@ PNGs do fluxo export → reset → import → settings voltam.
 - [ ] `CHANGELOG.md` atualizado.
 - [ ] Comentário `(futuro)` em `restaurarVault.ts:14` removido.
 
-## 10. Dúvidas em aberto
+## 10. Decisões resolvidas
 
-Confirmar com dono se restore deve **sobrescrever** stores existentes ou
-**mesclar** (atual export grava em `restaurado-<DATA>/` arquivo files;
-para snapshot, default deve ser sobrescrever — mas deve perguntar ao usuário).
-Decisão pendente até execução.
+**Q1: sobrescrever stores ou mesclar?** → **Sempre confirmar com diálogo
+explícito antes de aplicar snapshot.**
+Implementação: `aplicarSnapshot(snap)` recebe parâmetro `confirmado: boolean`.
+Se `false`, dispara `<ConfirmDialog>` com texto "Vamos sobrescrever suas
+configurações atuais com as do backup. Continuar?" e aborta se "Cancelar".
+Default = `false` (UI sempre passa via Dialog).
+
+**Q2: o que acontece se versão de schema do snapshot diferir?** →
+**Aborta restore com toast erro** e log no console explicando a versão
+incompatível. Não tenta migrar. Próxima sprint pode adicionar migração.
+
+**Q3: snapshot inclui o `vaultRoot` antigo?** → **Sim**, mas `aplicarSnapshot`
+**ignora** o `vaultRoot` (preserva o atual do dispositivo). Restore migra
+configurações pessoais, não topologia de armazenamento.

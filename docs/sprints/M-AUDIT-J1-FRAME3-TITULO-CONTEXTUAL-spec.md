@@ -71,8 +71,14 @@ fix: m-audit-j1-frame3-titulo-contextual permissoes h1 contextual
 - [ ] `CHANGELOG.md` atualizado.
 - [ ] `docs/FEATURES-CANONICAS.md` §1 (onboarding) atualizado.
 
-## 10. Dúvidas em aberto
+## 10. Decisão resolvida
 
-Frase exata do H1 — proposta acima é sugestão. Dono pode preferir outra
-("As permissões que você liberar.", "O que o app pode usar.", etc.).
-Decisão na execução.
+H1 do Frame 3: **"Libere o que faz sentido pra você."**
+
+Justificativa:
+- Mantém eyebrow "Permissões" (consistente com outros 4 frames).
+- Tom respeitoso (ADR-0005 sem motivacional, sem gamificação).
+- Implica autonomia — usuário decide quais permissões dar.
+- Sentence case + ponto final + acentuação OK.
+- Não usa imperativo agressivo ("Libere todas!") nem manipulação ("Para
+  uma melhor experiência...").

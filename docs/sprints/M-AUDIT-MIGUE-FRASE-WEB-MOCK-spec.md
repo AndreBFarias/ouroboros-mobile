@@ -50,12 +50,26 @@ Padrão (Regra -1, sentence case PT-BR, sem emojis, TS strict). Sem novas deps.
 
 ## 6. Procedimento sugerido
 
-1. Ler `salvarFrase.ts` atual para entender contrato (input, return).
-2. Adicionar branch web `__DEV__` que chama `(window as any).__gauntlet?.salvarFraseMock(texto)` se disponível.
-3. Em `gauntlet.ts`, criar `salvarFraseMock(texto)` que adiciona ao estado mock interno e devolve `{ ok: true, uri: 'web://mock-vault/markdown/frase-...' }`.
-4. Atualizar `tests/lib/midia/salvarFrase.test.ts`.
-5. Criar E2E `m-save-frase.e2e.ts`.
-6. Smoke verde.
+1. Ler `src/lib/midia/salvarFrase.ts` atual (linha 20 tem o comentário canonico).
+2. Adicionar branch web `__DEV__`:
+   ```ts
+   if (Platform.OS === 'web' && __DEV__) {
+     const gauntlet = (globalThis as any).__gauntlet;
+     if (typeof gauntlet?.salvarFraseMock === 'function') {
+       return gauntlet.salvarFraseMock(texto, { autor, para });
+     }
+     return { ok: false, motivo: 'web-no-mock' };
+   }
+   ```
+3. Em `src/lib/dev/gauntlet.ts` adicionar a interface ApiKey (mesmo padrão do `adicionarFotoMock` linha 103/384):
+   ```ts
+   salvarFraseMock(texto: string, meta: { autor: 'pessoa_a' | 'pessoa_b'; para: 'mim' | string }):
+     { ok: true; uri: string; companion: string };
+   ```
+   Implementação: gera slug `frase-${YYYY-MM-DD}-${rand6}`, escreve no estado mock vault sob `markdown/<slug>.md` + companion frontmatter via `serializarCompanionDeterministico` de `src/lib/midia/companion.ts`.
+4. Atualizar `tests/lib/midia/salvarFrase.test.ts`: caso "web Gauntlet usa mock" + caso "web sem mock retorna ok=false".
+5. Criar `tests/e2e/playwright/m-save-frase.e2e.ts` copiando `docs/templates/e2e-template.e2e.ts`.
+6. Smoke verde + 3 PNGs em `docs/sprints/M-AUDIT-MIGUE-FRASE-WEB-MOCK-screenshots-gauntlet/`.
 
 ## 7. Verificação runtime-real
 

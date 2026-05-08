@@ -9,14 +9,18 @@ STATUS:     [todo]
 
 ## 1. Objetivo
 
-Decidir e implementar o destino dos arquivos de Share Intent (M08) no
-layout-por-tipo (ADR-0023). Atualmente Share Intent grava em
+Migrar destino dos arquivos de Share Intent (M08) para o layout-por-tipo
+(ADR-0023). Atualmente Share Intent grava em
 `inbox/<area>/<subtipo>/<data>-<slug>.md` (legado pré-H2). Spec H2 deixou
 explícito "sprint dedicada migra share intent para layout-por-tipo".
 
-**Decisão a tomar com o dono:** A) prefixo no slug
-(`markdown/inbox-<subtipo>-<data>-<slug>.md`) ou B) pasta exceção
-(manter `inbox/<area>/<subtipo>/`)?
+**Decisão tomada (2026-05-08): opção B — pasta exceção `inbox/`.**
+Justificativa: o conceito "inbox" é triagem temporária (não permanente
+como humor/diário/evento); manter pasta dedicada preserva semântica e
+evita poluir `markdown/` com arquivos pendentes de classificação. Após
+triagem (salvar como evento/diário/conquista), o arquivo é movido para
+o destino canônico e removido do `inbox/`. ADR-0024 documenta como
+**exceção parcial** ao ADR-0023.
 
 ## 2. Entregáveis
 
@@ -51,11 +55,18 @@ que arquivo cai no path canônico decidido.
 
 ## 6. Procedimento
 
-1. Apresentar A vs B ao dono com tradeoffs (A = consistência rígida do
-   layout-por-tipo; B = manter rastreabilidade do "inbox" como conceito).
-2. Implementar a escolha.
-3. Migrar arquivos legados via boot hook.
-4. ADR-0024.
+1. Criar `docs/ADRs/0024-share-intent-layout-pasta-excecao.md` com o
+   contexto, decisão B, alternativa rejeitada A, consequências.
+2. Confirmar `src/lib/share/saveShareReceived.ts` continua escrevendo
+   em `inbox/<area>/<subtipo>/<data>-<slug>.md` (sem mudança de path).
+3. Boot hook em `src/lib/boot/migrarVaultLayoutPorTipo.ts`: garantir que
+   `inbox/` é **whitelisted** e NÃO migrado para `markdown/`. Adicionar
+   teste de regressão.
+4. Adicionar comentário em `src/lib/schemas/inbox-arquivo.ts` referenciando
+   ADR-0024.
+5. Atualizar `docs/FEATURES-CANONICAS.md` §2.7 ("Share Intent Receiver")
+   removendo a nota "(legado pré-H2; sprint dedicada migra share intent
+   para layout-por-tipo)" e substituindo por referência a ADR-0024.
 
 ## 7. Verificação
 
@@ -76,6 +87,8 @@ PNGs do fluxo share intent → arquivo no vault.
 - [ ] `STATE.md`, `ROADMAP.md`, `CHANGELOG.md`, `FEATURES-CANONICAS.md`
   §2.7 atualizados.
 
-## 10. Dúvidas em aberto
+## 10. Decisão resolvida
 
-A vs B. Bloqueador antes de execução.
+**B (pasta exceção `inbox/`).** Conceito "inbox" preserva semântica de
+triagem temporária; arquivos saem do `inbox/` quando classificados.
+ADR-0024 documenta como exceção parcial ao ADR-0023 layout-por-tipo.

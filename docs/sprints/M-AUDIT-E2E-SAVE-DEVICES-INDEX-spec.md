@@ -39,9 +39,21 @@ Manual via playwright MCP.
 
 ## 6. Procedimento
 
-1. Verificar se há API no Gauntlet para ler arquivo do mock vault. Se
-   não, adicionar `lerVaultMock(path)` (sub-sprint trivial).
-2. Implementar asserts.
+1. **Pré-requisito** (confirmado 2026-05-08): `lerVaultMock(path)`
+   **NÃO existe** no `__gauntlet`. Adicionar antes:
+   ```ts
+   // src/lib/dev/gauntlet.ts (novo método)
+   lerVaultMock(path: string): string | null {
+     return mockVaultStore.getState().arquivos[path] ?? null;
+   }
+   ```
+   E declarar no tipo `__gauntletApi`. Esta extensão fica nesta sprint
+   mesma (não é sprint nova).
+2. Implementar asserts no E2E:
+   - `__gauntlet.reset() && __gauntlet.seed()` → ler `markdown/_devices.md`.
+   - Asserir conteúdo contém `deviceId:` + `nome_amigavel:` + `pessoa: pessoa_a` + `primeira_atividade:` ISO datetime.
+   - Re-rodar `__gauntlet.reset() && __gauntlet.seed()` → conteúdo
+     **idêntico** ao primeiro (idempotência).
 
 ## 7. Verificação
 
@@ -61,6 +73,8 @@ E2E é o validador.
 
 - [ ] `STATE.md`, `CHANGELOG.md`.
 
-## 10. Dúvidas em aberto
+## 10. Decisão resolvida
 
-`lerVaultMock` API existe no `__gauntlet`? Confirmar antes da execução.
+`lerVaultMock` **não existe** no Gauntlet (confirmado via grep
+2026-05-08). Esta sprint adiciona como sub-step §6.1 (sem sprint nova).
+Implementação: helper sobre o estado do mock vault interno.

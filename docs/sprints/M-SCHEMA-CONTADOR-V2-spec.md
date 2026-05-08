@@ -3,8 +3,8 @@
 ```
 DEPENDE:    HEAD em 9c385b3 + I-CONTADOR fechada (55cab5f)
 BLOQUEIA:   nada (cosmético schema)
-ESTIMATIVA: ~1h + decisão dono
-STATUS:     [todo]
+ESTIMATIVA: ~1h
+STATUS:     [v2]
 ```
 
 ## 1. Objetivo
@@ -60,7 +60,12 @@ Não há mudança visual.
 
 - [ ] `STATE.md`, `CHANGELOG.md`.
 
-## 10. Dúvidas em aberto
+## 10. Decisão resolvida
 
-**Bloqueador**: dono decide se renomeia (`resets` → `historico_resets`)
-ou se mantém. Só depois execução.
+**Sprint movida para `[v2]`** (não executar antes de v1.0.0).
+
+Justificativa: campo `resets` continua funcional; rename é cosmético
+e introduz risco de regressão sem ganho proporcional. Custo da
+migração lossless (alias zod + writers atualizados) é maior que o
+benefício antes do release. Reavaliar pós-v1.0.0 quando schema
+puder ser quebrado em v2.

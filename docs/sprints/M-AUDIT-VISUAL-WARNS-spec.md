@@ -64,8 +64,18 @@ PNGs antes/depois batch.
 
 - [ ] `STATE.md`, `CHANGELOG.md`, `FEATURES-CANONICAS.md`.
 
-## 10. Dúvidas em aberto
+## 10. Decisões resolvidas
 
-W3: encurtar "Evolução Corporal" para "Evolução" só, OU manter texto
-completo mas com font menor? Confirmar com dono na execução.
-W5: loader é intencional? Confirmar antes de remover.
+**W3** — Encurtar a label da tab para **"Evolução"** (1 palavra).
+Justificativa: outras tabs (`Treinos`, `Exercícios`) usam 1 palavra cada;
+consistência visual mais importante que precisão semântica. O título
+"Saúde Física" + ícone da tab dão contexto suficiente. Remove quebra de
+linha sem reduzir font.
+
+**W5** — Investigar antes de remover.
+Procedimento: `git log -p -- src/components/scanner/ScannerSheet.tsx`
+e `app/scanner.tsx` para identificar quando o `<OuroborosLoader compacto>`
+foi adicionado. Se commit foi A18 (Screen opaco com loader como mitigação
+de gorhom), **manter** (é proteção contra A17 reincidente). Se foi
+acidental ou ornamental, **remover**. Decisão final na execução, gravada
+no commit message.

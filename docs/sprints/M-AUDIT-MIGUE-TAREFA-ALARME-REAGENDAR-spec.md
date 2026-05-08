@@ -56,11 +56,26 @@ adb shell dumpsys alarm | grep com.ouroboros
 
 ## 6. Procedimento sugerido
 
-1. Ler `tarefas.ts` para entender estrutura atual.
-2. Identificar funções de edição (provavelmente `salvarTarefa` faz upsert).
-3. Em mudança de `data_hora_iso`, dispatchar `cancelarAlarme + agendarAlarme`
-   via callback ou import direto.
-4. Testar idempotência.
+1. Ler `src/lib/vault/tarefas.ts` linhas 280-300 (TODO M30 está em `:284`).
+2. Estender `salvarTarefa(tarefa)` (ou função equivalente de upsert) para
+   detectar transição:
+   ```ts
+   const tarefaAntiga = await lerTarefa(slug); // lê arquivo .md anterior
+   if (tarefaAntiga?.alarme_companion_slug && tarefa.alarme_companion_slug) {
+     const dataMudou = tarefaAntiga.data_hora_iso !== tarefa.data_hora_iso;
+     if (dataMudou) {
+       await cancelarAlarme(tarefa.alarme_companion_slug);
+       await agendarAlarme(tarefa.alarme_companion_slug, tarefa.data_hora_iso);
+     }
+   }
+   ```
+3. Garantir que `cancelarAlarme` é idempotente (se id não existe no
+   `expo-notifications`, swallow erro).
+4. Remover comentário `TODO M30:` em `tarefas.ts:284`.
+5. Caso de teste em `tests/lib/vault/tarefas-reagendar.test.ts`:
+   - cria tarefa com alarme em data X.
+   - edita data para Y.
+   - assert `cancelarAlarme(slug)` chamado 1x e `agendarAlarme(slug, Y)` chamado 1x.
 
 ## 7. Verificação
 
