@@ -34,7 +34,7 @@ bloqueia APK preview.
 | G2.1 | `I-DIARIO-REFLEXAO-RECAP` (colateral G2) | `I-DIARIO-REFLEXAO-RECAP-spec.md` | ~1.5h | `[ok]` |
 | G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[ok]` |
 | G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[ok]` |
-| G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[todo]` |
+| G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[ok]` (40 PNGs em 22 sprints) |
 | G6 | `M-DOCS-PATH-FIX` | `M-DOCS-PATH-FIX-spec.md` | ~0.3h | `[ok]` |
 | G7 | `M-SCHEMA-CONTADOR-V2` | `M-SCHEMA-CONTADOR-V2-spec.md` | ~1h | `[v2]` (descopada pré-v1.0.0) |
 
@@ -47,7 +47,7 @@ bloqueia APK preview.
 | V3 | `M-AUDIT-E2E-BOTOES-LARGURA` | `M-AUDIT-E2E-BOTOES-LARGURA-spec.md` | ~0.5h | `[ok]` |
 | V4.0 | `INFRA-VAULT-WEB-MOCK` (pré-requisito V4) | `INFRA-VAULT-WEB-MOCK-spec.md` | ~2h | `[ok]` |
 | V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~1h | `[ok]` (escopo expandido absorveu disparaBootHooks) |
-| W2.1 | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS` (achado V4 v2) | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS-spec.md` | ~0.3h | `[todo]` |
+| W2.1 | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS` (achado V4 v2) | `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS-spec.md` | ~0.3h | `[ok]` |
 
 ### Bloco W — Patches visuais consolidados
 

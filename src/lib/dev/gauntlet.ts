@@ -257,15 +257,18 @@ function aplicarReset(): void {
   // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
   // em web para que reload nao re-hidrate estado anterior. Em mobile,
   // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
+  // W2.1 (2026-05-08): chaves alinhadas 1:1 com `name:` declarado em
+  // src/lib/stores/*.ts. Sem fallback por prefixo -- explicito evita
+  // limpar chaves de outras apps. Se nova store persist for adicionada,
+  // adicionar a chave aqui no mesmo commit.
   if (typeof window !== 'undefined') {
     try {
-      window.localStorage?.removeItem('ouroboros.onboarding');
-      window.localStorage?.removeItem('ouroboros.onboarding.v2');
       window.localStorage?.removeItem('ouroboros.onboarding.v3');
-      window.localStorage?.removeItem('ouroboros.vault');
-      window.localStorage?.removeItem('ouroboros.pessoa');
+      window.localStorage?.removeItem('ouroboros.vault.v1');
+      window.localStorage?.removeItem('ouroboros.pessoa.v1');
       window.localStorage?.removeItem('ouroboros.sessao.v1');
       window.localStorage?.removeItem('ouroboros.settings.v2');
+      window.localStorage?.removeItem('ouroboros.google.v1');
     } catch {
       // ignora -- modo privado, iframe sem permissao.
     }

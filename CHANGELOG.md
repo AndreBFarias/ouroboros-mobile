@@ -5,6 +5,46 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda B parte 2 (2026-05-08): W2.1 chaves persist + G5 retroativo PNGs
+
+- **W2.1 `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS`** — `aplicarReset` em
+  `src/lib/dev/gauntlet.ts` linhas 257-273 sincroniza chaves
+  localStorage 1:1 com as canônicas das stores. Auditoria revelou:
+  - Estavam corretas: `ouroboros.settings.v2`, `ouroboros.onboarding.v3`,
+    `ouroboros.sessao.v1`.
+  - **Estavam desalinhadas**: `ouroboros.pessoa` -> `ouroboros.pessoa.v1`,
+    `ouroboros.vault` -> `ouroboros.vault.v1`.
+  - **Faltava**: `ouroboros.google.v1` (`googleAuth.ts:283` usa
+    `STORAGE_KEY` constante).
+  - **Fantasmas removidos**: `ouroboros.onboarding`, `ouroboros.onboarding.v2`.
+
+- **G5 `M-GAUNTLET-RETROATIVO-AUDIT`** — **40 PNGs reais persistidos**
+  em 22 pastas `docs/sprints/<id>-screenshots-gauntlet/` (excedeu meta
+  de 37). Cobertura 22/22 sprints UI da spec. Captura via
+  playwright-core direto + chromium-1208 (precedente G2.1).
+  - Achados visuais notáveis durante captura:
+    - **WARN W2 confirmado** em `M-BOTOES-LARGURA/02-home-recap.png`:
+      pílula com texto colado às bordas.
+    - **W5 loader scanner** confirmado em
+      `M-SAVE-SCANNER-VALIDA/01-empty.png`: loader Ouroboros decorativo
+      abaixo do botão "Capturar nota".
+    - **3 chips Reflexão visíveis** em `I-DIARIO-REFLEXAO/01-empty.png`
+      confirmando G2.
+    - **Drawer com "Acesso Rápido" + "Registrar" + "Utilitários"** em
+      `M-MENU-LATERAL-LAYOUT/01-drawer-aberto.png` confirmando K1+K2.
+    - **3 abas Saúde Física** em
+      `M-SAVE-FOTO-VALIDA/01-saude-fisica-treinos.png` confirmando L1.
+    - **Recap toggle Lista/Calendário** em
+      `M-RECAP-CALENDARIO-UNIFICAR/01-lista.png` confirmando L2.
+  - Limitações de plataforma documentadas: sheets `@gorhom/bottom-sheet`
+    em web não abrem (A17), FAB+ click via locator não dispara menu —
+    pares 01==02 com mesmo sha em algumas pastas porque estado base
+    foi capturado mas overlay não. Esperado pelo BRIEF §1.9. Nível B
+    cobre.
+  - 1 MB total (margem 6-7 MB do limite).
+
+Smoke verde 184/1794 mantido.
+
 ### Onda B parte 1 (2026-05-08): V4 v2 escopo expandido + spec W2.1 colateral
 
 - **V4 v2 `M-AUDIT-E2E-SAVE-DEVICES-INDEX` (escopo expandido)** — V4 v1
