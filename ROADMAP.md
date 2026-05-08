@@ -31,7 +31,7 @@ bloqueia APK preview.
 |---|---|---|---|---|
 | G1 | `M-SHARE-INTENT-LAYOUT` | `M-SHARE-INTENT-LAYOUT-spec.md` | ~2h | `[ok]` (ADR-0024) |
 | G2 | `I-DIARIO-REFLEXAO` | `I-DIARIO-REFLEXAO-spec.md` | ~1.5h | `[ok]` |
-| G2.1 | `I-DIARIO-REFLEXAO-RECAP` (colateral G2) | `I-DIARIO-REFLEXAO-RECAP-spec.md` | ~1.5h | `[todo]` |
+| G2.1 | `I-DIARIO-REFLEXAO-RECAP` (colateral G2) | `I-DIARIO-REFLEXAO-RECAP-spec.md` | ~1.5h | `[ok]` |
 | G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[ok]` |
 | G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[ok]` |
 | G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[todo]` |
@@ -45,15 +45,15 @@ bloqueia APK preview.
 | V1 | `M-AUDIT-E2E-AMIGOS-LABEL` | `M-AUDIT-E2E-AMIGOS-LABEL-spec.md` | ~0.5h | `[ok]` |
 | V2 | `M-AUDIT-E2E-MENU-NOMES` | `M-AUDIT-E2E-MENU-NOMES-spec.md` | ~0.3h | `[ok]` |
 | V3 | `M-AUDIT-E2E-BOTOES-LARGURA` | `M-AUDIT-E2E-BOTOES-LARGURA-spec.md` | ~0.5h | `[ok]` |
-| V4.0 | `INFRA-VAULT-WEB-MOCK` (pré-requisito V4) | `INFRA-VAULT-WEB-MOCK-spec.md` | ~2h | `[todo]` |
-| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~0.5h | `[blocked V4.0]` |
+| V4.0 | `INFRA-VAULT-WEB-MOCK` (pré-requisito V4) | `INFRA-VAULT-WEB-MOCK-spec.md` | ~2h | `[ok]` |
+| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~0.5h | `[todo]` (destravada por V4.0) |
 
 ### Bloco W — Patches visuais consolidados
 
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
 | W1 | `M-AUDIT-VISUAL-WARNS` (7 patches em batch) | `M-AUDIT-VISUAL-WARNS-spec.md` | ~3-4h | `[ok]` |
-| W1.1 | `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING` (achado colateral W1) | `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING-spec.md` | ~0.5h | `[todo]` |
+| W1.1 | `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING` (achado colateral W1) | `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING-spec.md` | ~0.5h | `[ok]` |
 
 **Total bloco S+G+V+W:** ~21-23h ativas.
 

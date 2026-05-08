@@ -37,6 +37,7 @@ import {
 } from '@/lib/hooks/useRecap';
 import { RecapSecaoConquistas } from './RecapSecaoConquistas';
 import { RecapSecaoCrises } from './RecapSecaoCrises';
+import { RecapSecaoReflexoes } from './RecapSecaoReflexoes';
 import { RecapSecaoEvolucoes } from './RecapSecaoEvolucoes';
 import { RecapSecaoTarefas } from './RecapSecaoTarefas';
 import { RecapSecaoNumeros } from './RecapSecaoNumeros';
@@ -142,6 +143,7 @@ export function RecapScreen() {
       ? 0
       : data.conquistas.length +
         data.crises.length +
+        data.reflexoes.length +
         data.evolucoes.length +
         data.tarefasConcluidas.length;
 
@@ -323,6 +325,7 @@ export function RecapScreen() {
             >
               <RecapSecaoConquistas itens={data.conquistas} />
               <RecapSecaoCrises itens={data.crises} />
+              <RecapSecaoReflexoes itens={data.reflexoes} />
               <RecapSecaoEvolucoes itens={data.evolucoes} />
               <RecapSecaoTarefas itens={data.tarefasConcluidas} />
               <RecapSecaoNumeros numeros={data.numeros} />

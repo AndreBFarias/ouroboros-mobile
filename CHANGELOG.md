@@ -5,6 +5,53 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda A (2026-05-08): V4.0 + W1.1 + G2.1 colaterais paralelos
+
+- **V4.0 `INFRA-VAULT-WEB-MOCK`** — mock store SAF web em `src/lib/dev/vaultMockStore.ts`
+  (zustand `useVaultMock` com `Map<uri, string>` + helpers
+  getArquivo/setArquivo/listar/listarPasta/limpar).
+  `src/lib/vault/reader.ts` e `writer.ts` ganharam branch
+  `Platform.OS === 'web' && __DEV__` que delega para o mock.
+  `src/lib/dev/gauntlet.ts` expõe `lerVaultMock(uri)` e
+  `listarVaultMock()` com guard GAUNTLET_ATIVO. `aplicarReset` zera
+  o mock. `docs/GAUNTLET.md` atualizado. Mobile real intacto (SAF
+  continua em produção). +4 casos jest. Destrava V4 + qualquer E2E
+  que valida conteúdo de arquivo.
+
+- **W1.1 `M-AUDIT-VISUAL-BUTTON-GHOST-PADDING`** — fix raiz no
+  `<Button variant="ghost">` em `src/components/ui/Button.tsx:108-124`:
+  adicionado `paddingHorizontal: spacing.base` (16dp). 39 instâncias
+  no codebase ganham respiração interna automática. Wrappers externos
+  redundantes removidos: `app/index.tsx:154-159` (W2 botão Recap) e
+  `src/components/eventos/LocalizacaoBlock.tsx` (W4 simplificado —
+  mantém flexShrink, remove padding extra).
+
+- **G2.1 `I-DIARIO-REFLEXAO-RECAP`** — integração completa do modo
+  reflexão com Recap:
+  - `SecaoDiariosEventosAgrupado.tsx` ganha 3 cores (red trigger,
+    green vitoria, cyan reflexao) substituindo ternário binário.
+  - `useRecap.ts` ganha `interface ReflexaoItem` + chave `reflexoes`
+    em `RecapData` + filtro `d.modo === 'reflexao'` + ordenação por
+    data desc + fallback empty.
+  - `RecapScreen.tsx` pluga nova seção entre Crises e Evoluções +
+    `totalSecoes` inclui reflexoes.
+  - `RecapSecaoReflexoes.tsx` componente novo (80L) espelhando padrão
+    de `RecapSecaoCrises`, ícone MessageCircle cyan, tom respeitoso
+    ADR-0005.
+  - +6 casos jest cobrindo mix, ordenação, fallback, fora período,
+    intensidade e estado vazio.
+  - 2 PNGs reais capturados em
+    `docs/sprints/I-DIARIO-REFLEXAO-RECAP-screenshots-gauntlet/`
+    (chip Reflexão cyan + Recap empty state limitação documentada).
+  - Achado colateral: `listarDiarios` em `src/lib/vault/diario.ts:28`
+    filtra `web://` antes do reader, então Recap permanece vazio no
+    Gauntlet mesmo após `seedComDados('diarios-3')`. Sprint nova
+    proposta: `INFRA-VAULT-WEB-MOCK-LISTAR` (não dispatchada — V4.0
+    parcialmente cobre via reader integrado).
+
+Smoke combinado: 183 suites / 1791 testes verde (+10 onda A vs 1781).
+TS strict 0. PT-BR check OK.
+
 ### Batch 6 (2026-05-08): V1 + V2 + V3 E2E paralelos + V4 rejeitada formalmente
 
 - **V1 `M-AUDIT-E2E-AMIGOS-LABEL`** — `tests/e2e/playwright/m-amigos-label.e2e.ts`

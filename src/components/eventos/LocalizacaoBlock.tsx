@@ -77,11 +77,11 @@ export function LocalizacaoBlock({
           flexWrap: 'wrap',
         }}
       >
-        {/* W4 (M-AUDIT-VISUAL-WARNS): flexShrink 0 + paddingHorizontal
-            externo evitam que o texto longo vaze do pill quando o chip
-            de bairro divide a linha. Ghost button nao tem padding
-            horizontal interno; o wrapper compensa. */}
-        <View style={{ flexShrink: 0, paddingHorizontal: spacing.sm }}>
+        {/* W4 + W1.1: flexShrink 0 evita compressao quando o chip de
+            bairro divide a linha (defesa W4 mantida). paddingHorizontal
+            externo removido em W1.1 — variant ghost ja embute 16dp na
+            raiz (vide src/components/ui/Button.tsx). */}
+        <View style={{ flexShrink: 0 }}>
           <Button
             variant="ghost"
             label={detectando ? 'Detectando...' : 'Usar localização atual'}

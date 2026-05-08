@@ -3,7 +3,8 @@
 // unica, ordenada por hora descendente. Cor da borda esquerda
 // diferencia o registro:
 //   - diario.modo === 'trigger'   -> red
-//   - diario.modo !== 'trigger'   -> green (vitoria/positivo neutro)
+//   - diario.modo === 'reflexao'  -> cyan (G2.1, anotacao contemplativa)
+//   - diario.modo === 'vitoria'   -> green (anonimato-allow: substantivo)
 //   - evento.modo === 'positivo'  -> green
 //   - evento.modo !== 'positivo'  -> red (negativo)
 //
@@ -83,7 +84,12 @@ function ItemLinha({ item }: ItemLinhaProps) {
   let detalhe = '';
 
   if (item.tipo === 'diario') {
-    corBorda = item.meta.modo === 'trigger' ? colors.red : colors.green;
+    // G2.1: 3 cores por modo do diario emocional. Reflexao (modo
+    // contemplativo introduzido em G2) ganha cyan, coerente com os
+    // chips accent cyan da paleta de emocoes.
+    if (item.meta.modo === 'trigger') corBorda = colors.red;
+    else if (item.meta.modo === 'reflexao') corBorda = colors.cyan;
+    else corBorda = colors.green;
     rotulo = 'Diário';
     titulo = item.meta.texto;
   } else {

@@ -151,12 +151,10 @@ function TelaHojeConteudo({
                 />
               </View>
             )}
-            {/* W2 (M-AUDIT-VISUAL-WARNS): wrapper com paddingHorizontal
-                base (16dp) garante respiracao entre avatar e o pill ghost,
-                que era 0/0 no header. */}
-            <View style={{ paddingHorizontal: spacing.base }}>
-              <Button label="Recap" variant="ghost" onPress={onRecapPress} />
-            </View>
+            {/* W1.1 (M-AUDIT-VISUAL-BUTTON-GHOST-PADDING): wrapper W2
+                removido — agora o variant ghost ja embute paddingHorizontal
+                base (16dp) na raiz, evitando duplicacao para 32dp. */}
+            <Button label="Recap" variant="ghost" onPress={onRecapPress} />
           </View>
         }
       />

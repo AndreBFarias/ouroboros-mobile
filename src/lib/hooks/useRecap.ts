@@ -95,6 +95,15 @@ export interface CriseItem {
   frase: string;
 }
 
+// Item de reflexao (modo contemplativo do diario emocional, G2/G2.1).
+// Sem polaridade — nao entra em conquistas nem crises.
+export interface ReflexaoItem {
+  id: string;
+  data: string;
+  intensidade: number;
+  frase: string;
+}
+
 // Item de evolucao positiva mensuravel.
 export interface EvolucaoItem {
   id: string;
@@ -123,6 +132,7 @@ export interface NumerosRecap {
 export interface RecapData {
   conquistas: ConquistaItem[];
   crises: CriseItem[];
+  reflexoes: ReflexaoItem[];
   evolucoes: EvolucaoItem[];
   tarefasConcluidas: TarefaConcluidaItem[];
   numeros: NumerosRecap;
@@ -298,6 +308,22 @@ export function agregarRecap(input: {
     return a.data < b.data ? 1 : -1;
   });
 
+  // Reflexoes (G2.1): modo 'reflexao' do diario emocional. Lista
+  // paralela a conquistas/crises, sem polaridade. Ordenacao por data
+  // desc (mais recente primeiro).
+  const reflexoes: ReflexaoItem[] = [];
+  for (const d of diariosFiltrados) {
+    if (d.modo === 'reflexao') {
+      reflexoes.push({
+        id: `diario_reflexao:${d.data}:${d.autor}`,
+        data: d.data,
+        intensidade: d.intensidade,
+        frase: truncar(d.texto || 'Reflexão sem descrição.', 120),
+      });
+    }
+  }
+  reflexoes.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+
   // Evolucoes: delta humor (media), treinos no periodo, contadores em
   // alta (sequencia >= 30 dias).
   const evolucoes: EvolucaoItem[] = [];
@@ -364,6 +390,7 @@ export function agregarRecap(input: {
   return {
     conquistas,
     crises,
+    reflexoes,
     evolucoes,
     tarefasConcluidas,
     numeros,
@@ -426,6 +453,7 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
           setData({
             conquistas: [],
             crises: [],
+            reflexoes: [],
             evolucoes: [],
             tarefasConcluidas: [],
             numeros: {

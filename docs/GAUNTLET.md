@@ -258,6 +258,36 @@ Auditoria 2026-05-04 documentou os erros operacionais mais comuns.
 - `reset()` v2 — limpa todas as stores + menuAberto + pathnameRef
   + localStorage do persist em web.
 
+## APIs Vault Mock (V4.0 INFRA-VAULT-WEB-MOCK, 2026-05-08)
+
+Em web/dev, `StorageAccessFramework.{read,write}AsStringAsync` lança
+`UnavailabilityError` (SAF não existe no DOM). Antes desta sprint,
+todos os saves eram silenciosamente engolidos e nenhum `.md` era
+escrito — E2Es de save só podiam validar "não crashou", não
+conteúdo. V4.0 introduz `useVaultMock` (zustand `Map<uri, string>`)
+que `reader.ts`/`writer.ts` interceptam quando
+`Platform.OS === 'web' && __DEV__`. Mobile real continua em SAF.
+
+```js
+// Lê conteúdo serializado de um arquivo .md gravado pelo app
+const md = window.__gauntlet.lerVaultMock(
+  'content://com.android.externalstorage.documents/tree/.../markdown/_devices.md'
+);
+// → string com frontmatter + body, ou null se não existe.
+
+// Lista todas as URIs gravadas (ordenadas alfabeticamente)
+const todas = window.__gauntlet.listarVaultMock();
+// → ['content://.../markdown/_devices.md', 'content://.../markdown/frase-...', ...]
+```
+
+Reset zera o store automaticamente. Reload da página perde o estado
+(em memória apenas) — por design, igual aos outros mocks
+(`useFrasesMock`, `useGaleriaMock`, etc).
+
+Use estes helpers em E2Es para validar **conteúdo** dos arquivos
+gravados (devicesIndex, frases, humores, eventos, etc), não só
+"não crashou".
+
 ## Próximos passos
 
 - M-GAUNTLET-DEAD-CODE-V2 — refactor para tornar gauntlet

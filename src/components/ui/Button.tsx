@@ -13,7 +13,7 @@ import { Pressable, Text } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
-import { colors } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 
 export type ButtonVariant = 'primary' | 'success' | 'ghost' | 'destructive';
 
@@ -115,6 +115,14 @@ export function Button({
           backgroundColor: v.bgColor,
           borderRadius: 12,
           paddingVertical: 16,
+          // W1.1 (M-AUDIT-VISUAL-BUTTON-GHOST-PADDING): variant ghost
+          // tinha paddingHorizontal 0 e o texto ficava colado nas
+          // bordas do pill (borda 1dp visivel). 16dp uniforme garante
+          // respiracao interna em todas as instancias compartilhadas.
+          // As outras variantes mantem padding 0 horizontal porque o
+          // CTA primario costuma ser fullWidth com label curto e nao
+          // se beneficia do mesmo espaco extra.
+          ...(variant === 'ghost' ? { paddingHorizontal: spacing.base } : {}),
           alignItems: 'center',
           justifyContent: 'center',
           ...(fullWidth ? { width: '100%' as const } : {}),

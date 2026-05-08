@@ -30,6 +30,7 @@ import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock } from '@/lib/dev/diarioMock';
 import { useEventosMock } from '@/lib/dev/eventosMock';
 import { useFrasesMock } from '@/lib/dev/frasesMock';
+import { useVaultMock } from '@/lib/dev/vaultMockStore';
 import { slugDeFrase, stringifyCompanionMidia } from '@/lib/midia/companion';
 import type { Para } from '@/lib/schemas/para';
 // M-GAUNTLET-DEAD-CODE-V2: a flag canonica vive em gauntletAtivo (micro-
@@ -125,6 +126,15 @@ export interface GauntletAPI {
   // + reflexao). 'eventos-7' alimenta useEventosMock (7 eventos em
   // -7d a hoje). No-op em mobile (guard ja filtra).
   seedComDados(fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'): Promise<void>;
+  // V4.0 (INFRA-VAULT-WEB-MOCK, 2026-05-08): le conteudo serializado
+  // de um arquivo .md do Vault mock (web/dev). Util para E2E auditar
+  // que features de save (devicesIndex, frase, humor, etc) realmente
+  // gravaram no path canonico esperado. Retorna null se nao existe
+  // ou se rodando em mobile (no-op por guard).
+  lerVaultMock(uri: string): string | null;
+  // V4.0: lista todas as URIs gravadas no Vault mock. Ordenado
+  // alfabeticamente. Retorna [] em mobile.
+  listarVaultMock(): string[];
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -231,6 +241,9 @@ function aplicarReset(): void {
   useEventosMock.getState().limpar();
   // M-AUDIT-MIGUE-FRASE-WEB-MOCK: zera frases mock para isolar E2E.
   useFrasesMock.getState().limpar();
+  // V4.0 (INFRA-VAULT-WEB-MOCK): zera vault mock para isolar E2E. Sem
+  // isto, arquivos gravados em sprint anterior vazariam para a proxima.
+  useVaultMock.getState().limpar();
   // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
   // em web para que reload nao re-hidrate estado anterior. Em mobile,
   // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
@@ -470,6 +483,11 @@ const api: GauntletAPI = {
     if (!GAUNTLET_ATIVO) return;
     await aplicarSeedComDados(fixture);
   },
+  lerVaultMock: comGuard(
+    (uri: string) => useVaultMock.getState().getArquivo(uri) ?? null,
+    null as string | null
+  ),
+  listarVaultMock: comGuard(() => useVaultMock.getState().listar(), [] as string[]),
 };
 
 // Auditoria 2026-05-04 (item 27): captura console.error para o
