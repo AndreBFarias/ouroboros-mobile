@@ -9,6 +9,55 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+## Bloco S+G+V+W — Auditoria pré-APK (2026-05-08, novos)
+
+Após auditoria visual completa (RELATORIO em `docs/auditoria-2026-05-08/`),
+17 specs corretivas materializam débitos formais e visuais. Bloco S+W
+bloqueia APK preview.
+
+### Bloco S — Saneamento de débito declarado (alta prioridade)
+
+| # | Sprint | Spec | Estim. | Status |
+|---|---|---|---|---|
+| S1 | `M-AUDIT-MIGUE-FRASE-WEB-MOCK` | `M-AUDIT-MIGUE-FRASE-WEB-MOCK-spec.md` | ~1h | `[todo]` |
+| S2 | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR` | `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR-spec.md` | ~2h | `[todo]` |
+| S3 | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT` | `M-AUDIT-MIGUE-RESTORE-SNAPSHOT-spec.md` | ~3h | `[todo]` |
+| S4 | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` | `M-AUDIT-LABEL-GAUNTLET-DASHBOARD-spec.md` | ~0.5h | `[todo]` |
+| S5 | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL` | `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL-spec.md` | ~0.5h | `[todo]` |
+
+### Bloco G — Materializar achados colaterais (anti-débito)
+
+| # | Sprint | Spec | Estim. | Status |
+|---|---|---|---|---|
+| G1 | `M-SHARE-INTENT-LAYOUT` | `M-SHARE-INTENT-LAYOUT-spec.md` | ~2h | `[todo]` |
+| G2 | `I-DIARIO-REFLEXAO` | `I-DIARIO-REFLEXAO-spec.md` | ~1.5h | `[todo]` |
+| G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[todo]` |
+| G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[todo]` |
+| G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[todo]` |
+| G6 | `M-DOCS-PATH-FIX` | `M-DOCS-PATH-FIX-spec.md` | ~0.3h | `[todo]` |
+| G7 | `M-SCHEMA-CONTADOR-V2` | `M-SCHEMA-CONTADOR-V2-spec.md` | ~1h | `[todo]` |
+
+### Bloco V — Cobertura E2E faltante
+
+| # | Sprint | Spec | Estim. | Status |
+|---|---|---|---|---|
+| V1 | `M-AUDIT-E2E-AMIGOS-LABEL` | `M-AUDIT-E2E-AMIGOS-LABEL-spec.md` | ~0.5h | `[todo]` |
+| V2 | `M-AUDIT-E2E-MENU-NOMES` | `M-AUDIT-E2E-MENU-NOMES-spec.md` | ~0.3h | `[todo]` |
+| V3 | `M-AUDIT-E2E-BOTOES-LARGURA` | `M-AUDIT-E2E-BOTOES-LARGURA-spec.md` | ~0.5h | `[todo]` |
+| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~0.5h | `[todo]` |
+
+### Bloco W — Patches visuais consolidados
+
+| # | Sprint | Spec | Estim. | Status |
+|---|---|---|---|---|
+| W1 | `M-AUDIT-VISUAL-WARNS` (7 patches em batch) | `M-AUDIT-VISUAL-WARNS-spec.md` | ~3-4h | `[todo]` |
+
+**Total bloco S+G+V+W:** ~21-23h ativas.
+
+**Pré-condição APK preview**: Bloco S + W zerados.
+
+---
+
 ## Estado real consolidado (planejamento end-to-end v1.0.0 — 2026-05-06)
 
 Plano `tem-muita-coisa-zoada-golden-zebra` (aprovado 2026-05-06):

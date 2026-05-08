@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Auditoria pré-APK 2026-05-08 (relatório + 17 specs corretivas)
+
+- docs: relatorio consolidado em `docs/auditoria-2026-05-08/RELATORIO.md`
+  cobrindo 30 sprints golden-zebra. Pipeline: estatica (grep + spec vs
+  commits) + visual (Gauntlet + mockup canonico). Achados:
+  **18 OK / 7 WARN / 3 FAIL / 4 migues em codigo / 22+ sprints sem PNG real**.
+- specs: 17 specs corretivas materializadas em `docs/sprints/`:
+  - **Bloco S** (saneamento debito declarado, alta prioridade):
+    `M-AUDIT-MIGUE-FRASE-WEB-MOCK`, `M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR`,
+    `M-AUDIT-MIGUE-RESTORE-SNAPSHOT`, `M-AUDIT-LABEL-GAUNTLET-DASHBOARD`,
+    `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL`.
+  - **Bloco G** (anti-debito, materializa colaterais nunca specados):
+    `M-SHARE-INTENT-LAYOUT`, `I-DIARIO-REFLEXAO`, `INFRA-CHECK-TEST-DATA-ALLOW`,
+    `INFRA-GAUNTLET-AMIGOS-API`, `M-GAUNTLET-RETROATIVO-AUDIT`,
+    `M-DOCS-PATH-FIX`, `M-SCHEMA-CONTADOR-V2`.
+  - **Bloco V** (cobertura E2E faltante): `M-AUDIT-E2E-AMIGOS-LABEL`,
+    `M-AUDIT-E2E-MENU-NOMES`, `M-AUDIT-E2E-BOTOES-LARGURA`,
+    `M-AUDIT-E2E-SAVE-DEVICES-INDEX`.
+  - **Bloco W** (consolidado): `M-AUDIT-VISUAL-WARNS` (7 patches batch).
+- Plano em `~/.claude/plans/snug-humming-wall.md`. APK preview bloqueado
+  ate Bloco S + W zerados.
+
 ### Sprint M-TEST-ERROR-SILENCE (2026-05-08)
 
 - style: silenciar `console.error` esperado em 3 testes do path
