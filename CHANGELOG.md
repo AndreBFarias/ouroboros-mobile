@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 4 (2026-05-08): G2 diario reflexao
+
+- **G2 `I-DIARIO-REFLEXAO`** — modo "Reflexão" implementado:
+  - `DiarioEmocionalModoSchema` agora aceita 3 valores
+    (`trigger | vitoria | reflexao`). Refines preservados (funcionou
+    só em trigger, mídia obrigatória só em vitoria).
+  - `EMOCOES_REFLEXIVAS` em `src/lib/diario/emocoes.ts`: 6 chips
+    accent cyan — `pensativo / curioso / gratidão / aceitação /
+    silêncio / contemplação`.
+  - `EmocaoChips` aceita 3 modos com lookup ternário.
+  - `app/diario-emocional.tsx` ganha 3º chip `Reflexão` (accent cyan)
+    + 3 ternários para cor de borda / variant botão / label
+    (`Refletir`) / título contextual ("O que está passando pela
+    cabeça."). `flexWrap` para não overflow.
+  - `saveDiario.ts` agnóstico ao modo (path canônico preservado).
+  - +1 caso schema + 1 E2E `m-save-diario-reflexao.e2e.ts`.
+  - Validação visual confirmada: 3 chips renderizam em
+    `/diario-emocional` no Gauntlet.
+- Smoke: 180 suites / 1775 testes verde (+12 vs 1763).
+- Achados colaterais: `SecaoDiariosEventosAgrupado.tsx` pinta reflexão
+  de verde (deveria ser cyan); `useRecap.ts` ignora reflexão sem ter
+  seção dedicada. **Spec G2.1 `I-DIARIO-REFLEXAO-RECAP-spec.md`
+  materializada** para integrar reflexão ao Recap (cor cyan no card +
+  seção "Reflexões" no modo Lista).
+
 ### Batch 3 (2026-05-08): S1 + S2 + S3 migues codigo paralelos
 
 - **S1 `M-AUDIT-MIGUE-FRASE-WEB-MOCK`** — `src/lib/midia/salvarFrase.ts`

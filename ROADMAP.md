@@ -30,7 +30,8 @@ bloqueia APK preview.
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
 | G1 | `M-SHARE-INTENT-LAYOUT` | `M-SHARE-INTENT-LAYOUT-spec.md` | ~2h | `[todo]` |
-| G2 | `I-DIARIO-REFLEXAO` | `I-DIARIO-REFLEXAO-spec.md` | ~1.5h | `[todo]` |
+| G2 | `I-DIARIO-REFLEXAO` | `I-DIARIO-REFLEXAO-spec.md` | ~1.5h | `[ok]` |
+| G2.1 | `I-DIARIO-REFLEXAO-RECAP` (colateral G2) | `I-DIARIO-REFLEXAO-RECAP-spec.md` | ~1.5h | `[todo]` |
 | G3 | `INFRA-CHECK-TEST-DATA-ALLOW` | `INFRA-CHECK-TEST-DATA-ALLOW-spec.md` | ~0.5h | `[ok]` |
 | G4 | `INFRA-GAUNTLET-AMIGOS-API` | `INFRA-GAUNTLET-AMIGOS-API-spec.md` | ~0.5h | `[ok]` |
 | G5 | `M-GAUNTLET-RETROATIVO-AUDIT` | `M-GAUNTLET-RETROATIVO-AUDIT-spec.md` | ~3h | `[todo]` |

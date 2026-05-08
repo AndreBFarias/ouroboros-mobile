@@ -1,12 +1,14 @@
-// Emocoes do diario emocional (Tela 18). Duas listas fechadas
-// segundo o modo do registro: 6 negativas (modo trigger) e 6
-// positivas (modo vitoria). Slug em snake_case ASCII fica no
-// frontmatter; a UI exibe via formatEmocao em Sentence case com
-// acentuacao PT-BR.
+// Emocoes do diario emocional (Tela 18). Tres listas fechadas
+// segundo o modo do registro: 6 negativas (modo trigger), 6 positivas
+// (modo vitoria) e 6 contemplativas (modo reflexao). Slug em
+// snake_case ASCII fica no frontmatter; a UI exibe via formatEmocao
+// em Sentence case com acentuacao PT-BR.
 //
 // Decisão M06 (spec seção 9 item 1): listas fixas e fechadas para
 // evitar derivas e simplificar agregacao futura. Ampliacao via
-// sprint nova se demanda surgir.
+// sprint nova se demanda surgir. Sprint G2 (I-DIARIO-REFLEXAO,
+// 2026-05-08): adicionada lista contemplativa para o terceiro modo
+// canonico (nem trigger, nem vitoria — neutro).
 //
 // O dicionario de labels acentuados existe pelo mesmo motivo do
 // tagsRapidas.ts pos M05.1: fallback mecanico não restaura
@@ -35,7 +37,21 @@ export const EMOCOES_POSITIVAS = [
 
 export type EmocaoPositiva = (typeof EMOCOES_POSITIVAS)[number];
 
-export type EmocaoSlug = EmocaoNegativa | EmocaoPositiva;
+// Emocoes contemplativas (modo reflexao). Sprint G2: ordenadas do
+// mais leve ao mais profundo para varredura intuitiva. Sem polaridade
+// — nao entram em "Conquistas" nem "Crises" no Recap.
+export const EMOCOES_REFLEXIVAS = [
+  'pensativo',
+  'curioso',
+  'gratidao',
+  'aceitacao',
+  'silencio',
+  'contemplacao',
+] as const;
+
+export type EmocaoReflexiva = (typeof EMOCOES_REFLEXIVAS)[number];
+
+export type EmocaoSlug = EmocaoNegativa | EmocaoPositiva | EmocaoReflexiva;
 
 // Mapa de slug -> label acentuado em PT-BR. Slugs ASCII no
 // frontmatter; apresentacao restaura diacritico onde a ortografia
@@ -54,12 +70,18 @@ const EMOCOES_LABELS: Record<EmocaoSlug, string> = {
   conexao: 'Conexão',
   paz: 'Paz',
   orgulho: 'Orgulho',
+  pensativo: 'Pensativo',
+  curioso: 'Curioso',
+  aceitacao: 'Aceitação',
+  silencio: 'Silêncio',
+  contemplacao: 'Contemplação',
 };
 
 function isEmocaoSlug(s: string): s is EmocaoSlug {
   return (
     (EMOCOES_NEGATIVAS as readonly string[]).includes(s) ||
-    (EMOCOES_POSITIVAS as readonly string[]).includes(s)
+    (EMOCOES_POSITIVAS as readonly string[]).includes(s) ||
+    (EMOCOES_REFLEXIVAS as readonly string[]).includes(s)
   );
 }
 
@@ -88,4 +110,13 @@ export const EMOCOES_POSITIVAS_OPTIONS: readonly ChipOption[] =
     value: slug,
     label: formatEmocao(slug),
     accent: 'green',
+  }));
+
+// Reflexivas em accent cyan: tom contemplativo, distinto do red
+// (trigger) e green (vitoria). Sprint G2.
+export const EMOCOES_REFLEXIVAS_OPTIONS: readonly ChipOption[] =
+  EMOCOES_REFLEXIVAS.map((slug) => ({
+    value: slug,
+    label: formatEmocao(slug),
+    accent: 'cyan',
   }));

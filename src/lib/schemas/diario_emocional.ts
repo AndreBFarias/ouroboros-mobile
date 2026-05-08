@@ -2,17 +2,23 @@
 // (diario emocional). Modelado em docs/BRIEFING.md seção 7.
 //
 // Modos:
-// - 'trigger' = momento difícil. Estrategia + funcionou opcionais.
-// - 'vitoria' = anonimato-allow: superacao, sucesso. So texto e emocoes.
+// - 'trigger' = momento dificil. Estrategia + funcionou opcionais.
+// - 'vitoria' = anonimato-allow: superacao, sucesso. So texto e emocoes,
+//   exige ao menos uma midia.
+// - 'reflexao' = anotacao contemplativa sem polaridade (nem trigger,
+//   nem vitoria). Sem midia obrigatoria, sem funcionou/estrategia.
+//   Sprint G2 (I-DIARIO-REFLEXAO): cobre o terceiro modo canonico
+//   prescrito em FEATURES-CANONICAS §2.2; nao entra em conquistas
+//   nem crises do Recap (M36).
 //
 // 'funcionou' so faz sentido em modo trigger (estrategia foi
-// efetiva?). Quando modo === 'vitoria', funcionou deve ser undefined.
+// efetiva?). Quando modo !== 'trigger', funcionou deve ser undefined.
 import { z } from 'zod';
 import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
 import { MidiaSchema } from '@/lib/schemas/midia';
 import { ParaSchema } from '@/lib/schemas/para';
 
-export const DiarioEmocionalModoSchema = z.enum(['trigger', 'vitoria']);
+export const DiarioEmocionalModoSchema = z.enum(['trigger', 'vitoria', 'reflexao']);
 export type DiarioEmocionalModo = z.infer<typeof DiarioEmocionalModoSchema>;
 
 const Iso8601 = z

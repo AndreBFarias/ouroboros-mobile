@@ -94,7 +94,12 @@ function labelComQuem(c: ComQuem): string {
   return nomeDe(c);
 }
 
-const MODOS_VALIDOS: readonly ModoParam[] = ['trigger', 'vitoria', 'audio'];
+const MODOS_VALIDOS: readonly ModoParam[] = [
+  'trigger',
+  'vitoria',
+  'reflexao',
+  'audio',
+];
 
 function isModoParam(value: unknown): value is ModoParam {
   return (
@@ -281,11 +286,33 @@ export default function DiarioEmocional() {
     return <Redirect href="/onboarding" />;
   }
 
-  const corBordaModo = modo === 'trigger' ? colors.red : colors.green;
-  const variantBotao = modo === 'trigger' ? 'destructive' : 'success';
-  const labelBotao = modo === 'trigger' ? 'Registrar' : 'Anotar';
+  // Sprint G2: borda/variant/label/titulo agora cobrem 3 modos.
+  // Reflexao usa cyan (contemplativo, sem polaridade) e variant
+  // primary (default neutro) com label "Refletir".
+  const corBordaModo =
+    modo === 'trigger'
+      ? colors.red
+      : modo === 'vitoria'
+        ? colors.green
+        : colors.cyan;
+  const variantBotao: 'destructive' | 'success' | 'primary' =
+    modo === 'trigger'
+      ? 'destructive'
+      : modo === 'vitoria'
+        ? 'success'
+        : 'primary';
+  const labelBotao =
+    modo === 'trigger'
+      ? 'Registrar'
+      : modo === 'vitoria'
+        ? 'Anotar'
+        : 'Refletir';
   const tituloModo =
-    modo === 'trigger' ? 'O que aconteceu agora.' : 'O que rolou de bom.';
+    modo === 'trigger'
+      ? 'O que aconteceu agora.'
+      : modo === 'vitoria'
+        ? 'O que rolou de bom.'
+        : 'O que está passando pela cabeça.';
 
   const tituloSecao = (texto: string) => (
     <Text
@@ -424,8 +451,8 @@ export default function DiarioEmocional() {
         <View style={{ gap: spacing.sm }}>
           {tituloSecao('Modo')}
           <View
-            style={{ flexDirection: 'row', gap: spacing.sm }}
-            accessibilityLabel="seletor de modo trigger ou vitoria"
+            style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}
+            accessibilityLabel="seletor de modo trigger vitoria ou reflexao"
           >
             <Chip
               label="Trigger"
@@ -438,6 +465,12 @@ export default function DiarioEmocional() {
               accent="green"
               selected={modo === 'vitoria'}
               onPress={() => setModo('vitoria')}
+            />
+            <Chip
+              label="Reflexão"
+              accent="cyan"
+              selected={modo === 'reflexao'}
+              onPress={() => setModo('reflexao')}
             />
           </View>
         </View>
