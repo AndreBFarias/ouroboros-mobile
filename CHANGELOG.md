@@ -5,6 +5,18 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint M-TEST-WARNS (2026-05-07)
+
+- style: zera warnings runtime evitaveis em `npm test` (3 → 0)
+  (M-TEST-WARNS). Envolve `useNavegacao.setState` em `act(...)` em
+  `tests/components/chrome/FABMenu.test.tsx` (2 wraps + import
+  composto) e remove `jest.advanceTimersByTime?.(0)` redundante em
+  `tests/components/diario/MicrofoneButton.test.tsx`. Decisao
+  arquitetural: nao ativar `useFakeTimers()` global porque
+  quebraria 4 outros testes do mesmo describe que dependem de
+  `setTimeout` real. Baseline Jest preservado em 1742/1/176; 3
+  `console.error "save * fail"` intencionais intactos.
+
 ### Sprint M-LINT-CLEANUP (2026-05-07)
 
 - style: zera warnings ESLint (50 → 0) em escopo full `eslint .`

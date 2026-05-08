@@ -186,7 +186,6 @@ describe('MicrofoneButton ciclo press/release', () => {
       // Drena Promise.all (saveRecordingToVault + transcribeStream).
       // O Voice dispara onSpeechResults via setTimeout(0).
       for (let i = 0; i < 10; i++) await Promise.resolve();
-      jest.advanceTimersByTime?.(0);
       await new Promise((r) => setTimeout(r, 0));
       for (let i = 0; i < 10; i++) await Promise.resolve();
     });

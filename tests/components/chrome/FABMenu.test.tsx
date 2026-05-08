@@ -5,7 +5,7 @@
 //
 // Mock minimo de expo-router (usePathname controlavel) e do store
 // useNavegacao via getState() pra assertar mutacao.
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 let mockPathname = '/';
 jest.mock('expo-router', () => ({
@@ -46,11 +46,15 @@ describe('FABMenu', () => {
     const { queryByLabelText, rerender } = render(<FABMenu />);
     expect(queryByLabelText('abrir menu lateral')).toBeTruthy();
 
-    useNavegacao.setState({ sheetCapturaAberto: true });
+    act(() => {
+      useNavegacao.setState({ sheetCapturaAberto: true });
+    });
     rerender(<FABMenu />);
     expect(queryByLabelText('abrir menu lateral')).toBeNull();
 
-    useNavegacao.setState({ sheetCapturaAberto: false });
+    act(() => {
+      useNavegacao.setState({ sheetCapturaAberto: false });
+    });
     rerender(<FABMenu />);
     expect(queryByLabelText('abrir menu lateral')).toBeTruthy();
   });
