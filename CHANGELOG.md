@@ -5,6 +5,37 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 6 (2026-05-08): V1 + V2 + V3 E2E paralelos + V4 rejeitada formalmente
+
+- **V1 `M-AUDIT-E2E-AMIGOS-LABEL`** — `tests/e2e/playwright/m-amigos-label.e2e.ts`
+  (165L) cobrindo 3 cenários: setTipoCompanhia('casal') → chip "Casal",
+  setTipoCompanhia('amigos') → chip "Todos", setTipoCompanhia('sozinho')
+  → "Ambos" presente OU ausente (anti-vazamento). Asserções via DOM
+  body.textContent + screenshots A/B/C.
+- **V2 `M-AUDIT-E2E-MENU-NOMES`** — `tests/e2e/playwright/m-menu-nomes.e2e.ts`
+  (167L) cobrindo seções K2 ("Acesso Rápido" + "Utilitários" presentes;
+  "Ver" / "Opcionais" antigos ausentes — regressão protetora).
+- **V3 `M-AUDIT-E2E-BOTOES-LARGURA`** — `tests/e2e/playwright/m-botoes-largura.e2e.ts`
+  (281L) com 3 medições JS via getBoundingClientRect + getComputedStyle:
+  Conectar conta Google em /agenda (width >= 200, padding ancestral
+  >= 16); Recap home (wrapper W2 paddingHorizontal >= 16, centralização);
+  Abrir agenda em /settings/contas-google (com fallback gauntletSkip).
+
+- **V4 `M-AUDIT-E2E-SAVE-DEVICES-INDEX` REJEITADA FORMALMENTE** pelo
+  executor: hipótese `mockVaultStore` central da spec é falsa
+  (0 matches em rg). Em web/dev, SAF read/writeAsStringAsync lança
+  UnavailabilityError; nenhum arquivo `_devices.md` é escrito.
+  E2Es de save existentes só asseguram "não crasha". Validar conteúdo
+  exige sprint INFRA prévia.
+- **Spec `INFRA-VAULT-WEB-MOCK` (V4.0) materializada** como
+  pré-requisito de V4: implementa `useVaultMock` zustand store +
+  branch web __DEV__ em reader/writer + `__gauntlet.lerVaultMock` /
+  `listarVaultMock`. Estimado ~2h. Mobile real intacto. Após V4.0,
+  V4 é re-despachado.
+
+Smoke 181/1781 verde mantido (E2Es são doc-only para Jest via
+testPathIgnorePatterns).
+
 ### Batch 5 (2026-05-08): G1 share intent ADR-0024
 
 - **G1 `M-SHARE-INTENT-LAYOUT`** — opção B (pasta exceção) materializada:

@@ -42,10 +42,11 @@ bloqueia APK preview.
 
 | # | Sprint | Spec | Estim. | Status |
 |---|---|---|---|---|
-| V1 | `M-AUDIT-E2E-AMIGOS-LABEL` | `M-AUDIT-E2E-AMIGOS-LABEL-spec.md` | ~0.5h | `[todo]` |
-| V2 | `M-AUDIT-E2E-MENU-NOMES` | `M-AUDIT-E2E-MENU-NOMES-spec.md` | ~0.3h | `[todo]` |
-| V3 | `M-AUDIT-E2E-BOTOES-LARGURA` | `M-AUDIT-E2E-BOTOES-LARGURA-spec.md` | ~0.5h | `[todo]` |
-| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~0.5h | `[todo]` |
+| V1 | `M-AUDIT-E2E-AMIGOS-LABEL` | `M-AUDIT-E2E-AMIGOS-LABEL-spec.md` | ~0.5h | `[ok]` |
+| V2 | `M-AUDIT-E2E-MENU-NOMES` | `M-AUDIT-E2E-MENU-NOMES-spec.md` | ~0.3h | `[ok]` |
+| V3 | `M-AUDIT-E2E-BOTOES-LARGURA` | `M-AUDIT-E2E-BOTOES-LARGURA-spec.md` | ~0.5h | `[ok]` |
+| V4.0 | `INFRA-VAULT-WEB-MOCK` (pré-requisito V4) | `INFRA-VAULT-WEB-MOCK-spec.md` | ~2h | `[todo]` |
+| V4 | `M-AUDIT-E2E-SAVE-DEVICES-INDEX` | `M-AUDIT-E2E-SAVE-DEVICES-INDEX-spec.md` | ~0.5h | `[blocked V4.0]` |
 
 ### Bloco W — Patches visuais consolidados
 
