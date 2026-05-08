@@ -73,7 +73,7 @@ function avaliarTresTreinosSemana(
     .filter((t) => t.autor === autor)
     .filter((t) => new Date(t.data).getTime() >= limite);
   if (recentes.length >= 3) {
-    return { descricao: 'Tres treinos nesta semana.', tags: ['treino', 'consistencia'] };
+    return { descricao: 'Três treinos nesta semana.', tags: ['treino', 'consistencia'] };
   }
   return null;
 }

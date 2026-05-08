@@ -20,15 +20,15 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 const ROTAS_VER = [
   { rota: '/', label: 'Hoje' },
-  { rota: '/saude-fisica', label: 'Saude Fisica' },
+  { rota: '/saude-fisica', label: 'Saúde Física' },
   { rota: '/humor', label: 'Humor' },
   { rota: '/recap', label: 'Recap' },
   { rota: '/financas', label: 'Financas' },
 ];
 
 const ROTAS_REGISTRAR = [
-  { rota: '/humor-rapido', label: 'Humor rapido' },
-  { rota: '/diario-emocional', label: 'Diario emocional' },
+  { rota: '/humor-rapido', label: 'Humor rápido' },
+  { rota: '/diario-emocional', label: 'Diário emocional' },
   { rota: '/eventos', label: 'Eventos' },
   { rota: '/scanner', label: 'Scanner' },
 ];
@@ -38,9 +38,9 @@ const ROTAS_OPCIONAIS = [
   { rota: '/alarmes', label: 'Alarmes' },
   { rota: '/contadores', label: 'Contadores' },
   { rota: '/ciclo', label: 'Ciclo' },
-  { rota: '/exercicios', label: 'Exercicios' },
+  { rota: '/exercicios', label: 'Exercícios' },
   { rota: '/medidas', label: 'Medidas' },
-  { rota: '/settings', label: 'Configuracoes' },
+  { rota: '/settings', label: 'Configurações' },
 ];
 
 const ROTAS_DEV = [

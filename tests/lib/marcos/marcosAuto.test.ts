@@ -84,7 +84,7 @@ describe('verificarMarcosAuto', () => {
     const chamadas = mockSaveMarco.mock.calls;
     const houveTresTreinos = chamadas.some((c) => {
       const arg = c[0] as { meta: Marco };
-      return arg.meta.descricao.includes('Tres treinos');
+      return arg.meta.descricao.includes('Três treinos');
     });
     expect(houveTresTreinos).toBe(true);
   });
@@ -101,14 +101,14 @@ describe('verificarMarcosAuto', () => {
     // Marco existente com hash igual ao que seria gerado.
     const hashEsperado = require('@/lib/marcos/hash').hashMarcoConteudo(
       'pessoa_a',
-      'Tres treinos nesta semana.'
+      'Três treinos nesta semana.'
     );
     mockListarMarcos.mockResolvedValueOnce([
       {
         tipo: 'marco',
         data: '2026-01-01T00:00:00-03:00',
         autor: 'pessoa_a',
-        descricao: 'Tres treinos nesta semana.',
+        descricao: 'Três treinos nesta semana.',
         tags: [],
         auto: true,
         origem: 'backend',
@@ -122,7 +122,7 @@ describe('verificarMarcosAuto', () => {
     const chamadas = mockSaveMarco.mock.calls;
     const houveTresTreinos = chamadas.some((c) => {
       const arg = c[0] as { meta: Marco };
-      return arg.meta.descricao.includes('Tres treinos');
+      return arg.meta.descricao.includes('Três treinos');
     });
     expect(houveTresTreinos).toBe(false);
   });
@@ -162,7 +162,7 @@ describe('verificarMarcosAuto', () => {
     // 3 treinos com autor pessoa_a (que nao tem nenhum).
     const tresTreinos = mockSaveMarco.mock.calls.filter((c) => {
       const arg = c[0] as { meta: Marco };
-      return arg.meta.descricao.includes('Tres treinos');
+      return arg.meta.descricao.includes('Três treinos');
     });
     expect(tresTreinos).toHaveLength(0);
     expect(out.criados).toBe(0);

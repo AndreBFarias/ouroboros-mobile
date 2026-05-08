@@ -124,6 +124,23 @@ RE_JSX_TEXT_NODE = re.compile(
     r">(?P<txt>[^<{}>\n][^<{}>]*?[A-Za-zà-úÀ-Ú][^<{}>]*?)<"
 )
 
+# 3. Object literal property: { prop: 'X' } ou { prop: "X" }
+# Precedido por `,` `{` ou inicio de linha para reduzir falso positivo
+# de ternario tipo `cond ? a : 'X'` (separador `:` apos identificador
+# nao precedido por whitespace de bloco). Exige whitespace ou inicio
+# antes do nome da prop.
+RE_OBJ_LITERAL_PROP = re.compile(
+    r"""
+    (?:^|[\{,(\[]|\s)\s*
+    (?P<prop>[a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*
+    (?:
+        "(?P<dq>(?:[^"\\]|\\.)*)" |
+        '(?P<sq>(?:[^'\\]|\\.)*)'
+    )
+    """,
+    re.VERBOSE,
+)
+
 
 class Violacao(NamedTuple):
     arquivo: str
@@ -251,7 +268,33 @@ def auditar_arquivo(
                     )
                 )
 
-        # 2. JSX text nodes
+        # 2. Object literal props ({ prop: 'X' })
+        for m in RE_OBJ_LITERAL_PROP.finditer(linha):
+            prop = m.group("prop")
+            if prop in PROPS_IGNORADAS:
+                continue
+            if prop not in PROPS_UI:
+                continue
+            valor = m.group("dq") or m.group("sq") or ""
+            if not valor.strip():
+                continue
+            res = checar_string(valor, dicionario)
+            if res:
+                tok, sugestao = res
+                col = m.start() + 1
+                violacoes.append(
+                    Violacao(
+                        arquivo=rel,
+                        linha=nlinha,
+                        coluna=col,
+                        contexto=f"obj-prop:{prop}",
+                        string_original=valor,
+                        token_problema=tok,
+                        sugestao=sugestao,
+                    )
+                )
+
+        # 3. JSX text nodes
         for m in RE_JSX_TEXT_NODE.finditer(linha):
             txt = m.group("txt").strip()
             if not txt:

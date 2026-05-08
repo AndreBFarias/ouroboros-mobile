@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Batch 1 fase 1.5 (2026-05-08): S4 v2 + colateral marcosAuto
+
+- **S4 v2 `M-AUDIT-LABEL-GAUNTLET-DASHBOARD` (escopo expandido,
+  opção B)** — `scripts/check_strings_ui_ptbr.py` ganha regex
+  `RE_OBJ_LITERAL_PROP` para detectar strings UI em **object literals**
+  (`{ prop: 'X' }`), reusando whitelist `PROPS_UI` e blacklist
+  `PROPS_IGNORADAS`. Estende cobertura sem novos falsos positivos
+  estruturais.
+- 5 violações (não 2 como spec estimava) corrigidas em
+  `src/lib/dev/gauntletDashboard.tsx`:
+  - L23 `Saude Fisica` → `Saúde Física`
+  - L30 `Humor rapido` → `Humor rápido`
+  - L31 `Diario emocional` → `Diário emocional`
+  - L41 `Exercicios` → `Exercícios`
+  - L43 `Configuracoes` → `Configurações`
+- Achado colateral revelado pelo regex novo: `marcosAuto.ts:76` tinha
+  `Tres treinos nesta semana.` sem acento. Corrigido para
+  `Três treinos nesta semana.` (micro-fix maestro, 1 char + sync 4
+  asserts em `tests/lib/marcos/marcosAuto.test.ts`). Esta regressão
+  estava invisível ao scan antes do regex novo.
+- Smoke: 1743/1/176 verde. TS strict 0. PT-BR check OK.
+
 ### Batch 1 fase 1 (2026-05-08): S5 + G6 + G3 + G4
 
 - **S5 `M-AUDIT-J1-FRAME3-TITULO-CONTEXTUAL`** — Frame 3 do onboarding
