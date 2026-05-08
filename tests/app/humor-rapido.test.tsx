@@ -205,6 +205,7 @@ describe('Tela 15 — humor rapido', () => {
   });
 
   it('toast de erro quando saveHumor falha', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockSaveHumor.mockRejectedValueOnce(new Error('SAF off'));
     const { getByLabelText, queryByLabelText } = renderTela();
     fireEvent.press(getByLabelText('Salvar'));
@@ -213,6 +214,7 @@ describe('Tela 15 — humor rapido', () => {
     );
     // Nao deve voltar quando o save falha.
     expect(mockBack).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it('clique em chip rapido entra na lista de tags', async () => {

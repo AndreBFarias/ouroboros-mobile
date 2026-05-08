@@ -275,6 +275,7 @@ describe('Tela 18 — validacao do save', () => {
   });
 
   it('toast de erro quando saveDiario rejeita', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockSaveDiario.mockRejectedValueOnce(new Error('SAF off'));
     const utils = renderTela();
     const { getByLabelText, queryByLabelText } = utils;
@@ -288,6 +289,7 @@ describe('Tela 18 — validacao do save', () => {
       expect(queryByLabelText('toast error')).toBeTruthy()
     );
     expect(mockBack).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
 

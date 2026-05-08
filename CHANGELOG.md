@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sprint M-TEST-ERROR-SILENCE (2026-05-08)
+
+- style: silenciar `console.error` esperado em 3 testes do path
+  de erro do save (M-TEST-ERROR-SILENCE). Adiciona
+  `jest.spyOn(console, 'error').mockImplementation(() => {})`
+  com `mockRestore()` dentro dos 3 `it`s standalone que
+  exercem `SAF off` em `tests/app/humor-rapido.test.tsx:208`,
+  `tests/app/eventos.test.tsx:310` e
+  `tests/app/diario-emocional.test.tsx:278`. Comportamento de
+  produção preservado: `app/humor-rapido.tsx:181`,
+  `app/eventos.tsx:290` e `app/diario-emocional.tsx:381`
+  continuam emitindo `console.error` em runtime real.
+  Asserts dos 3 testes (toast error + mockBack nao chamado)
+  preservados. Revoga formalmente §C da M-TEST-WARNS:
+  decisao anterior categorizou os 3 console.error como
+  "intencionais permanecem", mas auditoria mostrou que
+  asserts independem do log — spy localizado e seguro.
+  Fecha o batch anti-ruido de install (M-LINT-CLEANUP +
+  M-TEST-WARNS + M-TEST-ERROR-SILENCE). Baseline
+  1742/1/176 preservado; 6 linhas adicionadas em 3
+  arquivos de teste; zero edits em producao.
+
 ### Sprint M-TEST-WARNS (2026-05-07)
 
 - style: zera warnings runtime evitaveis em `npm test` (3 → 0)
