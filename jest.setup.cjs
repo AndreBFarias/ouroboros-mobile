@@ -219,11 +219,14 @@ jest.mock('@gorhom/bottom-sheet', () => {
     React.createElement(RN.View, props);
   const BottomSheetView = ({ children, ...rest }) =>
     React.createElement(RN.View, rest, children);
+  const BottomSheetScrollView = ({ children, ...rest }) =>
+    React.createElement(RN.ScrollView, rest, children);
   return {
     __esModule: true,
     default: BottomSheet,
     BottomSheetBackdrop,
     BottomSheetView,
+    BottomSheetScrollView,
   };
 });
 

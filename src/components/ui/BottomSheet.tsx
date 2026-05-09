@@ -66,6 +66,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       [snapPoints]
     );
 
+
     // M34.1: merge containerStyle default + override do consumidor.
     // Array de StyleProp permite que props especificas do consumidor
     // sobrescrevam o zIndex 100 quando explicitamente desejado, mas
@@ -197,12 +198,16 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
         enablePanDownToClose={enablePanDownToClose}
         backdropComponent={renderBackdrop}
         containerStyle={mergedContainerStyle}
-        // V4.0.2 (2026-05-09): animateOnMount obrigatorio em gorhom 5
-        // + New Arch (Fabric) para sheet abrir automaticamente quando
-        // index >= 0 inicial. Sem isso, sheet renderiza offscreen e
-        // index={0} nunca dispara animacao (testado em Redmi Note 13
-        // HyperOS, dev-client).
+        // V4.0.2 (2026-05-09): gorhom 5 + Reanimated 4 + New Arch fix.
+        // - animateOnMount: dispara snap inicial quando index >= 0.
+        // - enableDynamicSizing=false: gorhom 5 default e true e exige
+        //   que children direto seja BottomSheetView/BottomSheetScrollView
+        //   pra medir altura. Como nossos consumers ainda usam <ScrollView>
+        //   cru (legado pre-V4.0.2), forcamos altura via snapPoints e
+        //   desabilitamos dynamic sizing — sheet abre normalmente.
+        //   Issue gorhom #1751 confirmado pelo maintainer.
         animateOnMount
+        enableDynamicSizing={false}
         backgroundStyle={{
           backgroundColor: colors.bgAlt,
           borderTopLeftRadius: radius.sheet,

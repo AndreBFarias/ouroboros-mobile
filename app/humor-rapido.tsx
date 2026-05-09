@@ -19,8 +19,9 @@
 // timeout, toast 'Não foi possível salvar: timeout salvando' libera
 // o usuario sem loader infinito.
 import { useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import {
   BottomSheet,
   Button,
@@ -207,7 +208,7 @@ export default function HumorRapido() {
           }
         }}
       >
-      <ScrollView
+      <BottomSheetScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.md,
@@ -318,7 +319,7 @@ export default function HumorRapido() {
           onPress={handleSave}
           disabled={salvando}
         />
-      </ScrollView>
+      </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );
