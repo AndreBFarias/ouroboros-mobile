@@ -5,7 +5,62 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
-### Onda D (2026-05-08): V4.0.2 fix vault freeze APK alpha-2 + sync tipoCompanhia
+### Onda E (2026-05-09 madrugada): V4.0.2 part 4-8 — vault HyperOS-proof + BottomSheet New Arch + saves E2E
+
+- **V4.0.2 part 8 (HEAD `f895b93`)** — Reverter `BottomSheetScrollView`
+  em telas regulares. `EvolucaoCorporalTab` e `MiniHumorScreen` têm
+  `ScrollView` FORA do `BottomSheet` (são abas com sheet auxiliar);
+  trocar por `BottomSheetScrollView` dispara render error
+  `useBottomSheetInternal cannot be used out of the BottomSheet!`.
+  Reversão preserva fix dos consumers que realmente têm scroll
+  dentro do sheet (humor-rapido, diario-emocional, eventos).
+
+- **V4.0.2 part 7 (`a2b2b44`)** — `ScrollView` → `BottomSheetScrollView`
+  em consumers que rolam dentro do sheet. `ScrollView` puro causa
+  conflito de gestos com `BottomSheet` em New Arch (swipe interno
+  fecha o sheet inteiro). Aplicado em `app/eventos.tsx`,
+  `app/diario-emocional.tsx`. Mock de `BottomSheetScrollView`
+  adicionado em `jest.setup.cjs`.
+
+- **V4.0.2 part 6 (`28f5449`)** — BottomSheet abre em New Arch +
+  dev-client. Bug raiz confirmado pela issue gorhom #1751:
+  `enableDynamicSizing=true` (default v5) exige que children direto
+  seja `BottomSheetView`/`BottomSheetScrollView` para medir altura.
+  Com `ScrollView` cru, sheet renderiza com altura 0 e fica offscreen
+  (`translateY=screenHeight`). **Fix combinado:**
+  - `BottomSheet` wrapper: `animateOnMount=true` + `enableDynamicSizing=false`
+  - `humor-rapido.tsx`: `ScrollView` → `BottomSheetScrollView`
+  Validado live em Redmi Note 13 HyperOS (sheet abre + scroll interno).
+
+- **V4.0.2 part 5 (`60706f6`)** — Vault default em `documentDirectory`.
+  Bug raiz validado: expo-file-system bloqueia writes em `/sdcard/`
+  raiz mesmo com `MANAGE_EXTERNAL_STORAGE` granted (logcat:
+  `Location 'file:///sdcard/X' isn't writable`). `FilePermissionModule`
+  do expo-modules-core restringe writes a `filesDir`/`cacheDir`/
+  external app dir. Default agora computa via `FileSystem.documentDirectory`
+  + `Ouroboros/` (sempre gravável, sem permissão especial).
+  Trade-off: vault em pasta privada do app (não visível direto pra
+  Obsidian/Syncthing); usuários que precisam de integração externa
+  usam "Outra pasta" via SAF picker.
+
+- **V4.0.2 part 4 (`d0468ab`)** — `writeVaultFile` ensureParentDir +
+  MidiaFotoTab layout-por-tipo. `writer.ts` agora cria pasta-pai antes
+  de write em `file://` (cobre paths legados `treinos/`, `inbox/financeiro/`).
+  `MidiaFotoTab.tsx` migrado de `assetsPath` legado para `fotoPath`
+  canônico (`jpg/foto-YYYY-MM-DD-<rand>.jpg`).
+
+- **Saves end-to-end validados live no celular** (4 saves
+  persistidos no disco com schemas YAML válidos):
+  - `humor-2026-05-09.md` — humor rápido com 4 sliders default
+  - `audio-2026-05-09-e3aa.m4a` (287 KB) + companion `audio-...md`
+  - `contador-sem.md` — contador "Sem cafeína", início hoje
+  - `alarme-acordar.md` — 08:00 semanal seg-sex + 5 notification IDs
+
+- **APK alpha-3 production disparado** em EAS preview profile:
+  `f470a212-d401-4d23-8a09-03b8c09535e9`. Inclui todos fixes
+  V4.0.2 part 1-8.
+
+### Onda D (2026-05-08): V4.0.2 part 1-3 — fix vault freeze APK alpha-2 + sync tipoCompanhia
 
 - **V4.0.2 `M-VAULT-SAF-FILE-RESOLUCAO`** — APK alpha-2 travava no
   onboarding ao escolher pasta SAF. Causa raiz tripla:
