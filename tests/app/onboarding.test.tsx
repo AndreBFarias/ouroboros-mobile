@@ -34,7 +34,7 @@ const mockInicializarEscolhido = jest.fn<
   Promise<{ vaultRoot: string; criado: boolean; modo: 'auto' | 'saf-fallback' | 'web' }>,
   [string]
 >();
-const mockPedirPermissaoStorage = jest.fn<Promise<void>, []>();
+const mockPedirPermissaoStorage = jest.fn<Promise<boolean>, []>();
 const mockRequestVaultPermission = jest.fn<Promise<string | null>, []>();
 
 jest.mock('@/lib/vault', () => {
@@ -90,9 +90,11 @@ beforeEach(() => {
     criado: true,
     modo: 'auto',
   });
-  mockPedirPermissaoStorage.mockResolvedValue(undefined);
+  mockPedirPermissaoStorage.mockResolvedValue(true);
+  // V4.0.2: requestVaultPermission converte SAF tree URI para file://
+  // antes de retornar ao caller.
   mockRequestVaultPermission.mockResolvedValue(
-    'content://com.android.externalstorage.documents/tree/primary%3ADownload'
+    'file:///sdcard/Download'
   );
   mockReqCamera.mockResolvedValue(true);
   mockReqMicrofone.mockResolvedValue(true);
@@ -164,7 +166,30 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     expect(api.getByText('Onde salvar seus dados?')).toBeTruthy();
   });
 
-  it('Frame 2 caminho A -> Frame 3 Permissoes', async () => {
+  it('Frame 2 caminho A (permissao ja concedida) -> Frame 3 Permissoes', async () => {
+    const api = renderTela();
+    avancarAtePasta(api);
+    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    await waitFor(() => {
+      expect(mockInicializarEscolhido).toHaveBeenCalledWith(
+        'file:///sdcard/Documents/Ouroboros/'
+      );
+    });
+    // V4.0.2: handleUsarSugestao tenta init direto; so chama
+    // pedirPermissaoStorage no fallback. Como o mock default ja
+    // retorna sucesso na 1a tentativa, pedirPermissao nao precisa
+    // ser chamado.
+    expect(mockPedirPermissaoStorage).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
+    });
+    expect(useOnboarding.getState().permissoes.storage).toBe(true);
+  });
+
+  it('Frame 2 caminho A (1a tentativa falha, retry apos grant)', async () => {
+    mockInicializarEscolhido.mockRejectedValueOnce(
+      new Error('storage permission denied')
+    );
     const api = renderTela();
     avancarAtePasta(api);
     fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
@@ -172,14 +197,11 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
       expect(mockPedirPermissaoStorage).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
-      expect(mockInicializarEscolhido).toHaveBeenCalledWith(
-        'file:///sdcard/Documents/Ouroboros/'
-      );
+      expect(mockInicializarEscolhido).toHaveBeenCalledTimes(2);
     });
     await waitFor(() => {
       expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
     });
-    expect(useOnboarding.getState().permissoes.storage).toBe(true);
   });
 
   it('Frame 2 caminho B -> Frame 3 Permissoes', async () => {
@@ -190,8 +212,9 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
       expect(mockRequestVaultPermission).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
+      // V4.0.2: requestVaultPermission retorna file:// (convertido).
       expect(mockInicializarEscolhido).toHaveBeenCalledWith(
-        'content://com.android.externalstorage.documents/tree/primary%3ADownload'
+        'file:///sdcard/Download'
       );
     });
     await waitFor(() => {
@@ -211,16 +234,19 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     expect(api.getByText('Onde salvar seus dados?')).toBeTruthy();
   });
 
-  it('Frame 2 erro probe: mantem usuario no Frame 2', async () => {
-    mockInicializarEscolhido.mockRejectedValueOnce(
+  it('Frame 2 init falha + permissao negada: mantem usuario no Frame 2', async () => {
+    mockInicializarEscolhido.mockRejectedValue(
       new Error('storage permission denied (probe write failed)')
     );
+    mockPedirPermissaoStorage.mockResolvedValueOnce(false);
     const api = renderTela();
     avancarAtePasta(api);
     fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
     await waitFor(() => {
-      expect(mockInicializarEscolhido).toHaveBeenCalledTimes(1);
+      expect(mockPedirPermissaoStorage).toHaveBeenCalledTimes(1);
     });
+    // 1a tentativa de init (falhou) + nao chama 2a porque permissao denied.
+    expect(mockInicializarEscolhido).toHaveBeenCalledTimes(1);
     expect(api.getByText('Onde salvar seus dados?')).toBeTruthy();
   });
 

@@ -86,6 +86,8 @@ export {
   inicializarVaultEscolhido,
   garantirSubpastas,
   pedirPermissaoStorage,
+  safTreeUriToFileUri,
+  sanearTrailingSpaceFolder,
   sugestaoVaultPathDefault,
   sugestaoVaultUriDefault,
   SUBPASTAS_CANONICAS,

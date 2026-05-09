@@ -182,6 +182,21 @@ const atualizarDeviceIndexHook: BootHook = async () => {
   await atualizarDeviceIndex();
 };
 
+// V4.0.2 (2026-05-08): reconcilia useSettings.pessoa.tipoCompanhia
+// com useOnboarding.tipoCompanhia. Cobre usuarios v3 que onboardaram
+// antes do espelhamento automatico (ficaram presos em settings='sozinho'
+// mesmo escolhendo casal/amigos). Idempotente.
+const reconciliarTipoCompanhiaHook: BootHook = async () => {
+  const { useOnboarding } = await import('@/lib/stores/onboarding');
+  const { useSettings } = await import('@/lib/stores/settings');
+  const ob = useOnboarding.getState().tipoCompanhia;
+  const expected: 'sozinho' | 'duo' = ob === 'sozinho' ? 'sozinho' : 'duo';
+  const atual = useSettings.getState().pessoa.tipoCompanhia;
+  if (atual !== expected) {
+    useSettings.getState().setPessoa('tipoCompanhia', expected);
+  }
+};
+
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
@@ -209,5 +224,9 @@ BOOT_HOOKS.push(
   // M38: registra/atualiza dispositivo atual no devices index. Roda
   // depois de migrarAssets para nao competir por SAF de leitura no
   // arranque. Idempotente (so ultima_atividade muda em boot subsequente).
-  atualizarDeviceIndexHook
+  atualizarDeviceIndexHook,
+  // V4.0.2: reconcilia tipoCompanhia entre useOnboarding e useSettings.
+  // Sem dependencia de I/O (so toca stores em memoria), entao roda por
+  // ultimo sem afetar arranque. Idempotente.
+  reconciliarTipoCompanhiaHook
 );

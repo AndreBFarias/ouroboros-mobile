@@ -149,17 +149,33 @@ export default function Onboarding() {
     avancar();
   };
 
-  // Caminho A do Frame 2: usuario aceitou a sugestao
-  // /sdcard/Documents/Ouroboros/. Pede permissao de armazenamento
-  // (Intent ALL_FILES em Android >=11; PermissionsAndroid em <11) e
-  // inicializa direto na URI sugerida. Se o probe falhar (OEM
-  // agressivo), exibe toast e mantem usuario no Frame 2 para tentar
-  // "Outra pasta".
+  // Caminho A do Frame 2 (V4.0.2): usuario aceitou a sugestao
+  // /sdcard/Documents/Ouroboros/. Tenta inicializar direto; se falhar
+  // por permissao, abre tela de configuracoes e aguarda usuario voltar
+  // com MANAGE_EXTERNAL_STORAGE concedido; depois retry.
   const handleUsarSugestao = async () => {
     if (escolhendoPasta) return;
     setEscolhendoPasta(true);
     try {
-      await pedirPermissaoStorage();
+      // 1a tentativa: pode ja ter permissao concedida.
+      try {
+        await inicializarVaultEscolhido(sugestaoVaultUriDefault());
+        setPermissao('storage', true);
+        avancar();
+        return;
+      } catch {
+        // Probe falhou: assumimos falta de permissao.
+      }
+      // Pede permissao bloqueante (espera retorno do usuario).
+      const granted = await pedirPermissaoStorage();
+      if (!granted) {
+        toast.show(
+          'Permissão necessária. Toque "Permitir gerenciar todos os arquivos" e volte.',
+          'error'
+        );
+        return;
+      }
+      // 2a tentativa apos grant.
       await inicializarVaultEscolhido(sugestaoVaultUriDefault());
       setPermissao('storage', true);
       avancar();
@@ -173,20 +189,33 @@ export default function Onboarding() {
     }
   };
 
-  // Caminho B do Frame 2: usuario escolheu "Outra pasta" via SAF
-  // picker. requestVaultPermission abre o picker; ao receber a URI,
-  // chamamos inicializarVaultEscolhido(uri) que cria as 8 subpastas
-  // (H2) e persiste o vaultRoot.
+  // Caminho B do Frame 2 (V4.0.2): usuario escolheu "Outra pasta" via
+  // SAF picker. requestVaultPermission abre o picker; converte tree
+  // URI para file:// equivalente; garante MANAGE concedido; entao
+  // inicializa.
   const handleEscolherOutra = async () => {
     if (escolhendoPasta) return;
     setEscolhendoPasta(true);
     try {
-      const uri = await requestVaultPermission();
-      if (!uri) {
-        // Usuario cancelou o picker: mantem Frame 2 sem mensagem.
+      const fileUri = await requestVaultPermission();
+      if (!fileUri) {
+        // Cancelou ou volume secundario nao suportado.
+        toast.show(
+          'Pasta não suportada. Use uma pasta no armazenamento principal.',
+          'error'
+        );
         return;
       }
-      await inicializarVaultEscolhido(uri);
+      // Garante MANAGE concedido (necessario para writes file://).
+      const granted = await pedirPermissaoStorage();
+      if (!granted) {
+        toast.show(
+          'Permissão necessária. Toque "Permitir gerenciar todos os arquivos" e volte.',
+          'error'
+        );
+        return;
+      }
+      await inicializarVaultEscolhido(fileUri);
       setPermissao('storage', true);
       avancar();
     } catch {

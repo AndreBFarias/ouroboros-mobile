@@ -460,7 +460,16 @@ function VaultBootGate() {
           await inicializarVaultEscolhido(persisted);
           return;
         }
-        await pedirPermissaoStorage();
+        // V4.0.2: pedir permissao bloqueante; se nao concedida, toast
+        // acionavel em vez de silencioso fail no probe.
+        const granted = await pedirPermissaoStorage();
+        if (!granted) {
+          toast.show(
+            'Permissão de armazenamento necessária. Ative em Configurações.',
+            'error'
+          );
+          return;
+        }
         await inicializarVaultEscolhido(sugestaoVaultUriDefault());
       } catch {
         toast.show(

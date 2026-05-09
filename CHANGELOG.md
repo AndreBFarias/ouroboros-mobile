@@ -5,6 +5,47 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda D (2026-05-08): V4.0.2 fix vault freeze APK alpha-2 + sync tipoCompanhia
+
+- **V4.0.2 `M-VAULT-SAF-FILE-RESOLUCAO`** — APK alpha-2 travava no
+  onboarding ao escolher pasta SAF. Causa raiz tripla:
+  1. **String-concat de SAF tree URIs gerava URI malformado.** Toda a
+     camada de save assume `file://` mas `requestVaultPermission`
+     persistia `content://...tree/X` e `vaultUriJoin` produzia
+     `content://...tree/X/markdown/humor.md` que não é URI SAF válido
+     (Android exige `tree/X/document/Y` formato).
+     [Logcat real Redmi Note 13: `SecurityException: Permission Denial
+     ... requires ACTION_OPEN_DOCUMENT`].
+     **Fix:** `safTreeUriToFileUri()` converte tree URI primário
+     (`primary:Pasta`) para `file:///sdcard/Pasta/`; `requestVaultPermission`
+     retorna `file://` direto. Volume secundário (cartão SD/USB)
+     retorna null com toast acionável.
+  2. **Race condition na MANAGE_EXTERNAL_STORAGE.** `pedirPermissaoStorage`
+     disparava Intent e retornava antes do usuário tocar em "Permitir";
+     probe imediato falhava silenciosamente.
+     **Fix:** retorno boolean explícito + `AppState` listener espera
+     foreground + retry probe 5x com backoff 500ms (timeout 60s).
+     `handleUsarSugestao` tenta init direto primeiro (já concedida),
+     fallback para Intent + retry após retorno.
+  3. **Trailing space em pasta Syncthing/MIUI.** `sanearTrailingSpaceFolder()`
+     detecta `Pasta ` e renomeia silenciosamente para `Pasta` antes
+     do probe. Idempotente (pula se destino já existe).
+
+- **Sync `tipoCompanhia` entre `useOnboarding` e `useSettings`** — bug
+  estrutural M29: dois stores com mesmo conceito mas tipos
+  incompatíveis (`'sozinho'|'casal'|'amigos'` vs `'sozinho'|'duo'`).
+  Componentes lendo `useSettings.pessoa.tipoCompanhia` (`SeletorPara`,
+  `SeletorPessoaDestino`, `ItemTarefa`, `editar-pessoa.tsx`) ficavam
+  presos em `'sozinho'` mesmo após escolha de "Casal" no onboarding —
+  resultado: chips "Para mim/parceiro/casal" sumiam, pessoa B sumia
+  da edição. Fix: `setTipoCompanhia` em `useOnboarding` espelha em
+  `useSettings.pessoa.tipoCompanhia` (`casal|amigos -> 'duo'`,
+  `sozinho -> 'sozinho'`); novo BOOT_HOOK `reconciliarTipoCompanhia`
+  cobre apps pré-V4.0.2.
+
+- **Smoke 186 suites / 1802+1 testes verde**, TS strict 0 erros.
+  Tests permissions-init refatorados para novo contrato boolean.
+
 ### Onda C (2026-05-08): V4.0.1 + UX scripts + EAS preview alpha-2
 
 - **V4.0.1 `INFRA-VAULT-MOCK-CONVERGENCIA`** — mocks por feature

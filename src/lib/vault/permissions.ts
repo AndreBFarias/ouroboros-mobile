@@ -31,7 +31,17 @@
 // No web (Chrome desktop, validacao via MCP de browser), SAF e
 // SecureStore nao existem. Usamos localStorage como fallback para
 // permitir testar fluxos JS sem conflito com celular fisico.
-import { PermissionsAndroid, Platform } from 'react-native';
+//
+// V4.0.2 (2026-05-08): SAF picker passa a resolver tree URIs em
+// armazenamento primario (/sdcard) para file:// equivalente, de
+// forma que toda a camada de save (que sempre assumiu file://)
+// continue funcionando uniformemente. Combinado com
+// MANAGE_EXTERNAL_STORAGE concedido, o usuario pode escolher
+// QUALQUER pasta sob /sdcard via picker SAF mas o app escreve
+// como file:// (sem URIs malformados de string-concat). Tambem
+// trata trailing space em nome de pasta (Syncthing/MIUI) renomeando
+// silenciosamente a pasta antes de inicializar.
+import { AppState, PermissionsAndroid, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -115,15 +125,62 @@ async function deleteKey(name: string): Promise<void> {
   await SecureStore.deleteItemAsync(name);
 }
 
-// Fluxo de pedido de permissao de armazenamento. NAO usa o resultado
-// como fonte de verdade; apenas dispara a UI de pedido. O probe
-// posterior diz se o write funciona de fato (vide A19).
+// Probe rapido de MANAGE_EXTERNAL_STORAGE: tenta escrever um arquivo
+// efemero em /sdcard/Documents/. Se sucesso, permissao esta ativa
+// (Android 11+) ou WRITE_EXTERNAL_STORAGE concedido (Android <11).
+// Idempotente, deleta o probe ao final.
+async function probeManagePermission(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  const probeUri = `file:///sdcard/Documents/.ouroboros-permcheck-${Date.now()}`;
+  try {
+    await FileSystem.writeAsStringAsync(probeUri, 'ok');
+    await FileSystem.deleteAsync(probeUri, { idempotent: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Espera AppState voltar para 'active' (usuario retornou da tela de
+// configuracoes). Resolve com true quando volta, false em timeout.
+function waitForAppForeground(timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (AppState.currentState === 'active') {
+      resolve(true);
+      return;
+    }
+    let resolved = false;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && !resolved) {
+        resolved = true;
+        sub.remove();
+        resolve(true);
+      }
+    });
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        sub.remove();
+        resolve(false);
+      }
+    }, timeoutMs);
+  });
+}
+
+// Fluxo de pedido de permissao de armazenamento. Diferente da versao
+// pre-V4.0.2: agora ESPERA o usuario retornar da tela de configuracoes
+// e re-probea ate confirmar grant ou esgotar timeout. Resolve com true
+// se permissao concedida, false caso contrario. Caller deve mostrar
+// toast acionavel se false.
 //
 // Android <11 (API <30): WRITE_EXTERNAL_STORAGE via PermissionsAndroid.
 // Android >=11 (API >=30): Intent MANAGE_EXTERNAL_STORAGE leva o
-// usuario direto para a tela de configuracao do app no sistema.
-export async function pedirPermissaoStorage(): Promise<void> {
-  if (Platform.OS !== 'android') return;
+// usuario para tela de configuracao; AppState detecta retorno; probe
+// confirma grant.
+export async function pedirPermissaoStorage(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  // Caminho rapido: ja concedida.
+  if (await probeManagePermission()) return true;
   const apiLevel =
     typeof Platform.Version === 'number'
       ? Platform.Version
@@ -135,16 +192,107 @@ export async function pedirPermissaoStorage(): Promise<void> {
         { data: `package:${ANDROID_PACKAGE}` }
       );
     } catch {
-      // Se a Intent falhar, segue: o probe vai detectar.
+      // Intent falhou; sem caminho de fallback util.
+      return false;
     }
-    return;
+    // Usuario foi para configuracoes. Espera retorno + retry probe.
+    await waitForAppForeground(60_000);
+    // Backoff curto para o sistema atualizar appops.
+    for (let i = 0; i < 5; i++) {
+      if (await probeManagePermission()) return true;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
   }
+  // Android <11: pedido convencional bloqueante.
   try {
-    await PermissionsAndroid.request(
+    const result = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
     );
+    return result === PermissionsAndroid.RESULTS.GRANTED;
   } catch {
-    // Mesmo padrao: probe e fonte de verdade.
+    return false;
+  }
+}
+
+// Converte um SAF tree URI em armazenamento primario (/sdcard) para
+// file:// equivalente. Retorna null se o URI nao for resolvivel para
+// file:// (cartao SD externo, USB, etc) — caller deve mostrar erro.
+//
+// Formato SAF tree URI:
+//   content://com.android.externalstorage.documents/tree/<volume>%3A<path>
+// onde:
+//   <volume> = 'primary' (armazenamento principal) ou UUID (cartao SD)
+//   <path> = caminho relativo url-encoded (espacos = %20)
+//
+// V4.0.2: app monta toda a logica em cima de file:// + MANAGE
+// permission, evitando os problemas estruturais de SAF (URIs
+// malformadas em concat, createFileAsync obrigatorio para writes).
+export function safTreeUriToFileUri(treeUri: string): string | null {
+  const PREFIX = 'content://com.android.externalstorage.documents/tree/';
+  if (!treeUri.startsWith(PREFIX)) return null;
+  const treePart = treeUri.substring(PREFIX.length);
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(treePart);
+  } catch {
+    return null;
+  }
+  const colonIdx = decoded.indexOf(':');
+  if (colonIdx === -1) return null;
+  const volume = decoded.substring(0, colonIdx);
+  const relPath = decoded.substring(colonIdx + 1);
+  if (volume !== 'primary') {
+    // Cartao SD ou USB — nao suportado nesta fase.
+    return null;
+  }
+  // Encode path para URI (espacos viram %20) mas preservando '/' e
+  // evitando dupla codificacao. Vamos componenetizar e re-encodar.
+  const segs = relPath.split('/').map((s) => encodeURIComponent(s));
+  const encodedPath = segs.join('/');
+  return `file:///sdcard/${encodedPath}`;
+}
+
+// Detecta se o nome final da pasta tem trailing space (artefato MIUI/
+// HyperOS/Syncthing) e renomeia para versao limpa. Retorna o URI
+// final (renomeado se aplicavel, original caso contrario). Idempotente.
+export async function sanearTrailingSpaceFolder(
+  fileUri: string
+): Promise<string> {
+  if (!fileUri.startsWith('file://')) return fileUri;
+  // Remove trailing slashes.
+  const noTrail = fileUri.replace(/\/+$/, '');
+  // decodifica para detectar espaco no nome real.
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(noTrail);
+  } catch {
+    return fileUri;
+  }
+  // Procura ultimo segmento.
+  const lastSlash = decoded.lastIndexOf('/');
+  if (lastSlash === -1) return fileUri;
+  const parent = decoded.substring(0, lastSlash);
+  const folderName = decoded.substring(lastSlash + 1);
+  if (!/\s$/.test(folderName)) return fileUri;
+  const cleanName = folderName.replace(/\s+$/, '');
+  if (cleanName === folderName || cleanName.length === 0) return fileUri;
+  const cleanFileUri = `file://${parent}/${encodeURIComponent(cleanName)}`;
+  // Tenta renomear via moveAsync. Se destino ja existe, mantem o
+  // original (usuario tem 2 pastas: uma com espaco, outra sem; nao
+  // mexemos para nao perder dado).
+  try {
+    const cleanInfo = await FileSystem.getInfoAsync(cleanFileUri);
+    if (cleanInfo.exists) return fileUri;
+  } catch {
+    return fileUri;
+  }
+  try {
+    await FileSystem.moveAsync({ from: noTrail, to: cleanFileUri });
+    return cleanFileUri;
+  } catch {
+    // Falha em renomear: continua com o original.
+    return fileUri;
   }
 }
 
@@ -216,30 +364,33 @@ export async function inicializarVaultEscolhido(
   if (!trimmed) {
     throw new Error('inicializarVaultEscolhido: uri vazia');
   }
-  await garantirSubpastas(trimmed);
-  const writable = await probeVaultWritable(trimmed);
+  // V4.0.2: renomeia pasta com trailing space (artefato Syncthing/MIUI)
+  // antes de qualquer probe ou write. Idempotente.
+  const sane = await sanearTrailingSpaceFolder(trimmed);
+  await garantirSubpastas(sane);
+  const writable = await probeVaultWritable(sane);
   if (!writable) {
     throw new Error(
       'storage permission denied (probe write failed na pasta escolhida)'
     );
   }
-  // Detecta se a URI veio do SAF picker (content://) ou de uma pasta
-  // file:// concedida via MANAGE_EXTERNAL_STORAGE. So afeta o telemetry
-  // do retorno (modo); pode ser util para o caller decidir copy/UX.
-  const modo: ModoInicializacao = trimmed.startsWith('content://')
+  const modo: ModoInicializacao = sane.startsWith('content://')
     ? 'saf-fallback'
     : 'auto';
-  await writeKey(VAULT_ROOT_KEY, trimmed);
-  useVault.getState().setVaultRoot(trimmed);
-  return { vaultRoot: trimmed, criado: true, modo };
+  await writeKey(VAULT_ROOT_KEY, sane);
+  useVault.getState().setVaultRoot(sane);
+  return { vaultRoot: sane, criado: true, modo };
 }
 
-// Pede permissao SAF e retorna URI da pasta selecionada, ou null se
-// o usuario cancelar. Persiste o URI. No web devolve URI mock para
-// permitir validacao visual do app sem precisar de SAF.
+// Pede permissao SAF (apenas como UI de seletor de pasta) e converte
+// o tree URI para file:// equivalente. V4.0.2 (2026-05-08): app
+// nunca persiste content:// como vault root; toda a camada de save
+// assume file:// + MANAGE_EXTERNAL_STORAGE. Se o picker retornar
+// armazenamento secundario (cartao SD/USB), retorna null e caller
+// avisa.
 //
-// H3: o caller (onboarding "Outra pasta" ou Settings "Trocar pasta")
-// e responsavel por chamar inicializarVaultEscolhido(uri) em seguida.
+// Retorna { fileUri, treeUri } quando ok, null quando cancelado/nao
+// suportado. fileUri esta pronto para inicializarVaultEscolhido.
 export async function requestVaultPermission(): Promise<string | null> {
   if (isWeb()) {
     const mockUri = 'web://mock-vault/Protocolo-Ouroboros';
@@ -250,9 +401,14 @@ export async function requestVaultPermission(): Promise<string | null> {
   if (!result.granted) {
     return null;
   }
-  const uri = result.directoryUri;
-  await writeKey(VAULT_ROOT_KEY, uri);
-  return uri;
+  const treeUri = result.directoryUri;
+  // Converte para file:// — V4.0.2 unifica saves em MANAGE permission.
+  const fileUri = safTreeUriToFileUri(treeUri);
+  if (!fileUri) {
+    // Volume secundario nao suportado nesta fase.
+    return null;
+  }
+  return fileUri;
 }
 
 // Le o URI persistido. Retorna null se nunca foi concedido ou foi limpo.

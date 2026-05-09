@@ -8,10 +8,17 @@
 // para v3 em J1: usuarios v2 ganham defaults novos (sexoDeclarado
 // null, permissoes com storage true e demais false). O fluxo de
 // onboarding e refeito quando done=false.
+//
+// V4.0.2 (2026-05-08): setTipoCompanhia agora ESPELHA a escolha em
+// useSettings.pessoa.tipoCompanhia (mapeia casal/amigos -> 'duo',
+// sozinho -> 'sozinho'). Sem isso, SeletorPara, SeletorPessoaDestino,
+// ItemTarefa e editar-pessoa.tsx (que leem de useSettings) ficavam
+// presos em modo 'sozinho' independente da escolha do usuario.
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+import { useSettings } from '@/lib/stores/settings';
 
 export type TipoCompanhia = 'sozinho' | 'casal' | 'amigos';
 
@@ -75,7 +82,14 @@ export const useOnboarding = create<OnboardingStore>()(
       tipoCompanhia: 'sozinho',
       sexoDeclarado: SEXO_DEFAULT,
       permissoes: PERMISSOES_DEFAULT,
-      setTipoCompanhia: (tipoCompanhia) => set({ tipoCompanhia }),
+      setTipoCompanhia: (tipoCompanhia) => {
+        set({ tipoCompanhia });
+        // Espelha em useSettings (canonico para componentes pos-M29)
+        // mapeando: casal/amigos -> 'duo', sozinho -> 'sozinho'.
+        const settingsValue: 'sozinho' | 'duo' =
+          tipoCompanhia === 'sozinho' ? 'sozinho' : 'duo';
+        useSettings.getState().setPessoa('tipoCompanhia', settingsValue);
+      },
       setSexoDeclarado: (pessoa, sexo) =>
         set((s) => ({
           sexoDeclarado: { ...s.sexoDeclarado, [pessoa]: sexo },
@@ -85,13 +99,15 @@ export const useOnboarding = create<OnboardingStore>()(
           permissoes: { ...s.permissoes, [chave]: granted },
         })),
       marcarConcluido: () => set({ done: true }),
-      resetar: () =>
+      resetar: () => {
         set({
           done: false,
           tipoCompanhia: 'sozinho',
           sexoDeclarado: { ...SEXO_DEFAULT },
           permissoes: { ...PERMISSOES_DEFAULT },
-        }),
+        });
+        useSettings.getState().setPessoa('tipoCompanhia', 'sozinho');
+      },
     }),
     {
       name: 'ouroboros.onboarding.v3',

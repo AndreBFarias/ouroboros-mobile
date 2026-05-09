@@ -227,62 +227,61 @@ describe('garantirSubpastas (H3)', () => {
   });
 });
 
-describe('pedirPermissaoStorage', () => {
+describe('pedirPermissaoStorage (V4.0.2: boolean grant + retry probe)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getFsMemory().clear();
+    getFsDirs().clear();
   });
 
   afterEach(() => {
     setPlatform(ORIGINAL_OS as 'web' | 'android' | 'ios', ORIGINAL_VERSION as number);
   });
 
-  it('em iOS vira no-op', async () => {
+  it('em iOS retorna true sem disparar intent', async () => {
     setPlatform('ios', 17);
-    await pedirPermissaoStorage();
+    await expect(pedirPermissaoStorage()).resolves.toBe(true);
     expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
     expect(getPermissionsAndroid().request).not.toHaveBeenCalled();
   });
 
-  it('em web vira no-op', async () => {
+  it('em web retorna true sem disparar intent', async () => {
     setPlatform('web', 0);
-    await pedirPermissaoStorage();
+    await expect(pedirPermissaoStorage()).resolves.toBe(true);
     expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
     expect(getPermissionsAndroid().request).not.toHaveBeenCalled();
   });
 
-  it('Android API >=30 dispara Intent MANAGE_APP_ALL_FILES_ACCESS_PERMISSION', async () => {
-    setPlatform('android', 33);
-    await pedirPermissaoStorage();
-    expect(IntentLauncher.startActivityAsync).toHaveBeenCalledWith(
-      'android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION',
-      expect.objectContaining({ data: 'package:com.ouroboros.mobile' })
-    );
-    expect(getPermissionsAndroid().request).not.toHaveBeenCalled();
-  });
-
-  it('Android API <30 pede WRITE_EXTERNAL_STORAGE via PermissionsAndroid', async () => {
+  it('Android API <30 retorna true em GRANTED, false em DENIED', async () => {
     setPlatform('android', 28);
-    await pedirPermissaoStorage();
-    expect(getPermissionsAndroid().request).toHaveBeenCalledWith(
-      'android.permission.WRITE_EXTERNAL_STORAGE'
+    // Forca probe inicial falhar (mock ainda nao concedeu) — depois grant
+    // sai pelo PermissionsAndroid.
+    (FileSystem.writeAsStringAsync as jest.Mock).mockRejectedValueOnce(
+      new Error('no permission')
     );
-    expect(IntentLauncher.startActivityAsync).not.toHaveBeenCalled();
+    (getPermissionsAndroid().request as jest.Mock).mockResolvedValueOnce(
+      'granted'
+    );
+    await expect(pedirPermissaoStorage()).resolves.toBe(true);
+
+    (FileSystem.writeAsStringAsync as jest.Mock).mockRejectedValueOnce(
+      new Error('no permission')
+    );
+    (getPermissionsAndroid().request as jest.Mock).mockResolvedValueOnce(
+      'denied'
+    );
+    await expect(pedirPermissaoStorage()).resolves.toBe(false);
   });
 
-  it('engole erro do IntentLauncher e nao propaga', async () => {
-    setPlatform('android', 33);
-    (IntentLauncher.startActivityAsync as jest.Mock).mockRejectedValueOnce(
-      new Error('Activity not found')
-    );
-    await expect(pedirPermissaoStorage()).resolves.toBeUndefined();
-  });
-
-  it('engole erro do PermissionsAndroid e nao propaga', async () => {
+  it('engole erro do PermissionsAndroid retornando false', async () => {
     setPlatform('android', 28);
+    (FileSystem.writeAsStringAsync as jest.Mock).mockRejectedValueOnce(
+      new Error('no permission')
+    );
     (getPermissionsAndroid().request as jest.Mock).mockRejectedValueOnce(
       new Error('User denied')
     );
-    await expect(pedirPermissaoStorage()).resolves.toBeUndefined();
+    await expect(pedirPermissaoStorage()).resolves.toBe(false);
   });
 });
 
