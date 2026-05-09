@@ -58,21 +58,25 @@ function joinUri(root: string, rel: string): string {
   return `${r}/${s}`;
 }
 
-// Lista basenames de uma pasta SAF; retorna [] se inexistente.
+// Lista basenames de uma pasta; retorna [] se inexistente.
+// V4.0.2: dispatcha por scheme. file:// devolve nomes diretos;
+// content:// devolve URIs cheios e extraimos basename.
 async function listarBasenames(folderUri: string): Promise<string[]> {
-  let uris: string[];
   try {
-    uris = await StorageAccessFramework.readDirectoryAsync(folderUri);
+    if (folderUri.startsWith('content://')) {
+      const uris = await StorageAccessFramework.readDirectoryAsync(folderUri);
+      const out: string[] = [];
+      for (const u of uris) {
+        const decoded = decodeURIComponent(u);
+        const last = decoded.split('/').pop() ?? '';
+        if (last.length > 0) out.push(last);
+      }
+      return out;
+    }
+    return await FileSystem.readDirectoryAsync(folderUri);
   } catch {
     return [];
   }
-  const out: string[] = [];
-  for (const u of uris) {
-    const decoded = decodeURIComponent(u);
-    const last = decoded.split('/').pop() ?? '';
-    if (last.length > 0) out.push(last);
-  }
-  return out;
 }
 
 // Move um arquivo de origem para destino se origem existir e destino

@@ -158,10 +158,26 @@ export default function ShareReceiveRoute() {
     [subtipo, intentSafe.mimeType, intentSafe.nomeSugerido, agora, nomeBase]
   );
 
+  // V4.0.2: garante pasta-pai do destino antes de qualquer write.
+  // share intent persiste em inbox/financeiro/<subtipo>/ que NAO esta
+  // em SUBPASTAS_CANONICAS — sem isso, o FileOutputStream interno do
+  // copyAsync para content://->file:// falha por parent ausente.
+  async function ensureParentDir(destinoUri: string): Promise<void> {
+    const lastSlash = destinoUri.lastIndexOf('/');
+    if (lastSlash === -1) return;
+    const parentUri = destinoUri.substring(0, lastSlash);
+    try {
+      await FileSystem.makeDirectoryAsync(parentUri, { intermediates: true });
+    } catch {
+      // Ja existe ou backend rejeitou; copy posterior decide.
+    }
+  }
+
   // Helpers para gravar binario + meta. Ambos lancam em erro de I/O;
   // o caller (handleSalvar) faz wrap em try/catch.
   async function gravarBinario(rel: string): Promise<void> {
     const destinoUri = joinUri(vaultRootSafe, rel);
+    await ensureParentDir(destinoUri);
     await FileSystem.copyAsync({ from: intentSafe.uri, to: destinoUri });
   }
 
@@ -186,6 +202,7 @@ export default function ShareReceiveRoute() {
       throw new Error(`inbox_arquivo invalido: ${validacao.error.message}`);
     }
     const mdUri = joinUri(vaultRootSafe, relMd);
+    await ensureParentDir(mdUri);
     // Body livre do .md fica vazio no caso default. Caller futuro
     // pode adicionar texto extraido por OCR (M09).
     await writeVaultFile<InboxArquivoMeta>(mdUri, validacao.data, '');

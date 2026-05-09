@@ -7,7 +7,15 @@
 // V4.0 (INFRA-VAULT-WEB-MOCK, 2026-05-08): em web/dev (Platform.OS
 // === 'web' && __DEV__), le do useVaultMock em vez de SAF (que lanca
 // UnavailabilityError no DOM). Mobile real continua usando SAF nativo.
+//
+// V4.0.2 (2026-05-08): listVaultFolder dispatcha entre file:// e
+// content://. StorageAccessFramework.readDirectoryAsync e bound ao
+// readSAFDirectoryAsync nativo, que rejeita file:// URIs com erro
+// silencioso (try/catch retornava []). Para file://, usamos
+// FileSystem.readDirectoryAsync (que devolve NOMES, nao URIs cheios),
+// e prependamos o folderUri para retornar formato consistente.
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import type { ZodType } from 'zod';
 import { parseFrontmatter, type ParsedFrontmatter } from '@/lib/vault/frontmatter';
@@ -40,18 +48,30 @@ export async function readVaultFile<T>(
 
 // Lista URIs de arquivos dentro de uma pasta do Vault. Filtra por
 // extensao quando fornecida (ex: '.md'). Pasta inexistente => [].
+//
+// V4.0.2: dispatcha por scheme. file:// usa FileSystem.readDirectoryAsync
+// (devolve NOMES) e prepend o folderUri para resultado uniforme.
+// content:// (legacy SAF persisted) usa StorageAccessFramework.
 export async function listVaultFolder(
   folderUri: string,
   ext?: string
 ): Promise<string[]> {
-  let entries: string[];
   if (Platform.OS === 'web' && __DEV__) {
     // Branch web/dev: lista do mock store. listarPasta ja filtra por
     // prefixo e extensao -- sem chamar SAF (que lancaria).
     return useVaultMock.getState().listarPasta(folderUri, ext);
   }
+  let entries: string[];
   try {
-    entries = await StorageAccessFramework.readDirectoryAsync(folderUri);
+    if (folderUri.startsWith('content://')) {
+      entries = await StorageAccessFramework.readDirectoryAsync(folderUri);
+    } else {
+      // file:// (post-V4.0.2 vault root). FileSystem.readDirectoryAsync
+      // devolve apenas nomes; transformamos em URIs completos.
+      const names = await FileSystem.readDirectoryAsync(folderUri);
+      const sep = folderUri.endsWith('/') ? '' : '/';
+      entries = names.map((n) => `${folderUri}${sep}${encodeURIComponent(n)}`);
+    }
   } catch {
     return [];
   }

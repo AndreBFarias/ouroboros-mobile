@@ -291,16 +291,23 @@ export async function migrarAssetsLegacyParaMedia(
   };
 
   const assetsUri = joinUri(vaultRoot, 'assets');
+  // V4.0.2: dispatcha por scheme. file:// devolve nomes diretos via
+  // FileSystem.readDirectoryAsync; content:// devolve URIs cheios.
   let entries: string[];
   try {
-    entries = await StorageAccessFramework.readDirectoryAsync(assetsUri);
+    if (assetsUri.startsWith('content://')) {
+      entries = await StorageAccessFramework.readDirectoryAsync(assetsUri);
+    } else {
+      const names = await FileSystem.readDirectoryAsync(assetsUri);
+      const sep = assetsUri.endsWith('/') ? '' : '/';
+      entries = names.map((n) => `${assetsUri}${sep}${encodeURIComponent(n)}`);
+    }
   } catch {
     // assets/ nao existe ou sem permissao — nada a migrar.
     return result;
   }
 
   for (const entryUri of entries) {
-    // entryUri vem como URI completo do SAF; extraimos basename.
     const decoded = decodeURIComponent(entryUri);
     const basename = decoded.split('/').pop() ?? decoded;
 

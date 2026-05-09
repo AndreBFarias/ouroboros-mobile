@@ -135,20 +135,22 @@ describe('inicializarVaultEscolhido (H3)', () => {
     expect(useVault.getState().vaultRoot).toBe(SUGESTAO_URI);
   });
 
-  it('Android com URI SAF (content://...) cria 8 subpastas e modo saf-fallback', async () => {
+  it('Android com URI SAF persisted (content://...) migra para file:// e modo auto', async () => {
+    // V4.0.2: vaultRoot persistido em content:// (apps pre-V4.0.2)
+    // e migrado para file:// equivalente de armazenamento primario.
     setPlatform('android', 33);
     const result = await inicializarVaultEscolhido(SAF_URI);
     expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(8);
     SUBPASTAS_CANONICAS.forEach((sub) => {
       expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(
-        `${SAF_URI}/${sub}`,
+        `file:///sdcard/Download/${sub}`,
         { intermediates: true }
       );
     });
-    expect(result.modo).toBe('saf-fallback');
+    expect(result.modo).toBe('auto');
     expect(result.criado).toBe(true);
-    expect(result.vaultRoot).toBe(SAF_URI);
-    expect(useVault.getState().vaultRoot).toBe(SAF_URI);
+    expect(result.vaultRoot).toBe('file:///sdcard/Download');
+    expect(useVault.getState().vaultRoot).toBe('file:///sdcard/Download');
   });
 
   it('URI vazia lanca erro descritivo', async () => {

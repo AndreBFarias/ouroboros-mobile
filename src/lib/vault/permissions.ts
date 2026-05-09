@@ -364,9 +364,16 @@ export async function inicializarVaultEscolhido(
   if (!trimmed) {
     throw new Error('inicializarVaultEscolhido: uri vazia');
   }
+  // V4.0.2: migra vaultRoot persistido em formato content:// (apps
+  // pre-V4.0.2 que escolheram via SAF picker) para file:// equivalente.
+  // Sem isso, listVaultFolder/saves silenciosos. Volume secundario
+  // permanece content:// (sem migration possivel).
+  const migrated = trimmed.startsWith('content://')
+    ? safTreeUriToFileUri(trimmed) ?? trimmed
+    : trimmed;
   // V4.0.2: renomeia pasta com trailing space (artefato Syncthing/MIUI)
   // antes de qualquer probe ou write. Idempotente.
-  const sane = await sanearTrailingSpaceFolder(trimmed);
+  const sane = await sanearTrailingSpaceFolder(migrated);
   await garantirSubpastas(sane);
   const writable = await probeVaultWritable(sane);
   if (!writable) {
