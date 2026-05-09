@@ -17,8 +17,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Text, View } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { ScrollView, Text, View } from "react-native";
 import { router } from 'expo-router';
 import { CalendarRange } from '@/lib/icons';
 import {
@@ -174,7 +173,7 @@ export function MiniHumorScreen(): ReactNode {
         <Header title="Humor" />
       </View>
 
-      <BottomSheetScrollView
+      <ScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.base,
@@ -265,7 +264,7 @@ export function MiniHumorScreen(): ReactNode {
             ) : null}
           </>
         ) : null}
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <BottomSheet ref={modalRef} snapPoints={SHEET_60} index={-1}>
         {diaSelecionado ? (

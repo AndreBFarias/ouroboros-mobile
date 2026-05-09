@@ -24,8 +24,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { Text, View } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { ScrollView, Text, View } from "react-native";
 import { Plus } from '@/lib/icons';
 import {
   BottomSheet,
@@ -208,7 +207,7 @@ export function EvolucaoCorporalTab({
 
   return (
     <View style={{ flex: 1 }}>
-      <BottomSheetScrollView
+      <ScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.base,
@@ -230,7 +229,7 @@ export function EvolucaoCorporalTab({
             <ItemTimeline key={`${m.data}-${m.descricao}`} marco={m} />
           ))
         )}
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <BottomSheet ref={novoRef} snapPoints={SHEET_70} index={-1}>
         <SheetNovoMarco
