@@ -148,8 +148,8 @@ jest.mock('@/lib/vault/permissions', () => ({
       modo: 'auto',
     })
   ),
-  sugestaoVaultPathDefault: () => '/sdcard/Documents/Ouroboros/',
-  sugestaoVaultUriDefault: () => 'file:///sdcard/Documents/Ouroboros/',
+  sugestaoVaultPathDefault: () => '/sdcard/Ouroboros/',
+  sugestaoVaultUriDefault: () => 'file:///sdcard/Ouroboros/',
 }));
 
 // Mock de Platform como Android (loadVaultRoot ja esta mockado mas

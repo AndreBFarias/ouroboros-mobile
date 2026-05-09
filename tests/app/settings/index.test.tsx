@@ -73,8 +73,8 @@ jest.mock('@/lib/vault/permissions', () => ({
   inicializarVaultEscolhido: jest.fn(() =>
     Promise.resolve({ ok: true, vaultRoot: '/tmp/vault', criado: true, modo: 'auto' })
   ),
-  sugestaoVaultPathDefault: () => '/sdcard/Documents/Ouroboros/',
-  sugestaoVaultUriDefault: () => 'file:///sdcard/Documents/Ouroboros/',
+  sugestaoVaultPathDefault: () => '/sdcard/Ouroboros/',
+  sugestaoVaultUriDefault: () => 'file:///sdcard/Ouroboros/',
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';

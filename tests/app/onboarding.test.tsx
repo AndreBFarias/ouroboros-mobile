@@ -44,8 +44,8 @@ jest.mock('@/lib/vault', () => {
     inicializarVaultEscolhido: (uri: string) => mockInicializarEscolhido(uri),
     pedirPermissaoStorage: () => mockPedirPermissaoStorage(),
     requestVaultPermission: () => mockRequestVaultPermission(),
-    sugestaoVaultPathDefault: () => '/sdcard/Documents/Ouroboros/',
-    sugestaoVaultUriDefault: () => 'file:///sdcard/Documents/Ouroboros/',
+    sugestaoVaultPathDefault: () => '/sdcard/Ouroboros/',
+    sugestaoVaultUriDefault: () => 'file:///sdcard/Ouroboros/',
   };
 });
 
@@ -86,7 +86,7 @@ beforeEach(() => {
   usePessoa.getState().setNome('pessoa_a', '');
   usePessoa.getState().setNome('pessoa_b', '');
   mockInicializarEscolhido.mockResolvedValue({
-    vaultRoot: 'file:///sdcard/Documents/Ouroboros/',
+    vaultRoot: 'file:///sdcard/Ouroboros/',
     criado: true,
     modo: 'auto',
   });
@@ -169,10 +169,10 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
   it('Frame 2 caminho A (permissao ja concedida) -> Frame 3 Permissoes', async () => {
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(mockInicializarEscolhido).toHaveBeenCalledWith(
-        'file:///sdcard/Documents/Ouroboros/'
+        'file:///sdcard/Ouroboros/'
       );
     });
     // V4.0.2: handleUsarSugestao tenta init direto; so chama
@@ -192,7 +192,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     );
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(mockPedirPermissaoStorage).toHaveBeenCalledTimes(1);
     });
@@ -241,7 +241,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     mockPedirPermissaoStorage.mockResolvedValueOnce(false);
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(mockPedirPermissaoStorage).toHaveBeenCalledTimes(1);
     });
@@ -253,7 +253,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
   it('Frame 3 Permissoes: 4 cards renderizam com toggles default', async () => {
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Câmera')).toBeTruthy();
     });
@@ -269,7 +269,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
   it('Frame 3 Permissoes: H1 contextual (eyebrow Permissoes + frase distinta)', async () => {
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Libere o que faz sentido pra você.')).toBeTruthy();
     });
@@ -280,7 +280,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
   it('Frame 3 "Continuar": chama request* para toggles ON, persiste em store, avanca para Frame 4', async () => {
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Câmera')).toBeTruthy();
     });
@@ -309,7 +309,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
   it('Frame 3: toggle camera OFF nao chama requestCamera', async () => {
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Câmera')).toBeTruthy();
     });
@@ -327,7 +327,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     mockReqCamera.mockResolvedValueOnce(false);
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Câmera')).toBeTruthy();
     });
@@ -344,7 +344,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     // Tudo concedido: storage + camera + microfone + notificacoes = 4.
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Câmera')).toBeTruthy();
     });
@@ -357,7 +357,7 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
   it('Frame 4: Comecar marca concluido e redireciona', async () => {
     const api = renderTela();
     avancarAtePasta(api);
-    fireEvent.press(api.getByLabelText('usar sugestao documents ouroboros'));
+    fireEvent.press(api.getByLabelText('usar sugestao ouroboros'));
     await waitFor(() => {
       expect(api.getByText('Câmera')).toBeTruthy();
     });

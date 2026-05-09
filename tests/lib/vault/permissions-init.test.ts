@@ -82,13 +82,13 @@ const SAF_URI =
   'content://com.android.externalstorage.documents/tree/primary%3ADownload';
 
 describe('sugestaoVaultPathDefault / sugestaoVaultUriDefault', () => {
-  it('path default e /sdcard/Documents/Ouroboros/', () => {
-    expect(sugestaoVaultPathDefault()).toBe('/sdcard/Documents/Ouroboros/');
+  it('path default e /sdcard/Ouroboros/', () => {
+    expect(sugestaoVaultPathDefault()).toBe('/mock/documents/Ouroboros/');
   });
 
   it('uri default e file://${path}', () => {
     expect(sugestaoVaultUriDefault()).toBe(
-      'file:///sdcard/Documents/Ouroboros/'
+      'file:///mock/documents/Ouroboros/'
     );
   });
 });
@@ -123,7 +123,7 @@ describe('inicializarVaultEscolhido (H3)', () => {
     expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledTimes(8);
     SUBPASTAS_CANONICAS.forEach((sub) => {
       // vaultUriJoin remove a barra final do root antes de juntar.
-      const expected = `file:///sdcard/Documents/Ouroboros/${sub}`;
+      const expected = `file:///mock/documents/Ouroboros/${sub}`;
       expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(
         expected,
         { intermediates: true }
@@ -193,7 +193,7 @@ describe('inicializarVaultEscolhido (H3)', () => {
   it('probe escreve, le e deleta .ouroboros-probe sob a URI escolhida', async () => {
     setPlatform('android', 33);
     await inicializarVaultEscolhido(SUGESTAO_URI);
-    const probeUri = `file:///sdcard/Documents/Ouroboros/.ouroboros-probe`;
+    const probeUri = `file:///mock/documents/Ouroboros/.ouroboros-probe`;
     expect(FileSystem.writeAsStringAsync).toHaveBeenCalledWith(probeUri, 'ok');
     expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith(probeUri);
     expect(FileSystem.deleteAsync).toHaveBeenCalledWith(probeUri, {

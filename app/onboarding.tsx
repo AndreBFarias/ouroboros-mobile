@@ -751,11 +751,11 @@ function Frame2({
       </Sub>
 
       <CardPasta
-        titulo="Sugestão: Documents/Ouroboros"
+        titulo="Sugestão: Ouroboros"
         descricao="Pasta dedicada visível no seu file manager. Fácil de sincronizar com Obsidian ou Syncthing."
         path={sugestaoVaultPathDefault()}
         botaoLabel="Usar essa"
-        accessibilityLabel="usar sugestao documents ouroboros"
+        accessibilityLabel="usar sugestao ouroboros"
         onPress={onUsarSugestao}
         ocupado={ocupado}
       />

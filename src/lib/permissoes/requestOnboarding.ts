@@ -127,7 +127,8 @@ export async function getStorageStatus(): Promise<StatusPermissao> {
   if (Platform.OS !== 'android') return 'concedida';
   // Lazy import para evitar ciclo (vault/permissions importa este modulo).
   const FileSystem = await import('expo-file-system/legacy');
-  const probeUri = `file:///sdcard/Documents/.ouroboros-permcheck-${Date.now()}`;
+  // V4.0.2: probe em /sdcard/ raiz (universalmente gravavel com MANAGE).
+  const probeUri = `file:///sdcard/.ouroboros-permcheck-${Date.now()}`;
   try {
     await FileSystem.writeAsStringAsync(probeUri, 'ok');
     await FileSystem.deleteAsync(probeUri, { idempotent: true });

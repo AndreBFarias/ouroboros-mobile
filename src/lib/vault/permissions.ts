@@ -63,22 +63,40 @@ function isWeb(): boolean {
 // onboarding (ADR-0022). Mantida como funcao para nao virar constante
 // global de modulo (impede testes de monkeypatch, mantem clareza de
 // intencao: e uma sugestao, nao a verdade).
-const SUGESTAO_VAULT_PATH = '/sdcard/Documents/Ouroboros/';
-const SUGESTAO_VAULT_URI = `file://${SUGESTAO_VAULT_PATH}`;
+// V4.0.2 (2026-05-09): default agora computa dinamicamente como
+// FileSystem.documentDirectory + 'Ouroboros/'. expo-file-system bloqueia
+// writes em /sdcard/ raiz mesmo com MANAGE_EXTERNAL_STORAGE granted
+// (FilePermissionModule restringe writes a filesDir, cacheDir e
+// external app dir). documentDirectory sempre gravavel, sem
+// permissao especial. Trade-off: outros apps (Obsidian/Syncthing)
+// nao acessam diretamente — usuario que precisar dessa integracao
+// usa "Outra pasta" via SAF picker para escolher /sdcard/X visivel.
+//
+// Computado por chamada porque FileSystem.documentDirectory pode ser
+// null em testes/web e a chamada precisa happenar runtime.
 const PROBE_FILENAME = '.ouroboros-probe';
 const ANDROID_PACKAGE = 'com.ouroboros.mobile';
 
 // Retorna a sugestao default de path para a pasta do Vault. NAO
 // implica que o vault esta nesse path; e apenas o que o onboarding
 // oferece como atalho. ADR-0022.
+//
+// V4.0.2: computado dinamicamente via FileSystem.documentDirectory
+// porque expo-file-system bloqueia writes em /sdcard/ raiz.
 export function sugestaoVaultPathDefault(): string {
-  return SUGESTAO_VAULT_PATH;
+  const docDir = FileSystem.documentDirectory;
+  if (!docDir) return '/data/user/0/com.ouroboros.mobile/files/Ouroboros/';
+  // documentDirectory ja vem com 'file://' prefix; strip para path.
+  const path = docDir.replace(/^file:\/\//, '');
+  return `${path}Ouroboros/`;
 }
 
 // Retorna a sugestao default ja em forma de URI file://. Usado pelo
 // caminho "Usar essa" do onboarding e pela sub-tela de Settings.
 export function sugestaoVaultUriDefault(): string {
-  return SUGESTAO_VAULT_URI;
+  const docDir = FileSystem.documentDirectory;
+  if (!docDir) return 'file:///data/user/0/com.ouroboros.mobile/files/Ouroboros/';
+  return `${docDir}Ouroboros/`;
 }
 
 // Subpastas canonicas criadas pela inicializacao (H2 layout-por-tipo,
@@ -131,7 +149,11 @@ async function deleteKey(name: string): Promise<void> {
 // Idempotente, deleta o probe ao final.
 async function probeManagePermission(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
-  const probeUri = `file:///sdcard/Documents/.ouroboros-permcheck-${Date.now()}`;
+  // V4.0.2: probe no app's external files dir, que sempre e gravavel
+  // independente de MANAGE_EXTERNAL_STORAGE. Para vault em /sdcard/
+  // arbitrario o caller precisa usar SAF picker explicitamente.
+  const baseDir = FileSystem.documentDirectory ?? 'file:///sdcard/';
+  const probeUri = `${baseDir}.ouroboros-permcheck-${Date.now()}`;
   try {
     await FileSystem.writeAsStringAsync(probeUri, 'ok');
     await FileSystem.deleteAsync(probeUri, { idempotent: true });
