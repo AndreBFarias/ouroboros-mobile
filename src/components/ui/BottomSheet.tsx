@@ -197,6 +197,12 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
         enablePanDownToClose={enablePanDownToClose}
         backdropComponent={renderBackdrop}
         containerStyle={mergedContainerStyle}
+        // V4.0.2 (2026-05-09): animateOnMount obrigatorio em gorhom 5
+        // + New Arch (Fabric) para sheet abrir automaticamente quando
+        // index >= 0 inicial. Sem isso, sheet renderiza offscreen e
+        // index={0} nunca dispara animacao (testado em Redmi Note 13
+        // HyperOS, dev-client).
+        animateOnMount
         backgroundStyle={{
           backgroundColor: colors.bgAlt,
           borderTopLeftRadius: radius.sheet,
