@@ -1,23 +1,20 @@
 // Hook de dados da Tela 01 (hoje). Le do Vault, em ordem:
-//   1. daily/YYYY-MM-DD.md         (humor do dia)
-//   2. inbox/mente/diario/YYYY-MM-DD-*.md  (diarios emocionais)
-//   3. eventos/YYYY-MM-DD-*.md     (eventos)
+//   1. markdown/humor-YYYY-MM-DD.md         (humor do dia)
+//   2. markdown/diario-YYYY-MM-DD-*-*.md    (diarios emocionais)
+//   3. markdown/evento-YYYY-MM-DD-*.md      (eventos)
+//
+// V4.0.2 (2026-05-08): migra de leitura legacy daily/inbox/eventos/
+// (pre-H2) para layout-por-tipo via listarHumor/listarDiarios/
+// listarEventos canonicos. Sem isso, apos migrarVaultLayoutPorTipo
+// (boot hook) os arquivos saiam de daily/ e Hoje screen ficava vazio.
 //
 // Filtra automaticamente pela pessoa ativa (autor === pessoaAtiva)
 // quando filtro não e 'ambos'. Devolve loading/error simples.
-//
-// Estrategia SAF: lista o conteudo da pasta-pai (vaultRoot) usando
-// readDirectoryAsync. Como SAF retorna URIs completos opacos, o que
-// importa e que cada URI termine com o sufixo do path canonico (ex:
-// '...%2Fdaily%2F2026-04-29.md'). O matching e por sufixo decodificado.
 import { useEffect, useState, useCallback } from 'react';
-import { listVaultFolder, readVaultFile } from '@/lib/vault';
-import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
-import {
-  DiarioEmocionalSchema,
-  type DiarioEmocionalMeta,
-} from '@/lib/schemas/diario_emocional';
-import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
+import { formatDateYmd, listarDiarios, listarEventos, listarHumor } from '@/lib/vault';
+import { type HumorMeta } from '@/lib/schemas/humor';
+import { type DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
+import { type EventoMeta } from '@/lib/schemas/evento';
 import type { Para } from '@/lib/schemas/para';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useFiltroPessoaEfetivo } from '@/lib/stores/filtroEfetivo';
@@ -57,52 +54,8 @@ function matchPara(para: Para, filtro: FiltroPara): boolean {
   return para.tipo === 'outra' && para.pessoa === filtro;
 }
 
-// Decodifica e checa se o URI termina com a pasta canonica (em
-// qualquer encoding razoavel: '/daily', '%2Fdaily', etc).
-function uriBelongsToFolder(uri: string, folder: string): boolean {
-  const decoded = decodeURIComponent(uri);
-  return decoded.includes(`/${folder}/`) || decoded.endsWith(`/${folder}`);
-}
-
-// Filtra URIs cujo nome de arquivo (ultima parte decodificada)
-// comeca com o prefixo de data ymd.
-function uriMatchesDatePrefix(uri: string, ymd: string): boolean {
-  const decoded = decodeURIComponent(uri);
-  const tail = decoded.split('/').pop() ?? decoded;
-  return tail.startsWith(ymd);
-}
-
-// Resolve: dado o root SAF e um nome de pasta (ex: 'daily'),
-// devolve uma "lista plausivel" de URIs descendentes. SAF não tem
-// API simples de "abrir subpasta por nome"; o caminho mais robusto
-// e listar a raiz e filtrar pelos URIs que decodificados contenham
-// '/<folder>/'. Esta função retorna best-effort.
-async function listFolderByName(
-  rootUri: string,
-  folder: string,
-  ext: string
-): Promise<string[]> {
-  // 1. Tenta listar direto a raiz: SAF retorna entradas no nível
-  //    superior; subpastas aparecem como URIs de tree separadas.
-  const rootEntries = await listVaultFolder(rootUri);
-  const matches: string[] = [];
-
-  // Procura uma sub-arvore cujo URI bata com a pasta alvo. Algumas
-  // implementacoes SAF retornam '.../tree/.../document/...%2Ffolder'.
-  for (const entry of rootEntries) {
-    if (uriBelongsToFolder(entry, folder)) {
-      // Pode ser tanto a propria pasta quanto um arquivo dentro
-      if (ext && entry.toLowerCase().endsWith(ext.toLowerCase())) {
-        matches.push(entry);
-      } else {
-        // Tenta listar como subpasta
-        const sub = await listVaultFolder(entry, ext);
-        matches.push(...sub);
-      }
-    }
-  }
-  return matches;
-}
+// V4.0.2: helpers de leitura legacy removidos. useHoje agora usa
+// listarHumor/listarDiarios/listarEventos canonicos do vault index.
 
 export interface UseHojeOptions {
   // YYYY-MM-DD para forcar data alvo (default: hoje em UTC-3).
@@ -155,38 +108,25 @@ export function useHoje(arg?: string | UseHojeOptions): HojeData {
 
     (async () => {
       try {
-        // Humor do dia
-        const dailyUris = await listFolderByName(vaultRoot, 'daily', '.md');
-        const humorUri = dailyUris.find((u) => uriMatchesDatePrefix(u, ymd));
-        const humorRead = humorUri
-          ? await readVaultFile(humorUri, HumorSchema)
-          : null;
+        // V4.0.2: usa helpers canonicos do layout-por-tipo. listarHumor
+        // ja filtra por prefixo 'humor-' em markdown/; idem listarDiarios
+        // (prefixo 'diario-') e listarEventos (prefixo 'evento-').
+        const [humoresTodos, diariosTodos, eventosTodos] = await Promise.all([
+          listarHumor(vaultRoot),
+          listarDiarios(vaultRoot),
+          listarEventos(vaultRoot),
+        ]);
 
-        // Diarios emocionais do dia
-        const diarioUris = await listFolderByName(
-          vaultRoot,
-          'diario',
-          '.md'
+        // Filtra por data alvo. HumorSchema.data = YYYY-MM-DD direto;
+        // DiarioEmocional.data e EventoMeta.data sao ISO 8601 (precisa
+        // converter para YYYY-MM-DD em UTC-3).
+        const humorRead = humoresTodos.find((h) => h.data === ymd) ?? null;
+        const diariosDoDia = diariosTodos.filter(
+          (d) => formatDateYmd(new Date(d.data)) === ymd
         );
-        const diariosDoDia = diarioUris.filter((u) =>
-          uriMatchesDatePrefix(u, ymd)
+        const eventosDoDia = eventosTodos.filter(
+          (e) => formatDateYmd(new Date(e.data)) === ymd
         );
-        const diariosLidos: DiarioEmocionalMeta[] = [];
-        for (const u of diariosDoDia) {
-          const r = await readVaultFile(u, DiarioEmocionalSchema);
-          if (r) diariosLidos.push(r.meta);
-        }
-
-        // Eventos do dia
-        const eventosUris = await listFolderByName(vaultRoot, 'eventos', '.md');
-        const eventosDoDia = eventosUris.filter((u) =>
-          uriMatchesDatePrefix(u, ymd)
-        );
-        const eventosLidos: EventoMeta[] = [];
-        for (const u of eventosDoDia) {
-          const r = await readVaultFile(u, EventoSchema);
-          if (r) eventosLidos.push(r.meta);
-        }
 
         if (cancelled) return;
 
@@ -199,15 +139,15 @@ export function useHoje(arg?: string | UseHojeOptions): HojeData {
         // depois `para` (destinatario emocional, M33). Humor nao tem
         // campo `para`, so respeita autor.
         setHumor(
-          humorRead && matchAutor(humorRead.meta.autor) ? humorRead.meta : null
+          humorRead && matchAutor(humorRead.autor) ? humorRead : null
         );
         setDiarios(
-          diariosLidos
+          diariosDoDia
             .filter((d) => matchAutor(d.autor))
             .filter((d) => matchPara(d.para, filtroPara))
         );
         setEventos(
-          eventosLidos
+          eventosDoDia
             .filter((e) => matchAutor(e.autor))
             .filter((e) => matchPara(e.para, filtroPara))
         );
