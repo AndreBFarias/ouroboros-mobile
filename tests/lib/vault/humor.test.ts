@@ -31,10 +31,19 @@ beforeEach(() => {
 });
 
 describe('listarHumor', () => {
-  it('devolve [] quando vault root vazio ou web mock', async () => {
+  it('devolve [] quando vault root vazio (sem chamar reader)', async () => {
     expect(await listarHumor('')).toEqual([]);
-    expect(await listarHumor('web://mock-vault')).toEqual([]);
     expect(mockListVaultFolder).not.toHaveBeenCalled();
+  });
+
+  it('com vaultRoot web://, delega ao reader (V4.0.1)', async () => {
+    // V4.0.1: early return 'web://' removido. Reader em web __DEV__
+    // delega ao useVaultMock; em jest (Platform.OS=ios default) o
+    // listVaultFolder mock retorna o que injetarmos.
+    mockListVaultFolder.mockResolvedValueOnce([]);
+    const out = await listarHumor('web://mock-vault');
+    expect(out).toEqual([]);
+    expect(mockListVaultFolder).toHaveBeenCalled();
   });
 
   it('devolve [] quando pasta vazia', async () => {

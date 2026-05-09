@@ -9,11 +9,20 @@
 #   ./run.sh --emulator  # inicia emulador Android e abre o app nele
 #   ./run.sh --mirror    # espelha celular conectado em janela do PC
 #
+# Para validacao visual silenciosa em browser desktop:
+#   ./gauntlet.sh        # sobe Metro web + abre Chrome em /_dev/gauntlet
+#                        # ou: duplo-clique em Gauntlet.desktop no Files
+#
 # Combine flags: ./run.sh --emulator --clear
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
+
+# Garante que Gauntlet.desktop continua executavel apos checkout fresh
+if [[ -f "$ROOT/Gauntlet.desktop" && ! -x "$ROOT/Gauntlet.desktop" ]]; then
+  chmod +x "$ROOT/Gauntlet.desktop" 2>/dev/null || true
+fi
 
 EXTRA_ARGS=("$@")
 

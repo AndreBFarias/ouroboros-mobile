@@ -19,7 +19,16 @@ import { GAUNTLET_ATIVO, gauntlet, type SeedOpcoes } from '@/lib/dev/gauntlet';
 import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock, type DiarioMockEntrada } from '@/lib/dev/diarioMock';
 import { useEventosMock, type EventoMockEntrada } from '@/lib/dev/eventosMock';
-import { formatDateYmd } from '@/lib/vault/paths';
+import {
+  formatDateYmd,
+  diarioPath,
+  eventoPath,
+  humorPath,
+  vaultUriJoin,
+} from '@/lib/vault/paths';
+import { stringifyFrontmatter } from '@/lib/vault/frontmatter';
+import { useVault } from '@/lib/stores/vault';
+import { useVaultMock } from '@/lib/dev/vaultMockStore';
 import type { HumorHeatmapCell } from '@/lib/schemas/humor_heatmap_cache';
 import type { PessoaAutor, PessoaId } from '@/lib/schemas/pessoa';
 
@@ -110,6 +119,38 @@ function dataIsoDeOffsetHoras(offsetHoras: number, agora?: Date): string {
   return `${y}-${m}-${d}T${hh}:${mm}Z`;
 }
 
+// V4.0.1 (INFRA-VAULT-MOCK-CONVERGENCIA): helpers de espelhamento.
+// Cada seed* alem de popular o store de dominio (humorMock, diarioMock,
+// eventosMock) tambem popula useVaultMock com o .md serializado, para
+// que reader/Recap web enxerguem os fixtures via caminho canonico.
+
+// Slug curto a partir das primeiras palavras de um texto livre. ASCII
+// kebab-case, max 24 chars. Espelha companion.slugDeFrase mas mais
+// curto (path de diario ja tem timestamp, slug serve so para legibilidade).
+function slugCurto(texto: string): string {
+  const limpo = texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 24)
+    .replace(/-+$/, '');
+  return limpo.length > 0 ? limpo : 'sem-titulo';
+}
+
+// Espelha um conteudo .md serializado no useVaultMock no path
+// <vaultRoot>/<rel>. Se vaultRoot nao foi setado (caller esqueceu
+// seed de identidade), pula silenciosamente -- mock so faz sentido
+// quando ha vaultRoot.
+function espelharNoVaultMock(rel: string, conteudo: string): void {
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const uri = vaultUriJoin(vaultRoot, rel);
+  useVaultMock.getState().setArquivo(uri, conteudo);
+}
+
 // Casts seguros: a fixture guarda 'pessoa_a'/'pessoa_b'/'ambos' como
 // string; o tipo PessoaId/PessoaAutor restringe a esses literais.
 function comoAutor(s: string): PessoaAutor {
@@ -129,72 +170,170 @@ function comoPessoaId(s: string): PessoaId {
 // no useHumorHeatmap mescla as celulas com qualquer cache real.
 //
 // Hoje = parametro opcional para teste deterministico.
+//
+// V4.0.1: alem de useHumorMock, popular useVaultMock com .md
+// serializado em markdown/humor-YYYY-MM-DD-<autor>.md. Path canonico
+// do reader e markdown/humor-YYYY-MM-DD.md, mas dois autores no mesmo
+// dia colidem; sufixo por autor evita colisao e ainda casa o filtro
+// matchesFeaturePrefix('humor-').
 export function seedHumores(dias: number = 30, hoje?: Date): void {
   if (!GAUNTLET_ATIVO) return;
   const total = Math.max(1, Math.min(30, dias));
   const limiar = -(total - 1); // ex: dias=30 -> limiar -29; dias=7 -> limiar -6
   const fonte = humoresFixture.celulas as HumorFixtureCelula[];
-  const celulas: HumorHeatmapCell[] = fonte
-    .filter((c) => c.offsetDias >= limiar)
-    .map((c) => ({
-      data: formatDateYmd(dataDeOffset(c.offsetDias, hoje)),
-      autor: comoAutor(c.autor),
+  const filtradas = fonte.filter((c) => c.offsetDias >= limiar);
+  const celulas: HumorHeatmapCell[] = filtradas.map((c) => ({
+    data: formatDateYmd(dataDeOffset(c.offsetDias, hoje)),
+    autor: comoAutor(c.autor),
+    humor: c.humor,
+    energia: c.energia,
+    ansiedade: c.ansiedade,
+    foco: c.foco,
+    tags: c.tags,
+  }));
+  useHumorMock.getState().definir(celulas);
+
+  // V4.0.1: espelhar cada celula como .md no vault mock.
+  for (const c of filtradas) {
+    const date = dataDeOffset(c.offsetDias, hoje);
+    const dataYmd = formatDateYmd(date);
+    const autor = comoAutor(c.autor);
+    const meta = {
+      tipo: 'humor' as const,
+      data: dataYmd,
+      autor,
       humor: c.humor,
       energia: c.energia,
       ansiedade: c.ansiedade,
       foco: c.foco,
       tags: c.tags,
-    }));
-  useHumorMock.getState().definir(celulas);
+    };
+    const conteudo = stringifyFrontmatter(meta, '');
+    // Path com sufixo de autor para evitar colisao entre 2 pessoas.
+    const relBase = humorPath(date); // markdown/humor-YYYY-MM-DD.md
+    const rel = relBase.replace(/\.md$/, `-${autor}.md`);
+    espelharNoVaultMock(rel, conteudo);
+  }
 }
 
 // seedDiarios: gera entradas de diario emocional a partir do fixture
 // diarios-3.json. qtd controla quantas (1..3); default 3.
+//
+// V4.0.1: alem de useDiarioMock, popular useVaultMock com .md
+// serializado por DiarioEmocionalSchema em markdown/diario-YYYY-MM-DD-
+// HHmm-<slug>.md. Reader filtra por prefixo 'diario-'.
 export function seedDiarios(qtd: number = 3, agora?: Date): void {
   if (!GAUNTLET_ATIVO) return;
   const total = Math.max(1, Math.min(3, qtd));
   const fonte = diariosFixture.entradas as DiarioFixtureEntrada[];
-  const entradas: DiarioMockEntrada[] = fonte
-    .slice(0, total)
-    .map((e) => ({
-      data: dataIsoDeOffsetHoras(e.offsetHoras, agora),
+  const selecionadas = fonte.slice(0, total);
+  const entradas: DiarioMockEntrada[] = selecionadas.map((e) => ({
+    data: dataIsoDeOffsetHoras(e.offsetHoras, agora),
+    autor: comoAutor(e.autor),
+    modo: e.modo,
+    intensidade: e.intensidade,
+    emocoes: e.emocoes,
+    com: e.com.map(comoPessoaId),
+    contextoSocial: e.contextoSocial,
+    texto: e.texto,
+    estrategia: e.estrategia,
+    funcionou: e.funcionou,
+    tags: e.tags,
+    midia: e.midia ?? [],
+  }));
+  useDiarioMock.getState().definir(entradas);
+
+  // V4.0.1: espelhar cada entrada como .md no vault mock.
+  for (const e of selecionadas) {
+    const base = agora ? new Date(agora.getTime()) : new Date();
+    base.setTime(base.getTime() + e.offsetHoras * 3600_000);
+    const dataIso = dataIsoDeOffsetHoras(e.offsetHoras, agora);
+    const slug = slugCurto(e.texto);
+    const rel = diarioPath(base, slug);
+    // Schema DiarioEmocionalSchema (note: campo canonico
+    // contexto_social com underscore, midia como array de objetos
+    // {tipo,path}). Mapeamos a fixture (que usa contextoSocial
+    // camelCase + midia como array de strings) para o shape canonico.
+    const midiaCanonica = (e.midia ?? []).map((path) => ({
+      tipo: 'foto' as const,
+      path,
+    }));
+    const meta: Record<string, unknown> = {
+      tipo: 'diario_emocional',
+      data: dataIso,
       autor: comoAutor(e.autor),
       modo: e.modo,
-      intensidade: e.intensidade,
       emocoes: e.emocoes,
+      intensidade: e.intensidade,
       com: e.com.map(comoPessoaId),
-      contextoSocial: e.contextoSocial,
+      contexto_social: e.contextoSocial,
       texto: e.texto,
-      estrategia: e.estrategia,
-      funcionou: e.funcionou,
-      tags: e.tags,
-      midia: e.midia ?? [],
-    }));
-  useDiarioMock.getState().definir(entradas);
+      midia: midiaCanonica,
+      para: { tipo: 'mim' },
+    };
+    if (typeof e.estrategia === 'string') meta.estrategia = e.estrategia;
+    if (typeof e.funcionou === 'boolean') meta.funcionou = e.funcionou;
+    const conteudo = stringifyFrontmatter(meta, e.texto);
+    espelharNoVaultMock(rel, conteudo);
+  }
 }
 
 // seedEventos: gera eventos a partir do fixture eventos-7.json.
 // qtd controla quantos (1..7); default 7.
+//
+// V4.0.1: alem de useEventosMock, popular useVaultMock com .md
+// serializado por EventoSchema em markdown/evento-YYYY-MM-DD-<slug>.md.
+// Reader filtra por prefixo 'evento-'.
 export function seedEventos(qtd: number = 7, hoje?: Date): void {
   if (!GAUNTLET_ATIVO) return;
   const total = Math.max(1, Math.min(7, qtd));
   const fonte = eventosFixture.eventos as EventoFixtureEntrada[];
-  const eventos: EventoMockEntrada[] = fonte
-    .slice(0, total)
-    .map((e) => ({
-      data: formatDateYmd(dataDeOffset(e.offsetDias, hoje)),
+  const selecionados = fonte.slice(0, total);
+  const eventos: EventoMockEntrada[] = selecionados.map((e) => ({
+    data: formatDateYmd(dataDeOffset(e.offsetDias, hoje)),
+    autor: comoAutor(e.autor),
+    modo: e.modo,
+    lugar: e.lugar,
+    categoria: e.categoria,
+    com: e.com.map(comoPessoaId),
+    intensidade: e.intensidade,
+    descricao: e.descricao,
+    fotos: e.fotos,
+    midia: e.midia,
+    slug: e.slug,
+  }));
+  useEventosMock.getState().definir(eventos);
+
+  // V4.0.1: espelhar cada evento como .md no vault mock. EventoSchema
+  // exige data ISO 8601 com hora (regex Iso8601). formatDateYmd da
+  // YYYY-MM-DD apenas; complementamos com 'T12:00:00-03:00' (meio-dia
+  // sao paulo, deterministico). Schema tambem refina: modo='positivo'
+  // exige midia.length > 0 -- fixture eventos-7 ja respeita.
+  for (const e of selecionados) {
+    const date = dataDeOffset(e.offsetDias, hoje);
+    const dataYmd = formatDateYmd(date);
+    const dataIso = `${dataYmd}T12:00:00-03:00`;
+    const rel = eventoPath(date, e.slug);
+    const midiaCanonica = (e.midia ?? []).map((path) => ({
+      tipo: 'foto' as const,
+      path,
+    }));
+    const meta = {
+      tipo: 'evento' as const,
+      data: dataIso,
       autor: comoAutor(e.autor),
       modo: e.modo,
       lugar: e.lugar,
       categoria: e.categoria,
       com: e.com.map(comoPessoaId),
       intensidade: e.intensidade,
-      descricao: e.descricao,
       fotos: e.fotos,
-      midia: e.midia,
-      slug: e.slug,
-    }));
-  useEventosMock.getState().definir(eventos);
+      midia: midiaCanonica,
+      para: { tipo: 'mim' as const },
+    };
+    const conteudo = stringifyFrontmatter(meta, e.descricao);
+    espelharNoVaultMock(rel, conteudo);
+  }
 }
 
 // Utility para testes: leitores diretos das stores mock.

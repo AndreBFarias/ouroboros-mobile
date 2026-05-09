@@ -72,6 +72,26 @@ else
 fi
 
 echo ""
+echo ""
+echo ">> configurando atalho de duplo-clique do Gauntlet"
+chmod +x ./gauntlet.sh ./run.sh ./uninstall.sh 2>/dev/null || true
+if [[ -f ./Gauntlet.desktop ]]; then
+  chmod +x ./Gauntlet.desktop
+  # Marca .desktop como confiavel no GNOME/Files (evita prompt)
+  if command -v gio >/dev/null 2>&1; then
+    gio set "$ROOT/Gauntlet.desktop" "metadata::trusted" true 2>/dev/null || true
+  fi
+  # Permissao executavel + atributo "trusted" para Nautilus/Caja
+  if command -v gio >/dev/null 2>&1; then
+    gio set "$ROOT/Gauntlet.desktop" "metadata::xfce::trusted" true 2>/dev/null || true
+  fi
+  echo "OK: Gauntlet.desktop pronto. Duplo-clique em Files abre o Gauntlet"
+  echo "    no navegador sem terminal. Tambem: ./gauntlet.sh"
+else
+  echo "AVISO: Gauntlet.desktop ausente na raiz; nao instalado"
+fi
+
+echo ""
 echo ">> validando instalacao (smoke test)"
 ./scripts/smoke.sh
 
@@ -81,11 +101,11 @@ echo "INSTALACAO CONCLUIDA"
 echo "=================================================="
 echo ""
 echo "Para iniciar o servidor de desenvolvimento:"
-echo "  ./run.sh"
-echo ""
-echo "Para validar com novo build no celular real:"
-echo "  ./run.sh --clear  (limpa cache do Metro)"
+echo "  ./run.sh                  # Metro + QR para Expo Go (celular)"
+echo "  ./run.sh --clear          # limpa cache do Metro antes de subir"
+echo "  ./gauntlet.sh             # Metro web + Chrome silencioso (validacao visual)"
+echo "  duplo-clique em Gauntlet.desktop em Files (mesmo efeito)"
 echo ""
 echo "Documentacao:"
-echo "  README.md, ROADMAP.md (em breve), STATE.md (em breve),"
-echo "  docs/BRIEFING.md, docs/CONTEXTO.md, docs/PLANO_TECNICO_APK.md"
+echo "  README.md, ROADMAP.md, STATE.md, docs/BRIEFING.md,"
+echo "  docs/CONTEXTO.md, docs/I2-OAUTH-CHECKLIST.md, docs/GAUNTLET.md"

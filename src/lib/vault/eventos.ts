@@ -17,10 +17,14 @@ function joinUri(root: string, rel: string): string {
 // Lista todos os eventos do Vault (H2 layout-por-tipo). Le markdown/
 // filtrando por prefixo 'evento-'. Pasta inexistente => []. Ordenacao
 // desc por data ISO 8601.
+//
+// V4.0.1 (INFRA-VAULT-MOCK-CONVERGENCIA, 2026-05-08): early return
+// para 'web://...' removido. Reader em web __DEV__ delega ao
+// useVaultMock (V4.0).
 export async function listarEventos(
   vaultRoot: string
 ): Promise<EventoMeta[]> {
-  if (!vaultRoot || vaultRoot.startsWith('web://')) {
+  if (!vaultRoot) {
     return [];
   }
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);

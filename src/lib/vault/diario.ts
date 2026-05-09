@@ -22,10 +22,17 @@ function joinUri(root: string, rel: string): string {
 // Lista todos os registros de diario emocional do Vault (H2 layout-
 // por-tipo). Le markdown/ filtrando por prefixo 'diario-'. Pasta
 // inexistente => []. Ordenacao desc por data (ISO 8601 lexicografica).
+//
+// V4.0.1 (INFRA-VAULT-MOCK-CONVERGENCIA, 2026-05-08): early return
+// para vaultRoot 'web://...' removido. V4.0 fez reader.ts/writer.ts
+// delegarem ao useVaultMock em web __DEV__, entao listarDiarios pode
+// rodar normalmente -- listVaultFolder ja desvia para mock store.
+// Mobile real: vaultRoot e 'file://' ou 'content://', nao bate em
+// 'web://', logo branch nunca disparava em mobile.
 export async function listarDiarios(
   vaultRoot: string
 ): Promise<DiarioEmocionalMeta[]> {
-  if (!vaultRoot || vaultRoot.startsWith('web://')) {
+  if (!vaultRoot) {
     return [];
   }
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);

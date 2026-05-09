@@ -21,8 +21,12 @@ function joinUri(root: string, rel: string): string {
 // Le markdown/ e filtra por prefixo 'humor-'. Pasta ausente => [].
 // Ordenacao desc por data (mais recente primeiro), preservando ordem
 // de leitura dentro do mesmo dia (caso 2 pessoas tenham gravado).
+//
+// V4.0.1 (INFRA-VAULT-MOCK-CONVERGENCIA, 2026-05-08): early return
+// para 'web://...' removido. Reader em web __DEV__ delega ao
+// useVaultMock (V4.0).
 export async function listarHumor(vaultRoot: string): Promise<HumorMeta[]> {
-  if (!vaultRoot || vaultRoot.startsWith('web://')) {
+  if (!vaultRoot) {
     return [];
   }
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);

@@ -5,6 +5,26 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda C (2026-05-08): V4.0.1 + UX scripts + EAS preview alpha-2
+
+- **V4.0.1 `INFRA-VAULT-MOCK-CONVERGENCIA`** — mocks por feature
+  (`useFrasesMock`, `useGaleriaMock`) e seed determinístico agora
+  espelham conteúdo serializado em `useVaultMock` no path canônico.
+  `listarDiarios`/`listarEventos`/`listarHumor` em `src/lib/vault/`
+  perdem early-return `web://` (reader já delega ao mock store via
+  V4.0). `marcos`/`treinos`/`tarefas`/`contadores` não tinham
+  early-return — confirmado via grep, zero alteração necessária.
+  +2 casos jest (frasesMock-vault-espelhamento + useRecap-reflexao-vaultmock).
+  Mobile real intacto (vaultRoot mobile é `file://`/`content://`).
+  Smoke 186 suites / 1803 testes verde (+9 vs 1794).
+
+- **Gauntlet UX silenciosa** — `gauntlet.sh` v3 vira **silencioso por
+  padrão** (default abre browser e retorna). `--verbose` opt-in mostra
+  log. Alias `--quiet` mantido por retro-compat. `install.sh`
+  configura `Gauntlet.desktop` com `gio metadata::trusted=true`
+  (pula prompt de Files). `run.sh` documenta atalho do Gauntlet e
+  garante `chmod +x` no `Gauntlet.desktop` em checkout fresh.
+
 ### Onda B parte 2 (2026-05-08): W2.1 chaves persist + G5 retroativo PNGs
 
 - **W2.1 `M-AUDIT-GAUNTLET-RESET-PERSIST-KEYS`** — `aplicarReset` em
