@@ -21,7 +21,8 @@
 // frontmatter so os PessoaId validos e marcamos contexto extra no
 // corpo livre do .md como linha "Com: <quem>." legivel pelo humano.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from "react-native";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
 import {
@@ -427,7 +428,7 @@ export default function DiarioEmocional() {
           if (idx === -1) router.back();
         }}
       >
-      <ScrollView
+      <BottomSheetScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.md,
@@ -629,7 +630,7 @@ export default function DiarioEmocional() {
 
         {/* M06.5: gravacao de audio agora vive inline acima do
             textarea via MicrofoneButton; placeholder antigo removido. */}
-      </ScrollView>
+      </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );

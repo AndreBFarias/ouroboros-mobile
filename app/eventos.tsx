@@ -23,9 +23,10 @@
 //
 // Modo negativo não dispara haptic no save (mesmo principio da M06).
 import { useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import {
   BottomSheet,
   Button,
@@ -309,7 +310,7 @@ export default function Eventos() {
           if (idx === -1) router.back();
         }}
       >
-      <ScrollView
+      <BottomSheetScrollView
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.md,
@@ -458,7 +459,7 @@ export default function Eventos() {
           onPress={handleSave}
           disabled={salvando}
         />
-      </ScrollView>
+      </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );
