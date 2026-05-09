@@ -11,10 +11,28 @@
 // === 'web' && __DEV__), escreve no useVaultMock em vez de SAF (que
 // lancaria UnavailabilityError silencioso). Mobile real continua
 // usando SAF nativo.
+//
+// V4.0.2 (2026-05-08): garante pasta-pai antes de write em file://.
+// Cobre paths legados (treinos/, inbox/financeiro/<subtipo>/) que
+// nao estao em SUBPASTAS_CANONICAS. Sem isso, FileOutputStream
+// interno do writeAsStringAsync falha por parent ausente.
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { stringifyFrontmatter } from '@/lib/vault/frontmatter';
 import { useVaultMock } from '@/lib/dev/vaultMockStore';
+
+async function ensureParentDir(fileUri: string): Promise<void> {
+  if (!fileUri.startsWith('file://')) return; // SAF auto-cria
+  const lastSlash = fileUri.lastIndexOf('/');
+  if (lastSlash === -1) return;
+  const parentUri = fileUri.substring(0, lastSlash);
+  try {
+    await FileSystem.makeDirectoryAsync(parentUri, { intermediates: true });
+  } catch {
+    // Ja existe ou backend rejeitou; write posterior decide.
+  }
+}
 
 export async function writeVaultFile<T>(
   uri: string,
@@ -28,5 +46,6 @@ export async function writeVaultFile<T>(
     useVaultMock.getState().setArquivo(uri, raw);
     return;
   }
+  await ensureParentDir(uri);
   await StorageAccessFramework.writeAsStringAsync(uri, raw);
 }

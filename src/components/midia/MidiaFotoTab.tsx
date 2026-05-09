@@ -17,7 +17,7 @@ import { Button, useToast } from '@/components/ui';
 import { spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
-import { assetsPath, formatDateYmdHm } from '@/lib/vault/paths';
+import { fotoPath } from '@/lib/vault/paths';
 import type { MidiaFoto } from '@/lib/schemas/midia';
 
 export interface MidiaFotoTabProps {
@@ -56,8 +56,10 @@ export function MidiaFotoTab({
         toast.show('Vault não disponível.', 'error');
         return;
       }
-      const filename = `${formatDateYmdHm(new Date())}-conquista-${suffixCurto()}.jpg`;
-      const relPath = assetsPath(filename);
+      // V4.0.2: layout-por-tipo (jpg/foto-YYYY-MM-DD-<rand>.jpg).
+      // Pasta jpg/ esta em SUBPASTAS_CANONICAS, criada por
+      // garantirSubpastas em init.
+      const relPath = fotoPath(new Date(), suffixCurto(), 'jpg');
       const destinoUri = joinUri(vaultRoot, relPath);
       try {
         await FileSystem.copyAsync({ from: uriOrigem, to: destinoUri });
