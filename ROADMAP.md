@@ -9,6 +9,35 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+## V4.0.2 — Onda E (2026-05-09 madrugada): vault HyperOS-proof + BottomSheet New Arch + saves E2E
+
+Resposta direta ao bug do APK alpha-2 (vault freeze no celular real).
+Validação via dev-client + Metro live reload em Redmi Note 13 HyperOS.
+Bug raiz tripla resolvida em 9 commits (V4.0.2 part 1-8 +
+animateOnMount). 4 saves end-to-end persistidos no disco. APK
+alpha-3 production disparado.
+
+| # | Commit | O que faz | Status |
+|---|---|---|---|
+| V4.0.2-1 | `a5d99ce` | SAF→file:// resolução + sync `tipoCompanhia` entre stores | `[ok]` |
+| V4.0.2-2 | `80f4b4d` | `listVaultFolder` dispatch por scheme + share intent parent dir | `[ok]` |
+| V4.0.2-3 | `b9a9685` | Permissões screen completa (storage + alarme exato) + `useHoje` layout-por-tipo | `[ok]` |
+| V4.0.2-4 | `d0468ab` | `writeVaultFile` `ensureParentDir` + `MidiaFotoTab` layout-por-tipo | `[ok]` |
+| V4.0.2-5 | `60706f6` | Vault default em `documentDirectory` (Armadilha **A31** descoberta) | `[ok]` |
+| V4.0.2-6 | `28f5449` | BottomSheet abre em New Arch (Armadilha **A30** descoberta — gorhom #1751) | `[ok]` |
+| V4.0.2-7 | `a2b2b44` | `ScrollView`→`BottomSheetScrollView` em consumers do sheet | `[ok]` |
+| V4.0.2-8 | `f895b93` | Reverter BSScrollView em telas regulares (`useBottomSheetInternal` error) | `[ok]` |
+
+**Saves end-to-end validados live:**
+- `humor-2026-05-09.md` — frontmatter completo, 4 sliders default
+- `audio-2026-05-09-e3aa.m4a` (287 KB) + companion `audio-...md`
+- `contador-sem.md` — contador "Sem cafeína", início hoje
+- `alarme-acordar.md` — 08:00 semanal seg-sex + 5 notification IDs
+
+**APK alpha-3:** `f470a212-d401-4d23-8a09-03b8c09535e9` (preview
+profile, production-mode Hermes + New Arch). Substitui alpha-2 que
+travava no vault.
+
 ## Bloco S+G+V+W — Auditoria pré-APK (2026-05-08, novos)
 
 Após auditoria visual completa (RELATORIO em `docs/auditoria-2026-05-08/`),

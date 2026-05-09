@@ -14,10 +14,20 @@ inacessível, captura preta, alarmes mudos, identidade impessoal). A
 tag git `v1.0.0` permanece em `main` por histórico, mas o release
 público foi deletado.
 
-Refundação em 21 sprints (M21 → M41) em curso. Quando fecharem, a
-**v1.0.0 será republicada** (refeita) como release público. Acompanhe
-em [`STATE.md`](STATE.md), [`ROADMAP.md`](ROADMAP.md) e
-[`docs/sprints/`](docs/sprints/).
+Refundação em 21 sprints (M21 → M41) **fechada em 2026-05-07** (31/31
+sprints H–O). Pendente para v1.0.0 público: I2-OAUTH (precisa Google
+Cloud Console) + Bloco P (field test 7 dias APK).
+
+**APK alpha-3 (2026-05-09 madrugada)** — corrige bug crítico de vault
+freeze do alpha-2 em Redmi Note 13 HyperOS. V4.0.2 part 1-8 entregam:
+- Vault default em `documentDirectory` (HyperOS-proof — Armadilha A31)
+- BottomSheet abre em New Arch + Reanimated 4 (Armadilha A30)
+- Sync `tipoCompanhia` entre `useOnboarding` e `useSettings`
+- 4 saves end-to-end validados no celular real (humor, áudio binário,
+  contador, alarme com 5 schedules)
+
+Acompanhe em [`STATE.md`](STATE.md), [`ROADMAP.md`](ROADMAP.md),
+[`CHANGELOG.md`](CHANGELOG.md) Onda E e [`docs/sprints/`](docs/sprints/).
 
 Sem Play Store. Sem auto-update. Cada release é distribuição manual
 deliberada. Veja [`docs/RELEASE.md`](docs/RELEASE.md) para o pipeline
