@@ -11,6 +11,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import type { Para } from '@/lib/schemas/para';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+import { VAULT_SCHEMA_VERSION } from '@/lib/vault/frontmatter';
 
 // midia_pdf adicionado em M-VAULT-MD-FIX-scanner: nota fiscal multi
 // page consolidada via expo-print salva binario em media/scanner/
@@ -69,6 +70,11 @@ export function stringifyCompanionMidia(
   input: CompanionMidiaInput
 ): string {
   const linhas: string[] = ['---'];
+  // Q12: carimbo defensivo na primeira linha do YAML companion. Mesmo
+  // valor de VAULT_SCHEMA_VERSION usado por stringifyFrontmatter para
+  // simetria com os demais .md do Vault. Backend Python rejeita
+  // arquivos sem este campo (rotacao v1 -> v2 futura).
+  linhas.push(`_schema_version: ${VAULT_SCHEMA_VERSION}`);
   linhas.push(`tipo: ${input.tipo}`);
   linhas.push(`arquivo: ${input.arquivo}`);
   linhas.push(`data: ${input.data}`);
