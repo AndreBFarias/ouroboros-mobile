@@ -29,6 +29,8 @@ import { CalendarioFases } from '@/components/ciclo/CalendarioFases';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { autorPadrao } from '@/lib/ciclo/inferencia';
 import {
   listarRegistrosCiclo,
   duracaoCicloDetectada,
@@ -63,6 +65,19 @@ export default function CicloIndex() {
   const router = useRouter();
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  const sexoA = useOnboarding((s) => s.sexoDeclarado.pessoa_a);
+  const sexoB = useOnboarding((s) => s.sexoDeclarado.pessoa_b);
+
+  // Onda Q fix Bloqueador A: simetria com registrar.tsx — load tem que
+  // usar o mesmo autor inferido que o save usa. Sem isso, em casal
+  // masculino+feminino o save grava 'pessoa_b' (feminina inferida) e o
+  // load filtra por pessoaAtiva 'pessoa_a' (default do store), causando
+  // empty state apesar do registro persistir no disco.
+  const autorListagem = useMemo(
+    () => autorPadrao(tipoCompanhia, sexoA, sexoB) ?? pessoaAtiva,
+    [tipoCompanhia, sexoA, sexoB, pessoaAtiva]
+  );
 
   const [registros, setRegistros] = useState<CicloMenstrualMeta[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -75,14 +90,14 @@ export default function CicloIndex() {
     }
     setCarregando(true);
     try {
-      const out = await listarRegistrosCiclo(vaultRoot, pessoaAtiva, {
+      const out = await listarRegistrosCiclo(vaultRoot, autorListagem, {
         periodo: 'tudo',
       });
       setRegistros(out);
     } finally {
       setCarregando(false);
     }
-  }, [vaultRoot, pessoaAtiva]);
+  }, [vaultRoot, autorListagem]);
 
   useEffect(() => {
     void carregar();
