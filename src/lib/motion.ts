@@ -7,6 +7,10 @@ export const springs = {
   default: { type: 'spring', damping: 18, stiffness: 200 },
   bouncy: { type: 'spring', damping: 12, stiffness: 180 },
   snappy: { type: 'spring', damping: 26, stiffness: 320 },
+  // Q3 (Onda Q): curva drawer/sheet pra superficies grandes. Sem
+  // overshoot perceptivel, sente premium. Usar quando "subtle" parece
+  // poing demais (drawers de 280dp+).
+  smooth: { type: 'spring', damping: 32, stiffness: 170, mass: 1 },
 } as const satisfies Record<string, MotiTransitionProp>;
 
 export const timings = {

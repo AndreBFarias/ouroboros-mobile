@@ -55,7 +55,11 @@ import { useNavegacao } from '@/lib/stores/navegacao';
 import { comTimeout } from '@/lib/util/comTimeout';
 import { useSafeBottomMargin } from './safeBottom';
 
-const FAB_SIZE = 56;
+// Q4 (Onda Q): tamanho unificado 64dp entre FABMenu (esq, roxo) e
+// MenuCapturaVerde (dir, verde). Era 56dp; aumentado para 64 para
+// coincidir com a contraparte roxa (72->64). Cores permanecem
+// distintas; posicao vertical alinha via useSafeBottomMargin compartilhado.
+const FAB_SIZE = 64;
 
 // I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): comTimeout extraido
 // para @/lib/util/comTimeout (helper canonico do Bloco I). FRASE,
@@ -202,19 +206,32 @@ export function MenuCapturaVerde({
     sheetRef.current?.expand();
   }, [setSheetCapturaAberto]);
 
-  // M-CAPTURA-UNIFICADA: dispara expand 1 frame apos mount quando
-  // abrirNoMount=true. setTimeout(0) garante que o sheet ja montou
-  // a arvore interna antes de tentar expandir (evita Armadilha A17:
-  // race com hidratacao + ref nula no primeiro render).
+  // M-CAPTURA-UNIFICADA + Q7 (Onda Q): dispara expand apos mount quando
+  // abrirNoMount=true. setTimeout(0) original (M-CAPTURA-UNIFICADA)
+  // disparava antes do gorhom v5 + New Arch terminar de montar a
+  // arvore interna offscreen (A30 do BRIEF), resultando em expand()
+  // no-op silencioso no celular real (~30% dos casos com OEMs HyperOS).
+  // Q7 sobe o delay para 120ms (1-2 frames @60fps) + retry uma vez
+  // em 800ms se sheet ainda nao abriu (state global sheetCapturaAberto
+  // ainda false). Cobre tanto devices rapidos quanto OEMs lentos.
   useEffect(() => {
     if (!abrirNoMount) return;
     if (abriuAutomaticoRef.current) return;
     abriuAutomaticoRef.current = true;
-    const t = setTimeout(() => {
+    const t1 = setTimeout(() => {
       setSheetCapturaAberto(true);
       sheetRef.current?.expand();
-    }, 0);
-    return () => clearTimeout(t);
+    }, 120);
+    const t2 = setTimeout(() => {
+      if (!useNavegacao.getState().sheetCapturaAberto) {
+        setSheetCapturaAberto(true);
+        sheetRef.current?.expand();
+      }
+    }, 800);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [abrirNoMount, setSheetCapturaAberto]);
 
   const fecharMenu = useCallback(() => {

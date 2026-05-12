@@ -21,9 +21,10 @@
 // Fonte de verdade visual: docs/Ouroboros_24_telas-standalone.html
 // artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
 // docs/BRIEFING.md secao 7.
-import { useEffect } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import { Sparkles } from 'lucide-react-native';
 import {
   Card,
   EmptyState,
@@ -34,7 +35,65 @@ import {
   ChipGroup,
   Button,
 } from '@/components/ui';
+import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
+
+// Q2.2 (Onda Q): Recap inline. Pressable direto resolve o problema do
+// Button generico colapsar layout flex no celular real (W1 do M-AUDIT
+// fixava isso em Q2, mas no APK new arch o MotiView ainda hidratava
+// sem propagar o flex row interno). Custom resolve em ~30 linhas.
+interface BotaoRecapProps {
+  onPress: () => void;
+}
+function BotaoRecap({ onPress }: BotaoRecapProps) {
+  const [pressed, setPressed] = useState(false);
+  return (
+    <Pressable
+      onPressIn={() => {
+        setPressed(true);
+        haptics.light();
+      }}
+      onPressOut={() => setPressed(false)}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Recap"
+      hitSlop={8}
+      style={{
+        // Q2.3 (Onda Q): row + flexShrink 0 evita o wrap "Re/ca/p" que
+        // apareceu no celular real. O Header right={} aplica flex 1 ao
+        // wrapper externo e o filho Pressable herdava largura limitada.
+        // alignSelf flex-end + flexShrink 0 + minWidth conteudo garante
+        // que o pill use largura intrinseca (icone + label + paddings).
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexShrink: 0,
+        alignSelf: 'flex-end',
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 999,
+        backgroundColor: 'rgba(189,147,249,0.16)',
+        borderWidth: 1,
+        borderColor: 'rgba(189,147,249,0.45)',
+        opacity: pressed ? 0.85 : 1,
+      }}
+    >
+      <Sparkles size={14} color={colors.purple} strokeWidth={2.25} />
+      <Text
+        numberOfLines={1}
+        style={{
+          color: colors.purple,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: 14,
+          lineHeight: 18,
+          flexShrink: 0,
+        }}
+      >
+        Recap
+      </Text>
+    </Pressable>
+  );
+}
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useOnboarding } from '@/lib/stores/onboarding';
@@ -151,10 +210,15 @@ function TelaHojeConteudo({
                 />
               </View>
             )}
-            {/* W1.1 (M-AUDIT-VISUAL-BUTTON-GHOST-PADDING): wrapper W2
-                removido — agora o variant ghost ja embute paddingHorizontal
-                base (16dp) na raiz, evitando duplicacao para 32dp. */}
-            <Button label="Recap" variant="ghost" onPress={onRecapPress} />
+            {/* Q2/Q2.1/Q2.2 (Onda Q): Recap como Pressable custom em vez
+                de Button generico — Button mete justifyContent center no
+                MotiView e o filho View com flex row colapsava no celular
+                real (mostrava so o icone). Aqui controlamos o layout
+                direto: pill purple/16 + borda purple/45 + Sparkles 14dp
+                + label 14dp, padding 20dp horizontal + 10dp vertical,
+                radius 999 chip, gap 6dp. */}
+            <BotaoRecap onPress={onRecapPress} />
+
           </View>
         }
       />

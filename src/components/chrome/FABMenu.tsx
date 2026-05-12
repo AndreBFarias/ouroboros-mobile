@@ -36,7 +36,11 @@ import { useNavegacao } from '@/lib/stores/navegacao';
 import { rotaEsconderFAB } from '@/lib/navigation/rotasSemFAB';
 import { useSafeBottomMargin } from './safeBottom';
 
-const FAB_SIZE = 72;
+// Q4 (Onda Q): tamanho unificado 64dp entre FABMenu (esq, roxo) e
+// MenuCapturaVerde (dir, verde). Era 72dp; reduzido para 64 para
+// coincidir com a contraparte verde (56->64). bottom ja alinha via
+// useSafeBottomMargin compartilhado em ambos.
+const FAB_SIZE = 64;
 
 export function FABMenu() {
   const pathname = usePathname();
@@ -123,7 +127,7 @@ export function FABMenu() {
             shadowRadius: 6,
           }}
         >
-          <Menu size={28} color={colors.bg} strokeWidth={1.8} />
+          <Menu size={24} color={colors.bg} strokeWidth={1.8} />
         </Pressable>
       </Animated.View>
     </View>

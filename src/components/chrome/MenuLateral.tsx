@@ -309,13 +309,15 @@ export function MenuLateral() {
 }
 
 // N2 (M-MOTI-FIX-CRITICOS): wrapper Animated.View que dispara slide
-// translateX(-PAINEL_WIDTH) -> 0 em mount via withSpring. springs.subtle
-// canonico (damping 22, stiffness 220) preserva intent visual K1.
+// translateX(-PAINEL_WIDTH) -> 0 em mount via withSpring.
+// Q3 (Onda Q): curva trocada de subtle (damping 22, stiffness 220 —
+// reportada como "muito poing") para smooth (damping 32, stiffness 170,
+// mass 1). Sem overshoot perceptivel, sente premium em drawer grande.
 function PainelDrawer({ children }: { children: ReactNode }) {
   const translateX = useSharedValue(-PAINEL_WIDTH);
 
   useEffect(() => {
-    translateX.value = withSpring(0, { damping: 22, stiffness: 220 });
+    translateX.value = withSpring(0, { damping: 32, stiffness: 170, mass: 1 });
   }, [translateX]);
 
   const animStyle = useAnimatedStyle(() => ({

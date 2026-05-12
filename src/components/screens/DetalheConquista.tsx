@@ -9,10 +9,12 @@
 // Strings de UI em sentence case PT-BR com acentuação completa.
 // Comentários em PT-BR com acentuação correta.
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import { ExternalLink, FileX, MapPin } from '@/lib/icons';
+import { Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { ExternalLink, MapPin, X } from '@/lib/icons';
+import { Image as ExpoImage } from 'react-native';
 import { Screen, Header } from '@/components/ui';
 import { CoverMidia } from '@/components/data/CoverMidia';
+import { WaveformPreview } from '@/components/midia/WaveformPreview';
 import { lerConquistas } from '@/lib/conquistas/loader';
 import { useVault } from '@/lib/stores/vault';
 import { colors } from '@/theme/tokens';
@@ -115,10 +117,29 @@ function Conteudo({ conquista }: { conquista: Conquista }) {
     conquista.bairro || conquista.lugar
       ? [conquista.bairro, conquista.lugar].filter(Boolean).join(' — ')
       : null;
+  const vaultRoot = useVault((s) => s.vaultRoot);
+  // Q6 (Onda Q): foto fullscreen modal. Tap no cover quando midia.tipo
+  // === 'foto' abre Modal nativo com Image em escala max. Tap em
+  // qualquer lugar fecha. Sem libs novas (Modal e' do react-native).
+  const [fotoExpandida, setFotoExpandida] = useState<string | null>(null);
+  const ehFoto = conquista.midiaPrincipal.tipo === 'foto';
+  const fotoUri =
+    ehFoto && vaultRoot
+      ? `${vaultRoot.endsWith('/') ? vaultRoot.slice(0, -1) : vaultRoot}/${(conquista.midiaPrincipal as { path: string }).path}`
+      : null;
 
   return (
     <View style={{ gap: 16, marginTop: 8 }}>
-      <View
+      <Pressable
+        onPress={() => {
+          if (ehFoto && fotoUri) {
+            haptics.light();
+            setFotoExpandida(fotoUri);
+          }
+        }}
+        disabled={!ehFoto || !fotoUri}
+        accessibilityRole={ehFoto ? 'imagebutton' : undefined}
+        accessibilityLabel={ehFoto ? 'expandir foto em tela cheia' : undefined}
         style={{
           width: '100%',
           height: 240,
@@ -128,7 +149,51 @@ function Conteudo({ conquista }: { conquista: Conquista }) {
         }}
       >
         <CoverMidia midia={conquista.midiaPrincipal} />
-      </View>
+      </Pressable>
+
+      {/* Q6 (Onda Q): fullscreen viewer da foto via Modal nativo. */}
+      <Modal
+        visible={fotoExpandida !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFotoExpandida(null)}
+      >
+        <Pressable
+          onPress={() => setFotoExpandida(null)}
+          accessibilityRole="button"
+          accessibilityLabel="fechar foto"
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.95)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {fotoExpandida ? (
+            <ExpoImage
+              source={{ uri: fotoExpandida }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
+              accessibilityLabel="foto da conquista em tela cheia"
+            />
+          ) : null}
+          <View
+            style={{
+              position: 'absolute',
+              top: 48,
+              right: 24,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <X size={20} color={colors.fg} strokeWidth={1.8} />
+          </View>
+        </Pressable>
+      </Modal>
 
       <Text
         style={{
@@ -185,35 +250,13 @@ function MidiaInterativa({ midia }: { midia: Midia }) {
     return <LinkExterno rotulo="Abrir no Spotify" url={url} />;
   }
   if (midia.tipo === 'audio') {
-    // Decisão A5: detalhe verifica existência do arquivo via FileSystem
-    // antes de mostrar player. Aqui mostramos a mensagem padrão de
-    // áudio indisponível porque o player real fica para sub-sprint
-    // dedicada (M11.5 entrega cover decorativo no card e mensagem de
-    // fallback no detalhe).
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          padding: 12,
-          backgroundColor: colors.bgAlt,
-          borderRadius: 12,
-        }}
-      >
-        <FileX size={18} color={colors.muted} strokeWidth={1.5} />
-        <Text
-          style={{
-            color: colors.muted,
-            fontSize: 13,
-            lineHeight: 18,
-            flex: 1,
-          }}
-        >
-          Áudio não disponível neste dispositivo.
-        </Text>
-      </View>
-    );
+    // Q6 (Onda Q): substituido o fallback "indisponivel" pelo player
+    // real via WaveformPreview (expo-av Audio.Sound, play/pause +
+    // duracao). WaveformPreview ja existia mas era usado so no
+    // CoverMidia compacto; agora aparece como controle inline tambem
+    // no detalhe da conquista. Resolve queixa "preciso conseguir
+    // abrir a midia".
+    return <WaveformPreview path={midia.path} duracaoSeg={midia.duracao_seg} />;
   }
   return null;
 }

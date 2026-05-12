@@ -5,6 +5,92 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda Q (2026-05-12): pré-v1.0 — 8 fixes UX + Q0 OAuth liberado
+
+Sessão de validação final com dono. Foco: corrigir bugs reportados +
+preparar polish v1.0. Validação live em celular real (Xiaomi
+2312DRAABG HyperOS) via dev-client + hot-reload. 1802 testes verdes,
+typecheck silent, anonimato + PT-BR OK.
+
+- **Q0 — OAuth Google Calendar liberado.** Console (`protocolo-ouroboros`,
+  conta `andrefarias@projeto-luna.ia.br`) confirmou: Calendar API
+  ENABLED, Consent screen Em Teste com 3 test users
+  (`andre.dsbf@gmail.com`, `andrefarias@projeto-luna.ia.br`,
+  `vitoriamaria.sds@gmail.com`), escopo `calendar.events.readonly`
+  presente, Android client `com.ouroboros.mobile` + SHA-1
+  `E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`
+  corretos. Validação runtime real (login Google + lista eventos)
+  fica para batch de testes em `/agenda`.
+
+- **Q1 — Rename display "ouroboros-mobile" → "Ouroboros".**
+  `app.json:expo.name` → `Ouroboros`. `package.json + lock` →
+  `ouroboros`. **Slug mantido** (`ouroboros-mobile`) para preservar
+  EAS project ID `27c5d3d3-1110-49c1-8457-a99c6249f320`.
+  Validado live: header browser e dev-client mostram "Ouroboros".
+
+- **Q2 — Recap visível na Home (5 iterações).** Variant ghost
+  invisível (contraste ruim sobre bg). Iterações: ghost → pill
+  (Button.tsx) → Pressable inline → fix raiz no Header.tsx (vide
+  A33). Final: `BotaoRecap` inline em `app/index.tsx:35-78`,
+  Pressable com flex row + Sparkles 14dp + label 14dp, fundo
+  purple/16, borda purple/45, radius 999. Header.tsx slot direito
+  trocou `w-10` por `minWidth: 40` (cresce com conteúdo).
+
+- **Q3 — Menu lateral animação sóbria.** `springs.smooth` (damping=32,
+  stiffness=170, mass=1) substitui `subtle` (damping=22, stiffness=220
+  — reportado "muito poing"). Aplicado em `MenuLateral.tsx:318`
+  PainelDrawer. Sem overshoot perceptível.
+
+- **Q4 — FABs unificados em 64dp.** `FABMenu.tsx` 72→64.
+  `MenuCapturaVerde.tsx` 56→64. Bottom já alinhado via
+  `useSafeBottomMargin` compartilhado em ambos. Ícone Menu
+  reduzido 28→24dp pra coerência visual.
+
+- **Q5 — Transcrição live durante gravação.** `MicrofoneButton.tsx`
+  dispara `transcribeStream` em paralelo ao `Audio.Recording`
+  (antes era sequencial — só transcrevia ao soltar). Parciais
+  do `expo-speech-recognition` chegam ao textarea via
+  `onTextoTranscrito(parcial)` enquanto usuário fala. Respeita
+  `settings.privacidade.ocultarTranscricoes`. Best-effort: erro
+  silencioso não bloqueia save de áudio.
+
+- **Q6 — Mídia viewer inline.** `DetalheConquista.tsx`: áudio
+  agora usa `WaveformPreview` (player real expo-av play/pause +
+  duração) em vez de fallback "indisponível". Foto: tap no cover
+  abre Modal nativo fullscreen com `resizeMode contain` + botão X
+  de fechar. YouTube/Spotify continuam external via Linking.
+  Vídeo fica pós-1.0 (não está no schema Midia atual).
+
+- **Q7 — Fix bug "Registrar momento" da câmera.** `MenuCapturaVerde.tsx`
+  useEffect `abrirNoMount`: `setTimeout(0)` → `setTimeout(120)` +
+  retry em 800ms se `useNavegacao.getState().sheetCapturaAberto`
+  ainda for false. Cobre A30 (gorhom v5 + Reanimated 4 + New Arch
+  sheet offscreen em OEMs HyperOS lentos).
+
+- **Q8 — Ciclo histórico: lista + mini-stats.** `app/ciclo/index.tsx`
+  ganhou: (1) mini-stats no topo "Dia X do ciclo · Duração média
+  Y dias", (2) seção "Últimos registros" com lista vertical dos
+  últimos 14 dias (chip de fase Dracula + sintomas resumidos +
+  data abreviada); tap em item navega para `/ciclo/registrar`
+  pré-preenchido. `ItemRegistroCiclo` componente local. Tom
+  sóbrio mantido (ADR-0005). Resolve queixa "não consigo ver o
+  que registro nem acompanhar".
+
+### Armadilhas descobertas na Onda Q (adicionadas ao VALIDATOR_BRIEF)
+
+- **A32** — HyperOS bloqueia `adb install -r`. Usar
+  `adb push /data/local/tmp/ + pm install -r -t` para bypass.
+- **A33** — `Header.tsx` `w-10` corta right slot maior que 40dp.
+- **A34** — `Button.tsx` MotiView colapsa flex row complexo no
+  New Arch. Usar `Pressable` direto inline para CTAs com layout
+  custom.
+- **A35** — ADB tap usa coords físicas; screencap vem escalado.
+  Usar `uiautomator dump` para bounds absolutos.
+- **A36** — App ANR em `DevLauncherErrorActivity` indica crash
+  JS antes do errboundary. Logcat com `-s ReactNativeJS` necessário.
+- **A37** — Build EAS dev-client demora 10-25min. Reusar APK
+  local + `adb reverse 8081` quando código JS é o único que mudou.
+
 ### Onda E (2026-05-09 madrugada): V4.0.2 part 4-8 — vault HyperOS-proof + BottomSheet New Arch + saves E2E
 
 - **V4.0.2 part 8 (HEAD `f895b93`)** — Reverter `BottomSheetScrollView`

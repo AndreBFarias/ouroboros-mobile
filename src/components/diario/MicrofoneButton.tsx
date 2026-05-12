@@ -109,6 +109,14 @@ export function MicrofoneButton({
   // primeira vez = toast simples, segunda = deep link para Settings
   // (decisao de UX da spec, secao 10).
   const negacoesRef = useRef<number>(0);
+  // Q5 (Onda Q): transcricao LIVE em paralelo a gravacao. A promise
+  // resolve quando cancelTranscribe e' chamado (release do botao) ou
+  // quando o reconhecedor termina sozinho (silencio prolongado). O
+  // ultimo parcial entregue fica em textoLiveRef para reuso no save
+  // do companion .md, evitando dupla chamada a transcribeStream
+  // (que falharia: o modulo nativo nao aceita stop+start imediato).
+  const transcribeLivePromiseRef = useRef<Promise<string> | null>(null);
+  const textoLiveRef = useRef<string>('');
 
   // Limpa timers e listener de status. Idempotente.
   const limparTimers = () => {
@@ -211,17 +219,20 @@ export function MicrofoneButton({
       return;
     }
 
-    // Transcribe e' best-effort: roda apos save concluir, falhas nao
-    // bloqueiam o audio (ja persistido). Quando bem sucedido, regrava
-    // o companion .md com transcricao + chama callback. Quando falha
-    // (sem rede / modulo nativo ausente em Expo Go / silencio), audio
-    // permanece no Vault e companion fica com transcricao ausente
-    // (semantica null canonica do MidiaCompanionSchema).
+    // Q5 (Onda Q): transcricao live ja rolou em paralelo durante o
+    // recording (disparada em iniciar). Aqui apenas: (a) cancela o
+    // stream caso ainda esteja ativo; (b) aguarda a promise resolver
+    // pra ter o ultimo parcial canonico; (c) usa textoLiveRef como
+    // fallback se a promise nao retornar texto. Evita chamada dupla
+    // a transcribeStream que falhava no modulo nativo (start+stop+
+    // start imediato em < 100ms causa state inconsistente no
+    // SpeechRecognizer Android).
     try {
-      const texto = await transcribeStream(() => {
-        // Parciais ignorados aqui; UI atual nao mostra streaming
-        // por simplicidade. Caller recebe so o final via callback.
-      });
+      await cancelTranscribe().catch(() => undefined);
+      const textoDoStream =
+        (await transcribeLivePromiseRef.current?.catch(() => '')) ?? '';
+      transcribeLivePromiseRef.current = null;
+      const texto = textoDoStream || textoLiveRef.current;
       if (texto && texto.trim().length > 0) {
         try {
           await comTimeout(
@@ -237,12 +248,18 @@ export function MicrofoneButton({
           // Falha ao regravar companion com transcricao nao deve
           // quebrar UX — audio ja esta salvo. Loga silenciosamente.
         }
-        // Privacidade: quando ocultarTranscricoes está ativo, o áudio
-        // continua sendo salvo no Vault (anexo legítimo) mas o texto
-        // transcrito não polui o textarea -- usuário escreve o que
-        // quiser por cima sem ver a transcrição automática.
+        // Privacidade: quando ocultarTranscricoes esta ativo, parciais
+        // ja foram suprimidos durante a gravacao em iniciar(); aqui
+        // tambem nao chamamos onTextoTranscrito. Audio fica salvo,
+        // companion .md guarda a transcricao no frontmatter (uso
+        // futuro pelo usuario com permissao via Settings toggle).
         if (!ocultarTranscricoes) {
-          onTextoTranscrito(texto);
+          // Ja entregamos parciais durante o recording. Texto final
+          // pode ser ligeiramente diferente (ultimo isFinal=true).
+          // Chamamos so se mudou para nao causar flicker desnecessario.
+          if (texto !== textoLiveRef.current) {
+            onTextoTranscrito(texto);
+          }
         }
       }
     } catch (err) {
@@ -294,6 +311,24 @@ export function MicrofoneButton({
     setEstado('recording');
     setTempoMs(0);
     haptics.medium().catch(() => undefined);
+
+    // Q5 (Onda Q): dispara transcricao live em paralelo a gravacao.
+    // Best-effort -- erros nao bloqueiam o audio (que ja esta sendo
+    // gravado). Cada parcial entrega texto cumulativo ao caller via
+    // onTextoTranscrito, atualizando o textarea do diario enquanto
+    // o usuario fala. Respeita ocultarTranscricoes (privacidade):
+    // quando ativo, parciais nao vazam para a UI.
+    textoLiveRef.current = '';
+    transcribeLivePromiseRef.current = transcribeStream((parcial) => {
+      textoLiveRef.current = parcial;
+      if (!ocultarTranscricoes) {
+        onTextoTranscrito(parcial);
+      }
+    }).catch(() => {
+      // Falha silenciosa: audio ja esta gravando, companion .md vai
+      // ficar sem transcricao mas o anexo audio persiste no Vault.
+      return '';
+    });
 
     // Listener de status: atualiza amplitudes em background. Nao
     // dispara re-render se o componente ja desmontou (ref vazio).

@@ -56,7 +56,18 @@ export function Header({ title, onBack, right }: HeaderProps) {
         {title}
       </Text>
 
-      <View className="w-10 items-end justify-center">{right}</View>
+      {/* Q2.4 (Onda Q): largura fixa w-10 (40px) cortava conteudo do
+          right slot quando ele e um pill (Recap) com icone + label.
+          Min 40dp para back-symmetry, mas cresce com conteudo. */}
+      <View
+        style={{
+          minWidth: 40,
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+        }}
+      >
+        {right}
+      </View>
     </View>
   );
 }
