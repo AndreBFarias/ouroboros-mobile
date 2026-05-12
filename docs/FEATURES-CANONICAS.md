@@ -312,6 +312,33 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `CardHero`, `CardTopCategorias` e `ListaTransacoes` permanecem no
   repositório, sem consumidores, prontos para retomada futura.
 
+### 6.3 Galeria unificada (Vault Explorer) — Q9 (entregue)
+
+Tela acessível pelo item **Galeria** do menu lateral (seção "Acesso
+Rápido"). Mostra **todos os registros salvos no Vault** agrupados
+visualmente em um grid de 2 colunas, com filtros rápidos por tipo:
+
+- **Tudo** — todos os tipos canônicos.
+- **Fotos** — apenas `markdown/foto-*.md` (companion das imagens).
+- **Áudios** — apenas `markdown/audio-*.md`.
+- **Vídeos** — apenas `markdown/video-*.md`.
+- **Textos** — diário emocional, frases e notas (texto livre).
+- **Mais** — humor, ciclo, eventos, marcos, tarefas, alarmes,
+  contadores, exercícios e documentos.
+
+Cada card mostra título curto (derivado do frontmatter ou
+humanização do slug), data formatada `dd/mm/aaaa` e a tag do tipo
+com cor de acento sóbria (faixa lateral de 3dp, ADR-0005). Tap no
+card abre `/galeria/detalhe/[slug]` com visualização read-only do
+frontmatter completo e do corpo .md.
+
+Implementação: `src/lib/vault/galeria.ts` itera `markdown/` uma
+vez, filtra por prefixo canônico de feature e lê apenas o
+frontmatter de cada item (não carrega binários — performance
+crítica). Ordenação desc por data, tie-break por slug asc. Arquivos
+malformados são silenciosamente ignorados (mesmo padrão de
+`listarRegistrosCiclo`).
+
 ## 7. Recap (Lista + Calendário) — M36 + L2 (entregue)
 
 > Unificado em L2 (`M-RECAP-CALENDARIO-UNIFICAR`, ADR-0021,

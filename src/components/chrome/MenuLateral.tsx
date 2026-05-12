@@ -55,6 +55,7 @@ import {
   Hash,
   Heart,
   Home,
+  Image as ImageIcon,
   Layers,
   ListChecks,
   Mic,
@@ -151,6 +152,9 @@ export function MenuLateral() {
       // continua acessivel via tap no ConquistaCard dentro do Recap.
       // M37.1: item "Agenda" (Google Calendar leitura).
       { label: 'Agenda', a11yLabel: 'item agenda', icone: CalendarRange, route: '/agenda' },
+      // Q9 (Onda Q): "Galeria" — vault explorer unificado que mostra
+      // todos os registros salvos com filtros rapidos por tipo.
+      { label: 'Galeria', a11yLabel: 'item galeria', icone: ImageIcon, route: '/galeria' },
     ];
     if (featureToggles.mostrarFinancasEmDesenvolvimento) {
       ver.push({ label: 'Finanças', a11yLabel: 'item financas', icone: Wallet, route: '/financas' });
