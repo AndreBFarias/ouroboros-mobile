@@ -29,6 +29,8 @@ import {
   pathMdCompanion,
 } from '@/lib/share/path-resolver';
 import { subtipoDefault } from '@/lib/share/categorias';
+import { processarShareFinanceiro } from '@/lib/share/financeiroReceiver';
+import type { FinanceiroMeta } from '@/lib/schemas/financeiro';
 import {
   InboxArquivoSchema,
   type InboxArquivoMeta,
@@ -80,12 +82,23 @@ export default function ShareReceiveRoute() {
     mime?: string | string[];
     nome?: string | string[];
     origem?: string | string[];
+    // Q10: share intent text/plain do banco traz comprovante puro.
+    texto?: string | string[];
   }>();
 
   const intent: SharedIntentInput | null = useMemo(
     () => parseIntentParams(params),
     [params]
   );
+
+  // Q10: extrai texto puro do intent (quando vier sem URI). Usado para
+  // alimentar o classifier financeiro.
+  const textoIntent: string | null = useMemo(() => {
+    const t = params.texto;
+    if (typeof t === 'string' && t.length > 0) return t;
+    if (Array.isArray(t) && typeof t[0] === 'string' && t[0].length > 0) return t[0];
+    return null;
+  }, [params.texto]);
 
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
@@ -186,6 +199,38 @@ export default function ShareReceiveRoute() {
     relMd: string,
     tamanhoBytes: number
   ): Promise<void> {
+    // Q10: tenta auto-classificar o conteudo (texto compartilhado ou
+    // nome do arquivo). Se classifier casa em pix/boleto/extrato,
+    // grava o .md companion com FinanceiroSchema (metadados ricos:
+    // valor, EndToEndID, linha digitavel, instituicao).
+    const financeiro = processarShareFinanceiro({
+      conteudo: {
+        texto: textoIntent,
+        uri: intentSafe.uri,
+        mimeType: intentSafe.mimeType,
+        nomeArquivo: intentSafe.nomeSugerido,
+      },
+      autor: pessoa,
+      agora,
+    });
+
+    const mdUri = joinUri(vaultRootSafe, relMd);
+    await ensureParentDir(mdUri);
+
+    if (financeiro !== null) {
+      // Sobrepoe o anexo path com o binario efetivamente gravado.
+      const metaFin: FinanceiroMeta = {
+        ...financeiro.meta,
+        arquivo_anexo: rel,
+      };
+      const corpo = financeiro.classificacao.endToEndId
+        ? `EndToEndID: ${financeiro.classificacao.endToEndId}\n`
+        : '';
+      await writeVaultFile<FinanceiroMeta>(mdUri, metaFin, corpo);
+      return;
+    }
+
+    // Fallback: schema generico inbox_arquivo.
     const meta: InboxArquivoMeta = {
       tipo: 'inbox_arquivo',
       subtipo,
@@ -201,8 +246,6 @@ export default function ShareReceiveRoute() {
     if (!validacao.success) {
       throw new Error(`inbox_arquivo invalido: ${validacao.error.message}`);
     }
-    const mdUri = joinUri(vaultRootSafe, relMd);
-    await ensureParentDir(mdUri);
     // Body livre do .md fica vazio no caso default. Caller futuro
     // pode adicionar texto extraido por OCR (M09).
     await writeVaultFile<InboxArquivoMeta>(mdUri, validacao.data, '');

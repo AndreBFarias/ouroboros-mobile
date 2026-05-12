@@ -418,7 +418,7 @@ export function contadoresPath(slug: string): string {
 // porque share intent tem subtipos (pix/extrato/exame/...) que nao
 // foram cobertos pelo redesenho H2. Sprint dedicada migrara.
 export function inboxFinanceiroPath(
-  subtipo: 'pix' | 'extrato' | 'nota',
+  subtipo: 'pix' | 'extrato' | 'nota' | 'boleto',
   date: Date,
   args: { ext: string; slug?: string }
 ): string {

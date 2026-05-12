@@ -27,6 +27,8 @@ export interface SharedIntentParams {
   readonly mime: string | null;
   readonly nome: string | null;
   readonly origem: string | null;
+  // Q10: texto puro (quando share intent traz text/plain do banco).
+  readonly texto: string | null;
 }
 
 // Útil interno: pega primeiro valor string de queryParam que pode
@@ -61,12 +63,16 @@ export function parseSharedUrl(url: string): SharedIntentParams | null {
     const parsed = Linking.parse(url);
     const q = parsed.queryParams ?? {};
     const uri = pickStringParam(q.uri);
-    if (!uri) return null;
+    const texto = pickStringParam(q.texto);
+    // Aceita share text-only (sem URI) quando vem texto. Tipico do
+    // intent SEND text/plain do banco: copia o comprovante puro.
+    if (!uri && !texto) return null;
     return {
-      uri,
+      uri: uri ?? '',
       mime: pickStringParam(q.mime),
       nome: pickStringParam(q.nome),
       origem: pickStringParam(q.origem),
+      texto,
     };
   } catch {
     return null;
@@ -83,10 +89,12 @@ export function handleSharedUrl(url: string): void {
     // Constroi objeto de params somente com chaves não nulas para
     // que a query gerada pelo router fique limpa quando o intent
     // emissor omitir campos opcionais.
-    const out: Record<string, string> = { uri: params.uri };
+    const out: Record<string, string> = {};
+    if (params.uri) out.uri = params.uri;
     if (params.mime) out.mime = params.mime;
     if (params.nome) out.nome = params.nome;
     if (params.origem) out.origem = params.origem;
+    if (params.texto) out.texto = params.texto;
     router.push({
       pathname: '/share-receive' as never,
       params: out,

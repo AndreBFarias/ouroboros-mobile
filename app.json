@@ -51,6 +51,30 @@
             },
             {
               "mimeType": "application/pdf"
+            },
+            {
+              "mimeType": "text/plain"
+            },
+            {
+              "mimeType": "text/html"
+            },
+            {
+              "mimeType": "application/octet-stream"
+            }
+          ]
+        },
+        {
+          "action": "VIEW",
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "mimeType": "application/pdf"
+            },
+            {
+              "mimeType": "text/plain"
             }
           ]
         }

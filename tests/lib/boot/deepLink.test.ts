@@ -112,6 +112,22 @@ describe('handleSharedUrl', () => {
     });
   });
 
+  it('encaminha texto puro quando intent traz text/plain (Q10)', () => {
+    const { router } = require('expo-router');
+    handleSharedUrl(
+      'ouroboros://share?texto=' +
+        encodeURIComponent('Pix enviado R$ 50,00 EAB123CD45EF6789') +
+        '&mime=text/plain'
+    );
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/share-receive',
+      params: {
+        texto: 'Pix enviado R$ 50,00 EAB123CD45EF6789',
+        mime: 'text/plain',
+      },
+    });
+  });
+
   it('omite chaves opcionais quando ausentes', () => {
     const { router } = require('expo-router');
     handleSharedUrl('ouroboros://share?uri=content://x/y');
@@ -123,7 +139,7 @@ describe('handleSharedUrl', () => {
 });
 
 describe('parseSharedUrl', () => {
-  it('devolve null sem uri', () => {
+  it('devolve null sem uri nem texto', () => {
     expect(parseSharedUrl('ouroboros://share')).toBeNull();
   });
 
@@ -136,6 +152,7 @@ describe('parseSharedUrl', () => {
       mime: 'image/png',
       nome: 'foto.png',
       origem: 'com.app',
+      texto: null,
     });
   });
 
@@ -146,6 +163,20 @@ describe('parseSharedUrl', () => {
       mime: null,
       nome: null,
       origem: null,
+      texto: null,
+    });
+  });
+
+  it('aceita share text-only (Q10)', () => {
+    const r = parseSharedUrl(
+      'ouroboros://share?texto=' + encodeURIComponent('Pix enviado')
+    );
+    expect(r).toEqual({
+      uri: '',
+      mime: null,
+      nome: null,
+      origem: null,
+      texto: 'Pix enviado',
     });
   });
 });

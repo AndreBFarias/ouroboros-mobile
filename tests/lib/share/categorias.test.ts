@@ -7,6 +7,8 @@ import {
   INBOX_SUBTIPO_OPTIONS,
   pastaParaSubtipo,
   subtipoDefault,
+  classificarFinanceiro,
+  parseValorBrl,
 } from '@/lib/share/categorias';
 import { VAULT_FOLDERS } from '@/lib/vault/paths';
 
@@ -150,5 +152,120 @@ describe('subtipoDefault', () => {
   it('mime desconhecido cai em outro', () => {
     expect(subtipoDefault('application/octet-stream')).toBe('outro');
     expect(subtipoDefault('text/plain')).toBe('outro');
+  });
+});
+
+// ============================================================
+// Q10 — classifier financeiro
+// ============================================================
+
+describe('parseValorBrl', () => {
+  it('parseia formato pt-BR com milhar e centavos', () => {
+    expect(parseValorBrl('1.234,56')).toBe(1234.56);
+  });
+
+  it('parseia valor inteiro sem centavos', () => {
+    expect(parseValorBrl('50')).toBe(50);
+  });
+
+  it('parseia valor com so um decimal-style ponto virando milhar', () => {
+    // "1.000" no padrao brasileiro e mil, nao um virgula
+    expect(parseValorBrl('1.000')).toBe(1000);
+  });
+
+  it('parseia valor pequeno com centavos', () => {
+    expect(parseValorBrl('12,50')).toBe(12.5);
+  });
+
+  it('devolve null em entrada vazia ou invalida', () => {
+    expect(parseValorBrl('')).toBeNull();
+    expect(parseValorBrl(null)).toBeNull();
+    expect(parseValorBrl(undefined)).toBeNull();
+    expect(parseValorBrl('abc')).toBeNull();
+  });
+
+  it('rejeita valor negativo', () => {
+    expect(parseValorBrl('-50')).toBeNull();
+  });
+});
+
+describe('classificarFinanceiro', () => {
+  it('detecta Pix via EndToEndID e captura valor', () => {
+    const texto =
+      'Comprovante Pix enviado R$ 250,00 para pessoa_a. EndToEndID E12345678901234 em 12/05/2026.';
+    const r = classificarFinanceiro(texto);
+    expect(r.categoria).toBe('pix');
+    expect(r.valor).toBe(250);
+    expect(r.endToEndId).toBe('E12345678901234');
+  });
+
+  it('detecta Pix por palavra-chave + valor quando nao ha EndToEndID', () => {
+    const texto = 'Pix recebido de pessoa_b no valor de R$ 100,00 via Nubank.';
+    const r = classificarFinanceiro(texto);
+    expect(r.categoria).toBe('pix');
+    expect(r.valor).toBe(100);
+    expect(r.instituicao).toMatch(/Nubank/i);
+  });
+
+  it('detecta boleto via linha digitavel mascarada', () => {
+    const texto =
+      'Pagamento gerado: 23793.39001 60083.395002 71300.063307 1 96920000150000';
+    const r = classificarFinanceiro(texto);
+    expect(r.categoria).toBe('boleto');
+    expect(r.linhaDigitavel).toContain('23793.39001');
+  });
+
+  it('detecta extrato via banco + palavra-chave', () => {
+    const texto = 'Nubank — Lancamentos do mes. Saldo atual R$ 3.200,45.';
+    const r = classificarFinanceiro(texto);
+    expect(r.categoria).toBe('extrato');
+    expect(r.instituicao).toMatch(/Nubank/i);
+    expect(r.valor).toBe(3200.45);
+  });
+
+  it('texto irrelevante devolve categoria null', () => {
+    const r = classificarFinanceiro('Lembrar de comprar leite no mercado.');
+    expect(r.categoria).toBeNull();
+    expect(r.valor).toBeNull();
+    expect(r.endToEndId).toBeNull();
+  });
+
+  it('entrada vazia devolve null em todos os campos', () => {
+    const r = classificarFinanceiro('');
+    expect(r.categoria).toBeNull();
+    expect(r.endToEndId).toBeNull();
+    expect(r.linhaDigitavel).toBeNull();
+    expect(r.instituicao).toBeNull();
+  });
+
+  it('entrada null devolve null sem crashar', () => {
+    const r = classificarFinanceiro(null);
+    expect(r.categoria).toBeNull();
+  });
+
+  it('valor R$ 1.234,56 parseia para 1234.56', () => {
+    const texto = 'Pix R$ 1.234,56 enviado. EAB1234CD5678901';
+    const r = classificarFinanceiro(texto);
+    expect(r.valor).toBe(1234.56);
+  });
+
+  it('valor R$ 50 sem centavos parseia para 50', () => {
+    const texto = 'Pix R$ 50 EAB1234CD5678901';
+    const r = classificarFinanceiro(texto);
+    expect(r.valor).toBe(50);
+  });
+
+  it('boleto tem precedencia sobre palavra Pix quando ambos aparecem', () => {
+    const texto =
+      'Pix gerou boleto: 23793.39001 60083.395002 71300.063307 1 96920000150000';
+    const r = classificarFinanceiro(texto);
+    expect(r.categoria).toBe('boleto');
+  });
+
+  it('captura banco Itau com acento', () => {
+    const texto = 'Itaú — Saldo R$ 1.500,00';
+    const r = classificarFinanceiro(texto);
+    expect(r.categoria).toBe('extrato');
+    expect(r.instituicao).toMatch(/Ita/i);
   });
 });
