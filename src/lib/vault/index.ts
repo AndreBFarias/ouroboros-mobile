@@ -17,6 +17,7 @@ export {
   cicloPath,
   alarmePath,
   tarefaPath,
+  rotinaPath,
   contadorPath,
   notaPath,
   notaArquivoPath,
@@ -151,6 +152,13 @@ export {
   excluirContador,
   registrarReset,
 } from './contadores';
+
+export {
+  listarRotinas,
+  lerRotina,
+  escreverRotina,
+  removerRotina,
+} from './rotina';
 
 // M36: helpers de leitura agregada para o Recap.
 export { listarHumor } from './humor';

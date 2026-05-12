@@ -172,6 +172,13 @@ export function tarefaPath(slug: string): string {
   return `markdown/tarefa-${slug}.md`;
 }
 
+// markdown/rotina-<slug>.md (Q11, M-ROTINA-TREINO)
+// Rotina de treino reusavel (template). Slug e a chave estavel; nome
+// pode mudar em edicao. data_criacao vive no frontmatter.
+export function rotinaPath(slug: string): string {
+  return `markdown/rotina-${slug}.md`;
+}
+
 // markdown/contador-<slug>.md
 export function contadorPath(slug: string): string {
   return `markdown/contador-${slug}.md`;

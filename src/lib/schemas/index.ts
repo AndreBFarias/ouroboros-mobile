@@ -110,6 +110,12 @@ export {
   type Contador,
 } from './contador';
 export {
+  RotinaSchema,
+  ExercicioRotinaSchema,
+  type RotinaMeta,
+  type ExercicioRotina,
+} from './rotina';
+export {
   MidiaSchema,
   MidiaSpotifySchema,
   MidiaYoutubeSchema,

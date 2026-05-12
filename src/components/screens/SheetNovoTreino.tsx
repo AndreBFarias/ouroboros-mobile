@@ -13,8 +13,15 @@
 // do .md original. Em criacao novo arquivo deriva slug da rotina.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import {
   BottomSheetView,
   BottomSheetTextInput,
@@ -27,7 +34,7 @@ import {
   useToast,
   type ChipOption,
 } from '@/components/ui';
-import { colors, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { saveTreino } from '@/lib/treinos/saveTreino';
 import { useVault } from '@/lib/stores/vault';
@@ -45,6 +52,15 @@ export interface SheetNovoTreinoProps {
   // Path relativo do .md original (ex: 'treinos/2026-04-23-rotina-a.md').
   // Caller fornece em edicao para preservar slug.
   slugOriginal?: string;
+  // Q11.b: snapshot derivado de uma RotinaMeta via sessaoFromRotina,
+  // usado para pre-preencher o form em criacao quando o usuario escolhe
+  // uma rotina como template. Em edicao (inicial != null) e' ignorado:
+  // a sessao ja tem seus proprios dados imutaveis.
+  rotinaSnapshot?: Partial<TreinoSessao>;
+  // Q11.b: callback opcional para o caller exibir o SeletorRotina em
+  // outro sheet. Quando undefined, o botao "Usar rotina" no topo nao
+  // renderiza (caller nao quer dar essa opcao).
+  onAbrirSeletorRotina?: () => void;
   onSalvo: () => void;
   onCancelar: () => void;
 }
@@ -52,6 +68,8 @@ export interface SheetNovoTreinoProps {
 export function SheetNovoTreino({
   inicial,
   slugOriginal,
+  rotinaSnapshot,
+  onAbrirSeletorRotina,
   onSalvo,
   onCancelar,
 }: SheetNovoTreinoProps): ReactNode {
@@ -59,18 +77,31 @@ export function SheetNovoTreino({
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
 
-  const [rotina, setRotina] = useState<string>(inicial?.rotina ?? '');
-  const [duracao, setDuracao] = useState<number>(inicial?.duracao_min ?? 30);
-  const [observacoes, setObservacoes] = useState<string>(
-    inicial?.observacoes ?? ''
-  );
-  const [exercicios, setExercicios] = useState<ExercicioSessao[]>(
-    inicial?.exercicios ?? []
-  );
+  // Q11.b: rotinaSnapshot tem precedencia sobre vazio em criacao
+  // (inicial=null). Em edicao (inicial!=null) o snapshot e' ignorado.
+  const seedRotina = inicial?.rotina ?? rotinaSnapshot?.rotina ?? '';
+  const seedDuracao = inicial?.duracao_min ?? 30;
+  const seedObservacoes = inicial?.observacoes ?? '';
+  const seedExercicios =
+    inicial?.exercicios ?? rotinaSnapshot?.exercicios ?? [];
+
+  const [rotina, setRotina] = useState<string>(seedRotina);
+  const [duracao, setDuracao] = useState<number>(seedDuracao);
+  const [observacoes, setObservacoes] = useState<string>(seedObservacoes);
+  const [exercicios, setExercicios] = useState<ExercicioSessao[]>(seedExercicios);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [exerciciosBiblioteca, setExerciciosBiblioteca] = useState<
     Exercicio[]
   >([]);
+  // Q11.b: snapshot pendente quando ha edicao em curso e o usuario
+  // escolheu uma nova rotina. Modal pergunta antes de sobrescrever.
+  const [snapshotPendente, setSnapshotPendente] =
+    useState<Partial<TreinoSessao> | null>(null);
+  // Referencia do ultimo snapshot ja aplicado para evitar reaplicar
+  // o mesmo (caller pode rerenderizar com a mesma rotina).
+  const ultimoSnapshotAplicadoRef = useRef<Partial<TreinoSessao> | null>(
+    rotinaSnapshot ?? null
+  );
 
   // Carrega lista de exercícios da biblioteca para popular o ChipGroup.
   useEffect(() => {
@@ -94,6 +125,44 @@ export function SheetNovoTreino({
     setObservacoes(inicial.observacoes ?? '');
     setExercicios(inicial.exercicios);
   }, [inicial]);
+
+  // Q11.b: aplica de fato o snapshot recebido no form. Helper interno
+  // chamado pelo effect de sincronizacao e pelo "Confirmar" do modal.
+  const aplicarSnapshot = useCallback(
+    (snap: Partial<TreinoSessao>) => {
+      if (typeof snap.rotina === 'string') setRotina(snap.rotina);
+      if (Array.isArray(snap.exercicios)) setExercicios(snap.exercicios);
+      ultimoSnapshotAplicadoRef.current = snap;
+    },
+    []
+  );
+
+  // Q11.b: sincroniza com rotinaSnapshot quando este muda em criacao
+  // (caller troca de rotina sem desmontar o sheet). Decisao UX 2026-05-12:
+  // se o form ja tem dados, abrir modal "Substituir treino atual?"
+  // antes de sobrescrever. Se vazio, aplica direto. Em edicao
+  // (inicial!=null) o snapshot e' sempre ignorado.
+  useEffect(() => {
+    if (inicial) return;
+    if (!rotinaSnapshot) return;
+    // Mesmo objeto referencia ja aplicado: noop. Evita reaplicar quando
+    // caller rerenderiza com mesma rotina.
+    if (ultimoSnapshotAplicadoRef.current === rotinaSnapshot) return;
+
+    const temEdicao =
+      exercicios.length > 0 ||
+      rotina.trim().length > 0 ||
+      observacoes.trim().length > 0;
+
+    if (!temEdicao) {
+      aplicarSnapshot(rotinaSnapshot);
+      return;
+    }
+    setSnapshotPendente(rotinaSnapshot);
+  }, [rotinaSnapshot, inicial, aplicarSnapshot]);
+  // exercicios/rotina/observacoes fora das deps de proposito: o effect
+  // dispara apenas quando rotinaSnapshot muda, lendo edicao atual no
+  // momento da troca; ja-aplicado e' protegido pela ref.
 
   const opcoesExercicios: ChipOption[] = useMemo(
     () =>
@@ -226,6 +295,16 @@ export function SheetNovoTreino({
         >
           {inicial ? 'Editar treino' : 'Novo treino'}
         </Text>
+
+        {/* Q11.b: atalho "Usar rotina" so em criacao e quando o caller
+            registrou o handler. Em edicao, sessao ja tem dados imutaveis. */}
+        {!inicial && onAbrirSeletorRotina ? (
+          <Button
+            label="Usar rotina"
+            onPress={onAbrirSeletorRotina}
+            variant="ghost"
+          />
+        ) : null}
 
         <View style={{ gap: spacing.sm }}>
           <Text
@@ -442,6 +521,74 @@ export function SheetNovoTreino({
           />
         </View>
       </ScrollView>
+
+      {/* Q11.b: confirma sobrescrita quando ha edicao em curso. */}
+      <Modal
+        visible={snapshotPendente !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSnapshotPendente(null)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(20, 21, 26, 0.85)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing.lg,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.bg,
+              borderRadius: radius.modal,
+              padding: spacing.lg,
+              gap: spacing.base,
+              width: '100%',
+              maxWidth: 360,
+            }}
+            accessibilityLabel="modal confirmar substituir treino"
+          >
+            <Text
+              style={{
+                color: colors.fg,
+                fontFamily: 'JetBrainsMono_500Medium',
+                fontSize: 16,
+                lineHeight: 24,
+              }}
+            >
+              Substituir treino atual?
+            </Text>
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 13,
+                lineHeight: 20,
+              }}
+            >
+              A rotina escolhida vai sobrescrever os exercícios e o nome
+              da rotina que você já preencheu. Duração e observações
+              continuam como estão.
+            </Text>
+            <View style={{ gap: spacing.sm }}>
+              <Button
+                label="Substituir"
+                onPress={() => {
+                  if (snapshotPendente) aplicarSnapshot(snapshotPendente);
+                  setSnapshotPendente(null);
+                }}
+                variant="primary"
+              />
+              <Button
+                label="Manter o que estou editando"
+                onPress={() => setSnapshotPendente(null)}
+                variant="ghost"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </BottomSheetView>
   );
 }

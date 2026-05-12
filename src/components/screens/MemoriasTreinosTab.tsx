@@ -43,8 +43,12 @@ import { colors, spacing } from '@/theme/tokens';
 import { useTreinos } from '@/lib/hooks/useTreinos';
 import { SheetNovoTreino } from './SheetNovoTreino';
 import { DetalheDiaTreinoModal } from './DetalheDiaTreinoModal';
-import { treinosPath } from '@/lib/vault/paths';
+import { treinosPath, formatDateYmd } from '@/lib/vault/paths';
 import { slugifyTreino } from '@/lib/treinos/slug';
+import { SeletorRotina } from '@/components/treino/SeletorRotina';
+import { sessaoFromRotina } from '@/lib/treino/sessaoFromRotina';
+import { usePessoa } from '@/lib/stores/pessoa';
+import type { RotinaMeta } from '@/lib/schemas/rotina';
 import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
@@ -60,9 +64,16 @@ export function MemoriasTreinosTab({
 }: MemoriasTreinosTabProps = {}): ReactNode {
   const router = useRouter();
   const { sessoes, recarregar } = useTreinos();
+  const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const detalheRef = useRef<BottomSheetRef>(null);
   const novoRef = useRef<BottomSheetRef>(null);
   const editarRef = useRef<BottomSheetRef>(null);
+  const seletorRotinaRef = useRef<BottomSheetRef>(null);
+  // Q11.b: snapshot de rotina escolhida no SeletorRotina; alimenta o
+  // SheetNovoTreino em criacao. Cada escolha gera nova referencia
+  // para o useEffect interno do sheet detectar troca.
+  const [pendingRotinaSnapshot, setPendingRotinaSnapshot] =
+    useState<Partial<TreinoSessao> | null>(null);
 
   // M11.1 (§2.2): atalho navegacional para a galeria de exercicios.
   // Usuario que ainda nao tem exercicios cadastrados (FAB Salvar
@@ -145,8 +156,36 @@ export function MemoriasTreinosTab({
 
   const handleSalvoNovo = useCallback(() => {
     novoRef.current?.close();
+    setPendingRotinaSnapshot(null);
     void recarregar();
   }, [recarregar]);
+
+  // Q11.b: orquestracao do SeletorRotina sobre o SheetNovoTreino.
+  const handleAbrirSeletorRotina = useCallback(() => {
+    seletorRotinaRef.current?.expand();
+  }, []);
+
+  const handleEscolherRotina = useCallback(
+    (rotina: RotinaMeta | null) => {
+      seletorRotinaRef.current?.close();
+      if (rotina === null) {
+        // "Sem rotina (treino livre)": nao mexe no que ja foi digitado.
+        return;
+      }
+      const snap = sessaoFromRotina(rotina, formatDateYmd(new Date()), pessoaAtiva);
+      setPendingRotinaSnapshot(snap);
+    },
+    [pessoaAtiva]
+  );
+
+  const handleCancelarSeletor = useCallback(() => {
+    seletorRotinaRef.current?.close();
+  }, []);
+
+  const handleCancelarNovo = useCallback(() => {
+    novoRef.current?.close();
+    setPendingRotinaSnapshot(null);
+  }, []);
 
   const handleSalvoEdicao = useCallback(() => {
     editarRef.current?.close();
@@ -268,8 +307,18 @@ export function MemoriasTreinosTab({
       <BottomSheet ref={novoRef} snapPoints={SHEET_90} index={-1}>
         <SheetNovoTreino
           inicial={null}
+          rotinaSnapshot={pendingRotinaSnapshot ?? undefined}
+          onAbrirSeletorRotina={handleAbrirSeletorRotina}
           onSalvo={handleSalvoNovo}
-          onCancelar={() => novoRef.current?.close()}
+          onCancelar={handleCancelarNovo}
+        />
+      </BottomSheet>
+
+      {/* Q11.b: sheet do SeletorRotina aberto a partir do SheetNovoTreino. */}
+      <BottomSheet ref={seletorRotinaRef} snapPoints={SHEET_60} index={-1}>
+        <SeletorRotina
+          onSelect={handleEscolherRotina}
+          onCancelar={handleCancelarSeletor}
         />
       </BottomSheet>
 
