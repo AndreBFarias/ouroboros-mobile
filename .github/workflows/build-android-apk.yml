@@ -76,8 +76,9 @@ jobs:
 
       - name: Restrict to arm64-v8a
         run: |
-          echo "reactNativeArchitectures=arm64-v8a" >> android/gradle.properties
-          echo "android.enableR8.fullMode=true" >> android/gradle.properties
+          printf '\nreactNativeArchitectures=arm64-v8a\nandroid.enableR8.fullMode=true\n' \
+            >> android/gradle.properties
+          tail -5 android/gradle.properties
 
       - name: Gradle assembleRelease
         working-directory: android
