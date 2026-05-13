@@ -8,11 +8,18 @@
 // por vez. Caller renderiza ambos lado-a-lado.
 //
 // API:
-//   <TranscreverButton onTextoTranscrito={(texto) => void} />
+//   <TranscreverButton
+//     onTextoTranscrito={(texto) => void}     // chamado UMA VEZ no release
+//     onPreviewParcial={(parcial) => void}    // opcional, cada partial
+//   />
 //
-// Caller decide se faz append ou sobrescreve no textarea. Respeita
-// settings.privacidade.ocultarTranscricoes: quando ativo, parciais
-// nao vazam para a UI (texto final tambem nao chega).
+// Caller decide se faz append ou sobrescreve com onTextoTranscrito
+// (final). Partials nunca disparam onTextoTranscrito — evita o bug
+// Q22.A em que cada partial era appendado N vezes no textarea. Se o
+// caller quiser preview live, passar onPreviewParcial separado.
+//
+// Respeita settings.privacidade.ocultarTranscricoes: quando ativo,
+// nem parciais nem texto final vazam pra UI.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useRef, useState } from 'react';
@@ -42,11 +49,18 @@ import {
 type Estado = 'idle' | 'requesting' | 'listening';
 
 export interface TranscreverButtonProps {
+  // Chamado UMA VEZ por sessao, no release do botao, com o texto
+  // consolidado final. Caller faz append ou sobrescreve livremente.
   onTextoTranscrito: (texto: string) => void;
+  // Opcional: chamado a cada partial result do reconhecedor. Pra
+  // preview live em outra area da UI (NUNCA no mesmo textarea que
+  // recebe o final — vide Q22.A bug de duplicacao).
+  onPreviewParcial?: (parcial: string) => void;
 }
 
 export function TranscreverButton({
   onTextoTranscrito,
+  onPreviewParcial,
 }: TranscreverButtonProps) {
   const toast = useToast();
   const ocultarTranscricoes = useSettings(
@@ -93,8 +107,10 @@ export function TranscreverButton({
 
     promiseRef.current = transcribeStream((parcial) => {
       ultimoParcialRef.current = parcial;
-      if (!ocultarTranscricoes) {
-        onTextoTranscrito(parcial);
+      if (!ocultarTranscricoes && onPreviewParcial) {
+        // Q22.A: partials VAO pra preview opcional. NAO disparam o
+        // onTextoTranscrito (que cumulava N vezes no caller).
+        onPreviewParcial(parcial);
       }
     }).catch((err) => {
       // Se o usuario revoga permissao no meio, faz toast claro.
@@ -116,14 +132,11 @@ export function TranscreverButton({
     const textoFinal =
       (await promiseRef.current?.catch(() => '')) ?? '';
     promiseRef.current = null;
+    // Q22.A: emitir UMA UNICA chamada de onTextoTranscrito por sessao
+    // com o texto consolidado. Fallback pro ultimo parcial quando o
+    // reconhecedor resolve com string vazia (Android 12+ as vezes corta).
     const texto = textoFinal || ultimoParcialRef.current;
-    if (
-      texto &&
-      texto.trim().length > 0 &&
-      !ocultarTranscricoes &&
-      texto !== ultimoParcialRef.current
-    ) {
-      // Texto final pode ser ligeiramente diferente do ultimo parcial.
+    if (texto && texto.trim().length > 0 && !ocultarTranscricoes) {
       onTextoTranscrito(texto);
     }
     setEstado('idle');
