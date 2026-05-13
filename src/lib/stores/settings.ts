@@ -62,6 +62,11 @@ export interface SettingsState {
     // exportarVaultZip + escreve em Documents/Ouroboros-Backups/auto/
     // com rotacao em 4 arquivos).
     backupAutomaticoSemanal: boolean;
+    // Q17 (Onda Q, 2026-05-13): opt-in para escrever no Health Connect
+    // do Android quando o usuario salva treino/medida/ciclo no Vault.
+    // Default false (privacy-first; apenas saves locais ate o usuario
+    // conectar explicitamente via /settings/integracoes).
+    healthConnectSync: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -134,6 +139,9 @@ const DEFAULT_STATE_V2: Omit<
     // M-BACKUP-AUTOMATICO: default OFF (privacy-first). Usuario ativa
     // conscientemente. Quando OFF, agendarBackup nem registra timer.
     backupAutomaticoSemanal: false,
+    // Q17 (Onda Q): default OFF. Usuario opt-in via
+    // /settings/integracoes apos aceitar permissions do Health Connect.
+    healthConnectSync: false,
   },
   privacidade: {
     biometriaAbrir: false,

@@ -155,6 +155,7 @@ function snapshotValido(): SnapshotSettings {
         widgetMostraNome: true,
         mostrarFinancasEmDesenvolvimento: true,
         backupAutomaticoSemanal: true,
+        healthConnectSync: false,
       },
       privacidade: {
         biometriaAbrir: true,

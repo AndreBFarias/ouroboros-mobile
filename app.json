@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.ouroboros.mobile",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon-foreground.png",
         "backgroundColor": "#14151a"

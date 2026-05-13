@@ -209,6 +209,17 @@ function SecaoPessoa() {
         accessibilityLabel="contas google"
       />
 
+      <LinkSubTela
+        titulo="Integrações"
+        subtitulo="Conexão Saúde (Android) e outras integrações externas."
+        onPress={() =>
+          router.push(
+            '/settings/integracoes' as Parameters<typeof router.push>[0]
+          )
+        }
+        accessibilityLabel="item integracoes"
+      />
+
       {ehSozinho ? (
         <LinkSubTela
           titulo="Adicionar segunda pessoa"

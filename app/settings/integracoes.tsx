@@ -27,6 +27,7 @@ import {
   revogarTodas,
   type PermissionItem,
 } from '@/lib/health/permissions';
+import { useSettings } from '@/lib/stores/settings';
 
 function rotuloPermission(p: PermissionItem): string {
   const map: Record<string, string> = {
@@ -78,6 +79,9 @@ export default function SettingsIntegracoesScreen() {
       const concedidas = await solicitarPermissoesCanonicas();
       setPermissoes(concedidas);
       if (concedidas.length > 0) {
+        // Q17.c: ao aceitar permissoes, liga o toggle de sync para
+        // saves futuros escreverem em HC automaticamente.
+        useSettings.getState().setFeatureToggle('healthConnectSync', true);
         void haptics.success();
         toast.show(`Conectado: ${concedidas.length} tipos.`, 'success');
       } else {
@@ -95,6 +99,9 @@ export default function SettingsIntegracoesScreen() {
     setSalvando(true);
     try {
       await revogarTodas();
+      // Q17.c: ao revogar, desativa sync para evitar tentativas
+      // futuras que falhariam silentemente.
+      useSettings.getState().setFeatureToggle('healthConnectSync', false);
       setPermissoes([]);
       toast.show('Conexão removida.', 'success');
     } finally {
