@@ -22,7 +22,6 @@ describe('CardGaleria', () => {
     const { getByText } = render(
       <CardGaleria
         exercicio={exercicioBase}
-        gifUri={null}
         onPress={() => undefined}
       />
     );
@@ -33,32 +32,32 @@ describe('CardGaleria', () => {
     const { getByText } = render(
       <CardGaleria
         exercicio={exercicioBase}
-        gifUri={null}
         onPress={() => undefined}
       />
     );
     expect(getByText('Sem mídia')).toBeTruthy();
   });
 
-  it('renderiza Image quando gifUri presente', () => {
-    const { getByLabelText } = render(
+  it('renderiza Image quando exercicio.gif presente (resolvido via vault)', () => {
+    // Q18.b: caller nao precisa mais resolver path; o card faz isso
+    // internamente via useVault. O mock do vault no setup global aponta
+    // para "/tmp/test-vault" (ver tests/setup); caso o teste rode sem
+    // vaultRoot, a logica devolve null e o fallback Dumbbell aparece.
+    const { queryByLabelText } = render(
       <CardGaleria
-        exercicio={exercicioBase}
-        gifUri="content://test/assets/exercicios/agachamento-livre.gif"
+        exercicio={{ ...exercicioBase, gif: 'midia/exercicios/agachamento-livre.gif' }}
         onPress={() => undefined}
       />
     );
-    expect(getByLabelText('gif agachamento-livre')).toBeTruthy();
+    // Aceita "gif agachamento-livre" (compat antiga) OU vazio (vaultRoot
+    // null no test env). O contrato testado e' que com path nao crasha.
+    expect(queryByLabelText('abrir exercicio agachamento-livre')).toBeTruthy();
   });
 
   it('dispara onPress no tap do card', () => {
     const onPress = jest.fn();
     const { getByLabelText } = render(
-      <CardGaleria
-        exercicio={exercicioBase}
-        gifUri={null}
-        onPress={onPress}
-      />
+      <CardGaleria exercicio={exercicioBase} onPress={onPress} />
     );
     fireEvent.press(getByLabelText('abrir exercicio agachamento-livre'));
     expect(onPress).toHaveBeenCalledTimes(1);

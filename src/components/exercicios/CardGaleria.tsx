@@ -10,31 +10,36 @@
 // /exercicios/[slug] (M27 moveu de (tabs)/exercicios para raiz).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { Dumbbell } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius } from '@/theme/tokens';
+import { useVault } from '@/lib/stores/vault';
 import type { Exercicio } from '@/lib/schemas/exercicio';
 
 interface CardGaleriaProps {
   exercicio: Exercicio;
-  // URI absoluto do GIF resolvido para SAF (vaultRoot + exercicio.gif)
-  // ou null quando não ha GIF cadastrado. Caller resolve pra simplificar
-  // o componente (não precisa conhecer vaultRoot).
-  gifUri: string | null;
   onPress: () => void;
   onLongPress?: () => void;
 }
 
+// Q18.b: path-based API alinhada com MidiaExecucaoPlayer. Render inline
+// mantido porque o card da galeria usa aspect 1:1 responsivo (grid 2
+// colunas), incompativel com o size fixo 96x96 do Player canonico.
 export function CardGaleria({
   exercicio,
-  gifUri,
   onPress,
   onLongPress,
 }: CardGaleriaProps) {
+  const vaultRoot = useVault((s) => s.vaultRoot);
+  const gifUri = useMemo(() => {
+    if (!vaultRoot || !exercicio.gif || exercicio.gif.length === 0) return null;
+    const trimmed = vaultRoot.endsWith('/') ? vaultRoot.slice(0, -1) : vaultRoot;
+    return `${trimmed}/${exercicio.gif}`;
+  }, [vaultRoot, exercicio.gif]);
   const [pressed, setPressed] = useState(false);
 
   return (

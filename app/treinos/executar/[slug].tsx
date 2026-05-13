@@ -23,6 +23,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pause, Play, ChevronRight, Plus } from '@/lib/icons';
 import { Button, Header, Screen, useToast } from '@/components/ui';
+import { MidiaExecucaoPlayer } from '@/components/exercicios/MidiaExecucaoPlayer';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
@@ -324,17 +325,32 @@ export default function ExecutarTreino() {
               }}
               accessibilityLabel={`exercicio atual ${exercicio.nome}`}
             >
-              <Text
+              <View
                 style={{
-                  color: colors.fg,
-                  fontFamily: 'JetBrainsMono_500Medium',
-                  fontSize: 20,
-                  lineHeight: 28,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing.base,
                 }}
-                numberOfLines={2}
               >
-                {exercicio.nome}
-              </Text>
+                {/* Q18.b: thumbnail 96x96 da midia de execucao. */}
+                <MidiaExecucaoPlayer
+                  path={exercicio.gif}
+                  size="sm"
+                  accessibilityLabel={`midia ${exercicio.nome}`}
+                />
+                <Text
+                  style={{
+                    flex: 1,
+                    color: colors.fg,
+                    fontFamily: 'JetBrainsMono_500Medium',
+                    fontSize: 20,
+                    lineHeight: 28,
+                  }}
+                  numberOfLines={2}
+                >
+                  {exercicio.nome}
+                </Text>
+              </View>
               <View
                 style={{
                   flexDirection: 'row',

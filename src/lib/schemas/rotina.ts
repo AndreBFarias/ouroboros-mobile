@@ -43,6 +43,10 @@ export const ExercicioRotinaSchema = z.object({
   reps: z.string().min(1),
   descanso_seg: z.number().int().positive().default(90),
   observacao: z.string().nullable(),
+  // Q18.b: path relativo ao vaultRoot da midia de execucao (GIF/JPG/MP4).
+  // Snapshot na hora de criar/editar a rotina; o executor renderiza esse
+  // path diretamente. Optional pra retro-compat com rotinas anteriores.
+  gif: z.string().optional(),
 });
 export type ExercicioRotina = z.infer<typeof ExercicioRotinaSchema>;
 

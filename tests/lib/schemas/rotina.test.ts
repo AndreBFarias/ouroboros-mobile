@@ -96,6 +96,16 @@ describe('ExercicioRotinaSchema', () => {
       ExercicioRotinaSchema.parse({ ...exBase, observacao: null }).observacao
     ).toBeNull();
   });
+
+  it('Q18.b preserva gif quando presente e aceita ausencia (retro-compat)', () => {
+    const comGif = ExercicioRotinaSchema.parse({
+      ...exBase,
+      gif: 'midia/exercicios/agachamento.gif',
+    });
+    expect(comGif.gif).toBe('midia/exercicios/agachamento.gif');
+    const semGif = ExercicioRotinaSchema.parse(exBase);
+    expect(semGif.gif).toBeUndefined();
+  });
 });
 
 describe('RotinaSchema', () => {

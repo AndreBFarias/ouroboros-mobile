@@ -12,7 +12,6 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -33,6 +32,7 @@ import {
   BlocoInstrucao,
   HistoricoSparkline,
 } from '@/components/exercicios';
+import { MidiaExecucaoPlayer } from '@/components/exercicios/MidiaExecucaoPlayer';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
@@ -91,14 +91,6 @@ export default function DetalheExercicio() {
       cancelled = true;
     };
   }, [vaultRoot, slug]);
-
-  const gifUri = useMemo(() => {
-    if (!vaultRoot || !exercicio?.gif) return null;
-    const trimmedRoot = vaultRoot.endsWith('/')
-      ? vaultRoot.slice(0, -1)
-      : vaultRoot;
-    return `${trimmedRoot}/${exercicio.gif}`;
-  }, [vaultRoot, exercicio?.gif]);
 
   const ultima = useMemo(() => {
     if (!exercicio || exercicio.historico.length === 0) return null;
@@ -192,44 +184,12 @@ export default function DetalheExercicio() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* GIF full-width 16:9 ou placeholder */}
-        <View
-          style={{
-            aspectRatio: 16 / 9,
-            backgroundColor: colors.bgAlt,
-            borderRadius: radius.card,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          {gifUri ? (
-            <Image
-              source={{ uri: gifUri }}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
-              accessibilityLabel={`gif ${exercicio.slug}`}
-            />
-          ) : (
-            <View style={{ alignItems: 'center', gap: 6 }}>
-              <Dumbbell
-                size={48}
-                color={colors.mutedDecor}
-                strokeWidth={1.5}
-              />
-              <Text
-                style={{
-                  color: colors.mutedDecor,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 11,
-                  lineHeight: 14,
-                }}
-              >
-                Sem mídia
-              </Text>
-            </View>
-          )}
-        </View>
+        {/* Q18.b: player canonico full-width (GIF/JPG/MP4 com fallback Dumbbell). */}
+        <MidiaExecucaoPlayer
+          path={exercicio.gif}
+          size="lg"
+          accessibilityLabel={`midia ${exercicio.slug}`}
+        />
 
         {/* Nome */}
         <Text

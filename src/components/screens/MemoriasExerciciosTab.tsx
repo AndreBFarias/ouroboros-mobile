@@ -80,20 +80,6 @@ export function MemoriasExerciciosTab({
     }, [carregar])
   );
 
-  // Resolve URI absoluto do GIF a partir do path relativo. Quando
-  // vazio, devolve null para o card mostrar placeholder. Mesma logica
-  // de app/exercicios/index.tsx para manter paridade.
-  const resolveGifUri = useCallback(
-    (relPath: string): string | null => {
-      if (!vaultRoot || !relPath || relPath.length === 0) return null;
-      const trimmedRoot = vaultRoot.endsWith('/')
-        ? vaultRoot.slice(0, -1)
-        : vaultRoot;
-      return `${trimmedRoot}/${relPath}`;
-    },
-    [vaultRoot]
-  );
-
   const irParaDetalhe = useCallback(
     (slug: string) => {
       router.push({ pathname: '/exercicios/[slug]', params: { slug } });
@@ -206,7 +192,6 @@ export function MemoriasExerciciosTab({
             <CardGaleria
               key={ex.slug}
               exercicio={ex}
-              gifUri={resolveGifUri(ex.gif)}
               onPress={() => irParaDetalhe(ex.slug)}
               onLongPress={() => irParaEdicao(ex.slug)}
             />
