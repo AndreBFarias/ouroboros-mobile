@@ -4,7 +4,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Dumbbell } from '@/lib/icons';
 import { EmptyState, FAB, Header, Screen } from '@/components/ui';

@@ -294,7 +294,6 @@ export function aplicarSnapshot(
     return { ok: false, motivo: 'snapshot-invalido' };
   }
   if (snap.schema !== EXPORT_SCHEMA_VERSION) {
-    // eslint-disable-next-line no-console
     console.error(
       `[aplicarSnapshot] schema incompativel: esperado ${EXPORT_SCHEMA_VERSION}, recebido ${snap.schema}`
     );

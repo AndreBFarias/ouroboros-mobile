@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Heart, Settings as SettingsIcon } from '@/lib/icons';
+import { Heart } from '@/lib/icons';
 import { Button, Header, Screen, useToast } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';

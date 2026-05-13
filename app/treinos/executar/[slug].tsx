@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pause, Play, ChevronRight, Plus } from '@/lib/icons';
+import { Plus } from '@/lib/icons';
 import { Button, Header, Screen, useToast } from '@/components/ui';
 import { MidiaExecucaoPlayer } from '@/components/exercicios/MidiaExecucaoPlayer';
 import { colors, radius, spacing } from '@/theme/tokens';

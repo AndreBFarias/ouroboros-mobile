@@ -73,7 +73,6 @@ export function parseFrontmatter<T>(
   if (raw_meta && typeof raw_meta === 'object') {
     const ver = (raw_meta as Record<string, unknown>)._schema_version;
     if (typeof ver === 'number' && ver !== VAULT_SCHEMA_VERSION) {
-      // eslint-disable-next-line no-console
       console.warn(
         `vault frontmatter _schema_version=${ver} difere da versao atual ${VAULT_SCHEMA_VERSION}; parse prossegue`
       );

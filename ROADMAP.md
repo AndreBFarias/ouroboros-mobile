@@ -41,15 +41,19 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q17.a | Setup Health Connect — pacote + AndroidManifest + tela `/settings/integracoes` + rationale activity | `1fcbaf5` | `[ok]` |
 | Q17.b | `lib/health/sync.ts` — read/write ExerciseSession + Weight + BodyFat + MenstruationFlow + Steps | `cee0d17` | `[ok]` |
 | Q17.c | Toggle `healthConnectSync` em settings + hook em saveTreino + entry em `/settings/index` | `cee0d17` | `[ok]` |
-| Q17.c.b | Hook HC em `escreverMedida` (peso → WeightRecord) | _pending_ | `[ok]` |
-| Q17.c.c | Hook HC em `escreverRegistroCiclo` (fase=menstrual → MenstruationFlowRecord) | _pending_ | `[ok]` |
-| Q17.d | Bloco "Importados de Conexão Saúde" em Evolução (passos 7d + peso + treinos 30d) | _pending_ | `[ok]` |
+| Q17.c.b | Hook HC em `escreverMedida` (peso → WeightRecord) | `15733aa` | `[ok]` |
+| Q17.c.c | Hook HC em `escreverRegistroCiclo` (fase=menstrual → MenstruationFlowRecord) | `15733aa` | `[ok]` |
+| Q17.d | Bloco "Importados de Conexão Saúde" em Evolução (passos 7d + peso + treinos 30d) | `ff89ad8` | `[ok]` |
 | Q18 | `MidiaExecucaoPlayer` (player GIF/MP4/JPG reusável; integração no detalhe/executor pendente Q18.b) | `1fcbaf5` | `[ok parcial]` |
-| Q18.b | Player integrado em detalhe + executor + galeria; `ExercicioRotinaSchema.gif` opcional | _pending_ | `[ok]` |
+| Q18.b | Player integrado em detalhe + executor + galeria; `ExercicioRotinaSchema.gif` opcional | `272c912` | `[ok]` |
 | Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` esqueleto (form completo em Q19.b) | `1fcbaf5` | `[ok parcial]` |
-| Q19.b | Form completo + multi-select de rotinas + sheet "Qual treino hoje?" + Iniciar pill | _pending_ | `[ok]` |
+| Q19.b | Form completo + multi-select de rotinas + sheet "Qual treino hoje?" + Iniciar pill | `93a8e23` | `[ok]` |
 | Q20 | Share Pix/boleto/extrato — spec runtime validation | `ff20d2c` (spec) | `[spec]` |
-| Q21 | ETL unificação Mobile↔Backend Python — CSV canônico + drift check no smoke + rotina/grupo no contrato | _pending_ | `[ok parcial]` |
+| Q21 | ETL unificação Mobile↔Backend Python — CSV canônico + drift check no smoke + rotina/grupo no contrato | `840513f` | `[ok parcial]` |
+| Q17.c.d | Campo `gordura` em MedidasSchema + hook `escreverBodyFatEmHC` | _spec_ | `[spec]` |
+| Q18.x | `<Video>` real do expo-av no `MidiaExecucaoPlayer` | _spec_ | `[spec]` |
+| Q21.b | 7+ issues `etl-contract` no sibling Python `protocolo-ouroboros` | _spec_ | `[spec]` |
+| Q23 | Bump `compileSdk 35` via expo-build-properties (destrava CI alpha-5+) | _spec_ | `[spec]` |
 
 **Releases gerados:**
 
@@ -69,6 +73,10 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 - [`docs/sprints/Q19-GRUPOS-EXERCICIOS-spec.md`](docs/sprints/Q19-GRUPOS-EXERCICIOS-spec.md)
 - [`docs/sprints/Q20-SHARE-PIX-VALIDACAO-spec.md`](docs/sprints/Q20-SHARE-PIX-VALIDACAO-spec.md)
 - [`docs/sprints/Q21-ETL-UNIFICACAO-spec.md`](docs/sprints/Q21-ETL-UNIFICACAO-spec.md)
+- [`docs/sprints/Q21b-ISSUES-ETL-CONTRACT-SIBLING-spec.md`](docs/sprints/Q21b-ISSUES-ETL-CONTRACT-SIBLING-spec.md)
+- [`docs/sprints/Q17cd-MEDIDAS-BODYFAT-spec.md`](docs/sprints/Q17cd-MEDIDAS-BODYFAT-spec.md)
+- [`docs/sprints/Q18x-MIDIAEXEC-VIDEO-REAL-spec.md`](docs/sprints/Q18x-MIDIAEXEC-VIDEO-REAL-spec.md)
+- [`docs/sprints/Q23-COMPILESDK-35-spec.md`](docs/sprints/Q23-COMPILESDK-35-spec.md)
 
 ---
 

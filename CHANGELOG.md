@@ -5,6 +5,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sanitização pós-sessão 2026-05-13 (tarde)
+
+- Lint zerado em `app/` + `src/`: 5 warnings antigos removidos
+  (`Pause`/`Play`/`ChevronRight` unused no executor;
+  `View` no `app/grupos/index.tsx`; `SettingsIcon` em integrações;
+  2 `eslint-disable` redundantes em `vault/frontmatter.ts` e
+  `services/restaurarVault.ts`).
+- 4 specs novas materializadas em `docs/sprints/`:
+  - `Q17cd-MEDIDAS-BODYFAT-spec.md` — campo `gordura` em
+    `MedidasSchema` + `escreverBodyFatEmHC`.
+  - `Q18x-MIDIAEXEC-VIDEO-REAL-spec.md` — substituir fallback Image
+    por `<Video>` real do expo-av para `.mp4`/`.mov`/`.webm`.
+  - `Q21b-ISSUES-ETL-CONTRACT-SIBLING-spec.md` — 7+ issues
+    `etl-contract` no `protocolo-ouroboros` (parte que sobrou de Q21).
+  - `Q23-COMPILESDK-35-spec.md` — bump `compileSdk 35` via
+    `expo-build-properties` (destrava CI alpha-5+).
+
 ### Q21 — ETL canônico Mobile↔Backend: CSV + drift check (parcial, 2026-05-13)
 
 - Novo `scripts/exportar_contrato.py` (stdlib only, sem deps externas):
