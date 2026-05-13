@@ -44,12 +44,12 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q17.c.b | Hook HC em `escreverMedida` (peso → WeightRecord) | `15733aa` | `[ok]` |
 | Q17.c.c | Hook HC em `escreverRegistroCiclo` (fase=menstrual → MenstruationFlowRecord) | `15733aa` | `[ok]` |
 | Q17.d | Bloco "Importados de Conexão Saúde" em Evolução (passos 7d + peso + treinos 30d) | `ff89ad8` | `[ok]` |
-| Q18 | `MidiaExecucaoPlayer` (player GIF/MP4/JPG reusável; integração no detalhe/executor pendente Q18.b) | `1fcbaf5` | `[ok parcial]` |
+| Q18 | `MidiaExecucaoPlayer` (player GIF/MP4/JPG reusável + integração Q18.b + video real Q18.x) | `1fcbaf5`+`272c912`+`15ce58a` | `[ok]` |
 | Q18.b | Player integrado em detalhe + executor + galeria; `ExercicioRotinaSchema.gif` opcional | `272c912` | `[ok]` |
-| Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` esqueleto (form completo em Q19.b) | `1fcbaf5` | `[ok parcial]` |
+| Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` + form Q19.b completo | `1fcbaf5`+`93a8e23` | `[ok]` |
 | Q19.b | Form completo + multi-select de rotinas + sheet "Qual treino hoje?" + Iniciar pill | `93a8e23` | `[ok]` |
 | Q20 | Share Pix/boleto/extrato — spec runtime validation | `ff20d2c` (spec) | `[spec]` |
-| Q21 | ETL unificação Mobile↔Backend Python — CSV canônico + drift check no smoke + rotina/grupo no contrato | `840513f` | `[ok parcial]` |
+| Q21 | ETL unificação Mobile↔Backend Python — CSV canônico + drift check no smoke + 7 issues sibling | `840513f`+`1c9ed04` | `[ok]` |
 | Q17.c.d | Campo `gordura` em MedidasSchema + hook `escreverBodyFatEmHC` | (HEAD) | `[ok]` |
 | Q17.e | Keystore EAS encriptado em 4 GitHub Secrets + workflow signing | (HEAD) | `[ok]` |
 | Q22.A | Fix transcrição duplicando texto no diário (split partial/final no TranscreverButton) | (HEAD) | `[ok]` |
@@ -64,8 +64,9 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 
 | Versão | Tipo | Commit | Status |
 |---|---|---|---|
-| `v1.0.0-alpha-4` | EAS preview | `a1dd3c9` | publicado em GitHub Releases |
-| `v1.0.0-alpha-5` | GitHub Actions local | `26dbf85` | build em andamento |
+| `v1.0.0-alpha-4` | EAS preview | `a1dd3c9` | publicado em GitHub Releases (OAuth funciona) |
+| `v1.0.0-alpha-5` | GitHub Actions local (debug keystore) | `46bec14` | publicado, OAuth quebrado (pre-Q17.e) |
+| `v1.0.0-alpha-6` | GitHub Actions local (keystore EAS Q17.e) | `3aef8e7` | publicado, OAuth funciona, signature canônica |
 
 **Pendências documentadas:**
 - **Q17.e** — Keystore EAS encriptado em GitHub Secrets para OAuth

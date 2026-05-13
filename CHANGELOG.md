@@ -5,6 +5,50 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### alpha-6 publicado + Q17.e + Q22.A + Q22.B causa-raiz + Q24 spec (2026-05-13 madrugada)
+
+- **`v1.0.0-alpha-6` publicado** em GitHub Releases via workflow
+  `build-android-apk.yml` (run #25828812872). Assinado com keystore
+  EAS canônico (Q17.e), SHA-1
+  `E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`
+  bate o cadastrado no Google Cloud Console. APK arm64-v8a 66 MB.
+  Inclui todas as features pós-alpha-5 (Q17.d/c.b/c.c/c.d, Q18.b/x,
+  Q19.b, Q21+sibling, Q22.A, Q23). Instalado no Xiaomi via
+  `pm install -r` (versionCode 3→4, vault preservado).
+- **Q17.e** keystore EAS encriptado em 4 GitHub Secrets
+  (`ANDROID_KEYSTORE_BASE64`, `*_PASSWORD`, `*_KEY_ALIAS`,
+  `*_KEY_PASSWORD`). Workflow ganha 3 novos steps: Provision
+  keystore (decodifica base64 → `android/app/release.keystore`),
+  Patch build.gradle signing (apenda `signingConfigs.release` pós-
+  prebuild), Verify APK signature (apksigner verify --print-certs
+  + comparação contra SHA-1 canônico). Fallback gracioso quando
+  secrets ausentes. Script versionado `scripts/exportar_keystore_eas.sh`
+  automatiza export+upload. `docs/RELEASE.md` ganha seção dedicada.
+- **Q22.A** fix transcrição duplicando texto no diário. Causa raiz:
+  `TranscreverButton` chamava `onTextoTranscrito(parcial)` a cada
+  partial result do Android SpeechRecognizer; caller diário fazia
+  `setTexto(prev => prev + transcrito)` → append cumulativo.
+  Fix: split em `onTextoTranscrito` (final, uma vez) +
+  `onPreviewParcial?` (opcional, partials pra UI separada). Caller
+  diário usa só o final, sem mudança de API necessária.
+- **Q22.B** causa raiz identificada (não bloqueia v1.0): typo de
+  1 byte no SHA-1 cadastrado no Google Cloud Console (4º octeto
+  `43` em vez de `B3`). Dono editou pro valor correto durante a
+  sessão. Aguardando propagação Google (5-30 min) + retest no
+  alpha-6 instalado.
+- **Q24** spec aberta cobrindo Recap navegável (Q24.a — cards
+  Números clicáveis → listas editáveis, ~3h) + Recap Memórias
+  (Q24.b — slideshow Wrapped/Google Photos com Ken Burns + ambient
+  audio toggle + paleta vibrante, ~6-10h, v1.1). 4 decisões UX
+  firmadas pelo dono: auto-advance 5s, ambient audio opt-in,
+  paleta vibrante exclusiva ao modo Memórias, frases delegadas ao
+  executor.
+- **Limpeza ROADMAP**: Q18/Q19/Q21 marcados `[ok parcial]` viraram
+  `[ok]` (entregas Q18.b/Q19.b/Q21.b fecharam escopo total).
+
+Baseline preservado: 195 suítes Jest / 1932 testes verde · TS
+strict zero · drift contract 174 campos auditados.
+
 ### Validação live alpha-4 + Q17.c.d + Q18.x + Q21.b (2026-05-13 noite)
 
 - **Validação live alpha-4** (parcial) no Xiaomi 2312DRAABG HyperOS
