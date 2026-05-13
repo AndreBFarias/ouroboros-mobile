@@ -108,6 +108,60 @@ Services.
 6. Retest: app → Configurações → Contas Google → Conectar.
    Tela consent deve aparecer.
 
+## Segunda causa raiz (descoberta 2026-05-13 madrugada)
+
+Mesmo após corrigir o SHA-1, retest ainda dá erro 400. Print do
+"detalhes do erro" no Google mostra explicitamente:
+
+```
+Detalhes da solicitação: redirect_uri=ouroboros://oauth-callback
+flowName=GeneralOAuthFlow
+```
+
+**OAuth client tipo Android não aceita custom-scheme redirect_uri.**
+Clients tipo Android no Cloud Console esperam fluxo via Google Play
+Services `signInIntent` (token volta via Activity result, não via
+custom scheme). Quando o `expo-auth-session` PKCE passa
+`redirect_uri=ouroboros://oauth-callback` na request OAuth, Google
+**rejeita por design** com `invalid_request`.
+
+### Fix definitivo
+
+Criar um OAuth client **tipo Web application** novo e trocar o
+`client_id` no `env.json`:
+
+1. https://console.cloud.google.com/apis/credentials?project=protocolo-ouroboros
+2. **Create credentials** → **OAuth client ID** → Application type:
+   **Web application**.
+3. Name: `Ouroboros Web` (ou similar).
+4. Authorized redirect URIs:
+   - `ouroboros://oauth-callback`
+   - `https://auth.expo.io/@andrefarias/ouroboros-mobile` (proxy Expo Go,
+     caso volte a usar)
+5. Create → copiar o **Client ID** novo (formato
+   `<random>.apps.googleusercontent.com`).
+6. Atualizar `env.json` (raiz do projeto, gitignored):
+   ```json
+   {
+     "android": {
+       "client_id": "<novo-web-client-id>.apps.googleusercontent.com",
+       "project_id": "protocolo-ouroboros",
+       ...
+     }
+   }
+   ```
+7. Rebuildar APK (alpha-7):
+   ```bash
+   gh workflow run build-android-apk.yml
+   ```
+8. Retest no novo APK.
+
+### Por que o Android client cadastrado fica?
+
+Não deletar. Mantém como referência caso decida migrar pra
+`@react-native-google-signin/google-signin` no futuro (que usa
+signInIntent nativo, mais ergonômico mas custa swap de lib).
+
 ## Passos para o dono resolver (mantidos para referência futura)
 
 ### Passo 1: abrir Cloud Console

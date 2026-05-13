@@ -290,6 +290,13 @@ export function MenuLateral() {
           ref={scrollRef}
           onScroll={aoRolar}
           scrollEventThrottle={16}
+          // Q22.E (2026-05-13): flex 1 garante que o ScrollView nao
+          // ultrapasse a altura do painel - antes a falta de flex
+          // fazia o conteudo expandir alem do rodape Configuracoes,
+          // cortando os itens da secao Utilitarios (Tarefas / Alarmes
+          // / Contadores / Rotinas / Ciclo) que ficavam atras do
+          // botao Configuracoes absoluto no rodape.
+          style={{ flex: 1 }}
           contentContainerStyle={{
             paddingTop: spacing.xl,
             paddingBottom: spacing.lg,

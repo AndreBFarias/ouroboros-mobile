@@ -3,13 +3,21 @@
 // por default, override via prop `icon`. Press dispara haptic medium e
 // scale 0.97 com spring snappy. Sem texto: acessibilidade via label
 // explicito ("ação rapida" ou override).
+//
+// Q22.D (2026-05-13): bottom usa useSafeBottomMargin pra alinhar
+// verticalmente com FABMenu (canto inferior esquerdo) e MenuCapturaVerde
+// (verde). Antes usava `spacing.xl` fixo (=24dp) que deixava o FAB
+// muito mais perto da borda inferior que o FABMenu (240dp + insets),
+// formando degrau visual feio: o "+" ficava abaixo do hamburguer.
 import { useState, type ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { MotiView } from 'moti';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
+import { useSafeBottomMargin } from '@/components/chrome/safeBottom';
 
 export interface FABProps {
   onPress: () => void;
@@ -27,6 +35,10 @@ export function FAB({
   disabled = false,
 }: FABProps) {
   const [pressed, setPressed] = useState(false);
+  const insets = useSafeAreaInsets();
+  // Q22.D: bottom canonico igual ao FABMenu e MenuCapturaVerde
+  // (max(24dp, 10% altura) + inset.bottom).
+  const bottomCanonico = useSafeBottomMargin(insets.bottom);
 
   return (
     <Pressable
@@ -49,7 +61,7 @@ export function FAB({
       style={{
         position: 'absolute',
         right: spacing.lg,
-        bottom: spacing.xl,
+        bottom: bottomCanonico,
       }}
     >
       <MotiView

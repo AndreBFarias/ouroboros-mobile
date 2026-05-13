@@ -96,6 +96,20 @@ export default function RotinaDetalhe() {
     }
   }, [vaultRoot, rotina, toast, router]);
 
+  // Q22.C (2026-05-13): movido pra antes dos early returns. Antes
+  // estava apos os "if (carregando) return" / "if (!rotina) return",
+  // disparando "Rendered more hooks than during the previous render"
+  // ao terminar o load — guard rotina + slug interno cobre o caso
+  // onde rotina ainda nao chegou.
+  const handleIniciarTreino = useCallback(() => {
+    if (!rotina) return;
+    void haptics.light();
+    router.push({
+      pathname: '/treinos/executar/[slug]',
+      params: { slug: rotina.slug },
+    });
+  }, [rotina, router]);
+
   if (carregando) {
     return (
       <Screen>
@@ -125,15 +139,6 @@ export default function RotinaDetalhe() {
       </Screen>
     );
   }
-
-  const handleIniciarTreino = useCallback(() => {
-    if (!rotina) return;
-    void haptics.light();
-    router.push({
-      pathname: '/treinos/executar/[slug]',
-      params: { slug: rotina.slug },
-    });
-  }, [rotina, router]);
 
   return (
     <Screen>

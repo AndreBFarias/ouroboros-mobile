@@ -11,6 +11,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Activity, Footprints, Scale } from '@/lib/icons';
 import {
   BottomSheet,
@@ -199,13 +200,45 @@ function CardTreinos({
 export function CardHCResumo(): ReactNode {
   const { habilitado, loading, passos, peso, treinos } = useHealthConnectResumo();
   const sheetRef = useRef<BottomSheetRef>(null);
+  const router = useRouter();
 
   const abrirLista = useCallback(() => {
     sheetRef.current?.expand();
   }, []);
 
+  // Q22.F (2026-05-13): empty state quando HC off. Antes retornava
+  // null silenciosamente, fazendo o user achar que a feature nao
+  // existia. Agora mostra reminder discreto + tap leva pra
+  // /settings/integracoes onde ativa o toggle.
   if (!habilitado) {
-    return null;
+    return (
+      <Pressable
+        onPress={() => router.push('/settings/integracoes' as Parameters<typeof router.push>[0])}
+        accessibilityRole="button"
+        accessibilityLabel="conectar conexao saude"
+        style={{
+          marginBottom: spacing.lg,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.base,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.bgElev,
+          backgroundColor: colors.bgAlt,
+        }}
+      >
+        <Text
+          {...textPropsDecor()}
+          style={{
+            color: colors.muted,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: 12,
+            lineHeight: 18,
+          }}
+        >
+          Conecte sua Conexão Saúde para ver passos, peso e treinos importados aqui.
+        </Text>
+      </Pressable>
+    );
   }
 
   return (

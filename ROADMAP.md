@@ -53,7 +53,12 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q17.c.d | Campo `gordura` em MedidasSchema + hook `escreverBodyFatEmHC` | (HEAD) | `[ok]` |
 | Q17.e | Keystore EAS encriptado em 4 GitHub Secrets + workflow signing | (HEAD) | `[ok]` |
 | Q22.A | Fix transcrição duplicando texto no diário (split partial/final no TranscreverButton) | (HEAD) | `[ok]` |
-| Q22.B | OAuth Google 400 invalid_request — config Cloud Console (depende dono) | _spec_ | `[spec]` |
+| Q22.B | OAuth Google 400 invalid_request — Web client + env.json (depende dono criar) | _spec_ | `[spec]` |
+| Q22.C | Fix crash hook order em `RotinaDetalhe` (useCallback após early return) | (HEAD) | `[ok]` |
+| Q22.D | Fix FAB+ posicionamento canônico via useSafeBottomMargin (alinha com FABMenu/Verde) | (HEAD) | `[ok]` |
+| Q22.E | Fix drawer ScrollView sem flex:1 (Utilitários cortados pelo footer Configurações) | (HEAD) | `[ok]` |
+| Q22.F | Empty state Q17.d CardHCResumo (HC off mostra CTA pra integrações em vez de invisível) | (HEAD) | `[ok]` |
+| Q22.G | Share intent Pix — receiver nativo via `expo-share-intent` (depende install + prebuild) | _spec_ | `[spec]` |
 | Q24.a | Recap navegável: cards Números clicáveis → listas → edição | _spec_ | `[spec]` |
 | Q24.b | Recap Memórias / Wrapped: slideshow Ken Burns + frases sóbrias | _spec_ | `[spec]` |
 | Q18.x | `<Video>` real do expo-av no `MidiaExecucaoPlayer` | (HEAD) | `[ok]` |
