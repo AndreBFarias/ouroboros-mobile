@@ -1,10 +1,14 @@
 # Build APK Android local sem EAS Cloud (Q17 Onda Q, 2026-05-13).
-# Trigger manual (workflow_dispatch) ou em push de tag v*-alpha-*.
+# Trigger manual ou em push de tag v*-alpha-*.
 #
-# Limitacao OAuth: APK gerado usa debug keystore + env.json.example
-# stub. OAuth Google retornara erro 400 nesse APK (esperado).
-# Resolvido em sprint futura: armazenar env.json real + keystore
-# EAS como GitHub Secrets encriptados.
+# Otimizacoes pos 1a run cancelada (timeout 45min em CMake):
+#   - abi=arm64-v8a apenas (cobre 95%+ devices Android modernos)
+#   - timeout aumentado pra 90min
+#   - cache gradle cobre 2a execucao em < 15min
+#
+# Limitacao OAuth: debug keystore (SHA-1 do AOSP) nao bate com
+# Android OAuth client do Cloud Console. Q17.e resolve isso com
+# keystore EAS em GitHub Secrets.
 name: Build Android APK
 
 on:
@@ -17,7 +21,7 @@ jobs:
   build:
     name: Build APK Android
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +56,7 @@ jobs:
             echo "Using ENV_JSON_BASE64 secret (OAuth canonico)"
             echo "$ENV_JSON_BASE64" | base64 -d > env.json
           else
-            echo "Falling back to env.json.example (OAuth nao funcional nesse APK)"
+            echo "Falling back to env.json.example (OAuth nao funcional)"
             cp env.json.example env.json
           fi
 
@@ -70,11 +74,16 @@ jobs:
       - name: Expo prebuild Android
         run: npx expo prebuild --platform android --no-install --clean
 
+      - name: Restrict to arm64-v8a
+        run: |
+          echo "reactNativeArchitectures=arm64-v8a" >> android/gradle.properties
+          echo "android.enableR8.fullMode=true" >> android/gradle.properties
+
       - name: Gradle assembleRelease
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace -Preact.architectures=arm64-v8a
 
       - name: Locate APK
         id: locate
