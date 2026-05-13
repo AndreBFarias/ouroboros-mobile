@@ -16,8 +16,6 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const TEXTO_HEADER_HC = 'importados de Conexao Saude';
-
 export default async function caseQ17dEvolucaoHcResumo(
   page: PlaywrightPageLike
 ): Promise<ResultadoE2E> {
@@ -75,9 +73,9 @@ export default async function caseQ17dEvolucaoHcResumo(
     });
     await page.waitForTimeout(800);
 
-    const blocoOcultoOff = await page.evaluate((texto) => {
-      return !document.body.innerText.includes(texto);
-    }, TEXTO_HEADER_HC);
+    const blocoOcultoOff = await page.evaluate(() => {
+      return !document.body.innerText.includes('importados de Conexao Saude');
+    });
     const pathOff = `docs/sprints/Q17-screenshots-gauntlet/q17d-e2e-A-toggle-off.png`;
     await page.screenshot({ path: pathOff });
     screenshots.push(pathOff);
@@ -124,9 +122,9 @@ export default async function caseQ17dEvolucaoHcResumo(
     });
     await page.waitForTimeout(1200);
 
-    const blocoOcultoOn = await page.evaluate((texto) => {
-      return !document.body.innerText.includes(texto);
-    }, TEXTO_HEADER_HC);
+    const blocoOcultoOn = await page.evaluate(() => {
+      return !document.body.innerText.includes('importados de Conexao Saude');
+    });
     const pathOn = `docs/sprints/Q17-screenshots-gauntlet/q17d-e2e-B-toggle-on-sem-perm.png`;
     await page.screenshot({ path: pathOn });
     screenshots.push(pathOn);
