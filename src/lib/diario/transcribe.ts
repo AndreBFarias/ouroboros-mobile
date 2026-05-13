@@ -133,7 +133,6 @@ export async function transcribeStream(
       ExpoSpeechRecognitionModule.addListener('error', (raw) => {
         const e = raw as ExpoSpeechRecognitionErrorEvent;
         const code = e.error || '';
-        console.warn('[transcribe Q5 ERROR EVENT]', JSON.stringify(raw));
         if (ERROS_PERMISSAO.has(code)) {
           falhar(new MicPermissionError());
           return;
@@ -152,11 +151,14 @@ export async function transcribeStream(
     );
 
     try {
-      console.warn('[transcribe Q5 START]', IDIOMA);
       ExpoSpeechRecognitionModule.start({
         lang: IDIOMA,
         interimResults: true,
-        continuous: false,
+        // Q5.2 (Onda Q, 2026-05-12): continuous=true permite fala
+        // longa sem timeout de silencio do SpeechRecognizer Android
+        // (default fechava a sessao apos ~6-8s sem audio). Caller
+        // chama abort() no release do botao para encerrar manualmente.
+        continuous: true,
         // requiresOnDeviceRecognition true respeita ADR-0007
         // (zero rede). Em devices sem suporte on-device, o módulo
         // emite 'service-not-allowed' que cai no ERROS_PERMISSAO.

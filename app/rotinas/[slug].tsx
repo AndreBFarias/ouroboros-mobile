@@ -6,8 +6,9 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Play } from '@/lib/icons';
 import { Header, Screen, useToast } from '@/components/ui';
 import { FormRotina, type FormRotinaSubmit } from '@/components/treino/FormRotina';
 import { colors, spacing } from '@/theme/tokens';
@@ -125,9 +126,52 @@ export default function RotinaDetalhe() {
     );
   }
 
+  const handleIniciarTreino = useCallback(() => {
+    if (!rotina) return;
+    void haptics.light();
+    router.push({
+      pathname: '/treinos/executar/[slug]',
+      params: { slug: rotina.slug },
+    });
+  }, [rotina, router]);
+
   return (
     <Screen>
-      <Header title={rotina.nome} onBack={() => router.back()} />
+      <Header
+        title={rotina.nome}
+        onBack={() => router.back()}
+        right={
+          <Pressable
+            onPress={handleIniciarTreino}
+            accessibilityRole="button"
+            accessibilityLabel="iniciar treino"
+            hitSlop={8}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+              backgroundColor: 'rgba(80, 250, 123, 0.16)',
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: colors.green,
+            }}
+          >
+            <Play size={14} color={colors.green} strokeWidth={1.75} />
+            <Text
+              style={{
+                color: colors.green,
+                fontFamily: 'JetBrainsMono_500Medium',
+                fontSize: 12,
+                lineHeight: 16,
+              }}
+            >
+              Iniciar
+            </Text>
+          </Pressable>
+        }
+      />
       <FormRotina
         inicial={{
           nome: rotina.nome,

@@ -105,10 +105,6 @@ export function TranscreverButton({
       // Demais falhas (service-not-allowed em devices sem speech
       // recognizer, no-speech timeout) sao silenciadas: o usuario
       // pode tentar de novo ou digitar manualmente.
-      console.warn(
-        '[transcrever fail]',
-        err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-      );
       return '';
     });
   };

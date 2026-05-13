@@ -160,26 +160,37 @@ export function MemoriasTreinosTab({
     void recarregar();
   }, [recarregar]);
 
-  // Q11.b: orquestracao do SeletorRotina sobre o SheetNovoTreino.
+  // Q11.b + Q15 (Onda Q): orquestracao do SeletorRotina sobre o
+  // SheetNovoTreino. Fecha o sheet de baixo antes de abrir o seletor
+  // (anti-empilhamento visual descoberto na validacao live 2026-05-12).
+  // Reabre o sheet com 280ms de delay para a animacao de close do
+  // primeiro completar — mesmo padrao do handleEditar acima.
+  const REOPEN_DELAY_MS = 280;
   const handleAbrirSeletorRotina = useCallback(() => {
-    seletorRotinaRef.current?.expand();
+    novoRef.current?.close();
+    setTimeout(() => seletorRotinaRef.current?.expand(), REOPEN_DELAY_MS);
   }, []);
 
   const handleEscolherRotina = useCallback(
     (rotina: RotinaMeta | null) => {
       seletorRotinaRef.current?.close();
-      if (rotina === null) {
-        // "Sem rotina (treino livre)": nao mexe no que ja foi digitado.
-        return;
+      if (rotina !== null) {
+        const snap = sessaoFromRotina(
+          rotina,
+          formatDateYmd(new Date()),
+          pessoaAtiva
+        );
+        setPendingRotinaSnapshot(snap);
       }
-      const snap = sessaoFromRotina(rotina, formatDateYmd(new Date()), pessoaAtiva);
-      setPendingRotinaSnapshot(snap);
+      // Reabre o SheetNovoTreino apos a animacao de close do seletor.
+      setTimeout(() => novoRef.current?.expand(), REOPEN_DELAY_MS);
     },
     [pessoaAtiva]
   );
 
   const handleCancelarSeletor = useCallback(() => {
     seletorRotinaRef.current?.close();
+    setTimeout(() => novoRef.current?.expand(), REOPEN_DELAY_MS);
   }, []);
 
   const handleCancelarNovo = useCallback(() => {

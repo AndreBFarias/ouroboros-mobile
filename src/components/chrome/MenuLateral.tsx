@@ -52,6 +52,7 @@ import {
   BellRing,
   CalendarRange,
   Camera,
+  Dumbbell,
   Hash,
   Heart,
   Home,
@@ -194,6 +195,10 @@ export function MenuLateral() {
     if (featureToggles.cicloMenstrual && mostrarCiclo) {
       opcionais.push({ label: 'Ciclo', a11yLabel: 'item ciclo', icone: Moon, route: '/ciclo' });
     }
+    // Q14 (Onda Q, 2026-05-12): entry de Rotinas de Treino. Antes
+    // so descobrivel via SheetNovoTreino → Usar rotina → Abrir rotinas.
+    // Agora visivel diretamente no menu para edicao/criacao livre.
+    opcionais.push({ label: 'Rotinas', a11yLabel: 'item rotinas', icone: Dumbbell, route: '/rotinas' });
 
     const lista: SecaoMenu[] = [
       { titulo: 'Acesso Rápido', itens: ver },
