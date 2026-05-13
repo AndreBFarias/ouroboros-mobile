@@ -9,7 +9,7 @@
 // (provavelmente o usuario nao tem fonte para aquele tipo no HC).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Activity, Footprints, Scale } from '@/lib/icons';
 import {
