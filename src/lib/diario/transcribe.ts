@@ -133,6 +133,7 @@ export async function transcribeStream(
       ExpoSpeechRecognitionModule.addListener('error', (raw) => {
         const e = raw as ExpoSpeechRecognitionErrorEvent;
         const code = e.error || '';
+        console.warn('[transcribe Q5 ERROR EVENT]', JSON.stringify(raw));
         if (ERROS_PERMISSAO.has(code)) {
           falhar(new MicPermissionError());
           return;
@@ -151,6 +152,7 @@ export async function transcribeStream(
     );
 
     try {
+      console.warn('[transcribe Q5 START]', IDIOMA);
       ExpoSpeechRecognitionModule.start({
         lang: IDIOMA,
         interimResults: true,

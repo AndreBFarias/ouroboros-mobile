@@ -19,6 +19,7 @@ export { default as Briefcase } from 'lucide-react-native/dist/esm/icons/briefca
 export { default as Calendar } from 'lucide-react-native/dist/esm/icons/calendar.mjs';
 export { default as CalendarRange } from 'lucide-react-native/dist/esm/icons/calendar-range.mjs';
 export { default as Camera } from 'lucide-react-native/dist/esm/icons/camera.mjs';
+export { default as Captions } from 'lucide-react-native/dist/esm/icons/captions.mjs';
 export { default as Check } from 'lucide-react-native/dist/esm/icons/check.mjs';
 export { default as ChevronDown } from 'lucide-react-native/dist/esm/icons/chevron-down.mjs';
 export { default as ChevronLeft } from 'lucide-react-native/dist/esm/icons/chevron-left.mjs';

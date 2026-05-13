@@ -63,10 +63,9 @@ export function MidiaAudioTab({
         </Text>
       ) : (
         <MicrofoneButton
-          // No-op: a transcricao chega mas e ignorada nesta aba. Em
-          // sprint futura, refactor adiciona prop transcribe? para
-          // pular o pipeline inteiro.
-          onTextoTranscrito={() => undefined}
+          // Q5.1: transcricao migrou pro TranscreverButton separado.
+          // Aqui na aba de audio do MidiaPicker so faz sentido gravar
+          // mesmo (mantém .m4a no Vault).
           onAudioGravado={(relPath) => {
             setUltimoPath(relPath);
             const midia: MidiaAudio = { tipo: 'audio', path: relPath };

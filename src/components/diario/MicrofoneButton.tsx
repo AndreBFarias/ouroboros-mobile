@@ -1,9 +1,16 @@
 // Botao circular de gravacao do diario emocional (Tela 18, M06.5).
-// Press-and-hold inicia captura de audio + transcricao on-device;
-// release encerra. Estados: idle | requesting | recording |
-// transcribing. Idle = circulo cyan vazio com icone Mic; recording
-// = pulsa + mostra contador 'mm:ss' e waveform abaixo do botao;
-// transcribing = spinner sutil.
+// Press-and-hold inicia captura de audio (.m4a); release encerra.
+// Estados: idle | requesting | recording. Idle = circulo cyan vazio
+// com icone Mic; recording = pulsa + mostra contador 'mm:ss' e
+// waveform abaixo do botao.
+//
+// Q5.1 (Onda Q, 2026-05-12 noite): transcricao live REMOVIDA deste
+// componente — SpeechRecognizer Android nao consegue compartilhar o
+// microfone com Audio.Recording (sempre aborta com error=aborted).
+// A transcricao ao vivo passou a viver no TranscreverButton.tsx,
+// disparado por um botao separado ao lado deste. Decisao durol do
+// dono 2026-05-12: dois botoes claros (Gravar audio | Transcrever)
+// em vez de um botao tentando os dois ao mesmo tempo.
 //
 // Limite 60s: timer interno forca stop ao atingir, dispara toast.
 //
@@ -31,38 +38,25 @@ import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
-import { useSettings } from '@/lib/stores/settings';
 import {
   startRecording,
   stopRecording,
   saveRecordingToVault,
-  atualizarCompanionAudioComTranscricao,
   discardRecording,
 } from '@/lib/diario/recordAudio';
-import {
-  transcribeStream,
-  cancel as cancelTranscribe,
-} from '@/lib/diario/transcribe';
-import {
-  requestMicPermission,
-  MicPermissionError,
-} from '@/lib/diario/permissions';
+import { requestMicPermission } from '@/lib/diario/permissions';
 import { comTimeout } from '@/lib/util/comTimeout';
 import type { Audio } from 'expo-av';
 
 const LIMITE_MS = 60_000; // 60 segundos
 const TICK_MS = 250; // refresh do contador e do waveform
 
-type Estado = 'idle' | 'requesting' | 'recording' | 'transcribing';
+type Estado = 'idle' | 'requesting' | 'recording' | 'salvando';
 
 export interface MicrofoneButtonProps {
-  // Caller recebe texto transcrito e decide se faz append ou
-  // sobrescreve. Convencao M06.5: append (preserva digitacao
-  // anterior do usuario).
-  onTextoTranscrito: (texto: string) => void;
-  // Caller recebe path relativo (ex.: 'assets/2026-04-29-1845-3f2a.m4a')
+  // Caller recebe path relativo (ex.: 'm4a/audio-2026-05-12-3f2a.m4a')
   // para salvar em meta.audio. Se gravacao for descartada (erro
-  // de permissao, < 1s), nao chama esse callback.
+  // de permissao, < 500ms), nao chama esse callback.
   onAudioGravado: (relPath: string) => void;
 }
 
@@ -87,14 +81,10 @@ function meteringParaAmplitude(metering: number | undefined): number {
 }
 
 export function MicrofoneButton({
-  onTextoTranscrito,
   onAudioGravado,
 }: MicrofoneButtonProps) {
   const toast = useToast();
   const vaultRoot = useVault((s) => s.vaultRoot);
-  const ocultarTranscricoes = useSettings(
-    (s) => s.privacidade.ocultarTranscricoes
-  );
 
   const [estado, setEstado] = useState<Estado>('idle');
   const [tempoMs, setTempoMs] = useState<number>(0);
@@ -109,14 +99,6 @@ export function MicrofoneButton({
   // primeira vez = toast simples, segunda = deep link para Settings
   // (decisao de UX da spec, secao 10).
   const negacoesRef = useRef<number>(0);
-  // Q5 (Onda Q): transcricao LIVE em paralelo a gravacao. A promise
-  // resolve quando cancelTranscribe e' chamado (release do botao) ou
-  // quando o reconhecedor termina sozinho (silencio prolongado). O
-  // ultimo parcial entregue fica em textoLiveRef para reuso no save
-  // do companion .md, evitando dupla chamada a transcribeStream
-  // (que falharia: o modulo nativo nao aceita stop+start imediato).
-  const transcribeLivePromiseRef = useRef<Promise<string> | null>(null);
-  const textoLiveRef = useRef<string>('');
 
   // Limpa timers e listener de status. Idempotente.
   const limparTimers = () => {
@@ -130,10 +112,9 @@ export function MicrofoneButton({
     }
   };
 
-  // Cleanup ao desmontar: aborta gravacao + transcricao + apaga
-  // o .m4a temporario que ficou no cache (lição M06.5 ACHADO 3 do
-  // validador -- usuario sai da tela mid-record nao pode deixar
-  // arquivo orfao acumulando).
+  // Cleanup ao desmontar: aborta gravacao + apaga o .m4a temporario
+  // que ficou no cache (lição M06.5 ACHADO 3 do validador -- usuario
+  // sai da tela mid-record nao pode deixar arquivo orfao acumulando).
   useEffect(() => {
     return () => {
       limparTimers();
@@ -149,7 +130,6 @@ export function MicrofoneButton({
           })
           .catch(() => undefined);
       }
-      cancelTranscribe().catch(() => undefined);
     };
   }, []);
 
@@ -192,17 +172,16 @@ export function MicrofoneButton({
       return;
     }
 
-    setEstado('transcribing');
-    toast.show('Transcrevendo…', 'info');
+    setEstado('salvando');
 
     // I-AUDIO (M-SAVE-AUDIO-VALIDA, 2026-05-07): save com timeout 30s
     // (SAF write em /sdcard/Documents/ pode levar mais em OEMs lentos
-    // tipo MIUI/HyperOS). Decisao de spec: audio salva ANTES de
-    // transcribe — transcribe e' best-effort e nao bloqueia save.
+    // tipo MIUI/HyperOS). Q5.1: companion .md fica sem transcricao
+    // (campo opcional). Usuario pode anexar texto via TranscreverButton
+    // separado ou digitar manualmente na textarea do diario.
     const dataCaptura = new Date();
-    let relPath: string | null = null;
     try {
-      relPath = await comTimeout(
+      const relPath = await comTimeout(
         saveRecordingToVault(stopResult.uri, vaultRoot, dataCaptura),
         30_000
       );
@@ -213,68 +192,6 @@ export function MicrofoneButton({
       const msg = err instanceof Error ? err.message : String(err);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
       console.error('save audio fail', err);
-      setEstado('idle');
-      setTempoMs(0);
-      setAmplitudes([]);
-      return;
-    }
-
-    // Q5 (Onda Q): transcricao live ja rolou em paralelo durante o
-    // recording (disparada em iniciar). Aqui apenas: (a) cancela o
-    // stream caso ainda esteja ativo; (b) aguarda a promise resolver
-    // pra ter o ultimo parcial canonico; (c) usa textoLiveRef como
-    // fallback se a promise nao retornar texto. Evita chamada dupla
-    // a transcribeStream que falhava no modulo nativo (start+stop+
-    // start imediato em < 100ms causa state inconsistente no
-    // SpeechRecognizer Android).
-    try {
-      await cancelTranscribe().catch(() => undefined);
-      const textoDoStream =
-        (await transcribeLivePromiseRef.current?.catch(() => '')) ?? '';
-      transcribeLivePromiseRef.current = null;
-      const texto = textoDoStream || textoLiveRef.current;
-      if (texto && texto.trim().length > 0) {
-        try {
-          await comTimeout(
-            atualizarCompanionAudioComTranscricao(
-              vaultRoot,
-              relPath,
-              dataCaptura,
-              texto
-            ),
-            30_000
-          );
-        } catch {
-          // Falha ao regravar companion com transcricao nao deve
-          // quebrar UX — audio ja esta salvo. Loga silenciosamente.
-        }
-        // Privacidade: quando ocultarTranscricoes esta ativo, parciais
-        // ja foram suprimidos durante a gravacao em iniciar(); aqui
-        // tambem nao chamamos onTextoTranscrito. Audio fica salvo,
-        // companion .md guarda a transcricao no frontmatter (uso
-        // futuro pelo usuario com permissao via Settings toggle).
-        if (!ocultarTranscricoes) {
-          // Ja entregamos parciais durante o recording. Texto final
-          // pode ser ligeiramente diferente (ultimo isFinal=true).
-          // Chamamos so se mudou para nao causar flicker desnecessario.
-          if (texto !== textoLiveRef.current) {
-            onTextoTranscrito(texto);
-          }
-        }
-      }
-    } catch (err) {
-      if (err instanceof MicPermissionError) {
-        negacoesRef.current += 1;
-        if (negacoesRef.current >= 2) {
-          toast.show('Sem permissão de microfone.', 'error');
-          Linking.openSettings().catch(() => undefined);
-        } else {
-          toast.show('Sem permissão de microfone.', 'error');
-        }
-      }
-      // Demais erros de transcribe sao silenciados na UI (audio ja
-      // salvo, toast de sucesso ja exibido). Log para diagnose.
-      console.error('transcribe audio fail (best-effort)', err);
     }
     setEstado('idle');
     setTempoMs(0);
@@ -311,24 +228,6 @@ export function MicrofoneButton({
     setEstado('recording');
     setTempoMs(0);
     haptics.medium().catch(() => undefined);
-
-    // Q5 (Onda Q): dispara transcricao live em paralelo a gravacao.
-    // Best-effort -- erros nao bloqueiam o audio (que ja esta sendo
-    // gravado). Cada parcial entrega texto cumulativo ao caller via
-    // onTextoTranscrito, atualizando o textarea do diario enquanto
-    // o usuario fala. Respeita ocultarTranscricoes (privacidade):
-    // quando ativo, parciais nao vazam para a UI.
-    textoLiveRef.current = '';
-    transcribeLivePromiseRef.current = transcribeStream((parcial) => {
-      textoLiveRef.current = parcial;
-      if (!ocultarTranscricoes) {
-        onTextoTranscrito(parcial);
-      }
-    }).catch(() => {
-      // Falha silenciosa: audio ja esta gravando, companion .md vai
-      // ficar sem transcricao mas o anexo audio persiste no Vault.
-      return '';
-    });
 
     // Listener de status: atualiza amplitudes em background. Nao
     // dispara re-render se o componente ja desmontou (ref vazio).
@@ -379,7 +278,7 @@ export function MicrofoneButton({
         ? 'Solicitando…'
         : estado === 'recording'
           ? formatTimer(tempoMs)
-          : 'Transcrevendo…';
+          : 'Salvando…';
 
   return (
     <View
@@ -389,7 +288,7 @@ export function MicrofoneButton({
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={estado === 'transcribing' || estado === 'requesting'}
+        disabled={estado === 'salvando' || estado === 'requesting'}
         accessibilityRole="button"
         accessibilityLabel={
           estado === 'recording' ? 'parar gravacao' : 'botao gravar audio'

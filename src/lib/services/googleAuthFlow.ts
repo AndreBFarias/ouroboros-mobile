@@ -20,6 +20,16 @@ import { makeRedirectUri } from 'expo-auth-session';
 import envJson from '../../../env.json';
 
 interface EnvOAuth {
+  // Q0 (Onda Q, 2026-05-12): chave canonica e' `android` pra refletir
+  // o tipo do OAuth client no Google Cloud (com.ouroboros.mobile +
+  // SHA-1). Mantemos `installed` como fallback para compat com env.json
+  // exportados em versoes anteriores do projeto.
+  android?: {
+    client_id?: string;
+    project_id?: string;
+    auth_uri?: string;
+    token_uri?: string;
+  };
   installed?: {
     client_id?: string;
     project_id?: string;
@@ -45,14 +55,15 @@ export interface ClientIdInfo {
   ambiente: 'expo-go' | 'standalone';
 }
 
-// Le o client_id do env.json. Lanca erro claro se ausente para que
-// a UI possa mostrar fallback "Configure env.json" em vez de crash
-// generico.
+// Le o client_id do env.json. Prefere `android` (canonico pos-Q0
+// 2026-05-12); cai em `installed` legado se necessario. Lanca erro
+// claro se ambos ausentes para que a UI possa mostrar fallback
+// "Configure env.json" em vez de crash generico.
 export function getClientIdFromEnv(): string {
-  const cid = env.installed?.client_id;
+  const cid = env.android?.client_id ?? env.installed?.client_id;
   if (typeof cid !== 'string' || cid.length === 0) {
     throw new Error(
-      'env.json ausente ou sem installed.client_id. Veja docs/SETUP-OAUTH-GOOGLE.md.'
+      'env.json ausente ou sem android.client_id. Veja docs/SETUP-OAUTH-GOOGLE.md.'
     );
   }
   return cid;

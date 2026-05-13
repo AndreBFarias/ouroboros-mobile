@@ -1,14 +1,13 @@
-// Testes do MicrofoneButton (M06.5). Mocka expo-av e
-// expo-speech-recognition via jest.mock para isolar o componente
-// do hardware. Verifica:
+// Testes do MicrofoneButton (M06.5). Mocka expo-av via jest.mock
+// para isolar o componente do hardware. Verifica:
 //   - render no estado idle expoe label 'Gravar audio'
 //   - pressIn dispara startRecording quando permissao concedida
-//   - pressOut dispara stopRecording + saveRecordingToVault +
-//     transcribeStream e callbacks chegam ao caller
-// Migracao INTEGRACAO-M15: trocou @react-native-voice/voice
-// (deprecated, conflito de manifest no Gradle 8) por
-// expo-speech-recognition. Mock simula addListener('result',cb) para
-// disparar o evento isFinal=true logo apos start().
+//   - pressOut dispara stopRecording + saveRecordingToVault e
+//     callback onAudioGravado chega ao caller
+//
+// Q5.1 (Onda Q, 2026-05-12): transcricao live foi extraida pra
+// TranscreverButton.tsx (botao separado). MicrofoneButton ficou
+// audio-only — mocks de expo-speech-recognition removidos.
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { ToastProvider } from '@/components/ui';
 
@@ -46,56 +45,6 @@ jest.mock('expo-av', () => ({
   },
 }));
 
-// Mock do expo-speech-recognition: addListener('result', cb)
-// captura callback e o teste o invoca após start() com texto fixo.
-// Mantém compatibilidade com mocks anteriores via voiceListeners
-// (renomeado para speechListeners).
-const speechListeners: Record<string, ((e: unknown) => void) | null> = {
-  result: null,
-  error: null,
-  end: null,
-};
-
-jest.mock('expo-speech-recognition', () => ({
-  __esModule: true,
-  ExpoSpeechRecognitionModule: {
-    start: jest.fn(() => {
-      // Simula entrega assíncrona do resultado em microtask, no
-      // formato do expo-speech-recognition (results[].transcript +
-      // isFinal=true). Logo após dispara 'end' para fechar a Promise.
-      setTimeout(() => {
-        speechListeners.result?.({
-          isFinal: true,
-          results: [{ transcript: 'oi diario hoje foi bom' }],
-        });
-        speechListeners.end?.(undefined);
-      }, 0);
-    }),
-    stop: jest.fn(),
-    abort: jest.fn(),
-    requestPermissionsAsync: jest.fn(() =>
-      Promise.resolve({ granted: true })
-    ),
-    isRecognitionAvailable: jest.fn(() => true),
-    addListener: jest.fn(
-      (eventName: string, cb: (e: unknown) => void) => {
-        speechListeners[eventName] = cb;
-        return {
-          remove: () => {
-            speechListeners[eventName] = null;
-          },
-        };
-      }
-    ),
-    removeAllListeners: jest.fn(() => {
-      speechListeners.result = null;
-      speechListeners.error = null;
-      speechListeners.end = null;
-    }),
-  },
-  useSpeechRecognitionEvent: jest.fn(),
-}));
-
 // Mock do FileSystem para isolar o saveRecordingToVault. O teste
 // nao verifica I/O real; so confirma que copyAsync foi chamado.
 // M-VAULT-MD-FIX-diario-audio (2026-05-04): tambem precisa
@@ -126,24 +75,15 @@ import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
 
 beforeEach(() => {
   jest.clearAllMocks();
-  speechListeners.result = null;
-  speechListeners.error = null;
-  speechListeners.end = null;
 });
 
-function renderComProviders(
-  onTextoTranscrito = jest.fn(),
-  onAudioGravado = jest.fn()
-) {
+function renderComProviders(onAudioGravado = jest.fn()) {
   const utils = render(
     <ToastProvider>
-      <MicrofoneButton
-        onTextoTranscrito={onTextoTranscrito}
-        onAudioGravado={onAudioGravado}
-      />
+      <MicrofoneButton onAudioGravado={onAudioGravado} />
     </ToastProvider>
   );
-  return { ...utils, onTextoTranscrito, onAudioGravado };
+  return { ...utils, onAudioGravado };
 }
 
 describe('MicrofoneButton render', () => {
@@ -170,9 +110,8 @@ describe('MicrofoneButton ciclo press/release', () => {
     expect(mockStartAsync).toHaveBeenCalled();
   });
 
-  it('pressOut encerra gravacao e dispara callbacks com texto + path', async () => {
-    const { getByLabelText, onTextoTranscrito, onAudioGravado } =
-      renderComProviders();
+  it('pressOut encerra gravacao e dispara callback com path do audio', async () => {
+    const { getByLabelText, onAudioGravado } = renderComProviders();
     const botao = getByLabelText('botao gravar audio');
 
     await act(async () => {
@@ -183,8 +122,7 @@ describe('MicrofoneButton ciclo press/release', () => {
 
     await act(async () => {
       fireEvent(botao, 'pressOut');
-      // Drena Promise.all (saveRecordingToVault + transcribeStream).
-      // O Voice dispara onSpeechResults via setTimeout(0).
+      // Drena saveRecordingToVault.
       for (let i = 0; i < 10; i++) await Promise.resolve();
       await new Promise((r) => setTimeout(r, 0));
       for (let i = 0; i < 10; i++) await Promise.resolve();
@@ -195,6 +133,5 @@ describe('MicrofoneButton ciclo press/release', () => {
     expect(onAudioGravado).toHaveBeenCalledWith(
       expect.stringMatching(/^m4a\/audio-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.m4a$/)
     );
-    expect(onTextoTranscrito).toHaveBeenCalledWith('oi diario hoje foi bom');
   });
 });

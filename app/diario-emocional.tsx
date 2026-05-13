@@ -43,6 +43,7 @@ import {
 import { OuroborosLoader } from '@/components/brand';
 import { EmocaoChips } from '@/components/diario/EmocaoChips';
 import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
+import { TranscreverButton } from '@/components/diario/TranscreverButton';
 import { MidiaPicker } from '@/components/midia/MidiaPicker';
 import { colors, spacing } from '@/theme/tokens';
 import { springs } from '@/lib/motion';
@@ -159,6 +160,15 @@ export default function DiarioEmocional() {
   const router = useRouter();
   const toast = useToast();
   const sheetRef = useRef<BottomSheetRef>(null);
+  // Q6 fix (Onda Q): garante router.back() chamado uma unica vez por
+  // sessao do sheet. Save + onChange(-1) ambos disparam back, mas a
+  // 2a chamada falhava com "GO_BACK was not handled by any navigator".
+  const backCalledRef = useRef(false);
+  const goBackOnce = () => {
+    if (backCalledRef.current) return;
+    backCalledRef.current = true;
+    router.back();
+  };
   const params = useLocalSearchParams<{ modo?: string }>();
   const modoBruto = Array.isArray(params.modo) ? params.modo[0] : params.modo;
   const modoParam: ModoParam = isModoParam(modoBruto) ? modoBruto : 'vitoria';
@@ -389,7 +399,6 @@ export default function DiarioEmocional() {
       await comTimeout(saveDiario(validacao.data, body, vaultRoot));
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('diarioEmocional');
-      sheetRef.current?.close();
       if (modo === 'vitoria') {
         // anonimato-allow: substantivo comum (conquista) na frase abaixo.
         // Conquista registrada — respeita Settings.somVibracao.vitoria.
@@ -402,7 +411,12 @@ export default function DiarioEmocional() {
       } else {
         toast.show('Diário salvo.', 'success');
       }
-      router.back();
+      // Q6 fix (Onda Q, 2026-05-12): usa goBackOnce ref pra evitar
+      // dupla chamada de router.back() (save → close → onChange(-1)).
+      // A 2a chamada falhava com "GO_BACK was not handled by any
+      // navigator". Fecha o sheet (UX de close anim) + volta uma vez.
+      goBackOnce();
+      sheetRef.current?.close();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
@@ -425,7 +439,7 @@ export default function DiarioEmocional() {
         index={0}
         enablePanDownToClose
         onChange={(idx) => {
-          if (idx === -1) router.back();
+          if (idx === -1) goBackOnce();
         }}
       >
       <BottomSheetScrollView
@@ -524,20 +538,35 @@ export default function DiarioEmocional() {
           />
 
           {permitirAudio ? (
-            <MicrofoneButton
-              onTextoTranscrito={(transcrito) => {
-                // Append: preserva digitacao previa do usuario.
-                // Inclui espaco se ja havia texto, evitando colagem
-                // "tudoJunto". Quebra de linha em frase nova.
-                setTexto((prev) => {
-                  const limpo = transcrito.trim();
-                  if (limpo.length === 0) return prev;
-                  if (prev.length === 0) return limpo;
-                  return `${prev.trimEnd()} ${limpo}`;
-                });
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: spacing.lg,
+                justifyContent: 'center',
+                alignItems: 'flex-start',
               }}
-              onAudioGravado={(relPath) => setAudioPath(relPath)}
-            />
+              accessibilityLabel="botoes de audio e transcricao"
+            >
+              <MicrofoneButton
+                onAudioGravado={(relPath) => setAudioPath(relPath)}
+              />
+              {/* Q5.1: botao separado pra transcrever fala em texto
+                  sem gravar audio (evita conflito de microfone com o
+                  expo-av Audio.Recording). */}
+              <TranscreverButton
+                onTextoTranscrito={(transcrito) => {
+                  // Append: preserva digitacao previa do usuario.
+                  // Inclui espaco se ja havia texto, evitando colagem
+                  // "tudoJunto".
+                  setTexto((prev) => {
+                    const limpo = transcrito.trim();
+                    if (limpo.length === 0) return prev;
+                    if (prev.length === 0) return limpo;
+                    return `${prev.trimEnd()} ${limpo}`;
+                  });
+                }}
+              />
+            </View>
           ) : null}
 
           <Textarea
