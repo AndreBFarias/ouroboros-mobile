@@ -1,10 +1,10 @@
 # Build APK Android local sem EAS Cloud (Q17 Onda Q, 2026-05-13).
 # Trigger manual (workflow_dispatch) ou em push de tag v*-alpha-*.
 #
-# Limitacao OAuth: APK gerado usa debug keystore. SHA-1 nao bate com
-# Android OAuth client cadastrado em Google Cloud Console. OAuth
-# Google retornara erro 400 nesse APK; resolvido em sprint futura
-# que armazena keystore EAS como secret encriptado.
+# Limitacao OAuth: APK gerado usa debug keystore + env.json.example
+# stub. OAuth Google retornara erro 400 nesse APK (esperado).
+# Resolvido em sprint futura: armazenar env.json real + keystore
+# EAS como GitHub Secrets encriptados.
 name: Build Android APK
 
 on:
@@ -43,6 +43,18 @@ jobs:
 
       - name: Install npm deps
         run: npm ci --legacy-peer-deps
+
+      - name: Provision env.json
+        env:
+          ENV_JSON_BASE64: ${{ secrets.ENV_JSON_BASE64 }}
+        run: |
+          if [ -n "$ENV_JSON_BASE64" ]; then
+            echo "Using ENV_JSON_BASE64 secret (OAuth canonico)"
+            echo "$ENV_JSON_BASE64" | base64 -d > env.json
+          else
+            echo "Falling back to env.json.example (OAuth nao funcional nesse APK)"
+            cp env.json.example env.json
+          fi
 
       - name: Cache Gradle
         uses: actions/cache@v4
