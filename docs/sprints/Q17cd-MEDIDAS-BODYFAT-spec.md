@@ -1,7 +1,11 @@
 # Q17.c.d — Campo `gordura` em MedidasSchema + hook `escreverBodyFatEmHC`
 
-> **Tamanho:** Pequeno (1h)
-> **Bloqueia v1.0.0?** Não — extensão opcional do schema medidas.
+> **Status:** [ok] entregue 2026-05-13 tarde (sessão validação live).
+> Smoke verde 195 suítes / 1932 testes (era 1927 baseline, +5 testes
+> novos cobrindo gordura optional/range/zero/máx 100). Drift contract
+> auditou 174 campos (era 173). UI tela 12 ganhou input 10º
+> "Gordura corporal %" entre peso e cintura.
+> **Tamanho:** Pequeno (1h) — fechado em ~50min.
 > **Pré-requisitos:** Q17.c.b entregue (hook HC peso plugado em
 > `escreverMedida`).
 

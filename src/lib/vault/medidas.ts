@@ -20,7 +20,7 @@ import {
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
-import { escreverPesoEmHC } from '@/lib/health/sync';
+import { escreverPesoEmHC, escreverBodyFatEmHC } from '@/lib/health/sync';
 import { useSettings } from '@/lib/stores/settings';
 
 // Período de filtro suportado pela Tela 13. '30d' = ultimos 30 dias,
@@ -98,7 +98,7 @@ export async function listarMedidas(
   return filtradas;
 }
 
-// Atalho usado pela Tela 12 para pre-preencher os 9 inputs com o
+// Atalho usado pela Tela 12 para pre-preencher os 10 inputs com o
 // ultimo snapshot conhecido. Retorna null se não ha registro algum.
 export async function lerUltimaMedida(
   vaultRoot: string
@@ -129,13 +129,17 @@ export async function escreverMedida(
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<Medida>(uri, parsed.data, body);
 
-  // Q17.c.b: sync opt-in para Health Connect. Best-effort — falha aqui
-  // nao impacta o caller (medida ja persistiu no Vault). Apenas peso
-  // tem mapping canonico em HC; demais medidas corporais ficam locais.
+  // Q17.c.b / Q17.c.d: sync opt-in para Health Connect. Best-effort —
+  // falha aqui nao impacta o caller (medida ja persistiu no Vault).
+  // Peso e gordura corporal tem mapping canonico em HC (WeightRecord
+  // + BodyFatRecord); demais medidas geometricas ficam locais.
   try {
     const habilitado = useSettings.getState().featureToggles.healthConnectSync;
     if (habilitado && typeof parsed.data.peso === 'number') {
       void escreverPesoEmHC(parsed.data.peso, dataDate);
+    }
+    if (habilitado && typeof parsed.data.gordura === 'number') {
+      void escreverBodyFatEmHC(parsed.data.gordura, dataDate);
     }
   } catch {
     // Erros silenciosos por design (path nao-critico).

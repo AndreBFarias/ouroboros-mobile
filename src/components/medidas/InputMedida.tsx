@@ -2,7 +2,7 @@
 //   - Label PT-BR acima ("Peso", "Cintura", ...).
 //   - Campo com fundo bg-alt, borda bg-elev (purple ao focar).
 //   - Placeholder em muted-decor mostrando a SUGESTAO (ultima medida)
-//     ou apenas a unidade "kg" / "cm" quando sem sugestao. Cor
+//     ou apenas a unidade "kg" / "cm" / "%" quando sem sugestao. Cor
 //     muted-decor diferencia visualmente que e sugestao, não valor
 //     real - quando o usuario digita, o texto vira fg normal.
 //   - keyboardType decimal-pad para teclado numerico.
@@ -20,7 +20,7 @@ import { colors } from '@/theme/tokens';
 
 export interface InputMedidaProps {
   label: string;
-  unidade: 'kg' | 'cm';
+  unidade: 'kg' | 'cm' | '%';
   // Valor digitado (string para permitir virgula PT-BR); '' = vazio.
   value: string;
   onChangeText: (next: string) => void;

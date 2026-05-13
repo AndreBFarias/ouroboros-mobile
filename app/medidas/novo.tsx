@@ -1,8 +1,9 @@
-// Tela 12 - Form de medidas corporais. Grid 2 colunas com 9 inputs
-// numericos (peso, cintura, peito, bracos esq/dir, coxas esq/dir,
-// barriga, quadril). Cada input mostra placeholder muted-decor com
-// a ultima medida (sugestao) ou apenas a unidade quando não ha
-// sugestao.
+// Tela 12 - Form de medidas corporais. Grid 2 colunas com 10 inputs
+// numericos (peso, gordura corporal %, cintura, peito, bracos
+// esq/dir, coxas esq/dir, barriga, quadril). Cada input mostra
+// placeholder muted-decor com a ultima medida (sugestao) ou apenas
+// a unidade quando não ha sugestao. Gordura adicionado em Q17.c.d
+// pra fechar trio HC write (peso + body fat + menstruacao).
 //
 // Bloco fotos com 3 botoes 100x100dp (frente / costas / lado), cada
 // um abre expo-image-picker. Estado vazio mostra icone Camera muted-
@@ -57,6 +58,7 @@ type CamposState = Record<MedidaCampo, string>;
 function camposVazios(): CamposState {
   return {
     peso: '',
+    gordura: '',
     cintura: '',
     peito: '',
     braco_esq: '',
@@ -303,7 +305,7 @@ export default function NovaMedida() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Grid 2 cols com 9 inputs */}
+        {/* Grid 2 cols com 10 inputs (Q17.c.d adicionou gordura) */}
         <View style={{ gap: spacing.sm }}>
           {linhas.map((linha, idx) => (
             <View

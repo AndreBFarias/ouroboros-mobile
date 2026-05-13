@@ -1,10 +1,12 @@
 # Q23 — Bump compileSdk/targetSdk 34 → 35 para destravar CI alpha-5
 
-> **Tamanho:** Trivial (15 min)
-> **Bloqueia v1.0.0?** Não — alpha-4 (EAS) já publicado funciona. Mas
-> bloqueia a pipeline CI local (`.github/workflows/build-android-apk.yml`)
-> que assina sem keystore EAS.
-> **Pré-requisitos:** nenhum (sprint cirúrgica).
+> **Status:** [ok] entregue em commit `46bec14` (2026-05-13 00:25 UTC).
+> Spec foi escrita após o fato; achada stale durante validação live
+> 2026-05-13 tarde. `app.json` declara compileSdkVersion 35 +
+> targetSdkVersion 35 via expo-build-properties.
+> **Tamanho original:** Trivial (15 min).
+> **Bloqueia v1.0.0?** Não.
+> **Pré-requisitos:** nenhum.
 
 ## Contexto
 

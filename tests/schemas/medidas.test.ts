@@ -11,6 +11,7 @@ const baseMedida = {
   data: '2026-04-28',
   autor: 'pessoa_a',
   peso: 78.4,
+  gordura: 18.5,
   cintura: 84.0,
   peito: 102.0,
   braco_esq: 33.0,
@@ -27,9 +28,10 @@ const baseMedida = {
 };
 
 describe('MedidasSchema', () => {
-  it('aceita registro completo com 9 medidas', () => {
+  it('aceita registro completo com 10 medidas (Q17.c.d incluiu gordura)', () => {
     const out = MedidasSchema.parse(baseMedida);
     expect(out.peso).toBe(78.4);
+    expect(out.gordura).toBe(18.5);
     expect(out.cintura).toBe(84.0);
     expect(out.fotos).toHaveLength(2);
     expect(out.reflexao).toContain('Dorso');
@@ -98,6 +100,29 @@ describe('MedidasSchema', () => {
     ).toThrow();
   });
 
+  it('aceita registro sem gordura (Q17.c.d optional)', () => {
+    const { gordura: _omit, ...semGordura } = baseMedida;
+    const out = MedidasSchema.parse(semGordura);
+    expect(out.gordura).toBeUndefined();
+  });
+
+  it('rejeita gordura acima de 100% (Q17.c.d)', () => {
+    expect(() =>
+      MedidasSchema.parse({ ...baseMedida, gordura: 105 })
+    ).toThrow();
+  });
+
+  it('rejeita gordura negativa (Q17.c.d)', () => {
+    expect(() =>
+      MedidasSchema.parse({ ...baseMedida, gordura: -2 })
+    ).toThrow();
+  });
+
+  it('aceita gordura 0 (Q17.c.d nonnegative)', () => {
+    const out = MedidasSchema.parse({ ...baseMedida, gordura: 0 });
+    expect(out.gordura).toBe(0);
+  });
+
   it('aceita decimais comuns (78,4 kg)', () => {
     const out = MedidasSchema.parse({
       ...baseMedida,
@@ -126,9 +151,10 @@ describe('MedidasSchema', () => {
 });
 
 describe('MEDIDAS_CAMPOS', () => {
-  it('expoe os 9 campos canonicos na ordem esperada', () => {
+  it('expoe os 10 campos canonicos na ordem esperada (Q17.c.d adicionou gordura apos peso)', () => {
     expect(MEDIDAS_CAMPOS).toEqual([
       'peso',
+      'gordura',
       'cintura',
       'peito',
       'braco_esq',
@@ -150,14 +176,21 @@ describe('MEDIDAS_LABELS', () => {
     expect(MEDIDAS_LABELS.cintura.unidade).toBe('cm');
   });
 
-  it('todos os 9 campos tem label PT-BR com acentuacao quando aplicavel', () => {
+  it('gordura usa unidade % com label PT-BR (Q17.c.d)', () => {
+    expect(MEDIDAS_LABELS.gordura).toEqual({
+      label: 'Gordura corporal',
+      unidade: '%',
+    });
+  });
+
+  it('todos os 10 campos tem label PT-BR com acentuacao quando aplicavel', () => {
     expect(MEDIDAS_LABELS.braco_esq.label).toBe('Braço esquerdo');
     expect(MEDIDAS_LABELS.braco_dir.label).toBe('Braço direito');
     expect(MEDIDAS_LABELS.coxa_esq.label).toBe('Coxa esquerda');
     expect(MEDIDAS_LABELS.coxa_dir.label).toBe('Coxa direita');
   });
 
-  it('cobre todos os 9 campos sem omissoes', () => {
+  it('cobre todos os 10 campos sem omissoes', () => {
     for (const campo of MEDIDAS_CAMPOS) {
       expect(MEDIDAS_LABELS[campo]).toBeDefined();
       expect(MEDIDAS_LABELS[campo].label.length).toBeGreaterThan(0);

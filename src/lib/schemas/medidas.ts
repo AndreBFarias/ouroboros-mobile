@@ -30,13 +30,21 @@ const DataYmd = z
 // "zero literal" precisa fazer escolha explicita).
 const MedidaNumerica = z.number().positive().finite().max(500);
 
+// Percentual 0..100 (campo gordura corporal). Faixa distinta do
+// MedidaNumerica porque a unidade e' adimensional e o limite max e'
+// 100 (acima disso e' lixo). Q17.c.d (2026-05-13).
+const MedidaPercentual = z.number().nonnegative().finite().max(100);
+
 export const MedidasSchema = z.object({
   tipo: z.literal('medidas'),
   data: DataYmd,
   autor: PessoaAutorSchema,
-  // Nove medidas canonicas conforme docs/BRIEFING.md seção 7.
+  // Nove medidas canonicas conforme docs/BRIEFING.md seção 7
+  // mais "gordura" (% body fat) adicionada em Q17.c.d para fechar
+  // o trio HC write (peso + body fat + menstruacao).
   // Todas opcionais: usuario registra so o que quer naquela semana.
   peso: MedidaNumerica.optional(),
+  gordura: MedidaPercentual.optional(),
   cintura: MedidaNumerica.optional(),
   peito: MedidaNumerica.optional(),
   braco_esq: MedidaNumerica.optional(),
@@ -61,6 +69,7 @@ export type Medida = z.infer<typeof MedidasSchema>;
 // com .map(MEDIDAS_CAMPOS) garantindo ordem estavel.
 export const MEDIDAS_CAMPOS = [
   'peso',
+  'gordura',
   'cintura',
   'peito',
   'braco_esq',
@@ -75,8 +84,12 @@ export type MedidaCampo = (typeof MEDIDAS_CAMPOS)[number];
 
 // Metadata de exibicao por campo: rotulo PT-BR, unidade. Mantida
 // próxima do schema para evitar drift entre tela e modelo.
-export const MEDIDAS_LABELS: Record<MedidaCampo, { label: string; unidade: 'kg' | 'cm' }> = {
+export const MEDIDAS_LABELS: Record<
+  MedidaCampo,
+  { label: string; unidade: 'kg' | 'cm' | '%' }
+> = {
   peso: { label: 'Peso', unidade: 'kg' },
+  gordura: { label: 'Gordura corporal', unidade: '%' },
   cintura: { label: 'Cintura', unidade: 'cm' },
   peito: { label: 'Peito', unidade: 'cm' },
   braco_esq: { label: 'Braço esquerdo', unidade: 'cm' },

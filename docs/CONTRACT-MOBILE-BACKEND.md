@@ -356,6 +356,7 @@ medidaRef: 2026-05-12
 | `data` | `YYYY-MM-DD` | sim | |
 | `autor` | `pessoa_a` \| `pessoa_b` | sim | Nunca `ambos`. |
 | `peso` / `cintura` / `peito` / `braco_esq` / `braco_dir` / `coxa_esq` / `coxa_dir` / `barriga` / `quadril` | número >0..500 | não | kg para peso, cm para o resto. |
+| `gordura` | número 0..100 | não | Percentual de gordura corporal (Q17.c.d). Espelhado em HC `BodyFatRecord`. |
 | `fotos` | string[] | não | Default `[]`. Paths relativos. |
 | `reflexao` | string | não | Texto livre. |
 

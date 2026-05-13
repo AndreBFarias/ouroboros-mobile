@@ -55,6 +55,7 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.5,medidas,1,data,YYYY-MM-DD,sim,
 5.5,medidas,1,autor,pessoa_a` | `pessoa_b,sim,Nunca `ambos`.
 5.5,medidas,1,peso` / `cintura` / `peito` / `braco_esq` / `braco_dir` / `coxa_esq` / `coxa_dir` / `barriga` / `quadril,número >0..500,não,"kg para peso, cm para o resto."
+5.5,medidas,1,gordura,número 0..100,não,Percentual de gordura corporal (Q17.c.d). Espelhado em HC `BodyFatRecord`.
 5.5,medidas,1,fotos,string[],não,Default `[]`. Paths relativos.
 5.5,medidas,1,reflexao,string,não,Texto livre.
 5.6,exercicio,1,_schema_version,inteiro,sim (escrita),
