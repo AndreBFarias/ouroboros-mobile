@@ -5,6 +5,25 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Q18.b — Player de mídia integrado em detalhe + executor + galeria (2026-05-13)
+
+- `ExercicioRotinaSchema.gif` agora aceita string opcional (snapshot
+  do path da mídia no momento de criar/editar a rotina). Retro-compat
+  preservado para rotinas anteriores que não tinham o campo.
+- `app/exercicios/[slug].tsx` (detalhe do exercício) — bloco GIF
+  full-width legado (Image inline + fallback Dumbbell) substituído
+  por `<MidiaExecucaoPlayer path={exercicio.gif} size="lg" />`.
+- `app/treinos/executar/[slug].tsx` — thumbnail 96×96 ao lado do nome
+  do exercício atual no card "Exercício N/M" (`size="sm"`).
+- `src/components/exercicios/CardGaleria.tsx` — prop `gifUri` (resolvida
+  pelo caller) substituída por path resolvido internamente via
+  `useVault`. Layout 1:1 responsivo mantido inline (incompatível com
+  size fixo 96×96 do Player canônico). Callers (`app/exercicios/index.tsx`
+  e `src/components/screens/MemoriasExerciciosTab.tsx`) perdem o helper
+  `resolveGifUri` que ficou morto.
+- 1 teste novo em `tests/lib/schemas/rotina.test.ts` cobrindo
+  `gif: optional` (1903 verde, baseline 1902).
+
 ### Q17.d — Bloco "Importados de Conexão Saúde" em Evolução (2026-05-13)
 
 - Novo hook `useHealthConnectResumo` em `src/lib/hooks/` consome
