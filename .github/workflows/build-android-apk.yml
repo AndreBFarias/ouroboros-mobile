@@ -144,11 +144,24 @@ jobs:
         env:
           APK_PATH: ${{ steps.locate.outputs.apk_path }}
         run: |
-          SHA1=$(keytool -printcert -jarfile "$APK_PATH" | grep -E "^\s*SHA1:" | head -1 | awk '{print $2}')
-          EXPECTED="E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C"
-          echo "APK SHA-1: $SHA1"
-          echo "Expected:  $EXPECTED"
-          if [ "$SHA1" != "$EXPECTED" ]; then
+          # APKs v2/v3-signed nao funcionam com keytool -printcert -jarfile.
+          # Usar apksigner canonico (build-tools/*).
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::apksigner nao encontrado em $ANDROID_HOME/build-tools"
+            exit 1
+          fi
+          echo "Using apksigner: $APKSIGNER"
+          CERTS_OUT=$("$APKSIGNER" verify --print-certs "$APK_PATH")
+          echo "$CERTS_OUT"
+          # Output formato: "Signer #1 certificate SHA-1 digest: <hex sem :>"
+          SHA1_HEX=$(echo "$CERTS_OUT" | grep -i "SHA-1 digest:" | head -1 | awk '{print $NF}')
+          EXPECTED="e449c8b3b489f92669aa311c38814344d37db38c"
+          # Normaliza pra lowercase sem separador
+          SHA1_NORM=$(echo "$SHA1_HEX" | tr '[:upper:]' '[:lower:]')
+          echo "APK SHA-1 hex: $SHA1_NORM"
+          echo "Expected hex:  $EXPECTED"
+          if [ "$SHA1_NORM" != "$EXPECTED" ]; then
             echo "::error::SHA-1 mismatch entre APK e keystore EAS canonico"
             exit 1
           fi
