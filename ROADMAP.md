@@ -9,6 +9,70 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+## Onda Q — pré v1.0.0 (2026-05-11 a 2026-05-13)
+
+Maratona de fixes de UX + features pré-release final. Resposta a bugs
+reportados em validação live no Xiaomi 2312DRAABG HyperOS + pedidos
+do dono. Validações via dev-client + Metro live reload + adb tap por
+bounds canônicos.
+
+Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (6 sessões registradas).
+
+| # | Sprint | Commit | Status |
+|---|---|---|---|
+| Q0 | OAuth Google Calendar (scope `calendar.events.readonly` registrado, env.json `android` client) | `557319f` + `c6abaa5` + `cee0d17` | `[ok]` |
+| Q1 | Rename app → "Ouroboros" | `557319f` | `[ok]` |
+| Q2 | Recap visível na Home (5 iterações, BotaoRecap inline) | `557319f` | `[ok]` |
+| Q3 | MenuLateral `springs.smooth` (animação sóbria) | `557319f` | `[ok]` |
+| Q4 | FABs unificados em 64dp | `557319f` | `[ok]` |
+| Q5.1 | TranscreverButton separado do MicrofoneButton (resolve aborto de mic compartilhado) | `c6abaa5` | `[ok]` |
+| Q5.2 | Speech-recognition `continuous=true` para fala longa | `2edbc98` | `[ok]` |
+| Q6 | Ref guard `goBackOnce()` no diário (evita `GO_BACK was not handled`) | `c6abaa5` | `[ok]` |
+| Q7 | Sheet câmera "Registrar momento" com retry 800ms (cobre A30) | `557319f` | `[ok]` |
+| Q8 | Ciclo persistência — simetria save/load via `autorPadrao` | `47f5564` | `[ok]` |
+| Q9 | Galeria unificada `/galeria` (Vault Explorer) | `3f919f5` | `[ok]` |
+| Q10 | Share Intent expandido — Pix/boleto/extrato regex classifier | `7d3332a` | `[ok]` |
+| Q11.a | Schema Rotina + CRUD vault + rotas `/rotinas` | `6d96ae4` | `[ok]` |
+| Q11.b | SeletorRotina integrado no SheetNovoTreino + modal "Substituir treino atual?" | `6d96ae4` | `[ok]` |
+| Q11.c | Executor de treino com timer descanso ajustável | `2edbc98` | `[ok]` |
+| Q12 | Bridge ETL Mobile↔Backend (`_schema_version: 1` em todos writers) | `245954f` | `[ok]` |
+| Q14 | Entry "Rotinas" no MenuLateral (Utilitários, Dumbbell ícone) | `2edbc98` | `[ok]` |
+| Q15 | SeletorRotina fecha SheetNovoTreino antes de abrir (anti-empilhamento) | `2edbc98` | `[ok]` |
+| Q17.a | Setup Health Connect — pacote + AndroidManifest + tela `/settings/integracoes` + rationale activity | `1fcbaf5` | `[ok]` |
+| Q17.b | `lib/health/sync.ts` — read/write ExerciseSession + Weight + BodyFat + MenstruationFlow + Steps | `cee0d17` | `[ok]` |
+| Q17.c | Toggle `healthConnectSync` em settings + hook em saveTreino + entry em `/settings/index` | `cee0d17` | `[ok]` |
+| Q18 | `MidiaExecucaoPlayer` (player GIF/MP4/JPG reusável; integração no detalhe/executor pendente Q18.b) | `1fcbaf5` | `[ok parcial]` |
+| Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` esqueleto (form completo em Q19.b) | `1fcbaf5` | `[ok parcial]` |
+| Q20 | Share Pix/boleto/extrato — spec runtime validation | `ff20d2c` (spec) | `[spec]` |
+| Q21 | ETL unificação Mobile↔Backend Python — auditoria contrato | `ff20d2c` (spec) | `[spec]` |
+
+**Releases gerados:**
+
+| Versão | Tipo | Commit | Status |
+|---|---|---|---|
+| `v1.0.0-alpha-4` | EAS preview | `a1dd3c9` | publicado em GitHub Releases |
+| `v1.0.0-alpha-5` | GitHub Actions local | `26dbf85` | build em andamento |
+
+**Pendências documentadas:**
+- **Q17.e** — Keystore EAS encriptado em GitHub Secrets para OAuth
+  funcionar em APKs gerados pelo workflow local (SHA-1 canônico
+  do Cloud Console).
+- **Q18.b** — Integração visual do `MidiaExecucaoPlayer` no
+  detalhe `/exercicios/<slug>` e no executor `app/treinos/executar/<slug>`.
+- **Q19.b** — Form completo de criação/edição de Grupo (multi-select
+  de rotinas) + botão "Iniciar treino" com sheet "Qual treino hoje?".
+- **Q22** — Sub-sprints Q17.d (UI evolução com dados HC importados),
+  Q17.c.b/c (hooks save em Medida + Ciclo).
+
+**Specs detalhadas das sprints pendentes:**
+- [`docs/sprints/Q17-HEALTH-CONNECT-spec.md`](docs/sprints/Q17-HEALTH-CONNECT-spec.md)
+- [`docs/sprints/Q18-EXERCICIOS-COM-GIF-spec.md`](docs/sprints/Q18-EXERCICIOS-COM-GIF-spec.md)
+- [`docs/sprints/Q19-GRUPOS-EXERCICIOS-spec.md`](docs/sprints/Q19-GRUPOS-EXERCICIOS-spec.md)
+- [`docs/sprints/Q20-SHARE-PIX-VALIDACAO-spec.md`](docs/sprints/Q20-SHARE-PIX-VALIDACAO-spec.md)
+- [`docs/sprints/Q21-ETL-UNIFICACAO-spec.md`](docs/sprints/Q21-ETL-UNIFICACAO-spec.md)
+
+---
+
 ## V4.0.2 — Onda E (2026-05-09 madrugada): vault HyperOS-proof + BottomSheet New Arch + saves E2E
 
 Resposta direta ao bug do APK alpha-2 (vault freeze no celular real).

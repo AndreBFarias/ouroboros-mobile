@@ -248,6 +248,40 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Recap (M36) consumirá esse vínculo agregando conquistas
   textuais com snapshots corporais por período.
 
+### 3.7 Integração Health Connect Android — Q17 (Onda Q, 2026-05-13)
+
+- App reconhecido em "Conexão Saúde" do Android nativo (Health
+  Connect). Listado em "Apps conectados" quando o usuário aceita
+  permissões.
+- Pacote: `react-native-health-connect@^3.5.0` via Expo Config Plugin.
+- Permissões declaradas em `app.json android.permissions`:
+  - `READ_STEPS`
+  - `READ_EXERCISE` + `WRITE_EXERCISE`
+  - `READ_WEIGHT` + `WRITE_WEIGHT`
+  - `READ_BODY_FAT` + `WRITE_BODY_FAT`
+  - `READ_HEART_RATE`
+  - `READ_SLEEP`
+  - `READ_MENSTRUATION` + `WRITE_MENSTRUATION`
+- Intent-filter `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`
+  aponta para `/_internal/health-rationale` (rationale UI explicando
+  uso de cada tipo, ADR-0007 zero rede).
+- Tela `/settings/integracoes`:
+  - Card "Conexão Saúde (Android)" com status SDK (Disponível /
+    Atualização necessária / Indisponível).
+  - Botão "Conectar" abre sheet de permissões do sistema.
+  - Após conectar: lista de tipos permitidos + botões "Abrir Conexão
+    Saúde" e "Desconectar".
+- Toggle `settings.featureToggles.healthConnectSync` (default `false`)
+  liga sync automático Vault→HC:
+  - `saveTreino` grava `ExerciseSessionRecord` (best-effort).
+  - Hooks futuros (Q17.c.b/c) escrevem `WeightRecord`,
+    `BodyFatRecord`, `MenstruationFlowRecord` quando salvar Medida/Ciclo.
+- Sync reverso (HC → Ouroboros): `lib/health/sync.ts` expõe helpers
+  `sincronizarTreinosDeHC`, `sincronizarPassosDeHC`,
+  `sincronizarPesoDeHC` para Saúde Física → Evolução consumir
+  registros externos (caminhada Mi Fit, peso balança inteligente, etc.).
+  UI dedicada entra em Q17.d.
+
 ## 4. Exercícios — M13 (Telas 02, 07, 08)
 
 - Galeria de exercícios cadastrados (CRUD).
@@ -255,23 +289,44 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   descrição.
 - Detalhe: histórico de uso + estatísticas.
 
-## 4.5 Rotinas de Treino — M-ROTINA-TREINO (proposta)
+## 4.5 Rotinas de Treino — Q11.a+b+c (Onda Q 2026-05-12, entregue)
 
-- Template reutilizável com nome + cor (6 chips Dracula) +
-  frequência semanal informativa + lista ordenada de exercícios
-  (séries × reps_alvo × carga_kg + observação).
-- CRUD em `/rotinas` (lista, novo, detalhe/edição), com **soft
-  delete** (arquivar — sessões antigas continuam apontando).
-- Selecionável no `SheetNovoTreino` via `<SeletorRotina>` no topo
-  do form. Ao escolher, `sessaoFromRotina()` pré-preenche
-  exercícios, séries, reps, carga.
+- Template reutilizável com nome + descrição opcional + lista
+  ordenada de exercícios (séries × reps × carga_kg + descanso_seg
+  + observação). Cap 20 exercícios.
+- `ExercicioRotinaSchema.reps` é string livre (`"12"`, `"8-10"`,
+  `"amrap"`, `"ate falha"`); `sessaoFromRotina` converte para number
+  via piso de faixa + fallback 10.
+- CRUD em `/rotinas` (`index`, `novo`, `[slug]`) com filtro por
+  autor (`pessoa_a` vê só rotinas próprias). Slug único garantido
+  via `slugifyTitulo` + `sufixoRandom` (50 tentativas).
+- Selecionável no `SheetNovoTreino` via `<SeletorRotina>` em 2º
+  BottomSheet (Q15: sheet de baixo fecha antes de abrir o de cima,
+  anti-empilhamento). Modal "Substituir treino atual?" quando há
+  edição em curso.
 - **Snapshot imutável**: editar rotina NÃO afeta sessões já
-  registradas. Sessão grava cópia dos campos no momento.
-- `exercicio_nome` denormalizado dentro da rotina (cache que
-  evita "exercício deletado" → texto vazio).
-- Cap 20 exercícios por rotina.
-- Persiste em `rotinas/<slug>.md`.
-- Item "Rotinas" no MenuLateral seção "Registrar".
+  registradas. `sessaoFromRotina` retorna cópia mapeada via
+  `.map`.
+- Path canônico H2: `markdown/rotina-<slug>.md` (frontmatter
+  validado com `_schema_version: 1`).
+- Entry "Rotinas" no MenuLateral seção "Utilitários" (Q14).
+- **Executor Q11.c** em `app/treinos/executar/[slug]`:
+  state machine `executando` → `descansando` → `concluido`.
+  Timer regressivo do descanso (default `exercicio.descanso_seg`,
+  ajustável +/-10s, botão "Pular descanso"). Ao concluir todos
+  exercícios, salva uma TreinoSessao no Vault como snapshot imutável.
+  Botão "Iniciar" pill verde no header de `/rotinas/<slug>`.
+
+## 4.6 Grupos de Treino — Q19 (Onda Q 2026-05-13, esqueleto)
+
+- Container que agrupa 1..10 rotinas existentes (Treino A/B/C
+  sob "Treino do Quaresma" sem duplicar dados).
+- Schema `GrupoTreinoSchema` em `src/lib/schemas/grupo_treino.ts`:
+  referência por slug (`rotina_slugs: string[]`), sem embedding.
+- Path canônico: `markdown/grupo-<slug>.md`.
+- CRUD vault em `src/lib/vault/grupo_treino.ts`.
+- Rotas `/grupos/` (index com FAB+, novo stub, detalhe stub) —
+  forms completos + botão "Iniciar treino" entram em Q19.b.
 
 ## 5. Medidas Corporais — M12 (Telas 12, 13)
 
