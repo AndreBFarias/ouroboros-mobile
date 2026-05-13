@@ -236,9 +236,33 @@ pulado.
 - **Reanimated puro**, não Moti (mantém consistência A28).
 - **Ken Burns** via `useSharedValue` controlando `translate` +
   `scale` em loop `withRepeat(withTiming(...))`.
-- **Auto-advance** via `useEffect` + `setTimeout`, cancelável.
-- **Áudio tap-play opcional** via `expo-av Audio.Sound`. Default
-  mute. Botão play discreto no canto.
+- **Auto-advance 5s/slide** (decisão dono 2026-05-13). Via
+  `useEffect` + `setTimeout`, cancelável.
+- **Áudio tap-play opcional por slide** via `expo-av Audio.Sound`.
+  Tap-play é manual por slide; default mute.
+- **Ambient audio toggle em Settings** (decisão dono 2026-05-13).
+  Novo `featureToggles.recapAmbientAudio` em
+  `src/lib/stores/settings.ts`, default `false` (ADR-0005 zero
+  trilha artificial). Quando ON, slideshow toca trilha instrumental
+  CC0 baixinha durante TODO o slideshow (volume 0.3, fade-in/out).
+  Trilha embarcada local em `assets/audio/recap-ambient.mp3`
+  (~30-60s loopable). Item de UI em Configurações: "Trilha sonora
+  durante Memórias" com subtítulo "Toca ambiente baixinho enquanto
+  você revisa a semana."
+- **Paleta vibrante exclusiva ao modo Memórias** (decisão dono
+  2026-05-13). Quebra visual intencional vs cotidiano sóbrio do
+  resto do app. Tokens novos em `src/theme/tokens.ts` sob namespace
+  `colorsMemorias`:
+  - `bg`: gradient animado roxo profundo `#1a0d2e` → magenta
+    `#3a1755` → cyan elétrico `#0f4d6b`, oscilação lenta (8s ciclo).
+  - `fg`: branco quente `#fdf6e3` (não `#f8f8f2` do Dracula base).
+  - `accent`: dourado pálido `#f5d97c` (substitui `--purple` em
+    elementos de destaque tipo barra de progresso e tipografia
+    grande).
+  - Mantém `purple/pink/cyan` originais como cores secundárias
+    pra elementos contextuais (humor, vitória, evento).
+  - Partículas/dots sutis brancos translúcidos animados no fundo
+    (densidade baixa, velocidade lenta — sem "festa").
 - **Gestos** via `react-native-gesture-handler` (já no bundle):
   `Tap.numberOfTaps(1)` zonas esquerda/direita, `LongPress` pausa,
   `Pan` vertical detecta swipe-down dismiss.
@@ -246,6 +270,10 @@ pulado.
   Q24.b.x. Botão "Compartilhar" disabled visual.
 - **Performance**: max 10 slides. Fotos lazy load. Áudio só
   carrega quando tap-play.
+- **Frases**: lista sugerida abaixo é guia. Dono delegou a redação
+  final pro executor (decisão 2026-05-13) — confiança dada,
+  manter ADR-0005 (sentence case, sem exclamação, sem emoji, sem
+  comparativo).
 
 ### Critérios de aceite Q24.b
 
@@ -314,20 +342,17 @@ Achados colaterais previsíveis em Q24.b:
   IG. Requer `react-native-view-shot` + ffmpeg/web canvas.
   Documentar separado quando dono pedir compartilhamento.
 
-## Pontos de UX a confirmar com o dono antes de implementar Q24.b
+## Pontos de UX confirmados pelo dono (2026-05-13)
 
-Spec assume defaults sóbrios alinhados ao ADR-0005, mas há
-escolhas que talvez o dono queira customizar:
-
-1. **Velocidade do auto-advance**: 5s/slide é o spec. Spotify usa
-   3s, Google Photos usa 4-6s. Pode ficar configurável (3/5/8).
-2. **Ambient audio**: spec assume zero trilha sonora (ADR-0005).
-   Dono pode querer mood music sutil opcional (toggle em Settings).
-3. **Cor do gradient**: spec mantém paleta atual (purple/pink/cyan
-   sobre #1f1d2e). Dono pode querer paleta vibrante só no modo
-   Memórias (intuito de quebra com cotidiano).
-4. **Frases**: lista acima é sugestão. Dono pode querer revisar
-   uma a uma. Recomendo levar pra apreciação após Q24.a fechar.
+1. **Auto-advance 5s/slide** — firme, não configurável.
+2. **Ambient audio opcional** — toggle em Settings
+   (`featureToggles.recapAmbientAudio`), default OFF.
+3. **Paleta vibrante exclusiva no modo Memórias** — quebra
+   intencional vs cotidiano. Tokens `colorsMemorias` definidos nas
+   decisões técnicas (roxo profundo → magenta → cyan + dourado
+   pálido + branco quente + partículas).
+4. **Frases delegadas ao executor** — confiança dada. Manter
+   ADR-0005.
 
 ## Estimativa
 
