@@ -1,0 +1,174 @@
+schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
+5.1,humor,1,_schema_version,inteiro,sim (escrita),Q12; valor `1`.
+5.1,humor,1,tipo,literal `'humor',sim,Discriminador.
+5.1,humor,1,data,YYYY-MM-DD,sim,UTC-3.
+5.1,humor,1,autor,pessoa_a` | `pessoa_b,sim,
+5.1,humor,1,humor,inteiro 1..5,sim,Slider.
+5.1,humor,1,energia,inteiro 1..5,sim,Slider.
+5.1,humor,1,ansiedade,inteiro 1..5,sim,Slider.
+5.1,humor,1,foco,inteiro 1..5,sim,Slider.
+5.1,humor,1,medicacao,string,não,Texto livre.
+5.1,humor,1,horas_sono,número 0..24,não,
+5.1,humor,1,tags,string[],não,Default `[]`. Lista fechada em `src/lib/humor/tagsRapidas.ts`.
+5.1,humor,1,frase,string,não,Texto livre.
+5.2,diario_emocional,1,_schema_version,inteiro,sim (escrita),
+5.2,diario_emocional,1,tipo,literal `'diario_emocional',sim,
+5.2,diario_emocional,1,data,ISO 8601 com hora,sim,
+5.2,diario_emocional,1,autor,pessoa_a` | `pessoa_b,sim,
+5.2,diario_emocional,1,modo,trigger` | `vitoria` | `reflexao,sim,
+5.2,diario_emocional,1,emocoes,string[],não,Default `[]`.
+5.2,diario_emocional,1,intensidade,inteiro 1..5,sim,
+5.2,diario_emocional,1,com,(`pessoa_a` | `pessoa_b` | `ambos`)[],não,Default `[]`.
+5.2,diario_emocional,1,contexto_social,(`amigos` | `sozinho`)[],não,Default `[]`.
+5.2,diario_emocional,1,texto,string,sim,Pode ser vazio.
+5.2,diario_emocional,1,estrategia,string,não,Apenas em modo `trigger`.
+5.2,diario_emocional,1,funcionou,boolean,não,Apenas em modo `trigger`.
+5.2,diario_emocional,1,audio,string | null,não,Path relativo do .m4a.
+5.2,diario_emocional,1,midia,Midia[],não,Default `[]`. Veja seção 5.12. Em `vitoria` exige >=1.
+5.2,diario_emocional,1,para,Para,sim,Default `{ tipo: 'mim' }`. Veja seção 5.15.
+5.3,evento,1,_schema_version,inteiro,sim (escrita),
+5.3,evento,1,tipo,literal `'evento',sim,
+5.3,evento,1,data,ISO 8601 com hora,sim,
+5.3,evento,1,autor,pessoa_a` | `pessoa_b,sim,
+5.3,evento,1,modo,positivo` | `negativo,sim,
+5.3,evento,1,lugar,string,não,
+5.3,evento,1,bairro,string,não,
+5.3,evento,1,com,(`pessoa_a` | `pessoa_b` | `ambos`)[],não,Default `[]`.
+5.3,evento,1,categoria,string,não,
+5.3,evento,1,intensidade,inteiro 1..5,sim,
+5.3,evento,1,fotos,string[],não,Default `[]`. Paths relativos.
+5.3,evento,1,midia,Midia[],não,Default `[]`. Em `positivo` exige >=1.
+5.3,evento,1,para,Para,sim,Default `{ tipo: 'mim' }`.
+5.4,marco,1,_schema_version,inteiro,sim (escrita),
+5.4,marco,1,tipo,literal `'marco',sim,
+5.4,marco,1,data,ISO 8601 com hora,sim,
+5.4,marco,1,autor,pessoa_a` | `pessoa_b,sim,
+5.4,marco,1,descricao,string >=1,sim,
+5.4,marco,1,tags,string[],não,Default `[]`.
+5.4,marco,1,auto,boolean,não,Default `false`.
+5.4,marco,1,origem,backend` | `client,não,Só preenchido se `auto=true`.
+5.4,marco,1,hash,string len=12,não,SHA-256 truncado para idempotência client/backend.
+5.4,marco,1,para,Para,sim,Default `{ tipo: 'mim' }`.
+5.4,marco,1,medidaRef,YYYY-MM-DD,não,Reverse-link para medidas/.
+5.5,medidas,1,_schema_version,inteiro,sim (escrita),
+5.5,medidas,1,tipo,literal `'medidas',sim,
+5.5,medidas,1,data,YYYY-MM-DD,sim,
+5.5,medidas,1,autor,pessoa_a` | `pessoa_b,sim,Nunca `ambos`.
+5.5,medidas,1,peso` / `cintura` / `peito` / `braco_esq` / `braco_dir` / `coxa_esq` / `coxa_dir` / `barriga` / `quadril,número >0..500,não,"kg para peso, cm para o resto."
+5.5,medidas,1,fotos,string[],não,Default `[]`. Paths relativos.
+5.5,medidas,1,reflexao,string,não,Texto livre.
+5.6,exercicio,1,_schema_version,inteiro,sim (escrita),
+5.6,exercicio,1,tipo,literal `'exercicio',sim,
+5.6,exercicio,1,slug,kebab-case ASCII,sim,
+5.6,exercicio,1,nome,string >=1,sim,
+5.6,exercicio,1,grupo_muscular,string[] >=1,sim,Lista aberta.
+5.6,exercicio,1,nivel,iniciante` | `intermediario` | `avancado,sim,
+5.6,exercicio,1,equipamento,string >=1,sim,
+5.6,exercicio,1,instrucao,string >=1,sim,Prosa.
+5.6,exercicio,1,dicas,string[],não,Default `[]`.
+5.6,exercicio,1,gif,string,não,Default `''`. Path relativo do gif.
+5.6,exercicio,1,historico,HistoricoExecucao[],não,Default `[]`.
+5.7,ciclo_menstrual,1,_schema_version,inteiro,sim (escrita),
+5.7,ciclo_menstrual,1,tipo,literal `'ciclo_menstrual',sim,
+5.7,ciclo_menstrual,1,data,YYYY-MM-DD,sim,
+5.7,ciclo_menstrual,1,autor,pessoa_a` | `pessoa_b,sim,
+5.7,ciclo_menstrual,1,data_inicio,YYYY-MM-DD` | null,sim,Null antes do primeiro registro.
+5.7,ciclo_menstrual,1,fase,folicular` | `ovulatoria` | `lutea` | `menstrual,sim,
+5.7,ciclo_menstrual,1,sintomas,enum[],não,Default `[]`. Lista canônica de 8 itens.
+5.7,ciclo_menstrual,1,intensidade,inteiro 1..5 | null,sim,
+5.7,ciclo_menstrual,1,humor_associado,inteiro 1..5 | null,sim,
+5.7,ciclo_menstrual,1,texto,string | null,sim,Pode ser null.
+5.8,alarme,1,_schema_version,inteiro,sim (escrita),
+5.8,alarme,1,tipo,literal `'alarme',sim,
+5.8,alarme,1,slug,kebab-case ASCII,sim,
+5.8,alarme,1,titulo,string 1..80,sim,Acentuação PT-BR aceita.
+5.8,alarme,1,horario,HH:MM` 24h,sim,
+5.8,alarme,1,dias_semana,int[] (0..6),sim,0..7 itens; semanal exige >=1.
+5.8,alarme,1,recorrencia,unica` | `diaria` | `semanal` | `mensal,não,Default `semanal`.
+5.8,alarme,1,data_unica,ISO datetime,não,Apenas para `recorrencia=unica`.
+5.8,alarme,1,dia_mes,int 1..31,não,Apenas para `recorrencia=mensal`.
+5.8,alarme,1,tag,medicacao` | `treino` | `outro,sim,
+5.8,alarme,1,som,gentle` | `normal` | `forte,sim,
+5.8,alarme,1,ativo,boolean,sim,
+5.8,alarme,1,snooze_minutos,int 1..60,sim,Default 5.
+5.8,alarme,1,criado_em,ISO datetime,sim,
+5.8,alarme,1,ultimo_disparo,ISO datetime | null,sim,
+5.8,alarme,1,notification_ids,string[],sim,IDs do scheduler nativo.
+5.8,alarme,1,snooze_id,string | null,sim,
+5.9,tarefa,1,_schema_version,inteiro,sim (escrita),
+5.9,tarefa,1,tipo,literal `'tarefa',sim,
+5.9,tarefa,1,data,YYYY-MM-DD,sim,Criação.
+5.9,tarefa,1,autor,pessoa_a` | `pessoa_b,sim,
+5.9,tarefa,1,titulo,string 1..200,sim,
+5.9,tarefa,1,feito,boolean,sim,
+5.9,tarefa,1,feito_em,ISO datetime | null,sim,
+5.9,tarefa,1,categoria,enum (8 valores),não,Default `outro`.
+5.9,tarefa,1,pessoa_destino,discriminatedUnion,não,Default `{ tipo: 'mim' }`.
+5.9,tarefa,1,alarme,objeto | null,não,Default `null`.
+5.10,contador,1,_schema_version,inteiro,sim (escrita),
+5.10,contador,1,tipo,literal `'contador',sim,
+5.10,contador,1,slug,kebab-case ASCII,sim,
+5.10,contador,1,titulo,string 1..80,sim,
+5.10,contador,1,inicio,YYYY-MM-DD,sim,Data atual do start; atualiza em reset.
+5.10,contador,1,recorde,int >=0,não,Default 0.
+5.10,contador,1,resets,ISO datetime[],não,Default `[]`.
+5.10,contador,1,criado_em,ISO datetime,sim,
+5.10,contador,1,para,Para,sim,Default `{ tipo: 'mim' }`.
+5.11,financeiro_nota,1,_schema_version,inteiro,sim (escrita),
+5.11,financeiro_nota,1,tipo,literal `'financeiro',sim,
+5.11,financeiro_nota,1,subtipo,literal `'nota',sim,
+5.11,financeiro_nota,1,data,ISO 8601 com hora,sim,
+5.11,financeiro_nota,1,autor,pessoa_a` | `pessoa_b,sim,
+5.11,financeiro_nota,1,valor,número >=0,sim,Em reais.
+5.11,financeiro_nota,1,descricao,string >=1,sim,
+5.11,financeiro_nota,1,categoria,mercado` | `farmacia` | `transporte` | `alimentacao` | `outro,sim,
+5.11,financeiro_nota,1,imagem,string >=1,sim,Path relativo ao Vault.
+5.11,financeiro_nota,1,bairro,string,não,
+5.11,financeiro_nota,1,ocr_confianca,número 0..1,sim,
+5.11,financeiro_nota,1,revisar,boolean,não,Default `false`.
+5.13,midia-companion,1,_schema_version,inteiro,sim (escrita),Q12 estendeu para companion.
+5.13,midia-companion,1,tipo,midia_foto` | `midia_audio` | `midia_video` | `midia_frase` | `midia_pdf,sim,
+5.13,midia-companion,1,arquivo,string >=1,sim,Basename do binário (com ext).
+5.13,midia-companion,1,data,ISO datetime,sim,
+5.13,midia-companion,1,autor,pessoa_a` | `pessoa_b,sim,
+5.13,midia-companion,1,duracao_seg,int >=0,não,Para áudio/vídeo.
+5.13,midia-companion,1,transcricao,string,não,STT (áudio).
+5.13,midia-companion,1,legenda,string,não,Texto livre.
+5.13,midia-companion,1,para,Para` (formato canônico string `mim`/`casal`/`outra:pessoa_X` no companion manual; objeto discriminado no schema Zod),sim,Default `mim`.
+5.13,midia-companion,1,origem,string,não,"Schema-mãe (`diario_emocional`, etc.)."
+5.13,midia-companion,1,origem_ref,string,não,Path relativo do .md mãe.
+5.13,midia-companion,1,medida_ref,string,não,Reverse-link para medidas/.
+5.14,inbox_arquivo,1,_schema_version,inteiro,sim (escrita),
+5.14,inbox_arquivo,1,tipo,literal `'inbox_arquivo',sim,
+5.14,inbox_arquivo,1,subtipo,pix` | `extrato` | `nota` | `exame` | `receita` | `garantia` | `contrato` | `outro,sim,
+5.14,inbox_arquivo,1,data,ISO 8601 com hora,sim,
+5.14,inbox_arquivo,1,autor,pessoa_a` | `pessoa_b,sim,
+5.14,inbox_arquivo,1,arquivo,string >=1,sim,Path relativo do binário.
+5.14,inbox_arquivo,1,mime_type,string >=1,sim,
+5.14,inbox_arquivo,1,tamanho_bytes,int >=0,sim,
+5.14,inbox_arquivo,1,origem,string | null,sim,App de origem do share intent.
+5.14,inbox_arquivo,1,revisar,boolean,não,Default `true`.
+5.17,treino_sessao,1,_schema_version,inteiro,sim (escrita),
+5.17,treino_sessao,1,tipo,literal `'treino_sessao',sim,
+5.17,treino_sessao,1,data,ISO 8601 com hora,sim,
+5.17,treino_sessao,1,autor,pessoa_a` | `pessoa_b,sim,
+5.17,treino_sessao,1,rotina,string,não,"Ex: ""rotina A""."
+5.17,treino_sessao,1,duracao_min,int 1..240,sim,
+5.17,treino_sessao,1,exercicios,ExercicioSessao[]` >=1,sim,
+5.17,treino_sessao,1,observacoes,string,não,
+5.21,rotina_treino,1,_schema_version,inteiro,sim (escrita),
+5.21,rotina_treino,1,tipo,literal `'rotina_treino',sim,
+5.21,rotina_treino,1,slug,string regex `[a-z0-9-]+,sim,Chave; salvar duas vezes sobrescreve.
+5.21,rotina_treino,1,nome,string,sim,
+5.21,rotina_treino,1,descricao,string | null,sim,
+5.21,rotina_treino,1,exercicios,ExercicioRotina[]` 1..20,sim,Cap UX.
+5.21,rotina_treino,1,data_criacao,YYYY-MM-DD,sim,
+5.21,rotina_treino,1,autor,pessoa_a` | `pessoa_b,sim,
+5.22,grupo_treino,1,_schema_version,inteiro,sim (escrita),
+5.22,grupo_treino,1,tipo,literal `'grupo_treino',sim,
+5.22,grupo_treino,1,slug,string regex `[a-z0-9-]+,sim,
+5.22,grupo_treino,1,nome,string 1..80,sim,
+5.22,grupo_treino,1,descricao,string | null,sim,
+5.22,grupo_treino,1,rotina_slugs,string[] 1..10,sim,Referência por slug; não duplica dados.
+5.22,grupo_treino,1,data_criacao,YYYY-MM-DD,sim,
+5.22,grupo_treino,1,autor,pessoa_a` | `pessoa_b,sim,

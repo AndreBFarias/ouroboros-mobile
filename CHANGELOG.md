@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Q21 — ETL canônico Mobile↔Backend: CSV + drift check (parcial, 2026-05-13)
+
+- Novo `scripts/exportar_contrato.py` (stdlib only, sem deps externas):
+  parser de tabelas markdown de `docs/CONTRACT-MOBILE-BACKEND.md`
+  com escape `\|` preservado, emite CSV canônico de 173 campos
+  (colunas `schema_idx`, `schema_nome`, `schema_versao`, `campo`,
+  `tipo`, `obrigatorio`, `notas`).
+- `docs/CONTRACT-MOBILE-BACKEND.csv` versionado (174 linhas
+  incluindo header). Consumível por backend Python via
+  `pandas.read_csv` ou `csv.DictReader`.
+- Duas seções novas no contrato MD: **5.21 rotina_treino**
+  (`RotinaSchema` com `ExercicioRotina[]` 1..20, campo `gif`
+  opcional pós-Q18.b) e **5.22 grupo_treino** (`GrupoTreinoSchema`
+  com `rotina_slugs[]` 1..10, referência por slug sem duplicar
+  dados — Q19/Q19.b).
+- Novo `scripts/test_contract_drift.sh`: warning-only check (exit
+  0 sempre) com duas heurísticas — (a) CSV em sync com MD via
+  regen+diff, (b) schemas `.ts` mais novos que o MD via mtime.
+- `scripts/smoke.sh` agora chama o drift check entre o audit
+  PT-BR e o typecheck. Avisos aparecem no stderr sem bloquear o
+  build.
+- **Não entregue nesta sprint**: 7+ issues `etl-contract` no repo
+  sibling `protocolo-ouroboros` (requer revisão do dono antes de
+  abrir massa de issues).
+
 ### Q17.c.b/c — Hooks HC em saveMedida + saveCiclo (2026-05-13)
 
 - `src/lib/vault/medidas.ts:escreverMedida` agora dispara

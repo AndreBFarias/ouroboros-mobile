@@ -49,7 +49,7 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` esqueleto (form completo em Q19.b) | `1fcbaf5` | `[ok parcial]` |
 | Q19.b | Form completo + multi-select de rotinas + sheet "Qual treino hoje?" + Iniciar pill | _pending_ | `[ok]` |
 | Q20 | Share Pix/boleto/extrato — spec runtime validation | `ff20d2c` (spec) | `[spec]` |
-| Q21 | ETL unificação Mobile↔Backend Python — auditoria contrato | `ff20d2c` (spec) | `[spec]` |
+| Q21 | ETL unificação Mobile↔Backend Python — CSV canônico + drift check no smoke + rotina/grupo no contrato | _pending_ | `[ok parcial]` |
 
 **Releases gerados:**
 

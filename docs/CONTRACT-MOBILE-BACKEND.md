@@ -34,6 +34,8 @@ em todo arquivo persistido a partir da sprint Q12, 2026-05-12).
    - [5.18 frase (midia_frase)](#518-frase-midia_frase)
    - [5.19 agenda (Google Calendar)](#519-agenda-google-calendar)
    - [5.20 devices_index](#520-devices_index)
+   - [5.21 rotina_treino](#521-rotina_treino)
+   - [5.22 grupo_treino](#522-grupo_treino)
 6. [Caches que NÃO são contrato](#caches-que-não-são-contrato)
 7. [Migração defensiva](#migração-defensiva)
 8. [Próximos passos backend Python](#próximos-passos-backend-python)
@@ -771,6 +773,50 @@ Nomes reais NUNCA aparecem em Vault. Mapeamento `pessoa_a →
 - **Schema**: definido em `src/lib/vault/devicesIndex.ts`.
 - Backend Python pode usar para detectar split-brain entre
   dispositivos Syncthing.
+
+### 5.21 rotina_treino
+
+- **Tipo canônico**: `rotina_treino`
+- **Path canônico**: `markdown/rotina-<slug>.md` (helper `rotinaPath`)
+- **Schema**: `src/lib/schemas/rotina.ts` (`RotinaSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `tipo` | literal `'rotina_treino'` | sim | |
+| `slug` | string regex `[a-z0-9-]+` | sim | Chave; salvar duas vezes sobrescreve. |
+| `nome` | string | sim | |
+| `descricao` | string \| null | sim | |
+| `exercicios` | `ExercicioRotina[]` 1..20 | sim | Cap UX. |
+| `data_criacao` | YYYY-MM-DD | sim | |
+| `autor` | `pessoa_a` \| `pessoa_b` | sim | |
+
+`ExercicioRotina = { nome: string, carga_kg: number\|null, series: int>=1, reps: string, descanso_seg: int>=1 (default 90), observacao: string\|null, gif?: string (Q18.b path relativo) }`.
+
+`reps` é string livre (`"12"`, `"8-10"`, `"amrap"`, `"ate falha"`); `sessaoFromRotina` converte para number ao criar TreinoSessao.
+
+### 5.22 grupo_treino
+
+- **Tipo canônico**: `grupo_treino`
+- **Path canônico**: `markdown/grupo-<slug>.md` (helper `grupoPath`)
+- **Schema**: `src/lib/schemas/grupo_treino.ts` (`GrupoTreinoSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `tipo` | literal `'grupo_treino'` | sim | |
+| `slug` | string regex `[a-z0-9-]+` | sim | |
+| `nome` | string 1..80 | sim | |
+| `descricao` | string \| null | sim | |
+| `rotina_slugs` | string[] 1..10 | sim | Referência por slug; não duplica dados. |
+| `data_criacao` | YYYY-MM-DD | sim | |
+| `autor` | `pessoa_a` \| `pessoa_b` | sim | |
+
+Container que agrupa até 10 rotinas existentes para o ciclo de treino do usuário ("Treino do Quaresma" → Treino A/B/C). Backend Python pode resolver `rotina_slugs` em paralelo via `markdown/rotina-<slug>.md` para gerar visões agregadas (Q19.b).
 
 ---
 

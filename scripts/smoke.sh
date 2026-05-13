@@ -14,6 +14,9 @@ echo ">> dados de teste"
 echo ">> strings UI PT-BR (acentuacao canonica)"
 python3 scripts/check_strings_ui_ptbr.py
 
+echo ">> contract drift (Mobile <-> Backend Python)"
+./scripts/test_contract_drift.sh || true
+
 # Typecheck, lint e testes so rodam quando o projeto Expo existir
 if [[ -f package.json ]]; then
   echo ">> typecheck"
