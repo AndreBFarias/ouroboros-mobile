@@ -1,6 +1,6 @@
 // Player reusavel da midia de execucao de um exercicio. Q18 (Onda Q
-// 2026-05-13). Suporta GIF/JPG estatico via <Image> e MP4 via
-// <Video> com autoplay loop sem som.
+// 2026-05-13). Suporta GIF/JPG estatico via <Image> e MP4/MOV/WEBM
+// via <Video> de expo-av com autoplay loop sem som (Q18.x).
 //
 // Caller passa apenas o `path` relativo ao vaultRoot. O componente
 // resolve a URI completa via stores/vault e dispatcha o renderer
@@ -13,6 +13,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useMemo, type ReactNode } from 'react';
 import { Image, View } from 'react-native';
+import { ResizeMode, Video } from 'expo-av';
 import { Dumbbell } from '@/lib/icons';
 import { colors, radius } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
@@ -61,8 +62,9 @@ export function MidiaExecucaoPlayer({
   const uri = vaultRoot ? `${vaultRoot}/${path}` : path;
 
   if (ehVideo(path)) {
-    // Q18.x: integrar <Video> de expo-av com shouldPlay+isLooping+isMuted.
-    // Por enquanto fallback Image (alguns devices renderizam frame zero).
+    // Q18.x: <Video> expo-av com shouldPlay+isLooping+isMuted. Convive
+    // com musica em outras telas (isMuted true). resizeMode COVER
+    // preserva enquadramento como o GIF.
     return (
       <View
         style={{
@@ -73,10 +75,13 @@ export function MidiaExecucaoPlayer({
         }}
         accessibilityLabel={accessibilityLabel}
       >
-        <Image
+        <Video
           source={{ uri }}
           style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isLooping
+          isMuted
         />
       </View>
     );

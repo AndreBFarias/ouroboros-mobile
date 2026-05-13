@@ -222,6 +222,12 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Componente interno: `<MemoriasExerciciosTab>`. A rota standalone
   `/exercicios` continua existindo (mantém o FAB+ verde próprio
   para fluxo direto sem passar por Saúde Física).
+- **Player de mídia Q18.b + Q18.x:** `<MidiaExecucaoPlayer>` exibe
+  GIF/JPG/PNG via `<Image>` nativo (GIF anima em Android 9+) e
+  vídeo `.mp4`/`.mov`/`.webm` via `<Video>` de expo-av com
+  `shouldPlay+isLooping+isMuted` (Q18.x). Convive com música tocando
+  em outras telas sem trilha de som concorrente. Empty state usa
+  ícone Dumbbell quando `gif` é vazio.
 
 ### 3.4 ~~Fotos~~ (REMOVIDA em L1)
 - Aba removida porque o FAB+ verde do MenuCapturaVerde já oferece

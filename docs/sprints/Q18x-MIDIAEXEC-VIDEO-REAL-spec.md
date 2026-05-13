@@ -1,7 +1,9 @@
 # Q18.x — `MidiaExecucaoPlayer` com `<Video>` real do expo-av
 
-> **Tamanho:** Pequeno (1–2h)
-> **Bloqueia v1.0.0?** Não — fallback Image cobre o caso degradado.
+> **Status:** [ok] entregue 2026-05-13 tarde. Smoke verde 195 suítes
+> / 1932 testes. TS strict zero.
+> **Tamanho:** Pequeno (1–2h) — fechado em ~15min (escopo cirúrgico
+> menor que o estimado pela spec).
 > **Pré-requisitos:** Q18 e Q18.b entregues. `expo-av` já está no
 > bundle (alarme/diário usam).
 
