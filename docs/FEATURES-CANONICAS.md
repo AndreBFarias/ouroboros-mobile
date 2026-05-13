@@ -329,7 +329,7 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   exercícios, salva uma TreinoSessao no Vault como snapshot imutável.
   Botão "Iniciar" pill verde no header de `/rotinas/<slug>`.
 
-## 4.6 Grupos de Treino — Q19 (Onda Q 2026-05-13, esqueleto)
+## 4.6 Grupos de Treino — Q19 + Q19.b (Onda Q 2026-05-13)
 
 - Container que agrupa 1..10 rotinas existentes (Treino A/B/C
   sob "Treino do Quaresma" sem duplicar dados).
@@ -337,8 +337,20 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   referência por slug (`rotina_slugs: string[]`), sem embedding.
 - Path canônico: `markdown/grupo-<slug>.md`.
 - CRUD vault em `src/lib/vault/grupo_treino.ts`.
-- Rotas `/grupos/` (index com FAB+, novo stub, detalhe stub) —
-  forms completos + botão "Iniciar treino" entram em Q19.b.
+- Rotas `/grupos/`:
+  - `index` com FAB+, empty state, lista ordenada PT-BR.
+  - `novo` — `FormGrupo` (Input nome + Textarea descrição +
+    `SeletorMultiRotinas` multi-select 1..10) + slug único.
+  - `[slug]` — detalhe com mesmo `FormGrupo` em modo edição,
+    botão "Apagar" (modal confirm) e pill verde "Iniciar" no
+    right slot do header.
+- **Iniciar treino**: tap na pill verde abre `BottomSheet`
+  `SeletorTreinoDoGrupo` listando cada rotina referenciada. Tap
+  em uma rotina navega para `/treinos/executar/<slug>` (executor
+  Q11.c). Caso o grupo tenha apenas 1 rotina, o sheet é pulado
+  (navegação direta).
+- Rotinas removidas após a criação do grupo aparecem desabilitadas
+  no sheet ("Rotina removida (slug)") sem quebrar a UI.
 
 ## 5. Medidas Corporais — M12 (Telas 12, 13)
 

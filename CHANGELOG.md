@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Q19.b — Grupos de Treino completos: form + sheet "Qual treino hoje?" + Iniciar (2026-05-13)
+
+- Três componentes novos em `src/components/treino/`:
+  - `SeletorMultiRotinas` — lista checkbox com cap 10 reforçado e
+    empty state com link `/rotinas/novo`. Carregamento via
+    `listarRotinas(vaultRoot, pessoaAtiva)`.
+  - `FormGrupo` — Input nome + Textarea descrição + multi-select +
+    Salvar/Cancelar/Apagar com modal de confirmação. Validação no
+    submit (nome 1..80, 1..10 rotinas).
+  - `SeletorTreinoDoGrupo` — BottomSheet content "Qual treino hoje?"
+    com `Promise.all(lerRotina(slug))` para resolver rotinas
+    referenciadas; rotinas removidas aparecem como item disabled
+    rotulado em vez de quebrar a lista.
+- `app/grupos/novo.tsx` (stub removido) — slug único via
+  `slugifyTitulo` + `sufixoRandom` (50 tentativas), persistência via
+  `escreverGrupo`, `router.replace('/grupos/<slug>')` pós-save.
+- `app/grupos/[slug].tsx` (stub removido) — detalhe com `FormGrupo`
+  inicial + onApagar via `removerGrupo` + right slot do header tem
+  pill verde "Iniciar"; tap abre BottomSheet `SeletorTreinoDoGrupo`
+  se houver >1 rotina, ou navega direto pra `/treinos/executar/<slug>`
+  se houver apenas 1.
+- 24 testes novos em `tests/lib/schemas/grupo_treino.test.ts` (13) e
+  `tests/lib/vault/grupo_treino.test.ts` (11). Total 1927 verde
+  (baseline 1903).
+
 ### Q18.b — Player de mídia integrado em detalhe + executor + galeria (2026-05-13)
 
 - `ExercicioRotinaSchema.gif` agora aceita string opcional (snapshot

@@ -45,6 +45,7 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q18 | `MidiaExecucaoPlayer` (player GIF/MP4/JPG reusável; integração no detalhe/executor pendente Q18.b) | `1fcbaf5` | `[ok parcial]` |
 | Q18.b | Player integrado em detalhe + executor + galeria; `ExercicioRotinaSchema.gif` opcional | _pending_ | `[ok]` |
 | Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` esqueleto (form completo em Q19.b) | `1fcbaf5` | `[ok parcial]` |
+| Q19.b | Form completo + multi-select de rotinas + sheet "Qual treino hoje?" + Iniciar pill | _pending_ | `[ok]` |
 | Q20 | Share Pix/boleto/extrato — spec runtime validation | `ff20d2c` (spec) | `[spec]` |
 | Q21 | ETL unificação Mobile↔Backend Python — auditoria contrato | `ff20d2c` (spec) | `[spec]` |
 
@@ -59,8 +60,6 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 - **Q17.e** — Keystore EAS encriptado em GitHub Secrets para OAuth
   funcionar em APKs gerados pelo workflow local (SHA-1 canônico
   do Cloud Console).
-- **Q19.b** — Form completo de criação/edição de Grupo (multi-select
-  de rotinas) + botão "Iniciar treino" com sheet "Qual treino hoje?".
 - **Q22** — Sub-sprint Q17.c.b/c (hooks save em Medida + Ciclo).
 
 **Specs detalhadas das sprints pendentes:**
