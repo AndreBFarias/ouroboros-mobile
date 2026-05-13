@@ -20,6 +20,8 @@ import {
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
+import { escreverPesoEmHC } from '@/lib/health/sync';
+import { useSettings } from '@/lib/stores/settings';
 
 // Período de filtro suportado pela Tela 13. '30d' = ultimos 30 dias,
 // '90d' = ultimos 90, 'tudo' = sem filtro.
@@ -126,5 +128,18 @@ export async function escreverMedida(
   const rel = medidasPath(dataDate);
   const uri = joinUri(vaultRoot, rel);
   await writeVaultFile<Medida>(uri, parsed.data, body);
+
+  // Q17.c.b: sync opt-in para Health Connect. Best-effort — falha aqui
+  // nao impacta o caller (medida ja persistiu no Vault). Apenas peso
+  // tem mapping canonico em HC; demais medidas corporais ficam locais.
+  try {
+    const habilitado = useSettings.getState().featureToggles.healthConnectSync;
+    if (habilitado && typeof parsed.data.peso === 'number') {
+      void escreverPesoEmHC(parsed.data.peso, dataDate);
+    }
+  } catch {
+    // Erros silenciosos por design (path nao-critico).
+  }
+
   return { uri, rel };
 }

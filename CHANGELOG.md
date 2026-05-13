@@ -5,6 +5,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Q17.c.b/c — Hooks HC em saveMedida + saveCiclo (2026-05-13)
+
+- `src/lib/vault/medidas.ts:escreverMedida` agora dispara
+  `escreverPesoEmHC(parsed.data.peso, dataDate)` quando o toggle
+  `featureToggles.healthConnectSync` está ligado e o registro tem
+  campo `peso` definido. Best-effort: falha no HC não impacta o
+  save local. Outras medidas (cintura, braço, coxa, etc.) ficam
+  apenas no Vault — não há mapping canônico em HC.
+- `src/lib/vault/ciclo.ts:escreverRegistroCiclo` agora dispara
+  `escreverMenstruacaoEmHC(dataDate, fluxo)` quando o toggle está
+  ligado e `fase === 'menstrual'`. Helper privado
+  `intensidadeParaFluxoHC(1..5 → 1..3)` mapeia a intensidade do
+  schema interno (5 níveis) para o `flow` canônico do HC (light /
+  medium / heavy).
+- Best-effort em try/catch fora do hot path: caller (UI) não vê
+  diferença. Espelha o padrão de `saveTreino` (Q17.c).
+
 ### Q19.b — Grupos de Treino completos: form + sheet "Qual treino hoje?" + Iniciar (2026-05-13)
 
 - Três componentes novos em `src/components/treino/`:

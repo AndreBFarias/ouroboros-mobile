@@ -28,6 +28,8 @@ import {
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
+import { escreverMenstruacaoEmHC } from '@/lib/health/sync';
+import { useSettings } from '@/lib/stores/settings';
 import {
   CicloMenstrualSchema,
   type CicloMenstrualMeta,
@@ -153,6 +155,15 @@ export async function lerRegistroCiclo(
 // Persiste um registro de ciclo. Caller fornece meta já validado (ou
 // ao menos com shape correto); revalidamos defensivamente. Escreve em
 // inbox/saude/ciclo/YYYY-MM-DD.md derivando o nome da data do meta.
+// Mapeia intensidade 1..5 do schema interno pra flow 1..3 (light /
+// medium / heavy) do HC. <=2 = light, 3 = medium, >=4 = heavy.
+function intensidadeParaFluxoHC(i: number | null): 1 | 2 | 3 {
+  if (i === null) return 2;
+  if (i <= 2) return 1;
+  if (i >= 4) return 3;
+  return 2;
+}
+
 export async function escreverRegistroCiclo(
   vaultRoot: string,
   meta: CicloMenstrualMeta,
@@ -168,6 +179,20 @@ export async function escreverRegistroCiclo(
   const rel = cicloPath(dataDate);
   const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<CicloMenstrualMeta>(uri, parsed.data, body);
+
+  // Q17.c.c: sync opt-in para Health Connect. Best-effort. So escreve
+  // quando fase=menstrual (HC nao tem mapping para folicular/lutea/
+  // ovulatoria; sao inferencias locais nossas).
+  try {
+    const habilitado = useSettings.getState().featureToggles.healthConnectSync;
+    if (habilitado && parsed.data.fase === 'menstrual') {
+      const fluxo = intensidadeParaFluxoHC(parsed.data.intensidade);
+      void escreverMenstruacaoEmHC(dataDate, fluxo);
+    }
+  } catch {
+    // Erros silenciosos por design (path nao-critico).
+  }
+
   return { uri, rel };
 }
 
