@@ -6,9 +6,11 @@ entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
 processa. Construído com Expo + React Native, sem rede de saída,
 estética premium nativa desde o dia um.
 
-## Status v1.0 — Onda Q (alpha-4 publicado, alpha-5 em CI local)
+## Status v1.0 — Onda Q FECHADA (alpha-4 + alpha-5 publicados)
 
-**APK [v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4)** (2026-05-12 noite) — 21 sprints da Onda Q entregues em 3 dias de maratona:
+**APKs publicados:**
+- **[v1.0.0-alpha-5](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-5)** (2026-05-13 madrugada) — Q17 Health Connect completo + Q18 player + Q19 grupos esqueleto. 65 MB (arm64-v8a only). Via GitHub Actions (workflow `build-android-apk.yml`) porque EAS Free Tier esgotou. OAuth Google quebrado nesse APK (debug keystore — workaround: usar alpha-4).
+- **[v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4)** (2026-05-12 noite) — 21 sprints da Onda Q entregues em 3 dias de maratona. APK universal 157 MB via EAS preview:
 
 - **Q0** OAuth Google Calendar (scope `calendar.events.readonly` registrado + `env.json` Android client)
 - **Q1–Q4** Rename "Ouroboros" + Recap visível + MenuLateral suave + FABs 64dp
@@ -29,7 +31,12 @@ estética premium nativa desde o dia um.
 
 Métricas pós-Onda Q: 1892 testes Jest verde · typecheck silent · smoke OK · anonimato (Regra −1) OK · PT-BR audit OK.
 
-**Próxima alpha (alpha-5):** GitHub Actions workflow (`.github/workflows/build-android-apk.yml`) builda APK local com Q17/Q18/Q19 inclusos. EAS Free Tier esgotada — workflow resolve dependência. Detalhes em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md).
+**Pendências priorizadas pré-v1.0:**
+- **Q17.e** keystore EAS em GitHub Secrets — desbloqueia OAuth Google em APKs do CI local (spec em `docs/sprints/Q17e-KEYSTORE-EAS-EM-SECRETS-spec.md`).
+- **Validação live integrada do alpha-4** no celular real (Q5.1 mic, Q6 save sem erro, Q0 OAuth runtime, Q11.c executor, Q17 HC conexão real, Q9 Galeria, Q14/Q15).
+- **Q17.d/Q18.b/Q19.b** — completar features semi-entregues (specs detalhados em `docs/sprints/`).
+
+Log completo em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (7 sessões registradas) e [`docs/RELATORIO-ONDA-Q-FINAL.md`](docs/RELATORIO-ONDA-Q-FINAL.md).
 
 ### Releases anteriores
 

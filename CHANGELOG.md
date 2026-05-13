@@ -32,7 +32,7 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ### v1.0.0-alpha-5 (2026-05-13 madrugada) — Q17 Health Connect completo + CI local
 
-APK gerado via GitHub Actions (workflow `.github/workflows/build-android-apk.yml`) após EAS Free Tier esgotar. Limitação: APK assinado com debug keystore — OAuth Google não funciona nessa alpha (resolvido em sprint futura com keystore EAS em GitHub Secrets).
+[Release publicado](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-5) — APK 65 MB (arm64-v8a only, commit `46bec14`). Gerado via GitHub Actions (workflow `.github/workflows/build-android-apk.yml`) após EAS Free Tier esgotar. Pipeline convergiu em 6 tentativas com erros distintos a cada vez (env.json gitignored → CMake timeout 45min → minSdk 24<26 → gradle.properties sem newline → compileSdk 34<35 → sucesso). Limitação: APK assinado com debug keystore — OAuth Google não funciona nessa alpha (resolvido em sprint Q17.e com keystore EAS em GitHub Secrets).
 
 **Q17 Health Connect (commit `cee0d17`)**
 - `npm install react-native-health-connect@^3.5.0` via Expo Config Plugin.

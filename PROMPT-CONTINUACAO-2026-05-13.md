@@ -4,7 +4,8 @@
 > de orquestrador para retomar do ponto exato em que a Onda Q parou,
 > com os mesmos acessos, conhecimento e privilégios.
 >
-> Atualizado em 2026-05-13 02:50 BRT após HEAD `d24ce6e` em `main`.
+> Atualizado em 2026-05-13 03:30 BRT após HEAD `46bec14` em `main`.
+> Onda Q FECHADA com alpha-4 + alpha-5 publicados.
 > Substitui prompts anteriores (`HANDOFF-PROMPT.md`, `PROMPT-MAESTRO-ORQUESTRADOR.md`).
 
 ---
@@ -31,15 +32,13 @@ Seu papel:
 
 - Working dir: `/home/andrefarias/Desenvolvimento/Protocolo-Mob-Ouroboros`
 - Branch: `main` (sempre sincronizada com `origin/main`).
-- HEAD atual: `d24ce6e` (push em main 2026-05-13 madrugada).
+- HEAD atual: `46bec14` (push em main 2026-05-13 madrugada).
 - Backend sibling: `~/Desenvolvimento/protocolo-ouroboros` (Python ETL).
 
-## Releases gerados
+## Releases gerados (ambos publicados)
 
-- **[v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4)** publicado (EAS preview, commit `a1dd3c9`, 157 MB).
-- **v1.0.0-alpha-5** em build via GitHub Actions
-  (`.github/workflows/build-android-apk.yml`, último run `25774779518`).
-  EAS Free Tier esgotada até 01/Jun/2026.
+- **[v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4)** — EAS preview, universal 157 MB, commit `a1dd3c9`. OAuth Google funciona.
+- **[v1.0.0-alpha-5](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-5)** — GitHub Actions, arm64-v8a only 65 MB, commit `46bec14`. Inclui Q17/Q18/Q19. OAuth Google **quebrado** (debug keystore — Q17.e resolve). EAS Free Tier esgotada até 01/Jun/2026.
 
 ## Boot canônico (leia em ordem antes de qualquer ação)
 
