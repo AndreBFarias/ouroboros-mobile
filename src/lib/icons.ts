@@ -11,6 +11,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 
+export { default as Activity } from 'lucide-react-native/dist/esm/icons/activity.mjs';
 export { default as AlertTriangle } from 'lucide-react-native/dist/esm/icons/triangle-alert.mjs';
 export { default as BarChart } from 'lucide-react-native/dist/esm/icons/chart-no-axes-column-increasing.mjs';
 export { default as Bell } from 'lucide-react-native/dist/esm/icons/bell.mjs';
@@ -51,6 +52,7 @@ export { default as Pause } from 'lucide-react-native/dist/esm/icons/pause.mjs';
 export { default as Play } from 'lucide-react-native/dist/esm/icons/play.mjs';
 export { default as Plus } from 'lucide-react-native/dist/esm/icons/plus.mjs';
 export { default as Repeat } from 'lucide-react-native/dist/esm/icons/repeat.mjs';
+export { default as Footprints } from 'lucide-react-native/dist/esm/icons/footprints.mjs';
 export { default as Scale } from 'lucide-react-native/dist/esm/icons/scale.mjs';
 export { default as ScanLine } from 'lucide-react-native/dist/esm/icons/scan-line.mjs';
 export { default as Search } from 'lucide-react-native/dist/esm/icons/search.mjs';

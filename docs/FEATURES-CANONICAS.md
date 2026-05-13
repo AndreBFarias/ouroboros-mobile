@@ -280,7 +280,19 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `sincronizarTreinosDeHC`, `sincronizarPassosDeHC`,
   `sincronizarPesoDeHC` para Saúde Física → Evolução consumir
   registros externos (caminhada Mi Fit, peso balança inteligente, etc.).
-  UI dedicada entra em Q17.d.
+- **Q17.d (Onda Q, 2026-05-13)** — bloco "Importados de Conexão
+  Saúde" no topo da aba Saúde Física → Evolução. Três cards
+  horizontais: passos dos últimos 7 dias com delta vs semana
+  anterior, último peso registrado com delta vs leitura anterior,
+  e contagem de treinos externos dos últimos 30 dias (tap abre
+  sheet com a lista detalhada). Render condicional: só aparece
+  quando `featureToggles.healthConnectSync` está ligado **e** há
+  ao menos uma permission concedida. Pull on-demand no `focus` da
+  tab. Dados não persistem no Vault (apenas RAM do hook). Erro
+  silencioso: card individual mostra "Sem dados" se reader falhar.
+  Hook canônico: `useHealthConnectResumo`. Helpers puros em
+  `lib/health/resumo.ts` (`resumirPassos`, `resumirPeso`,
+  `resumirTreinos`).
 
 ## 4. Exercícios — M13 (Telas 02, 07, 08)
 

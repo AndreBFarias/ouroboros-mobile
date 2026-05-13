@@ -5,6 +5,31 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Q17.d — Bloco "Importados de Conexão Saúde" em Evolução (2026-05-13)
+
+- Novo hook `useHealthConnectResumo` em `src/lib/hooks/` consome
+  `lib/health/sync.ts` (Q17.b) com `Promise.all` dos 3 readers
+  (`sincronizarPassosDeHC` 14d, `sincronizarPesoDeHC` 90d,
+  `sincronizarTreinosDeHC` 30d). Pull on-demand no `focus` da tab
+  consumidora via `useFocusEffect`. Estado interno isola toggle
+  `featureToggles.healthConnectSync` + checagem de permissions
+  concedidas via `listarPermissoesConcedidas`.
+- Helpers puros em `src/lib/health/resumo.ts` — `resumirPassos`
+  particiona janelas 7+7 dias para delta, `resumirPeso` ordena
+  desc por timestamp e devolve último + delta (null quando só há
+  uma leitura), `resumirTreinos` filtra dentro de 30 dias e
+  arredonda duração para minutos (mínimo 1).
+- Componente `src/components/screens/EvolucaoCorporalTab/CardHCResumo.tsx`
+  renderiza três `MiniCard` lado a lado (passos, peso, treinos
+  externos) no topo da `ScrollView` da `EvolucaoCorporalTab`. Tap
+  no card de treinos abre `BottomSheet` (SHEET_70) com a lista
+  detalhada (rótulo + data + minutos). Render zero quando toggle
+  off ou sem permission concedida — não polui o layout.
+- 10 novos testes Jest em `tests/lib/health/resumo.test.ts`
+  (1902 verde, baseline 1892).
+- Dados de HC ficam apenas em RAM do hook; não persistem no Vault
+  (Recap/exports não enxergam HC). Erro silencioso por card.
+
 ### v1.0.0-alpha-5 (2026-05-13 madrugada) — Q17 Health Connect completo + CI local
 
 APK gerado via GitHub Actions (workflow `.github/workflows/build-android-apk.yml`) após EAS Free Tier esgotar. Limitação: APK assinado com debug keystore — OAuth Google não funciona nessa alpha (resolvido em sprint futura com keystore EAS em GitHub Secrets).

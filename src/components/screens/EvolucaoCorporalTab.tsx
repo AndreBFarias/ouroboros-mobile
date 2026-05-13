@@ -36,6 +36,7 @@ import { colors, spacing } from '@/theme/tokens';
 import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import { useMarcos } from '@/lib/hooks/useMarcos';
 import { SheetNovoMarco } from './SheetNovoMarco';
+import { CardHCResumo } from './EvolucaoCorporalTab/CardHCResumo';
 import { SecaoEvolucaoCorporal } from './EvolucaoCorporalTab/SecaoEvolucaoCorporal';
 import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { Marco } from '@/lib/schemas/marco';
@@ -215,6 +216,11 @@ export function EvolucaoCorporalTab({
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Q17.d: bloco "Importados de Conexao Saude" com passos,
+            peso e treinos externos. Render zero quando toggle off
+            ou sem permissions concedidas. */}
+        <CardHCResumo />
+
         {/* M11.4: subsecao "Evolucao corporal" antes do timeline de
             marcos textuais. Faixa horizontal de cards mensais com
             foto frontal + peso + delta. Tap abre /medidas. Botao
