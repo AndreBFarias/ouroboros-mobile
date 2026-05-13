@@ -1,10 +1,12 @@
 # Q22.B — OAuth Google bloqueado com erro 400 invalid_request
 
-> **Status:** spec aberta 2026-05-13 noite. Bloqueado por ação no
-> Google Cloud Console — depende do dono.
-> **Tamanho:** Trivial (15-30 min no Cloud Console).
-> **Bloqueia v1.0.0?** Não — feature opcional. Só usuário que quer
-> Google Calendar agenda integrada é afetado.
+> **Status:** causa raiz identificada 2026-05-13 noite. **Typo de 1
+> byte no SHA-1 cadastrado no Google Cloud Console**: 4º octeto
+> mostra `43` quando o keystore EAS real tem `B3`. Fix: editar SHA-1
+> no Cloud Console pra `E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`.
+> Aguardando propagação Google (5-30 min) + retest dono.
+> **Tamanho:** Trivial (1 min no Cloud Console + retest).
+> **Bloqueia v1.0.0?** Não — feature opcional, mas trivial de fixar.
 
 ## Reprodução (validação live alpha-4 2026-05-13)
 
@@ -34,11 +36,34 @@ App usa:
 - **Redirect URI**: `ouroboros://oauth-callback` (standalone) ou
   `auth.expo.io/...` (Expo Go via proxy)
 - **Flow**: PKCE com `expo-auth-session`
+- **Tipo OAuth client (Cloud Console)**: Android
+  (`package_name=com.ouroboros.mobile`)
 
 `calendar.events.readonly` é classificado como **sensitive scope**
 pelo Google. Aplicações com sensitive scope em modo **Production**
 exigem **verification**. Em modo **Testing** funciona OK até 100
 test users.
+
+### Causa raiz confirmada (2026-05-13 noite)
+
+Auditoria do dono no Cloud Console encontrou:
+- App em modo **Testing**, `andre.dsbf@gmail.com` cadastrado como
+  test user, campos obrigatórios preenchidos — tudo OK.
+- OAuth client tipo **Android** com `package_name=com.ouroboros.mobile`
+  e SHA-1 cadastrado:
+  ```
+  E4:49:C8:43:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C
+  ```
+
+Mas o keystore EAS real (confirmado via `eas credentials --platform android`
+e `keytool -list` local) tem SHA-1:
+```
+E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C
+```
+
+**Diferença no 4º octeto: `B3` no real, `43` no Cloud Console.** Typo
+de transcrição. Google calcula SHA-1 do APK instalado, compara com
+o cadastrado, não bate → `invalid_request`.
 
 ## Causas mais prováveis (em ordem)
 
@@ -69,7 +94,21 @@ custom. Precisa ser "Web application" pra PKCE com custom scheme
 funcionar, OU usar tipo Android com `signInIntent` do Google Play
 Services.
 
-## Passos para o dono resolver
+## Fix imediato (descoberto 2026-05-13 noite)
+
+1. https://console.cloud.google.com/apis/credentials?project=protocolo-ouroboros
+2. Clicar no client `691237256846-sgqvc50rnut8p5emjq44sjfs6jg9tq5g`
+3. Campo **SHA-1 certificate fingerprint** → editar valor para:
+   ```
+   E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C
+   ```
+   (4º octeto: **B3**, não 43)
+4. Salvar
+5. Aguardar 5-30 min de propagação Google
+6. Retest: app → Configurações → Contas Google → Conectar.
+   Tela consent deve aparecer.
+
+## Passos para o dono resolver (mantidos para referência futura)
 
 ### Passo 1: abrir Cloud Console
 
