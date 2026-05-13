@@ -54,6 +54,8 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q17.e | Keystore EAS encriptado em 4 GitHub Secrets + workflow signing | (HEAD) | `[ok]` |
 | Q22.A | Fix transcrição duplicando texto no diário (split partial/final no TranscreverButton) | (HEAD) | `[ok]` |
 | Q22.B | OAuth Google 400 invalid_request — config Cloud Console (depende dono) | _spec_ | `[spec]` |
+| Q24.a | Recap navegável: cards Números clicáveis → listas → edição | _spec_ | `[spec]` |
+| Q24.b | Recap Memórias / Wrapped: slideshow Ken Burns + frases sóbrias | _spec_ | `[spec]` |
 | Q18.x | `<Video>` real do expo-av no `MidiaExecucaoPlayer` | (HEAD) | `[ok]` |
 | Q21.b | 7+ issues `etl-contract` no sibling Python `protocolo-ouroboros` | issues #24-30 sibling | `[ok]` |
 | Q23 | Bump `compileSdk 35` via expo-build-properties (destrava CI alpha-5+) | `46bec14` | `[ok]` |
