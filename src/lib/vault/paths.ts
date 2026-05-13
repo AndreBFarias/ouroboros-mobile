@@ -179,6 +179,13 @@ export function rotinaPath(slug: string): string {
   return `markdown/rotina-${slug}.md`;
 }
 
+// markdown/grupo-<slug>.md (Q19, Grupos de Treino)
+// Container que referencia 1..10 rotinas por slug. Permite "Treino A
+// /B/C" sob um mesmo grupo "Treino do Quaresma" sem duplicar dados.
+export function grupoPath(slug: string): string {
+  return `markdown/grupo-${slug}.md`;
+}
+
 // markdown/contador-<slug>.md
 export function contadorPath(slug: string): string {
   return `markdown/contador-${slug}.md`;

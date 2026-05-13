@@ -18,6 +18,7 @@ export {
   alarmePath,
   tarefaPath,
   rotinaPath,
+  grupoPath,
   contadorPath,
   notaPath,
   notaArquivoPath,
@@ -159,6 +160,13 @@ export {
   escreverRotina,
   removerRotina,
 } from './rotina';
+
+export {
+  listarGrupos,
+  lerGrupo,
+  escreverGrupo,
+  removerGrupo,
+} from './grupo_treino';
 
 // M36: helpers de leitura agregada para o Recap.
 export { listarHumor } from './humor';

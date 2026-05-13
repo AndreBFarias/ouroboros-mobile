@@ -116,6 +116,10 @@ export {
   type ExercicioRotina,
 } from './rotina';
 export {
+  GrupoTreinoSchema,
+  type GrupoTreino,
+} from './grupo_treino';
+export {
   MidiaSchema,
   MidiaSpotifySchema,
   MidiaYoutubeSchema,

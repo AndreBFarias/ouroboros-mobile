@@ -37,9 +37,26 @@
         "android.permission.CAMERA",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.MANAGE_EXTERNAL_STORAGE"
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.WRITE_EXERCISE",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.WRITE_WEIGHT",
+        "android.permission.health.READ_BODY_FAT",
+        "android.permission.health.WRITE_BODY_FAT",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_MENSTRUATION",
+        "android.permission.health.WRITE_MENSTRUATION"
       ],
       "intentFilters": [
+        {
+          "action": "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE",
+          "category": [
+            "DEFAULT"
+          ]
+        },
         {
           "action": "SEND",
           "category": [
@@ -130,7 +147,8 @@
           "speechRecognitionPermission": "Permitir reconhecimento de voz para preencher o diário."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "react-native-health-connect"
     ],
     "experiments": {
       "typedRoutes": true
