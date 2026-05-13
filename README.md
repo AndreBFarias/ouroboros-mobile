@@ -6,25 +6,36 @@ entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
 processa. Construído com Expo + React Native, sem rede de saída,
 estética premium nativa desde o dia um.
 
-## Status v1.0 — Refundação em curso
+## Status v1.0 — Onda Q (alpha-4 publicado, alpha-5 em CI local)
 
-A v1.0.0 foi publicada em 2026-05-02 e **retirada do GitHub Releases**
-no mesmo dia ao identificarmos bugs críticos em uso real (vault
-inacessível, captura preta, alarmes mudos, identidade impessoal). A
-tag git `v1.0.0` permanece em `main` por histórico, mas o release
-público foi deletado.
+**APK [v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4)** (2026-05-12 noite) — 21 sprints da Onda Q entregues em 3 dias de maratona:
 
-Refundação em 21 sprints (M21 → M41) **fechada em 2026-05-07** (31/31
-sprints H–O). Pendente para v1.0.0 público: I2-OAUTH (precisa Google
-Cloud Console) + Bloco P (field test 7 dias APK).
+- **Q0** OAuth Google Calendar (scope `calendar.events.readonly` registrado + `env.json` Android client)
+- **Q1–Q4** Rename "Ouroboros" + Recap visível + MenuLateral suave + FABs 64dp
+- **Q5.1+Q5.2** TranscreverButton separado (resolve aborto de mic) + speech-recognition continuous
+- **Q6** Ref guard `goBackOnce()` no diário (resolve `GO_BACK was not handled`)
+- **Q7** Sheet câmera com retry 800ms (cobre A30)
+- **Q8** Ciclo persistência — simetria save/load via `autorPadrao`
+- **Q9** Galeria unificada `/galeria` (Vault Explorer)
+- **Q10** Share Intent expandido — Pix/boleto/extrato regex classifier
+- **Q11.a+b+c** Rotinas completas (CRUD + SeletorRotina + executor com timer)
+- **Q12** Bridge ETL Mobile↔Backend (`_schema_version: 1` em todos writers)
+- **Q14** Entry "Rotinas" no MenuLateral
+- **Q15** Sheets desempilhados durante seletor
+- **Q17** Integração Health Connect Android completa (pacote, permissions, tela `/settings/integracoes`, sync read+write)
+- **Q18** `MidiaExecucaoPlayer` para GIFs em exercícios (integração visual em Q18.b)
+- **Q19** Grupos de Treino esqueleto (schema + vault + rotas)
+- **Q20–Q21** Specs detalhadas em `docs/sprints/`
 
-**APK alpha-3 (2026-05-09 madrugada)** — corrige bug crítico de vault
-freeze do alpha-2 em Redmi Note 13 HyperOS. V4.0.2 part 1-8 entregam:
-- Vault default em `documentDirectory` (HyperOS-proof — Armadilha A31)
-- BottomSheet abre em New Arch + Reanimated 4 (Armadilha A30)
-- Sync `tipoCompanhia` entre `useOnboarding` e `useSettings`
-- 4 saves end-to-end validados no celular real (humor, áudio binário,
-  contador, alarme com 5 schedules)
+Métricas pós-Onda Q: 1892 testes Jest verde · typecheck silent · smoke OK · anonimato (Regra −1) OK · PT-BR audit OK.
+
+**Próxima alpha (alpha-5):** GitHub Actions workflow (`.github/workflows/build-android-apk.yml`) builda APK local com Q17/Q18/Q19 inclusos. EAS Free Tier esgotada — workflow resolve dependência. Detalhes em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md).
+
+### Releases anteriores
+
+- **APK alpha-3 (2026-05-09 madrugada)** — vault HyperOS-proof + BottomSheet New Arch + saves E2E (V4.0.2 part 1-8). Bug raiz tripla do alpha-2 corrigida. Vault default em `documentDirectory` (HyperOS-proof — Armadilha A31), BottomSheet abre em New Arch + Reanimated 4 (Armadilha A30), sync `tipoCompanhia` entre stores, 4 saves end-to-end validados no celular real.
+- **v1.0.0** (2026-05-02) — publicada e retirada do GitHub Releases no mesmo dia ao identificarmos bugs críticos. Tag git permanece em `main` por histórico.
+- Refundação em 21 sprints (M21 → M41) fechada em 2026-05-07 (31/31 sprints H–O).
 
 Acompanhe em [`STATE.md`](STATE.md), [`ROADMAP.md`](ROADMAP.md),
 [`CHANGELOG.md`](CHANGELOG.md) Onda E e [`docs/sprints/`](docs/sprints/).

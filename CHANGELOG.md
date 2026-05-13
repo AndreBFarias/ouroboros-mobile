@@ -5,6 +5,101 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### v1.0.0-alpha-5 (2026-05-13 madrugada) — Q17 Health Connect completo + CI local
+
+APK gerado via GitHub Actions (workflow `.github/workflows/build-android-apk.yml`) após EAS Free Tier esgotar. Limitação: APK assinado com debug keystore — OAuth Google não funciona nessa alpha (resolvido em sprint futura com keystore EAS em GitHub Secrets).
+
+**Q17 Health Connect (commit `cee0d17`)**
+- `npm install react-native-health-connect@^3.5.0` via Expo Config Plugin.
+- `app.json` ganha 11 permissions `android.permission.health.*` (READ/WRITE de Steps, ExerciseSession, Weight, BodyFat, HeartRate, Sleep, MenstruationFlow).
+- Intent-filter `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE` aponta para nova rota `/_internal/health-rationale`.
+- Tela `/settings/integracoes` lista o status do SDK e gerencia conexão.
+- `src/lib/health/sync.ts` expõe 6 helpers: `sincronizarTreinosDeHC`, `sincronizarPassosDeHC`, `sincronizarPesoDeHC`, `escreverTreinoEmHC`, `escreverPesoEmHC`, `escreverBodyFatEmHC`, `escreverMenstruacaoEmHC`.
+- Toggle `settings.featureToggles.healthConnectSync` (default false): ao aceitar permissions na UI, `saveTreino` passa a gravar `ExerciseSessionRecord` automaticamente em HC (best-effort, falha no HC não bloqueia save local).
+- Link "Integrações" em `/settings/index.tsx`.
+
+**Q18 MidiaExecucaoPlayer (commit `1fcbaf5`)**
+- Player reusável em `src/components/exercicios/MidiaExecucaoPlayer.tsx` para GIF/JPG/MP4 com fallback Dumbbell vazio. Tamanhos `sm` (96×96) e `lg` (aspect 16:10). Integração no detalhe `/exercicios/<slug>` e no executor `app/treinos/executar/<slug>` entra em Q18.b.
+
+**Q19 Grupos de Treino esqueleto (commit `1fcbaf5`)**
+- Novo schema `GrupoTreinoSchema` em `src/lib/schemas/grupo_treino.ts` (1..10 rotinas referenciadas por slug, sem duplicar dados).
+- Helpers vault em `src/lib/vault/grupo_treino.ts` (`listarGrupos`, `lerGrupo`, `escreverGrupo`, `removerGrupo`).
+- Path canônico `markdown/grupo-<slug>.md` via `grupoPath` em `paths.ts`.
+- Rotas `app/grupos/{_layout,index,novo,[slug]}.tsx` — lista com FAB+, empty state, stubs `novo` e `[slug]` (form completo + botão "Iniciar treino" entram em Q19.b).
+
+**CI local — GitHub Actions (commit `26dbf85` + `67c3022`)**
+- Workflow `.github/workflows/build-android-apk.yml` com trigger manual + auto em tag `v*-alpha-*`. Setup Node 22 + Java 17 + Android SDK 34. `expo prebuild --platform android` + `gradle assembleRelease`. Cache Gradle pra builds < 15 min em subsequentes.
+- `env.json.example` versionado + step "Provision env.json" no workflow tenta `secrets.ENV_JSON_BASE64` primeiro, cai em stub se ausente.
+
+**Specs Q17–Q21 detalhadas (commit `ff20d2c`)**
+- `docs/sprints/Q17-HEALTH-CONNECT-spec.md` (já implementada nesta alpha).
+- `docs/sprints/Q18-EXERCICIOS-COM-GIF-spec.md`.
+- `docs/sprints/Q19-GRUPOS-EXERCICIOS-spec.md`.
+- `docs/sprints/Q20-SHARE-PIX-VALIDACAO-spec.md`.
+- `docs/sprints/Q21-ETL-UNIFICACAO-spec.md`.
+
+### v1.0.0-alpha-4 (2026-05-12 noite) — Onda Q sessões 1–4
+
+APK [v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4) via EAS preview. Commit `a1dd3c9` (bump versionCode 3).
+
+**Q5.1 — TranscreverButton separado do MicrofoneButton (commit `c6abaa5`)**
+- Android `SpeechRecognizer` não consegue compartilhar o microfone com `expo-av Audio.Recording` — sempre aborta com `error="aborted"`. Confirmado via logcat instrumentado.
+- Solução: 2 botões distintos lado-a-lado no diário emocional.
+  - `MicrofoneButton` (cyan) grava só áudio `.m4a` no Vault.
+  - `TranscreverButton` (orange) chama speech-recognition sozinho, transcreve direto pro textarea.
+
+**Q5.2 — Speech-recognition continuous (commit `2edbc98`)**
+- Default `continuous=false` faz o `SpeechRecognizer` Android encerrar sozinho após 6–8s de silêncio. Trocado para `continuous=true`; o caller chama `abort()` no release do botão.
+
+**Q6 — `goBackOnce()` no diário (commit `c6abaa5`)**
+- `router.back()` era disparado em sequência tanto pelo save bem-sucedido quanto pelo `onChange(-1)` ao fechar o BottomSheet — segunda chamada falhava com `GO_BACK was not handled by any navigator`.
+- Resolvido com ref guard `backCalledRef` que garante chamada única por sessão do sheet.
+
+**Q0 — OAuth Google Calendar (commits `557319f` + `c6abaa5`)**
+- Causa raiz: scope `https://www.googleapis.com/auth/calendar.events.readonly` NÃO estava registrado em "Acesso a dados" do consent screen. Quando o app pede um scope não-declarado, Google retorna `Error 400 invalid_request` com mensagem genérica de "OAuth 2.0 policy".
+- `env.json` chave renomeada `installed` → `android` para refletir tipo real do OAuth client (com.ouroboros.mobile + SHA-1).
+- `googleAuthFlow.getClientIdFromEnv` lê `env.android?.client_id ?? env.installed?.client_id` (fallback legado).
+
+**Q11.a — Schema Rotina + CRUD vault (commit `6d96ae4`)**
+- `RotinaSchema` (Zod) com cap 20 exercícios, `carga_kg` nullable, `reps` string livre (`"12"`, `"8-10"`, `"amrap"`, `"ate falha"`), `descanso_seg` default 90.
+- `src/lib/vault/rotina.ts`: filter por autor (privacidade), sort PT-BR `localeCompare`, slug único via `slugifyTitulo` + `sufixoRandom` (50 tentativas).
+- Rotas `app/rotinas/{index,_layout,novo,[slug]}.tsx` reusando `FormRotina` compartilhado.
+
+**Q11.b — SeletorRotina integrado (commit `6d96ae4`)**
+- `BottomSheetView` com item "Sem rotina (treino livre)" + lista de rotinas + empty state guiando para `/rotinas`.
+- `src/lib/treino/sessaoFromRotina.ts`: helper puro convertendo `RotinaMeta` em `Partial<TreinoSessao>` (piso de faixa, fallback 10, cópia imutável).
+- `SheetNovoTreino` ganha props `rotinaSnapshot` + `onAbrirSeletorRotina`; modal interno "Substituir treino atual?" quando há edição em curso.
+- `MemoriasTreinosTab` integra o 3º BottomSheet com state `pendingRotinaSnapshot`.
+
+**Q11.c — Executor de treino com timer (commit `2edbc98`)**
+- Rotas `app/treinos/_layout.tsx` + `app/treinos/executar/[slug].tsx`.
+- State machine `executando` → `descansando` → `concluido`.
+- Timer regressivo do descanso (default `exercicio.descanso_seg`, ajustável +/-10s, botão "Pular descanso").
+- Botão "Iniciar" pill verde no header de `/rotinas/<slug>`.
+- Salva `TreinoSessao` no Vault como snapshot imutável ao concluir.
+
+**Q14 — Entry "Rotinas" no MenuLateral (commit `2edbc98`)**
+- Item Dumbbell em Utilitários, antes só acessível via SheetNovoTreino → Usar rotina → empty state.
+
+**Q15 — Anti-empilhamento de sheets (commit `2edbc98`)**
+- `handleAbrirSeletorRotina` fecha `novoRef` antes de expandir `seletorRotinaRef`. Reabre com delay 280ms após escolha/cancelamento.
+
+**Q9 — Galeria unificada (commit `3f919f5`)**
+- `/galeria` com Vault Explorer agrupando por prefixo do filename.
+
+**Q10 — Share Intent Pix/boleto/extrato (commit `7d3332a`)**
+- `app.json intentFilters` expandido (`text/plain`, `text/html`, `application/octet-stream`).
+- `src/lib/share/categorias.ts` ganha regex classifier (Pix `E\d{14}`, boleto linha digitável, extrato `Nubank|Itaú|Bradesco|Santander|Inter|C6` + saldo).
+- Auto-rename `inbox/financeiro/<categoria>/YYYY-MM-DD-<valor>.<ext>` + companion `.md` rico.
+
+**Q12 — Bridge ETL Mobile↔Backend (commit `245954f`)**
+- `_schema_version: 1` adicionado em todos os writers de `.md`.
+- `docs/CONTRACT-MOBILE-BACKEND.md` documenta o contrato.
+
+**Q8 — Ciclo persistência (commit `47f5564`)**
+- Bug raiz: `app/ciclo/index.tsx` carregava com `pessoaAtiva` enquanto saves usavam `autorPadrao(tipoCompanhia, sexoA, sexoB)` (resultado diferente em config casal masc+fem). Filter do load excluía os registros do disco.
+- Fix: replicar a inferência de autor na listagem (`autorListagem = autorPadrao(...) ?? pessoaAtiva`) para simetria save/load.
+
 ### Onda Q (2026-05-12): pré-v1.0 — 8 fixes UX + Q0 OAuth liberado
 
 Sessão de validação final com dono. Foco: corrigir bugs reportados +
