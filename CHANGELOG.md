@@ -5,6 +5,41 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Validação live alpha-4 + Q17.c.d + Q18.x + Q21.b (2026-05-13 noite)
+
+- **Validação live alpha-4** (parcial) no Xiaomi 2312DRAABG HyperOS
+  via ADB+uiautomator. 8/13 itens do checklist mínimo pré-release
+  validados (onboarding/home, BotaoRecap, Tela Hoje, abas Saúde
+  Física, sheet Diário Q5.1/Q5.2, ciclo persistente, sheet câmera
+  Q7). Itens 5/9/10/11/12/13 são pré-features Q14/Q17/Q18.b/Q19.b
+  que entraram pós-`a1dd3c9` (alpha-4 base). Relatório em
+  `docs/validacao-live-alpha-4-2026-05-13.md` com 8 screenshots
+  redactados (nomes pessoa_a/b cobertos com `#2a2638`).
+- **Q17.c.d** Campo `gordura` 0..100 % opcional em `MedidasSchema`
+  + plug `escreverBodyFatEmHC` em `escreverMedida` (toggle HC
+  opcional). `MEDIDAS_CAMPOS` passa de 9 para 10 (gordura entre
+  peso e cintura). Contrato `.md`+`.csv` ganha linha 5.5/`gordura`
+  (174 campos auditados, era 173). 4 testes novos em
+  `tests/schemas/medidas.test.ts`. `InputMedida` aceita unidade `%`
+  além de `kg`/`cm`. Commit `2c72690`.
+- **Q18.x** `<Video>` real do expo-av no `MidiaExecucaoPlayer`
+  substitui fallback `<Image>` para `.mp4`/`.mov`/`.webm`.
+  `shouldPlay+isLooping+isMuted` (convive com música em outras
+  telas). GIF/JPG/PNG sem regressão. FEATURES-CANONICAS §3.3
+  atualizada. Commit `15ce58a`.
+- **Q21.b** 7 issues `etl-contract` abertas em
+  `AndreBFarias/protocolo-ouroboros` (#24-#30) cobrindo humor,
+  diario_emocional, treino/rotina/grupo, medidas (com gordura
+  Q17.c.d), ciclo_menstrual, midia (4 tipos) e marco+evento+agenda.
+  Label `etl-contract` criada nesta sessão.
+- **Q23** já estava entregue em `46bec14` (`compileSdkVersion: 35`
+  + `targetSdkVersion: 35` via `expo-build-properties`). Spec
+  stale atualizada com `[ok]` no título.
+
+Baseline preservado: 195 suítes Jest / 1932 testes verde · TS strict
+zero · lint zero warnings · drift contract 174 campos auditados em
+sync.
+
 ### Sanitização pós-sessão 2026-05-13 (tarde)
 
 - Lint zerado em `app/` + `src/`: 5 warnings antigos removidos

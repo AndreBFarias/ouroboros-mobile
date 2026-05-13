@@ -1,9 +1,14 @@
 # Q21.b — Issues `etl-contract` no repo sibling Python
 
-> **Tamanho:** Pequeno (1h)
-> **Bloqueia v1.0.0?** Não — comunicação cross-repo, paralela ao app.
-> **Pré-requisitos:** Q21 entregue (CSV + drift check); gh CLI
-> autenticado pra `AndreBFarias/protocolo-ouroboros`.
+> **Status:** [ok] entregue 2026-05-13 tarde.
+> 7 issues abertas (#24-#30) em `AndreBFarias/protocolo-ouroboros`
+> com label `etl-contract` (criada no mesmo passo). Cobertura: humor,
+> diario_emocional, treino/rotina/grupo, medidas (com gordura
+> Q17.c.d), ciclo_menstrual, midia (foto/audio/video/documento),
+> marco+evento+agenda.
+> **Tamanho:** Pequeno (1h) — fechado em ~25min após troca de
+> account gh (andrefariasmec → AndreBFarias com permissão admin).
+> **Pré-requisitos:** Q21 entregue.
 
 ## Contexto
 
