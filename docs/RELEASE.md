@@ -173,3 +173,81 @@ Excedeu limite → abrir sub-sprint M19.x antes de lançar:
 - Sem analytics / telemetria.
 - Sem Play Store updates / OTA / EAS Update.
 - Sem rede em runtime (ADR-0007).
+
+## Q17.e — Keystore EAS em GitHub Secrets (release alternativo via CI local)
+
+Quando a quota EAS Free Tier estoura, o workflow
+[`.github/workflows/build-android-apk.yml`](../.github/workflows/build-android-apk.yml)
+builda APK no GitHub Actions runner usando o **mesmo keystore EAS**
+distribuído nas releases oficiais. Mesma SHA-1, OAuth Google
+funciona.
+
+### Setup inicial (uma vez)
+
+Use o script versionado:
+
+```bash
+./scripts/exportar_keystore_eas.sh --apply
+```
+
+O script:
+1. Carrega `EXPO_TOKEN` do `.env`.
+2. Roda `eas credentials --platform android` (escolha **production** →
+   **credentials.json: Download credentials from EAS to credentials.json**
+   no menu interativo).
+3. Extrai `keystorePassword`, `keyAlias`, `keyPassword` de
+   `credentials.json`.
+4. Valida com `keytool` que a senha bate.
+5. Confirma SHA-1 `E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`
+   (o cadastrado em Google Cloud Console).
+6. Gera base64 do `.jks` em arquivo temp.
+7. Com `--apply`, cadastra 4 secrets via `gh secret set`:
+   - `ANDROID_KEYSTORE_BASE64`
+   - `ANDROID_KEYSTORE_PASSWORD`
+   - `ANDROID_KEY_ALIAS`
+   - `ANDROID_KEY_PASSWORD`
+8. Shred no arquivo temp via trap exit.
+
+Sem `--apply`, o script só imprime os 4 comandos `gh secret set` pra
+você colar.
+
+**Higiene pós-execução**: apague `credentials/android/keystore.jks` e
+`credentials.json` do disco local (gitignored, mas evita exposição
+acidental). O `.gitignore` cobre `credentials/android/`, `credentials.json`
+e `*.jks`.
+
+### Disparar build via workflow
+
+```bash
+gh workflow run build-android-apk.yml
+gh run watch
+```
+
+Workflow steps relevantes (gerados pela Q17.e):
+- **Provision keystore EAS** — decodifica `ANDROID_KEYSTORE_BASE64`
+  em `android/app/release.keystore`. Skip + fallback se secret
+  ausente (cai em debug keystore, OAuth quebra).
+- **Patch build.gradle signing release** — apenda bloco
+  `android.signingConfigs.release { ... }` no `android/app/build.gradle`
+  pós-prebuild, lendo senhas via env vars.
+- **Verify APK signature** — `keytool -printcert -jarfile <apk>` +
+  comparação contra SHA-1 esperado. Falha o build se mismatch.
+
+### Rotação de keystore
+
+Não rotacionar a menos que o `.jks` vaze. Rotação invalidaria todas
+as releases instaladas — usuários precisariam desinstalar + reinstalar
+perdendo Vault. Se rotacionar:
+
+1. Atualizar SHA-1 no Cloud Console (OAuth client Android).
+2. Re-rodar `./scripts/exportar_keystore_eas.sh --apply` (os 4
+   secrets sobrescrevem).
+3. Bump major `versionCode` no `app.json` pra forçar reinstall.
+4. Comunicar usuários antes do build.
+
+### Comportamento sem os secrets
+
+O workflow continua funcionando sem os 4 secrets — cai em debug
+keystore (caminho legado pré-Q17.e). APK gera, instala, mas OAuth
+Google rejeita com `400 invalid_request`. Útil só pra smoke de build,
+não pra distribuição.

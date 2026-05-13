@@ -78,9 +78,14 @@ builds/
 # Keystore Android para release v1.0.0+. Backup manual em local seguro
 # (USB criptografado fora do git). Caso a chave seja perdida, novas
 # releases precisam de novo identificador no Play Store -- por isso
-# o backup deve sobreviver ao computador.
+# o backup deve sobreviver ao computador. credentials/ inteiro
+# blacklisted exceto README pra evitar vazar .jks/credentials.json
+# baixados por eas credentials --platform android (Q17.e).
 credentials/keystore.jks
 credentials/keystore.json
+credentials/android/
+credentials.json
+*.jks
 
 # Arquivos de instrucao/orquestracao para IA (CLAUDE.md, HANDOFF, etc).
 # Mantidos apenas localmente -- nao versionar (Regra -1, anonimato).

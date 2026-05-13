@@ -1,9 +1,16 @@
 # Q17.e — Keystore EAS encriptado em GitHub Secrets
 
-> **Tamanho:** Pequeno (1.5–3h)
-> **Bloqueia v1.0.0?** Sim — desbloqueia OAuth Google em qualquer
-> APK gerado pelo CI local, evitando dependência do EAS quando a
-> quota Free Tier estoura.
+> **Status:** [ok] entregue 2026-05-13 noite. 4 secrets cadastrados
+> em `AndreBFarias/ouroboros-mobile` (verificável via
+> `gh api repos/AndreBFarias/ouroboros-mobile/actions/secrets`).
+> Workflow patcheado com 3 novos steps: Provision keystore EAS,
+> Patch build.gradle signing release, Verify APK signature. Fallback
+> gracioso quando secrets ausentes. Script versionado
+> `scripts/exportar_keystore_eas.sh` automatiza export+upload.
+> `docs/RELEASE.md` ganhou seção dedicada com setup, rotação e
+> comportamento sem secrets.
+> **Tamanho:** Pequeno (1.5–3h) — fechado em ~1h após dono baixar
+> .jks via eas credentials e fornecer senhas.
 > **Pré-requisitos:** Q17.a entregue (workflow `build-android-apk.yml`
 > em produção), acesso ao dashboard EAS para exportar keystore.
 
