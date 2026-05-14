@@ -5,6 +5,116 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### alpha-11 + Q22 completo + Q24.a + Q24.b mvp (2026-05-13 noite → 2026-05-14 madrugada)
+
+Maratona ~10h fechando v1.0 pré-release. 6 alpha-builds em camadas
+debugando o OAuth + 4 fixes UX descobertos na validação live alpha-6.
+
+- **`v1.0.0-alpha-11` publicado** (run #25835371464, arm64 66 MB).
+  Consolida Q22.B fim + Q22.G + Q24.a + Q24.b MVP. Instalado no
+  Xiaomi via `pm install -r` (vault preservado). Mesma keystore EAS
+  canônica.
+- **Q22.A** transcrição duplicava texto N vezes no diário
+  emocional. `TranscreverButton` chamava `onTextoTranscrito` a cada
+  partial do `SpeechRecognizer` → caller fazia append cumulativo.
+  Split API em `onTextoTranscrito` (final, uma vez) +
+  `onPreviewParcial?` (opcional para preview live em outro lugar).
+  Caller diário não precisou mudar — agora recebe 1 chamada
+  consolidada. Commit `0148a1d`.
+- **Q22.B** OAuth Google `Erro 400: invalid_request` — quatro
+  causas raiz descobertas em sequência:
+  1. **Typo SHA-1**: Cloud Console tinha `43` no 4º octeto em vez
+     de `B3` (transcrição manual incorreta). Dono corrigiu.
+  2. **Tipo OAuth client incompatível**: client tipo Android no
+     Cloud Console exige Google Play Services signInIntent —
+     custom scheme PKCE não funciona. Dono criou client tipo iOS
+     (`691237256846-tl2edd8uvb6bbn6men478c0agq7ea91p`) com Bundle
+     ID `com.ouroboros.mobile`. `env.json` atualizado.
+  3. **Redirect URI custom scheme rejeitado**: iOS OAuth clients
+     exigem `com.googleusercontent.apps.<reverse-client-id>:/oauthredirect`,
+     não `ouroboros://oauth-callback`. `app.json` `scheme` virou
+     array `["ouroboros", "com.googleusercontent.apps.<id>"]`;
+     `googleAuthFlow.ts:pickClientId()` agora deriva redirect URI
+     reverso-DNS automaticamente do client_id.
+  4. **`WebBrowser.maybeCompleteAuthSession()` faltando** no
+     `_layout.tsx` top-level. Sem essa call, o callback OAuth
+     (deep link no scheme novo) vazava pro `expo-router` e
+     mostrava "Unmatched Route" em vez de fechar o browser +
+     entregar o `code`. Adicionada chamada top-level fora de
+     qualquer hook conforme doc oficial Expo. Commits `d7afd8c`,
+     `fabab93`, `d8e594a`, `c2495b4`.
+- **Q22.C** crash em `app/rotinas/[slug].tsx` ao tap em treino:
+  `useCallback(handleIniciarTreino)` estava após dois early
+  returns (`carregando` e `!rotina`) → React renderizava número
+  diferente de hooks em renders consecutivos → "Rendered more
+  hooks than during the previous render". Movido pra antes dos
+  early returns. Commit `358c957`.
+- **Q22.D** FAB+ alinhamento canônico. `FAB.tsx` usava
+  `bottom: spacing.xl` fixo (24dp), enquanto `FABMenu` e
+  `MenuCapturaVerde` usam `useSafeBottomMargin` (max 24dp, 10%
+  altura + safe area = ~264dp). Resultado: FAB+ ficava muito mais
+  baixo que o hamburguer (degrau visual). Fix: `FAB.tsx` consome
+  `useSafeBottomMargin` agora. Commit `358c957`.
+- **Q22.E** drawer cortando seção Utilitários. ScrollView interno
+  sem `flex: 1` permitia conteúdo expandir além da altura do
+  painel; rodapé Configurações absoluto sobrepunha
+  Tarefas/Alarmes/Contadores/Rotinas (bounds inválidos `y2 < y1`).
+  Fix: 1 linha `style={{ flex: 1 }}`. Commit `358c957`.
+- **Q22.F** empty state HC card na aba Evolução. `CardHCResumo`
+  retornava `null` quando `!habilitado` — usuário não via nem
+  reminder pra ativar Health Connect. Fix: empty state discreto
+  com texto muted "Conecte sua Conexão Saúde para ver passos,
+  peso e treinos importados aqui." + tap leva pra
+  `/settings/integracoes`. Commit `358c957`.
+- **Q22.G** share intent Pix nativo via `expo-share-intent`.
+  Antes: `intentFilters` declarados em `app.json` faziam Ouroboros
+  aparecer no sheet de share Android, mas o intent `action.SEND`
+  era descartado (sem ponte JS, payload nunca chegava ao código).
+  Fix: `npx expo install expo-share-intent` + config plugin
+  oficial gerencia intent filters (text/image/pdf/octet-stream).
+  Hook `useShareIntentListener` no `_layout.tsx` mapeia
+  `shareIntent` → params canônicos e navega pra `/share-receive`.
+  Commit `3a1726f`.
+- **Q24.a** Recap navegável (cards Números clicáveis). Antes os
+  6 cards do grid 2×3 (Registros/Treinos/Fotos/Eventos±/Tarefas)
+  eram read-only — usuário via "23 registros" mas não tinha jeito
+  de saber QUAIS. Fix: cards viraram `Pressable`, tap navega pra
+  `/recap-lista?tipo=...&de=...&ate=...` com items linkando pra
+  rotas de edição existentes (humor sheet, `/diario-emocional?slug=`,
+  `/galeria/detalhe/[slug]`, `/todo?focus=`). Tipos sem rota de
+  edição dedicada (treinos detalhe, eventos detalhe) ainda mostram
+  toast "Em breve" — sub-sprints Q24.a.b/c cobrem. Commit `1124998`.
+- **Q24.b MVP** modo Memórias (Recap Wrapped). Terceiro toggle no
+  header Recap: Lista / Calendário / **Memórias**. Tap em Memórias
+  navega pra `/recap-memorias` (rota separada full-screen) sem
+  alterar o modo anterior. Slideshow 5 slides candidatos: abertura
+  ("Olhe o que ficou"), números (registros + treinos + tarefas),
+  vitórias (contagem + frase recente), crises (contagem agregada
+  sem detalhe pra evitar re-trauma), encerramento ("Continue.").
+  Auto-advance 5s/slide, tap-esquerda volta, tap-direita avança,
+  longpress pausa, X fecha. Indicador barras finas top. Paleta
+  exclusiva `colorsMemorias` (gradient roxo profundo → magenta →
+  cyan elétrico + dourado pálido + branco quente) — quebra visual
+  intencional vs cotidiano sóbrio. Frases respeitam ADR-0005 (sem
+  exclamação, sem emoji, sem comparativo). Settings ganha toggle
+  `recapAmbientAudio` (default false) — file/playback ficam em
+  sub-sprint Q24.b.a. Ken Burns nas fotos vai em Q24.b.b. Export
+  stories IG vai em Q24.b.c. Commit `ea10ce8`.
+
+Sequência de alpha-builds publicados:
+- `alpha-6` baseline Q17.e (run 25828812872)
+- `alpha-7` Q22.C/D/E/F (run 25831353422)
+- `alpha-8` Q22.B client iOS (run 25832907738)
+- `alpha-9` Q22.B redirect URI reverso-DNS (run 25834009770)
+- `alpha-10` Q22.B maybeCompleteAuthSession (run 25834852405,
+  publicado mas obsoleto pelo alpha-11)
+- `alpha-11` consolidado Q22.B + Q22.G + Q24.a + Q24.b MVP
+  (run 25835371464)
+
+Baseline preservado: 195 suítes Jest / 1932 testes verde · TS
+strict 0 · drift contract 174 campos auditados · 6 releases
+publicados em GitHub Releases.
+
 ### alpha-6 publicado + Q17.e + Q22.A + Q22.B causa-raiz + Q24 spec (2026-05-13 madrugada)
 
 - **`v1.0.0-alpha-6` publicado** em GitHub Releases via workflow

@@ -53,14 +53,17 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q17.c.d | Campo `gordura` em MedidasSchema + hook `escreverBodyFatEmHC` | (HEAD) | `[ok]` |
 | Q17.e | Keystore EAS encriptado em 4 GitHub Secrets + workflow signing | (HEAD) | `[ok]` |
 | Q22.A | Fix transcrição duplicando texto no diário (split partial/final no TranscreverButton) | (HEAD) | `[ok]` |
-| Q22.B | OAuth Google 400 invalid_request — Web client + env.json (depende dono criar) | _spec_ | `[spec]` |
-| Q22.C | Fix crash hook order em `RotinaDetalhe` (useCallback após early return) | (HEAD) | `[ok]` |
-| Q22.D | Fix FAB+ posicionamento canônico via useSafeBottomMargin (alinha com FABMenu/Verde) | (HEAD) | `[ok]` |
-| Q22.E | Fix drawer ScrollView sem flex:1 (Utilitários cortados pelo footer Configurações) | (HEAD) | `[ok]` |
-| Q22.F | Empty state Q17.d CardHCResumo (HC off mostra CTA pra integrações em vez de invisível) | (HEAD) | `[ok]` |
-| Q22.G | Share intent Pix — receiver nativo via `expo-share-intent` (depende install + prebuild) | _spec_ | `[spec]` |
-| Q24.a | Recap navegável: cards Números clicáveis → listas → edição | _spec_ | `[spec]` |
-| Q24.b | Recap Memórias / Wrapped: slideshow Ken Burns + frases sóbrias | _spec_ | `[spec]` |
+| Q22.B | OAuth Google 400 invalid_request — 4 causas raiz: SHA-1 typo + iOS client + redirect reverso-DNS + maybeCompleteAuthSession | `0148a1d`+`fabab93`+`d8e594a`+`c2495b4` | `[ok]` |
+| Q22.C | Fix crash hook order em `RotinaDetalhe` (useCallback após early return) | `358c957` | `[ok]` |
+| Q22.D | Fix FAB+ posicionamento canônico via useSafeBottomMargin (alinha com FABMenu/Verde) | `358c957` | `[ok]` |
+| Q22.E | Fix drawer ScrollView sem flex:1 (Utilitários cortados pelo footer Configurações) | `358c957` | `[ok]` |
+| Q22.F | Empty state Q17.d CardHCResumo (HC off mostra CTA pra integrações em vez de invisível) | `358c957` | `[ok]` |
+| Q22.G | Share intent Pix via expo-share-intent + useShareIntentListener no _layout | `3a1726f` | `[ok]` |
+| Q24.a | Recap navegável: cards Números clicáveis → listas → edição | `1124998` | `[ok]` |
+| Q24.b | Recap Memórias / Wrapped MVP: toggle 3-modos + slideshow 5 slides + paleta colorsMemorias | `ea10ce8` | `[ok mvp]` |
+| Q24.b.a | Ambient audio file `.mp3` + playback expo-av no slideshow Memórias | _backlog_ | `[backlog]` |
+| Q24.b.b | Ken Burns nas fotos do diário/marco em slides Memórias | _backlog_ | `[backlog]` |
+| Q24.b.c | Export memória como PNG stories IG via react-native-view-shot | _backlog_ | `[backlog]` |
 | Q18.x | `<Video>` real do expo-av no `MidiaExecucaoPlayer` | (HEAD) | `[ok]` |
 | Q21.b | 7+ issues `etl-contract` no sibling Python `protocolo-ouroboros` | issues #24-30 sibling | `[ok]` |
 | Q23 | Bump `compileSdk 35` via expo-build-properties (destrava CI alpha-5+) | `46bec14` | `[ok]` |
@@ -69,9 +72,14 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 
 | Versão | Tipo | Commit | Status |
 |---|---|---|---|
-| `v1.0.0-alpha-4` | EAS preview | `a1dd3c9` | publicado em GitHub Releases (OAuth funciona) |
+| `v1.0.0-alpha-4` | EAS preview | `a1dd3c9` | publicado (OAuth funciona, pré-Q14/Q17.d/Q18.b/Q19.b) |
 | `v1.0.0-alpha-5` | GitHub Actions local (debug keystore) | `46bec14` | publicado, OAuth quebrado (pre-Q17.e) |
-| `v1.0.0-alpha-6` | GitHub Actions local (keystore EAS Q17.e) | `3aef8e7` | publicado, OAuth funciona, signature canônica |
+| `v1.0.0-alpha-6` | GitHub Actions local (keystore EAS Q17.e) | `3aef8e7` | publicado, signature canônica |
+| `v1.0.0-alpha-7` | GitHub Actions local (Q22.C/D/E/F) | `358c957` | publicado, fixes pos-validacao alpha-6 |
+| `v1.0.0-alpha-8` | GitHub Actions local (Q22.B iOS client) | `fabab93` | publicado, oauth client tipo iOS |
+| `v1.0.0-alpha-9` | GitHub Actions local (Q22.B redirect reverso-DNS) | `d8e594a` | publicado |
+| `v1.0.0-alpha-10` | GitHub Actions local (Q22.B maybeCompleteAuthSession) | `c2495b4` | obsoleto, sobrescrito por alpha-11 |
+| `v1.0.0-alpha-11` | GitHub Actions local (consolidado Q22.B+G + Q24.a+b mvp) | `ea10ce8` | **atual, instalado no Xiaomi, aguarda validação live** |
 
 **Pendências documentadas:**
 - **Q17.e** — Keystore EAS encriptado em GitHub Secrets para OAuth
