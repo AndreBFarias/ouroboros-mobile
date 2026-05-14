@@ -5,7 +5,16 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef } from 'react';
+
+// Q22.B (2026-05-13): obrigatorio chamar antes de qualquer
+// AuthRequest.promptAsync resolver. Sem isso, o callback OAuth do
+// google (deep link `com.googleusercontent.apps...:/oauthredirect`)
+// vaza pro expo-router e exibe "Unmatched Route" em vez de fechar o
+// browser + entregar o code pro app. Chamada top-level garantida
+// fora de qualquer hook ou guard.
+WebBrowser.maybeCompleteAuthSession();
 import { Appearance, LogBox, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { OuroborosLoader } from '@/components/brand';
