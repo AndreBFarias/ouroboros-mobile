@@ -88,12 +88,26 @@ export function pickClientId(): ClientIdInfo {
     };
   }
 
+  // Q22.B (2026-05-13, segunda causa raiz): OAuth client tipo iOS
+  // do Google Cloud Console exige redirect_uri no formato reverso-DNS
+  // do clientId, terminando em `:/oauthredirect`. Custom schemes
+  // arbitrarios (`ouroboros://oauth-callback`) sao rejeitados pelo
+  // Google com erro 400 invalid_request. O scheme reverso-DNS
+  // (com.googleusercontent.apps.<client-id-prefix>) e' registrado
+  // adicionalmente em app.json `scheme` array, permitindo que o
+  // Android volte ao app quando o Google redirecionar pra essa URI.
+  //
+  // Formato canonico: dado clientId
+  //   `<NUMERO>-<HASH>.apps.googleusercontent.com`
+  // o reverso e':
+  //   `com.googleusercontent.apps.<NUMERO>-<HASH>:/oauthredirect`
+  const reverso = `com.googleusercontent.apps.${clientId.replace(
+    '.apps.googleusercontent.com',
+    ''
+  )}`;
   return {
     clientId,
-    redirectUri: makeRedirectUri({
-      scheme: 'ouroboros',
-      path: 'oauth-callback',
-    }),
+    redirectUri: `${reverso}:/oauthredirect`,
     ambiente,
   };
 }

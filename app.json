@@ -6,7 +6,10 @@
     "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "scheme": "ouroboros",
+    "scheme": [
+      "ouroboros",
+      "com.googleusercontent.apps.691237256846-tl2edd8uvb6bbn6men478c0agq7ea91p"
+    ],
     "newArchEnabled": true,
     "icon": "./assets/icon.png",
     "splash": {
