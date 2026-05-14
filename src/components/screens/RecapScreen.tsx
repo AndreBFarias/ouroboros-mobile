@@ -43,7 +43,9 @@ import { RecapSecaoTarefas } from './RecapSecaoTarefas';
 import { RecapSecaoNumeros } from './RecapSecaoNumeros';
 import { RecapModoCalendario } from './RecapModoCalendario';
 
-type RecapModo = 'lista' | 'calendario';
+// Q24.b (2026-05-13): 'memorias' nao e' um state interno -- tap nessa
+// pill navega pra rota /recap-memorias (slideshow Wrapped full-screen).
+type RecapModo = 'lista' | 'calendario' | 'memorias';
 
 const PERIODOS = [
   { value: 'semana', label: 'Semana' },
@@ -55,6 +57,7 @@ const PERIODOS = [
 const MODOS: ReadonlyArray<{ value: RecapModo; label: string; a11y: string }> = [
   { value: 'lista', label: 'Lista', a11y: 'modo lista' },
   { value: 'calendario', label: 'Calendário', a11y: 'modo calendario' },
+  { value: 'memorias', label: 'Memórias', a11y: 'modo memorias' },
 ];
 
 function formatYmd(d: Date): string {
@@ -135,6 +138,19 @@ export function RecapScreen() {
   const trocarModo = (proximo: RecapModo) => {
     if (proximo === modo) return;
     haptics.selection();
+    if (proximo === 'memorias') {
+      // Q24.b: rota separada (slideshow full-screen). NAO atualiza
+      // `modo` -- ao voltar do slideshow, usuario aterriza no modo
+      // anterior preservado (Lista ou Calendario).
+      router.push({
+        pathname: '/recap-memorias' as never,
+        params: {
+          de: range.de.toISOString(),
+          ate: range.ate.toISOString(),
+        },
+      });
+      return;
+    }
     setModo(proximo);
   };
 

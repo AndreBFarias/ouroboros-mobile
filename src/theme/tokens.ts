@@ -20,6 +20,25 @@ export const colors = {
 
 export type ColorToken = keyof typeof colors;
 
+// Q24.b (2026-05-13) -- Paleta exclusiva ao modo Memorias do Recap.
+// Quebra visual intencional vs cotidiano sobrio do resto do app: o
+// slideshow Wrapped precisa sentir diferente, evocativo, "momento
+// fora do tempo". Mantem o tom calmo (sem cores berrantes) mas
+// adiciona profundidade quente e dourado palido como acento.
+//
+// USADA APENAS em /recap-memorias e seus slides. Demais telas
+// continuam com `colors` (Dracula base).
+export const colorsMemorias = {
+  // Fundo gradient animado oscila entre estes 3 ao longo de 8s:
+  bgGradient: ['#1a0d2e', '#3a1755', '#0f4d6b'] as const,
+  // Foreground branco quente (vs #f8f8f2 do Dracula).
+  fg: '#fdf6e3',
+  // Dourado palido pra destaque (numeros grandes, progress bar).
+  accent: '#f5d97c',
+  // Cores secundarias contextuais mantem da paleta principal:
+  // purple (vitorias), pink (crises), cyan (treinos), green (sucesso).
+} as const;
+
 // Escala 4dp. Padding lateral de tela = lg (20dp).
 export const spacing = {
   xs: 4,

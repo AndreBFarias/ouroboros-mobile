@@ -67,6 +67,11 @@ export interface SettingsState {
     // Default false (privacy-first; apenas saves locais ate o usuario
     // conectar explicitamente via /settings/integracoes).
     healthConnectSync: boolean;
+    // Q24.b (2026-05-13): trilha sonora ambient durante o modo
+    // Memorias do Recap. Default false (ADR-0005 zero trilha
+    // sonora artificial). Quando on, slideshow toca trilha cc0
+    // baixinha em loop durante toda a sessao.
+    recapAmbientAudio: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -142,6 +147,9 @@ const DEFAULT_STATE_V2: Omit<
     // Q17 (Onda Q): default OFF. Usuario opt-in via
     // /settings/integracoes apos aceitar permissions do Health Connect.
     healthConnectSync: false,
+    // Q24.b: default OFF (zero trilha sonora artificial, ADR-0005).
+    // Toggle em Configuracoes habilita ambient audio nos slides.
+    recapAmbientAudio: false,
   },
   privacidade: {
     biometriaAbrir: false,

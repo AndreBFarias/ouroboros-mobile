@@ -156,6 +156,7 @@ function snapshotValido(): SnapshotSettings {
         mostrarFinancasEmDesenvolvimento: true,
         backupAutomaticoSemanal: true,
         healthConnectSync: false,
+        recapAmbientAudio: false,
       },
       privacidade: {
         biometriaAbrir: true,
