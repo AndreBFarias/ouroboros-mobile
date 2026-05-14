@@ -59,44 +59,6 @@
           "category": [
             "DEFAULT"
           ]
-        },
-        {
-          "action": "SEND",
-          "category": [
-            "DEFAULT"
-          ],
-          "data": [
-            {
-              "mimeType": "image/*"
-            },
-            {
-              "mimeType": "application/pdf"
-            },
-            {
-              "mimeType": "text/plain"
-            },
-            {
-              "mimeType": "text/html"
-            },
-            {
-              "mimeType": "application/octet-stream"
-            }
-          ]
-        },
-        {
-          "action": "VIEW",
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ],
-          "data": [
-            {
-              "mimeType": "application/pdf"
-            },
-            {
-              "mimeType": "text/plain"
-            }
-          ]
         }
       ]
     },
@@ -160,6 +122,17 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35
           }
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": [
+            "text/*",
+            "image/*",
+            "application/pdf",
+            "application/octet-stream"
+          ]
         }
       ]
     ],

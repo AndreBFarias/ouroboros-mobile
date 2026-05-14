@@ -23,6 +23,7 @@ import { MenuLateral } from '@/components/chrome/MenuLateral';
 import { FABMenu } from '@/components/chrome/FABMenu';
 import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
+import { useShareIntentListener } from '@/lib/boot/useShareIntentListener';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 import { useAppPronto } from '@/lib/boot/useAppPronto';
@@ -122,6 +123,10 @@ export default function RootLayout() {
   // Boot hook: registra listener de share intent (M00.5; M08 plugara
   // o fluxo real). Hook idempotente ao desmontar.
   useDeepLinkListener();
+  // Q22.G (2026-05-13): listener canonico de share intent nativo
+  // via expo-share-intent. Captura action.SEND (texto/foto/PDF) de
+  // outros apps (banco, galeria) e roteia pra /share-receive.
+  useShareIntentListener();
 
   // M27.3: hideAsync idempotente. Spec exige UMA unica chamada.
   // Ref guard local ao componente; useFonts em SDK 54 web pode
