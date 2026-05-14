@@ -2,31 +2,74 @@
 // neutro. ADR-0005: sem emoji, sem comparativo (X% melhor), so o
 // numero e o que ele representa.
 //
+// Q24.a (2026-05-13): cada card vira Pressable que navega para
+// /recap-lista?tipo=<chave>&de=...&ate=... permitindo o usuario
+// abrir os registros originais por trás do numero (humor -> sheet
+// humor, diario -> /diario-emocional?slug=, etc).
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Card } from '@/components/ui';
 import { colors } from '@/theme/tokens';
-import type { NumerosRecap } from '@/lib/hooks/useRecap';
+import { haptics } from '@/lib/haptics';
+import type { NumerosRecap, PeriodoRange } from '@/lib/hooks/useRecap';
 
 interface Props {
   numeros: NumerosRecap;
+  range: PeriodoRange;
 }
+
+type TipoChave =
+  | 'registros'
+  | 'treinos'
+  | 'fotos'
+  | 'eventos_pos'
+  | 'eventos_neg'
+  | 'tarefas';
 
 interface CardNumero {
   rotulo: string;
   valor: number;
+  tipo: TipoChave;
 }
 
-export function RecapSecaoNumeros({ numeros }: Props) {
+export function RecapSecaoNumeros({ numeros, range }: Props) {
+  const router = useRouter();
+
   const cards: CardNumero[] = [
-    { rotulo: 'Registros', valor: numeros.registros },
-    { rotulo: 'Treinos', valor: numeros.treinos },
-    { rotulo: 'Fotos', valor: numeros.fotos },
-    { rotulo: 'Eventos positivos', valor: numeros.eventos_positivos },
-    { rotulo: 'Eventos difíceis', valor: numeros.eventos_negativos },
-    { rotulo: 'Tarefas concluídas', valor: numeros.tarefas_concluidas },
+    { rotulo: 'Registros', valor: numeros.registros, tipo: 'registros' },
+    { rotulo: 'Treinos', valor: numeros.treinos, tipo: 'treinos' },
+    { rotulo: 'Fotos', valor: numeros.fotos, tipo: 'fotos' },
+    {
+      rotulo: 'Eventos positivos',
+      valor: numeros.eventos_positivos,
+      tipo: 'eventos_pos',
+    },
+    {
+      rotulo: 'Eventos difíceis',
+      valor: numeros.eventos_negativos,
+      tipo: 'eventos_neg',
+    },
+    {
+      rotulo: 'Tarefas concluídas',
+      valor: numeros.tarefas_concluidas,
+      tipo: 'tarefas',
+    },
   ];
+
+  const abrir = (tipo: TipoChave) => {
+    void haptics.light();
+    router.push({
+      pathname: '/recap-lista' as never,
+      params: {
+        tipo,
+        de: range.de.toISOString(),
+        ate: range.ate.toISOString(),
+      },
+    });
+  };
 
   return (
     <View style={{ gap: 12 }} accessibilityLabel="secao numeros">
@@ -47,13 +90,17 @@ export function RecapSecaoNumeros({ numeros }: Props) {
         }}
       >
         {cards.map((card) => (
-          <View
+          <Pressable
             key={card.rotulo}
+            onPress={() => abrir(card.tipo)}
+            accessibilityRole="button"
+            accessibilityLabel={`abrir lista ${card.rotulo}`}
             style={{ width: '48%' }}
-            accessibilityLabel={`numero ${card.rotulo}`}
           >
             <Card>
-              <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}>
+              <View
+                style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}
+              >
                 <Text
                   style={{
                     fontFamily: 'JetBrainsMono_500Medium',
@@ -76,7 +123,7 @@ export function RecapSecaoNumeros({ numeros }: Props) {
                 </Text>
               </View>
             </Card>
-          </View>
+          </Pressable>
         ))}
       </View>
     </View>

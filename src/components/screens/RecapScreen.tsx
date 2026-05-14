@@ -328,7 +328,7 @@ export function RecapScreen() {
               <RecapSecaoReflexoes itens={data.reflexoes} />
               <RecapSecaoEvolucoes itens={data.evolucoes} />
               <RecapSecaoTarefas itens={data.tarefasConcluidas} />
-              <RecapSecaoNumeros numeros={data.numeros} />
+              <RecapSecaoNumeros numeros={data.numeros} range={range} />
             </ScrollView>
           )}
         </Animated.View>
