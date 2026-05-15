@@ -73,6 +73,14 @@ cd ouroboros-mobile
 Escaneie o QR no Expo Go do celular Android (mesma rede WiFi). Fast
 refresh em menos de 1 segundo, sem build de Android Studio.
 
+### Quando usar cada um
+
+| Comando | Para que | Dependências |
+|---|---|---|
+| `./gauntlet.sh` | Validação visual web rápida (UI, CSS, routing) | Nenhuma (Chrome) |
+| `./run.sh` | Teste nativo no celular físico | Wi-Fi + QR code |
+| `./run.sh --emulator` | Teste nativo no emulador Android | AVD configurado |
+
 ## Scripts
 
 | Script | Função |
