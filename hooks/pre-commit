@@ -16,6 +16,13 @@ python3 scripts/check_strings_ui_ptbr.py
 if [[ -f package.json ]]; then
   STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
   if [[ -n "$STAGED" ]]; then
+    # AUDIT-T3-DX D1 (2026-05-15): auto-formato silencioso via prettier
+    # nos arquivos staged antes do lint. Filosofia identica ao bloco
+    # anonimato/whitespace existente: nao bloqueia, apenas formata e
+    # re-stagea. Se prettier falhar (binario ausente), ignora silencioso
+    # para nao quebrar commit em maquina sem node_modules.
+    npx --no-install prettier --write --log-level=warn $STAGED 2>/dev/null || true
+    git add $STAGED
     npx --no-install eslint $STAGED || { echo "ERRO: eslint falhou nos arquivos staged"; exit 1; }
   fi
 fi
