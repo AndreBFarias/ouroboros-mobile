@@ -19,6 +19,7 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { corDe, inicialDe } from '@/config/pessoas.config';
 import { PersonAvatar } from './PersonAvatar';
+import { useOptionalToast } from './Toast';
 
 interface AvatarPickerProps {
   pessoa: PessoaAutor;
@@ -30,12 +31,18 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
   const setFoto = usePessoa((s) => s.setFoto);
   const [pressed, setPressed] = useState(false);
   const [carregando, setCarregando] = useState(false);
+  const toast = useOptionalToast();
 
   const escolher = useCallback(async () => {
     setCarregando(true);
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) return;
+      if (!perm.granted) {
+        // B3: permissao negada agora notifica o usuario em vez de silenciar.
+        // Sem toast, o press parecia ter dado errado sem motivo aparente.
+        toast.show('Sem permissão de galeria.', 'error');
+        return;
+      }
       // SDK 54+ usa array de MediaType ao inves de MediaTypeOptions.
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
@@ -73,7 +80,7 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
     } finally {
       setCarregando(false);
     }
-  }, [pessoa, setFoto, fotoAtual]);
+  }, [pessoa, setFoto, fotoAtual, toast]);
 
   return (
     <View style={{ alignItems: 'center', gap: 8 }}>
