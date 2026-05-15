@@ -175,13 +175,18 @@ export function Slider({
   const handleTick = useCallback(
     (next: number) => {
       const rounded = step > 0 ? Math.round(next / step) * step : next;
-      if (rounded !== lastTick) {
-        setLastTick(rounded);
+      // Clamp defensivo: state racing entre RNSlider/input range nativo
+      // pode emitir valor fora de range (overshoot do thumb, snap nao
+      // exato). Schema zod downstream rejeitaria com erro generico.
+      // Clamp aqui evita estado invalido sem barulho.
+      const safe = Math.max(min, Math.min(max, rounded));
+      if (safe !== lastTick) {
+        setLastTick(safe);
         haptics.selection();
       }
-      onChange(rounded);
+      onChange(safe);
     },
-    [lastTick, onChange, step]
+    [lastTick, max, min, onChange, step]
   );
 
   const display = step >= 1 ? Math.round(value).toString() : value.toFixed(2);
