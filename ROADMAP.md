@@ -9,6 +9,27 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+## Auditoria pré-v1.0 — 2026-05-15
+
+Auditoria sistemática em 5 eixos. Tranches 1 + 3 entregues em paralelo
+via worktrees isoladas. Tranche 2 (lock vault) e 2 sub-sprints
+periféricas registradas como anti-débito.
+
+| # | Sprint | Commits | Status |
+|---|---|---|---|
+| AUDIT-T1 | Bugs latentes B1–B6 (atomic write, OAuth wrap, toast permission, slider clamp, input maxLength, sync-conflict filter em 16 listadores) | `0d95b9a` → `6779059` (6 commits) | `[ok]` |
+| AUDIT-T3 | DX: prettier + scripts diag/fix-it/bump-versioncode + OAuth doc consolidado + README clarificado + install legacy-peer-deps | `ec6db3b` → `16eff36` (5 commits) | `[ok]` |
+| AUDIT-NORMALIZE | `prettier --write` em src+app+tests (379 arquivos) | `9609961` | `[ok]` |
+| AUDIT-T1B6-MIGRATION-FIX | Filtro `sync-conflict` em `migrarVaultLayoutPorTipo` + 4 listadores periféricos (achado colateral T1) | — | `[todo]` (alta prioridade pré-v1.0) |
+| AUDIT-T1B3-PICKERS-RESTANTES | Toast em 5 outros pickers silenciosos | — | `[todo]` |
+| AUDIT-T2-LOCK-VAULT | Eliminar race read-then-write em saves multi-device (B7 descopado de T1) | — | `[todo]` (pós validação live alpha-11) |
+
+Métricas pós-auditoria: 202 suítes / 1957 testes verde · TS strict 0 ·
+drift contract 174 campos · push em main · `.prettierrc` ativo ·
+hooks/pre-commit com auto-format silencioso.
+
+---
+
 ## Onda Q — pré v1.0.0 (2026-05-11 a 2026-05-13)
 
 Maratona de fixes de UX + features pré-release final. Resposta a bugs

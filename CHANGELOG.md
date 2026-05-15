@@ -5,6 +5,61 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Auditoria pré-v1.0 — Tranche 1 (bugs) + Tranche 3 (DX) (2026-05-15)
+
+Auditoria sistemática em 5 eixos (drift docs↔código, bugs latentes,
+robustez, DX, AIX) entregou 2 sprints corretivas executadas em paralelo
+via worktrees isoladas e 1 normalização de formatação.
+
+- **Tranche 1 — Bugs latentes B1–B6** (commits `0d95b9a` → `6779059`):
+  - **B1**: writer.ts ganha atomic write em `file://` (`<uri>.writing
+    + moveAsync`) + boot hook `limparArquivosWritingOrfaos` varre
+    órfãos.
+  - **B2**: `pickClientIdSafe()` adicionado em `googleAuthFlow.ts`
+    como wrap defensivo do `pickClientId` original (callers existentes
+    preservados).
+  - **B3**: `AvatarPicker` mostra toast "Sem permissão de galeria."
+    em vez de silenciar.
+  - **B4**: `Slider` aplica `Math.max(min, Math.min(max, next))` no
+    handler interno (defensive clamp).
+  - **B5**: prop `maxLength` opcional em `Input.tsx`.
+  - **B6**: util `src/lib/vault/syncConflict.ts` + filtro
+    `!ehSyncConflict(nome)` em 16 listadores do vault (humor, diário,
+    eventos, marcos, medidas, ciclo, contadores, tarefas, alarmes,
+    rotinas, treinos, exercícios, grupos, agenda, galeria,
+    midiaCompanion).
+  - Testes novos: writer-atomic, limparOrfaos, pickClientIdSafe,
+    syncConflict, AvatarPicker-permission, Slider-clamp,
+    Input-maxLength. **+7 suítes / +25 testes** (baseline 195/1932 →
+    202/1957).
+- **Tranche 3 — DX/automação** (commits `ec6db3b` → `16eff36`):
+  - **D2**: `scripts/diag.sh` (adb + Metro status + logcat),
+    `scripts/fix-it.sh` (prettier + eslint --fix), `scripts/bump-versioncode.sh`.
+  - **D5**: `install.sh` documenta `--legacy-peer-deps` (Expo SDK 54
+    + React 19 incompatibilidades).
+  - **D4**: README ganha tabela `gauntlet.sh` vs `run.sh` vs
+    `run.sh --emulator`.
+  - **D1**: `.prettierrc` canônica + integração silenciosa em
+    `hooks/pre-commit` (auto-format staged).
+  - **D3**: OAuth setup consolidado em `docs/OAUTH-SETUP.md`
+    (passos 1–5 + checklist live + troubleshooting Q22.B 4 camadas);
+    `SETUP-OAUTH-GOOGLE.md` e `I2-OAUTH-CHECKLIST.md` viraram
+    redirects.
+- **`style: m-prettier-normalize`** (commit `9609961`): aplicação em
+  massa de `prettier --write` em `src/`, `app/`, `tests/`. 379
+  arquivos reformatados. Fix manual em `app/recap-memorias.tsx` para
+  preservar markers `// anonimato-allow:` em ternary multi-linha.
+  Smoke pós-normalize: 202/1957 verde.
+- **Anti-débito (specs novas registradas, sem implementação)**:
+  - `docs/sprints/AUDIT-T1B6-MIGRATION-FIX-spec.md` — `migrarVaultLayoutPorTipo`
+    + 4 listadores periféricos precisam do mesmo filtro `sync-conflict`
+    (achado colateral crítico do executor T1).
+  - `docs/sprints/AUDIT-T1B3-PICKERS-RESTANTES-spec.md` — 5 outros
+    pickers (FotosBlock, localizacao, MidiaFotoTab×2, adicionarFotoManual)
+    seguem padrão antigo de silenciar permissão negada.
+  - `docs/sprints/AUDIT-T2-LOCK-VAULT-spec.md` — eliminar race
+    read-then-write em saves multi-device (B7 descopado de T1).
+
 ### alpha-11 + Q22 completo + Q24.a + Q24.b mvp (2026-05-13 noite → 2026-05-14 madrugada)
 
 Maratona ~10h fechando v1.0 pré-release. 6 alpha-builds em camadas
