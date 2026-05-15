@@ -14,8 +14,18 @@ describe('useGaleriaMock (M11.1)', () => {
   });
 
   it('adicionar insere no inicio (LIFO)', () => {
-    const a = { uri: 'a', data: '2026-05-01', origemPath: 'p/a', origemSlug: 'a' };
-    const b = { uri: 'b', data: '2026-05-02', origemPath: 'p/b', origemSlug: 'b' };
+    const a = {
+      uri: 'a',
+      data: '2026-05-01',
+      origemPath: 'p/a',
+      origemSlug: 'a',
+    };
+    const b = {
+      uri: 'b',
+      data: '2026-05-02',
+      origemPath: 'p/b',
+      origemSlug: 'b',
+    };
     useGaleriaMock.getState().adicionar(a);
     useGaleriaMock.getState().adicionar(b);
     const fotos = useGaleriaMock.getState().fotos;

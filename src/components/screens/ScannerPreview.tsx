@@ -67,7 +67,9 @@ export function ScannerPreview() {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const nomeA = useNomeDe('pessoa_a');
   const nomeB = useNomeDe('pessoa_b');
-  const opcoesPessoa = useMemo<ReadonlyArray<{ value: PessoaAutor; label: string }>>(
+  const opcoesPessoa = useMemo<
+    ReadonlyArray<{ value: PessoaAutor; label: string }>
+  >(
     () => [
       { value: 'pessoa_a', label: nomeA },
       { value: 'pessoa_b', label: nomeB },
@@ -75,9 +77,10 @@ export function ScannerPreview() {
     [nomeA, nomeB]
   );
 
-  const uris: string[] = typeof params.uris === 'string' && params.uris.length > 0
-    ? params.uris.split('|')
-    : [];
+  const uris: string[] =
+    typeof params.uris === 'string' && params.uris.length > 0
+      ? params.uris.split('|')
+      : [];
 
   const [textoOcr, setTextoOcr] = useState<string>('');
   const [confianca, setConfianca] = useState<number>(0);
@@ -110,7 +113,8 @@ export function ScannerPreview() {
         const c = extrairCategoria(r.texto);
         setCategoria(c);
       } catch {
-        if (!cancelado) toast.show('Falha no reconhecimento de texto.', 'error');
+        if (!cancelado)
+          toast.show('Falha no reconhecimento de texto.', 'error');
       } finally {
         if (!cancelado) setCarregandoOcr(false);
       }
@@ -163,9 +167,10 @@ export function ScannerPreview() {
       }
 
       // Data ISO: se vazio, usa agora.
-      const dataIso = data.length > 0
-        ? `${data}T${new Date().toTimeString().slice(0, 5)}`
-        : new Date().toISOString();
+      const dataIso =
+        data.length > 0
+          ? `${data}T${new Date().toTimeString().slice(0, 5)}`
+          : new Date().toISOString();
 
       const meta: FinanceiroNotaMeta = {
         tipo: 'financeiro',
@@ -319,9 +324,7 @@ export function ScannerPreview() {
         />
 
         <View>
-          <Text className="font-mono text-muted text-xs mb-2">
-            Categoria
-          </Text>
+          <Text className="font-mono text-muted text-xs mb-2">Categoria</Text>
           <ChipGroup
             mode="single"
             options={CATEGORIAS.map((c) => ({
@@ -337,9 +340,7 @@ export function ScannerPreview() {
         </View>
 
         <View>
-          <Text className="font-mono text-muted text-xs mb-2">
-            Pessoa
-          </Text>
+          <Text className="font-mono text-muted text-xs mb-2">Pessoa</Text>
           <ChipGroup
             mode="single"
             options={opcoesPessoa.map((p) => ({

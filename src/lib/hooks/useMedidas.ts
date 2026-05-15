@@ -57,7 +57,9 @@ export function useMedidas(args: UseMedidasArgs = {}): UseMedidasResult {
           : todas.filter((m) => m.autor === pessoaAtiva);
       setMedidas(filtradas);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'falha ao carregar medidas');
+      setError(
+        err instanceof Error ? err.message : 'falha ao carregar medidas'
+      );
     } finally {
       setLoading(false);
     }

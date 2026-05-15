@@ -148,8 +148,7 @@ export function ExercicioForm({
   const handleSalvar = useCallback(async () => {
     if (!podeSalvar || !nivel) return;
 
-    const slug =
-      inicial?.slug ?? slugifyExercicio(nome.trim());
+    const slug = inicial?.slug ?? slugifyExercicio(nome.trim());
 
     const dicasLimpas = dicas.map((d) => d.trim()).filter((d) => d.length > 0);
 
@@ -290,7 +289,11 @@ export function ExercicioForm({
         {dicas.map((d, i) => (
           <View
             key={i}
-            style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}
+            style={{
+              flexDirection: 'row',
+              gap: spacing.sm,
+              alignItems: 'center',
+            }}
           >
             <View style={{ flex: 1 }}>
               <Input

@@ -168,9 +168,7 @@ function truncarCampoLongo(valor: unknown): unknown {
   return valor.slice(0, RASCUNHO_TEXTO_CAP);
 }
 
-function aplicarCapTextos<T extends Record<string, unknown>>(
-  parcial: T
-): T {
+function aplicarCapTextos<T extends Record<string, unknown>>(parcial: T): T {
   const saida: Record<string, unknown> = { ...parcial };
   for (const chave of Object.keys(saida)) {
     if (CAMPOS_TEXTO_LIVRE.has(chave)) {

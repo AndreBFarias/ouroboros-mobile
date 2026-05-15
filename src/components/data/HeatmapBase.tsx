@@ -106,9 +106,7 @@ export function HeatmapBase({
             const idx = linha * NUM_COLUNAS + col;
             const cel = lista[idx];
             const cor = paleta[cel.intensidade];
-            const handle = onCelulaPress
-              ? () => onCelulaPress(cel)
-              : undefined;
+            const handle = onCelulaPress ? () => onCelulaPress(cel) : undefined;
             const labelA11y = cel.data
               ? `celula ${cel.data} intensidade ${cel.intensidade}`
               : 'celula vazia';

@@ -18,7 +18,10 @@ export function BlocoInstrucao({
 }: BlocoInstrucaoProps) {
   // Divide em paragrafos por quebra de linha dupla. Em texto simples
   // (uma linha) o array tem 1 entrada e renderiza igual.
-  const paragrafos = texto.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+  const paragrafos = texto
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   return (
     <View style={{ gap: spacing.sm }}>

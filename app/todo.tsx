@@ -13,12 +13,7 @@
 // 'ouroboros.todo.ordem.v1' (array de paths em ordem).
 //
 // Comentarios sem acento (convencao shell/CI).
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { ListChecks } from '@/lib/icons';
@@ -188,12 +183,15 @@ export default function TelaTarefas() {
   const [tituloEditando, setTituloEditando] = useState<string>('');
   // M31: campos M31 carregados quando o usuario abre edicao. Sheet le
   // estes para popular categoria/destino/alarme atuais.
-  const [categoriaEditando, setCategoriaEditando] =
-    useState<TarefaCategoria | undefined>(undefined);
-  const [destinoEditando, setDestinoEditando] =
-    useState<TarefaPessoaDestino | undefined>(undefined);
-  const [alarmeEditando, setAlarmeEditando] =
-    useState<TarefaAlarme | null | undefined>(undefined);
+  const [categoriaEditando, setCategoriaEditando] = useState<
+    TarefaCategoria | undefined
+  >(undefined);
+  const [destinoEditando, setDestinoEditando] = useState<
+    TarefaPessoaDestino | undefined
+  >(undefined);
+  const [alarmeEditando, setAlarmeEditando] = useState<
+    TarefaAlarme | null | undefined
+  >(undefined);
   const [relEditando, setRelEditando] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<boolean>(false);
 
@@ -440,20 +438,17 @@ export default function TelaTarefas() {
     }
   }, [vaultRoot, tarefaParaExcluir, toast, carregar]);
 
-  const handleReorder = useCallback(
-    (nova: TarefaListada[]) => {
-      const rels = nova.map((t) => t.rel);
-      setOrdemSalva(rels);
-      // Atualiza a estrutura tarefas reordenando pendentes; feitas
-      // ficam intactas.
-      setTarefas((cur) => {
-        const ft = cur.filter((t) => t.meta.feito);
-        return [...nova, ...ft];
-      });
-      void gravarOrdemSalva(rels);
-    },
-    []
-  );
+  const handleReorder = useCallback((nova: TarefaListada[]) => {
+    const rels = nova.map((t) => t.rel);
+    setOrdemSalva(rels);
+    // Atualiza a estrutura tarefas reordenando pendentes; feitas
+    // ficam intactas.
+    setTarefas((cur) => {
+      const ft = cur.filter((t) => t.meta.feito);
+      return [...nova, ...ft];
+    });
+    void gravarOrdemSalva(rels);
+  }, []);
 
   const handleResetarOrdem = useCallback(async () => {
     setOrdemSalva([]);
@@ -472,9 +467,7 @@ export default function TelaTarefas() {
 
   // Header da lista (sticky-ish via ListHeaderComponent).
   const listHeader = (
-    <View
-      style={{ paddingBottom: spacing.base, gap: spacing.base }}
-    >
+    <View style={{ paddingBottom: spacing.base, gap: spacing.base }}>
       <BarraBusca value={busca} onChangeText={setBusca} />
       {ordemSalva.length > 0 && busca.length === 0 ? (
         <Pressable
@@ -655,8 +648,8 @@ export default function TelaTarefas() {
                 lineHeight: 20,
               }}
             >
-              A tarefa será movida para a lixeira. Você pode
-              recuperá-la manualmente em até 30 dias.
+              A tarefa será movida para a lixeira. Você pode recuperá-la
+              manualmente em até 30 dias.
             </Text>
             <View style={{ gap: spacing.sm }}>
               <Button

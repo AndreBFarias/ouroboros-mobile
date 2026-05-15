@@ -2,7 +2,11 @@ import { act, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { ToastProvider, useToast, useOptionalToast } from '@/components/ui';
 
-function Caller({ onApi }: { onApi: (api: ReturnType<typeof useToast>) => void }) {
+function Caller({
+  onApi,
+}: {
+  onApi: (api: ReturnType<typeof useToast>) => void;
+}) {
   const api = useToast();
   onApi(api);
   return null;

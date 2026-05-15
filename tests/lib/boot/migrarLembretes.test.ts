@@ -26,9 +26,7 @@ const mockEscreverAlarme = jest.fn(async (_root: string, meta: Alarme) => {
   return { uri: `mock://${meta.slug}`, rel: `alarmes/${meta.slug}.md` };
 });
 
-const mockListarAlarmes = jest.fn(async () =>
-  Array.from(memAlarmes.values())
-);
+const mockListarAlarmes = jest.fn(async () => Array.from(memAlarmes.values()));
 
 jest.mock('@/lib/vault/alarmes', () => ({
   __esModule: true,
@@ -132,9 +130,7 @@ describe('migrarLembretesParaAlarmes', () => {
 
     await migrarLembretesParaAlarmes(VAULT_ROOT);
 
-    expect(
-      await SecureStore.getItemAsync('ouroboros.settings.v1')
-    ).toBeNull();
+    expect(await SecureStore.getItemAsync('ouroboros.settings.v1')).toBeNull();
   });
 
   it('blob v1 ausente: no-op sem erro', async () => {

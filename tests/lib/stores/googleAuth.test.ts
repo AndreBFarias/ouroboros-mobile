@@ -75,13 +75,11 @@ describe('useGoogleAuth.refreshIfNeeded', () => {
         pessoa_b: { ...CONTA_VAZIA },
       },
     });
-    jest
-      .spyOn(googleAuthFlow, 'pickClientId')
-      .mockReturnValue({
-        clientId: 'cid',
-        redirectUri: 'mock://callback',
-        ambiente: 'standalone',
-      });
+    jest.spyOn(googleAuthFlow, 'pickClientId').mockReturnValue({
+      clientId: 'cid',
+      redirectUri: 'mock://callback',
+      ambiente: 'standalone',
+    });
     jest
       .spyOn(googleAuthFlow, 'refreshAccessToken')
       .mockRejectedValue(new googleAuthFlow.InvalidGrantError('expired'));
@@ -103,13 +101,11 @@ describe('useGoogleAuth.refreshIfNeeded', () => {
         pessoa_b: { ...CONTA_VAZIA },
       },
     });
-    jest
-      .spyOn(googleAuthFlow, 'pickClientId')
-      .mockReturnValue({
-        clientId: 'cid',
-        redirectUri: 'mock://callback',
-        ambiente: 'standalone',
-      });
+    jest.spyOn(googleAuthFlow, 'pickClientId').mockReturnValue({
+      clientId: 'cid',
+      redirectUri: 'mock://callback',
+      ambiente: 'standalone',
+    });
     jest.spyOn(googleAuthFlow, 'refreshAccessToken').mockResolvedValue({
       access_token: 'new',
       expires_in: 3600,

@@ -69,7 +69,8 @@ export default async function caseQ8CicloPersistencia(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ligada?',
+        detalhe:
+          'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ligada?',
         screenshots,
       };
     }

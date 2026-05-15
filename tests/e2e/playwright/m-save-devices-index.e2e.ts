@@ -132,21 +132,33 @@ export default async function caseSaveDevicesIndex(
 
     // 4. Frontmatter canonico do M38.
     const checks: Array<{ nome: string; presente: boolean }> = [
-      { nome: 'tipo: devices_index', presente: md1.includes('tipo: devices_index') },
+      {
+        nome: 'tipo: devices_index',
+        presente: md1.includes('tipo: devices_index'),
+      },
       { nome: 'registro:', presente: md1.includes('registro:') },
       { nome: 'deviceId ouro-', presente: /ouro-[a-z0-9]+/i.test(md1) },
-      { nome: 'nome_amigavel: dispositivo-1', presente: md1.includes('nome_amigavel: dispositivo-1') },
+      {
+        nome: 'nome_amigavel: dispositivo-1',
+        presente: md1.includes('nome_amigavel: dispositivo-1'),
+      },
       { nome: 'pessoa: pessoa_a', presente: md1.includes('pessoa: pessoa_a') },
       // ISO datetime: YYYY-MM-DDTHH:MM:SS
       {
         nome: 'primeira_atividade ISO',
-        presente: /primeira_atividade:\s*['"]?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(md1),
+        presente:
+          /primeira_atividade:\s*['"]?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(md1),
       },
       {
         nome: 'ultima_atividade ISO',
-        presente: /ultima_atividade:\s*['"]?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(md1),
+        presente: /ultima_atividade:\s*['"]?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(
+          md1
+        ),
       },
-      { nome: 'substituido_por: null', presente: md1.includes('substituido_por: null') },
+      {
+        nome: 'substituido_por: null',
+        presente: md1.includes('substituido_por: null'),
+      },
     ];
     const faltando = checks.filter((c) => !c.presente).map((c) => c.nome);
     if (faltando.length > 0) {

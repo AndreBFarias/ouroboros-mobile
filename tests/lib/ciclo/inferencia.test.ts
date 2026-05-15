@@ -7,10 +7,7 @@
 // Funcao pura sem I/O: testes diretos sem mock.
 //
 // Comentarios sem acento (convencao shell/CI).
-import {
-  autorPadrao,
-  deveMostrarItemCiclo,
-} from '@/lib/ciclo/inferencia';
+import { autorPadrao, deveMostrarItemCiclo } from '@/lib/ciclo/inferencia';
 
 describe('autorPadrao - sozinho', () => {
   it('feminino solo infere pessoa_a', () => {

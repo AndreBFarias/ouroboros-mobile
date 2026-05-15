@@ -39,20 +39,14 @@ describe('CardAlarme', () => {
 
   it('renderiza horario formatado', () => {
     const { getByText } = render(
-      <CardAlarme
-        alarme={baseAlarme}
-        onToggle={() => undefined}
-      />
+      <CardAlarme alarme={baseAlarme} onToggle={() => undefined} />
     );
     expect(getByText('08:30')).toBeTruthy();
   });
 
   it('renderiza linha micro com tag e som', () => {
     const { getByText, getAllByText } = render(
-      <CardAlarme
-        alarme={baseAlarme}
-        onToggle={() => undefined}
-      />
+      <CardAlarme alarme={baseAlarme} onToggle={() => undefined} />
     );
     // Texto: "Medicação da manhã" (titulo) + "Medicação · Suave" (linha
     // micro). getAllByText valida que a tag aparece pelo menos no rotulo
@@ -88,10 +82,7 @@ describe('CardAlarme', () => {
   it('toggle inline dispara onToggle com novo valor', () => {
     const onToggle = jest.fn();
     const { getByLabelText } = render(
-      <CardAlarme
-        alarme={baseAlarme}
-        onToggle={onToggle}
-      />
+      <CardAlarme alarme={baseAlarme} onToggle={onToggle} />
     );
     fireEvent.press(getByLabelText('alternar alarme medicacao-manha'));
     expect(onToggle).toHaveBeenCalledWith(false);

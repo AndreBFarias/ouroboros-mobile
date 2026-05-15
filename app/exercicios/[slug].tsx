@@ -11,13 +11,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Dumbbell } from '@/lib/icons';
 import {
@@ -28,19 +22,13 @@ import {
   Screen,
   useToast,
 } from '@/components/ui';
-import {
-  BlocoInstrucao,
-  HistoricoSparkline,
-} from '@/components/exercicios';
+import { BlocoInstrucao, HistoricoSparkline } from '@/components/exercicios';
 import { MidiaExecucaoPlayer } from '@/components/exercicios/MidiaExecucaoPlayer';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import {
-  lerExercicio,
-  excluirExercicio,
-} from '@/lib/vault/exercicios';
+import { lerExercicio, excluirExercicio } from '@/lib/vault/exercicios';
 import { adicionarTreinoLivre } from '@/lib/exercicios/adicionarTreinoLivre';
 import { useLarguraFrame } from '@/lib/ui/useLarguraFrame';
 import { formatGrupoMuscular } from '@/lib/exercicios/grupos';
@@ -253,10 +241,7 @@ export default function DetalheExercicio() {
             </Text>
             <View style={{ gap: spacing.xs }}>
               {exercicio.dicas.map((d, i) => (
-                <View
-                  key={i}
-                  style={{ flexDirection: 'row', gap: spacing.xs }}
-                >
+                <View key={i} style={{ flexDirection: 'row', gap: spacing.xs }}>
                   <Text
                     style={{
                       color: colors.mutedDecor,
@@ -397,8 +382,8 @@ export default function DetalheExercicio() {
                 lineHeight: 20,
               }}
             >
-              O arquivo será movido para a lixeira. Você pode
-              recuperá-lo manualmente em até 30 dias.
+              O arquivo será movido para a lixeira. Você pode recuperá-lo
+              manualmente em até 30 dias.
             </Text>
             <View style={{ gap: spacing.sm }}>
               <Button

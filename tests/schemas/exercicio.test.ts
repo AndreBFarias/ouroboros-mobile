@@ -37,7 +37,8 @@ describe('ExercicioSchema', () => {
       grupo_muscular: ['peito', 'triceps'],
       nivel: 'iniciante',
       equipamento: 'peso corporal',
-      instrucao: 'Apoie as maos no chao na largura dos ombros e flexione os bracos.',
+      instrucao:
+        'Apoie as maos no chao na largura dos ombros e flexione os bracos.',
     });
     expect(out.dicas).toEqual([]);
     expect(out.gif).toBe('');

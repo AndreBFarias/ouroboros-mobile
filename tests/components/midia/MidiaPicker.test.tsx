@@ -17,9 +17,7 @@ let mockCapPorRegistro = 4;
 jest.mock('@/lib/stores/settings', () => ({
   __esModule: true,
   useSettings: <T,>(
-    sel: (s: {
-      midia: { capPorRegistro: number; permitirAudio: boolean };
-    }) => T
+    sel: (s: { midia: { capPorRegistro: number; permitirAudio: boolean } }) => T
   ): T =>
     sel({
       midia: {
@@ -96,9 +94,7 @@ describe('MidiaPicker render', () => {
   });
 
   it('nao mostra caption red quando obrigatorio mas tem item', () => {
-    const inicial: Midia[] = [
-      { tipo: 'youtube', video_id: 'dQw4w9WgXcQ' },
-    ];
+    const inicial: Midia[] = [{ tipo: 'youtube', video_id: 'dQw4w9WgXcQ' }];
     const { queryByLabelText } = render(
       <Wrapper obrigatorio inicial={inicial} />
     );
@@ -119,9 +115,7 @@ describe('MidiaPicker interacao', () => {
   });
 
   it('adiciona midia youtube via link valido', async () => {
-    const { getByText, getByLabelText, queryByLabelText } = render(
-      <Wrapper />
-    );
+    const { getByText, getByLabelText, queryByLabelText } = render(<Wrapper />);
     fireEvent.press(getByText('YouTube'));
     const input = getByLabelText('campo link youtube');
     fireEvent.changeText(input, 'https://youtu.be/dQw4w9WgXcQ');
@@ -134,9 +128,7 @@ describe('MidiaPicker interacao', () => {
   });
 
   it('mostra erro inline para link youtube invalido', () => {
-    const { getByText, getByLabelText, queryByLabelText } = render(
-      <Wrapper />
-    );
+    const { getByText, getByLabelText, queryByLabelText } = render(<Wrapper />);
     fireEvent.press(getByText('YouTube'));
     const input = getByLabelText('campo link youtube');
     fireEvent.changeText(input, 'https://vimeo.com/12345678');
@@ -146,9 +138,7 @@ describe('MidiaPicker interacao', () => {
   });
 
   it('remove midia ao tocar no botao X', async () => {
-    const inicial: Midia[] = [
-      { tipo: 'youtube', video_id: 'dQw4w9WgXcQ' },
-    ];
+    const inicial: Midia[] = [{ tipo: 'youtube', video_id: 'dQw4w9WgXcQ' }];
     const { getByLabelText, queryByLabelText } = render(
       <Wrapper inicial={inicial} />
     );

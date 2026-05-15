@@ -318,10 +318,7 @@ export async function exportarVaultZip(): Promise<ExportarResultado> {
     compression: 'DEFLATE',
     compressionOptions: { level: 1 },
   });
-  const ts = new Date()
-    .toISOString()
-    .replace(/[:.]/g, '')
-    .slice(0, 15); // YYYYMMDDTHHmmss
+  const ts = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15); // YYYYMMDDTHHmmss
   const destino = `${cacheDir}ouroboros-export-${ts}.zip`;
   await FileSystem.writeAsStringAsync(destino, conteudo, {
     encoding: FileSystem.EncodingType.Base64,

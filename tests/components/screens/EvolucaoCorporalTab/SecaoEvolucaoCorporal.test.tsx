@@ -62,7 +62,9 @@ describe('SecaoEvolucaoCorporal', () => {
 
     expect(getByText('Evolução corporal')).toBeTruthy();
     expect(getByText('Sem registros corporais ainda.')).toBeTruthy();
-    expect(getByText('O primeiro registro abre a evolução visual.')).toBeTruthy();
+    expect(
+      getByText('O primeiro registro abre a evolução visual.')
+    ).toBeTruthy();
     // Subtitulo de "ultima medida" nao aparece sem dados.
     expect(queryByText(/Última medida/)).toBeNull();
   });

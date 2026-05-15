@@ -230,11 +230,7 @@ export function DetalheDiaTreinoModal({
         ) : null}
 
         <View style={{ gap: spacing.sm, marginTop: spacing.base }}>
-          <Button
-            label="Editar"
-            onPress={onEditar}
-            variant="primary"
-          />
+          <Button label="Editar" onPress={onEditar} variant="primary" />
           <Button
             label="Duplicar pra hoje"
             onPress={() => void handleDuplicar()}

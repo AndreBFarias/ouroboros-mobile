@@ -39,12 +39,13 @@ export function useTreinos(): UseTreinosResult {
     try {
       // Quando filtro = 'ambos', não filtra; senao filtra pelo autor
       // ativo. Mesmo padrao usado em useHoje.
-      const autor =
-        filtroPessoa === 'ambos' ? null : pessoaAtiva;
+      const autor = filtroPessoa === 'ambos' ? null : pessoaAtiva;
       const lista = await listarTreinos(vaultRoot, { autor });
       setSessoes(lista);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'falha ao carregar treinos');
+      setError(
+        err instanceof Error ? err.message : 'falha ao carregar treinos'
+      );
     } finally {
       setLoading(false);
     }

@@ -21,8 +21,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-VIDEO-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-VIDEO-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -129,8 +128,7 @@ export default async function caseSaveVideo(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'FAB verde "abrir menu de captura" ausente em /memoria',
+        detalhe: 'FAB verde "abrir menu de captura" ausente em /memoria',
         screenshots,
       };
     }
@@ -146,8 +144,7 @@ export default async function caseSaveVideo(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'item "Vídeo" (aria-label=capturar video) ausente no sheet',
+        detalhe: 'item "Vídeo" (aria-label=capturar video) ausente no sheet',
         screenshots,
       };
     }

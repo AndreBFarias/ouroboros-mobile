@@ -69,7 +69,10 @@ import {
 
 type FrameId = 0 | 1 | 2 | 3 | 4;
 
-const SEXO_OPTIONS: ReadonlyArray<{ value: NonNullable<SexoDeclarado>; label: string }> = [
+const SEXO_OPTIONS: ReadonlyArray<{
+  value: NonNullable<SexoDeclarado>;
+  label: string;
+}> = [
   { value: 'masculino', label: 'Masculino' },
   { value: 'feminino', label: 'Feminino' },
   { value: 'nao-binario', label: 'Não-binário' },
@@ -106,8 +109,7 @@ export default function Onboarding() {
   const [togNotificacoes, setTogNotificacoes] = useState(true);
   const [togLocalizacao, setTogLocalizacao] = useState(false);
 
-  const avancar = () =>
-    setFrame((f) => (f >= 4 ? 4 : ((f + 1) as FrameId)));
+  const avancar = () => setFrame((f) => (f >= 4 ? 4 : ((f + 1) as FrameId)));
 
   const handleFrame0 = () => {
     const nome = nomeInput.trim();
@@ -219,10 +221,7 @@ export default function Onboarding() {
       setPermissao('storage', true);
       avancar();
     } catch {
-      toast.show(
-        'Não foi possível usar essa pasta. Tente novamente.',
-        'error'
-      );
+      toast.show('Não foi possível usar essa pasta. Tente novamente.', 'error');
     } finally {
       setEscolhendoPasta(false);
     }
@@ -521,14 +520,20 @@ interface Frame0Props {
   onContinue: () => void;
 }
 
-function Frame0({ nome, onChange, sexo, onSexoChange, onContinue }: Frame0Props) {
+function Frame0({
+  nome,
+  onChange,
+  sexo,
+  onSexoChange,
+  onContinue,
+}: Frame0Props) {
   return (
     <View style={{ gap: spacing.lg }}>
       <MicroOrange>Antes de começar</MicroOrange>
       <Heading>Como você se chama?</Heading>
       <Sub>
-        Esse nome e a foto aparecem nos seus registros e no cabeçalho
-        da tela inicial. Você pode trocar depois nos ajustes.
+        Esse nome e a foto aparecem nos seus registros e no cabeçalho da tela
+        inicial. Você pode trocar depois nos ajustes.
       </Sub>
       <View style={{ alignItems: 'center', marginBottom: spacing.md }}>
         <AvatarPicker pessoa="pessoa_a" size={96} />
@@ -736,18 +741,14 @@ interface Frame2Props {
 // empilhados verticalmente, cada um com titulo + descricao + botao.
 // Ocupado bloqueia ambos enquanto a permissao/SAF picker esta em
 // andamento.
-function Frame2({
-  ocupado,
-  onUsarSugestao,
-  onEscolherOutra,
-}: Frame2Props) {
+function Frame2({ ocupado, onUsarSugestao, onEscolherOutra }: Frame2Props) {
   return (
     <View style={{ gap: spacing.lg }}>
       <MicroOrange>Pasta do Vault</MicroOrange>
       <Heading>Onde salvar seus dados?</Heading>
       <Sub>
-        Tudo o que você registrar fica em arquivos de texto numa pasta
-        do seu celular. Você decide onde.
+        Tudo o que você registrar fica em arquivos de texto numa pasta do seu
+        celular. Você decide onde.
       </Sub>
 
       <CardPasta
@@ -1000,7 +1001,14 @@ function Frame4({
       : `${permissoesConcedidas} permissões concedidas.`;
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.lg }}>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: spacing.lg,
+      }}
+    >
       <View
         style={{
           width: 96,

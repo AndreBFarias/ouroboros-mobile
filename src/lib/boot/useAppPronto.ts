@@ -26,10 +26,7 @@ import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
 import { useSessao } from '@/lib/stores/sessao';
 import { useHasHydrated } from '@/lib/stores/hydrated';
-import {
-  useBootStatus,
-  selectBootPronto,
-} from '@/lib/boot/useBootStatus';
+import { useBootStatus, selectBootPronto } from '@/lib/boot/useBootStatus';
 
 export interface UseAppProntoArgs {
   // useFonts ja roda em _layout.tsx; passamos o boolean ao hook

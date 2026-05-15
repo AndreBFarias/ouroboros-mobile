@@ -28,7 +28,10 @@ export const GrupoTreinoSchema = z.object({
   // Lista de slugs de rotinas. Cada rotina sera carregada via
   // lerRotina(vaultRoot, slug). 1..10 rotinas (cap pra UX nao virar
   // lista absurda; usuario que quer mais cria multiplo grupo).
-  rotina_slugs: z.array(z.string().regex(/^[a-z0-9-]+$/)).min(1).max(10),
+  rotina_slugs: z
+    .array(z.string().regex(/^[a-z0-9-]+$/))
+    .min(1)
+    .max(10),
   data_criacao: DataYmd,
   autor: PessoaAutorSchema,
 });

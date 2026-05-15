@@ -53,7 +53,9 @@ export default async function caseM111Fotos(
 
     // Click na tab Fotos.
     const tabClicada = await page.evaluate(() => {
-      const t = document.querySelector('[aria-label="tab fotos"]') as HTMLElement | null;
+      const t = document.querySelector(
+        '[aria-label="tab fotos"]'
+      ) as HTMLElement | null;
       if (!t) return false;
       t.click();
       return true;
@@ -122,15 +124,20 @@ export default async function caseM111Fotos(
       const w = globalThis as unknown as {
         __gauntlet: { adicionarFotoMock: () => Promise<void> };
       };
-      const before = document.querySelectorAll('[aria-label^="foto galeria-manual"]').length;
+      const before = document.querySelectorAll(
+        '[aria-label^="foto galeria-manual"]'
+      ).length;
       await w.__gauntlet.adicionarFotoMock();
       // Aguarda re-render do React.
       await new Promise((r) => setTimeout(r, 600));
-      const after = document.querySelectorAll('[aria-label^="foto galeria-manual"]').length;
+      const after = document.querySelectorAll(
+        '[aria-label^="foto galeria-manual"]'
+      ).length;
       return after > before;
     });
 
-    const depois = 'docs/sprints/M11.1-screenshots-gauntlet/B2-fotos-com-mock.png';
+    const depois =
+      'docs/sprints/M11.1-screenshots-gauntlet/B2-fotos-com-mock.png';
     await page.screenshot({ path: depois });
     screenshots.push(depois);
 
@@ -139,7 +146,8 @@ export default async function caseM111Fotos(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'adicionarFotoMock nao incrementou contagem de thumbs (verificar useFotosAgregadas + GAUNTLET_ATIVO)',
+        detalhe:
+          'adicionarFotoMock nao incrementou contagem de thumbs (verificar useFotosAgregadas + GAUNTLET_ATIVO)',
         screenshots,
       };
     }
@@ -148,7 +156,8 @@ export default async function caseM111Fotos(
       sprint,
       aspecto,
       status: 'PASS',
-      detalhe: 'FAB adicionar foto presente; adicionarFotoMock insere thumb no grid',
+      detalhe:
+        'FAB adicionar foto presente; adicionarFotoMock insere thumb no grid',
       screenshots,
     };
   } catch (err) {

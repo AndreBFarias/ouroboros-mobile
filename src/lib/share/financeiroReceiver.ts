@@ -40,10 +40,16 @@ export interface ResultadoReceiverFinanceiro {
 // local (sem reuso de share/intent.ts) porque aqui o conjunto e
 // restrito ao financeiro (pdf, jpg, png). Devolve string vazia quando
 // nao identifica.
-function extensaoAnexo(mime: string | null | undefined, nome: string | null | undefined): string {
+function extensaoAnexo(
+  mime: string | null | undefined,
+  nome: string | null | undefined
+): string {
   if (typeof nome === 'string' && nome.includes('.')) {
     const idx = nome.lastIndexOf('.');
-    const ext = nome.slice(idx + 1).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const ext = nome
+      .slice(idx + 1)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
     if (ext.length > 0 && ext.length <= 6) return ext;
   }
   if (mime === 'application/pdf') return 'pdf';
@@ -97,11 +103,13 @@ export function processarShareFinanceiro(args: {
   const categoria: FinanceiroCategoria = classificacao.categoria;
   const slug = slugDeNome(conteudo.nomeArquivo) || categoria;
   const ext = extensaoAnexo(conteudo.mimeType, conteudo.nomeArquivo);
-  const temBinario = typeof conteudo.uri === 'string' && conteudo.uri.length > 0;
+  const temBinario =
+    typeof conteudo.uri === 'string' && conteudo.uri.length > 0;
 
-  const relBinario = temBinario && ext.length > 0
-    ? inboxFinanceiroPath(categoria, agora, { ext, slug })
-    : null;
+  const relBinario =
+    temBinario && ext.length > 0
+      ? inboxFinanceiroPath(categoria, agora, { ext, slug })
+      : null;
   const relMd = inboxFinanceiroPath(categoria, agora, { ext: 'md', slug });
 
   const meta: FinanceiroMeta = {

@@ -80,9 +80,7 @@ export default async function caseSaveFrase(
 
     // 1. FAB+ verde presente.
     const fabPresente = await page.evaluate(() => {
-      return !!document.querySelector(
-        '[aria-label="abrir menu de captura"]'
-      );
+      return !!document.querySelector('[aria-label="abrir menu de captura"]');
     });
     if (!fabPresente) {
       return {

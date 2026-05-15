@@ -43,9 +43,7 @@ const ROTAS_OPCIONAIS = [
   { rota: '/settings', label: 'Configurações' },
 ];
 
-const ROTAS_DEV = [
-  { rota: '/_dev/showcase', label: 'Showcase 24 telas' },
-];
+const ROTAS_DEV = [{ rota: '/_dev/showcase', label: 'Showcase 24 telas' }];
 
 export default function GauntletDashboard() {
   const router = useRouter();
@@ -92,8 +90,8 @@ export default function GauntletDashboard() {
           marginBottom: spacing.base,
         }}
       >
-        Interface dev de teste. Use os botões abaixo ou
-        window.__gauntlet via console.
+        Interface dev de teste. Use os botões abaixo ou window.__gauntlet via
+        console.
       </Text>
 
       <Secao titulo="Ações">
@@ -113,9 +111,7 @@ export default function GauntletDashboard() {
           <BotaoAcao
             label="Seed casal"
             cor={colors.green}
-            onPress={() =>
-              gauntlet.seed({ nomeA: 'Alice', nomeB: 'Bob' })
-            }
+            onPress={() => gauntlet.seed({ nomeA: 'Alice', nomeB: 'Bob' })}
           />
           <BotaoAcao
             label="Abrir menu"
@@ -152,25 +148,45 @@ export default function GauntletDashboard() {
 
       <Secao titulo="Acesso Rápido">
         {ROTAS_VER.map((r) => (
-          <LinhaRota key={r.rota} rota={r.rota} label={r.label} router={router} />
+          <LinhaRota
+            key={r.rota}
+            rota={r.rota}
+            label={r.label}
+            router={router}
+          />
         ))}
       </Secao>
 
       <Secao titulo="Registrar (sheets opacas)">
         {ROTAS_REGISTRAR.map((r) => (
-          <LinhaRota key={r.rota} rota={r.rota} label={r.label} router={router} />
+          <LinhaRota
+            key={r.rota}
+            rota={r.rota}
+            label={r.label}
+            router={router}
+          />
         ))}
       </Secao>
 
       <Secao titulo="Utilitários e settings">
         {ROTAS_OPCIONAIS.map((r) => (
-          <LinhaRota key={r.rota} rota={r.rota} label={r.label} router={router} />
+          <LinhaRota
+            key={r.rota}
+            rota={r.rota}
+            label={r.label}
+            router={router}
+          />
         ))}
       </Secao>
 
       <Secao titulo="Dev">
         {ROTAS_DEV.map((r) => (
-          <LinhaRota key={r.rota} rota={r.rota} label={r.label} router={router} />
+          <LinhaRota
+            key={r.rota}
+            rota={r.rota}
+            label={r.label}
+            router={router}
+          />
         ))}
       </Secao>
     </ScrollView>

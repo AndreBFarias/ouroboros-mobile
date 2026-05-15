@@ -53,7 +53,11 @@ describe('capturarMusica (M34)', () => {
     pickSpy.mockResolvedValue({
       canceled: false,
       assets: [
-        { uri: 'file:///cache/track.mp3', name: 'minha-musica.mp3', mimeType: 'audio/mpeg' },
+        {
+          uri: 'file:///cache/track.mp3',
+          name: 'minha-musica.mp3',
+          mimeType: 'audio/mpeg',
+        },
       ],
     });
     copySpy.mockResolvedValue(undefined);

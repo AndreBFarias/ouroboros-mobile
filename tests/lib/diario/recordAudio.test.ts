@@ -18,7 +18,8 @@ const mockWriteAsStringAsync = jest.fn<Promise<void>, [string, string]>();
 
 jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
-  copyAsync: (...args: [{ from: string; to: string }]) => mockCopyAsync(...args),
+  copyAsync: (...args: [{ from: string; to: string }]) =>
+    mockCopyAsync(...args),
   writeAsStringAsync: (...args: [string, string]) =>
     mockWriteAsStringAsync(...args),
 }));
@@ -84,8 +85,7 @@ describe('saveRecordingToVault (I-AUDIO)', () => {
     const data = new Date('2026-04-29T12:00:00.000Z');
     const rel = await saveRecordingToVault(URI_TEMP, VAULT_ROOT, data);
     expect(mockWriteAsStringAsync).toHaveBeenCalledTimes(1);
-    const [destinoCompanion, conteudo] =
-      mockWriteAsStringAsync.mock.calls[0];
+    const [destinoCompanion, conteudo] = mockWriteAsStringAsync.mock.calls[0];
     const basenameSemExt = (rel.split('/').pop() ?? '').replace(/\.m4a$/, '');
     expect(destinoCompanion).toBe(
       `${VAULT_ROOT}/markdown/${basenameSemExt}.md`

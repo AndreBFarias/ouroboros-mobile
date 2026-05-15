@@ -34,10 +34,7 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { useSessao } from '@/lib/stores/sessao';
 import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
-import {
-  escreverContador,
-  listarContadores,
-} from '@/lib/vault/contadores';
+import { escreverContador, listarContadores } from '@/lib/vault/contadores';
 import {
   ContadorSchema,
   slugifyTitulo,
@@ -102,9 +99,7 @@ export default function ContadoresNovo() {
   // hidratar no Date convertemos via Date(`${inicio}T00:00:00`).
   const rascunho = useSessao((s) => s.rascunhos.contadoresNovo);
 
-  const [titulo, setTitulo] = useState<string>(
-    () => rascunho?.titulo ?? ''
-  );
+  const [titulo, setTitulo] = useState<string>(() => rascunho?.titulo ?? '');
   const [dataInicio, setDataInicio] = useState<Date>(() => {
     const semente = rascunho?.inicio;
     if (typeof semente === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(semente)) {
@@ -132,10 +127,7 @@ export default function ContadoresNovo() {
   );
   useAutoSaveRascunho('contadoresNovo', snapshotRascunho);
 
-  const handleDataChange = (
-    event: DateTimePickerEvent,
-    selecionado?: Date
-  ) => {
+  const handleDataChange = (event: DateTimePickerEvent, selecionado?: Date) => {
     if (Platform.OS === 'android') setPickerAberto(false);
     if (event.type === 'dismissed') return;
     if (selecionado) setDataInicio(selecionado);
@@ -193,7 +185,16 @@ export default function ContadoresNovo() {
     } finally {
       setSalvando(false);
     }
-  }, [vaultRoot, salvando, formValido, titulo, dataInicio, para, toast, router]);
+  }, [
+    vaultRoot,
+    salvando,
+    formValido,
+    titulo,
+    dataInicio,
+    para,
+    toast,
+    router,
+  ]);
 
   return (
     <Screen>
@@ -208,84 +209,84 @@ export default function ContadoresNovo() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingTop: spacing.base,
-          paddingBottom: spacing.huge,
-          gap: spacing.xl,
-        }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <Input
-          label="Título"
-          value={titulo}
-          onChangeText={setTitulo}
-          placeholder="Ex.: Sem cigarro"
-          accessibilityLabel="titulo do contador"
-        />
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingTop: spacing.base,
+            paddingBottom: spacing.huge,
+            gap: spacing.xl,
+          }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Input
+            label="Título"
+            value={titulo}
+            onChangeText={setTitulo}
+            placeholder="Ex.: Sem cigarro"
+            accessibilityLabel="titulo do contador"
+          />
 
-        <View style={{ gap: spacing.sm }}>
-          <Text
-            style={{
-              color: colors.muted,
-              fontFamily: 'JetBrainsMono_400Regular',
-              fontSize: 11,
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-            }}
-          >
-            Início
-          </Text>
-          <Pressable
-            onPress={() => setPickerAberto(true)}
-            accessibilityRole="button"
-            accessibilityLabel="abrir seletor de data"
-            style={{
-              backgroundColor: colors.bgAlt,
-              borderRadius: radius.input,
-              borderWidth: 1,
-              borderColor: colors.bgElev,
-              paddingVertical: 14,
-              paddingHorizontal: 16,
-            }}
-          >
+          <View style={{ gap: spacing.sm }}>
             <Text
               style={{
-                color: colors.fg,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: 16,
-                lineHeight: 24,
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: 1,
               }}
             >
-              {formatDataLeitura(dataInicio)}
+              Início
             </Text>
-          </Pressable>
-          {pickerAberto ? (
-            <DateTimePicker
-              value={dataInicio}
-              mode="date"
-              maximumDate={new Date()}
-              onChange={handleDataChange}
-            />
-          ) : null}
-        </View>
+            <Pressable
+              onPress={() => setPickerAberto(true)}
+              accessibilityRole="button"
+              accessibilityLabel="abrir seletor de data"
+              style={{
+                backgroundColor: colors.bgAlt,
+                borderRadius: radius.input,
+                borderWidth: 1,
+                borderColor: colors.bgElev,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.fg,
+                  fontFamily: 'JetBrainsMono_500Medium',
+                  fontSize: 16,
+                  lineHeight: 24,
+                }}
+              >
+                {formatDataLeitura(dataInicio)}
+              </Text>
+            </Pressable>
+            {pickerAberto ? (
+              <DateTimePicker
+                value={dataInicio}
+                mode="date"
+                maximumDate={new Date()}
+                onChange={handleDataChange}
+              />
+            ) : null}
+          </View>
 
-        {/* M33: destinatario / tema do contador. Render dinamico via
+          {/* M33: destinatario / tema do contador. Render dinamico via
             useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
             null e o default {tipo:'mim'} ja esta seedado. */}
-        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
-      </ScrollView>
+          <SeletorPara value={para} onChange={setPara} disabled={salvando} />
+        </ScrollView>
 
-      <View style={{ paddingBottom: spacing.base }}>
-        <Button
-          label="Criar"
-          onPress={() => void handleSalvar()}
-          variant="primary"
-          disabled={salvando || !formValido || !vaultRoot}
-        />
-      </View>
+        <View style={{ paddingBottom: spacing.base }}>
+          <Button
+            label="Criar"
+            onPress={() => void handleSalvar()}
+            variant="primary"
+            disabled={salvando || !formValido || !vaultRoot}
+          />
+        </View>
       </KeyboardAvoidingView>
     </Screen>
   );

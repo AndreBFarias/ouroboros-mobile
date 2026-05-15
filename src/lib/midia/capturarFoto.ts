@@ -52,10 +52,7 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
 import type { Para } from '@/lib/schemas/para';
 import { stringifyCompanionMidia } from '@/lib/midia/companion';
-import {
-  fotoPath,
-  fotoCompanionPath,
-} from '@/lib/vault/paths';
+import { fotoPath, fotoCompanionPath } from '@/lib/vault/paths';
 import { vaultUriJoin } from '@/lib/vault';
 
 declare const __DEV__: boolean;
@@ -130,14 +127,19 @@ export async function capturarFoto(
       const ts = Date.now();
       const data = new Date(ts).toISOString().slice(0, 10);
       const slug = `mock-${ts}`;
-      const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
+      const galeria =
+        require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
       galeria.useGaleriaMock.getState().adicionar({
         uri: `web://mock/foto-${ts}.jpg`,
         data,
         origemPath: `jpg/foto-${data}-mock.jpg`,
         origemSlug: slug,
       });
-      return { ok: true, arquivo: `jpg/foto-${data}-mock.jpg`, companion: null };
+      return {
+        ok: true,
+        arquivo: `jpg/foto-${data}-mock.jpg`,
+        companion: null,
+      };
     }
   }
 
@@ -165,7 +167,13 @@ export async function capturarFoto(
       return { ok: false, arquivo: null, companion: null };
     }
     const asset = result.assets[0];
-    return await gravar(vaultRoot, asset.uri, asset.mimeType ?? null, para, legenda);
+    return await gravar(
+      vaultRoot,
+      asset.uri,
+      asset.mimeType ?? null,
+      para,
+      legenda
+    );
   }
 
   const galPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -181,7 +189,13 @@ export async function capturarFoto(
     return { ok: false, arquivo: null, companion: null };
   }
   const asset = result.assets[0];
-  return await gravar(vaultRoot, asset.uri, asset.mimeType ?? null, para, legenda);
+  return await gravar(
+    vaultRoot,
+    asset.uri,
+    asset.mimeType ?? null,
+    para,
+    legenda
+  );
 }
 
 async function gravar(
@@ -208,7 +222,7 @@ async function gravar(
     const destinoCompanion = vaultUriJoin(vaultRoot, companionRel);
 
     const autor = usePessoa.getState().pessoaAtiva;
-    const basename = (binarioRel.split('/').pop() ?? binarioRel);
+    const basename = binarioRel.split('/').pop() ?? binarioRel;
 
     await FileSystem.copyAsync({ from: origemUri, to: destinoBin });
 

@@ -8,7 +8,7 @@ import type { FinancasTransacao } from '@/lib/schemas/financas-cache';
 function gerar(qtd: number): FinancasTransacao[] {
   const out: FinancasTransacao[] = [];
   for (let i = 0; i < qtd; i++) {
-    const dia = String(((i % 28) + 1)).padStart(2, '0');
+    const dia = String((i % 28) + 1).padStart(2, '0');
     out.push({
       data: `2026-04-${dia}`,
       autor: i % 2 === 0 ? 'pessoa_a' : 'pessoa_b',
@@ -48,9 +48,7 @@ describe('ListaTransacoes', () => {
         categoria: 'Estorno',
       },
     ];
-    const { getByLabelText } = render(
-      <ListaTransacoes transacoes={credito} />
-    );
+    const { getByLabelText } = render(<ListaTransacoes transacoes={credito} />);
     expect(
       getByLabelText('transacao estorno cashback credito 12.50')
     ).toBeTruthy();
@@ -67,9 +65,7 @@ describe('ListaTransacoes', () => {
         categoria: 'Compras Online',
       },
     ];
-    const { getByLabelText } = render(
-      <ListaTransacoes transacoes={despesa} />
-    );
+    const { getByLabelText } = render(<ListaTransacoes transacoes={despesa} />);
     expect(
       getByLabelText('transacao compras online despesa 57.86')
     ).toBeTruthy();

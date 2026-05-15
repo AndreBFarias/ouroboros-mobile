@@ -16,10 +16,7 @@ import { Text, View } from 'react-native';
 // Animated.View com entering/exiting da Reanimated 4. Spring canonico
 // no entering (damping 20, stiffness 250 = timings.toastIn). Exit com
 // fadeOut + slide de 20dp.
-import Animated, {
-  SlideInDown,
-  SlideOutDown,
-} from 'react-native-reanimated';
+import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { springs } from '@/lib/motion';
 import { colors, radius, spacing } from '@/theme/tokens';
 

@@ -3,10 +3,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { render, fireEvent } from '@testing-library/react-native';
-import {
-  BarraBusca,
-  normalizarBusca,
-} from '@/components/todo/BarraBusca';
+import { BarraBusca, normalizarBusca } from '@/components/todo/BarraBusca';
 
 describe('BarraBusca', () => {
   it('renderiza placeholder default', () => {

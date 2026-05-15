@@ -48,9 +48,7 @@ describe('extensaoDe', () => {
   });
 
   it('ignora extensao com mais de 6 chars do nome', () => {
-    expect(extensaoDe('application/pdf', 'arquivo.algoMuitoLongo')).toBe(
-      'pdf'
-    );
+    expect(extensaoDe('application/pdf', 'arquivo.algoMuitoLongo')).toBe('pdf');
   });
 
   it('sanitiza extensao com caracteres invalidos', () => {

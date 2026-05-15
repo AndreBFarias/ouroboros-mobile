@@ -6,7 +6,11 @@ export {
   PALETA_HUMOR,
   montarCelulasUltimos91Dias,
 } from './HeatmapBase';
-export type { HeatmapBaseProps, HeatmapCell, HeatmapPaleta } from './HeatmapBase';
+export type {
+  HeatmapBaseProps,
+  HeatmapCell,
+  HeatmapPaleta,
+} from './HeatmapBase';
 export { SparklineMedida } from './SparklineMedida';
 export type {
   SparklineMedidaPoint,

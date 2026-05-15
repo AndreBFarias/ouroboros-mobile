@@ -43,12 +43,14 @@ describe('HistoricoSparkline', () => {
   });
 
   it('limita exibicao a maxPontos', () => {
-    const longo: HistoricoExecucao[] = Array.from({ length: 20 }).map((_, i) => ({
-      data: `2026-04-${String(i + 1).padStart(2, '0')}T10:00:00-03:00`,
-      carga: 30 + i,
-      series: 3,
-      reps: 10,
-    }));
+    const longo: HistoricoExecucao[] = Array.from({ length: 20 }).map(
+      (_, i) => ({
+        data: `2026-04-${String(i + 1).padStart(2, '0')}T10:00:00-03:00`,
+        carga: 30 + i,
+        series: 3,
+        reps: 10,
+      })
+    );
     const { getAllByLabelText } = render(
       <HistoricoSparkline historico={longo} largura={300} maxPontos={12} />
     );

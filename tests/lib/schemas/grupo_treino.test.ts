@@ -3,7 +3,10 @@
 // YYYY-MM-DD, rejeicao de lista vazia.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { GrupoTreinoSchema, type GrupoTreino } from '@/lib/schemas/grupo_treino';
+import {
+  GrupoTreinoSchema,
+  type GrupoTreino,
+} from '@/lib/schemas/grupo_treino';
 
 const base: GrupoTreino = {
   tipo: 'grupo_treino',
@@ -87,12 +90,12 @@ describe('GrupoTreinoSchema', () => {
   });
 
   it('aceita autor pessoa_a ou pessoa_b', () => {
-    expect(
-      GrupoTreinoSchema.parse({ ...base, autor: 'pessoa_a' }).autor
-    ).toBe('pessoa_a');
-    expect(
-      GrupoTreinoSchema.parse({ ...base, autor: 'pessoa_b' }).autor
-    ).toBe('pessoa_b');
+    expect(GrupoTreinoSchema.parse({ ...base, autor: 'pessoa_a' }).autor).toBe(
+      'pessoa_a'
+    );
+    expect(GrupoTreinoSchema.parse({ ...base, autor: 'pessoa_b' }).autor).toBe(
+      'pessoa_b'
+    );
   });
 
   it('rejeita data fora do formato YYYY-MM-DD', () => {

@@ -87,12 +87,14 @@ export default async function caseM3411FabSomeComSheet(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'FAB roxo (abrir menu lateral) ausente no estado base /memoria',
+        detalhe:
+          'FAB roxo (abrir menu lateral) ausente no estado base /memoria',
         screenshots,
       };
     }
 
-    const baseShot = 'docs/sprints/M34.1.1-screenshots-gauntlet/A-fab-presente.png';
+    const baseShot =
+      'docs/sprints/M34.1.1-screenshots-gauntlet/A-fab-presente.png';
     await page.screenshot({ path: baseShot });
     screenshots.push(baseShot);
 

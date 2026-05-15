@@ -160,10 +160,7 @@ export default function GaleriaIndex() {
       </View>
 
       {carregando ? null : filtrados.length === 0 ? (
-        <EmptyState
-          frase="Nada salvo ainda."
-          Icon={ImageIcon}
-        />
+        <EmptyState frase="Nada salvo ainda." Icon={ImageIcon} />
       ) : (
         <FlatList
           data={filtrados}

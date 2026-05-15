@@ -80,9 +80,8 @@ export function useConquistas(): UseConquistasResult {
     setLoading(true);
     setError(null);
     try {
-      const { conquistas, totaisPorOrigem: totais } = await lerConquistas(
-        vaultRoot
-      );
+      const { conquistas, totaisPorOrigem: totais } =
+        await lerConquistas(vaultRoot);
       setBrutas(conquistas);
       setTotaisPorOrigem(totais);
     } catch (err) {

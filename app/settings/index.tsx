@@ -23,13 +23,7 @@ import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import {
-  Button,
-  Header,
-  Screen,
-  Toggle,
-  useToast,
-} from '@/components/ui';
+import { Button, Header, Screen, Toggle, useToast } from '@/components/ui';
 import { useSafeBottomMargin } from '@/components/chrome/safeBottom';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { LinkSubTela } from '@/components/settings/LinkSubTela';
@@ -481,16 +475,8 @@ function SecaoPrivacidade() {
         variant="primary"
         onPress={exportar}
       />
-      <Button
-        label="Importar backup"
-        variant="ghost"
-        onPress={importar}
-      />
-      <Button
-        label="Limpar cache local"
-        variant="ghost"
-        onPress={limpar}
-      />
+      <Button label="Importar backup" variant="ghost" onPress={importar} />
+      <Button label="Limpar cache local" variant="ghost" onPress={limpar} />
     </SecaoLista>
   );
 }

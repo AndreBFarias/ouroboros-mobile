@@ -150,7 +150,8 @@ const RE_VALOR_RS = /R\$\s*([\d.]+(?:,\d{2})?)/;
 
 // Linha digitavel de boleto (47 digitos com mascara
 // "XXXXX.XXXXX XXXXX.XXXXXX XXXXX.XXXXXX X XXXXXXXXXXXXXX").
-const RE_BOLETO = /\b(\d{5}\.\d{5}\s+\d{5}\.\d{6}\s+\d{5}\.\d{6}\s+\d\s+\d{14})\b/;
+const RE_BOLETO =
+  /\b(\d{5}\.\d{5}\s+\d{5}\.\d{6}\s+\d{5}\.\d{6}\s+\d\s+\d{14})\b/;
 
 // Lista de bancos brasileiros relevantes. Usado para identificar
 // 'extrato' e tambem como 'instituicao' em qualquer categoria.
@@ -216,7 +217,7 @@ export function classificarFinanceiro(
   const matchValor = texto.match(RE_VALOR_RS);
 
   const valor = matchValor ? parseValorBrl(matchValor[1] ?? null) : null;
-  const instituicao = matchInst ? matchInst[1] ?? null : null;
+  const instituicao = matchInst ? (matchInst[1] ?? null) : null;
 
   // Boleto tem precedencia: linha digitavel e marcador inequivoco.
   if (matchBoleto) {

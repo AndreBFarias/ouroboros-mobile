@@ -89,8 +89,8 @@ export default async function caseBackupAutomatico(
     screenshots.push(screenshotInicial);
 
     // Linha "Ultimo backup" NAO deve aparecer com toggle OFF.
-    const semUltimo = await page.evaluate(() =>
-      !document.querySelector('[aria-label="linha ultimo backup"]')
+    const semUltimo = await page.evaluate(
+      () => !document.querySelector('[aria-label="linha ultimo backup"]')
     );
     if (!semUltimo) {
       return {

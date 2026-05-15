@@ -50,7 +50,11 @@ export const GIF_MAX_BYTES = 5 * 1024 * 1024;
 async function validarGif(gifTemporario: string): Promise<void> {
   try {
     const info = await FileSystem.getInfoAsync(gifTemporario);
-    if (info.exists && typeof info.size === 'number' && info.size > GIF_MAX_BYTES) {
+    if (
+      info.exists &&
+      typeof info.size === 'number' &&
+      info.size > GIF_MAX_BYTES
+    ) {
       throw new Error(
         `arquivo maior que limite (${Math.round(info.size / 1024 / 1024)}MB > 5MB)`
       );

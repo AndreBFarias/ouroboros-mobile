@@ -65,9 +65,7 @@ describe('useAutoSaveRascunho', () => {
       jest.advanceTimersByTime(DEBOUNCE_PADRAO_MS);
     });
     // So o ultimo titulo persiste.
-    expect(useSessao.getState().rascunhos.contadoresNovo?.titulo).toBe(
-      'ABC'
-    );
+    expect(useSessao.getState().rascunhos.contadoresNovo?.titulo).toBe('ABC');
   });
 
   it('cleanup ao desmontar cancela o save pendente', () => {
@@ -85,8 +83,6 @@ describe('useAutoSaveRascunho', () => {
     act(() => {
       jest.advanceTimersByTime(DEBOUNCE_PADRAO_MS);
     });
-    expect(useSessao.getState().rascunhos.tarefasNova?.titulo).toBe(
-      'primeiro'
-    );
+    expect(useSessao.getState().rascunhos.tarefasNova?.titulo).toBe('primeiro');
   });
 });

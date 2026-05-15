@@ -16,7 +16,10 @@ import type {
 } from '../../../docs/templates/e2e-template.e2e';
 
 interface PageComConsole extends PlaywrightPageLike {
-  on?(event: 'console', handler: (msg: { type(): string; text(): string }) => void): void;
+  on?(
+    event: 'console',
+    handler: (msg: { type(): string; text(): string }) => void
+  ): void;
   on?(event: 'pageerror', handler: (err: Error) => void): void;
 }
 
@@ -54,7 +57,8 @@ export default async function caseMSliderWebLoop(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
+        detalhe:
+          'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
         screenshots,
       };
     }
@@ -90,7 +94,9 @@ export default async function caseMSliderWebLoop(
       };
     }
 
-    if (!inventarioHumor.classes.every((c) => c.includes('ouroboros-slider-web'))) {
+    if (
+      !inventarioHumor.classes.every((c) => c.includes('ouroboros-slider-web'))
+    ) {
       return {
         sprint,
         aspecto,
@@ -113,12 +119,18 @@ export default async function caseMSliderWebLoop(
       const antes = inp.getAttribute('aria-valuenow');
       // Dispara change com valor distinto.
       const novoValor = String(
-        Number(inp.max) - 1 === Number(antes) ? Number(inp.min) : Number(inp.max) - 1
+        Number(inp.max) - 1 === Number(antes)
+          ? Number(inp.min)
+          : Number(inp.max) - 1
       );
       inp.value = novoValor;
       inp.dispatchEvent(new Event('input', { bubbles: true }));
       inp.dispatchEvent(new Event('change', { bubbles: true }));
-      return { antes, depois: inp.getAttribute('aria-valuenow'), pediu: novoValor };
+      return {
+        antes,
+        depois: inp.getAttribute('aria-valuenow'),
+        pediu: novoValor,
+      };
     });
 
     if (!mudou) {
@@ -160,19 +172,19 @@ export default async function caseMSliderWebLoop(
       // o gauntlet a navegar via API JS lendo data-rota-alvo.
       // Mais simples: estendemos page com cast para a forma 2-arg
       // que o playwright real expoe (PageLike interno).
-      type EvaluateArg = <T, A>(fn: (arg: A) => T | Promise<T>, arg: A) => Promise<T>;
+      type EvaluateArg = <T, A>(
+        fn: (arg: A) => T | Promise<T>,
+        arg: A
+      ) => Promise<T>;
       const evalArg = (page as unknown as { evaluate: EvaluateArg }).evaluate;
-      await evalArg<boolean, string>(
-        async (rota: string) => {
-          const w = globalThis as unknown as {
-            __gauntlet?: { abrir: (r: string) => Promise<void> };
-          };
-          if (!w.__gauntlet) return false;
-          await w.__gauntlet.abrir(rota);
-          return true;
-        },
-        slug
-      );
+      await evalArg<boolean, string>(async (rota: string) => {
+        const w = globalThis as unknown as {
+          __gauntlet?: { abrir: (r: string) => Promise<void> };
+        };
+        if (!w.__gauntlet) return false;
+        await w.__gauntlet.abrir(rota);
+        return true;
+      }, slug);
       await page.waitForTimeout(1200);
 
       const screenB = `docs/sprints/${sprint}-screenshots-gauntlet/B-exercicio-detalhe-funcional.png`;

@@ -173,7 +173,9 @@ describe('saveNota — md semantico em markdown/nota-...md', () => {
     expect(r.uri.includes('inbox/financeiro/nota/')).toBe(false);
     expect(r.uri.endsWith('.md')).toBe(true);
     // Filename casa o padrao de notaPath: nota-YYYY-MM-DD-HHmmss-slug.md
-    expect(r.uri).toMatch(/markdown\/nota-\d{4}-\d{2}-\d{2}-\d{6}-[a-z0-9-]+\.md$/);
+    expect(r.uri).toMatch(
+      /markdown\/nota-\d{4}-\d{2}-\d{2}-\d{6}-[a-z0-9-]+\.md$/
+    );
 
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [, metaArg, bodyArg] = mockWriteVaultFile.mock.calls[0] as [

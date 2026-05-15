@@ -76,11 +76,7 @@ describe('EmocaoChips multi-select', () => {
 
     // Simula proximo render com o slug ja selecionado.
     rerender(
-      <EmocaoChips
-        modo="trigger"
-        value={['tristeza']}
-        onChange={onChange}
-      />
+      <EmocaoChips modo="trigger" value={['tristeza']} onChange={onChange} />
     );
     fireEvent.press(getByLabelText('chip Raiva'));
     expect(onChange).toHaveBeenLastCalledWith(['tristeza', 'raiva']);

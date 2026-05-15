@@ -407,10 +407,12 @@ describe('reagendarAlarmes', () => {
       identifier: 'ouroboros.lembrete.medicacao',
     });
 
-    const carregar = jest.fn().mockResolvedValue([
-      fixture({ slug: 'ativo', dias_semana: [1, 2], ativo: true }),
-      fixture({ slug: 'inativo', dias_semana: [3], ativo: false }),
-    ]);
+    const carregar = jest
+      .fn()
+      .mockResolvedValue([
+        fixture({ slug: 'ativo', dias_semana: [1, 2], ativo: true }),
+        fixture({ slug: 'inativo', dias_semana: [3], ativo: false }),
+      ]);
 
     await reagendarAlarmes(carregar);
 

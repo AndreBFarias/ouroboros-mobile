@@ -50,7 +50,9 @@ export default async function caseM113LarguraFrame(
     await page.waitForTimeout(1500);
 
     const tabClicada = await page.evaluate(() => {
-      const t = document.querySelector('[aria-label="tab fotos"]') as HTMLElement | null;
+      const t = document.querySelector(
+        '[aria-label="tab fotos"]'
+      ) as HTMLElement | null;
       if (!t) return false;
       t.click();
       return true;
@@ -77,7 +79,8 @@ export default async function caseM113LarguraFrame(
       await new Promise((r) => setTimeout(r, 800));
     });
 
-    const out = 'docs/sprints/M11.3-screenshots-gauntlet/A-grid-fotos-3-cols.png';
+    const out =
+      'docs/sprints/M11.3-screenshots-gauntlet/A-grid-fotos-3-cols.png';
     await page.screenshot({ path: out });
     screenshots.push(out);
 

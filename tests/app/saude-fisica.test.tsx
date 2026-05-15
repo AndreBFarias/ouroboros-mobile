@@ -108,8 +108,6 @@ describe('app/saude-fisica.tsx', () => {
 
   it('mostra empty state quando nao ha treinos (aba inicial)', () => {
     const { getByText } = render(<SaudeFisicaTab />);
-    expect(
-      getByText('Vai aparecer aqui assim que você treinar.')
-    ).toBeTruthy();
+    expect(getByText('Vai aparecer aqui assim que você treinar.')).toBeTruthy();
   });
 });

@@ -34,9 +34,7 @@ export const CHANNEL_IDS_LEGADOS = ['default', 'alarmes'] as const;
 // M30: padrao de vibracao canonico [0, 250, 500, 250]. 250ms de
 // pulse, 500ms pausa, 250ms pulse. Nem invasivo nem fraco (decisao
 // §9 do M30-spec).
-export const ALARME_VIBRATION_PATTERN: readonly number[] = [
-  0, 250, 500, 250,
-];
+export const ALARME_VIBRATION_PATTERN: readonly number[] = [0, 250, 500, 250];
 export const SONECA_ACTION_ID = 'alarme.soneca';
 export const DESLIGAR_ACTION_ID = 'alarme.desligar';
 

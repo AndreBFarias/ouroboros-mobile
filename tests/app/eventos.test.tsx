@@ -240,9 +240,7 @@ describe('Tela 20 - validacao do save', () => {
     const { getByLabelText, queryByLabelText } = renderTela();
     fireEvent.press(getByLabelText('Registrar'));
     expect(mockSaveEvento).not.toHaveBeenCalled();
-    await waitFor(() =>
-      expect(queryByLabelText('toast warn')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast warn')).toBeTruthy());
   });
 
   it('save em modo positivo chama saveEvento com payload valido', async () => {
@@ -289,9 +287,7 @@ describe('Tela 20 - validacao do save', () => {
       meta: { modo: string };
     };
     expect(args.meta.modo).toBe('negativo');
-    await waitFor(() =>
-      expect(queryByLabelText('toast success')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast success')).toBeTruthy());
   });
 
   it('apos salvar chama router.back', async () => {
@@ -317,9 +313,7 @@ describe('Tela 20 - validacao do save', () => {
     );
     adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Registrar'));
-    await waitFor(() =>
-      expect(queryByLabelText('toast error')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast error')).toBeTruthy());
     expect(mockBack).not.toHaveBeenCalled();
     errorSpy.mockRestore();
   });

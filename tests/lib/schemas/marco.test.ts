@@ -52,24 +52,18 @@ describe('MarcoSchema', () => {
   });
 
   it('rejeita hash com tamanho diferente de 12 chars', () => {
-    expect(() =>
-      MarcoSchema.parse({ ...baseMarco, hash: 'abc123' })
-    ).toThrow();
+    expect(() => MarcoSchema.parse({ ...baseMarco, hash: 'abc123' })).toThrow();
     expect(() =>
       MarcoSchema.parse({ ...baseMarco, hash: 'abc1234567890' })
     ).toThrow();
   });
 
   it('rejeita descricao vazia', () => {
-    expect(() =>
-      MarcoSchema.parse({ ...baseMarco, descricao: '' })
-    ).toThrow();
+    expect(() => MarcoSchema.parse({ ...baseMarco, descricao: '' })).toThrow();
   });
 
   it('rejeita autor "ambos"', () => {
-    expect(() =>
-      MarcoSchema.parse({ ...baseMarco, autor: 'ambos' })
-    ).toThrow();
+    expect(() => MarcoSchema.parse({ ...baseMarco, autor: 'ambos' })).toThrow();
   });
 
   it('rejeita origem invalida', () => {

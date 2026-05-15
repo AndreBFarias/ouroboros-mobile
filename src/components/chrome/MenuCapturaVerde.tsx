@@ -24,7 +24,13 @@
 //    coerencia visual; o que diferencia e a posicao (1a) e o icone.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -191,9 +197,7 @@ export function MenuCapturaVerde({
   // apenas uma vez por mount. Sem isto, mudancas de prop ou re-renders
   // do MemoriasScreen poderiam reciclar o sheet involuntariamente.
   const abriuAutomaticoRef = useRef<boolean>(false);
-  const setSheetCapturaAberto = useNavegacao(
-    (s) => s.setSheetCapturaAberto
-  );
+  const setSheetCapturaAberto = useNavegacao((s) => s.setSheetCapturaAberto);
   const insets = useSafeAreaInsets();
   // K4 (M-FAB-MENU-SAFE-BOTTOM, 2026-05-07): margem canonica = max(24dp,
   // 10% da altura) + inset.bottom. Mesma regra do FABMenu roxo para

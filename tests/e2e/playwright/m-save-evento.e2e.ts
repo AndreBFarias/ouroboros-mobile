@@ -34,8 +34,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-EVENTO-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-EVENTO-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -80,9 +79,7 @@ async function sheetMontou(page: PlaywrightPageLike): Promise<boolean> {
 // Alterna o chip "Negativo" para entrar no modo correspondente. Em
 // modo negativo o refine zod nao exige midia, simplificando o save
 // mock no Gauntlet.
-async function selecionarNegativo(
-  page: PlaywrightPageLike
-): Promise<boolean> {
+async function selecionarNegativo(page: PlaywrightPageLike): Promise<boolean> {
   return page.evaluate(() => {
     const buttons = Array.from(
       document.querySelectorAll('[role="button"]')
@@ -96,9 +93,7 @@ async function selecionarNegativo(
   });
 }
 
-async function tapRegistrar(
-  page: PlaywrightPageLike
-): Promise<string | null> {
+async function tapRegistrar(page: PlaywrightPageLike): Promise<string | null> {
   return page.evaluate(() => {
     const buttons = Array.from(
       document.querySelectorAll('[role="button"]')
@@ -187,8 +182,7 @@ export default async function caseSaveEvento(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          '__gauntlet.estado() lancou apos tap no cenario positivo',
+        detalhe: '__gauntlet.estado() lancou apos tap no cenario positivo',
         screenshots,
       };
     }
@@ -244,8 +238,7 @@ export default async function caseSaveEvento(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          '__gauntlet.estado() lancou apos tap no cenario negativo',
+        detalhe: '__gauntlet.estado() lancou apos tap no cenario negativo',
         screenshots,
       };
     }

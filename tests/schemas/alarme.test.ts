@@ -49,7 +49,10 @@ describe('AlarmeSchema', () => {
     const completo = {
       ...minimo,
       ultimo_disparo: '2026-04-29T08:30:00-03:00',
-      notification_ids: ['ouroboros.alarme.medicacao-manha.d1', 'ouroboros.alarme.medicacao-manha.d2'],
+      notification_ids: [
+        'ouroboros.alarme.medicacao-manha.d1',
+        'ouroboros.alarme.medicacao-manha.d2',
+      ],
       snooze_id: 'ouroboros.alarme.medicacao-manha.snooze',
     };
     const result = AlarmeSchema.safeParse(completo);

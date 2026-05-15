@@ -110,7 +110,8 @@ export default async function caseSaudeFisicaTabs(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'header antigo "Memorias" ainda visivel (L1 trocou para "Saude Fisica")',
+        detalhe:
+          'header antigo "Memorias" ainda visivel (L1 trocou para "Saude Fisica")',
         screenshots,
       };
     }
@@ -204,7 +205,8 @@ export default async function caseSaudeFisicaTabs(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'item "Memorias" legado ainda no menu (L1 deveria ter renomeado)',
+        detalhe:
+          'item "Memorias" legado ainda no menu (L1 deveria ter renomeado)',
         screenshots,
       };
     }

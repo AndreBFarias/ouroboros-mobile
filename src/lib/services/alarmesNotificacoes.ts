@@ -122,9 +122,7 @@ function idMonthly(slug: string): string {
 // e flag estourou=true quando o cap global de 64 foi atingido.
 //
 // Em Web vira no-op (ids=[], estourou=false).
-export async function agendarAlarme(
-  alarme: Alarme
-): Promise<AgendarResultado> {
+export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
   if (Platform.OS === 'web') return { ids: [], estourou: false };
   const parsed = AlarmeSchema.safeParse(alarme);
   if (!parsed.success) return { ids: [], estourou: false };
@@ -140,9 +138,7 @@ export async function agendarAlarme(
   // Conta quantos novos schedules vamos pedir conforme recorrencia.
   // Usado para verificar o cap antes de criar.
   const novosCount =
-    parsed.data.recorrencia === 'semanal'
-      ? parsed.data.dias_semana.length
-      : 1;
+    parsed.data.recorrencia === 'semanal' ? parsed.data.dias_semana.length : 1;
 
   const ativos = await contarSchedulesAlarmes();
   if (ativos + novosCount > LIMITE_SCHEDULES) {

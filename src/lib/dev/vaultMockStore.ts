@@ -57,7 +57,9 @@ export const useVaultMock = create<VaultMockState>((set, get) => ({
     let filtrado = uris.filter((u) => u.startsWith(prefixo));
     if (ext) {
       const norm = ext.startsWith('.') ? ext : `.${ext}`;
-      filtrado = filtrado.filter((u) => u.toLowerCase().endsWith(norm.toLowerCase()));
+      filtrado = filtrado.filter((u) =>
+        u.toLowerCase().endsWith(norm.toLowerCase())
+      );
     }
     filtrado.sort();
     return filtrado;

@@ -36,9 +36,7 @@ describe('HumorSchema', () => {
   });
 
   it('rejeita medicacao string vazia (use undefined para omitir)', () => {
-    expect(() =>
-      HumorSchema.parse({ ...baseHumor, medicacao: '' })
-    ).toThrow();
+    expect(() => HumorSchema.parse({ ...baseHumor, medicacao: '' })).toThrow();
   });
 
   it('rejeita autor ambos (so autor escreve)', () => {
@@ -51,7 +49,9 @@ describe('HumorSchema', () => {
   });
 
   it('rejeita data em formato invalido', () => {
-    expect(() => HumorSchema.parse({ ...baseHumor, data: '29/04/2026' })).toThrow();
+    expect(() =>
+      HumorSchema.parse({ ...baseHumor, data: '29/04/2026' })
+    ).toThrow();
   });
 
   it('rejeita sem autor', () => {

@@ -24,10 +24,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
     BottomSheetBackdrop: (props: Record<string, unknown>) =>
       ReactInner.createElement(RNInner.View, props),
     default: ReactInner.forwardRef(
-      (
-        props: { children: unknown },
-        ref: unknown
-      ) => {
+      (props: { children: unknown }, ref: unknown) => {
         ReactInner.useImperativeHandle(ref, () => ({
           expand: () => undefined,
           close: () => undefined,
@@ -92,10 +89,7 @@ describe('SheetNovaTarefa', () => {
   it('dispara onSalvar com payload contendo titulo trim e defaults M31', () => {
     const onSalvar = jest.fn();
     const { getByLabelText, getByText } = render(
-      <SheetNovaTarefa
-        onSalvar={onSalvar}
-        onCancelar={() => undefined}
-      />
+      <SheetNovaTarefa onSalvar={onSalvar} onCancelar={() => undefined} />
     );
     const input = getByLabelText('campo titulo da tarefa');
     fireEvent.changeText(input, '  Comprar leite  ');
@@ -113,10 +107,7 @@ describe('SheetNovaTarefa', () => {
   it('botao Salvar disabled quando titulo vazio', () => {
     const onSalvar = jest.fn();
     const { getByLabelText } = render(
-      <SheetNovaTarefa
-        onSalvar={onSalvar}
-        onCancelar={() => undefined}
-      />
+      <SheetNovaTarefa onSalvar={onSalvar} onCancelar={() => undefined} />
     );
     fireEvent.press(getByLabelText('Salvar'));
     expect(onSalvar).not.toHaveBeenCalled();
@@ -125,10 +116,7 @@ describe('SheetNovaTarefa', () => {
   it('dispara onCancelar no botao Cancelar', () => {
     const onCancelar = jest.fn();
     const { getByText } = render(
-      <SheetNovaTarefa
-        onSalvar={() => undefined}
-        onCancelar={onCancelar}
-      />
+      <SheetNovaTarefa onSalvar={() => undefined} onCancelar={onCancelar} />
     );
     fireEvent.press(getByText('Cancelar'));
     expect(onCancelar).toHaveBeenCalledTimes(1);
@@ -169,10 +157,7 @@ describe('SheetNovaTarefa - M31 categoria', () => {
   it('dispara onSalvar com categoria selecionada via chip', () => {
     const onSalvar = jest.fn();
     const { getByLabelText, getByText } = render(
-      <SheetNovaTarefa
-        onSalvar={onSalvar}
-        onCancelar={() => undefined}
-      />
+      <SheetNovaTarefa onSalvar={onSalvar} onCancelar={() => undefined} />
     );
     fireEvent.changeText(getByLabelText('campo titulo da tarefa'), 'Reunião');
     fireEvent.press(getByLabelText('chip Trabalho'));
@@ -241,10 +226,7 @@ describe('SheetNovaTarefa - M31 alarme toggle', () => {
   it('alarme default desligado, payload com alarme null', () => {
     const onSalvar = jest.fn();
     const { getByLabelText, getByText } = render(
-      <SheetNovaTarefa
-        onSalvar={onSalvar}
-        onCancelar={() => undefined}
-      />
+      <SheetNovaTarefa onSalvar={onSalvar} onCancelar={() => undefined} />
     );
     fireEvent.changeText(getByLabelText('campo titulo da tarefa'), 'X');
     fireEvent.press(getByText('Salvar'));
@@ -256,10 +238,7 @@ describe('SheetNovaTarefa - M31 alarme toggle', () => {
   it('toggle alarme ligado expoe seletor de data e payload com alarme ativo', () => {
     const onSalvar = jest.fn();
     const { getByLabelText, getByText } = render(
-      <SheetNovaTarefa
-        onSalvar={onSalvar}
-        onCancelar={() => undefined}
-      />
+      <SheetNovaTarefa onSalvar={onSalvar} onCancelar={() => undefined} />
     );
     fireEvent.changeText(getByLabelText('campo titulo da tarefa'), 'X');
     // Toggle "Lembrar com alarme" - implementacao usa Pressable interno;
@@ -281,10 +260,7 @@ describe('SheetNovaTarefa - M31 destino', () => {
   it('destino default "mim" no payload', () => {
     const onSalvar = jest.fn();
     const { getByLabelText, getByText } = render(
-      <SheetNovaTarefa
-        onSalvar={onSalvar}
-        onCancelar={() => undefined}
-      />
+      <SheetNovaTarefa onSalvar={onSalvar} onCancelar={() => undefined} />
     );
     fireEvent.changeText(getByLabelText('campo titulo da tarefa'), 'X');
     fireEvent.press(getByText('Salvar'));

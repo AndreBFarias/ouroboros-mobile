@@ -20,10 +20,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatePresence, MotiView } from 'moti';
-import {
-  BottomSheetView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -481,70 +478,70 @@ export function SheetNovaTarefa({
                 }}
                 accessibilityLabel="bloco alarme expandido"
               >
-              <Text
-                style={{
-                  color: colors.muted,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 11,
-                  lineHeight: 14,
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                }}
-              >
-                Data e hora
-              </Text>
-              <Pressable
-                onPress={() => setPickerAberto(true)}
-                accessibilityRole="button"
-                accessibilityLabel="abrir seletor de data e hora do alarme"
-                style={{
-                  backgroundColor: colors.bgAlt,
-                  borderRadius: radius.input,
-                  borderWidth: 1,
-                  borderColor: colors.bgElev,
-                  paddingVertical: 14,
-                  paddingHorizontal: 16,
-                }}
-              >
                 <Text
                   style={{
-                    color: colors.fg,
-                    fontFamily: 'JetBrainsMono_500Medium',
-                    fontSize: 16,
-                    lineHeight: 22,
+                    color: colors.muted,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 11,
+                    lineHeight: 14,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
                   }}
                 >
-                  {formatDataHoraLegivel(alarmeDataHora)}
+                  Data e hora
                 </Text>
-              </Pressable>
-              {pickerAberto ? (
-                <DateTimePicker
-                  value={parseIso(alarmeDataHora)}
-                  mode="datetime"
-                  onChange={handleDataHoraChange}
-                />
-              ) : null}
+                <Pressable
+                  onPress={() => setPickerAberto(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="abrir seletor de data e hora do alarme"
+                  style={{
+                    backgroundColor: colors.bgAlt,
+                    borderRadius: radius.input,
+                    borderWidth: 1,
+                    borderColor: colors.bgElev,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.fg,
+                      fontFamily: 'JetBrainsMono_500Medium',
+                      fontSize: 16,
+                      lineHeight: 22,
+                    }}
+                  >
+                    {formatDataHoraLegivel(alarmeDataHora)}
+                  </Text>
+                </Pressable>
+                {pickerAberto ? (
+                  <DateTimePicker
+                    value={parseIso(alarmeDataHora)}
+                    mode="datetime"
+                    onChange={handleDataHoraChange}
+                  />
+                ) : null}
 
-              <Text
-                style={{
-                  color: colors.muted,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 11,
-                  lineHeight: 14,
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  marginTop: spacing.xs,
-                }}
-              >
-                Recorrência
-              </Text>
-              <ChipGroup
-                mode="single"
-                value={alarmeRecorrencia}
-                onChange={handleRecorrenciaChange}
-                options={RECORRENCIA_CHIP_OPTIONS}
-                disabled={salvando}
-              />
+                <Text
+                  style={{
+                    color: colors.muted,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 11,
+                    lineHeight: 14,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    marginTop: spacing.xs,
+                  }}
+                >
+                  Recorrência
+                </Text>
+                <ChipGroup
+                  mode="single"
+                  value={alarmeRecorrencia}
+                  onChange={handleRecorrenciaChange}
+                  options={RECORRENCIA_CHIP_OPTIONS}
+                  disabled={salvando}
+                />
               </MotiView>
             ) : null}
           </AnimatePresence>

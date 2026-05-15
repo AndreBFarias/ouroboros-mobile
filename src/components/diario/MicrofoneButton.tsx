@@ -80,9 +80,7 @@ function meteringParaAmplitude(metering: number | undefined): number {
   return Math.max(0, Math.min(1, norm));
 }
 
-export function MicrofoneButton({
-  onAudioGravado,
-}: MicrofoneButtonProps) {
+export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
   const toast = useToast();
   const vaultRoot = useVault((s) => s.vaultRoot);
 
@@ -269,8 +267,7 @@ export function MicrofoneButton({
     finalizar(true).catch(() => undefined);
   };
 
-  const corBorda =
-    estado === 'recording' ? colors.red : colors.cyan;
+  const corBorda = estado === 'recording' ? colors.red : colors.cyan;
   const labelEstado =
     estado === 'idle'
       ? 'Gravar áudio'

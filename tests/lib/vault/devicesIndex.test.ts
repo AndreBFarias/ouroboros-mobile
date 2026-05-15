@@ -113,7 +113,10 @@ describe('escreverDevicesIndex', () => {
   });
 
   it('rejeita index com tipo errado', async () => {
-    const ruim = { tipo: 'outra_coisa', registro: {} } as unknown as DevicesIndex;
+    const ruim = {
+      tipo: 'outra_coisa',
+      registro: {},
+    } as unknown as DevicesIndex;
     await expect(escreverDevicesIndex(VAULT_ROOT, ruim)).rejects.toThrow(
       /devices index invalido/
     );
@@ -121,7 +124,8 @@ describe('escreverDevicesIndex', () => {
 
   it('limpa trailing %20 e whitespace via vaultUriJoin (URI SAF MIUI/OneUI)', async () => {
     const idx: DevicesIndex = { tipo: 'devices_index', registro: {} };
-    const dirty = 'content://com.android.externalstorage.documents/tree/primary:Test%20';
+    const dirty =
+      'content://com.android.externalstorage.documents/tree/primary:Test%20';
     await escreverDevicesIndex(dirty, idx);
     const [uri] = mockWriteVaultFile.mock.calls[0];
     // %20 trailing no root foi removido por vaultUriJoin.

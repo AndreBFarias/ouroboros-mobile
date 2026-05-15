@@ -14,7 +14,10 @@
 import { useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
-import { ShareReceiver, type ConflitoAcao } from '@/components/screens/ShareReceiver';
+import {
+  ShareReceiver,
+  type ConflitoAcao,
+} from '@/components/screens/ShareReceiver';
 import { useToast } from '@/components/ui';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
@@ -96,7 +99,8 @@ export default function ShareReceiveRoute() {
   const textoIntent: string | null = useMemo(() => {
     const t = params.texto;
     if (typeof t === 'string' && t.length > 0) return t;
-    if (Array.isArray(t) && typeof t[0] === 'string' && t[0].length > 0) return t[0];
+    if (Array.isArray(t) && typeof t[0] === 'string' && t[0].length > 0)
+      return t[0];
     return null;
   }, [params.texto]);
 
@@ -166,7 +170,9 @@ export default function ShareReceiveRoute() {
         mimeType: intentSafe.mimeType,
         agora,
         nome: intentSafe.nomeSugerido,
-        slug: nomeBase ? nomeBase.toLowerCase().replace(/[^a-z0-9]+/g, '-') : undefined,
+        slug: nomeBase
+          ? nomeBase.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          : undefined,
       }),
     [subtipo, intentSafe.mimeType, intentSafe.nomeSugerido, agora, nomeBase]
   );

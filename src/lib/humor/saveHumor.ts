@@ -24,7 +24,12 @@
 // OneUI/HyperOS, vide A29). Auditoria: 100% das concatenacoes ad-hoc
 // substituidas; vaultRoot vazio agora propaga erro claro do helper
 // em vez de gerar URI invalida silenciosa.
-import { humorPath, readVaultFile, vaultUriJoin, writeVaultFile } from '@/lib/vault';
+import {
+  humorPath,
+  readVaultFile,
+  vaultUriJoin,
+  writeVaultFile,
+} from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { useSettings } from '@/lib/stores/settings';
 import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
@@ -97,9 +102,8 @@ export async function saveHumor(
   // resiliente em ambientes de teste sem bridge nativa.
   try {
     if (useSettings.getState().featureToggles.widgetHomescreen === true) {
-      const { atualizarWidgetHomescreen } = await import(
-        '@/lib/widget/atualizarWidgetHomescreen'
-      );
+      const { atualizarWidgetHomescreen } =
+        await import('@/lib/widget/atualizarWidgetHomescreen');
       await atualizarWidgetHomescreen({ forcar: true });
     }
   } catch {

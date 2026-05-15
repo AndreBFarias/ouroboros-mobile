@@ -4,11 +4,7 @@ import { Textarea } from '@/components/ui/Textarea';
 describe('Textarea', () => {
   it('renderiza placeholder', () => {
     const { getByPlaceholderText } = render(
-      <Textarea
-        value=""
-        onChangeText={() => undefined}
-        placeholder="diario"
-      />
+      <Textarea value="" onChangeText={() => undefined} placeholder="diario" />
     );
     expect(getByPlaceholderText('diario')).toBeTruthy();
   });
@@ -16,11 +12,7 @@ describe('Textarea', () => {
   it('dispara onChangeText em texto longo', () => {
     const onChangeText = jest.fn();
     const { getByPlaceholderText } = render(
-      <Textarea
-        value=""
-        onChangeText={onChangeText}
-        placeholder="diario"
-      />
+      <Textarea value="" onChangeText={onChangeText} placeholder="diario" />
     );
     fireEvent.changeText(
       getByPlaceholderText('diario'),

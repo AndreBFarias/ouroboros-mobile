@@ -31,9 +31,7 @@ export function CoverMidia({ midia, width, height }: CoverMidiaProps) {
 
   if (midia.tipo === 'foto') {
     if (erroFoto) {
-      return (
-        <PlaceholderImagemAusente width={width} height={height} />
-      );
+      return <PlaceholderImagemAusente width={width} height={height} />;
     }
     return (
       <Image
@@ -75,9 +73,7 @@ export function CoverMidia({ midia, width, height }: CoverMidiaProps) {
 
   // Spotify — fallback bonito sempre presente; o título melhora
   // quando o cache do oEmbed retorna.
-  return (
-    <CoverSpotify midia={midia} width={width} height={height} />
-  );
+  return <CoverSpotify midia={midia} width={width} height={height} />;
 }
 
 // Placeholder usado quando a foto não carrega (mídia órfã, decisão

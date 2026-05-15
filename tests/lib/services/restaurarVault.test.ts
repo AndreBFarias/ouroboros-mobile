@@ -320,7 +320,8 @@ describe('restaurarVaultZip + aplicarSnapshotSettings', () => {
     const z = new JSZipRequire();
     const snapJson = JSON.stringify(snap);
     z.file('.ouroboros/snapshot-settings.json', snapJson);
-    const sha256Mod = require('@/lib/crypto/sha256') as typeof import('@/lib/crypto/sha256');
+    const sha256Mod =
+      require('@/lib/crypto/sha256') as typeof import('@/lib/crypto/sha256');
     const manifest = {
       schema: EXPORT_SCHEMA_VERSION,
       exportadoEm: '2026-05-08T12:00:00.000Z',

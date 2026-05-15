@@ -33,8 +33,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-HUMOR-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-HUMOR-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -80,9 +79,7 @@ async function tentarSalvar(page: PlaywrightPageLike): Promise<boolean> {
     const buttons = Array.from(
       document.querySelectorAll('[role="button"]')
     ) as HTMLElement[];
-    const alvo = buttons.find(
-      (b) => (b.textContent ?? '').trim() === 'Salvar'
-    );
+    const alvo = buttons.find((b) => (b.textContent ?? '').trim() === 'Salvar');
     if (!alvo) return false;
     alvo.click();
     return true;
@@ -209,8 +206,7 @@ export default async function caseSaveHumor(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          '__gauntlet.estado() lancou apos tap Salvar no cenario casal',
+        detalhe: '__gauntlet.estado() lancou apos tap Salvar no cenario casal',
         screenshots,
       };
     }

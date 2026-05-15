@@ -11,9 +11,10 @@
 // do modulo intacto via requireActual. Tem de vir ANTES do import
 // do seedDeterministico.
 jest.mock('@/lib/dev/gauntlet', () => {
-  const actual = jest.requireActual<typeof import('@/lib/dev/gauntlet')>(
-    '@/lib/dev/gauntlet'
-  );
+  const actual =
+    jest.requireActual<typeof import('@/lib/dev/gauntlet')>(
+      '@/lib/dev/gauntlet'
+    );
   return {
     __esModule: true,
     ...actual,
@@ -87,12 +88,12 @@ describe('seedDeterministico (M-GAUNTLET-SEED-V2)', () => {
         // Reseta o modulo gauntlet para usar o real (Platform.OS=ios -> false).
         jest.unmock('@/lib/dev/gauntlet');
         jest.resetModules();
-        const seedReal = jest.requireActual<typeof import('@/lib/dev/seedDeterministico')>(
-          '@/lib/dev/seedDeterministico'
-        );
-        const humorReal = jest.requireActual<typeof import('@/lib/dev/humorMock')>(
-          '@/lib/dev/humorMock'
-        );
+        const seedReal = jest.requireActual<
+          typeof import('@/lib/dev/seedDeterministico')
+        >('@/lib/dev/seedDeterministico');
+        const humorReal = jest.requireActual<
+          typeof import('@/lib/dev/humorMock')
+        >('@/lib/dev/humorMock');
         humorReal.useHumorMock.getState().limpar();
         seedReal.seedHumores(30);
         expect(humorReal.useHumorMock.getState().celulas).toEqual([]);

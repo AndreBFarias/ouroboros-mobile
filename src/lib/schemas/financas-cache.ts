@@ -31,9 +31,7 @@ export type FinancasTopCategoria = z.infer<typeof FinancasTopCategoriaSchema>;
 // do estabelecimento, do contato pix, etc.); o frontend so renderiza
 // e nunca persiste. 'autor' indica qual pessoa registrou a despesa.
 export const FinancasTransacaoSchema = z.object({
-  data: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve ser YYYY-MM-DD'),
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve ser YYYY-MM-DD'),
   autor: PessoaAutorSchema,
   tipo: FinancasTipoSchema,
   valor: z.number(),

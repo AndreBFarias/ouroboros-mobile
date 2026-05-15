@@ -57,9 +57,9 @@ describe('ExercicioRotinaSchema', () => {
   });
 
   it('aceita reps como "amrap" ou "ate falha"', () => {
-    expect(
-      ExercicioRotinaSchema.parse({ ...exBase, reps: 'amrap' }).reps
-    ).toBe('amrap');
+    expect(ExercicioRotinaSchema.parse({ ...exBase, reps: 'amrap' }).reps).toBe(
+      'amrap'
+    );
     expect(
       ExercicioRotinaSchema.parse({ ...exBase, reps: 'ate falha' }).reps
     ).toBe('ate falha');
@@ -187,12 +187,12 @@ describe('RotinaSchema', () => {
   });
 
   it('aceita autor pessoa_a ou pessoa_b', () => {
-    expect(
-      RotinaSchema.parse({ ...baseRotina, autor: 'pessoa_a' }).autor
-    ).toBe('pessoa_a');
-    expect(
-      RotinaSchema.parse({ ...baseRotina, autor: 'pessoa_b' }).autor
-    ).toBe('pessoa_b');
+    expect(RotinaSchema.parse({ ...baseRotina, autor: 'pessoa_a' }).autor).toBe(
+      'pessoa_a'
+    );
+    expect(RotinaSchema.parse({ ...baseRotina, autor: 'pessoa_b' }).autor).toBe(
+      'pessoa_b'
+    );
   });
 
   it('rejeita autor invalido (ambos)', () => {

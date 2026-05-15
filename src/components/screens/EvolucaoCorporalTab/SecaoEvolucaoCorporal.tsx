@@ -94,9 +94,7 @@ function diasDesde(iso: string, hoje: Date = new Date()): number {
 
 function resolveUri(vaultRoot: string | null, rel: string): string {
   if (!vaultRoot) return rel;
-  const trimmed = vaultRoot.endsWith('/')
-    ? vaultRoot.slice(0, -1)
-    : vaultRoot;
+  const trimmed = vaultRoot.endsWith('/') ? vaultRoot.slice(0, -1) : vaultRoot;
   return `${trimmed}/${rel}`;
 }
 

@@ -24,7 +24,10 @@ import { usePessoa } from '@/lib/stores/pessoa';
 function simularSeedDuo(nomeA: string, nomeB: string | null): void {
   const tipoCompanhiaOnboarding = nomeB ? 'casal' : 'sozinho';
   const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
-  useOnboarding.setState({ done: true, tipoCompanhia: tipoCompanhiaOnboarding });
+  useOnboarding.setState({
+    done: true,
+    tipoCompanhia: tipoCompanhiaOnboarding,
+  });
   usePessoa.setState({
     nomes: { pessoa_a: nomeA, pessoa_b: nomeB ?? 'Nome_B' },
     fotos: { pessoa_a: null, pessoa_b: null },

@@ -42,7 +42,9 @@ describe('getBairroAtual permission flow', () => {
   });
 
   it('devolve null quando requestPermissions lanca', async () => {
-    mockRequestPermissions.mockRejectedValue(new Error('permissao indisponivel'));
+    mockRequestPermissions.mockRejectedValue(
+      new Error('permissao indisponivel')
+    );
     const out = await getBairroAtual();
     expect(out).toBeNull();
   });

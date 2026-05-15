@@ -60,7 +60,9 @@ describe('BiometriaGate', () => {
   });
 
   it('sem hardware libera children silenciosamente', async () => {
-    (LocalAuthentication.hasHardwareAsync as jest.Mock).mockResolvedValue(false);
+    (LocalAuthentication.hasHardwareAsync as jest.Mock).mockResolvedValue(
+      false
+    );
     useSettings.getState().setPrivacidade('biometriaAbrir', true);
     const { findByText } = render(
       <ToastProvider>

@@ -82,9 +82,7 @@ export default async function caseRecapCalendarioUnificar(
       // Item de menu top-level "Calendario" tinha a11y label
       // "item calendario" (sem acento, pre-L2). Procurar por essa
       // referencia exata.
-      const nodes = document.querySelectorAll(
-        '[aria-label="item calendario"]'
-      );
+      const nodes = document.querySelectorAll('[aria-label="item calendario"]');
       return nodes.length === 0;
     });
     const pngMenu = `${dir}/A-menu-lateral-sem-calendario.png`;

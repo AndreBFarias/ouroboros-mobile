@@ -10,7 +10,10 @@
 //      'Maximum update depth' deve aparecer.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
 interface ConsoleErroCapturado {
   ts: number;

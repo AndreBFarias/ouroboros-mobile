@@ -55,10 +55,16 @@ export async function getBairroAtual(): Promise<BairroResult> {
   // Em locais sem bairro mapeado, 'subregion' carrega municipio ou
   // regiao administrativa. Se ambos vazios, devolve null para o
   // caller decidir como sinalizar.
-  if (typeof primeiro.district === 'string' && primeiro.district.trim().length > 0) {
+  if (
+    typeof primeiro.district === 'string' &&
+    primeiro.district.trim().length > 0
+  ) {
     return primeiro.district.trim();
   }
-  if (typeof primeiro.subregion === 'string' && primeiro.subregion.trim().length > 0) {
+  if (
+    typeof primeiro.subregion === 'string' &&
+    primeiro.subregion.trim().length > 0
+  ) {
     return primeiro.subregion.trim();
   }
   return null;

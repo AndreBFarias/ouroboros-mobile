@@ -30,9 +30,7 @@ function diario(
     contexto_social: [],
     texto,
     midia:
-      modo === 'vitoria'
-        ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }]
-        : [],
+      modo === 'vitoria' ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }] : [],
     para: { tipo: 'mim' },
   };
 }
@@ -48,7 +46,12 @@ describe('agregarRecap — modo reflexao (G2.1)', () => {
         diario('2026-05-02T10:00:00-03:00', 'vitoria', 4, 'concluí leitura'),
         diario('2026-05-03T11:00:00-03:00', 'vitoria', 5, 'projeto entregue'),
         diario('2026-05-01T09:00:00-03:00', 'trigger', 4, 'discussão tensa'),
-        diario('2026-05-02T15:00:00-03:00', 'reflexao', 2, 'pensando no futuro'),
+        diario(
+          '2026-05-02T15:00:00-03:00',
+          'reflexao',
+          2,
+          'pensando no futuro'
+        ),
         diario('2026-05-03T16:00:00-03:00', 'reflexao', 3, 'observando rotina'),
         diario('2026-05-04T08:00:00-03:00', 'reflexao', 1, 'manhã calma'),
       ],
@@ -75,8 +78,7 @@ describe('agregarRecap — modo reflexao (G2.1)', () => {
     // Crises so de origens negativas.
     expect(
       data.crises.every(
-        (c) =>
-          c.origem === 'diario_trigger' || c.origem === 'evento_negativo'
+        (c) => c.origem === 'diario_trigger' || c.origem === 'evento_negativo'
       )
     ).toBe(true);
   });

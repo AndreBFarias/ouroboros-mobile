@@ -111,7 +111,9 @@ describe('resolverDestino', () => {
       agora: FIXED_DATE,
       slug: 'Comprovante 123!',
     });
-    expect(out).toBe('inbox/financeiro/pix/2026-04-30-093045-comprovante-123.pdf');
+    expect(out).toBe(
+      'inbox/financeiro/pix/2026-04-30-093045-comprovante-123.pdf'
+    );
   });
 
   it('slug vazio nao adiciona separador', () => {
@@ -183,9 +185,7 @@ describe('pathMdCompanion', () => {
 
   it('preserva slug e timestamp', () => {
     expect(
-      pathMdCompanion(
-        'inbox/financeiro/pix/2026-04-30-093045-comprovante.pdf'
-      )
+      pathMdCompanion('inbox/financeiro/pix/2026-04-30-093045-comprovante.pdf')
     ).toBe('inbox/financeiro/pix/2026-04-30-093045-comprovante.md');
   });
 });

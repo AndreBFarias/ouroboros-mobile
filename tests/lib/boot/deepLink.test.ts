@@ -33,7 +33,8 @@ jest.mock('expo-linking', () => {
         const qs = url.slice(idx + 1);
         for (const part of qs.split('&')) {
           const [k, v] = part.split('=');
-          if (k) queryParams[decodeURIComponent(k)] = decodeURIComponent(v ?? '');
+          if (k)
+            queryParams[decodeURIComponent(k)] = decodeURIComponent(v ?? '');
         }
         return { queryParams };
       }
@@ -93,7 +94,9 @@ describe('handleSharedUrl', () => {
     (router.push as jest.Mock).mockImplementationOnce(() => {
       throw new Error('rota nao existe');
     });
-    expect(() => handleSharedUrl('ouroboros://share?uri=content://x')).not.toThrow();
+    expect(() =>
+      handleSharedUrl('ouroboros://share?uri=content://x')
+    ).not.toThrow();
   });
 
   it('encaminha mime + origem + nome quando presentes (M08)', () => {

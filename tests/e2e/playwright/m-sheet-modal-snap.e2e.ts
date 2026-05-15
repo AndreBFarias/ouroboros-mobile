@@ -155,7 +155,8 @@ export default async function caseSheetModalSnap(
       sprint,
       aspecto,
       status: 'PASS',
-      detalhe: 'sheets em humor-rapido/eventos/diario-emocional abrem no snap esperado; primeiro slider em metade superior',
+      detalhe:
+        'sheets em humor-rapido/eventos/diario-emocional abrem no snap esperado; primeiro slider em metade superior',
       screenshots,
     };
   } catch (err) {

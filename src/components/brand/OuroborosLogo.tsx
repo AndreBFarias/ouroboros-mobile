@@ -58,11 +58,7 @@ export function OuroborosLogo({
       accessibilityLabel="logo ouroboros"
       accessibilityRole="image"
     >
-      <Svg
-        width={tamanho}
-        height={tamanho}
-        viewBox="0 0 320 320"
-      >
+      <Svg width={tamanho} height={tamanho} viewBox="0 0 320 320">
         <Defs>
           <LinearGradient id="og1" x1="0" x2="1" y1="0" y2="1">
             <Stop offset="0%" stopColor={colors.purple} />

@@ -19,23 +19,11 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Camera, X } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  Button,
-  Header,
-  Screen,
-  Textarea,
-  useToast,
-} from '@/components/ui';
+import { Button, Header, Screen, Textarea, useToast } from '@/components/ui';
 import { InputMedida } from '@/components/medidas';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
@@ -166,12 +154,9 @@ export default function NovaMedida() {
     };
   }, [vaultRoot]);
 
-  const handleChangeCampo = useCallback(
-    (campo: MedidaCampo, valor: string) => {
-      setCampos((s) => ({ ...s, [campo]: valor }));
-    },
-    []
-  );
+  const handleChangeCampo = useCallback((campo: MedidaCampo, valor: string) => {
+    setCampos((s) => ({ ...s, [campo]: valor }));
+  }, []);
 
   const handleEscolherFoto = useCallback(
     async (lado: 'frente' | 'costas' | 'lado') => {
@@ -355,7 +340,10 @@ export default function NovaMedida() {
             {LADOS_FOTO.map(({ key, label }) => {
               const slot = fotos[key];
               return (
-                <View key={key} style={{ alignItems: 'center', gap: spacing.xs }}>
+                <View
+                  key={key}
+                  style={{ alignItems: 'center', gap: spacing.xs }}
+                >
                   <View
                     style={{
                       width: 100,

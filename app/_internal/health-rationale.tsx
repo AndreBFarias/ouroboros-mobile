@@ -63,9 +63,9 @@ export default function HealthRationaleScreen() {
             lineHeight: 22,
           }}
         >
-          O Ouroboros é um app local. Nenhum dado de saúde sai do seu
-          aparelho. Toda informação fica guardada no seu cofre pessoal
-          (vault) em arquivos texto que você controla.
+          O Ouroboros é um app local. Nenhum dado de saúde sai do seu aparelho.
+          Toda informação fica guardada no seu cofre pessoal (vault) em arquivos
+          texto que você controla.
         </Text>
 
         {TOPICOS.map((t) => (

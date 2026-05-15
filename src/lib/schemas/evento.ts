@@ -37,9 +37,9 @@ export const EventoSchema = z
     // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
     para: ParaSchema,
   })
-  .refine(
-    (v) => v.modo !== 'positivo' || v.midia.length > 0,
-    { message: 'positivo exige pelo menos uma midia', path: ['midia'] }
-  );
+  .refine((v) => v.modo !== 'positivo' || v.midia.length > 0, {
+    message: 'positivo exige pelo menos uma midia',
+    path: ['midia'],
+  });
 
 export type EventoMeta = z.infer<typeof EventoSchema>;

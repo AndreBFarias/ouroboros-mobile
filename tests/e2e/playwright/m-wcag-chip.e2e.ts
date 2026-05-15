@@ -26,7 +26,7 @@ function srgbToLin(c: number): number {
 }
 
 function parseRgb(
-  s: string,
+  s: string
 ): { r: number; g: number; b: number; a: number } | null {
   const m = s.match(/rgba?\(([^)]+)\)/i);
   if (m) {
@@ -43,7 +43,11 @@ function parseRgb(
   const hex = s.match(/^#([0-9a-f]{3,8})$/i);
   if (hex) {
     let h = hex[1];
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    if (h.length === 3)
+      h = h
+        .split('')
+        .map((c) => c + c)
+        .join('');
     if (h.length === 6) {
       return {
         r: parseInt(h.slice(0, 2), 16),
@@ -81,7 +85,7 @@ interface MedidaChip {
 }
 
 export default async function caseMwcagChip(
-  page: PlaywrightPageLike,
+  page: PlaywrightPageLike
 ): Promise<ResultadoE2E> {
   const sprint = 'M-WCAG-CHIP';
   const aspecto = 'touch-target-e-borda';
@@ -121,14 +125,17 @@ export default async function caseMwcagChip(
 
     const medida: MedidaChip = await page.evaluate(() => {
       const chips = Array.from(
-        document.querySelectorAll('[role="button"]'),
+        document.querySelectorAll('[role="button"]')
       ) as HTMLElement[];
       const alvo = chips.find((c) => {
         const aria = c.getAttribute('aria-label') ?? '';
         return aria.startsWith('chip ');
       });
       if (!alvo) {
-        return { ok: false, motivo: 'nenhum chip com aria chip-* encontrado em /humor-rapido' };
+        return {
+          ok: false,
+          motivo: 'nenhum chip com aria chip-* encontrado em /humor-rapido',
+        };
       }
 
       // Area visual do Pressable.
@@ -211,8 +218,7 @@ export default async function caseMwcagChip(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          `cores nao parseadas: borda="${medida.borderColor}" surface="${medida.bgEffective}"`,
+        detalhe: `cores nao parseadas: borda="${medida.borderColor}" surface="${medida.bgEffective}"`,
         screenshots,
       };
     }

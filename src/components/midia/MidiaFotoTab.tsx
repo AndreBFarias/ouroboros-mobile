@@ -115,10 +115,7 @@ export function MidiaFotoTab({
   }, [carregando, desabilitado, persistirEEmitir]);
 
   return (
-    <View
-      style={{ gap: spacing.sm }}
-      accessibilityLabel="aba foto"
-    >
+    <View style={{ gap: spacing.sm }} accessibilityLabel="aba foto">
       <Button
         variant="primary"
         label="Escolher da galeria"

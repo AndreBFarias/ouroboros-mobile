@@ -14,8 +14,7 @@ jest.mock('@/lib/vault', () => {
     ...actual,
     writeVaultFile: (...args: [string, unknown, string]) =>
       mockWriteVaultFile(...args),
-    readVaultFile: (...args: [string, unknown]) =>
-      mockReadVaultFile(...args),
+    readVaultFile: (...args: [string, unknown]) => mockReadVaultFile(...args),
   };
 });
 
@@ -74,14 +73,8 @@ afterEach(() => {
 
 describe('saveDiario caminho feliz', () => {
   it('grava no path canonico com slug da primeira emocao', async () => {
-    const out = await saveDiario(
-      baseTrigger,
-      'corpo livre.',
-      VAULT_ROOT
-    );
-    expect(out.uri).toMatch(
-      /markdown\/diario-2026-04-29-0900-raiva\.md$/
-    );
+    const out = await saveDiario(baseTrigger, 'corpo livre.', VAULT_ROOT);
+    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-raiva\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
     expect(uri).toContain('markdown/diario-2026-04-29-0900-raiva.md');
@@ -96,9 +89,7 @@ describe('saveDiario caminho feliz', () => {
   it('usa slug "registro" quando emocoes esta vazio', async () => {
     const sem: DiarioEmocionalMeta = { ...baseSucesso, emocoes: [] };
     const out = await saveDiario(sem, 'sem emocoes.', VAULT_ROOT);
-    expect(out.uri).toMatch(
-      /markdown\/diario-2026-04-29-0900-registro\.md$/
-    );
+    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-registro\.md$/);
   });
 
   it('grava modo vitoria sem funcionou', async () => {
@@ -122,9 +113,9 @@ describe('saveDiario validacao', () => {
       ...baseSucesso,
       funcionou: true,
     } as unknown as DiarioEmocionalMeta;
-    await expect(
-      saveDiario(invalido, '', VAULT_ROOT)
-    ).rejects.toThrow(/diario emocional invalido/);
+    await expect(saveDiario(invalido, '', VAULT_ROOT)).rejects.toThrow(
+      /diario emocional invalido/
+    );
     expect(mockWriteVaultFile).not.toHaveBeenCalled();
   });
 
@@ -133,9 +124,9 @@ describe('saveDiario validacao', () => {
       ...baseTrigger,
       intensidade: 7,
     } as unknown as DiarioEmocionalMeta;
-    await expect(
-      saveDiario(invalido, '', VAULT_ROOT)
-    ).rejects.toThrow(/diario emocional invalido/);
+    await expect(saveDiario(invalido, '', VAULT_ROOT)).rejects.toThrow(
+      /diario emocional invalido/
+    );
   });
 });
 

@@ -69,7 +69,9 @@ describe('diasEntre', () => {
 
   it('rejeita string mal-formatada', () => {
     expect(() => diasEntre('abc', '2026-04-29')).toThrow(/data invalida/);
-    expect(() => diasEntre('2026-04-29', '2026/04/30')).toThrow(/data invalida/);
+    expect(() => diasEntre('2026-04-29', '2026/04/30')).toThrow(
+      /data invalida/
+    );
   });
 
   it('cobre periodo de 365 dias', () => {

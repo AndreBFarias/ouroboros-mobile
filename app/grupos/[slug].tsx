@@ -18,10 +18,7 @@ import {
   useToast,
   type BottomSheetRef,
 } from '@/components/ui';
-import {
-  FormGrupo,
-  type FormGrupoSubmit,
-} from '@/components/treino/FormGrupo';
+import { FormGrupo, type FormGrupoSubmit } from '@/components/treino/FormGrupo';
 import { SeletorTreinoDoGrupo } from '@/components/treino/SeletorTreinoDoGrupo';
 import { colors } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';

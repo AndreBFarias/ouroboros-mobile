@@ -14,8 +14,7 @@
 // que precisa de outro shape sobrescreve via jest.resetModules + setMock.
 jest.mock('../../../env.json', () => ({
   android: {
-    client_id:
-      '1234567890-abcdef.apps.googleusercontent.com',
+    client_id: '1234567890-abcdef.apps.googleusercontent.com',
     project_id: 'mock-project',
   },
 }));
@@ -34,9 +33,7 @@ describe('pickClientIdSafe', () => {
     const { pickClientIdSafe } = require('@/lib/services/googleAuthFlow');
     const r = pickClientIdSafe();
     expect('erro' in r).toBe(false);
-    expect(r.clientId).toBe(
-      '1234567890-abcdef.apps.googleusercontent.com'
-    );
+    expect(r.clientId).toBe('1234567890-abcdef.apps.googleusercontent.com');
     expect(typeof r.redirectUri).toBe('string');
   });
 

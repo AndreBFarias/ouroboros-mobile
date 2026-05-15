@@ -32,7 +32,9 @@ export interface UseHealthConnectResumoResult {
 }
 
 export function useHealthConnectResumo(): UseHealthConnectResumoResult {
-  const habilitadoToggle = useSettings((s) => s.featureToggles.healthConnectSync);
+  const habilitadoToggle = useSettings(
+    (s) => s.featureToggles.healthConnectSync
+  );
   const [habilitado, setHabilitado] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [passos, setPassos] = useState<ResumoPassos | null>(null);

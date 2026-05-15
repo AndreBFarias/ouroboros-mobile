@@ -54,8 +54,7 @@ describe('processarShareFinanceiro', () => {
   it('classifica boleto a partir de linha digitavel', () => {
     const r = processarShareFinanceiro({
       conteudo: {
-        texto:
-          'Boleto: 23793.39001 60083.395002 71300.063307 1 96920000150000',
+        texto: 'Boleto: 23793.39001 60083.395002 71300.063307 1 96920000150000',
         nomeArquivo: null,
         uri: null,
         mimeType: 'text/plain',

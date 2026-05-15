@@ -78,11 +78,7 @@ export function LinkSubTela({
             </Text>
           ) : null}
         </View>
-        <ChevronRight
-          size={20}
-          color={colors.mutedDecor}
-          strokeWidth={1.6}
-        />
+        <ChevronRight size={20} color={colors.mutedDecor} strokeWidth={1.6} />
       </MotiView>
     </Pressable>
   );

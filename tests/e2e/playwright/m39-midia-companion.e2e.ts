@@ -86,9 +86,7 @@ export default async function caseM39MidiaCompanion(
     await page.waitForTimeout(1500);
 
     const fabPresente = await page.evaluate(() => {
-      return !!document.querySelector(
-        '[aria-label="abrir menu de captura"]'
-      );
+      return !!document.querySelector('[aria-label="abrir menu de captura"]');
     });
     if (!fabPresente) {
       return {
@@ -101,8 +99,7 @@ export default async function caseM39MidiaCompanion(
       };
     }
 
-    const png =
-      'docs/sprints/M39-screenshots-gauntlet/A-memoria-apos-m39.png';
+    const png = 'docs/sprints/M39-screenshots-gauntlet/A-memoria-apos-m39.png';
     await page.screenshot({ path: png });
     screenshots.push(png);
 

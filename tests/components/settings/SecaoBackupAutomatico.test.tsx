@@ -48,9 +48,7 @@ describe('SecaoBackupAutomatico', () => {
   });
 
   it('quando toggle ON, exibe a linha de ultimo backup com texto humano', async () => {
-    useSettings
-      .getState()
-      .setFeatureToggle('backupAutomaticoSemanal', true);
+    useSettings.getState().setFeatureToggle('backupAutomaticoSemanal', true);
     const tree = render(<SecaoBackupAutomatico />);
     await waitFor(() =>
       expect(tree.getByLabelText('linha ultimo backup')).toBeTruthy()
@@ -60,9 +58,9 @@ describe('SecaoBackupAutomatico', () => {
 
   it('press no toggle alterna useSettings.backupAutomaticoSemanal', async () => {
     const tree = render(<SecaoBackupAutomatico />);
-    expect(
-      useSettings.getState().featureToggles.backupAutomaticoSemanal
-    ).toBe(false);
+    expect(useSettings.getState().featureToggles.backupAutomaticoSemanal).toBe(
+      false
+    );
     fireEvent.press(tree.getByLabelText('toggle backup automatico semanal'));
     await waitFor(() =>
       expect(

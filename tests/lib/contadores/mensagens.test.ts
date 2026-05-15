@@ -1,5 +1,9 @@
 // M32: cobertura das 6 faixas + marcos. Comentarios sem acento.
-import { mensagemApoio, marcoAtingido, MARCOS_DIAS } from '@/lib/contadores/mensagens';
+import {
+  mensagemApoio,
+  marcoAtingido,
+  MARCOS_DIAS,
+} from '@/lib/contadores/mensagens';
 
 describe('mensagemApoio', () => {
   it('dia 0 = recomeco sem julgamento', () => {

@@ -11,10 +11,5 @@ export default function DetalheConquistaRoute() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const idNormalizado = typeof id === 'string' ? id : '';
-  return (
-    <DetalheConquista
-      id={idNormalizado}
-      onVoltar={() => router.back()}
-    />
-  );
+  return <DetalheConquista id={idNormalizado} onVoltar={() => router.back()} />;
 }

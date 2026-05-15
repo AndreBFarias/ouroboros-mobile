@@ -20,10 +20,7 @@ const baseMedida = {
   coxa_dir: 56.5,
   barriga: 89.0,
   quadril: 96.0,
-  fotos: [
-    'assets/m-2026-04-28-frente.jpg',
-    'assets/m-2026-04-28-costas.jpg',
-  ],
+  fotos: ['assets/m-2026-04-28-frente.jpg', 'assets/m-2026-04-28-costas.jpg'],
   reflexao: 'Dorso sentindo melhor depois das semanas de cardio.',
 };
 
@@ -83,21 +80,15 @@ describe('MedidasSchema', () => {
   });
 
   it('rejeita peso negativo', () => {
-    expect(() =>
-      MedidasSchema.parse({ ...baseMedida, peso: -5 })
-    ).toThrow();
+    expect(() => MedidasSchema.parse({ ...baseMedida, peso: -5 })).toThrow();
   });
 
   it('rejeita peso zero', () => {
-    expect(() =>
-      MedidasSchema.parse({ ...baseMedida, peso: 0 })
-    ).toThrow();
+    expect(() => MedidasSchema.parse({ ...baseMedida, peso: 0 })).toThrow();
   });
 
   it('rejeita medida acima do limite defensivo de 500', () => {
-    expect(() =>
-      MedidasSchema.parse({ ...baseMedida, peso: 780 })
-    ).toThrow();
+    expect(() => MedidasSchema.parse({ ...baseMedida, peso: 780 })).toThrow();
   });
 
   it('aceita registro sem gordura (Q17.c.d optional)', () => {
@@ -113,9 +104,7 @@ describe('MedidasSchema', () => {
   });
 
   it('rejeita gordura negativa (Q17.c.d)', () => {
-    expect(() =>
-      MedidasSchema.parse({ ...baseMedida, gordura: -2 })
-    ).toThrow();
+    expect(() => MedidasSchema.parse({ ...baseMedida, gordura: -2 })).toThrow();
   });
 
   it('aceita gordura 0 (Q17.c.d nonnegative)', () => {

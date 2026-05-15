@@ -42,10 +42,7 @@ function joinUri(root: string, rel: string): string {
 
 // Calcula data limite (em ISO YYYY-MM-DD) baseado em período. Para
 // 'tudo' retorna null (sem corte).
-function dataLimite(
-  periodo: MedidasPeriodo,
-  hoje: Date
-): string | null {
+function dataLimite(periodo: MedidasPeriodo, hoje: Date): string | null {
   if (periodo === 'tudo') return null;
   const dias = periodo === '30d' ? 30 : 90;
   const limite = new Date(hoje);

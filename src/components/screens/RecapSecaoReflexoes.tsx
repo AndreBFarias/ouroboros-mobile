@@ -38,8 +38,8 @@ export function RecapSecaoReflexoes({ itens }: Props) {
           lineHeight: 20,
         }}
       >
-        Você teve {itens.length}{' '}
-        {itens.length === 1 ? 'reflexão' : 'reflexões'} no período.
+        Você teve {itens.length} {itens.length === 1 ? 'reflexão' : 'reflexões'}{' '}
+        no período.
       </Text>
       {itens.map((item) => (
         <View key={item.id} accessibilityLabel={`reflexao ${item.id}`}>
@@ -54,11 +54,7 @@ export function RecapSecaoReflexoes({ itens }: Props) {
                 paddingLeft: 12,
               }}
             >
-              <MessageCircle
-                size={20}
-                color={colors.cyan}
-                strokeWidth={1.5}
-              />
+              <MessageCircle size={20} color={colors.cyan} strokeWidth={1.5} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Text
                   style={{

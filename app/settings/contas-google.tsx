@@ -141,14 +141,18 @@ export default function ContasGoogleScreen() {
   );
 
   // Sempre mostra pessoa_a; pessoa_b so quando filtro indica casal.
-  const mostrarPessoaB = tipoCompanhia === 'ambos' || tipoCompanhia === 'pessoa_b';
+  const mostrarPessoaB =
+    tipoCompanhia === 'ambos' || tipoCompanhia === 'pessoa_b';
 
   return (
     <Screen>
       <Header title="Contas Google" onBack={() => router.back()} />
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingBottom: 120,
+        }}
       >
         <Text
           style={{
@@ -158,8 +162,8 @@ export default function ContasGoogleScreen() {
             marginTop: spacing.lg,
           }}
         >
-          Conecte sua conta Google para visualizar a agenda dos próximos 30 dias.
-          Tokens ficam só no seu dispositivo. Sem servidor próprio.
+          Conecte sua conta Google para visualizar a agenda dos próximos 30
+          dias. Tokens ficam só no seu dispositivo. Sem servidor próprio.
         </Text>
 
         <SecaoLista titulo="Contas conectadas">

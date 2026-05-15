@@ -34,9 +34,7 @@ describe('MiniFinanceiroScreen (M35)', () => {
   it('expoe label canonico do EmptyState com a frase entre prefixo "vazio:"', () => {
     const { getByLabelText } = render(<MiniFinanceiroScreen />);
     expect(
-      getByLabelText(
-        'vazio: Em desenvolvimento. Disponível em versão futura.'
-      )
+      getByLabelText('vazio: Em desenvolvimento. Disponível em versão futura.')
     ).toBeTruthy();
   });
 
@@ -46,9 +44,7 @@ describe('MiniFinanceiroScreen (M35)', () => {
       queryByText('Rode o pipeline no desktop pra carregar dados.')
     ).toBeNull();
     expect(
-      queryByText(
-        'Cache em formato desconhecido. Rode o pipeline atualizado.'
-      )
+      queryByText('Cache em formato desconhecido. Rode o pipeline atualizado.')
     ).toBeNull();
     expect(queryByText('Carregando…')).toBeNull();
   });

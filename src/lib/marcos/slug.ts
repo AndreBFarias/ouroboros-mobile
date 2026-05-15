@@ -12,9 +12,7 @@ function stripAccents(input: string): string {
 
 function toKebab(input: string, maxLen: number = MAX_LEN): string {
   const ascii = stripAccents(input).toLowerCase();
-  const compacted = ascii
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const compacted = ascii.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   if (compacted.length === 0) return '';
   if (compacted.length <= maxLen) return compacted;
   const truncado = compacted.slice(0, maxLen);

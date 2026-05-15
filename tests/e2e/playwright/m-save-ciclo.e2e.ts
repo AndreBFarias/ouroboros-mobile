@@ -81,9 +81,7 @@ export default async function caseSaveCiclo(
       const buttons = Array.from(
         document.querySelectorAll('[role="button"]')
       ) as HTMLElement[];
-      return buttons.some(
-        (b) => (b.textContent ?? '').trim() === 'Salvar'
-      );
+      return buttons.some((b) => (b.textContent ?? '').trim() === 'Salvar');
     });
     if (!formMontou) {
       return {

@@ -322,6 +322,8 @@ describe('excluirAlarme', () => {
 
   it('nao propaga erro quando arquivo nao existe', async () => {
     mockDeleteAsync.mockRejectedValueOnce(new Error('nao existe'));
-    await expect(excluirAlarme(VAULT_ROOT, 'fantasma')).resolves.toBeUndefined();
+    await expect(
+      excluirAlarme(VAULT_ROOT, 'fantasma')
+    ).resolves.toBeUndefined();
   });
 });

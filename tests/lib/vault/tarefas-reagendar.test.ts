@@ -173,9 +173,9 @@ describe('escreverTarefa - re-agendamento companion (S2)', () => {
     const novo = tarefaComAlarme({
       data_hora_iso: '2026-05-03T10:00:00-03:00',
     });
-    await expect(escreverTarefa(VAULT_ROOT, REL, novo)).resolves.toMatchObject(
-      { rel: REL }
-    );
+    await expect(escreverTarefa(VAULT_ROOT, REL, novo)).resolves.toMatchObject({
+      rel: REL,
+    });
     expect(mockWriteVaultFile).toHaveBeenCalled();
   });
 
@@ -185,9 +185,9 @@ describe('escreverTarefa - re-agendamento companion (S2)', () => {
     mockCancelarAlarme.mockRejectedValueOnce(new Error('id inexistente'));
 
     const novo = tarefaComAlarme({ ativo: false });
-    await expect(escreverTarefa(VAULT_ROOT, REL, novo)).resolves.toMatchObject(
-      { rel: REL }
-    );
+    await expect(escreverTarefa(VAULT_ROOT, REL, novo)).resolves.toMatchObject({
+      rel: REL,
+    });
     expect(mockCancelarAlarme).toHaveBeenCalledTimes(1);
   });
 });

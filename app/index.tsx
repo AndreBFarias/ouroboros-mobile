@@ -137,7 +137,11 @@ export default function TelaHoje() {
 
   // Splash silencioso enquanto persist carrega.
   if (!tudoHidratado) {
-    return <Screen padded={false}><View style={{ flex: 1 }} /></Screen>;
+    return (
+      <Screen padded={false}>
+        <View style={{ flex: 1 }} />
+      </Screen>
+    );
   }
 
   // Gate de onboarding.
@@ -148,7 +152,8 @@ export default function TelaHoje() {
   const ehSozinho = tipoCompanhia === 'sozinho';
   const handleAvatarPress = ehSozinho
     ? undefined
-    : () => setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a');
+    : () =>
+        setPessoaAtiva(pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a');
 
   return (
     <TelaHojeConteudo
@@ -186,7 +191,13 @@ function TelaHojeConteudo({
       <Header
         title="Hoje"
         right={
-          <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: spacing.sm,
+              alignItems: 'center',
+            }}
+          >
             {ehSozinho ? (
               <PersonAvatar
                 pessoa={pessoaAtiva}
@@ -218,14 +229,17 @@ function TelaHojeConteudo({
                 + label 14dp, padding 20dp horizontal + 10dp vertical,
                 radius 999 chip, gap 6dp. */}
             <BotaoRecap onPress={onRecapPress} />
-
           </View>
         }
       />
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: spacing.base, paddingBottom: 120, gap: spacing.lg }}
+        contentContainerStyle={{
+          paddingTop: spacing.base,
+          paddingBottom: 120,
+          gap: spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {error ? <BannerErro mensagem={error} /> : null}
@@ -309,7 +323,12 @@ function SecaoHumor({ humor, loading }: SecaoHumorProps) {
       </Text>
       {loading ? (
         <Card>
-          <Text style={{ color: colors.muted, fontFamily: 'JetBrainsMono_400Regular' }}>
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+            }}
+          >
             Carregando...
           </Text>
         </Card>
@@ -320,10 +339,38 @@ function SecaoHumor({ humor, loading }: SecaoHumorProps) {
       ) : (
         <Card>
           <View style={{ gap: spacing.md }}>
-            <Slider value={humor.humor} min={1} max={5} onChange={() => undefined} disabled label="Humor" />
-            <Slider value={humor.energia} min={1} max={5} onChange={() => undefined} disabled label="Energia" />
-            <Slider value={humor.ansiedade} min={1} max={5} onChange={() => undefined} disabled label="Ansiedade" />
-            <Slider value={humor.foco} min={1} max={5} onChange={() => undefined} disabled label="Foco" />
+            <Slider
+              value={humor.humor}
+              min={1}
+              max={5}
+              onChange={() => undefined}
+              disabled
+              label="Humor"
+            />
+            <Slider
+              value={humor.energia}
+              min={1}
+              max={5}
+              onChange={() => undefined}
+              disabled
+              label="Energia"
+            />
+            <Slider
+              value={humor.ansiedade}
+              min={1}
+              max={5}
+              onChange={() => undefined}
+              disabled
+              label="Ansiedade"
+            />
+            <Slider
+              value={humor.foco}
+              min={1}
+              max={5}
+              onChange={() => undefined}
+              disabled
+              label="Foco"
+            />
             {humor.frase ? (
               <Text
                 style={{

@@ -15,7 +15,10 @@
 //
 // Comentarios sem acentuacao (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
-import { atualizarWidget, desativarWidget } from '../../../modules/widget-homescreen/src';
+import {
+  atualizarWidget,
+  desativarWidget,
+} from '../../../modules/widget-homescreen/src';
 import type { WidgetData } from '../../../modules/widget-homescreen/src';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
@@ -82,12 +85,10 @@ async function lerHeatmapCache(): Promise<number[]> {
     const raw = await FileSystem.readAsStringAsync(path);
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .slice(-7)
-      .map((v: unknown) => {
-        const n = typeof v === 'number' ? Math.round(v) : 0;
-        return Math.max(0, Math.min(5, n));
-      });
+    return parsed.slice(-7).map((v: unknown) => {
+      const n = typeof v === 'number' ? Math.round(v) : 0;
+      return Math.max(0, Math.min(5, n));
+    });
   } catch {
     return [];
   }

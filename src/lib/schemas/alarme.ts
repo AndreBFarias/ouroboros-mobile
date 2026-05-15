@@ -213,15 +213,17 @@ export const LIMITE_SCHEDULES = 64;
 // equivalentes ASCII, espacos por '-', remove caracteres invalidos.
 // Útil na criacao do alarme; usuario pode ajustar manualmente depois.
 export function slugifyTitulo(titulo: string): string {
-  return titulo
-    .toLowerCase()
-    .normalize('NFD')
-    // Remove diacriticos (faixa Unicode U+0300 a U+036F).
-    .replace(/[̀-ͯ]/g, '')
-    // Mantem so a-z 0-9 espaco e hifen.
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .slice(0, 64);
+  return (
+    titulo
+      .toLowerCase()
+      .normalize('NFD')
+      // Remove diacriticos (faixa Unicode U+0300 a U+036F).
+      .replace(/[̀-ͯ]/g, '')
+      // Mantem so a-z 0-9 espaco e hifen.
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 64)
+  );
 }

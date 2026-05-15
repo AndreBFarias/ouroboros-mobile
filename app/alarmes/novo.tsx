@@ -310,9 +310,8 @@ export default function AlarmesNovoOuEditar() {
     if (!vaultRoot || salvando || !formValido) return;
     setSalvando(true);
     try {
-      const baseSlug = editando && original
-        ? original.slug
-        : slugifyTitulo(titulo);
+      const baseSlug =
+        editando && original ? original.slug : slugifyTitulo(titulo);
       if (baseSlug.length === 0) {
         toast.show('Título inválido.', 'error');
         return;
@@ -602,9 +601,7 @@ export default function AlarmesNovoOuEditar() {
                   {dataUnica
                     ? recorrencia === 'mensal'
                       ? `Dia ${parsearDataUnica(dataUnica).getDate()}`
-                      : parsearDataUnica(dataUnica).toLocaleDateString(
-                          'pt-BR'
-                        )
+                      : parsearDataUnica(dataUnica).toLocaleDateString('pt-BR')
                     : 'Selecionar'}
                 </Text>
               </Pressable>

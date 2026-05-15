@@ -206,10 +206,7 @@ export function MidiaPicker({
     aba === 'audio' && !permitirAudio ? 'spotify' : aba;
 
   return (
-    <View
-      style={{ gap: spacing.sm }}
-      accessibilityLabel="midia picker"
-    >
+    <View style={{ gap: spacing.sm }} accessibilityLabel="midia picker">
       <Text
         style={{
           color: colors.muted,
@@ -243,28 +240,16 @@ export function MidiaPicker({
       {/* Sub-tela da aba ativa */}
       <View>
         {abaEfetiva === 'spotify' ? (
-          <MidiaSpotifyTab
-            onAdd={adicionar}
-            desabilitado={cheio}
-          />
+          <MidiaSpotifyTab onAdd={adicionar} desabilitado={cheio} />
         ) : null}
         {abaEfetiva === 'youtube' ? (
-          <MidiaYoutubeTab
-            onAdd={adicionar}
-            desabilitado={cheio}
-          />
+          <MidiaYoutubeTab onAdd={adicionar} desabilitado={cheio} />
         ) : null}
         {abaEfetiva === 'foto' ? (
-          <MidiaFotoTab
-            onAdd={adicionar}
-            desabilitado={cheio}
-          />
+          <MidiaFotoTab onAdd={adicionar} desabilitado={cheio} />
         ) : null}
         {abaEfetiva === 'audio' && permitirAudio ? (
-          <MidiaAudioTab
-            onAdd={adicionar}
-            desabilitado={cheio}
-          />
+          <MidiaAudioTab onAdd={adicionar} desabilitado={cheio} />
         ) : null}
       </View>
 

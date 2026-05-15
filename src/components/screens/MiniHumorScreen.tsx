@@ -17,7 +17,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { CalendarRange } from '@/lib/icons';
 import {
@@ -54,7 +54,10 @@ import type { ModoFiltroHumor } from '@/lib/hooks/useHumorHeatmap';
 // que ramifica por tipoCompanhia ('Casal' / 'Todos' / 'Ambos').
 const DIA_MS = 24 * 60 * 60 * 1000;
 
-function formatarBannerData(geradoEm: string, agora: Date): {
+function formatarBannerData(
+  geradoEm: string,
+  agora: Date
+): {
   texto: string;
   alerta: boolean;
 } {
@@ -191,9 +194,7 @@ export function MiniHumorScreen(): ReactNode {
         <ChipGroup
           mode="single"
           options={
-            vaultCompartilhado
-              ? chipOptionsCompartilhado
-              : chipOptionsPrivado
+            vaultCompartilhado ? chipOptionsCompartilhado : chipOptionsPrivado
           }
           value={modo}
           onChange={handleModoChange}
@@ -268,10 +269,7 @@ export function MiniHumorScreen(): ReactNode {
 
       <BottomSheet ref={modalRef} snapPoints={SHEET_60} index={-1}>
         {diaSelecionado ? (
-          <DiaHumorModal
-            data={diaSelecionado}
-            registros={registrosModal}
-          />
+          <DiaHumorModal data={diaSelecionado} registros={registrosModal} />
         ) : null}
       </BottomSheet>
     </Screen>

@@ -19,9 +19,7 @@ const CACHE_VALIDO = {
   gasto_semana: 873.45,
   gasto_semana_anterior: 921.1,
   delta_textual: 'abaixo da media',
-  top_categorias: [
-    { nome: 'Mercado', valor: 326.19, percentual: 0.37 },
-  ],
+  top_categorias: [{ nome: 'Mercado', valor: 326.19, percentual: 0.37 }],
   ultimas_transacoes: [
     {
       data: '2026-05-01',

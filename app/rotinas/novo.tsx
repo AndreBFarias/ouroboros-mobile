@@ -9,14 +9,14 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Header, Screen, useToast } from '@/components/ui';
-import { FormRotina, type FormRotinaSubmit } from '@/components/treino/FormRotina';
+import {
+  FormRotina,
+  type FormRotinaSubmit,
+} from '@/components/treino/FormRotina';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
-import {
-  escreverRotina,
-  listarRotinas,
-} from '@/lib/vault/rotina';
+import { escreverRotina, listarRotinas } from '@/lib/vault/rotina';
 import { slugifyTitulo, sufixoRandom } from '@/lib/schemas/tarefa';
 import { RotinaSchema, type RotinaMeta } from '@/lib/schemas/rotina';
 import { formatDateYmd } from '@/lib/vault/paths';

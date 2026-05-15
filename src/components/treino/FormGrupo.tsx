@@ -245,8 +245,8 @@ export function FormGrupo({
                   lineHeight: 20,
                 }}
               >
-                Apenas o agrupamento será removido. As rotinas
-                vinculadas permanecem disponíveis em /rotinas.
+                Apenas o agrupamento será removido. As rotinas vinculadas
+                permanecem disponíveis em /rotinas.
               </Text>
               <View style={{ gap: spacing.sm }}>
                 <Button

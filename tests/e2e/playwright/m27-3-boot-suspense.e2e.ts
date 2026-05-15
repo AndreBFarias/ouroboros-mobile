@@ -9,7 +9,10 @@
 // para correlacionar com as APIs de auditoria.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
 export default async function caseM27_3(
   page: PlaywrightPageLike

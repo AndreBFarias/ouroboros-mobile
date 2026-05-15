@@ -66,9 +66,7 @@ function serializarPara(p: Para): string {
 // Serializa o companion como bloco YAML simples + body opcional. O
 // body, por enquanto, repete a legenda quando presente para que o
 // Obsidian renderize um trecho legivel ao abrir o .md (M39 expande).
-export function stringifyCompanionMidia(
-  input: CompanionMidiaInput
-): string {
+export function stringifyCompanionMidia(input: CompanionMidiaInput): string {
   const linhas: string[] = ['---'];
   // Q12: carimbo defensivo na primeira linha do YAML companion. Mesmo
   // valor de VAULT_SCHEMA_VERSION usado por stringifyFrontmatter para
@@ -86,18 +84,12 @@ export function stringifyCompanionMidia(
     const escapada = input.legenda.replace(/"/g, '\\"');
     linhas.push(`legenda: "${escapada}"`);
   }
-  if (
-    typeof input.medida_ref === 'string' &&
-    input.medida_ref.length > 0
-  ) {
+  if (typeof input.medida_ref === 'string' && input.medida_ref.length > 0) {
     // Referencia ao registro-mae. Sem aspas: slug ASCII / data sem
     // espacos, seguro como YAML scalar simples.
     linhas.push(`medida_ref: ${input.medida_ref}`);
   }
-  if (
-    typeof input.transcricao === 'string' &&
-    input.transcricao.length > 0
-  ) {
+  if (typeof input.transcricao === 'string' && input.transcricao.length > 0) {
     // I-AUDIO: transcricao em uma unica linha YAML (escapando aspas
     // como na legenda). Quando STT falhou ou foi pulado, o caller
     // passa undefined e o campo simplesmente nao aparece no .md —

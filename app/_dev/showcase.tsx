@@ -26,7 +26,11 @@ const TELAS: ItemTela[] = [
   { numero: '07', rota: '/exercicios', nome: 'Exercicios (galeria)' },
   { numero: '08', rota: '/exercicios/novo', nome: 'Cadastro exercicio' },
   { numero: '09', rota: '/saude-fisica', nome: 'Saude Fisica (treinos)' },
-  { numero: '10', rota: '/saude-fisica', nome: 'Saude Fisica (evolucao corporal)' },
+  {
+    numero: '10',
+    rota: '/saude-fisica',
+    nome: 'Saude Fisica (evolucao corporal)',
+  },
   { numero: '11', rota: '/saude-fisica', nome: 'Saude Fisica (exercicios)' },
   { numero: '12', rota: '/medidas', nome: 'Medidas form' },
   { numero: '13', rota: '/medidas/historico', nome: 'Medidas historico' },
@@ -34,7 +38,12 @@ const TELAS: ItemTela[] = [
   { numero: '15', rota: '/humor-rapido', nome: 'Humor rapido', modal: true },
   { numero: '16', rota: '/scanner', nome: 'Scanner OCR', modal: true },
   { numero: '17', rota: '/share-receive', nome: 'Share intent', modal: true },
-  { numero: '18', rota: '/diario-emocional', nome: 'Diario emocional', modal: true },
+  {
+    numero: '18',
+    rota: '/diario-emocional',
+    nome: 'Diario emocional',
+    modal: true,
+  },
   { numero: '20', rota: '/eventos', nome: 'Eventos com lugar', modal: true },
   { numero: '21', rota: '/humor', nome: 'Mini Humor heatmap' },
   { numero: '22', rota: '/financas', nome: 'Mini Financeiro' },
@@ -79,9 +88,9 @@ export default function Showcase() {
           lineHeight: 20,
         }}
       >
-        Lista canonica das telas do mockup. Toque para navegar.
-        Modais ({'modal'}) abrem via console dev em vez de navegacao
-        direta. Boot fresh demora ~30s na primeira tela.
+        Lista canonica das telas do mockup. Toque para navegar. Modais (
+        {'modal'}) abrem via console dev em vez de navegacao direta. Boot fresh
+        demora ~30s na primeira tela.
       </Text>
 
       {TELAS.map((tela) => (

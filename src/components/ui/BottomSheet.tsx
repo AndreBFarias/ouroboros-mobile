@@ -66,7 +66,6 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       [snapPoints]
     );
 
-
     // M34.1: merge containerStyle default + override do consumidor.
     // Array de StyleProp permite que props especificas do consumidor
     // sobrescrevam o zIndex 100 quando explicitamente desejado, mas
@@ -148,7 +147,8 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
           if (r.width < winH * 0.3) continue;
           // Aplica transform alvo. transition='none' para nao
           // gerar slide visual interrompido.
-          (el as HTMLElement).style.transform = `matrix(1, 0, 0, 1, 0, ${targetY})`;
+          (el as HTMLElement).style.transform =
+            `matrix(1, 0, 0, 1, 0, ${targetY})`;
           (el as HTMLElement).style.transition = 'none';
           break;
         }

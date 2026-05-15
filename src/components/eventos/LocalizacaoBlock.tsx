@@ -50,10 +50,7 @@ export function LocalizacaoBlock({
   };
 
   return (
-    <View
-      style={{ gap: spacing.sm }}
-      accessibilityLabel="bloco onde"
-    >
+    <View style={{ gap: spacing.sm }} accessibilityLabel="bloco onde">
       <Text
         style={{
           color: colors.muted,

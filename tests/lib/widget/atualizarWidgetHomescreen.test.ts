@@ -28,7 +28,9 @@ const mockAtualizarWidget = jest.fn(() => Promise.resolve());
 const mockDesativarWidget = jest.fn(() => Promise.resolve());
 jest.mock('../../../modules/widget-homescreen/src', () => ({
   atualizarWidget: (...args: unknown[]) =>
-    (mockAtualizarWidget as unknown as (...a: unknown[]) => Promise<void>)(...args),
+    (mockAtualizarWidget as unknown as (...a: unknown[]) => Promise<void>)(
+      ...args
+    ),
   desativarWidget: () => mockDesativarWidget(),
 }));
 

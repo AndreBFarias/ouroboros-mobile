@@ -42,10 +42,7 @@ export default function AdicionarSegundaPessoa() {
 
   return (
     <Screen>
-      <Header
-        title="Adicionar segunda pessoa"
-        onBack={() => router.back()}
-      />
+      <Header title="Adicionar segunda pessoa" onBack={() => router.back()} />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -64,8 +61,8 @@ export default function AdicionarSegundaPessoa() {
             paddingHorizontal: spacing.xs,
           }}
         >
-          O Vault será compartilhado por padrão. Você pode mudar isso
-          depois nas configurações.
+          O Vault será compartilhado por padrão. Você pode mudar isso depois nas
+          configurações.
         </Text>
 
         <View style={{ gap: spacing.md, alignItems: 'center' }}>

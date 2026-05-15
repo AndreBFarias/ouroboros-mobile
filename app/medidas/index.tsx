@@ -10,20 +10,10 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Plus } from '@/lib/icons';
-import {
-  ChipGroup,
-  EmptyState,
-  FAB,
-  Header,
-  Screen,
-} from '@/components/ui';
+import { ChipGroup, EmptyState, FAB, Header, Screen } from '@/components/ui';
 import { CardComparativo, SliderFotos } from '@/components/medidas';
 import type { FotoMedida } from '@/components/medidas';
 import type { SparklineMedidaPoint } from '@/components/data';
@@ -51,9 +41,7 @@ const PERIODO_OPTIONS = [
 // assets/ continuam visiveis.
 function resolveUri(vaultRoot: string | null, rel: string): string {
   if (!vaultRoot) return rel;
-  const trimmed = vaultRoot.endsWith('/')
-    ? vaultRoot.slice(0, -1)
-    : vaultRoot;
+  const trimmed = vaultRoot.endsWith('/') ? vaultRoot.slice(0, -1) : vaultRoot;
   return `${trimmed}/${rel}`;
 }
 
@@ -89,10 +77,7 @@ function inferirLado(rel: string): 'frente' | 'costas' | 'lado' {
 // Monta lista de FotoMedida agregando todas as fotos de todas as
 // medidas do período, ordenada asc por data (caller SliderFotos
 // espera asc).
-function montarFotos(
-  lista: Medida[],
-  vaultRoot: string | null
-): FotoMedida[] {
+function montarFotos(lista: Medida[], vaultRoot: string | null): FotoMedida[] {
   const out: FotoMedida[] = [];
   for (const m of lista) {
     for (const rel of m.fotos) {
@@ -233,9 +218,7 @@ export default function ComparativoMedidas() {
                 {linha.map((campo) => {
                   const pontos = pontosDoCampo(lista, campo);
                   const valorAtual =
-                    pontos.length > 0
-                      ? pontos[pontos.length - 1].valor
-                      : null;
+                    pontos.length > 0 ? pontos[pontos.length - 1].valor : null;
                   const valorPrimeira =
                     pontos.length >= 2 ? pontos[0].valor : null;
                   const meta = MEDIDAS_LABELS[campo];
@@ -273,10 +256,7 @@ export default function ComparativoMedidas() {
             >
               Fotos
             </Text>
-            <SliderFotos
-              fotos={fotosAgregadas}
-              largura={larguraSlider}
-            />
+            <SliderFotos fotos={fotosAgregadas} largura={larguraSlider} />
           </View>
         ) : null}
       </ScrollView>

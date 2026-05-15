@@ -16,7 +16,8 @@ jest.mock('expo-router', () => ({
   useFocusEffect: () => undefined,
 }));
 
-let mockListaExercicios: Array<{ slug: string; nome: string; gif: string }> = [];
+let mockListaExercicios: Array<{ slug: string; nome: string; gif: string }> =
+  [];
 jest.mock('@/lib/vault/exercicios', () => ({
   __esModule: true,
   listarExercicios: () => Promise.resolve(mockListaExercicios),

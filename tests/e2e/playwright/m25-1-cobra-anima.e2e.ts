@@ -4,9 +4,14 @@
 // nao roda em web -- FAIL. Bug descoberto: rotacao parada.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
-export default async function caseM25_1(page: PlaywrightPageLike): Promise<ResultadoE2E> {
+export default async function caseM25_1(
+  page: PlaywrightPageLike
+): Promise<ResultadoE2E> {
   const sprint = 'M25.1';
   const aspecto = 'cobra-anima';
   const screenshots: string[] = [];
@@ -26,29 +31,43 @@ export default async function caseM25_1(page: PlaywrightPageLike): Promise<Resul
 
     const samples = await page.evaluate(async () => {
       const ler = () => {
-        const svg = document.querySelector('[aria-label="loader ouroboros"] svg');
+        const svg = document.querySelector(
+          '[aria-label="loader ouroboros"] svg'
+        );
         if (!svg) return null;
         const gs = svg.querySelectorAll('g');
-        return Array.from(gs).map(g => g.getAttribute('transform')).filter(Boolean);
+        return Array.from(gs)
+          .map((g) => g.getAttribute('transform'))
+          .filter(Boolean);
       };
-      const out: Array<{ t: number; transforms: (string | null)[] | null }> = [];
+      const out: Array<{ t: number; transforms: (string | null)[] | null }> =
+        [];
       for (let i = 0; i < 6; i++) {
         out.push({ t: i * 250, transforms: ler() });
-        await new Promise(r => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 250));
       }
       return out;
     });
 
-    const path = 'docs/validacao-gauntlet-2026-05-03/screenshots/M25.1/A-fail-rotate-zero.png';
+    const path =
+      'docs/validacao-gauntlet-2026-05-03/screenshots/M25.1/A-fail-rotate-zero.png';
     await page.screenshot({ path });
     screenshots.push(path);
 
-    const validos = samples.filter(s => s.transforms);
+    const validos = samples.filter((s) => s.transforms);
     const angulos = new Set(
-      validos.flatMap(s => s.transforms!.filter(t => t && t.startsWith('rotate')))
+      validos.flatMap((s) =>
+        s.transforms!.filter((t) => t && t.startsWith('rotate'))
+      )
     );
     if (validos.length === 0) {
-      return { sprint, aspecto, status: 'INCONCLUSIVO', detalhe: 'loader nao foi observado durante medicao', screenshots };
+      return {
+        sprint,
+        aspecto,
+        status: 'INCONCLUSIVO',
+        detalhe: 'loader nao foi observado durante medicao',
+        screenshots,
+      };
     }
     if (angulos.size <= 1) {
       return {
@@ -59,8 +78,20 @@ export default async function caseM25_1(page: PlaywrightPageLike): Promise<Resul
         screenshots,
       };
     }
-    return { sprint, aspecto, status: 'PASS', detalhe: `${angulos.size} angulos distintos observados`, screenshots };
+    return {
+      sprint,
+      aspecto,
+      status: 'PASS',
+      detalhe: `${angulos.size} angulos distintos observados`,
+      screenshots,
+    };
   } catch (err) {
-    return { sprint, aspecto, status: 'FAIL', detalhe: `erro: ${(err as Error).message}`, screenshots };
+    return {
+      sprint,
+      aspecto,
+      status: 'FAIL',
+      detalhe: `erro: ${(err as Error).message}`,
+      screenshots,
+    };
   }
 }

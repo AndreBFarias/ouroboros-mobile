@@ -81,10 +81,7 @@ export function WaveformPreview({ path, duracaoSeg }: WaveformPreviewProps) {
         // Quando a reproducao termina, voltamos para o estado idle
         // automaticamente; sem isso o botao fica travado em pause.
         sound.setOnPlaybackStatusUpdate((status) => {
-          if (
-            'didJustFinish' in status &&
-            status.didJustFinish === true
-          ) {
+          if ('didJustFinish' in status && status.didJustFinish === true) {
             setTocando(false);
             sound.setPositionAsync(0).catch(() => undefined);
           }

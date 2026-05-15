@@ -95,9 +95,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
       legenda: 'momento bom',
     });
     expect(r.ok).toBe(true);
-    expect(r.arquivo).toMatch(
-      /^jpg\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg$/
-    );
+    expect(r.arquivo).toMatch(/^jpg\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg$/);
     expect(r.companion).toMatch(
       /^markdown\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
     );
@@ -137,9 +135,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
 
     const r = await capturarFoto({ origem: 'galeria' });
     expect(r.ok).toBe(true);
-    expect(r.arquivo).toMatch(
-      /^png\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.png$/
-    );
+    expect(r.arquivo).toMatch(/^png\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.png$/);
     expect(r.companion).toMatch(
       /^markdown\/foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
     );
@@ -175,9 +171,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
     permCamSpy.mockResolvedValue({ granted: true });
     launchCamSpy.mockResolvedValue({
       canceled: false,
-      assets: [
-        { uri: 'file:///cam/foto.jpg', mimeType: 'image/jpeg' },
-      ],
+      assets: [{ uri: 'file:///cam/foto.jpg', mimeType: 'image/jpeg' }],
     });
     copySpy.mockResolvedValue(undefined);
     writeSpy.mockResolvedValue(undefined);
@@ -202,9 +196,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
     permGaleriaSpy.mockResolvedValue({ granted: true });
     launchGaleriaSpy.mockResolvedValue({
       canceled: false,
-      assets: [
-        { uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' },
-      ],
+      assets: [{ uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' }],
     });
     copySpy.mockRejectedValue(new Error('EACCES'));
     const r = await capturarFoto({ origem: 'galeria' });
@@ -222,9 +214,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
     permGaleriaSpy.mockResolvedValue({ granted: true });
     launchGaleriaSpy.mockResolvedValue({
       canceled: false,
-      assets: [
-        { uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' },
-      ],
+      assets: [{ uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' }],
     });
     copySpy.mockResolvedValue(undefined);
     writeSpy.mockResolvedValue(undefined);
@@ -257,9 +247,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
     permGaleriaSpy.mockResolvedValue({ granted: true });
     launchGaleriaSpy.mockResolvedValue({
       canceled: false,
-      assets: [
-        { uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' },
-      ],
+      assets: [{ uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' }],
     });
     copySpy.mockResolvedValue(undefined);
     writeSpy.mockResolvedValue(undefined);
@@ -267,9 +255,7 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
     const r = await capturarFoto({ origem: 'galeria' });
     expect(r.ok).toBe(true);
     const basenameBin = (r.arquivo ?? '').split('/').pop() ?? '';
-    expect(basenameBin).toMatch(
-      /^foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg$/
-    );
+    expect(basenameBin).toMatch(/^foto-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.jpg$/);
 
     const writeArgs = writeSpy.mock.calls[0] as [string, string];
     expect(writeArgs[1]).toContain(`arquivo: ${basenameBin}`);

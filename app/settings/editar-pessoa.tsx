@@ -57,10 +57,7 @@ export default function EditarPessoa() {
 
   return (
     <Screen>
-      <Header
-        title="Editar nomes e fotos"
-        onBack={() => router.back()}
-      />
+      <Header title="Editar nomes e fotos" onBack={() => router.back()} />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{

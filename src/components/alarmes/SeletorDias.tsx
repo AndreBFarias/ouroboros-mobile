@@ -17,10 +17,7 @@ import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
-import {
-  DIAS_SEMANA_LABELS,
-  DIAS_SEMANA_NOMES,
-} from '@/lib/schemas/alarme';
+import { DIAS_SEMANA_LABELS, DIAS_SEMANA_NOMES } from '@/lib/schemas/alarme';
 
 interface SeletorDiasProps {
   // Array de dias selecionados (0-6, 0=domingo).

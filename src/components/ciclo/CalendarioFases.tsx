@@ -24,9 +24,7 @@ import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
-import {
-  inferirFase,
-} from '@/lib/vault/ciclo';
+import { inferirFase } from '@/lib/vault/ciclo';
 import type {
   CicloMenstrualMeta,
   FaseCiclo,
@@ -117,63 +115,58 @@ export function CalendarioFases({
   }, [dataInicioUltimoCiclo, totalDias, registroPorData]);
 
   return (
-    <View
-      accessibilityLabel="calendario de fases"
-      style={{ gap: CELL_GAP }}
-    >
+    <View accessibilityLabel="calendario de fases" style={{ gap: CELL_GAP }}>
       {Array.from({ length: linhas }).map((_, linhaIdx) => (
         <View
           key={`linha-${linhaIdx}`}
           style={{ flexDirection: 'row', gap: CELL_GAP }}
         >
-          {celulas
-            .slice(linhaIdx * 7, linhaIdx * 7 + 7)
-            .map((c) => {
-              const corSolid = FASE_COR[c.fase];
-              const corFill = fillFromSolid(corSolid);
-              const fundo = c.temRegistro ? corFill : colors.bgAlt;
-              const borda = c.temRegistro ? corSolid : colors.bgElev;
-              const numero = c.index + 1;
+          {celulas.slice(linhaIdx * 7, linhaIdx * 7 + 7).map((c) => {
+            const corSolid = FASE_COR[c.fase];
+            const corFill = fillFromSolid(corSolid);
+            const fundo = c.temRegistro ? corFill : colors.bgAlt;
+            const borda = c.temRegistro ? corSolid : colors.bgElev;
+            const numero = c.index + 1;
 
-              return (
-                <Pressable
-                  key={`celula-${c.index}`}
-                  onPress={() => {
-                    if (!c.data) return;
-                    haptics.selection();
-                    onSelectDay(c.data);
+            return (
+              <Pressable
+                key={`celula-${c.index}`}
+                onPress={() => {
+                  if (!c.data) return;
+                  haptics.selection();
+                  onSelectDay(c.data);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`dia ${numero} fase ${c.fase}`}
+              >
+                <MotiView
+                  from={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={springs.subtle}
+                  style={{
+                    width: CELL_SIZE,
+                    height: CELL_SIZE,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    backgroundColor: fundo,
+                    borderColor: borda,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`dia ${numero} fase ${c.fase}`}
                 >
-                  <MotiView
-                    from={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={springs.subtle}
+                  <Text
                     style={{
-                      width: CELL_SIZE,
-                      height: CELL_SIZE,
-                      borderRadius: 6,
-                      borderWidth: 1,
-                      backgroundColor: fundo,
-                      borderColor: borda,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      color: c.temRegistro ? colors.fg : colors.muted,
+                      fontFamily: 'JetBrainsMono_400Regular',
+                      fontSize: 11,
                     }}
                   >
-                    <Text
-                      style={{
-                        color: c.temRegistro ? colors.fg : colors.muted,
-                        fontFamily: 'JetBrainsMono_400Regular',
-                        fontSize: 11,
-                      }}
-                    >
-                      {numero}
-                    </Text>
-                  </MotiView>
-                </Pressable>
-              );
-            })}
+                    {numero}
+                  </Text>
+                </MotiView>
+              </Pressable>
+            );
+          })}
         </View>
       ))}
     </View>

@@ -38,10 +38,7 @@ export function MidiaAudioTab({
   const [ultimoPath, setUltimoPath] = useState<string | null>(null);
 
   return (
-    <View
-      style={{ gap: spacing.base }}
-      accessibilityLabel="aba audio"
-    >
+    <View style={{ gap: spacing.base }} accessibilityLabel="aba audio">
       <Text
         style={{
           color: colors.muted,

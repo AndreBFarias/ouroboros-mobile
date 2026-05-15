@@ -25,7 +25,10 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import YAML from 'yaml';
 
-import { stringifyFrontmatter, parseFrontmatter } from '@/lib/vault/frontmatter';
+import {
+  stringifyFrontmatter,
+  parseFrontmatter,
+} from '@/lib/vault/frontmatter';
 import {
   dailyPath,
   eventosPath,
@@ -103,7 +106,11 @@ function escreverMd(vault: string, rel: string, meta: unknown, body: string) {
   return full;
 }
 
-function escreverBinario(vault: string, rel: string, conteudo: Buffer | string) {
+function escreverBinario(
+  vault: string,
+  rel: string,
+  conteudo: Buffer | string
+) {
   const full = path.join(vault, rel);
   fs.mkdirSync(path.dirname(full), { recursive: true });
   fs.writeFileSync(full, conteudo);
@@ -373,9 +380,7 @@ describe('feature treino sessao (M11)', () => {
       autor: 'pessoa_a',
       rotina: 'rotina A',
       duracao_min: 45,
-      exercicios: [
-        { nome: 'Agachamento', series: 3, reps: 12, carga_kg: 40 },
-      ],
+      exercicios: [{ nome: 'Agachamento', series: 3, reps: 12, carga_kg: 40 }],
     };
     const rel = treinosPath(DATA_FIXA, 'rotina-a');
     expect(rel).toBe('treinos/2026-05-04-rotina-a.md');

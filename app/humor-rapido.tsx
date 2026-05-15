@@ -81,9 +81,7 @@ export default function HumorRapido() {
     () => rascunho?.medicacao ?? ''
   );
   const [horasSonoTexto, setHorasSonoTexto] = useState<string>(() =>
-    typeof rascunho?.horas_sono === 'number'
-      ? String(rascunho.horas_sono)
-      : ''
+    typeof rascunho?.horas_sono === 'number' ? String(rascunho.horas_sono) : ''
   );
   const [tags, setTags] = useState<string[]>(() => rascunho?.tags ?? []);
   const [frase, setFrase] = useState<string>(() => rascunho?.frase ?? '');
@@ -208,118 +206,118 @@ export default function HumorRapido() {
           }
         }}
       >
-      <BottomSheetScrollView
-        contentContainerStyle={{
-          paddingHorizontal: spacing.lg,
-          paddingTop: spacing.md,
-          paddingBottom: spacing.xl,
-          gap: spacing.lg,
-        }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text
-          style={{
-            color: colors.fg,
-            fontFamily: 'JetBrainsMono_500Medium',
-            fontSize: 18,
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.xl,
+            gap: spacing.lg,
           }}
-          accessibilityRole="header"
-          accessibilityLabel="humor rapido"
+          keyboardShouldPersistTaps="handled"
         >
-          Humor rápido
-        </Text>
-
-        <View style={{ gap: spacing.md }}>
-          <Slider
-            label="Humor"
-            min={1}
-            max={5}
-            step={1}
-            value={humorVal}
-            onChange={setHumorVal}
-            accessibilityLabel="slider humor"
-          />
-          <Slider
-            label="Energia"
-            min={1}
-            max={5}
-            step={1}
-            value={energia}
-            onChange={setEnergia}
-            accessibilityLabel="slider energia"
-          />
-          <Slider
-            label="Ansiedade"
-            min={1}
-            max={5}
-            step={1}
-            value={ansiedade}
-            onChange={setAnsiedade}
-            accessibilityLabel="slider ansiedade"
-          />
-          <Slider
-            label="Foco"
-            min={1}
-            max={5}
-            step={1}
-            value={foco}
-            onChange={setFoco}
-            accessibilityLabel="slider foco"
-          />
-        </View>
-
-        <View style={{ gap: spacing.md }}>
-          <Input
-            label="Medicação tomada"
-            placeholder="Ex.: Fluoxetina 20mg (opcional)"
-            value={medicacao}
-            onChangeText={setMedicacao}
-            autoCapitalize="sentences"
-            accessibilityLabel="campo medicacao"
-          />
-          <Input
-            label="Horas de sono ontem"
-            placeholder="0 a 24"
-            value={horasSonoTexto}
-            onChangeText={setHorasSonoTexto}
-            keyboardType="numeric"
-            accessibilityLabel="campo horas de sono"
-          />
-        </View>
-
-        <View style={{ gap: spacing.sm }}>
           <Text
             style={{
-              color: colors.muted,
-              fontFamily: 'JetBrainsMono_400Regular',
-              fontSize: 12,
+              color: colors.fg,
+              fontFamily: 'JetBrainsMono_500Medium',
+              fontSize: 18,
             }}
+            accessibilityRole="header"
+            accessibilityLabel="humor rapido"
           >
-            Tags rápidas
+            Humor rápido
           </Text>
-          <ChipGroup
-            mode="multi"
-            value={tags}
-            onChange={setTags}
-            options={[...TAGS_RAPIDAS]}
+
+          <View style={{ gap: spacing.md }}>
+            <Slider
+              label="Humor"
+              min={1}
+              max={5}
+              step={1}
+              value={humorVal}
+              onChange={setHumorVal}
+              accessibilityLabel="slider humor"
+            />
+            <Slider
+              label="Energia"
+              min={1}
+              max={5}
+              step={1}
+              value={energia}
+              onChange={setEnergia}
+              accessibilityLabel="slider energia"
+            />
+            <Slider
+              label="Ansiedade"
+              min={1}
+              max={5}
+              step={1}
+              value={ansiedade}
+              onChange={setAnsiedade}
+              accessibilityLabel="slider ansiedade"
+            />
+            <Slider
+              label="Foco"
+              min={1}
+              max={5}
+              step={1}
+              value={foco}
+              onChange={setFoco}
+              accessibilityLabel="slider foco"
+            />
+          </View>
+
+          <View style={{ gap: spacing.md }}>
+            <Input
+              label="Medicação tomada"
+              placeholder="Ex.: Fluoxetina 20mg (opcional)"
+              value={medicacao}
+              onChangeText={setMedicacao}
+              autoCapitalize="sentences"
+              accessibilityLabel="campo medicacao"
+            />
+            <Input
+              label="Horas de sono ontem"
+              placeholder="0 a 24"
+              value={horasSonoTexto}
+              onChangeText={setHorasSonoTexto}
+              keyboardType="numeric"
+              accessibilityLabel="campo horas de sono"
+            />
+          </View>
+
+          <View style={{ gap: spacing.sm }}>
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 12,
+              }}
+            >
+              Tags rápidas
+            </Text>
+            <ChipGroup
+              mode="multi"
+              value={tags}
+              onChange={setTags}
+              options={[...TAGS_RAPIDAS]}
+            />
+          </View>
+
+          <Textarea
+            label="Uma frase sobre hoje"
+            placeholder="Opcional"
+            value={frase}
+            onChangeText={setFrase}
+            accessibilityLabel="campo frase do dia"
           />
-        </View>
 
-        <Textarea
-          label="Uma frase sobre hoje"
-          placeholder="Opcional"
-          value={frase}
-          onChangeText={setFrase}
-          accessibilityLabel="campo frase do dia"
-        />
-
-        <Button
-          variant="success"
-          label="Salvar"
-          onPress={handleSave}
-          disabled={salvando}
-        />
-      </BottomSheetScrollView>
+          <Button
+            variant="success"
+            label="Salvar"
+            onPress={handleSave}
+            disabled={salvando}
+          />
+        </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );

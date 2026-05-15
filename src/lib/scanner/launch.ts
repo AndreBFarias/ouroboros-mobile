@@ -49,7 +49,7 @@ export type ScannerQualidade = '8mp' | '12mp' | 'maxima';
 const MAPA_QUALIDADE: Record<ScannerQualidade, number> = {
   '8mp': 0.7,
   '12mp': 0.85,
-  'maxima': 1.0,
+  maxima: 1.0,
 };
 
 export interface DeskewedImagem {

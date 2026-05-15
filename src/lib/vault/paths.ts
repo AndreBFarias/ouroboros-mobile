@@ -27,13 +27,13 @@
 export function vaultUriJoin(root: string, rel: string): string {
   const r = root
     .trim()
-    .replace(/\s+$/, '')        // trim trailing whitespace
-    .replace(/%20+$/, '')       // trim trailing percent-encoded space
-    .replace(/\/+$/, '');       // trim trailing slashes
+    .replace(/\s+$/, '') // trim trailing whitespace
+    .replace(/%20+$/, '') // trim trailing percent-encoded space
+    .replace(/\/+$/, ''); // trim trailing slashes
   const s = rel
     .trim()
-    .replace(/^\s+/, '')        // trim leading whitespace
-    .replace(/^\/+/, '');       // trim leading slashes
+    .replace(/^\s+/, '') // trim leading whitespace
+    .replace(/^\/+/, ''); // trim leading slashes
   if (!r) {
     throw new Error('vaultUriJoin: root vazio (vault não inicializado?)');
   }
@@ -202,11 +202,7 @@ export function notaPath(date: Date, slug: string): string {
 // Binario da nota (pdf/jpg/png) recebido via share intent ou scanner.
 // Caller fornece ext sem o ponto (ex: 'pdf', 'jpg'); funcao roteia
 // para a pasta de tipo correta.
-export function notaArquivoPath(
-  date: Date,
-  slug: string,
-  ext: string
-): string {
+export function notaArquivoPath(date: Date, slug: string, ext: string): string {
   const extLower = ext.toLowerCase();
   return `${extLower}/nota-${formatDateYmdHms(date)}-${slug}.${extLower}`;
 }

@@ -33,7 +33,10 @@ import { usePessoa } from '@/lib/stores/pessoa';
 
 const VAULT_ROOT = 'content://test/vault';
 
-function fakeTreino(data: string, autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'): TreinoSessao {
+function fakeTreino(
+  data: string,
+  autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'
+): TreinoSessao {
   return {
     tipo: 'treino_sessao',
     data,

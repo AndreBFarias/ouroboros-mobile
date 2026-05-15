@@ -34,10 +34,7 @@ describe('CardTopCategorias', () => {
   });
 
   it('limita a 5 itens mesmo quando recebe mais', () => {
-    const seis = [
-      ...CINCO,
-      { nome: 'Outros', valor: 10, percentual: 0.01 },
-    ];
+    const seis = [...CINCO, { nome: 'Outros', valor: 10, percentual: 0.01 }];
     const { getAllByLabelText } = render(
       <CardTopCategorias categorias={seis} />
     );

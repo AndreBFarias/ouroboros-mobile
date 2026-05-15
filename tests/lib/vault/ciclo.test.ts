@@ -209,10 +209,13 @@ describe('escreverRegistroCiclo', () => {
   });
 
   it('lanca quando meta e invalido', async () => {
-    const meta = { ...fixture(), fase: 'invalida' } as unknown as CicloMenstrualMeta;
-    await expect(
-      escreverRegistroCiclo(VAULT_ROOT, meta, '')
-    ).rejects.toThrow(/invalido/);
+    const meta = {
+      ...fixture(),
+      fase: 'invalida',
+    } as unknown as CicloMenstrualMeta;
+    await expect(escreverRegistroCiclo(VAULT_ROOT, meta, '')).rejects.toThrow(
+      /invalido/
+    );
   });
 
   // I-CICLO (M-SAVE-CICLO-VALIDA): vaultUriJoin canonico cobre os
@@ -235,15 +238,18 @@ describe('escreverRegistroCiclo', () => {
     expect(mockWriteVaultFile).not.toHaveBeenCalled();
   });
 
-  it('vaultRoot com %20 ofensivo no fim e' + ' limpado pelo helper', async () => {
-    mockWriteVaultFile.mockResolvedValue(undefined);
-    const rootSujo = `${VAULT_ROOT}%20`;
-    const meta = fixture({ data: '2026-04-29' });
-    await escreverRegistroCiclo(rootSujo, meta, '');
-    const [uriArg] = mockWriteVaultFile.mock.calls[0];
-    expect(uriArg).toBe(`${VAULT_ROOT}/markdown/ciclo-2026-04-29.md`);
-    expect(uriArg).not.toContain('%20/markdown');
-  });
+  it(
+    'vaultRoot com %20 ofensivo no fim e' + ' limpado pelo helper',
+    async () => {
+      mockWriteVaultFile.mockResolvedValue(undefined);
+      const rootSujo = `${VAULT_ROOT}%20`;
+      const meta = fixture({ data: '2026-04-29' });
+      await escreverRegistroCiclo(rootSujo, meta, '');
+      const [uriArg] = mockWriteVaultFile.mock.calls[0];
+      expect(uriArg).toBe(`${VAULT_ROOT}/markdown/ciclo-2026-04-29.md`);
+      expect(uriArg).not.toContain('%20/markdown');
+    }
+  );
 });
 
 describe('duracaoCicloDetectada', () => {
@@ -274,9 +280,7 @@ describe('duracaoCicloDetectada', () => {
 describe('ultimaDataInicio', () => {
   it('retorna null quando nao ha registro com data_inicio', () => {
     expect(ultimaDataInicio([])).toBeNull();
-    expect(
-      ultimaDataInicio([fixture({ data_inicio: null })])
-    ).toBeNull();
+    expect(ultimaDataInicio([fixture({ data_inicio: null })])).toBeNull();
   });
 
   it('retorna data_inicio mais recente', () => {

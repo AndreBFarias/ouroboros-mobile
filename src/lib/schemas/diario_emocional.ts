@@ -18,7 +18,11 @@ import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
 import { MidiaSchema } from '@/lib/schemas/midia';
 import { ParaSchema } from '@/lib/schemas/para';
 
-export const DiarioEmocionalModoSchema = z.enum(['trigger', 'vitoria', 'reflexao']);
+export const DiarioEmocionalModoSchema = z.enum([
+  'trigger',
+  'vitoria',
+  'reflexao',
+]);
 export type DiarioEmocionalModo = z.infer<typeof DiarioEmocionalModoSchema>;
 
 const Iso8601 = z
@@ -58,13 +62,13 @@ export const DiarioEmocionalSchema = z
     // outra(pessoa) / casal. Default {tipo:'mim'} para .md v1.
     para: ParaSchema,
   })
-  .refine(
-    (v) => v.modo === 'trigger' || v.funcionou === undefined,
-    { message: 'funcionou so pode ser definido em modo trigger', path: ['funcionou'] }
-  )
-  .refine(
-    (v) => v.modo !== 'vitoria' || v.midia.length > 0,
-    { message: 'vitoria exige pelo menos uma midia', path: ['midia'] }
-  );
+  .refine((v) => v.modo === 'trigger' || v.funcionou === undefined, {
+    message: 'funcionou so pode ser definido em modo trigger',
+    path: ['funcionou'],
+  })
+  .refine((v) => v.modo !== 'vitoria' || v.midia.length > 0, {
+    message: 'vitoria exige pelo menos uma midia',
+    path: ['midia'],
+  });
 
 export type DiarioEmocionalMeta = z.infer<typeof DiarioEmocionalSchema>;

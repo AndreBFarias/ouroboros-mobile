@@ -25,7 +25,10 @@ export function parseCor(s: string): CorRgb | null {
   const m = trim.match(/rgba?\(([^)]+)\)/i);
   if (m) {
     const partes = m[1].split(',').map((p) => parseFloat(p.trim()));
-    if (partes.length >= 3 && partes.slice(0, 3).every((n) => Number.isFinite(n))) {
+    if (
+      partes.length >= 3 &&
+      partes.slice(0, 3).every((n) => Number.isFinite(n))
+    ) {
       return {
         r: partes[0],
         g: partes[1],
@@ -39,10 +42,17 @@ export function parseCor(s: string): CorRgb | null {
   const hex = trim.match(/^#([0-9a-f]{3,8})$/i);
   if (hex) {
     let h = hex[1];
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    if (h.length === 3)
+      h = h
+        .split('')
+        .map((c) => c + c)
+        .join('');
     if (h.length === 4) {
       // #rgba curto -- expandir para #rrggbbaa
-      h = h.split('').map((c) => c + c).join('');
+      h = h
+        .split('')
+        .map((c) => c + c)
+        .join('');
     }
     if (h.length === 6) {
       return {
@@ -76,7 +86,10 @@ export function luminanciaRelativa(cor: CorRgb): number {
 // Razao de contraste entre fg e bg. Aceita strings (hex/rgb) ou objetos.
 // Resultado entre 1.0 (sem contraste) e 21.0 (preto sobre branco).
 // Lanca Error se cores invalidas.
-export function ratioContraste(fg: string | CorRgb, bg: string | CorRgb): number {
+export function ratioContraste(
+  fg: string | CorRgb,
+  bg: string | CorRgb
+): number {
   const corFg = typeof fg === 'string' ? parseCor(fg) : fg;
   const corBg = typeof bg === 'string' ? parseCor(bg) : bg;
   if (!corFg) throw new Error(`cor de texto invalida: ${JSON.stringify(fg)}`);
@@ -108,14 +121,14 @@ export const WCAG_AAA_TEXTO_NORMAL = 7.0;
 // Checa conformidade contra WCAG AA texto normal. Retorna boolean.
 export function passaWcagAaTextoNormal(
   fg: string | CorRgb,
-  bg: string | CorRgb,
+  bg: string | CorRgb
 ): boolean {
   return ratioContraste(fg, bg) >= WCAG_AA_TEXTO_NORMAL;
 }
 
 export function passaWcagAaTextoGrande(
   fg: string | CorRgb,
-  bg: string | CorRgb,
+  bg: string | CorRgb
 ): boolean {
   return ratioContraste(fg, bg) >= WCAG_AA_TEXTO_GRANDE;
 }

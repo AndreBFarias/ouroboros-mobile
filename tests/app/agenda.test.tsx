@@ -26,7 +26,9 @@ jest.mock('@/components/brand', () => {
   return {
     __esModule: true,
     OuroborosLoader: () =>
-      ReactInner.createElement(View, { accessibilityLabel: 'ouroboros loader stub' }),
+      ReactInner.createElement(View, {
+        accessibilityLabel: 'ouroboros loader stub',
+      }),
   };
 });
 
@@ -93,13 +95,19 @@ describe('AgendaScreen', () => {
     (Platform as any).OS = 'web';
     const fetchOriginal = global.fetch;
     const fetchMock = jest.fn(async () => {
-      throw new Error('fetch nao deveria ser chamado em web __DEV__ com token mock');
+      throw new Error(
+        'fetch nao deveria ser chamado em web __DEV__ com token mock'
+      );
     });
     (global as any).fetch = fetchMock;
 
     try {
-      const { getByLabelText, queryByLabelText } = renderComToast(<AgendaScreen />);
-      const botao = await waitFor(() => getByLabelText('conectar conta google'));
+      const { getByLabelText, queryByLabelText } = renderComToast(
+        <AgendaScreen />
+      );
+      const botao = await waitFor(() =>
+        getByLabelText('conectar conta google')
+      );
       await act(async () => {
         fireEvent.press(botao);
       });

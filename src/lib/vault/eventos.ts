@@ -22,9 +22,7 @@ function joinUri(root: string, rel: string): string {
 // V4.0.1 (INFRA-VAULT-MOCK-CONVERGENCIA, 2026-05-08): early return
 // para 'web://...' removido. Reader em web __DEV__ delega ao
 // useVaultMock (V4.0).
-export async function listarEventos(
-  vaultRoot: string
-): Promise<EventoMeta[]> {
+export async function listarEventos(vaultRoot: string): Promise<EventoMeta[]> {
   if (!vaultRoot) {
     return [];
   }

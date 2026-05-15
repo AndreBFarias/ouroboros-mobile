@@ -1,9 +1,6 @@
 // Testes da extracao de video_id do YouTube (M07.x). Cobre os
 // tres formatos canonicos em uso: watch?v=, youtu.be/, shorts/.
-import {
-  extractYouTubeId,
-  youtubeThumbnailUrl,
-} from '@/lib/midia/youtubeId';
+import { extractYouTubeId, youtubeThumbnailUrl } from '@/lib/midia/youtubeId';
 
 describe('extractYouTubeId', () => {
   it('extrai id de watch?v=', () => {
@@ -27,15 +24,15 @@ describe('extractYouTubeId', () => {
   });
 
   it('extrai id de youtu.be/ com timestamp', () => {
-    expect(
-      extractYouTubeId('https://youtu.be/dQw4w9WgXcQ?t=42')
-    ).toBe('dQw4w9WgXcQ');
+    expect(extractYouTubeId('https://youtu.be/dQw4w9WgXcQ?t=42')).toBe(
+      'dQw4w9WgXcQ'
+    );
   });
 
   it('extrai id de shorts/', () => {
-    expect(
-      extractYouTubeId('https://www.youtube.com/shorts/dQw4w9WgXcQ')
-    ).toBe('dQw4w9WgXcQ');
+    expect(extractYouTubeId('https://www.youtube.com/shorts/dQw4w9WgXcQ')).toBe(
+      'dQw4w9WgXcQ'
+    );
   });
 
   it('retorna null para link nao-youtube', () => {

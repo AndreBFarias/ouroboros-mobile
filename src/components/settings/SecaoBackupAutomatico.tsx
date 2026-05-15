@@ -21,9 +21,7 @@ import {
 } from '@/lib/backup/executarBackup';
 
 export function SecaoBackupAutomatico() {
-  const ativo = useSettings(
-    (s) => s.featureToggles.backupAutomaticoSemanal
-  );
+  const ativo = useSettings((s) => s.featureToggles.backupAutomaticoSemanal);
   const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
   const [ultimoMs, setUltimoMs] = useState<number | null>(null);
 
@@ -63,8 +61,7 @@ export function SecaoBackupAutomatico() {
               color: colors.fg,
               fontFamily: 'JetBrainsMono_400Regular',
               fontSize: typography.body.size,
-              lineHeight:
-                typography.body.size * typography.body.lineHeight,
+              lineHeight: typography.body.size * typography.body.lineHeight,
             }}
           >
             Backup semanal

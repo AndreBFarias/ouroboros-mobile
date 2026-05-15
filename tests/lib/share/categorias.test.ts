@@ -94,9 +94,7 @@ describe('INBOX_SUBTIPOS_ORDEM', () => {
   });
 
   it('outro fica por ultimo', () => {
-    expect(INBOX_SUBTIPOS_ORDEM[INBOX_SUBTIPOS_ORDEM.length - 1]).toBe(
-      'outro'
-    );
+    expect(INBOX_SUBTIPOS_ORDEM[INBOX_SUBTIPOS_ORDEM.length - 1]).toBe('outro');
   });
 });
 

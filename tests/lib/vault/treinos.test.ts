@@ -94,7 +94,8 @@ describe('listarTreinos', () => {
     let i = 0;
     mockReadVaultFile.mockImplementation(async () => {
       i++;
-      const data = i === 1 ? '2026-04-20T10:00:00-03:00' : '2026-04-25T10:00:00-03:00';
+      const data =
+        i === 1 ? '2026-04-20T10:00:00-03:00' : '2026-04-25T10:00:00-03:00';
       return { meta: { ...sessaoBase, data }, body: '' };
     });
     const lista = await listarTreinos(VAULT_ROOT);

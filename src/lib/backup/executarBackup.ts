@@ -153,9 +153,12 @@ async function rotacionar(dir: string): Promise<number> {
 function carimboNome(now: Date = new Date()): string {
   const iso = now.toISOString();
   const semSeparadores = iso
-    .split('-').join('')
-    .split(':').join('')
-    .split('.').join('');
+    .split('-')
+    .join('')
+    .split(':')
+    .join('')
+    .split('.')
+    .join('');
   const ts = semSeparadores.slice(0, 15);
   return `backup-${ts}.zip`;
 }

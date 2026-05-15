@@ -20,9 +20,7 @@ import { Pressable } from 'react-native';
 import { Button, Chip, ChipGroup, type ChipOption } from '@/components/ui';
 import { PreviewArquivo } from './PreviewArquivo';
 import { colors, radius, spacing } from '@/theme/tokens';
-import {
-  INBOX_SUBTIPO_OPTIONS,
-} from '@/lib/share/categorias';
+import { INBOX_SUBTIPO_OPTIONS } from '@/lib/share/categorias';
 import type { InboxArquivoSubtipo } from '@/lib/schemas/inbox_arquivo';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { nomeDe } from '@/lib/stores/pessoa';
@@ -243,7 +241,13 @@ export function ShareReceiver(props: ShareReceiverProps) {
             >
               {conflito.pathExistente}
             </Text>
-            <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: spacing.sm,
+                flexWrap: 'wrap',
+              }}
+            >
               <Chip
                 label="Renomear automaticamente"
                 accent="yellow"

@@ -35,7 +35,11 @@ function peso(diasAtras: number, kg: number): RegistroExternoHC {
   };
 }
 
-function treino(diasAtras: number, duracaoMin: number, rotulo = 'Treino externo'): RegistroExternoHC {
+function treino(
+  diasAtras: number,
+  duracaoMin: number,
+  rotulo = 'Treino externo'
+): RegistroExternoHC {
   const fim = new Date(HOJE.getTime() - diasAtras * DIA);
   const inicio = new Date(fim.getTime() - duracaoMin * 60_000);
   return {
@@ -122,7 +126,11 @@ describe('resumirPeso', () => {
 describe('resumirTreinos', () => {
   it('conta apenas sessions dentro de 30 dias e ordena desc', () => {
     const r = resumirTreinos(
-      [treino(2, 45, 'Forca'), treino(35, 60, 'Antigo'), treino(10, 30, 'Cardio')],
+      [
+        treino(2, 45, 'Forca'),
+        treino(35, 60, 'Antigo'),
+        treino(10, 30, 'Cardio'),
+      ],
       HOJE
     );
     expect(r.ultimos30dias).toBe(2);
@@ -131,7 +139,10 @@ describe('resumirTreinos', () => {
   });
 
   it('arredonda duracao em minutos e garante minimo 1', () => {
-    const r = resumirTreinos([treino(1, 0.5, 'Curto'), treino(1, 12, 'Normal')], HOJE);
+    const r = resumirTreinos(
+      [treino(1, 0.5, 'Curto'), treino(1, 12, 'Normal')],
+      HOJE
+    );
     const curto = r.lista.find((t) => t.rotulo === 'Curto');
     expect(curto?.duracaoMin).toBeGreaterThanOrEqual(1);
     const normal = r.lista.find((t) => t.rotulo === 'Normal');

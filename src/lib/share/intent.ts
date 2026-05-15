@@ -25,9 +25,7 @@ export interface SharedIntentInput {
 // Mime types que o app aceita oficialmente (alinhado com
 // android.intentFilters em app.json). Outros mime types são aceitos
 // pelo helper mas o caller deve degradar para 'outro' na UI.
-const MIME_PERMITIDOS: ReadonlyArray<string> = [
-  'application/pdf',
-];
+const MIME_PERMITIDOS: ReadonlyArray<string> = ['application/pdf'];
 
 const MIME_PREFIXOS_PERMITIDOS: ReadonlyArray<string> = ['image/'];
 
@@ -45,7 +43,10 @@ export function mimeAceito(mimeType: string): boolean {
 export function extensaoDe(mimeType: string, nome?: string | null): string {
   if (nome && nome.includes('.')) {
     const idx = nome.lastIndexOf('.');
-    const ext = nome.slice(idx + 1).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const ext = nome
+      .slice(idx + 1)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
     if (ext.length > 0 && ext.length <= 6) return ext;
   }
   if (mimeType === 'application/pdf') return 'pdf';
@@ -70,13 +71,19 @@ export interface RawIntentParams {
 
 function pickFirst(value: string | string[] | null | undefined): string | null {
   if (typeof value === 'string') return value.length > 0 ? value : null;
-  if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
+  if (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    typeof value[0] === 'string'
+  ) {
     return value[0].length > 0 ? value[0] : null;
   }
   return null;
 }
 
-export function parseIntentParams(raw: RawIntentParams): SharedIntentInput | null {
+export function parseIntentParams(
+  raw: RawIntentParams
+): SharedIntentInput | null {
   const uri = pickFirst(raw.uri);
   if (!uri) return null;
   const mime = pickFirst(raw.mime) ?? 'application/octet-stream';

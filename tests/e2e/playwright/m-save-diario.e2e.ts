@@ -35,8 +35,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-DIARIO-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-DIARIO-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -174,8 +173,7 @@ export default async function caseSaveDiario(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'botao Registrar/Anotar/Salvar ausente no cenario trigger',
+        detalhe: 'botao Registrar/Anotar/Salvar ausente no cenario trigger',
         screenshots,
       };
     }
@@ -185,8 +183,7 @@ export default async function caseSaveDiario(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          '__gauntlet.estado() lancou apos tap no cenario trigger',
+        detalhe: '__gauntlet.estado() lancou apos tap no cenario trigger',
         screenshots,
       };
     }
@@ -221,8 +218,7 @@ export default async function caseSaveDiario(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'sheet diario-emocional nao montou no cenario vitoria',
+        detalhe: 'sheet diario-emocional nao montou no cenario vitoria',
         screenshots,
       };
     }
@@ -233,8 +229,7 @@ export default async function caseSaveDiario(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'botao Anotar/Registrar/Salvar ausente no cenario vitoria',
+        detalhe: 'botao Anotar/Registrar/Salvar ausente no cenario vitoria',
         screenshots,
       };
     }
@@ -244,8 +239,7 @@ export default async function caseSaveDiario(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          '__gauntlet.estado() lancou apos tap no cenario vitoria',
+        detalhe: '__gauntlet.estado() lancou apos tap no cenario vitoria',
         screenshots,
       };
     }

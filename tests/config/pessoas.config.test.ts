@@ -1,8 +1,4 @@
-import {
-  PESSOAS_CONFIG,
-  inicialDe,
-  corDe,
-} from '@/config/pessoas.config';
+import { PESSOAS_CONFIG, inicialDe, corDe } from '@/config/pessoas.config';
 
 // Padrao que casa nomes reais comuns. Construido via codepoints para nao
 // hardcodar nomes reais no proprio teste (regra de check_test_data.sh).

@@ -11,12 +11,7 @@ export type { InputProps } from './Input';
 export { Textarea } from './Textarea';
 export type { TextareaProps } from './Textarea';
 export { Chip, ChipGroup } from './Chip';
-export type {
-  ChipProps,
-  ChipGroupProps,
-  ChipOption,
-  ChipAccent,
-} from './Chip';
+export type { ChipProps, ChipGroupProps, ChipOption, ChipAccent } from './Chip';
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 export { PersonAvatar } from './PersonAvatar';

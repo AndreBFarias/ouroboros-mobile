@@ -59,10 +59,7 @@ export function MidiaSpotifyTab({
   };
 
   return (
-    <View
-      style={{ gap: spacing.sm }}
-      accessibilityLabel="aba spotify"
-    >
+    <View style={{ gap: spacing.sm }} accessibilityLabel="aba spotify">
       <Input
         label="Cole o link da música"
         placeholder="https://open.spotify.com/track/..."

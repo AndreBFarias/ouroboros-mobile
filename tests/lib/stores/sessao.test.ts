@@ -101,17 +101,15 @@ describe('useSessao', () => {
 
     it('cap aplica em frase, estrategia, lugar, titulo, medicacao', () => {
       const longo = 'a'.repeat(RASCUNHO_TEXTO_CAP + 100);
-      useSessao
-        .getState()
-        .salvarRascunho('humorRapido', {
-          humor: 3,
-          energia: 3,
-          ansiedade: 3,
-          foco: 3,
-          tags: [],
-          frase: longo,
-          medicacao: longo,
-        });
+      useSessao.getState().salvarRascunho('humorRapido', {
+        humor: 3,
+        energia: 3,
+        ansiedade: 3,
+        foco: 3,
+        tags: [],
+        frase: longo,
+        medicacao: longo,
+      });
       const r = useSessao.getState().rascunhos.humorRapido;
       expect(r?.frase?.length).toBe(RASCUNHO_TEXTO_CAP);
       expect(r?.medicacao?.length).toBe(RASCUNHO_TEXTO_CAP);
@@ -158,9 +156,7 @@ describe('useSessao', () => {
 
   describe('limparRascunho', () => {
     it('zera o rascunho alvo, preserva os outros', () => {
-      useSessao
-        .getState()
-        .salvarRascunho('humorRapido', { humor: 5 });
+      useSessao.getState().salvarRascunho('humorRapido', { humor: 5 });
       useSessao
         .getState()
         .salvarRascunho('contadoresNovo', { titulo: 'Sem cigarro' });

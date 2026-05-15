@@ -66,13 +66,9 @@ describe('useSettings (shape v2 - sprint M29)', () => {
 
     it('setFeatureToggle aceita widgetMostraNome', () => {
       useSettings.getState().setFeatureToggle('widgetMostraNome', true);
-      expect(useSettings.getState().featureToggles.widgetMostraNome).toBe(
-        true
-      );
+      expect(useSettings.getState().featureToggles.widgetMostraNome).toBe(true);
       // toggle principal segue default true (independente)
-      expect(useSettings.getState().featureToggles.widgetHomescreen).toBe(
-        true
-      );
+      expect(useSettings.getState().featureToggles.widgetHomescreen).toBe(true);
     });
 
     it('setSomVibracao geral=false desliga mestre', () => {
@@ -232,7 +228,9 @@ describe('migracao v1 -> v2', () => {
     // humor||fab => botoes (true || false = true neste caso).
     expect(v2.somVibracao.botoes).toBe(true);
     // Lembretes e sync descartados (nao existem em v2).
-    expect((v2 as unknown as Record<string, unknown>).lembretes).toBeUndefined();
+    expect(
+      (v2 as unknown as Record<string, unknown>).lembretes
+    ).toBeUndefined();
     expect((v2 as unknown as Record<string, unknown>).sync).toBeUndefined();
   });
 

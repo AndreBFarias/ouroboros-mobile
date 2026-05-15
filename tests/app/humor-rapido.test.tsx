@@ -14,8 +14,9 @@ jest.mock('expo-router', () => {
   // Para o Redirect retornamos uma string global lookup-friendly via
   // setRedirectHref (registrado no globalThis pelo test runner).
   const mockRedirectInstances: Array<{ href: string }> = [];
-  (globalThis as { __mockRedirectInstances?: typeof mockRedirectInstances })
-    .__mockRedirectInstances = mockRedirectInstances;
+  (
+    globalThis as { __mockRedirectInstances?: typeof mockRedirectInstances }
+  ).__mockRedirectInstances = mockRedirectInstances;
   return {
     __esModule: true,
     useRouter: () => ({
@@ -209,9 +210,7 @@ describe('Tela 15 — humor rapido', () => {
     mockSaveHumor.mockRejectedValueOnce(new Error('SAF off'));
     const { getByLabelText, queryByLabelText } = renderTela();
     fireEvent.press(getByLabelText('Salvar'));
-    await waitFor(() =>
-      expect(queryByLabelText('toast error')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast error')).toBeTruthy());
     // Nao deve voltar quando o save falha.
     expect(mockBack).not.toHaveBeenCalled();
     errorSpy.mockRestore();

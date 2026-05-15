@@ -68,8 +68,7 @@ export function CardComparativo({
   largura,
 }: CardComparativoProps) {
   const deltaTexto = formatarDelta(valorAtual, valorPrimeira, unidade);
-  const valorMostrado =
-    valorAtual === null ? '—' : formatarNumero(valorAtual);
+  const valorMostrado = valorAtual === null ? '—' : formatarNumero(valorAtual);
 
   // Largura útil do sparkline: card tem padding 16 lateral.
   const larguraSparkline = Math.max(0, largura - spacing.base * 2);

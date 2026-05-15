@@ -170,9 +170,7 @@ export default function SettingsIntegracoesScreen() {
               lineHeight: 20,
             }}
           >
-            {carregando
-              ? 'Verificando…'
-              : `Status: ${statusLabel[status]}.`}
+            {carregando ? 'Verificando…' : `Status: ${statusLabel[status]}.`}
           </Text>
           {status === 'available' && permissoes.length > 0 ? (
             <View style={{ marginTop: spacing.sm, gap: spacing.xs }}>

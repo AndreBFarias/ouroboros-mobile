@@ -14,9 +14,7 @@ const pontosBase: SparklineMedidaPoint[] = [
 
 describe('SparklineMedida', () => {
   it('mostra "Aguardando mais registros." quando lista vazia', () => {
-    const { getByText } = render(
-      <SparklineMedida pontos={[]} largura={200} />
-    );
+    const { getByText } = render(<SparklineMedida pontos={[]} largura={200} />);
     expect(getByText('Aguardando mais registros.')).toBeTruthy();
   });
 

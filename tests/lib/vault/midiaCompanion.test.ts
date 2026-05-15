@@ -70,8 +70,12 @@ describe('escreverMidiaComCompanion (M39)', () => {
     expect(r.companionPath.endsWith('.md')).toBe(true);
 
     // Mesmo basename (sem ext) para binario e companion (H2 layout-por-tipo).
-    const basenameBin = r.binarioPath.replace(/^jpg\//, '').replace(/\.jpg$/, '');
-    const basenameCmp = r.companionPath.replace(/^markdown\//, '').replace(/\.md$/, '');
+    const basenameBin = r.binarioPath
+      .replace(/^jpg\//, '')
+      .replace(/\.jpg$/, '');
+    const basenameCmp = r.companionPath
+      .replace(/^markdown\//, '')
+      .replace(/\.md$/, '');
     expect(basenameBin).toBe(basenameCmp);
 
     // copy chamado uma vez (binario novo).
@@ -147,17 +151,13 @@ describe('escreverMidiaComCompanion (M39)', () => {
   it('idempotente: nao sobrescreve binario quando arquivo ja existe', async () => {
     mockGetInfoAsync.mockResolvedValueOnce({ exists: true });
 
-    await escreverMidiaComCompanion(
-      VAULT_ROOT,
-      'file:///cache/foto.jpg',
-      {
-        tipo: 'midia_foto',
-        data: '2026-05-04T12:00:00.000Z',
-        autor: 'pessoa_a',
-        para: { tipo: 'mim' },
-        arquivo: 'fixo.jpg',
-      }
-    );
+    await escreverMidiaComCompanion(VAULT_ROOT, 'file:///cache/foto.jpg', {
+      tipo: 'midia_foto',
+      data: '2026-05-04T12:00:00.000Z',
+      autor: 'pessoa_a',
+      para: { tipo: 'mim' },
+      arquivo: 'fixo.jpg',
+    });
 
     expect(mockCopyAsync).not.toHaveBeenCalled();
     // Companion ainda e' (re)escrito — caller pode atualizar legenda.
@@ -206,19 +206,13 @@ describe('lerCompanion (M39)', () => {
 
   it('retorna null quando companion nao existe', async () => {
     mockSAFReadAsStringAsync.mockRejectedValueOnce(new Error('ENOENT'));
-    const meta = await lerCompanion(
-      VAULT_ROOT,
-      'media/fotos/inexistente.jpg'
-    );
+    const meta = await lerCompanion(VAULT_ROOT, 'media/fotos/inexistente.jpg');
     expect(meta).toBeNull();
   });
 
   it('retorna null quando companion tem yaml invalido', async () => {
     mockSAFReadAsStringAsync.mockResolvedValueOnce('sem frontmatter');
-    const meta = await lerCompanion(
-      VAULT_ROOT,
-      'media/fotos/lixo.jpg'
-    );
+    const meta = await lerCompanion(VAULT_ROOT, 'media/fotos/lixo.jpg');
     expect(meta).toBeNull();
   });
 });

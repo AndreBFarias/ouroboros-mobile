@@ -18,9 +18,7 @@ describe('FAB', () => {
 
   it('disabled bloqueia onPress', () => {
     const onPress = jest.fn();
-    const { getByLabelText } = render(
-      <FAB onPress={onPress} disabled />
-    );
+    const { getByLabelText } = render(<FAB onPress={onPress} disabled />);
     fireEvent.press(getByLabelText('acao rapida'));
     expect(onPress).not.toHaveBeenCalled();
   });

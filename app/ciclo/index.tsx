@@ -19,12 +19,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import {
-  Button,
-  EmptyState,
-  Header,
-  Screen,
-} from '@/components/ui';
+import { Button, EmptyState, Header, Screen } from '@/components/ui';
 import { CalendarioFases } from '@/components/ciclo/CalendarioFases';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
@@ -109,14 +104,8 @@ export default function CicloIndex() {
     }, [carregar])
   );
 
-  const dataInicio = useMemo(
-    () => ultimaDataInicio(registros),
-    [registros]
-  );
-  const duracao = useMemo(
-    () => duracaoCicloDetectada(registros),
-    [registros]
-  );
+  const dataInicio = useMemo(() => ultimaDataInicio(registros), [registros]);
+  const duracao = useMemo(() => duracaoCicloDetectada(registros), [registros]);
 
   // Q8 (Onda Q): calculo de dia atual do ciclo. Diferenca em dias
   // entre hoje e dataInicio + 1 (1-indexed). null se nao houver
@@ -292,9 +281,8 @@ function ItemRegistroCiclo({ registro, onPress }: ItemRegistroProps) {
     .slice(0, 3)
     .map((s) => SINTOMAS_LABELS[s])
     .join(' · ');
-  const sintomasExtras = registro.sintomas.length > 3
-    ? ` +${registro.sintomas.length - 3}`
-    : '';
+  const sintomasExtras =
+    registro.sintomas.length > 3 ? ` +${registro.sintomas.length - 3}` : '';
   return (
     <Pressable
       onPress={onPress}
@@ -351,7 +339,8 @@ function ItemRegistroCiclo({ registro, onPress }: ItemRegistroProps) {
             }}
             numberOfLines={1}
           >
-            {sintomasResumo}{sintomasExtras}
+            {sintomasResumo}
+            {sintomasExtras}
           </Text>
         ) : registro.texto ? (
           <Text

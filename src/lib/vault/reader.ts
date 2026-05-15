@@ -18,7 +18,10 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import type { ZodType } from 'zod';
-import { parseFrontmatter, type ParsedFrontmatter } from '@/lib/vault/frontmatter';
+import {
+  parseFrontmatter,
+  type ParsedFrontmatter,
+} from '@/lib/vault/frontmatter';
 import { useVaultMock } from '@/lib/dev/vaultMockStore';
 
 // Le e parseia um arquivo .md do Vault. Retorna null se o arquivo

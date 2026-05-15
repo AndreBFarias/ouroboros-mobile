@@ -15,13 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
-import {
-  Button,
-  EmptyState,
-  Header,
-  Screen,
-  useToast,
-} from '@/components/ui';
+import { Button, EmptyState, Header, Screen, useToast } from '@/components/ui';
 import { CalendarGrid } from '@/components/agenda/CalendarGrid';
 import { OuroborosLoader } from '@/components/brand';
 import { Calendar as CalendarIcon } from '@/lib/icons';
@@ -29,7 +23,11 @@ import { colors, spacing, typography } from '@/theme/tokens';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
-import { ApiError, listarEventos, type EventoCalendar } from '@/lib/services/calendarApi';
+import {
+  ApiError,
+  listarEventos,
+  type EventoCalendar,
+} from '@/lib/services/calendarApi';
 import {
   cacheEstaFresco,
   lerCacheEventos,
@@ -58,7 +56,10 @@ function dataIsoHoje(): string {
   return `${y}-${m}-${dia}`;
 }
 
-function eventosDoDia(eventos: EventoCalendar[], iso: string): EventoCalendar[] {
+function eventosDoDia(
+  eventos: EventoCalendar[],
+  iso: string
+): EventoCalendar[] {
   return eventos.filter((e) => e.inicio.slice(0, 10) === iso);
 }
 
@@ -123,7 +124,10 @@ export default function AgendaScreen() {
           return;
         }
         if (e.code === 'quota') {
-          toast.show('Limite Google atingido. Tente em alguns minutos.', 'error');
+          toast.show(
+            'Limite Google atingido. Tente em alguns minutos.',
+            'error'
+          );
         } else {
           toast.show('Erro ao buscar eventos. Tente novamente.', 'error');
         }
@@ -142,7 +146,10 @@ export default function AgendaScreen() {
         if (ativo) setEstado('invalido');
         return;
       }
-      if (typeof conta.accessToken !== 'string' || conta.accessToken.length === 0) {
+      if (
+        typeof conta.accessToken !== 'string' ||
+        conta.accessToken.length === 0
+      ) {
         if (ativo) setEstado('nao-conectado');
         return;
       }
@@ -207,7 +214,10 @@ export default function AgendaScreen() {
       <Header title="Agenda" onBack={() => router.back()} />
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.lg,
+          paddingBottom: 120,
+        }}
         accessibilityLabel="agenda root"
       >
         {estado === 'nao-conectado' ? (
@@ -297,7 +307,12 @@ export default function AgendaScreen() {
                 }}
                 accessibilityLabel="banner offline"
               >
-                <Text style={{ color: colors.fg, fontSize: typography.caption.size }}>
+                <Text
+                  style={{
+                    color: colors.fg,
+                    fontSize: typography.caption.size,
+                  }}
+                >
                   Sem conexão. Mostrando eventos do cache.
                 </Text>
               </View>
@@ -346,7 +361,8 @@ export default function AgendaScreen() {
                       style={{
                         color: colors.fg,
                         fontSize: typography.body.size,
-                        lineHeight: typography.body.size * typography.body.lineHeight,
+                        lineHeight:
+                          typography.body.size * typography.body.lineHeight,
                       }}
                     >
                       {e.titulo}

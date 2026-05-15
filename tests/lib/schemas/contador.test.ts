@@ -30,10 +30,7 @@ describe('ContadorSchema', () => {
     const c = {
       ...baseContador,
       recorde: 28,
-      resets: [
-        '2026-03-04T10:30:00-03:00',
-        '2026-04-01T08:00:00-03:00',
-      ],
+      resets: ['2026-03-04T10:30:00-03:00', '2026-04-01T08:00:00-03:00'],
       inicio: '2026-04-01',
     };
     const out = ContadorSchema.parse(c);
@@ -80,9 +77,7 @@ describe('ContadorSchema', () => {
   });
 
   it('rejeita slug vazio', () => {
-    expect(() =>
-      ContadorSchema.parse({ ...baseContador, slug: '' })
-    ).toThrow();
+    expect(() => ContadorSchema.parse({ ...baseContador, slug: '' })).toThrow();
   });
 
   it('rejeita inicio fora do formato YYYY-MM-DD', () => {

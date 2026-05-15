@@ -72,10 +72,7 @@ function basenameSemExt(basename: string): string {
 // canonica baseada na extensao concreta do arquivo, nao no tipo
 // semantico. Ex: midia_foto pode chegar como .jpg ou .png;
 // destino respectivo e' jpg/ ou png/.
-function pastaBinarioPorExt(
-  ext: string,
-  tipo: TipoMidiaCanonico
-): string {
+function pastaBinarioPorExt(ext: string, tipo: TipoMidiaCanonico): string {
   const e = ext.toLowerCase().replace(/^\./, '');
   if (e === 'jpg' || e === 'jpeg') return JPG_FOLDER;
   if (e === 'png') return PNG_FOLDER;

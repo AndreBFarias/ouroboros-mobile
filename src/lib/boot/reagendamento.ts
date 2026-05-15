@@ -37,9 +37,8 @@ export async function reagendarTodosBootHooks(): Promise<void> {
 // Import dinamico (lazy require) evita ciclo entre @/lib/boot/* e
 // @/lib/treinos|marcos/*. Funções wrapper encapsulam o require.
 const migrarDraftsHook: BootHook = async () => {
-  const { migrarDraftsParaTreinoSessao } = await import(
-    '@/lib/treinos/migrarDraftsParaTreinoSessao'
-  );
+  const { migrarDraftsParaTreinoSessao } =
+    await import('@/lib/treinos/migrarDraftsParaTreinoSessao');
   await migrarDraftsParaTreinoSessao();
 };
 
@@ -53,9 +52,8 @@ const marcosAutoHook: BootHook = async () => {
 // porque expo-notifications não persiste schedules entre reboots ou
 // updates do app no Android.
 const reagendarAlarmesHook: BootHook = async () => {
-  const { reagendarAlarmes } = await import(
-    '@/lib/services/alarmesNotificacoes'
-  );
+  const { reagendarAlarmes } =
+    await import('@/lib/services/alarmesNotificacoes');
   await reagendarAlarmes();
 };
 
@@ -69,9 +67,8 @@ const migrarLembretesHook: BootHook = async () => {
   const { useVault } = await import('@/lib/stores/vault');
   const vaultRoot = useVault.getState().vaultRoot;
   if (!vaultRoot) return;
-  const { migrarLembretesParaAlarmes } = await import(
-    '@/lib/boot/migrarLembretes'
-  );
+  const { migrarLembretesParaAlarmes } =
+    await import('@/lib/boot/migrarLembretes');
   await migrarLembretesParaAlarmes(vaultRoot);
 };
 
@@ -81,9 +78,8 @@ const migrarLembretesHook: BootHook = async () => {
 // registrarCategoriasAlarme em app/_layout.tsx, e este hook limpa o
 // lixo. Guardado por useSessao.flags.canalV1Deletado.
 const apagarChannelsLegadosHook: BootHook = async () => {
-  const { apagarChannelsLegadosUmaVez } = await import(
-    '@/lib/services/notificationActions'
-  );
+  const { apagarChannelsLegadosUmaVez } =
+    await import('@/lib/services/notificationActions');
   await apagarChannelsLegadosUmaVez();
 };
 
@@ -91,9 +87,8 @@ const apagarChannelsLegadosHook: BootHook = async () => {
 // dias. Idempotente: roda uma vez por dia, controlado por timestamp
 // em SecureStore.
 const limparLixeiraTarefasHook: BootHook = async () => {
-  const { limparLixeiraExpirada } = await import(
-    '@/lib/tarefas/limparLixeiraExpirada'
-  );
+  const { limparLixeiraExpirada } =
+    await import('@/lib/tarefas/limparLixeiraExpirada');
   await limparLixeiraExpirada();
 };
 
@@ -102,9 +97,8 @@ const limparLixeiraTarefasHook: BootHook = async () => {
 // rate-limit interno (1 update por minuto). Toggle off curta cedo
 // chamando desativarWidget no provider nativo.
 const atualizarWidgetHomescreenHook: BootHook = async () => {
-  const { atualizarWidgetHomescreenBootHook } = await import(
-    '@/lib/widget/atualizarWidgetHomescreen'
-  );
+  const { atualizarWidgetHomescreenBootHook } =
+    await import('@/lib/widget/atualizarWidgetHomescreen');
   await atualizarWidgetHomescreenBootHook();
 };
 
@@ -114,9 +108,8 @@ const atualizarWidgetHomescreenHook: BootHook = async () => {
 // useSettings.lembretes; cada chave ativa vira schedule, inativa
 // vira cancel idempotente.
 const reagendarLembretesHook: BootHook = async () => {
-  const { reagendarLembretes } = await import(
-    '@/lib/services/notificacoesLembretes'
-  );
+  const { reagendarLembretes } =
+    await import('@/lib/services/notificacoesLembretes');
   await reagendarLembretes();
 };
 
@@ -131,9 +124,8 @@ const migrarAssetsHook: BootHook = async () => {
   const { useVault } = await import('@/lib/stores/vault');
   const vaultRoot = useVault.getState().vaultRoot;
   if (!vaultRoot) return;
-  const { migrarAssetsLegacyParaMedia } = await import(
-    '@/lib/vault/midiaCompanion'
-  );
+  const { migrarAssetsLegacyParaMedia } =
+    await import('@/lib/vault/midiaCompanion');
   await migrarAssetsLegacyParaMedia(vaultRoot);
 };
 
@@ -146,9 +138,8 @@ const migrarCacheAgendaHook: BootHook = async () => {
   const { useVault } = await import('@/lib/stores/vault');
   const vaultRoot = useVault.getState().vaultRoot;
   if (!vaultRoot) return;
-  const { migrarCacheAgendaJsonParaMd } = await import(
-    '@/lib/boot/migrarCacheAgenda'
-  );
+  const { migrarCacheAgendaJsonParaMd } =
+    await import('@/lib/boot/migrarCacheAgenda');
   await migrarCacheAgendaJsonParaMd(vaultRoot);
 };
 
@@ -163,9 +154,8 @@ const migrarLayoutVaultHook: BootHook = async () => {
   const { useVault } = await import('@/lib/stores/vault');
   const vaultRoot = useVault.getState().vaultRoot;
   if (!vaultRoot) return;
-  const { migrarVaultLayoutPorTipo } = await import(
-    '@/lib/boot/migrarVaultLayoutPorTipo'
-  );
+  const { migrarVaultLayoutPorTipo } =
+    await import('@/lib/boot/migrarVaultLayoutPorTipo');
   await migrarVaultLayoutPorTipo(vaultRoot);
 };
 
@@ -192,9 +182,8 @@ const limparOrfaosWritingHook: BootHook = async () => {
   const { useVault } = await import('@/lib/stores/vault');
   const vaultRoot = useVault.getState().vaultRoot;
   if (!vaultRoot) return;
-  const { limparArquivosWritingOrfaos } = await import(
-    '@/lib/boot/limparArquivosWritingOrfaos'
-  );
+  const { limparArquivosWritingOrfaos } =
+    await import('@/lib/boot/limparArquivosWritingOrfaos');
   await limparArquivosWritingOrfaos(vaultRoot);
 };
 

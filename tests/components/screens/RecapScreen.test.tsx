@@ -125,9 +125,7 @@ describe('RecapScreen', () => {
 
   it('mostra empty state quando o vault nao tem registros no periodo', async () => {
     const { findByText } = render(<RecapScreen />);
-    expect(
-      await findByText('Nenhum registro neste período.')
-    ).toBeTruthy();
+    expect(await findByText('Nenhum registro neste período.')).toBeTruthy();
   });
 
   // L2 (M-RECAP-CALENDARIO-UNIFICAR)
@@ -143,7 +141,9 @@ describe('RecapScreen', () => {
   });
 
   it('alterna para modo Calendario ao tocar no botao Calendario', async () => {
-    const { findByLabelText, queryByText, findByText } = render(<RecapScreen />);
+    const { findByLabelText, queryByText, findByText } = render(
+      <RecapScreen />
+    );
     const calendario = await findByLabelText('modo calendario');
     fireEvent.press(calendario);
     await waitFor(() => {

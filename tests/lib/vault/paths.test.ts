@@ -49,37 +49,45 @@ import {
 
 describe('vaultUriJoin', () => {
   it('concatena root + rel simples', () => {
-    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', 'humor.md'))
-      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', 'humor.md')).toBe(
+      'file:///sdcard/Documents/Ouroboros/humor.md'
+    );
   });
 
   it('remove trailing whitespace do root', () => {
-    expect(vaultUriJoin('content://...primary:Ouroboros ', 'tarefas/x.md'))
-      .toBe('content://...primary:Ouroboros/tarefas/x.md');
+    expect(
+      vaultUriJoin('content://...primary:Ouroboros ', 'tarefas/x.md')
+    ).toBe('content://...primary:Ouroboros/tarefas/x.md');
   });
 
   it('remove trailing %20 do root', () => {
-    expect(vaultUriJoin('content://...primary:Ouroboros%20', 'tarefas/x.md'))
-      .toBe('content://...primary:Ouroboros/tarefas/x.md');
+    expect(
+      vaultUriJoin('content://...primary:Ouroboros%20', 'tarefas/x.md')
+    ).toBe('content://...primary:Ouroboros/tarefas/x.md');
   });
 
   it('remove trailing slashes do root', () => {
-    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros/', 'humor.md'))
-      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+    expect(
+      vaultUriJoin('file:///sdcard/Documents/Ouroboros/', 'humor.md')
+    ).toBe('file:///sdcard/Documents/Ouroboros/humor.md');
   });
 
   it('remove leading slashes do rel', () => {
-    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', '/humor.md'))
-      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+    expect(
+      vaultUriJoin('file:///sdcard/Documents/Ouroboros', '/humor.md')
+    ).toBe('file:///sdcard/Documents/Ouroboros/humor.md');
   });
 
   it('remove leading whitespace do rel', () => {
-    expect(vaultUriJoin('file:///sdcard/Documents/Ouroboros', ' humor.md'))
-      .toBe('file:///sdcard/Documents/Ouroboros/humor.md');
+    expect(
+      vaultUriJoin('file:///sdcard/Documents/Ouroboros', ' humor.md')
+    ).toBe('file:///sdcard/Documents/Ouroboros/humor.md');
   });
 
   it('lança erro com root vazio', () => {
-    expect(() => vaultUriJoin('', 'humor.md')).toThrow('vault não inicializado');
+    expect(() => vaultUriJoin('', 'humor.md')).toThrow(
+      'vault não inicializado'
+    );
   });
 
   it('lança erro com rel vazio', () => {
@@ -87,12 +95,15 @@ describe('vaultUriJoin', () => {
   });
 
   it('lança erro com root só whitespace', () => {
-    expect(() => vaultUriJoin('   ', 'humor.md')).toThrow('vault não inicializado');
+    expect(() => vaultUriJoin('   ', 'humor.md')).toThrow(
+      'vault não inicializado'
+    );
   });
 
   it('preserva subpaths complexos com slashes intermediários', () => {
-    expect(vaultUriJoin('file:///vault', 'markdown/diario-2026-05-06.md'))
-      .toBe('file:///vault/markdown/diario-2026-05-06.md');
+    expect(vaultUriJoin('file:///vault', 'markdown/diario-2026-05-06.md')).toBe(
+      'file:///vault/markdown/diario-2026-05-06.md'
+    );
   });
 });
 
@@ -180,14 +191,20 @@ describe('medidasPath (H2)', () => {
 describe('medidasFotoPath (H2)', () => {
   it('gera jpg/medidas-YYYY-MM-DD-<lado>.jpg para os 3 lados', () => {
     const d = new Date('2026-05-04T15:00:00.000Z');
-    expect(medidasFotoPath(d, 'frente')).toBe('jpg/medidas-2026-05-04-frente.jpg');
-    expect(medidasFotoPath(d, 'costas')).toBe('jpg/medidas-2026-05-04-costas.jpg');
+    expect(medidasFotoPath(d, 'frente')).toBe(
+      'jpg/medidas-2026-05-04-frente.jpg'
+    );
+    expect(medidasFotoPath(d, 'costas')).toBe(
+      'jpg/medidas-2026-05-04-costas.jpg'
+    );
     expect(medidasFotoPath(d, 'lado')).toBe('jpg/medidas-2026-05-04-lado.jpg');
   });
 
   it('respeita virada de dia em UTC-3', () => {
     const d = new Date('2026-04-29T02:30:00.000Z');
-    expect(medidasFotoPath(d, 'frente')).toBe('jpg/medidas-2026-04-28-frente.jpg');
+    expect(medidasFotoPath(d, 'frente')).toBe(
+      'jpg/medidas-2026-04-28-frente.jpg'
+    );
   });
 });
 
@@ -463,10 +480,24 @@ describe('matchesFeaturePrefix', () => {
   });
 
   it('separa medidas- de medidas-foto-', () => {
-    expect(matchesFeaturePrefix('markdown/medidas-2026-05-06.md', 'medidas-')).toBe(true);
-    expect(matchesFeaturePrefix('markdown/medidas-foto-2026-05-06-frente.md', 'medidas-')).toBe(true);
-    expect(matchesFeaturePrefix('markdown/medidas-foto-2026-05-06-frente.md', 'medidas-foto-')).toBe(true);
-    expect(matchesFeaturePrefix('markdown/medidas-2026-05-06.md', 'medidas-foto-')).toBe(false);
+    expect(
+      matchesFeaturePrefix('markdown/medidas-2026-05-06.md', 'medidas-')
+    ).toBe(true);
+    expect(
+      matchesFeaturePrefix(
+        'markdown/medidas-foto-2026-05-06-frente.md',
+        'medidas-'
+      )
+    ).toBe(true);
+    expect(
+      matchesFeaturePrefix(
+        'markdown/medidas-foto-2026-05-06-frente.md',
+        'medidas-foto-'
+      )
+    ).toBe(true);
+    expect(
+      matchesFeaturePrefix('markdown/medidas-2026-05-06.md', 'medidas-foto-')
+    ).toBe(false);
   });
 });
 

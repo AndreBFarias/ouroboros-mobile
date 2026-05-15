@@ -55,13 +55,9 @@ export const haptics = {
     ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Medium),
   selection: (): Promise<void> => ExpoHaptics.selectionAsync(),
   success: (): Promise<void> =>
-    ExpoHaptics.notificationAsync(
-      ExpoHaptics.NotificationFeedbackType.Success
-    ),
+    ExpoHaptics.notificationAsync(ExpoHaptics.NotificationFeedbackType.Success),
   error: (): Promise<void> =>
-    ExpoHaptics.notificationAsync(
-      ExpoHaptics.NotificationFeedbackType.Error
-    ),
+    ExpoHaptics.notificationAsync(ExpoHaptics.NotificationFeedbackType.Error),
 
   // Camada 2 — contextuais. Cada uma consulta o toggle agrupado
   // (sprint M29: humor/trigger/fab -> botoes, vitoria -> conquista,

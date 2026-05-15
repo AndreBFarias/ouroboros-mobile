@@ -81,7 +81,12 @@ export function resolverPeriodo(
 // contador=hash, tarefa=check).
 export interface ConquistaItem {
   id: string;
-  origem: 'diario_vitoria' | 'evento_positivo' | 'marco' | 'contador_sequencia' | 'tarefa_concluida';
+  origem:
+    | 'diario_vitoria'
+    | 'evento_positivo'
+    | 'marco'
+    | 'contador_sequencia'
+    | 'tarefa_concluida';
   data: string;
   frase: string;
 }
@@ -146,11 +151,7 @@ export interface UseRecapResult {
 // Predicado helper: ISO datetime ou data YYYY-MM-DD esta dentro do
 // range. Trata data simples como meio-dia local para evitar drift
 // de fuso (humor diario nao tem hora).
-function dentroDoPeriodo(
-  isoOuYmd: string,
-  de: Date,
-  ate: Date
-): boolean {
+function dentroDoPeriodo(isoOuYmd: string, de: Date, ate: Date): boolean {
   const date = isoOuYmd.includes('T')
     ? new Date(isoOuYmd)
     : new Date(`${isoOuYmd}T12:00:00-03:00`);
@@ -208,17 +209,36 @@ export function agregarRecap(input: {
   ate: Date;
   agora?: Date;
 }): RecapData {
-  const { humor, diarios, eventos, marcos, contadores, treinos, tarefas, de, ate } = input;
+  const {
+    humor,
+    diarios,
+    eventos,
+    marcos,
+    contadores,
+    treinos,
+    tarefas,
+    de,
+    ate,
+  } = input;
   const agora = input.agora ?? new Date();
 
   // Filtros por periodo.
   const humorFiltrado = humor.filter((h) => dentroDoPeriodo(h.data, de, ate));
-  const diariosFiltrados = diarios.filter((d) => dentroDoPeriodo(d.data, de, ate));
-  const eventosFiltrados = eventos.filter((e) => dentroDoPeriodo(e.data, de, ate));
-  const marcosFiltrados = marcos.filter((m) => dentroDoPeriodo(m.data, de, ate));
-  const treinosFiltrados = treinos.filter((t) => dentroDoPeriodo(t.data, de, ate));
+  const diariosFiltrados = diarios.filter((d) =>
+    dentroDoPeriodo(d.data, de, ate)
+  );
+  const eventosFiltrados = eventos.filter((e) =>
+    dentroDoPeriodo(e.data, de, ate)
+  );
+  const marcosFiltrados = marcos.filter((m) =>
+    dentroDoPeriodo(m.data, de, ate)
+  );
+  const treinosFiltrados = treinos.filter((t) =>
+    dentroDoPeriodo(t.data, de, ate)
+  );
   const tarefasFiltradas = tarefas.filter(
-    ({ meta }) => meta.feito && meta.feito_em && dentroDoPeriodo(meta.feito_em, de, ate)
+    ({ meta }) =>
+      meta.feito && meta.feito_em && dentroDoPeriodo(meta.feito_em, de, ate)
   );
 
   // Conquistas: vitorias do diario + eventos positivos + marcos +
@@ -236,7 +256,9 @@ export function agregarRecap(input: {
   }
   for (const e of eventosFiltrados) {
     if (e.modo === 'positivo') {
-      const rotulo = [e.categoria, e.bairro, e.lugar].filter(Boolean).join(' — ');
+      const rotulo = [e.categoria, e.bairro, e.lugar]
+        .filter(Boolean)
+        .join(' — ');
       conquistas.push({
         id: `evento_positivo:${e.data}:${e.autor}`,
         origem: 'evento_positivo',
@@ -293,7 +315,9 @@ export function agregarRecap(input: {
   }
   for (const e of eventosFiltrados) {
     if (e.modo === 'negativo') {
-      const rotulo = [e.categoria, e.bairro, e.lugar].filter(Boolean).join(' — ');
+      const rotulo = [e.categoria, e.bairro, e.lugar]
+        .filter(Boolean)
+        .join(' — ');
       crises.push({
         id: `evento_negativo:${e.data}:${e.autor}`,
         origem: 'evento_negativo',
@@ -367,8 +391,12 @@ export function agregarRecap(input: {
   tarefasConcluidas.sort((a, b) => (a.feito_em < b.feito_em ? 1 : -1));
 
   // Numeros agregados.
-  const eventosPositivos = eventosFiltrados.filter((e) => e.modo === 'positivo').length;
-  const eventosNegativos = eventosFiltrados.filter((e) => e.modo === 'negativo').length;
+  const eventosPositivos = eventosFiltrados.filter(
+    (e) => e.modo === 'positivo'
+  ).length;
+  const eventosNegativos = eventosFiltrados.filter(
+    (e) => e.modo === 'negativo'
+  ).length;
   const fotos = contarFotos(diariosFiltrados, eventosFiltrados);
   const totalRegistros =
     humorFiltrado.length +

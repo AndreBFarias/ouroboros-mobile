@@ -23,8 +23,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-FOTO-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-FOTO-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -132,8 +131,7 @@ export default async function caseSaveFoto(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'FAB verde "abrir menu de captura" ausente em /memoria',
+        detalhe: 'FAB verde "abrir menu de captura" ausente em /memoria',
         screenshots,
       };
     }
@@ -149,8 +147,7 @@ export default async function caseSaveFoto(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'item "Foto" (aria-label=capturar foto) ausente no sheet',
+        detalhe: 'item "Foto" (aria-label=capturar foto) ausente no sheet',
         screenshots,
       };
     }

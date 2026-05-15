@@ -54,9 +54,6 @@ describe('BottomSheet', () => {
     // Override vira array [default, custom]: a ordem garante que
     // consumidor tambem possa sobrescrever zIndex se quiser.
     expect(Array.isArray(root.props.style)).toBe(true);
-    expect(root.props.style).toEqual([
-      { zIndex: 100 },
-      { paddingTop: 8 },
-    ]);
+    expect(root.props.style).toEqual([{ zIndex: 100 }, { paddingTop: 8 }]);
   });
 });

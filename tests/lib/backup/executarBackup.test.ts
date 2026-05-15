@@ -210,9 +210,7 @@ describe('lerUltimoBackupMs + descreverUltimoBackup', () => {
 
   it('formata texto humano em PT-BR sentence case', () => {
     const agora = Date.now();
-    expect(descreverUltimoBackup(null)).toBe(
-      'Nenhum backup automático ainda.'
-    );
+    expect(descreverUltimoBackup(null)).toBe('Nenhum backup automático ainda.');
     expect(descreverUltimoBackup(agora - 30 * 1000)).toBe(
       'Último backup: agora mesmo.'
     );

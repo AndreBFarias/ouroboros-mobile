@@ -23,8 +23,7 @@ jest.mock('@/lib/vault', () => {
     ...actual,
     writeVaultFile: (...args: [string, unknown, string]) =>
       mockWriteVaultFile(...args),
-    readVaultFile: (...args: [string, unknown]) =>
-      mockReadVaultFile(...args),
+    readVaultFile: (...args: [string, unknown]) => mockReadVaultFile(...args),
   };
 });
 
@@ -33,7 +32,8 @@ const mockWriteAsStringAsync = jest.fn<Promise<void>, [string, string]>();
 
 jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
-  copyAsync: (...args: [{ from: string; to: string }]) => mockCopyAsync(...args),
+  copyAsync: (...args: [{ from: string; to: string }]) =>
+    mockCopyAsync(...args),
   writeAsStringAsync: (...args: [string, string]) =>
     mockWriteAsStringAsync(...args),
 }));
@@ -148,10 +148,7 @@ describe('saveEvento fotos copiadas', () => {
       meta: baseMeta,
       body: '',
       vaultRoot: VAULT_ROOT,
-      fotos: [
-        'file:///cache/img-temp-1.jpg',
-        'file:///cache/img-temp-2.jpg',
-      ],
+      fotos: ['file:///cache/img-temp-1.jpg', 'file:///cache/img-temp-2.jpg'],
     });
     expect(mockCopyAsync).toHaveBeenCalledTimes(2);
     expect(out.fotosGravadas).toHaveLength(2);
@@ -179,9 +176,7 @@ describe('saveEvento fotos copiadas', () => {
     });
     const [arg] = mockCopyAsync.mock.calls[0];
     expect(arg.from).toBe('file:///cache/img.jpg');
-    expect(arg.to).toMatch(
-      /Vault\/jpg\/2026-04-29-eventos-0000-1\.jpg$/
-    );
+    expect(arg.to).toMatch(/Vault\/jpg\/2026-04-29-eventos-0000-1\.jpg$/);
   });
 
   it('grava companion .md ao lado de cada foto', async () => {
@@ -189,17 +184,12 @@ describe('saveEvento fotos copiadas', () => {
       meta: baseMeta,
       body: 'cafe da manha gostoso.',
       vaultRoot: VAULT_ROOT,
-      fotos: [
-        'file:///cache/img-1.jpg',
-        'file:///cache/img-2.jpg',
-      ],
+      fotos: ['file:///cache/img-1.jpg', 'file:///cache/img-2.jpg'],
     });
     expect(mockWriteAsStringAsync).toHaveBeenCalledTimes(2);
     // Companion .md ao lado do binario: mesmo nome, extensao trocada.
     const [destino1, conteudo1] = mockWriteAsStringAsync.mock.calls[0];
-    expect(destino1).toMatch(
-      /Vault\/markdown\/2026-04-29-eventos-0000-1\.md$/
-    );
+    expect(destino1).toMatch(/Vault\/markdown\/2026-04-29-eventos-0000-1\.md$/);
     // Frontmatter canonico midia_foto com legenda referenciando o
     // evento de origem (rastreabilidade reversa galeria -> evento).
     expect(conteudo1).toContain('tipo: midia_foto');
@@ -207,13 +197,9 @@ describe('saveEvento fotos copiadas', () => {
     expect(conteudo1).toContain('autor: pessoa_a');
     expect(conteudo1).toContain('para: mim');
     // Slug do evento base e' "vila-madalena" (bairro).
-    expect(conteudo1).toContain(
-      'legenda: "evento 2026-04-29 vila-madalena"'
-    );
+    expect(conteudo1).toContain('legenda: "evento 2026-04-29 vila-madalena"');
     const [destino2] = mockWriteAsStringAsync.mock.calls[1];
-    expect(destino2).toMatch(
-      /Vault\/markdown\/2026-04-29-eventos-0000-2\.md$/
-    );
+    expect(destino2).toMatch(/Vault\/markdown\/2026-04-29-eventos-0000-2\.md$/);
   });
 
   it('lista vazia de fotos nao chama copyAsync nem writeAsStringAsync', async () => {
@@ -337,9 +323,7 @@ describe('saveEvento I-EVENTO vaultUriJoin canonico', () => {
     );
     // copyAsync recebe URI completo do binario montado via vaultUriJoin.
     const [{ to: copyTo }] = mockCopyAsync.mock.calls[0];
-    expect(copyTo).toBe(
-      `${VAULT_ROOT}/jpg/2026-04-29-eventos-0000-1.jpg`
-    );
+    expect(copyTo).toBe(`${VAULT_ROOT}/jpg/2026-04-29-eventos-0000-1.jpg`);
   });
 
   it('sem bairro: slug deriva do texto livre via vaultUriJoin', async () => {

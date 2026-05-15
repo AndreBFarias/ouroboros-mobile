@@ -184,6 +184,8 @@ describe('removerGrupo', () => {
 
   it('engole erro quando arquivo nao existe (idempotente)', async () => {
     mockDeleteAsync.mockRejectedValueOnce(new Error('not found'));
-    await expect(removerGrupo(VAULT_ROOT, 'inexistente')).resolves.toBeUndefined();
+    await expect(
+      removerGrupo(VAULT_ROOT, 'inexistente')
+    ).resolves.toBeUndefined();
   });
 });

@@ -27,8 +27,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-AUDIO-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-AUDIO-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;

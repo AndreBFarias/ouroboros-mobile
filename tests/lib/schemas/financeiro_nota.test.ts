@@ -45,4 +45,3 @@ describe('FinanceiroNotaSchema', () => {
     expect(FinanceiroNotaSchema.safeParse(subErrado).success).toBe(false);
   });
 });
-

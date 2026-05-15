@@ -21,8 +21,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/M-SAVE-ALARME-VALIDA-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/M-SAVE-ALARME-VALIDA-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -57,9 +56,7 @@ async function abrirNovoAlarme(page: PlaywrightPageLike): Promise<void> {
 
 async function formMontou(page: PlaywrightPageLike): Promise<boolean> {
   return page.evaluate(() => {
-    return !!document.querySelector(
-      'input[aria-label="titulo do alarme"]'
-    );
+    return !!document.querySelector('input[aria-label="titulo do alarme"]');
   });
 }
 
@@ -90,9 +87,7 @@ async function tapSalvar(page: PlaywrightPageLike): Promise<boolean> {
     const buttons = Array.from(
       document.querySelectorAll('[role="button"]')
     ) as HTMLElement[];
-    const alvo = buttons.find(
-      (b) => (b.textContent ?? '').trim() === 'Salvar'
-    );
+    const alvo = buttons.find((b) => (b.textContent ?? '').trim() === 'Salvar');
     if (!alvo) return false;
     alvo.click();
     return true;

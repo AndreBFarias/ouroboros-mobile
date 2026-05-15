@@ -15,7 +15,10 @@ import type {
 
 // Extensao local com console hook (PlaywrightPageLike base nao expoe).
 interface PageComConsole extends PlaywrightPageLike {
-  on?: (evt: string, handler: (msg: { type: () => string; text: () => string }) => void) => void;
+  on?: (
+    evt: string,
+    handler: (msg: { type: () => string; text: () => string }) => void
+  ) => void;
 }
 
 export default async function caseM343FABUnificado(
@@ -70,7 +73,9 @@ export default async function caseM343FABUnificado(
 
     // Vai para a tab Marcos.
     const tabClicada = await page.evaluate(() => {
-      const t = document.querySelector('[aria-label="tab marcos"]') as HTMLElement | null;
+      const t = document.querySelector(
+        '[aria-label="tab marcos"]'
+      ) as HTMLElement | null;
       if (!t) return false;
       t.click();
       return true;
@@ -139,7 +144,8 @@ export default async function caseM343FABUnificado(
       };
     }
 
-    const fabShot = 'docs/sprints/M34.3-screenshots-gauntlet/A-fab-verde-marcos.png';
+    const fabShot =
+      'docs/sprints/M34.3-screenshots-gauntlet/A-fab-verde-marcos.png';
     await page.screenshot({ path: fabShot });
     screenshots.push(fabShot);
 
@@ -176,7 +182,8 @@ export default async function caseM343FABUnificado(
       };
     }
 
-    const menuShot = 'docs/sprints/M34.3-screenshots-gauntlet/B-menu-marcos-aberto.png';
+    const menuShot =
+      'docs/sprints/M34.3-screenshots-gauntlet/B-menu-marcos-aberto.png';
     await page.screenshot({ path: menuShot });
     screenshots.push(menuShot);
 
@@ -204,7 +211,8 @@ export default async function caseM343FABUnificado(
       };
     }
 
-    const marcoShot = 'docs/sprints/M34.3-screenshots-gauntlet/C-sheet-novo-marco.png';
+    const marcoShot =
+      'docs/sprints/M34.3-screenshots-gauntlet/C-sheet-novo-marco.png';
     await page.screenshot({ path: marcoShot });
     screenshots.push(marcoShot);
 
@@ -218,7 +226,9 @@ export default async function caseM343FABUnificado(
     });
     await page.waitForTimeout(1200);
     await page.evaluate(() => {
-      const t = document.querySelector('[aria-label="tab marcos"]') as HTMLElement | null;
+      const t = document.querySelector(
+        '[aria-label="tab marcos"]'
+      ) as HTMLElement | null;
       t?.click();
     });
     await page.waitForTimeout(500);
@@ -252,7 +262,8 @@ export default async function caseM343FABUnificado(
       };
     }
 
-    const fraseShot = 'docs/sprints/M34.3-screenshots-gauntlet/D-sheet-frase-via-marcos.png';
+    const fraseShot =
+      'docs/sprints/M34.3-screenshots-gauntlet/D-sheet-frase-via-marcos.png';
     await page.screenshot({ path: fraseShot });
     screenshots.push(fraseShot);
 

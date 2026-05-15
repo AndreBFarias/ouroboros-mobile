@@ -92,9 +92,7 @@ export default async function caseSaveTarefa(
 
     // 3. SheetNovaTarefa montou com campo titulo.
     const sheetMontou = await page.evaluate(() => {
-      return !!document.querySelector(
-        '[aria-label="campo titulo da tarefa"]'
-      );
+      return !!document.querySelector('[aria-label="campo titulo da tarefa"]');
     });
     if (!sheetMontou) {
       return {

@@ -35,10 +35,7 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { frasePath } from '@/lib/vault/paths';
 import { vaultUriJoin } from '@/lib/vault';
 import type { Para } from '@/lib/schemas/para';
-import {
-  slugDeFrase,
-  stringifyCompanionMidia,
-} from '@/lib/midia/companion';
+import { slugDeFrase, stringifyCompanionMidia } from '@/lib/midia/companion';
 
 export interface SalvarFraseOpcoes {
   // Texto da frase. Obrigatorio nao-vazio (caller valida antes).

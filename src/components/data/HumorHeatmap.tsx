@@ -154,19 +154,13 @@ export function HumorHeatmap({
             const idx = linha * NUM_COLUNAS + col;
             const cel = lista[idx];
             const cor = HUMOR_COLOR_MAP[cel.nivel];
-            const handle = onCelulaPress
-              ? () => onCelulaPress(cel)
-              : undefined;
+            const handle = onCelulaPress ? () => onCelulaPress(cel) : undefined;
             const labelA11y = cel.data
               ? `celula ${cel.data} humor ${cel.nivel}`
               : 'celula vazia';
             const inner = (
               <MotiView
-                from={
-                  semStagger
-                    ? undefined
-                    : { scale: 0.4, opacity: 0 }
-                }
+                from={semStagger ? undefined : { scale: 0.4, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   ...springs.default,

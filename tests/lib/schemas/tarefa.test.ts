@@ -41,9 +41,9 @@ describe('TarefaSchema', () => {
   });
 
   it('aceita autor pessoa_b', () => {
-    expect(
-      TarefaSchema.parse({ ...baseTarefa, autor: 'pessoa_b' }).autor
-    ).toBe('pessoa_b');
+    expect(TarefaSchema.parse({ ...baseTarefa, autor: 'pessoa_b' }).autor).toBe(
+      'pessoa_b'
+    );
   });
 
   it('rejeita autor "ambos"', () => {
@@ -81,9 +81,7 @@ describe('TarefaSchema', () => {
   });
 
   it('rejeita titulo vazio', () => {
-    expect(() =>
-      TarefaSchema.parse({ ...baseTarefa, titulo: '' })
-    ).toThrow();
+    expect(() => TarefaSchema.parse({ ...baseTarefa, titulo: '' })).toThrow();
   });
 
   it('rejeita titulo > 200 chars', () => {

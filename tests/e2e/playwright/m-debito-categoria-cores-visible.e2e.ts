@@ -144,7 +144,8 @@ export default async function caseMDebitoCategoriaCoresVisible(
         'Saúde',
         'Outro',
       ];
-      const out: Record<string, { borderColor: string; ariaSelected: string }> = {};
+      const out: Record<string, { borderColor: string; ariaSelected: string }> =
+        {};
       for (const lbl of rotulos) {
         const el = document.querySelector(
           `[aria-label="chip ${lbl}"]`

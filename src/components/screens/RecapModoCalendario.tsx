@@ -173,9 +173,7 @@ export function RecapModoCalendario() {
             {conquistasDoDia.length === 0
               ? 'Nenhuma conquista neste dia.'
               : `${conquistasDoDia.length} ${
-                  conquistasDoDia.length === 1
-                    ? 'conquista'
-                    : 'conquistas'
+                  conquistasDoDia.length === 1 ? 'conquista' : 'conquistas'
                 } neste dia.`}
           </Text>
           {conquistasDoDia.length > 0 ? (

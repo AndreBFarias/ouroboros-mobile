@@ -54,7 +54,9 @@ type FsMockShape = typeof FileSystem & {
 function getFsMemory(): Map<string, string> {
   const fs = FileSystem as FsMockShape;
   if (!fs.__memory) {
-    throw new Error('jest.setup.cjs deve expor __memory no mock de expo-file-system/legacy');
+    throw new Error(
+      'jest.setup.cjs deve expor __memory no mock de expo-file-system/legacy'
+    );
   }
   return fs.__memory;
 }
@@ -62,7 +64,9 @@ function getFsMemory(): Map<string, string> {
 function getFsDirs(): Set<string> {
   const fs = FileSystem as FsMockShape;
   if (!fs.__dirs) {
-    throw new Error('jest.setup.cjs deve expor __dirs no mock de expo-file-system/legacy');
+    throw new Error(
+      'jest.setup.cjs deve expor __dirs no mock de expo-file-system/legacy'
+    );
   }
   return fs.__dirs;
 }
@@ -71,7 +75,10 @@ function getFsDirs(): Set<string> {
 // sem vazar o estado para outros suites.
 function setPlatform(os: 'web' | 'android' | 'ios', version: number) {
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });
-  Object.defineProperty(Platform, 'Version', { value: version, configurable: true });
+  Object.defineProperty(Platform, 'Version', {
+    value: version,
+    configurable: true,
+  });
 }
 
 const ORIGINAL_OS = Platform.OS;
@@ -87,9 +94,7 @@ describe('sugestaoVaultPathDefault / sugestaoVaultUriDefault', () => {
   });
 
   it('uri default e file://${path}', () => {
-    expect(sugestaoVaultUriDefault()).toBe(
-      'file:///mock/documents/Ouroboros/'
-    );
+    expect(sugestaoVaultUriDefault()).toBe('file:///mock/documents/Ouroboros/');
   });
 });
 
@@ -102,7 +107,10 @@ describe('inicializarVaultEscolhido (H3)', () => {
   });
 
   afterEach(() => {
-    setPlatform(ORIGINAL_OS as 'web' | 'android' | 'ios', ORIGINAL_VERSION as number);
+    setPlatform(
+      ORIGINAL_OS as 'web' | 'android' | 'ios',
+      ORIGINAL_VERSION as number
+    );
   });
 
   it('em web devolve mock URI sem tocar FileSystem (uri parametro ignorada)', async () => {
@@ -124,10 +132,9 @@ describe('inicializarVaultEscolhido (H3)', () => {
     SUBPASTAS_CANONICAS.forEach((sub) => {
       // vaultUriJoin remove a barra final do root antes de juntar.
       const expected = `file:///mock/documents/Ouroboros/${sub}`;
-      expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(
-        expected,
-        { intermediates: true }
-      );
+      expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith(expected, {
+        intermediates: true,
+      });
     });
     expect(result.modo).toBe('auto');
     expect(result.criado).toBe(true);
@@ -155,21 +162,15 @@ describe('inicializarVaultEscolhido (H3)', () => {
 
   it('URI vazia lanca erro descritivo', async () => {
     setPlatform('android', 33);
-    await expect(inicializarVaultEscolhido('')).rejects.toThrow(
-      /uri vazia/
-    );
-    await expect(inicializarVaultEscolhido('   ')).rejects.toThrow(
-      /uri vazia/
-    );
+    await expect(inicializarVaultEscolhido('')).rejects.toThrow(/uri vazia/);
+    await expect(inicializarVaultEscolhido('   ')).rejects.toThrow(/uri vazia/);
     expect(useVault.getState().vaultRoot).toBeNull();
   });
 
   it('idempotencia: chamar 2x com mesma URI nao lanca e mantem subpastas', async () => {
     setPlatform('android', 33);
     await inicializarVaultEscolhido(SUGESTAO_URI);
-    await expect(
-      inicializarVaultEscolhido(SUGESTAO_URI)
-    ).resolves.toEqual(
+    await expect(inicializarVaultEscolhido(SUGESTAO_URI)).resolves.toEqual(
       expect.objectContaining({
         modo: 'auto',
         vaultRoot: SUGESTAO_URI,
@@ -211,15 +212,16 @@ describe('garantirSubpastas (H3)', () => {
   });
 
   afterEach(() => {
-    setPlatform(ORIGINAL_OS as 'web' | 'android' | 'ios', ORIGINAL_VERSION as number);
+    setPlatform(
+      ORIGINAL_OS as 'web' | 'android' | 'ios',
+      ORIGINAL_VERSION as number
+    );
   });
 
   it('idempotente: rodar 2x nao lanca', async () => {
     setPlatform('android', 33);
     await garantirSubpastas(SUGESTAO_URI);
-    await expect(
-      garantirSubpastas(SUGESTAO_URI)
-    ).resolves.toBeUndefined();
+    await expect(garantirSubpastas(SUGESTAO_URI)).resolves.toBeUndefined();
   });
 
   it('em web vira no-op silencioso', async () => {
@@ -237,7 +239,10 @@ describe('pedirPermissaoStorage (V4.0.2: boolean grant + retry probe)', () => {
   });
 
   afterEach(() => {
-    setPlatform(ORIGINAL_OS as 'web' | 'android' | 'ios', ORIGINAL_VERSION as number);
+    setPlatform(
+      ORIGINAL_OS as 'web' | 'android' | 'ios',
+      ORIGINAL_VERSION as number
+    );
   });
 
   it('em iOS retorna true sem disparar intent', async () => {

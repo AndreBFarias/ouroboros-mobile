@@ -254,9 +254,7 @@ function LinhaExercicio({
       <Input
         label="Observação"
         value={exercicio.observacao ?? ''}
-        onChangeText={(v) =>
-          onChange({ observacao: v.length > 0 ? v : null })
-        }
+        onChangeText={(v) => onChange({ observacao: v.length > 0 ? v : null })}
         placeholder="Opcional"
         accessibilityLabel={`observacao exercicio ${index + 1}`}
       />
@@ -339,7 +337,9 @@ export function FormRotina({
   const podeSalvar =
     nome.trim().length > 0 &&
     exercicios.length >= 1 &&
-    exercicios.every((e) => e.nome.trim().length > 0 && e.reps.trim().length > 0);
+    exercicios.every(
+      (e) => e.nome.trim().length > 0 && e.reps.trim().length > 0
+    );
 
   const handleSalvar = useCallback(async () => {
     if (!podeSalvar || salvando) return;

@@ -53,7 +53,7 @@ describe('luminanciaRelativa', () => {
   it('branco = 1', () => {
     expect(luminanciaRelativa({ r: 255, g: 255, b: 255, a: 1 })).toBeCloseTo(
       1,
-      5,
+      5
     );
   });
   it('cinza intermediario fica entre 0 e 1', () => {
@@ -76,7 +76,7 @@ describe('ratioContraste', () => {
   it('aceita objetos CorRgb diretamente', () => {
     const r = ratioContraste(
       { r: 255, g: 255, b: 255, a: 1 },
-      { r: 0, g: 0, b: 0, a: 1 },
+      { r: 0, g: 0, b: 0, a: 1 }
     );
     expect(r).toBeCloseTo(21, 0);
   });
@@ -136,7 +136,7 @@ describe('Dracula contra superficies', () => {
 
   it('muted sobre bg/bgAlt/bgPage passa AA texto normal', () => {
     const muted = tabela.filter(
-      (l) => l.cor === 'muted' && l.sobre !== 'bgElev',
+      (l) => l.cor === 'muted' && l.sobre !== 'bgElev'
     );
     muted.forEach((l) => {
       expect(l.aa).toBe(true);
@@ -145,7 +145,7 @@ describe('Dracula contra superficies', () => {
 
   it('mutedDecor falha AA texto normal sobre bg (uso decorativo apenas)', () => {
     const linha = tabela.find(
-      (l) => l.cor === 'mutedDecor' && l.sobre === 'bg',
+      (l) => l.cor === 'mutedDecor' && l.sobre === 'bg'
     );
     expect(linha).toBeDefined();
     expect(linha?.aa).toBe(false);
@@ -155,8 +155,8 @@ describe('Dracula contra superficies', () => {
     const acento = tabela.filter(
       (l) =>
         ['purple', 'pink', 'cyan', 'green', 'yellow', 'orange'].includes(
-          l.cor,
-        ) && l.sobre === 'bg',
+          l.cor
+        ) && l.sobre === 'bg'
     );
     acento.forEach((l) => {
       expect(l.lg).toBe(true);

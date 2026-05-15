@@ -22,9 +22,7 @@ describe('ehSyncConflict', () => {
       ehSyncConflict('humor-2026-05-06.sync-conflict-20260506-093412-OURO1.md')
     ).toBe(true);
     expect(
-      ehSyncConflict(
-        'alarme-medicacao.sync-conflict-20260506-093412-OURO1.md'
-      )
+      ehSyncConflict('alarme-medicacao.sync-conflict-20260506-093412-OURO1.md')
     ).toBe(true);
     expect(
       ehSyncConflict('_devices.sync-conflict-20260506-093412-OURO1.md')

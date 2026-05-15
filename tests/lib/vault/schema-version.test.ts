@@ -20,11 +20,9 @@ const mockMakeDirectoryAsync = jest.fn();
 
 jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
-  makeDirectoryAsync: (...args: unknown[]) =>
-    mockMakeDirectoryAsync(...args),
+  makeDirectoryAsync: (...args: unknown[]) => mockMakeDirectoryAsync(...args),
   StorageAccessFramework: {
-    writeAsStringAsync: (...args: unknown[]) =>
-      mockWriteAsStringAsync(...args),
+    writeAsStringAsync: (...args: unknown[]) => mockWriteAsStringAsync(...args),
   },
 }));
 

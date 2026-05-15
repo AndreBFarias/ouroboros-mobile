@@ -125,10 +125,26 @@ export function OuroborosLoader({
         const node = document.querySelector(seletor) as Element | null;
         if (node) node.setAttribute(atributo, valor);
       };
-      escreverPorAttr(`[data-anim-id="${idG1}"]`, 'transform', `rotate(${a1} ${PIVOT} ${PIVOT})`);
-      escreverPorAttr(`[data-anim-id="${idG2}"]`, 'transform', `rotate(${a2} ${PIVOT} ${PIVOT})`);
-      escreverPorAttr(`[data-anim-id="${idG3}"]`, 'transform', `rotate(${a3} ${PIVOT} ${PIVOT})`);
-      escreverPorAttr(`[data-anim-id="${idFlow}"]`, 'stroke-dashoffset', String(flow));
+      escreverPorAttr(
+        `[data-anim-id="${idG1}"]`,
+        'transform',
+        `rotate(${a1} ${PIVOT} ${PIVOT})`
+      );
+      escreverPorAttr(
+        `[data-anim-id="${idG2}"]`,
+        'transform',
+        `rotate(${a2} ${PIVOT} ${PIVOT})`
+      );
+      escreverPorAttr(
+        `[data-anim-id="${idG3}"]`,
+        'transform',
+        `rotate(${a3} ${PIVOT} ${PIVOT})`
+      );
+      escreverPorAttr(
+        `[data-anim-id="${idFlow}"]`,
+        'stroke-dashoffset',
+        String(flow)
+      );
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -156,7 +172,10 @@ export function OuroborosLoader({
     );
     // gs-flow: oscila stroke-dashoffset 0 -> perimetro a cada 6s.
     offsetFlow.value = withRepeat(
-      withTiming(PERIMETRO_FLOW, { duration: DURACAO_FLOW, easing: Easing.linear }),
+      withTiming(PERIMETRO_FLOW, {
+        duration: DURACAO_FLOW,
+        easing: Easing.linear,
+      }),
       -1,
       false
     );
@@ -220,11 +239,7 @@ export function OuroborosLoader({
       accessibilityLabel="loader ouroboros"
       accessibilityRole="progressbar"
     >
-      <Svg
-        width={tamanhoFinal}
-        height={tamanhoFinal}
-        viewBox="0 0 320 320"
-      >
+      <Svg width={tamanhoFinal} height={tamanhoFinal} viewBox="0 0 320 320">
         <Defs>
           <LinearGradient id="og1" x1="0" x2="1" y1="0" y2="1">
             <Stop offset="0%" stopColor={colors.purple} />
@@ -242,7 +257,12 @@ export function OuroborosLoader({
         {/* outer dotted orbit (gs-2: 60s reverso). data-anim-id atravessa
             rn-svg-web e vira atributo no <g>; o RAF de M25.2 usa esse
             seletor para atualizar transform. */}
-        <AnimatedG animatedProps={propsG2} originX={PIVOT} originY={PIVOT} data-anim-id={idG2}>
+        <AnimatedG
+          animatedProps={propsG2}
+          originX={PIVOT}
+          originY={PIVOT}
+          data-anim-id={idG2}
+        >
           <Circle
             cx={PIVOT}
             cy={PIVOT}
@@ -256,7 +276,12 @@ export function OuroborosLoader({
         </AnimatedG>
 
         {/* inner flow ring (gs-3: 30s; gs-flow: dashoffset 6s) */}
-        <AnimatedG animatedProps={propsG3} originX={PIVOT} originY={PIVOT} data-anim-id={idG3}>
+        <AnimatedG
+          animatedProps={propsG3}
+          originX={PIVOT}
+          originY={PIVOT}
+          data-anim-id={idG3}
+        >
           <AnimatedCircle
             cx={PIVOT}
             cy={PIVOT}
@@ -272,7 +297,12 @@ export function OuroborosLoader({
         </AnimatedG>
 
         {/* main snake (gs-1: 90s) */}
-        <AnimatedG animatedProps={propsG1} originX={PIVOT} originY={PIVOT} data-anim-id={idG1}>
+        <AnimatedG
+          animatedProps={propsG1}
+          originX={PIVOT}
+          originY={PIVOT}
+          data-anim-id={idG1}
+        >
           <Path
             d="M 155 40 A 120 120 0 0 0 40 160 A 120 120 0 0 0 160 280 A 120 120 0 0 0 280 160 A 120 120 0 0 0 175 40"
             fill="none"

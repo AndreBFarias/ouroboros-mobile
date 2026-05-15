@@ -16,7 +16,9 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-export default async function caseM40(page: PlaywrightPageLike): Promise<ResultadoE2E> {
+export default async function caseM40(
+  page: PlaywrightPageLike
+): Promise<ResultadoE2E> {
   const sprint = 'M40';
   const aspecto = 'tela-hoje-v2';
   const screenshots: string[] = [];
@@ -63,7 +65,11 @@ export default async function caseM40(page: PlaywrightPageLike): Promise<Resulta
     // 2. Modo casal: ajustar tipoCompanhia via store interno.
     await page.evaluate(() => {
       const w = globalThis as unknown as {
-        __gauntlet: { reset: () => void; seed: () => void; setOnboardingDone: (b: boolean) => void };
+        __gauntlet: {
+          reset: () => void;
+          seed: () => void;
+          setOnboardingDone: (b: boolean) => void;
+        };
       };
       w.__gauntlet.reset();
       w.__gauntlet.seed();
@@ -101,7 +107,8 @@ export default async function caseM40(page: PlaywrightPageLike): Promise<Resulta
       sprint,
       aspecto,
       status: 'PASS',
-      detalhe: 'sozinho mostra Recap+Proximos sem Status; duo mostra Recap+Status do casal',
+      detalhe:
+        'sozinho mostra Recap+Proximos sem Status; duo mostra Recap+Status do casal',
       screenshots,
     };
   } catch (err) {

@@ -8,10 +8,7 @@
 //
 // Usa jest.useFakeTimers() para tornar os testes deterministas sem
 // depender de wall-clock. Comentarios sem acento.
-import {
-  comTimeout,
-  SAVE_TIMEOUT_DEFAULT_MS,
-} from '@/lib/util/comTimeout';
+import { comTimeout, SAVE_TIMEOUT_DEFAULT_MS } from '@/lib/util/comTimeout';
 
 describe('comTimeout', () => {
   beforeEach(() => {

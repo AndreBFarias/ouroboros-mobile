@@ -100,7 +100,8 @@ export default async function caseM36Recap(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'chips de periodo nao renderizaram (Semana/Mês/Ano/Personalizado)',
+        detalhe:
+          'chips de periodo nao renderizaram (Semana/Mês/Ano/Personalizado)',
         screenshots,
       };
     }

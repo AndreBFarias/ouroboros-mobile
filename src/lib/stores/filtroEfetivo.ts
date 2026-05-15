@@ -24,9 +24,7 @@ import type { PessoaId } from '@/lib/schemas/pessoa';
 export function useFiltroPessoaEfetivo(): PessoaId {
   const filtroBase = usePessoa((s) => s.filtroPessoa);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const vaultCompartilhado = useSettings(
-    (s) => s.pessoa.vaultCompartilhado
-  );
+  const vaultCompartilhado = useSettings((s) => s.pessoa.vaultCompartilhado);
   if (!vaultCompartilhado) return pessoaAtiva;
   return filtroBase;
 }

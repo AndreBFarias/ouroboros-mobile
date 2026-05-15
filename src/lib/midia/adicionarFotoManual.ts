@@ -33,7 +33,9 @@ declare const __DEV__: boolean;
 // Sufixo aleatorio curto (4 chars hex) para deduplicar dentro do
 // mesmo dia. Mesma politica do MidiaFotoTab M07.x.
 function suffixCurto(): string {
-  return Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
+  return Math.floor(Math.random() * 0xffff)
+    .toString(16)
+    .padStart(4, '0');
 }
 
 function joinUri(root: string, rel: string): string {
@@ -54,7 +56,8 @@ export async function adicionarFotoManual(): Promise<boolean> {
       const ts = Date.now();
       const data = new Date(ts).toISOString().slice(0, 10);
       const slug = `mock-${ts}`;
-      const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
+      const galeria =
+        require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
       galeria.useGaleriaMock.getState().adicionar({
         uri: `web://mock/foto-${ts}.jpg`,
         data,

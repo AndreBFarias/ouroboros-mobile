@@ -89,10 +89,7 @@ export function SecaoSobre({ semTituloDeSecao = false }: SecaoSobreProps = {}) {
 
   if (semTituloDeSecao) {
     return (
-      <View
-        accessibilityLabel="bloco sobre"
-        style={{ gap: spacing.sm }}
-      >
+      <View accessibilityLabel="bloco sobre" style={{ gap: spacing.sm }}>
         {conteudo}
       </View>
     );

@@ -9,10 +9,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import {
-  BottomSheetView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import {
   Button,
   ChipGroup,
@@ -108,7 +105,17 @@ export function SheetNovoMarco({
     } finally {
       setSalvando(false);
     }
-  }, [podeSalvar, vaultRoot, pessoaAtiva, descricao, tags, para, medidaRef, toast, onSalvo]);
+  }, [
+    podeSalvar,
+    vaultRoot,
+    pessoaAtiva,
+    descricao,
+    tags,
+    para,
+    medidaRef,
+    toast,
+    onSalvo,
+  ]);
 
   return (
     <BottomSheetView style={{ flex: 1 }}>
@@ -218,7 +225,13 @@ export function SheetNovoMarco({
             >
               Anexar evolução corporal
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: spacing.xs,
+              }}
+            >
               <Pressable
                 onPress={() => {
                   haptics.selection();

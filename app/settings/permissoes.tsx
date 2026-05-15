@@ -61,8 +61,7 @@ const TITULOS: Record<ChavePermissaoTela, string> = {
 };
 
 const DESCRICOES: Record<ChavePermissaoTela, string> = {
-  storage:
-    'Necessária. Para salvar registros na pasta do Vault em /sdcard.',
+  storage: 'Necessária. Para salvar registros na pasta do Vault em /sdcard.',
   camera: 'Para tirar fotos e escanear documentos.',
   microfone: 'Para gravar áudios no diário.',
   notificacoes: 'Para alarmes e lembretes.',
@@ -121,8 +120,10 @@ export default function PermissoesTela() {
   const router = useRouter();
   const setPermissao = useOnboarding((s) => s.setPermissao);
 
-  const [statusStorage, setStatusStorage] = useState<StatusPermissao>('nao-pedida');
-  const [statusCamera, setStatusCamera] = useState<StatusPermissao>('nao-pedida');
+  const [statusStorage, setStatusStorage] =
+    useState<StatusPermissao>('nao-pedida');
+  const [statusCamera, setStatusCamera] =
+    useState<StatusPermissao>('nao-pedida');
   const [statusMicrofone, setStatusMicrofone] =
     useState<StatusPermissao>('nao-pedida');
   const [statusNotificacoes, setStatusNotificacoes] =
@@ -278,8 +279,7 @@ function CartaoPermissao({ item, onAbrirSistema }: CartaoPermissaoProps) {
             color: colors.fg,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: typography.body.size,
-            lineHeight:
-              typography.body.size * typography.body.lineHeight,
+            lineHeight: typography.body.size * typography.body.lineHeight,
           }}
         >
           {item.titulo}
@@ -300,8 +300,7 @@ function CartaoPermissao({ item, onAbrirSistema }: CartaoPermissaoProps) {
           color: colors.muted,
           fontFamily: 'JetBrainsMono_400Regular',
           fontSize: typography.caption.size,
-          lineHeight:
-            typography.caption.size * typography.caption.lineHeight,
+          lineHeight: typography.caption.size * typography.caption.lineHeight,
         }}
       >
         {item.descricao}

@@ -29,7 +29,10 @@ jest.mock('expo-router', () => {
   };
 });
 
-const mockSaveDiario = jest.fn<Promise<{ uri: string }>, [unknown, string, string]>();
+const mockSaveDiario = jest.fn<
+  Promise<{ uri: string }>,
+  [unknown, string, string]
+>();
 
 jest.mock('@/lib/diario/saveDiario', () => ({
   saveDiario: (...args: [unknown, string, string]) => mockSaveDiario(...args),
@@ -173,9 +176,7 @@ describe('Tela 18 — validacao do save', () => {
     const { getByLabelText, queryByLabelText } = renderTela();
     fireEvent.press(getByLabelText('Anotar'));
     expect(mockSaveDiario).not.toHaveBeenCalled();
-    await waitFor(() =>
-      expect(queryByLabelText('toast warn')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast warn')).toBeTruthy());
   });
 
   it('save em modo vitoria chama saveDiario com payload valido', async () => {
@@ -256,9 +257,7 @@ describe('Tela 18 — validacao do save', () => {
     );
     adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
-    await waitFor(() =>
-      expect(queryByLabelText('toast success')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast success')).toBeTruthy());
   });
 
   it('toast de sucesso "Registrado." em modo trigger', async () => {
@@ -269,9 +268,7 @@ describe('Tela 18 — validacao do save', () => {
       'cansaco profundo.'
     );
     fireEvent.press(getByLabelText('Registrar'));
-    await waitFor(() =>
-      expect(queryByLabelText('toast success')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast success')).toBeTruthy());
   });
 
   it('toast de erro quando saveDiario rejeita', async () => {
@@ -285,9 +282,7 @@ describe('Tela 18 — validacao do save', () => {
     );
     adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
-    await waitFor(() =>
-      expect(queryByLabelText('toast error')).toBeTruthy()
-    );
+    await waitFor(() => expect(queryByLabelText('toast error')).toBeTruthy());
     expect(mockBack).not.toHaveBeenCalled();
     errorSpy.mockRestore();
   });

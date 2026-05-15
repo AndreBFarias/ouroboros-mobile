@@ -96,10 +96,7 @@ export {
   SUBPASTAS_CANONICAS,
   VAULT_ROOT_STORAGE_KEY,
 } from './permissions';
-export type {
-  ModoInicializacao,
-  ResultadoInicializacao,
-} from './permissions';
+export type { ModoInicializacao, ResultadoInicializacao } from './permissions';
 
 export {
   listarExercicios,
@@ -109,25 +106,13 @@ export {
 } from './exercicios';
 export type { ListarExerciciosFiltros } from './exercicios';
 
-export {
-  listarTreinos,
-  escreverTreino,
-  excluirTreino,
-} from './treinos';
+export { listarTreinos, escreverTreino, excluirTreino } from './treinos';
 export type { ListarTreinosFiltros } from './treinos';
 
-export {
-  listarMarcos,
-  escreverMarco,
-  excluirMarco,
-} from './marcos';
+export { listarMarcos, escreverMarco, excluirMarco } from './marcos';
 export type { ListarMarcosFiltros } from './marcos';
 
-export {
-  listarMedidas,
-  lerUltimaMedida,
-  escreverMedida,
-} from './medidas';
+export { listarMedidas, lerUltimaMedida, escreverMedida } from './medidas';
 export type { ListarMedidasFiltros, MedidasPeriodo } from './medidas';
 
 export {

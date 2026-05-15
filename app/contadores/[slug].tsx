@@ -13,20 +13,9 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Modal,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Button,
-  Header,
-  Input,
-  Screen,
-  useToast,
-} from '@/components/ui';
+import { Button, Header, Input, Screen, useToast } from '@/components/ui';
 import { ModalConfirmaReset } from '@/components/contadores/ModalConfirmaReset';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
@@ -555,8 +544,8 @@ export default function ContadorDetalhe() {
                 lineHeight: 20,
               }}
             >
-              O arquivo do contador será removido. Esta ação não pode
-              ser desfeita.
+              O arquivo do contador será removido. Esta ação não pode ser
+              desfeita.
             </Text>
             <View style={{ gap: spacing.sm }}>
               <Button

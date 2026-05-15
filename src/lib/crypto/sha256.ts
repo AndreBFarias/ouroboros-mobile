@@ -45,7 +45,7 @@ export function sha256Bytes(bytes: Uint8Array): string {
   // JS bitwise so trabalha em 32 bits; bitLen cabe em 53 bits (Number),
   // entao split em hi/lo.
   const hi = Math.floor(bitLen / 0x100000000) >>> 0;
-  const lo = (bitLen >>> 0);
+  const lo = bitLen >>> 0;
   padded[padLen - 8] = (hi >>> 24) & 0xff;
   padded[padLen - 7] = (hi >>> 16) & 0xff;
   padded[padLen - 6] = (hi >>> 8) & 0xff;

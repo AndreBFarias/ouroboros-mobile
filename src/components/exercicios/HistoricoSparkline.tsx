@@ -115,7 +115,10 @@ export function HistoricoSparkline({
   // estoure os limites laterais.
   const tooltipX =
     tooltipIdx !== null
-      ? Math.max(PADDING_X, Math.min(largura - 120 - PADDING_X, xs[tooltipIdx] - 60))
+      ? Math.max(
+          PADDING_X,
+          Math.min(largura - 120 - PADDING_X, xs[tooltipIdx] - 60)
+        )
       : 0;
 
   return (
@@ -174,13 +177,7 @@ export function HistoricoSparkline({
             strokeWidth={1.5}
           />
           {xs.map((x, i) => (
-            <Circle
-              key={i}
-              cx={x}
-              cy={ys[i]}
-              r={3}
-              fill={colors.cyan}
-            />
+            <Circle key={i} cx={x} cy={ys[i]} r={3} fill={colors.cyan} />
           ))}
         </Svg>
         {/* Pontos toucaveis em camada superior. Usa View porque

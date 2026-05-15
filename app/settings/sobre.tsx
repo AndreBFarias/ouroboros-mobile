@@ -144,10 +144,9 @@ function SecaoCreditos() {
             lineHeight: typography.body.size * typography.body.lineHeight,
           }}
         >
-          Projeto comunitário de código aberto. Construído com Expo,
-          React Native e ferramentas livres. Distribuído sem
-          telemetria, sem coleta de dados e sem dependência de
-          serviços remotos.
+          Projeto comunitário de código aberto. Construído com Expo, React
+          Native e ferramentas livres. Distribuído sem telemetria, sem coleta de
+          dados e sem dependência de serviços remotos.
         </Text>
       </View>
     </SecaoLista>

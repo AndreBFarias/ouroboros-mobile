@@ -32,10 +32,7 @@ import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import type { Para } from '@/lib/schemas/para';
 import { stringifyCompanionMidia } from '@/lib/midia/companion';
-import {
-  videoPath,
-  videoCompanionPath,
-} from '@/lib/vault/paths';
+import { videoPath, videoCompanionPath } from '@/lib/vault/paths';
 import { vaultUriJoin } from '@/lib/vault';
 import type { OrigemCaptura } from '@/lib/midia/capturarFoto';
 
@@ -127,7 +124,7 @@ async function gravar(
   const destinoCompanion = vaultUriJoin(vaultRoot, companionRel);
 
   const autor = usePessoa.getState().pessoaAtiva;
-  const basename = (binarioRel.split('/').pop() ?? binarioRel);
+  const basename = binarioRel.split('/').pop() ?? binarioRel;
 
   await FileSystem.copyAsync({ from: origemUri, to: destinoBin });
 

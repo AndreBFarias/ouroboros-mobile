@@ -11,7 +11,10 @@
 // final para docs/sprints/M38-screenshots-gauntlet/.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
 export default async function caseM38(
   page: PlaywrightPageLike
@@ -60,9 +63,8 @@ export default async function caseM38(
     // Verifica que o header da sub-tela esta visivel.
     const titulo = await page.evaluate(() => {
       const all = Array.from(document.querySelectorAll('*'));
-      return all.some(
-        (el) =>
-          (el.textContent ?? '').trim().includes('Dispositivos pareados')
+      return all.some((el) =>
+        (el.textContent ?? '').trim().includes('Dispositivos pareados')
       );
     });
     if (!titulo) {
@@ -76,8 +78,9 @@ export default async function caseM38(
     }
 
     // Verifica que o container da lista tem accessibilityLabel.
-    const temContainer = await page.evaluate(() =>
-      !!document.querySelector('[aria-label="lista dispositivos pareados"]')
+    const temContainer = await page.evaluate(
+      () =>
+        !!document.querySelector('[aria-label="lista dispositivos pareados"]')
     );
     if (!temContainer) {
       return {

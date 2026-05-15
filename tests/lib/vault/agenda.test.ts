@@ -65,7 +65,10 @@ describe('AgendaEventoSchema', () => {
   });
 
   it('aceita campo local opcional', () => {
-    const r = AgendaEventoSchema.safeParse({ ...eventoBase, local: 'Sao Paulo' });
+    const r = AgendaEventoSchema.safeParse({
+      ...eventoBase,
+      local: 'Sao Paulo',
+    });
     expect(r.success).toBe(true);
   });
 
@@ -75,7 +78,10 @@ describe('AgendaEventoSchema', () => {
   });
 
   it('rejeita pessoa fora do enum', () => {
-    const r = AgendaEventoSchema.safeParse({ ...eventoBase, pessoa: 'pessoa_c' });
+    const r = AgendaEventoSchema.safeParse({
+      ...eventoBase,
+      pessoa: 'pessoa_c',
+    });
     expect(r.success).toBe(false);
   });
 
@@ -107,8 +113,16 @@ describe('listarEventosAgenda', () => {
       return {
         meta:
           i === 1
-            ? { ...eventoBase, id: 'tarde', inicio: '2026-05-07T20:00:00-03:00' }
-            : { ...eventoBase, id: 'manha', inicio: '2026-05-07T08:00:00-03:00' },
+            ? {
+                ...eventoBase,
+                id: 'tarde',
+                inicio: '2026-05-07T20:00:00-03:00',
+              }
+            : {
+                ...eventoBase,
+                id: 'manha',
+                inicio: '2026-05-07T08:00:00-03:00',
+              },
         body: '',
       };
     });
@@ -253,7 +267,9 @@ describe('sincronizarSnapshotAgenda', () => {
     // Cada chamada deve ter URI canonica via vaultUriJoin.
     for (let i = 0; i < 5; i++) {
       const uriArg = mockWriteVaultFile.mock.calls[i][0] as string;
-      expect(uriArg).toContain(`markdown/agenda-pessoa_a-2026-05-${String(7 + i).padStart(2, '0')}-ev_${i}.md`);
+      expect(uriArg).toContain(
+        `markdown/agenda-pessoa_a-2026-05-${String(7 + i).padStart(2, '0')}-ev_${i}.md`
+      );
     }
   });
 

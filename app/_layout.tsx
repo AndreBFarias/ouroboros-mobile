@@ -87,8 +87,9 @@ LogBox.ignoreLogs([
 //   CSS gerado pelo NativeWind aplicar as variantes dark:.
 // Em Web o Appearance pode não expor setColorScheme; usamos try/catch.
 try {
-  (StyleSheet as unknown as { setFlag?: (k: string, v: string) => void })
-    .setFlag?.('darkMode', 'class');
+  (
+    StyleSheet as unknown as { setFlag?: (k: string, v: string) => void }
+  ).setFlag?.('darkMode', 'class');
   Appearance.setColorScheme?.('dark');
 } catch {
   // Plataforma não suporta uma das duas APIs (web).
@@ -202,106 +203,106 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <FrameMobileDev>
-      <BiometriaGate bypass={MODO_DEV_WEB}>
-        <ToastProvider>
-          <OnboardingGuard />
-          <VaultBootGate />
-          <SessaoBootGate />
-          <PermissaoNotificacaoGate />
-          <PathnameSyncDev />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'slide_from_right',
-              contentStyle: { backgroundColor: '#282a36' },
-            }}
-          >
-            {/* Rota modal raiz para o share intent receiver (M08). A
+        <BiometriaGate bypass={MODO_DEV_WEB}>
+          <ToastProvider>
+            <OnboardingGuard />
+            <VaultBootGate />
+            <SessaoBootGate />
+            <PermissaoNotificacaoGate />
+            <PathnameSyncDev />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'slide_from_right',
+                contentStyle: { backgroundColor: '#282a36' },
+              }}
+            >
+              {/* Rota modal raiz para o share intent receiver (M08). A
                 activity de share abre direto aqui sem expor a Stack
                 principal; cancelar/salvar usam router.dismissAll()
                 para devolver foco ao app de origem. */}
-            <Stack.Screen
-              name="share-receive"
-              options={{
-                presentation: 'modal',
-                headerShown: false,
-              }}
-            />
-            {/* M26: 4 rotas modais raiz que abrem BottomSheet. Sao
+              <Stack.Screen
+                name="share-receive"
+                options={{
+                  presentation: 'modal',
+                  headerShown: false,
+                }}
+              />
+              {/* M26: 4 rotas modais raiz que abrem BottomSheet. Sao
                 registradas com presentation='transparentModal' para que
                 o root Stack (#282a36) nao vaze por baixo, e
                 contentStyle.backgroundColor=#14151a (bgPage Dracula)
                 forca fundo opaco. Combina com Screen padded={false}
                 dentro de cada rota para eliminar a Armadilha A18
                 (tela preta quando expand do sheet falha). */}
-            <Stack.Screen
-              name="humor-rapido"
-              options={{
-                presentation: 'transparentModal',
-                contentStyle: { backgroundColor: '#14151a' },
-                animation: 'fade_from_bottom',
-              }}
-            />
-            <Stack.Screen
-              name="diario-emocional"
-              options={{
-                presentation: 'transparentModal',
-                contentStyle: { backgroundColor: '#14151a' },
-                animation: 'fade_from_bottom',
-              }}
-            />
-            <Stack.Screen
-              name="eventos"
-              options={{
-                presentation: 'transparentModal',
-                contentStyle: { backgroundColor: '#14151a' },
-                animation: 'fade_from_bottom',
-              }}
-            />
-            <Stack.Screen
-              name="scanner"
-              options={{
-                presentation: 'transparentModal',
-                contentStyle: { backgroundColor: '#14151a' },
-                animation: 'fade_from_bottom',
-              }}
-            />
-            {/* M-CAPTURA-UNIFICADA: rota modal de decisao entre
+              <Stack.Screen
+                name="humor-rapido"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="diario-emocional"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="eventos"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="scanner"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              {/* M-CAPTURA-UNIFICADA: rota modal de decisao entre
                 "Registrar momento" e "Escanear documento". Mesmo
                 padrao M26 (transparentModal + bg Dracula opaco)
                 para mitigar Armadilha A18 (tela preta se sheet
                 falha em expand). */}
-            <Stack.Screen
-              name="captura"
-              options={{
-                presentation: 'transparentModal',
-                contentStyle: { backgroundColor: '#14151a' },
-                animation: 'fade_from_bottom',
-              }}
-            />
-            {/* M36: rota modal /recap. Espelho otimista do Vault em
+              <Stack.Screen
+                name="captura"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              {/* M36: rota modal /recap. Espelho otimista do Vault em
                 periodo selecionavel. Apresentacao modal padrao (slide
                 de baixo) com fundo opaco Dracula (#14151a) ja garantido
                 pelo Screen e pelo contentStyle do Stack raiz. */}
-            <Stack.Screen
-              name="recap"
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-                contentStyle: { backgroundColor: '#14151a' },
-              }}
-            />
-          </Stack>
-          {/* M27: overlays globais. Ordem de zIndex declarada em
+              <Stack.Screen
+                name="recap"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
+                  contentStyle: { backgroundColor: '#14151a' },
+                }}
+              />
+            </Stack>
+            {/* M27: overlays globais. Ordem de zIndex declarada em
               CONTRACT secao 7.10 (Stack 0 -> FABMenu 10 ->
               MenuLateral 20 -> BiometriaGate 30 -> Toast 40).
               Renderizados FORA da Stack para sobrepor qualquer
               rota; FABMenu se auto-esconde em rotas modais via
               rotaEsconderFAB(usePathname()). */}
-          <FABMenu />
-          <MenuLateral />
-        </ToastProvider>
-      </BiometriaGate>
+            <FABMenu />
+            <MenuLateral />
+          </ToastProvider>
+        </BiometriaGate>
       </FrameMobileDev>
     </GestureHandlerRootView>
   );

@@ -138,9 +138,7 @@ export default function RotinasIndex() {
                   }}
                 >
                   {`${rotina.exercicios.length} ${
-                    rotina.exercicios.length === 1
-                      ? 'exercício'
-                      : 'exercícios'
+                    rotina.exercicios.length === 1 ? 'exercício' : 'exercícios'
                   }`}
                 </Text>
                 <Text

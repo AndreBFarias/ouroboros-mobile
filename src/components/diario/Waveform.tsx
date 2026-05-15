@@ -55,7 +55,9 @@ export function Waveform({ amplitudes }: WaveformProps) {
       accessibilityLabel="visualizacao do audio gravado"
     >
       {barras.map((amp, idx) => {
-        const altura = ALTURA_MIN + Math.max(0, Math.min(1, amp)) * (ALTURA_MAX - ALTURA_MIN);
+        const altura =
+          ALTURA_MIN +
+          Math.max(0, Math.min(1, amp)) * (ALTURA_MAX - ALTURA_MIN);
         return (
           <MotiView
             key={idx}

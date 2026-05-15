@@ -131,7 +131,8 @@ export default function Eventos() {
     return tipoCompanhia === 'sozinho' ? [] : ['pessoa_b'];
   });
   const [categoria, setCategoria] = useState<EventoCategoria>(
-    () => (rascunho?.categoria as EventoCategoria | undefined) ?? CATEGORIA_DEFAULT
+    () =>
+      (rascunho?.categoria as EventoCategoria | undefined) ?? CATEGORIA_DEFAULT
   );
   const [fotos, setFotos] = useState<string[]>([]);
   // Midia anexada (M07.x). Obrigatoria em modo positivo via refine.
@@ -310,156 +311,156 @@ export default function Eventos() {
           if (idx === -1) router.back();
         }}
       >
-      <BottomSheetScrollView
-        contentContainerStyle={{
-          paddingHorizontal: spacing.lg,
-          paddingTop: spacing.md,
-          paddingBottom: spacing.xl,
-          gap: spacing.lg,
-        }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text
-          style={{
-            color: colors.fg,
-            fontFamily: 'JetBrainsMono_500Medium',
-            fontSize: 18,
-          }}
-          accessibilityRole="header"
-          accessibilityLabel="eventos"
-        >
-          Eventos
-        </Text>
-
-        <View style={{ gap: spacing.sm }}>
-          {tituloSecao('Modo')}
-          <View
-            style={{ flexDirection: 'row', gap: spacing.sm }}
-            accessibilityLabel="seletor de modo positivo ou negativo"
-          >
-            <Chip
-              label="Positivo"
-              accent="green"
-              selected={modo === 'positivo'}
-              onPress={() => setModo('positivo')}
-            />
-            <Chip
-              label="Negativo"
-              accent="red"
-              selected={modo === 'negativo'}
-              onPress={() => setModo('negativo')}
-            />
-          </View>
-        </View>
-
-        <MotiView
-          // Borda esquerda animada acompanha o modo (mesmo padrao
-          // da Tela 18). Verde em modo positivo, vermelho em modo
-          // negativo. Como apenas borderLeftWidth tem largura > 0,
-          // so a faixa esquerda muda visualmente.
-          animate={{ borderColor: corBordaModo }}
-          transition={springs.subtle}
-          style={{
-            borderLeftWidth: 2,
-            borderTopWidth: 0,
-            borderRightWidth: 0,
-            borderBottomWidth: 0,
-            borderColor: corBordaModo,
-            paddingLeft: spacing.base,
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.xl,
             gap: spacing.lg,
           }}
+          keyboardShouldPersistTaps="handled"
         >
-          <Textarea
-            label="O que aconteceu?"
-            placeholder="Conte com suas palavras."
-            value={texto}
-            onChangeText={setTexto}
-            accessibilityLabel="campo o que aconteceu"
-          />
-
-          <LocalizacaoBlock
-            lugar={lugar}
-            onChangeLugar={setLugar}
-            bairro={bairro}
-            onDetectar={handleDetectar}
-            detectando={detectandoBairro}
-          />
-
-          <QuandoBlock
-            modo={quando}
-            onChangeModo={setQuando}
-            dataCustom={dataCustom}
-            onChangeDataCustom={setDataCustom}
-          />
+          <Text
+            style={{
+              color: colors.fg,
+              fontFamily: 'JetBrainsMono_500Medium',
+              fontSize: 18,
+            }}
+            accessibilityRole="header"
+            accessibilityLabel="eventos"
+          >
+            Eventos
+          </Text>
 
           <View style={{ gap: spacing.sm }}>
-            {tituloSecao('Com quem')}
-            <ChipGroup
-              mode="multi"
-              value={com}
-              onChange={(next) => setCom(next as PessoaAutor[])}
-              options={opcoesCom}
-            />
+            {tituloSecao('Modo')}
+            <View
+              style={{ flexDirection: 'row', gap: spacing.sm }}
+              accessibilityLabel="seletor de modo positivo ou negativo"
+            >
+              <Chip
+                label="Positivo"
+                accent="green"
+                selected={modo === 'positivo'}
+                onPress={() => setModo('positivo')}
+              />
+              <Chip
+                label="Negativo"
+                accent="red"
+                selected={modo === 'negativo'}
+                onPress={() => setModo('negativo')}
+              />
+            </View>
           </View>
 
-          <View style={{ gap: spacing.sm }}>
-            {tituloSecao('Categoria')}
-            <ChipGroup
-              mode="single"
-              value={categoria}
-              onChange={(next) => {
-                if (next !== null) setCategoria(next as EventoCategoria);
-              }}
-              options={[...EVENTO_CATEGORIAS_OPTIONS]}
+          <MotiView
+            // Borda esquerda animada acompanha o modo (mesmo padrao
+            // da Tela 18). Verde em modo positivo, vermelho em modo
+            // negativo. Como apenas borderLeftWidth tem largura > 0,
+            // so a faixa esquerda muda visualmente.
+            animate={{ borderColor: corBordaModo }}
+            transition={springs.subtle}
+            style={{
+              borderLeftWidth: 2,
+              borderTopWidth: 0,
+              borderRightWidth: 0,
+              borderBottomWidth: 0,
+              borderColor: corBordaModo,
+              paddingLeft: spacing.base,
+              gap: spacing.lg,
+            }}
+          >
+            <Textarea
+              label="O que aconteceu?"
+              placeholder="Conte com suas palavras."
+              value={texto}
+              onChangeText={setTexto}
+              accessibilityLabel="campo o que aconteceu"
             />
-          </View>
 
-          <FotosBlock fotos={fotos} onChangeFotos={setFotos} />
+            <LocalizacaoBlock
+              lugar={lugar}
+              onChangeLugar={setLugar}
+              bairro={bairro}
+              onDetectar={handleDetectar}
+              detectando={detectandoBairro}
+            />
 
-          {/* M07.x: midia obrigatoria em modo positivo; opcional em
+            <QuandoBlock
+              modo={quando}
+              onChangeModo={setQuando}
+              dataCustom={dataCustom}
+              onChangeDataCustom={setDataCustom}
+            />
+
+            <View style={{ gap: spacing.sm }}>
+              {tituloSecao('Com quem')}
+              <ChipGroup
+                mode="multi"
+                value={com}
+                onChange={(next) => setCom(next as PessoaAutor[])}
+                options={opcoesCom}
+              />
+            </View>
+
+            <View style={{ gap: spacing.sm }}>
+              {tituloSecao('Categoria')}
+              <ChipGroup
+                mode="single"
+                value={categoria}
+                onChange={(next) => {
+                  if (next !== null) setCategoria(next as EventoCategoria);
+                }}
+                options={[...EVENTO_CATEGORIAS_OPTIONS]}
+              />
+            </View>
+
+            <FotosBlock fotos={fotos} onChangeFotos={setFotos} />
+
+            {/* M07.x: midia obrigatoria em modo positivo; opcional em
               modo negativo. Cap e toggle audio via useSettings. */}
-          <MidiaPicker
-            value={midia}
-            onChange={setMidia}
-            obrigatorio={modo === 'positivo'}
-          />
+            <MidiaPicker
+              value={midia}
+              onChange={setMidia}
+              obrigatorio={modo === 'positivo'}
+            />
 
-          <Slider
-            label="Como foi?"
-            min={1}
-            max={5}
-            step={1}
-            value={intensidade}
-            onChange={setIntensidade}
-            accessibilityLabel="slider como foi"
-          />
-        </MotiView>
+            <Slider
+              label="Como foi?"
+              min={1}
+              max={5}
+              step={1}
+              value={intensidade}
+              onChange={setIntensidade}
+              accessibilityLabel="slider como foi"
+            />
+          </MotiView>
 
-        {/* M33: destinatario / tema da anotacao. Render dinamico via
+          {/* M33: destinatario / tema da anotacao. Render dinamico via
             useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
             null e o default {tipo:'mim'} ja esta seedado. */}
-        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
+          <SeletorPara value={para} onChange={setPara} disabled={salvando} />
 
-        <Text
-          style={{
-            color: colors.mutedDecor,
-            fontFamily: 'JetBrainsMono_400Regular',
-            fontSize: 11,
-            lineHeight: 16,
-            textAlign: 'center',
-          }}
-          accessibilityLabel="rodape privacidade"
-        >
-          Salvo localmente. Ninguém vê além de vocês dois.
-        </Text>
+          <Text
+            style={{
+              color: colors.mutedDecor,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 11,
+              lineHeight: 16,
+              textAlign: 'center',
+            }}
+            accessibilityLabel="rodape privacidade"
+          >
+            Salvo localmente. Ninguém vê além de vocês dois.
+          </Text>
 
-        <Button
-          variant={variantBotao}
-          label={labelBotao}
-          onPress={handleSave}
-          disabled={salvando}
-        />
-      </BottomSheetScrollView>
+          <Button
+            variant={variantBotao}
+            label={labelBotao}
+            onPress={handleSave}
+            disabled={salvando}
+          />
+        </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );

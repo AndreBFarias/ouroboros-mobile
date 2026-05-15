@@ -5,7 +5,11 @@ describe('Toggle', () => {
   it('alterna ao pressionar', () => {
     const onChange = jest.fn();
     const { getByLabelText } = render(
-      <Toggle value={false} onChange={onChange} accessibilityLabel="modo silencioso" />
+      <Toggle
+        value={false}
+        onChange={onChange}
+        accessibilityLabel="modo silencioso"
+      />
     );
     fireEvent.press(getByLabelText('modo silencioso'));
     expect(onChange).toHaveBeenCalledWith(true);

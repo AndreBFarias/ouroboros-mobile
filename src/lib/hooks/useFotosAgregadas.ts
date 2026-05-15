@@ -119,8 +119,9 @@ async function lerMedidas(
   // Medidas: 'medidas-YYYY-MM-DD.md' (registro), excluindo
   // 'medidas-foto-...md' (companion).
   const arquivos = todos.filter(
-    (u) => matchesFeaturePrefix(u, 'medidas-') &&
-           !matchesFeaturePrefix(u, 'medidas-foto-')
+    (u) =>
+      matchesFeaturePrefix(u, 'medidas-') &&
+      !matchesFeaturePrefix(u, 'medidas-foto-')
   );
   const out: FotoAgregada[] = [];
 
@@ -223,7 +224,8 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
     // a useGaleriaMock) do bundle release.
     if (__DEV__) {
       if (!MODO_DEV_WEB) return;
-      const galeria = require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
+      const galeria =
+        require('@/lib/dev/galeriaMock') as typeof import('@/lib/dev/galeriaMock');
       setFotosMock(galeria.useGaleriaMock.getState().fotos);
       return galeria.useGaleriaMock.subscribe((s) => setFotosMock(s.fotos));
     }
@@ -272,18 +274,19 @@ export function useFotosAgregadas(): UseFotosAgregadasResult {
   // mock por cima das do Vault. Em mobile real fotosMock e sempre []
   // (a store nunca recebe entrada fora do helper guardado), entao
   // este merge e benigno.
-  const fotosFinais: FotoAgregada[] = MODO_DEV_WEB && fotosMock.length > 0
-    ? [
-        ...fotosMock.map((m) => ({
-          uri: m.uri,
-          data: m.data,
-          origem: 'galeria-manual' as FotoOrigem,
-          origemPath: m.origemPath,
-          origemSlug: m.origemSlug,
-        })),
-        ...fotos,
-      ]
-    : fotos;
+  const fotosFinais: FotoAgregada[] =
+    MODO_DEV_WEB && fotosMock.length > 0
+      ? [
+          ...fotosMock.map((m) => ({
+            uri: m.uri,
+            data: m.data,
+            origem: 'galeria-manual' as FotoOrigem,
+            origemPath: m.origemPath,
+            origemSlug: m.origemSlug,
+          })),
+          ...fotos,
+        ]
+      : fotos;
 
   return { fotos: fotosFinais, loading, error, recarregar: carregar };
 }

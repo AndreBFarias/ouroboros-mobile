@@ -22,7 +22,7 @@ const SOURCE_PATH = 'app/medidas/novo.tsx';
 const TARGET_DP = 44;
 
 export default async function caseWcagMedidas(
-  page: PlaywrightPageLike,
+  page: PlaywrightPageLike
 ): Promise<ResultadoE2E> {
   const sprint = 'M-WCAG-MEDIDAS';
   const aspecto = 'remover-foto-target-size';
@@ -69,7 +69,7 @@ export default async function caseWcagMedidas(
         // Heuristica robusta: encontra o Pressable do "remover foto"
         // pelo accessibilityLabel canonico e extrai hitSlop e width.
         const blocoMatch = txt.match(
-          /accessibilityLabel=\{`remover foto[^`]*`\}[\s\S]{0,400}/,
+          /accessibilityLabel=\{`remover foto[^`]*`\}[\s\S]{0,400}/
         );
         if (!blocoMatch) {
           return {

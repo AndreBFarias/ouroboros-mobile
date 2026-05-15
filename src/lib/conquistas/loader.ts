@@ -55,7 +55,12 @@ function fraseDoDiario(meta: DiarioEmocionalMeta): string {
 }
 
 function tipoDoCover(tipo: string): MidiaCoverTipo {
-  if (tipo === 'foto' || tipo === 'youtube' || tipo === 'spotify' || tipo === 'audio') {
+  if (
+    tipo === 'foto' ||
+    tipo === 'youtube' ||
+    tipo === 'spotify' ||
+    tipo === 'audio'
+  ) {
     return tipo;
   }
   // Default seguro: trata como audio (waveform decorativo nao quebra
@@ -71,9 +76,7 @@ function conquistaIdDiario(meta: DiarioEmocionalMeta): string {
   return `diario_vitoria:${meta.data}:${meta.autor}`;
 }
 
-async function lerEventosPositivos(
-  vaultRoot: string
-): Promise<Conquista[]> {
+async function lerEventosPositivos(vaultRoot: string): Promise<Conquista[]> {
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'evento-'));
@@ -109,9 +112,7 @@ async function lerEventosPositivos(
   return out;
 }
 
-async function lerDiarioVitorias( // anonimato-allow: substantivo comum sucesso/conquista
-  vaultRoot: string
-): Promise<Conquista[]> {
+async function lerDiarioVitorias(vaultRoot: string): Promise<Conquista[]> { // anonimato-allow: substantivo comum sucesso/conquista
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'diario-'));

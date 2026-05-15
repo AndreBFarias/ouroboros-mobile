@@ -95,9 +95,7 @@ export function QuandoBlock({
       >
         Quando
       </Text>
-      <View
-        style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}
-      >
+      <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
         <Chip
           label="Agora"
           accent="purple"

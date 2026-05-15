@@ -43,16 +43,14 @@ describe('SheetEscolhaCaptura', () => {
   });
 
   it('tap em "Registrar momento" dispara onRegistrarMomento', () => {
-    const { getByLabelText, onRegistrarMomento, onEscanearDocumento } =
-      setup();
+    const { getByLabelText, onRegistrarMomento, onEscanearDocumento } = setup();
     fireEvent.press(getByLabelText('registrar momento'));
     expect(onRegistrarMomento).toHaveBeenCalledTimes(1);
     expect(onEscanearDocumento).not.toHaveBeenCalled();
   });
 
   it('tap em "Escanear documento" dispara onEscanearDocumento', () => {
-    const { getByLabelText, onRegistrarMomento, onEscanearDocumento } =
-      setup();
+    const { getByLabelText, onRegistrarMomento, onEscanearDocumento } = setup();
     fireEvent.press(getByLabelText('escanear documento'));
     expect(onEscanearDocumento).toHaveBeenCalledTimes(1);
     expect(onRegistrarMomento).not.toHaveBeenCalled();

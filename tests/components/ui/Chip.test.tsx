@@ -28,12 +28,7 @@ describe('Chip', () => {
   it('respeita disabled', () => {
     const onPress = jest.fn();
     const { getByLabelText } = render(
-      <Chip
-        label="bloqueado"
-        selected={false}
-        onPress={onPress}
-        disabled
-      />
+      <Chip label="bloqueado" selected={false} onPress={onPress} disabled />
     );
     fireEvent.press(getByLabelText('chip bloqueado'));
     expect(onPress).not.toHaveBeenCalled();
@@ -96,12 +91,12 @@ describe('hexToRgba — helper de borda em rest com accent', () => {
     ];
     passantes.forEach((c) => {
       expect(ratioContraste(c, colors.bgElev)).toBeGreaterThanOrEqual(
-        WCAG_AA_TEXTO_GRANDE,
+        WCAG_AA_TEXTO_GRANDE
       );
     });
     // Red eh excecao conhecida e documentada.
     expect(ratioContraste(colors.red, colors.bgElev)).toBeLessThan(
-      WCAG_AA_TEXTO_GRANDE,
+      WCAG_AA_TEXTO_GRANDE
     );
   });
 
@@ -116,9 +111,7 @@ describe('hexToRgba — helper de borda em rest com accent', () => {
 describe('ChipGroup single', () => {
   function HarnessSingle() {
     const [v, setV] = useState<string | null>(null);
-    return (
-      <ChipGroup mode="single" options={OPTS} value={v} onChange={setV} />
-    );
+    return <ChipGroup mode="single" options={OPTS} value={v} onChange={setV} />;
   }
 
   it('seleciona e desseleciona', () => {
@@ -133,9 +126,7 @@ describe('ChipGroup single', () => {
 describe('ChipGroup multi', () => {
   function HarnessMulti() {
     const [v, setV] = useState<string[]>([]);
-    return (
-      <ChipGroup mode="multi" options={OPTS} value={v} onChange={setV} />
-    );
+    return <ChipGroup mode="multi" options={OPTS} value={v} onChange={setV} />;
   }
 
   it('aceita selecao multipla sem erro', () => {

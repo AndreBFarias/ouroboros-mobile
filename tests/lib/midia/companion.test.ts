@@ -2,10 +2,7 @@
 // Cobre tipos foto/audio/video/frase, todos os estados de Para
 // (mim/casal/outra), legenda opcional, slug ASCII de frase e o body
 // dedicado do tipo midia_frase.
-import {
-  slugDeFrase,
-  stringifyCompanionMidia,
-} from '@/lib/midia/companion';
+import { slugDeFrase, stringifyCompanionMidia } from '@/lib/midia/companion';
 
 describe('stringifyCompanionMidia (M34)', () => {
   it('serializa midia_foto com Para mim sem legenda', () => {

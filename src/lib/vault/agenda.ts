@@ -110,7 +110,9 @@ export async function listarEventosAgenda(
     }
   }
 
-  lidos.sort((a, b) => (a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0));
+  lidos.sort((a, b) =>
+    a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0
+  );
   return lidos;
 }
 
@@ -146,7 +148,11 @@ export async function salvarEventoAgenda(
   }
   await garantirPastaAgenda(vaultRoot, parsed.data.pessoa);
   const idSeguro = sanitizarEventoId(parsed.data.id);
-  const rel = agendaEventoPath(parsed.data.pessoa, parsed.data.inicio, idSeguro);
+  const rel = agendaEventoPath(
+    parsed.data.pessoa,
+    parsed.data.inicio,
+    idSeguro
+  );
   const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<AgendaEvento>(uri, parsed.data, descricao);
   return { uri, rel };

@@ -2,9 +2,7 @@ import { slugifyMarco } from '@/lib/marcos/slug';
 
 describe('slugifyMarco', () => {
   it('deriva slug ASCII da descricao', () => {
-    expect(slugifyMarco('Tres treinos nesta semana.')).toMatch(
-      /^tres-treinos/
-    );
+    expect(slugifyMarco('Tres treinos nesta semana.')).toMatch(/^tres-treinos/);
   });
 
   it('cap em 24 chars', () => {

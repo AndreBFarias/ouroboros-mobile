@@ -212,11 +212,7 @@ export function SeletorRotina({
         )}
 
         <View style={{ marginTop: spacing.base }}>
-          <Button
-            label="Cancelar"
-            onPress={onCancelar}
-            variant="ghost"
-          />
+          <Button label="Cancelar" onPress={onCancelar} variant="ghost" />
         </View>
       </ScrollView>
     </BottomSheetView>

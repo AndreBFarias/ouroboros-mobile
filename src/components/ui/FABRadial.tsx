@@ -18,15 +18,7 @@ import Animated, {
   withSpring,
   withDelay,
 } from 'react-native-reanimated';
-import {
-  Camera,
-  Dumbbell,
-  Heart,
-  Mic,
-  Plus,
-  Trophy,
-  Zap,
-} from '@/lib/icons';
+import { Camera, Dumbbell, Heart, Mic, Plus, Trophy, Zap } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
@@ -273,7 +265,7 @@ function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
 
   const labelAcima = action.angleDeg >= 240;
   const containerStyle = labelAcima
-    ? ({
+    ? {
         position: 'absolute' as const,
         bottom: ACTION_SIZE + 6,
         left: (ACTION_SIZE - 160) / 2,
@@ -282,8 +274,8 @@ function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         opacity: open ? 1 : 0,
-      })
-    : ({
+      }
+    : {
         position: 'absolute' as const,
         right: ACTION_SIZE + LABEL_GAP,
         top: (ACTION_SIZE - 28) / 2,
@@ -292,7 +284,7 @@ function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
         alignItems: 'flex-end' as const,
         justifyContent: 'center' as const,
         opacity: open ? 1 : 0,
-      });
+      };
 
   return (
     <Animated.View

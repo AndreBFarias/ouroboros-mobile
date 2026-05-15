@@ -45,7 +45,11 @@ describe('ItemTarefa', () => {
   });
 
   it('renderiza accessibilityLabel feita quando feito=true', () => {
-    const t = { ...baseTarefa, feito: true, feito_em: '2026-04-29T15:00:00-03:00' };
+    const t = {
+      ...baseTarefa,
+      feito: true,
+      feito_em: '2026-04-29T15:00:00-03:00',
+    };
     const { getByLabelText } = render(
       <ItemTarefa tarefa={t} onTap={() => undefined} />
     );
@@ -84,7 +88,11 @@ describe('ItemTarefa', () => {
   });
 
   it('renderiza com estado feito (sem quebrar)', () => {
-    const t = { ...baseTarefa, feito: true, feito_em: '2026-04-29T15:00:00-03:00' };
+    const t = {
+      ...baseTarefa,
+      feito: true,
+      feito_em: '2026-04-29T15:00:00-03:00',
+    };
     const { getByText } = render(
       <ItemTarefa tarefa={t} onTap={() => undefined} />
     );

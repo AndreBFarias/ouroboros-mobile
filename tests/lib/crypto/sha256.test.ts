@@ -4,11 +4,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as crypto from 'node:crypto';
-import {
-  sha256Bytes,
-  sha256Utf8,
-  sha256Base64,
-} from '@/lib/crypto/sha256';
+import { sha256Bytes, sha256Utf8, sha256Base64 } from '@/lib/crypto/sha256';
 
 describe('sha256 puro JS', () => {
   it('vetor NIST: string vazia', () => {
@@ -26,9 +22,7 @@ describe('sha256 puro JS', () => {
   it('vetor NIST: 56 bytes (boundary do padding)', () => {
     expect(
       sha256Utf8('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq')
-    ).toBe(
-      '248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1'
-    );
+    ).toBe('248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1');
   });
 
   it('paridade com Node crypto para texto longo', () => {
@@ -48,7 +42,10 @@ describe('sha256 puro JS', () => {
   });
 
   it('sha256Bytes em buffer pequeno (1 byte)', () => {
-    const node = crypto.createHash('sha256').update(new Uint8Array([0x61])).digest('hex');
+    const node = crypto
+      .createHash('sha256')
+      .update(new Uint8Array([0x61]))
+      .digest('hex');
     expect(sha256Bytes(new Uint8Array([0x61]))).toBe(node);
   });
 

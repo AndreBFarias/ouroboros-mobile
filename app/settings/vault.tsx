@@ -83,17 +83,11 @@ export default function VaultTela() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <SecaoLista
-          titulo="Pasta atual"
-          accessibilityLabel="secao pasta atual"
-        >
+        <SecaoLista titulo="Pasta atual" accessibilityLabel="secao pasta atual">
           <BlocoPathAtual vaultRoot={vaultRoot} />
         </SecaoLista>
 
-        <SecaoLista
-          titulo="Ações"
-          accessibilityLabel="secao acoes vault"
-        >
+        <SecaoLista titulo="Ações" accessibilityLabel="secao acoes vault">
           {confirmandoTroca ? (
             <BlocoConfirmacaoTroca
               ocupado={ocupado}
@@ -208,9 +202,9 @@ function BlocoConfirmacaoTroca({
           lineHeight: typography.caption.size * typography.caption.lineHeight,
         }}
       >
-        Os dados ficam na pasta antiga. Mova manualmente se quiser
-        levar o histórico junto, ou exporte um backup pela tela
-        anterior antes de trocar.
+        Os dados ficam na pasta antiga. Mova manualmente se quiser levar o
+        histórico junto, ou exporte um backup pela tela anterior antes de
+        trocar.
       </Text>
       <View style={{ flexDirection: 'row', gap: spacing.md }}>
         <View style={{ flex: 1 }}>

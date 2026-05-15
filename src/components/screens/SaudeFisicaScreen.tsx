@@ -152,9 +152,7 @@ export function SaudeFisicaScreen(): ReactNode {
 
       <View style={{ flex: 1 }} key={`tabs-${capturaNonce}`}>
         {tab === 'treinos' ? (
-          <MemoriasTreinosTab
-            onRegistrarAcaoExtra={handleRegistrarAcaoExtra}
-          />
+          <MemoriasTreinosTab onRegistrarAcaoExtra={handleRegistrarAcaoExtra} />
         ) : null}
         {tab === 'evolucao' ? (
           <EvolucaoCorporalTab

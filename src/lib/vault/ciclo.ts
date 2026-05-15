@@ -204,9 +204,7 @@ export async function escreverRegistroCiclo(
 // consecutivos e retorna a diferenca em dias. Default 28 quando não
 // houver dois inicios registrados (calendario adapta para 35 quando
 // duracao > 28).
-export function duracaoCicloDetectada(
-  registros: CicloMenstrualMeta[]
-): number {
+export function duracaoCicloDetectada(registros: CicloMenstrualMeta[]): number {
   const inicios: string[] = [];
   let ultimo: string | null = null;
   for (const r of registros) {

@@ -21,9 +21,9 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { SecaoSobre } from '@/components/settings/SecaoSobre';
 
-const openURLSpy = jest.spyOn(Linking, 'openURL').mockImplementation(
-  () => Promise.resolve()
-);
+const openURLSpy = jest
+  .spyOn(Linking, 'openURL')
+  .mockImplementation(() => Promise.resolve());
 
 describe('SecaoSobre', () => {
   beforeEach(() => {

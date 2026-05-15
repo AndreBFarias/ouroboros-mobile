@@ -23,8 +23,7 @@ import type {
   ResultadoE2E,
 } from '../../../docs/templates/e2e-template.e2e';
 
-const SCREENSHOT_DIR =
-  'docs/sprints/I-DIARIO-REFLEXAO-screenshots-gauntlet';
+const SCREENSHOT_DIR = 'docs/sprints/I-DIARIO-REFLEXAO-screenshots-gauntlet';
 
 interface SeedFn {
   reset: () => void;
@@ -92,9 +91,7 @@ async function tresChipsModo(page: PlaywrightPageLike): Promise<boolean> {
   });
 }
 
-async function tapRefletir(
-  page: PlaywrightPageLike
-): Promise<string | null> {
+async function tapRefletir(page: PlaywrightPageLike): Promise<string | null> {
   return page.evaluate(() => {
     const buttons = Array.from(
       document.querySelectorAll('[role="button"]')
@@ -183,8 +180,7 @@ export default async function caseSaveDiarioReflexao(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          'botao Refletir/Anotar/Registrar ausente no cenario reflexao',
+        detalhe: 'botao Refletir/Anotar/Registrar ausente no cenario reflexao',
         screenshots,
       };
     }
@@ -195,8 +191,7 @@ export default async function caseSaveDiarioReflexao(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          '__gauntlet.estado() lancou apos tap no cenario reflexao',
+        detalhe: '__gauntlet.estado() lancou apos tap no cenario reflexao',
         screenshots,
       };
     }

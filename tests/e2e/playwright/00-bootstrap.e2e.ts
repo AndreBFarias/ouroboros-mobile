@@ -4,7 +4,10 @@
 // outros E2E.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
 export default async function caseBootstrap(
   page: PlaywrightPageLike
@@ -18,8 +21,10 @@ export default async function caseBootstrap(
     await page.waitForTimeout(1500);
 
     // Confirma window.__gauntlet
-    const gauntletPresente = await page.evaluate(() =>
-      typeof (globalThis as unknown as { __gauntlet?: unknown }).__gauntlet !== 'undefined'
+    const gauntletPresente = await page.evaluate(
+      () =>
+        typeof (globalThis as unknown as { __gauntlet?: unknown })
+          .__gauntlet !== 'undefined'
     );
     if (!gauntletPresente) {
       return {

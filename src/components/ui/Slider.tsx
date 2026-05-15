@@ -190,8 +190,7 @@ export function Slider({
   );
 
   const display = step >= 1 ? Math.round(value).toString() : value.toFixed(2);
-  const a11y =
-    accessibilityLabel ?? (label ? `slider ${label}` : 'slider');
+  const a11y = accessibilityLabel ?? (label ? `slider ${label}` : 'slider');
 
   const Impl = Platform.OS === 'web' ? SliderWeb : SliderNative;
 

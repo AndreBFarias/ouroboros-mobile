@@ -54,11 +54,12 @@ const PERIODOS = [
   { value: 'personalizado', label: 'Personalizado' },
 ] as const;
 
-const MODOS: ReadonlyArray<{ value: RecapModo; label: string; a11y: string }> = [
-  { value: 'lista', label: 'Lista', a11y: 'modo lista' },
-  { value: 'calendario', label: 'Calendário', a11y: 'modo calendario' },
-  { value: 'memorias', label: 'Memórias', a11y: 'modo memorias' },
-];
+const MODOS: ReadonlyArray<{ value: RecapModo; label: string; a11y: string }> =
+  [
+    { value: 'lista', label: 'Lista', a11y: 'modo lista' },
+    { value: 'calendario', label: 'Calendário', a11y: 'modo calendario' },
+    { value: 'memorias', label: 'Memórias', a11y: 'modo memorias' },
+  ];
 
 function formatYmd(d: Date): string {
   const y = d.getFullYear();

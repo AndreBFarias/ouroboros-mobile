@@ -20,20 +20,14 @@ const exercicioBase: Exercicio = {
 describe('CardGaleria', () => {
   it('renderiza nome do exercicio em sentence case com acento', () => {
     const { getByText } = render(
-      <CardGaleria
-        exercicio={exercicioBase}
-        onPress={() => undefined}
-      />
+      <CardGaleria exercicio={exercicioBase} onPress={() => undefined} />
     );
     expect(getByText('Agachamento livre')).toBeTruthy();
   });
 
   it('mostra placeholder "Sem mídia" quando gif ausente', () => {
     const { getByText } = render(
-      <CardGaleria
-        exercicio={exercicioBase}
-        onPress={() => undefined}
-      />
+      <CardGaleria exercicio={exercicioBase} onPress={() => undefined} />
     );
     expect(getByText('Sem mídia')).toBeTruthy();
   });
@@ -45,7 +39,10 @@ describe('CardGaleria', () => {
     // vaultRoot, a logica devolve null e o fallback Dumbbell aparece.
     const { queryByLabelText } = render(
       <CardGaleria
-        exercicio={{ ...exercicioBase, gif: 'midia/exercicios/agachamento-livre.gif' }}
+        exercicio={{
+          ...exercicioBase,
+          gif: 'midia/exercicios/agachamento-livre.gif',
+        }}
         onPress={() => undefined}
       />
     );

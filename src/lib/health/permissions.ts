@@ -28,7 +28,8 @@ interface HealthConnectModule {
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod = require('react-native-health-connect') as Partial<HealthConnectModule>;
+    const mod =
+      require('react-native-health-connect') as Partial<HealthConnectModule>;
     if (
       typeof mod.requestPermission !== 'function' ||
       typeof mod.getGrantedPermissions !== 'function'
@@ -61,7 +62,9 @@ export const PERMISSOES_CANONICAS: PermissionItem[] = [
 // Solicita ao sistema permissions canonicas. Retorna a lista do que
 // o usuario realmente concedeu (pode ser subset). Em ambiente sem
 // suporte, retorna [] sem crashar.
-export async function solicitarPermissoesCanonicas(): Promise<PermissionItem[]> {
+export async function solicitarPermissoesCanonicas(): Promise<
+  PermissionItem[]
+> {
   const mod = carregarModulo();
   if (!mod) return [];
   try {

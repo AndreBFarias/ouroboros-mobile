@@ -93,7 +93,9 @@ export interface GauntletAPI {
   abrir(rota: string): Promise<void>;
   abrirMenu(): void;
   fecharMenu(): void;
-  abrirSheet(rota: 'humor-rapido' | 'diario-emocional' | 'eventos' | 'scanner'): Promise<void>;
+  abrirSheet(
+    rota: 'humor-rapido' | 'diario-emocional' | 'eventos' | 'scanner'
+  ): Promise<void>;
   estado(): GauntletEstado;
   // APIs novas pos auditoria 2026-05-04.
   // Aguarda fontes carregarem e stores hidratarem. Resolve true
@@ -125,7 +127,9 @@ export interface GauntletAPI {
   // 'diarios-3' alimenta useDiarioMock (3 entradas: trigger + vitoria
   // + reflexao). 'eventos-7' alimenta useEventosMock (7 eventos em
   // -7d a hoje). No-op em mobile (guard ja filtra).
-  seedComDados(fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'): Promise<void>;
+  seedComDados(
+    fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'
+  ): Promise<void>;
   // V4.0 (INFRA-VAULT-WEB-MOCK, 2026-05-08): le conteudo serializado
   // de um arquivo .md do Vault mock (web/dev). Util para E2E auditar
   // que features de save (devicesIndex, frase, humor, etc) realmente
@@ -308,7 +312,10 @@ function navegar(rota: string): Promise<void> {
 // Auditoria 2026-05-04 (item 3, 5): cada metodo publico checa
 // GAUNTLET_ATIVO antes de tocar nas stores. Sem isto, import direto
 // da const `gauntlet` em mobile real vazaria bypass.
-function comGuard<T extends unknown[], R>(fn: (...args: T) => R, fallback: R): (...args: T) => R {
+function comGuard<T extends unknown[], R>(
+  fn: (...args: T) => R,
+  fallback: R
+): (...args: T) => R {
   return (...args: T): R => {
     if (!GAUNTLET_ATIVO) return fallback;
     return fn(...args);
@@ -461,8 +468,14 @@ const api: GauntletAPI = {
     if (!GAUNTLET_ATIVO) return;
     return navegar(rota);
   },
-  abrirMenu: comGuard(() => useNavegacao.setState({ menuAberto: true }), undefined as void),
-  fecharMenu: comGuard(() => useNavegacao.setState({ menuAberto: false }), undefined as void),
+  abrirMenu: comGuard(
+    () => useNavegacao.setState({ menuAberto: true }),
+    undefined as void
+  ),
+  fecharMenu: comGuard(
+    () => useNavegacao.setState({ menuAberto: false }),
+    undefined as void
+  ),
   abrirSheet: async (rota) => {
     if (!GAUNTLET_ATIVO) return;
     // Garante seed minimo antes de tentar abrir sheet (rota modal
@@ -500,15 +513,17 @@ const api: GauntletAPI = {
     (uri: string) => useVaultMock.getState().getArquivo(uri) ?? null,
     null as string | null
   ),
-  listarVaultMock: comGuard(() => useVaultMock.getState().listar(), [] as string[]),
+  listarVaultMock: comGuard(
+    () => useVaultMock.getState().listar(),
+    [] as string[]
+  ),
   disparaBootHooks: async () => {
     if (!GAUNTLET_ATIVO) return;
     // Import dinamico para evitar ciclo: gauntlet.ts e leve em
     // tempo de require, e reagendamento.ts ja importa varios
     // modulos de feature lazy. Em web/dev o bundle ja inclui ambos.
-    const { reagendarTodosBootHooks } = await import(
-      '@/lib/boot/reagendamento'
-    );
+    const { reagendarTodosBootHooks } =
+      await import('@/lib/boot/reagendamento');
     await reagendarTodosBootHooks();
   },
 };

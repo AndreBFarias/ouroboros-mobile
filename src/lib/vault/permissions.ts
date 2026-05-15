@@ -95,7 +95,8 @@ export function sugestaoVaultPathDefault(): string {
 // caminho "Usar essa" do onboarding e pela sub-tela de Settings.
 export function sugestaoVaultUriDefault(): string {
   const docDir = FileSystem.documentDirectory;
-  if (!docDir) return 'file:///data/user/0/com.ouroboros.mobile/files/Ouroboros/';
+  if (!docDir)
+    return 'file:///data/user/0/com.ouroboros.mobile/files/Ouroboros/';
   return `${docDir}Ouroboros/`;
 }
 
@@ -391,7 +392,7 @@ export async function inicializarVaultEscolhido(
   // Sem isso, listVaultFolder/saves silenciosos. Volume secundario
   // permanece content:// (sem migration possivel).
   const migrated = trimmed.startsWith('content://')
-    ? safTreeUriToFileUri(trimmed) ?? trimmed
+    ? (safTreeUriToFileUri(trimmed) ?? trimmed)
     : trimmed;
   // V4.0.2: renomeia pasta com trailing space (artefato Syncthing/MIUI)
   // antes de qualquer probe ou write. Idempotente.
@@ -426,7 +427,8 @@ export async function requestVaultPermission(): Promise<string | null> {
     await writeKey(VAULT_ROOT_KEY, mockUri);
     return mockUri;
   }
-  const result = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+  const result =
+    await StorageAccessFramework.requestDirectoryPermissionsAsync();
   if (!result.granted) {
     return null;
   }

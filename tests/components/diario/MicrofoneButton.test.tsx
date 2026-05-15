@@ -59,8 +59,7 @@ const mockWriteAsStringAsync = jest.fn((_a?: string, _b?: string) =>
 jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
   copyAsync: (args: { from: string; to: string }) => mockCopyAsync(args),
-  writeAsStringAsync: (a: string, b: string) =>
-    mockWriteAsStringAsync(a, b),
+  writeAsStringAsync: (a: string, b: string) => mockWriteAsStringAsync(a, b),
 }));
 
 // Mock do useVault: retorna vaultRoot fixo para o componente nao

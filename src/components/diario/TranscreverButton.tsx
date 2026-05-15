@@ -129,8 +129,7 @@ export function TranscreverButton({
     if (estado !== 'listening') return;
     haptics.light().catch(() => undefined);
     await cancelTranscribe().catch(() => undefined);
-    const textoFinal =
-      (await promiseRef.current?.catch(() => '')) ?? '';
+    const textoFinal = (await promiseRef.current?.catch(() => '')) ?? '';
     promiseRef.current = null;
     // Q22.A: emitir UMA UNICA chamada de onTextoTranscrito por sessao
     // com o texto consolidado. Fallback pro ultimo parcial quando o
@@ -150,8 +149,7 @@ export function TranscreverButton({
     finalizar().catch(() => undefined);
   };
 
-  const corBorda =
-    estado === 'listening' ? colors.purple : colors.orange;
+  const corBorda = estado === 'listening' ? colors.purple : colors.orange;
   const labelEstado =
     estado === 'idle'
       ? 'Transcrever'

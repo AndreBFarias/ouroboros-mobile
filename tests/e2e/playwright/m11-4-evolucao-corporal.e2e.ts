@@ -102,7 +102,9 @@ export default async function caseM114EvolucaoCorporal(
     const temConteudo = await page.evaluate(() => {
       const txt = document.body.innerText;
       const hasEmpty = txt.includes('Sem registros corporais ainda.');
-      const hasCard = !!document.querySelector('[aria-label*="abrir medida de"]');
+      const hasCard = !!document.querySelector(
+        '[aria-label*="abrir medida de"]'
+      );
       return hasEmpty || hasCard;
     });
     if (!temConteudo) {
@@ -173,7 +175,8 @@ export default async function caseM114EvolucaoCorporal(
       sprint,
       aspecto,
       status: 'PASS',
-      detalhe: 'secao Evolucao corporal presente + botao Registrar navegou para /medidas/novo',
+      detalhe:
+        'secao Evolucao corporal presente + botao Registrar navegou para /medidas/novo',
       screenshots,
     };
   } catch (err) {

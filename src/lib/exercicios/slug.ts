@@ -22,9 +22,7 @@ function stripAccents(input: string): string {
 function toKebab(input: string, maxLen: number = MAX_LEN): string {
   const ascii = stripAccents(input).toLowerCase();
   // Substitui qualquer caractere que não seja [a-z 0-9] por hifen.
-  const compacted = ascii
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const compacted = ascii.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   if (compacted.length === 0) return '';
   if (compacted.length <= maxLen) return compacted;
   // Trunca preservando palavras: corta no ultimo '-' antes do limite.

@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { parseFrontmatter, stringifyFrontmatter } from '@/lib/vault/frontmatter';
+import {
+  parseFrontmatter,
+  stringifyFrontmatter,
+} from '@/lib/vault/frontmatter';
 
 const FixtureSchema = z.object({
   tipo: z.string(),

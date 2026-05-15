@@ -12,20 +12,11 @@ import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Bell } from '@/lib/icons';
-import {
-  Button,
-  EmptyState,
-  Header,
-  Screen,
-  useToast,
-} from '@/components/ui';
+import { Button, EmptyState, Header, Screen, useToast } from '@/components/ui';
 import { CardAlarme } from '@/components/alarmes/CardAlarme';
 import { spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
-import {
-  escreverAlarme,
-  listarAlarmes,
-} from '@/lib/vault/alarmes';
+import { escreverAlarme, listarAlarmes } from '@/lib/vault/alarmes';
 import {
   agendarAlarme,
   cancelarAlarme,

@@ -47,7 +47,8 @@ export default async function caseSobreReleaseNotes(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
+        detalhe:
+          'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
         screenshots,
       };
     }
@@ -61,7 +62,8 @@ export default async function caseSobreReleaseNotes(
     });
     await page.waitForTimeout(1200);
 
-    const a11yPath = 'docs/sprints/M-SOBRE-RELEASE-NOTES-screenshots-gauntlet/A-tela-sobre-completa.png';
+    const a11yPath =
+      'docs/sprints/M-SOBRE-RELEASE-NOTES-screenshots-gauntlet/A-tela-sobre-completa.png';
     await page.screenshot({ path: a11yPath, fullPage: true });
     screenshots.push(a11yPath);
 
@@ -74,9 +76,7 @@ export default async function caseSobreReleaseNotes(
         return all.some((el) => el.textContent?.trim() === t);
       }
       function contaVersoes(): number {
-        return document.querySelectorAll(
-          '[aria-label^="versao "]'
-        ).length;
+        return document.querySelectorAll('[aria-label^="versao "]').length;
       }
       return {
         secaoSobrePresente: tem('secao sobre'),
@@ -95,7 +95,9 @@ export default async function caseSobreReleaseNotes(
     if (!checks.versao100Presente) falhas.push('versao 1.0.0 nao renderizada');
     if (!checks.botaoGitHub) falhas.push('botao github ausente');
     if (checks.nVersoes < 3) {
-      falhas.push(`mini-changelog tem ${checks.nVersoes} entradas, esperado >=3`);
+      falhas.push(
+        `mini-changelog tem ${checks.nVersoes} entradas, esperado >=3`
+      );
     }
 
     if (falhas.length > 0) {

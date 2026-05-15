@@ -12,13 +12,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  Button,
-  Header,
-  Input,
-  Screen,
-  useToast,
-} from '@/components/ui';
+import { Button, Header, Input, Screen, useToast } from '@/components/ui';
 import { useVault } from '@/lib/stores/vault';
 import { getDeviceId } from '@/lib/util/deviceId';
 import {
@@ -110,10 +104,7 @@ export default function DispositivosTela() {
 
   return (
     <Screen>
-      <Header
-        title="Dispositivos pareados"
-        onBack={() => router.back()}
-      />
+      <Header title="Dispositivos pareados" onBack={() => router.back()} />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -129,14 +120,13 @@ export default function DispositivosTela() {
             color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: typography.caption.size,
-            lineHeight:
-              typography.caption.size * typography.caption.lineHeight,
+            lineHeight: typography.caption.size * typography.caption.lineHeight,
             paddingHorizontal: spacing.xs,
           }}
         >
-          Cada instalação do app gera um identificador único usado pra
-          evitar perda de dados quando dois ou mais aparelhos editam o
-          mesmo registro ao mesmo tempo.
+          Cada instalação do app gera um identificador único usado pra evitar
+          perda de dados quando dois ou mais aparelhos editam o mesmo registro
+          ao mesmo tempo.
         </Text>
 
         {carregando ? (
@@ -241,18 +231,10 @@ function DispositivoCard({
             />
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <View style={{ flex: 1 }}>
-                <Button
-                  label="Cancelar"
-                  variant="ghost"
-                  onPress={onCancelar}
-                />
+                <Button label="Cancelar" variant="ghost" onPress={onCancelar} />
               </View>
               <View style={{ flex: 1 }}>
-                <Button
-                  label="Salvar"
-                  variant="primary"
-                  onPress={onSalvar}
-                />
+                <Button label="Salvar" variant="primary" onPress={onSalvar} />
               </View>
             </View>
           </View>

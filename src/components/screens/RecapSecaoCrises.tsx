@@ -51,11 +51,7 @@ export function RecapSecaoCrises({ itens }: Props) {
                 paddingLeft: 12,
               }}
             >
-              <AlertTriangle
-                size={20}
-                color={colors.red}
-                strokeWidth={1.5}
-              />
+              <AlertTriangle size={20} color={colors.red} strokeWidth={1.5} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Text
                   style={{

@@ -49,7 +49,8 @@ function diario(
     com: [],
     contexto_social: [],
     texto,
-    midia: modo === 'vitoria' ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }] : [],
+    midia:
+      modo === 'vitoria' ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }] : [],
     para: { tipo: 'mim' },
   };
   return base;
@@ -68,7 +69,8 @@ function evento(
     com: [],
     intensidade,
     fotos: [],
-    midia: modo === 'positivo' ? [{ tipo: 'foto', path: 'media/fotos/y.jpg' }] : [],
+    midia:
+      modo === 'positivo' ? [{ tipo: 'foto', path: 'media/fotos/y.jpg' }] : [],
     para: { tipo: 'mim' },
     categoria: 'lazer',
   };
@@ -193,14 +195,21 @@ describe('agregarRecap', () => {
   it('agrega conquistas de varias origens', () => {
     const data = agregarRecap({
       humor: [],
-      diarios: [diario('2026-05-02T10:00:00-03:00', 'vitoria', 5, 'concluí o projeto')],
+      diarios: [
+        diario('2026-05-02T10:00:00-03:00', 'vitoria', 5, 'concluí o projeto'),
+      ],
       eventos: [evento('2026-05-01T10:00:00-03:00', 'positivo')],
       marcos: [marco('2026-04-30T10:00:00-03:00', 'novo recorde de leitura')],
       contadores: [contador('cigarro', '2026-04-20', 0)],
       treinos: [],
       tarefas: [
         tarefa('comprar pão', true, '2026-05-03T10:00:00-03:00'),
-        tarefa('estudar typescript', true, '2026-05-02T18:00:00-03:00', 'desenvolvimento_pessoal'),
+        tarefa(
+          'estudar typescript',
+          true,
+          '2026-05-02T18:00:00-03:00',
+          'desenvolvimento_pessoal'
+        ),
       ],
       de: range.de,
       ate: range.ate,
@@ -312,7 +321,9 @@ describe('agregarRecap', () => {
       ate: range.ate,
       agora,
     });
-    expect(um.evolucoes.find((e) => e.id === 'evolucao:humor_medio')).toBeUndefined();
+    expect(
+      um.evolucoes.find((e) => e.id === 'evolucao:humor_medio')
+    ).toBeUndefined();
 
     const dois = agregarRecap({
       humor: [humor('2026-05-03', 4), humor('2026-05-02', 2)],
@@ -326,7 +337,9 @@ describe('agregarRecap', () => {
       ate: range.ate,
       agora,
     });
-    expect(dois.evolucoes.find((e) => e.id === 'evolucao:humor_medio')).toBeDefined();
+    expect(
+      dois.evolucoes.find((e) => e.id === 'evolucao:humor_medio')
+    ).toBeDefined();
   });
 
   it('estado vazio devolve listas vazias e numeros zerados', () => {

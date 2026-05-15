@@ -177,13 +177,7 @@ export default function ExecutarTreino() {
     setSerieAtual((curr) => curr + 1);
     setEstado('descansando');
     setSegundosDescanso(exercicio.descanso_seg);
-  }, [
-    exercicio,
-    rotina,
-    ehUltimaSerie,
-    ehUltimoExercicio,
-    salvarSessao,
-  ]);
+  }, [exercicio, rotina, ehUltimaSerie, ehUltimoExercicio, salvarSessao]);
 
   const pularDescanso = useCallback(() => {
     void haptics.light();
@@ -585,8 +579,8 @@ export default function ExecutarTreino() {
                 lineHeight: 20,
               }}
             >
-              O progresso parcial será descartado. A rotina continua salva
-              em /rotinas.
+              O progresso parcial será descartado. A rotina continua salva em
+              /rotinas.
             </Text>
             <View style={{ gap: spacing.sm }}>
               <Button

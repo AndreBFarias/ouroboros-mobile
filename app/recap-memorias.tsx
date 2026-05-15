@@ -9,13 +9,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useRef, useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  Dimensions,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -99,8 +93,7 @@ export default function RecapMemoriasTela() {
               style={[
                 styles.barraInner,
                 {
-                  width:
-                    i < index ? '100%' : i === index ? '50%' : '0%',
+                  width: i < index ? '100%' : i === index ? '50%' : '0%',
                 },
               ]}
             />
@@ -207,7 +200,11 @@ function SlideRender({ slide }: { slide: Slide }) {
         <View style={styles.slideCentral}>
           <Text style={styles.numeroEnorme}>{slide.contagem}</Text>
           <Text style={styles.rotuloMaiusculo}>
-            {slide.contagem === 1 ? 'Vitória' : 'Vitórias' /* anonimato-allow: tipo de conquista do diario, nao nome real */}
+            {
+              slide.contagem === 1
+                ? 'Vitória' /* anonimato-allow: tipo de conquista do diario */
+                : 'Vitórias' /* anonimato-allow: tipo de conquista do diario */
+            }
           </Text>
           {slide.frasePrincipal ? (
             <Text style={styles.citacao} numberOfLines={3}>

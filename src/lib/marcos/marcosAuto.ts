@@ -73,7 +73,10 @@ function avaliarTresTreinosSemana(
     .filter((t) => t.autor === autor)
     .filter((t) => new Date(t.data).getTime() >= limite);
   if (recentes.length >= 3) {
-    return { descricao: 'Três treinos nesta semana.', tags: ['treino', 'consistencia'] };
+    return {
+      descricao: 'Três treinos nesta semana.',
+      tags: ['treino', 'consistencia'],
+    };
   }
   return null;
 }
@@ -181,9 +184,7 @@ function avaliarPrimeiraConquistaSemana(
 }
 
 // Le humores (daily/<data>.md) e diarios emocionais para o autor.
-async function lerSinaisDeAutor(
-  vaultRoot: string
-): Promise<{
+async function lerSinaisDeAutor(vaultRoot: string): Promise<{
   humores: HumorMeta[];
   diarios: DiarioEmocionalMeta[];
 }> {
@@ -192,7 +193,9 @@ async function lerSinaisDeAutor(
   const markdownUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(markdownUri, '.md');
   const arquivosHumor = todos.filter((u) => matchesFeaturePrefix(u, 'humor-'));
-  const arquivosDiario = todos.filter((u) => matchesFeaturePrefix(u, 'diario-'));
+  const arquivosDiario = todos.filter((u) =>
+    matchesFeaturePrefix(u, 'diario-')
+  );
 
   const humores: HumorMeta[] = [];
   for (const a of arquivosHumor) {

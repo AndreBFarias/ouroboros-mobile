@@ -132,7 +132,9 @@ export function MenuLateral() {
     const rotaCaptura = (key: FABRadialKey): string => {
       const r = routeForCapture(key);
       if (r.params) {
-        const qs = new URLSearchParams(r.params as Record<string, string>).toString();
+        const qs = new URLSearchParams(
+          r.params as Record<string, string>
+        ).toString();
         return qs.length > 0 ? `${r.pathname}?${qs}` : r.pathname;
       }
       return r.pathname;
@@ -144,39 +146,99 @@ export function MenuLateral() {
     // o cache no Vault.
     const ver: ItemMenu[] = [
       { label: 'Hoje', a11yLabel: 'item hoje', icone: Home, route: '/' },
-      { label: 'Recap', a11yLabel: 'item recap', icone: BarChart, route: '/recap' },
-      { label: 'Saúde Física', a11yLabel: 'item saude fisica', icone: Layers, route: '/saude-fisica' },
-      { label: 'Humor', a11yLabel: 'item humor', icone: Heart, route: '/humor' },
+      {
+        label: 'Recap',
+        a11yLabel: 'item recap',
+        icone: BarChart,
+        route: '/recap',
+      },
+      {
+        label: 'Saúde Física',
+        a11yLabel: 'item saude fisica',
+        icone: Layers,
+        route: '/saude-fisica',
+      },
+      {
+        label: 'Humor',
+        a11yLabel: 'item humor',
+        icone: Heart,
+        route: '/humor',
+      },
       // L2 (M-RECAP-CALENDARIO-UNIFICAR, 2026-05-07): item "Calendario"
       // removido. Recap (toggle modo Lista/Calendario) absorveu a tela.
       // ADR-0021. Subrota /calendario/[id] (detalhe da conquista)
       // continua acessivel via tap no ConquistaCard dentro do Recap.
       // M37.1: item "Agenda" (Google Calendar leitura).
-      { label: 'Agenda', a11yLabel: 'item agenda', icone: CalendarRange, route: '/agenda' },
+      {
+        label: 'Agenda',
+        a11yLabel: 'item agenda',
+        icone: CalendarRange,
+        route: '/agenda',
+      },
       // Q9 (Onda Q): "Galeria" — vault explorer unificado que mostra
       // todos os registros salvos com filtros rapidos por tipo.
-      { label: 'Galeria', a11yLabel: 'item galeria', icone: ImageIcon, route: '/galeria' },
+      {
+        label: 'Galeria',
+        a11yLabel: 'item galeria',
+        icone: ImageIcon,
+        route: '/galeria',
+      },
     ];
     if (featureToggles.mostrarFinancasEmDesenvolvimento) {
-      ver.push({ label: 'Finanças', a11yLabel: 'item financas', icone: Wallet, route: '/financas' });
+      ver.push({
+        label: 'Finanças',
+        a11yLabel: 'item financas',
+        icone: Wallet,
+        route: '/financas',
+      });
     }
 
     const registrar: ItemMenu[] = [
-      { label: 'Humor', a11yLabel: 'registrar humor', icone: Heart, route: rotaCaptura('humor'), cor: colors.pink },
-      { label: 'Voz', a11yLabel: 'registrar voz', icone: Mic, route: rotaCaptura('voz'), cor: colors.cyan },
+      {
+        label: 'Humor',
+        a11yLabel: 'registrar humor',
+        icone: Heart,
+        route: rotaCaptura('humor'),
+        cor: colors.pink,
+      },
+      {
+        label: 'Voz',
+        a11yLabel: 'registrar voz',
+        icone: Mic,
+        route: rotaCaptura('voz'),
+        cor: colors.cyan,
+      },
       // M-CAPTURA-UNIFICADA: Camera passa a apontar para a rota
       // /captura (transparentModal) que ramifica entre "Registrar
       // momento" e "Escanear documento". Em vez do legado
       // rotaCaptura('camera') -> /scanner, que pulava direto a decisao.
-      { label: 'Câmera', a11yLabel: 'registrar camera', icone: Camera, route: '/captura', cor: colors.orange },
+      {
+        label: 'Câmera',
+        a11yLabel: 'registrar camera',
+        icone: Camera,
+        route: '/captura',
+        cor: colors.orange,
+      },
       // L1 (M-MEMORIAS-PARA-SAUDE-FISICA, 2026-05-07): item
       // "Exercícios" foi movido daqui para a aba Exercicios dentro de
       // /saude-fisica (a galeria fica naturalmente agrupada com
       // Treinos e Evolucao Corporal). MenuLateral seca "Registrar"
       // perde uma entrada — o caminho de cadastro continua acessivel
       // via FAB+ verde dentro da aba.
-      { label: 'Conquista', a11yLabel: 'registrar conquista', icone: Trophy, route: rotaCaptura('vitoria'), cor: colors.yellow },
-      { label: 'Crise', a11yLabel: 'registrar crise', icone: AlertTriangle, route: rotaCaptura('trigger'), cor: colors.red },
+      {
+        label: 'Conquista',
+        a11yLabel: 'registrar conquista',
+        icone: Trophy,
+        route: rotaCaptura('vitoria'),
+        cor: colors.yellow,
+      },
+      {
+        label: 'Crise',
+        a11yLabel: 'registrar crise',
+        icone: AlertTriangle,
+        route: rotaCaptura('trigger'),
+        cor: colors.red,
+      },
     ];
 
     // Secao "Utilitarios" (renomeada em K2; era "Opcionais"): cada
@@ -184,21 +246,46 @@ export function MenuLateral() {
     // sao todos off em M27; M29 vira para on.
     const opcionais: ItemMenu[] = [];
     if (featureToggles.todoLeve) {
-      opcionais.push({ label: 'Tarefas', a11yLabel: 'item tarefas', icone: ListChecks, route: '/todo' });
+      opcionais.push({
+        label: 'Tarefas',
+        a11yLabel: 'item tarefas',
+        icone: ListChecks,
+        route: '/todo',
+      });
     }
     if (featureToggles.alarmePessoal) {
-      opcionais.push({ label: 'Alarmes', a11yLabel: 'item alarmes', icone: BellRing, route: '/alarmes' });
+      opcionais.push({
+        label: 'Alarmes',
+        a11yLabel: 'item alarmes',
+        icone: BellRing,
+        route: '/alarmes',
+      });
     }
     if (featureToggles.contadorDiasSem) {
-      opcionais.push({ label: 'Contadores', a11yLabel: 'item contadores', icone: Hash, route: '/contadores' });
+      opcionais.push({
+        label: 'Contadores',
+        a11yLabel: 'item contadores',
+        icone: Hash,
+        route: '/contadores',
+      });
     }
     if (featureToggles.cicloMenstrual && mostrarCiclo) {
-      opcionais.push({ label: 'Ciclo', a11yLabel: 'item ciclo', icone: Moon, route: '/ciclo' });
+      opcionais.push({
+        label: 'Ciclo',
+        a11yLabel: 'item ciclo',
+        icone: Moon,
+        route: '/ciclo',
+      });
     }
     // Q14 (Onda Q, 2026-05-12): entry de Rotinas de Treino. Antes
     // so descobrivel via SheetNovoTreino → Usar rotina → Abrir rotinas.
     // Agora visivel diretamente no menu para edicao/criacao livre.
-    opcionais.push({ label: 'Rotinas', a11yLabel: 'item rotinas', icone: Dumbbell, route: '/rotinas' });
+    opcionais.push({
+      label: 'Rotinas',
+      a11yLabel: 'item rotinas',
+      icone: Dumbbell,
+      route: '/rotinas',
+    });
 
     const lista: SecaoMenu[] = [
       { titulo: 'Acesso Rápido', itens: ver },
@@ -285,7 +372,6 @@ export function MenuLateral() {
       />
 
       <PainelDrawer>
-
         <ScrollView
           ref={scrollRef}
           onScroll={aoRolar}
@@ -428,7 +514,11 @@ function Secao({ secao, onItemPress }: SecaoProps) {
         {secao.titulo}
       </Text>
       {secao.itens.map((item) => (
-        <ItemBotao key={item.label + item.route} item={item} onPress={onItemPress} />
+        <ItemBotao
+          key={item.label + item.route}
+          item={item}
+          onPress={onItemPress}
+        />
       ))}
     </View>
   );

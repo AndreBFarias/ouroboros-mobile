@@ -39,10 +39,7 @@ export async function comTimeout<T>(
     return await Promise.race<T>([
       p,
       new Promise<T>((_, rej) => {
-        timer = setTimeout(
-          () => rej(new Error('timeout salvando')),
-          ms
-        );
+        timer = setTimeout(() => rej(new Error('timeout salvando')), ms);
       }),
     ]);
   } finally {

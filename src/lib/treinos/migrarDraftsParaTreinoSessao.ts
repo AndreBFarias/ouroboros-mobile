@@ -45,7 +45,9 @@ function joinUri(root: string, rel: string): string {
 
 // Extrai data + slug do path canonico
 // treinos/draft/<YYYY-MM-DD>-<slug>.md.
-function parseDraftFilename(uri: string): { data: string; slug: string } | null {
+function parseDraftFilename(
+  uri: string
+): { data: string; slug: string } | null {
   const decoded = decodeURIComponent(uri);
   const match = decoded.match(/(\d{4}-\d{2}-\d{2})-([^/]+)\.md$/);
   if (!match) return null;

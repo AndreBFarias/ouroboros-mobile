@@ -48,10 +48,7 @@ export function MidiaYoutubeTab({
   };
 
   return (
-    <View
-      style={{ gap: spacing.sm }}
-      accessibilityLabel="aba youtube"
-    >
+    <View style={{ gap: spacing.sm }} accessibilityLabel="aba youtube">
       <Input
         label="Cole o link do vídeo"
         placeholder="https://youtube.com/watch?v=..."

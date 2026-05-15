@@ -32,7 +32,12 @@ interface ExpoSpeechRecognitionErrorEvent {
 interface SpeechRecognitionModule {
   addListener: (
     event: 'result' | 'error' | 'end',
-    cb: (e: ExpoSpeechRecognitionResultEvent | ExpoSpeechRecognitionErrorEvent | unknown) => void
+    cb: (
+      e:
+        | ExpoSpeechRecognitionResultEvent
+        | ExpoSpeechRecognitionErrorEvent
+        | unknown
+    ) => void
   ) => { remove: () => void };
   start: (config: {
     lang: string;
@@ -62,10 +67,7 @@ const IDIOMA = 'pt-BR';
 // API spec; o módulo os mapeia para SpeechRecognizer Android. Lista
 // fechada -- qualquer código não listado vira Error genérico que o
 // caller exibe como 'microfone indisponível'.
-const ERROS_PERMISSAO = new Set([
-  'not-allowed',
-  'service-not-allowed',
-]);
+const ERROS_PERMISSAO = new Set(['not-allowed', 'service-not-allowed']);
 
 // Inicia uma sessão de transcrição. Resolve com texto final quando
 // o reconhecedor encerra (silêncio detectado, stop manual, ou

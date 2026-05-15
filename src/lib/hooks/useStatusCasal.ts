@@ -86,7 +86,10 @@ function formatYmdLocal(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function maisRecente(a: UltimaAtividade | null, b: UltimaAtividade): UltimaAtividade {
+function maisRecente(
+  a: UltimaAtividade | null,
+  b: UltimaAtividade
+): UltimaAtividade {
   if (!a) return b;
   return a.iso >= b.iso ? a : b;
 }
@@ -181,8 +184,12 @@ export function useStatusCasal(ymdOverride?: string): StatusCasalData {
 
         if (cancelled) return;
 
-        setPessoaA(calcularStatus('pessoa_a', humorMeta, diariosLidos, eventosLidos));
-        setPessoaB(calcularStatus('pessoa_b', humorMeta, diariosLidos, eventosLidos));
+        setPessoaA(
+          calcularStatus('pessoa_a', humorMeta, diariosLidos, eventosLidos)
+        );
+        setPessoaB(
+          calcularStatus('pessoa_b', humorMeta, diariosLidos, eventosLidos)
+        );
         setLoading(false);
       } catch (err) {
         if (cancelled) return;

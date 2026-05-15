@@ -21,7 +21,9 @@ function srgbToLin(c: number): number {
   return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
 }
 
-function parseRgb(s: string): { r: number; g: number; b: number; a: number } | null {
+function parseRgb(
+  s: string
+): { r: number; g: number; b: number; a: number } | null {
   // rgb(...) ou rgba(...)
   const m = s.match(/rgba?\(([^)]+)\)/i);
   if (m) {
@@ -39,7 +41,11 @@ function parseRgb(s: string): { r: number; g: number; b: number; a: number } | n
   const hex = s.match(/^#([0-9a-f]{3,8})$/i);
   if (hex) {
     let h = hex[1];
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    if (h.length === 3)
+      h = h
+        .split('')
+        .map((c) => c + c)
+        .join('');
     if (h.length === 6) {
       return {
         r: parseInt(h.slice(0, 2), 16),
@@ -121,7 +127,9 @@ export default async function caseM342Contraste(
       const alvo = candidatos.find((b) => {
         const aria = b.getAttribute('aria-label') ?? '';
         const txt = b.textContent ?? '';
-        return aria.includes('Registrar foto') || txt.includes('Registrar foto');
+        return (
+          aria.includes('Registrar foto') || txt.includes('Registrar foto')
+        );
       });
       if (!alvo) {
         return { ok: false, motivo: 'botao nao encontrado' };
@@ -214,8 +222,7 @@ export default async function caseM342Contraste(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe:
-          `area de toque insuficiente: ${medida.width}x${medida.height} (< 44x44)`,
+        detalhe: `area de toque insuficiente: ${medida.width}x${medida.height} (< 44x44)`,
         screenshots,
       };
     }

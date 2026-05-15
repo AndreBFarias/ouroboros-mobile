@@ -100,7 +100,10 @@ export default async function caseM35FinancasEmpty(
     // "financas" nao aparece (toggle OFF esconde).
     await page.evaluate(async () => {
       const w = globalThis as unknown as {
-        __gauntlet: { abrir: (rota: string) => Promise<void>; abrirMenu: () => void };
+        __gauntlet: {
+          abrir: (rota: string) => Promise<void>;
+          abrirMenu: () => void;
+        };
       };
       await w.__gauntlet.abrir('/');
       w.__gauntlet.abrirMenu();

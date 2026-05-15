@@ -9,9 +9,10 @@
 // Mock do gauntlet: forca GAUNTLET_ATIVO=true para que seedDiarios
 // nao seja no-op em ambiente jest (default Platform.OS='ios').
 jest.mock('@/lib/dev/gauntlet', () => {
-  const actual = jest.requireActual<typeof import('@/lib/dev/gauntlet')>(
-    '@/lib/dev/gauntlet'
-  );
+  const actual =
+    jest.requireActual<typeof import('@/lib/dev/gauntlet')>(
+      '@/lib/dev/gauntlet'
+    );
   return {
     __esModule: true,
     ...actual,

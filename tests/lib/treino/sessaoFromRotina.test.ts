@@ -30,7 +30,11 @@ function fixtureRotina(over: Partial<RotinaMeta> = {}): RotinaMeta {
 
 describe('sessaoFromRotina', () => {
   it('mapeia campos basicos', () => {
-    const out = sessaoFromRotina(fixtureRotina(), '2026-05-12T10:00:00-03:00', 'pessoa_a');
+    const out = sessaoFromRotina(
+      fixtureRotina(),
+      '2026-05-12T10:00:00-03:00',
+      'pessoa_a'
+    );
     expect(out.tipo).toBe('treino_sessao');
     expect(out.rotina).toBe('Treino A');
     expect(out.data).toBe('2026-05-12T10:00:00-03:00');
@@ -83,9 +87,7 @@ describe('sessaoFromRotina', () => {
 
   it('reps "amrap" cai em fallback 10', () => {
     const rot = fixtureRotina({
-      exercicios: [
-        { ...fixtureRotina().exercicios[0], reps: 'amrap' },
-      ],
+      exercicios: [{ ...fixtureRotina().exercicios[0], reps: 'amrap' }],
     });
     const out = sessaoFromRotina(rot, '2026-05-12', 'pessoa_a');
     expect(out.exercicios?.[0].reps).toBe(10);
@@ -93,9 +95,7 @@ describe('sessaoFromRotina', () => {
 
   it('reps "ate falha" cai em fallback 10', () => {
     const rot = fixtureRotina({
-      exercicios: [
-        { ...fixtureRotina().exercicios[0], reps: 'ate falha' },
-      ],
+      exercicios: [{ ...fixtureRotina().exercicios[0], reps: 'ate falha' }],
     });
     const out = sessaoFromRotina(rot, '2026-05-12', 'pessoa_a');
     expect(out.exercicios?.[0].reps).toBe(10);
@@ -103,9 +103,7 @@ describe('sessaoFromRotina', () => {
 
   it('reps string vazia cai em fallback 10', () => {
     const rot = fixtureRotina({
-      exercicios: [
-        { ...fixtureRotina().exercicios[0], reps: '   ' },
-      ],
+      exercicios: [{ ...fixtureRotina().exercicios[0], reps: '   ' }],
     });
     const out = sessaoFromRotina(rot, '2026-05-12', 'pessoa_a');
     expect(out.exercicios?.[0].reps).toBe(10);
@@ -113,9 +111,7 @@ describe('sessaoFromRotina', () => {
 
   it('carga_kg null vira undefined (peso corporal)', () => {
     const rot = fixtureRotina({
-      exercicios: [
-        { ...fixtureRotina().exercicios[0], carga_kg: null },
-      ],
+      exercicios: [{ ...fixtureRotina().exercicios[0], carga_kg: null }],
     });
     const out = sessaoFromRotina(rot, '2026-05-12', 'pessoa_a');
     expect(out.exercicios?.[0].carga_kg).toBeUndefined();
@@ -123,9 +119,7 @@ describe('sessaoFromRotina', () => {
 
   it('carga_kg 0 preservado (treino sem peso explicito)', () => {
     const rot = fixtureRotina({
-      exercicios: [
-        { ...fixtureRotina().exercicios[0], carga_kg: 0 },
-      ],
+      exercicios: [{ ...fixtureRotina().exercicios[0], carga_kg: 0 }],
     });
     const out = sessaoFromRotina(rot, '2026-05-12', 'pessoa_a');
     expect(out.exercicios?.[0].carga_kg).toBe(0);

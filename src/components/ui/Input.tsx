@@ -10,11 +10,7 @@ import { colors } from '@/theme/tokens';
 // Subset suportado de autoCapitalize. O TextInput nativo aceita os 4
 // valores; expomos os mesmos para refletir a API do React Native sem
 // alargar a superficie da abstracao.
-export type InputAutoCapitalize =
-  | 'none'
-  | 'sentences'
-  | 'words'
-  | 'characters';
+export type InputAutoCapitalize = 'none' | 'sentences' | 'words' | 'characters';
 
 export interface InputProps {
   value: string;
@@ -52,9 +48,7 @@ export function Input({
   return (
     <View>
       {label ? (
-        <Text className="font-mono text-muted text-xs mb-2">
-          {label}
-        </Text>
+        <Text className="font-mono text-muted text-xs mb-2">{label}</Text>
       ) : null}
       <MotiView
         animate={{

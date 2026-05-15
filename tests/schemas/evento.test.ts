@@ -63,9 +63,9 @@ describe('EventoSchema', () => {
 
   // M07.x: refine de midia obrigatoria em modo positivo.
   it('rejeita positivo sem midia', () => {
-    expect(() =>
-      EventoSchema.parse({ ...baseEvento, midia: [] })
-    ).toThrow(/positivo exige pelo menos uma midia/);
+    expect(() => EventoSchema.parse({ ...baseEvento, midia: [] })).toThrow(
+      /positivo exige pelo menos uma midia/
+    );
   });
 
   it('aceita negativo sem midia', () => {

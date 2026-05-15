@@ -4,9 +4,14 @@
 // transicao (presente -> ausente). Bug descoberto: oscila.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
-export default async function caseM27_1(page: PlaywrightPageLike): Promise<ResultadoE2E> {
+export default async function caseM27_1(
+  page: PlaywrightPageLike
+): Promise<ResultadoE2E> {
   const sprint = 'M27.1';
   const aspecto = 'boot-sem-oscila';
   const screenshots: string[] = [];
@@ -28,15 +33,18 @@ export default async function caseM27_1(page: PlaywrightPageLike): Promise<Resul
       let anterior: boolean | null = null;
       let count = 0;
       for (let i = 0; i < 40; i++) {
-        const presente = !!document.querySelector('[aria-label="loader ouroboros"]');
+        const presente = !!document.querySelector(
+          '[aria-label="loader ouroboros"]'
+        );
         if (anterior !== null && anterior !== presente) count++;
         anterior = presente;
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, 200));
       }
       return count;
     });
 
-    const path = 'docs/validacao-gauntlet-2026-05-03/screenshots/M27.1/A-boot-oscila-em-humor.png';
+    const path =
+      'docs/validacao-gauntlet-2026-05-03/screenshots/M27.1/A-boot-oscila-em-humor.png';
     await page.screenshot({ path });
     screenshots.push(path);
 
@@ -49,8 +57,20 @@ export default async function caseM27_1(page: PlaywrightPageLike): Promise<Resul
         screenshots,
       };
     }
-    return { sprint, aspecto, status: 'PASS', detalhe: `${transicoes} transicoes em 8s`, screenshots };
+    return {
+      sprint,
+      aspecto,
+      status: 'PASS',
+      detalhe: `${transicoes} transicoes em 8s`,
+      screenshots,
+    };
   } catch (err) {
-    return { sprint, aspecto, status: 'FAIL', detalhe: `erro: ${(err as Error).message}`, screenshots };
+    return {
+      sprint,
+      aspecto,
+      status: 'FAIL',
+      detalhe: `erro: ${(err as Error).message}`,
+      screenshots,
+    };
   }
 }

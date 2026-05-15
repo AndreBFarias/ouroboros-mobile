@@ -99,7 +99,10 @@ export default function CicloRegistrar() {
 
   // Data alvo do registro: param da rota ou hoje. Hoje em UTC-3.
   const dataAlvo = useMemo(() => {
-    if (typeof params.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.data)) {
+    if (
+      typeof params.data === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(params.data)
+    ) {
       return params.data;
     }
     return formatDateYmd(new Date());

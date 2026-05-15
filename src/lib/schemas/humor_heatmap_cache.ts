@@ -17,9 +17,7 @@ const Slider1a5 = z.number().int().min(1).max(5);
 // pode ter dois registros no mesmo dia (humor manha + noite, ou
 // pessoa_a + pessoa_b); o cache lista todas as ocorrencias.
 export const HumorHeatmapCellSchema = z.object({
-  data: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve ser YYYY-MM-DD'),
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve ser YYYY-MM-DD'),
   autor: PessoaAutorSchema,
   humor: Slider1a5,
   energia: Slider1a5,

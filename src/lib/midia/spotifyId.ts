@@ -9,8 +9,7 @@
 // regex tolerante (1+) para nao bloquear ids de tamanho diferente
 // caso o Spotify mude o formato; validacao estrita fica para o
 // saveDiario / saveEvento se necessario.
-const SP_REGEX =
-  /spotify\.com\/(?:intl-[a-z]{2}\/)?track\/([A-Za-z0-9]+)/;
+const SP_REGEX = /spotify\.com\/(?:intl-[a-z]{2}\/)?track\/([A-Za-z0-9]+)/;
 
 export function extractSpotifyTrackId(url: string): string | null {
   if (typeof url !== 'string' || url.trim().length === 0) return null;

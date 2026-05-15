@@ -129,9 +129,7 @@ describe('limparLixeiraExpirada — varredura', () => {
 
   it('trata pasta inexistente como sucesso vazio', async () => {
     mockReadDir.mockRejectedValueOnce(new Error('ENOENT'));
-    const out = await limparLixeiraExpirada(
-      new Date('2026-04-29T10:00:00Z')
-    );
+    const out = await limparLixeiraExpirada(new Date('2026-04-29T10:00:00Z'));
     expect(out.rodou).toBe(true);
     expect(out.arquivosRemovidos).toBe(0);
   });

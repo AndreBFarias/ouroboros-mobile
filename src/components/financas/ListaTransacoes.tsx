@@ -91,16 +91,13 @@ function LinhaTransacao({ item, ultima }: LinhaProps): ReactNode {
           {formatarBRL(item.valor, item.tipo)}
         </Text>
       </View>
-      <View
-        style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-      >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Text
           style={{
             color: colors.muted,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: typography.caption.size,
-            lineHeight:
-              typography.caption.size * typography.caption.lineHeight,
+            lineHeight: typography.caption.size * typography.caption.lineHeight,
           }}
         >
           {formatarDataDM(item.data)} · {item.categoria}
@@ -111,8 +108,7 @@ function LinhaTransacao({ item, ultima }: LinhaProps): ReactNode {
             color: colors.mutedDecor,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: typography.caption.size,
-            lineHeight:
-              typography.caption.size * typography.caption.lineHeight,
+            lineHeight: typography.caption.size * typography.caption.lineHeight,
           }}
         >
           {item.autor === 'pessoa_a' ? 'A' : 'B'}

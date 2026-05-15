@@ -22,10 +22,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import {
-  BottomSheetView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Trash2 } from '@/lib/icons';
 import {
   Button,
@@ -88,11 +85,12 @@ export function SheetNovoTreino({
   const [rotina, setRotina] = useState<string>(seedRotina);
   const [duracao, setDuracao] = useState<number>(seedDuracao);
   const [observacoes, setObservacoes] = useState<string>(seedObservacoes);
-  const [exercicios, setExercicios] = useState<ExercicioSessao[]>(seedExercicios);
+  const [exercicios, setExercicios] =
+    useState<ExercicioSessao[]>(seedExercicios);
   const [salvando, setSalvando] = useState<boolean>(false);
-  const [exerciciosBiblioteca, setExerciciosBiblioteca] = useState<
-    Exercicio[]
-  >([]);
+  const [exerciciosBiblioteca, setExerciciosBiblioteca] = useState<Exercicio[]>(
+    []
+  );
   // Q11.b: snapshot pendente quando ha edicao em curso e o usuario
   // escolheu uma nova rotina. Modal pergunta antes de sobrescrever.
   const [snapshotPendente, setSnapshotPendente] =
@@ -128,14 +126,11 @@ export function SheetNovoTreino({
 
   // Q11.b: aplica de fato o snapshot recebido no form. Helper interno
   // chamado pelo effect de sincronizacao e pelo "Confirmar" do modal.
-  const aplicarSnapshot = useCallback(
-    (snap: Partial<TreinoSessao>) => {
-      if (typeof snap.rotina === 'string') setRotina(snap.rotina);
-      if (Array.isArray(snap.exercicios)) setExercicios(snap.exercicios);
-      ultimoSnapshotAplicadoRef.current = snap;
-    },
-    []
-  );
+  const aplicarSnapshot = useCallback((snap: Partial<TreinoSessao>) => {
+    if (typeof snap.rotina === 'string') setRotina(snap.rotina);
+    if (Array.isArray(snap.exercicios)) setExercicios(snap.exercicios);
+    ultimoSnapshotAplicadoRef.current = snap;
+  }, []);
 
   // Q11.b: sincroniza com rotinaSnapshot quando este muda em criacao
   // (caller troca de rotina sem desmontar o sheet). Decisao UX 2026-05-12:
@@ -237,7 +232,8 @@ export function SheetNovoTreino({
         rotina: rotina.trim(),
         duracao_min: duracao,
         exercicios,
-        observacoes: observacoes.trim().length > 0 ? observacoes.trim() : undefined,
+        observacoes:
+          observacoes.trim().length > 0 ? observacoes.trim() : undefined,
       };
 
       // Em edicao, preserva slug original (extraido do path).
@@ -388,8 +384,7 @@ export function SheetNovoTreino({
               lineHeight: 18,
             }}
           >
-            Cadastre exercícios na aba Galeria antes de montar um
-            treino.
+            Cadastre exercícios na aba Galeria antes de montar um treino.
           </Text>
         )}
 
@@ -567,9 +562,9 @@ export function SheetNovoTreino({
                 lineHeight: 20,
               }}
             >
-              A rotina escolhida vai sobrescrever os exercícios e o nome
-              da rotina que você já preencheu. Duração e observações
-              continuam como estão.
+              A rotina escolhida vai sobrescrever os exercícios e o nome da
+              rotina que você já preencheu. Duração e observações continuam como
+              estão.
             </Text>
             <View style={{ gap: spacing.sm }}>
               <Button

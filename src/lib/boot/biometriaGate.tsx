@@ -49,7 +49,10 @@ interface BiometriaGateProps {
   bypass?: boolean;
 }
 
-export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) {
+export function BiometriaGate({
+  children,
+  bypass = false,
+}: BiometriaGateProps) {
   // Auditoria 2026-05-04 (item 4): bypass so vale em build dev.
   // __DEV__ vira false em release; mesmo se um caller passar
   // bypass={true} por engano, em release a auth roda normalmente.
@@ -132,8 +135,7 @@ export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) 
           color: colors.fg,
           fontFamily: 'JetBrainsMono_500Medium',
           fontSize: typography.heading2.size,
-          lineHeight:
-            typography.heading2.size * typography.heading2.lineHeight,
+          lineHeight: typography.heading2.size * typography.heading2.lineHeight,
           textAlign: 'center',
           marginBottom: spacing.sm,
         }}
@@ -158,8 +160,7 @@ export function BiometriaGate({ children, bypass = false }: BiometriaGateProps) 
             color: colors.red,
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: typography.caption.size,
-            lineHeight:
-              typography.caption.size * typography.caption.lineHeight,
+            lineHeight: typography.caption.size * typography.caption.lineHeight,
             marginBottom: spacing.base,
           }}
         >
@@ -230,11 +231,7 @@ function FingerprintAnim() {
         animStyle,
       ]}
     >
-      <Fingerprint
-        size={48}
-        color={colors.purple}
-        strokeWidth={1.5}
-      />
+      <Fingerprint size={48} color={colors.purple} strokeWidth={1.5} />
     </Animated.View>
   );
 }

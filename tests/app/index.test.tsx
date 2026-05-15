@@ -18,8 +18,9 @@ const mockPush = jest.fn();
 
 jest.mock('expo-router', () => {
   const mockRedirectInstances: Array<{ href: string }> = [];
-  (globalThis as { __mockRedirectInstances?: typeof mockRedirectInstances })
-    .__mockRedirectInstances = mockRedirectInstances;
+  (
+    globalThis as { __mockRedirectInstances?: typeof mockRedirectInstances }
+  ).__mockRedirectInstances = mockRedirectInstances;
   return {
     __esModule: true,
     useRouter: () => ({ back: mockBack, replace: mockReplace, push: mockPush }),
@@ -87,13 +88,17 @@ beforeEach(() => {
   useVault.setState({ vaultRoot: VAULT_ROOT });
   useOnboarding.setState({ done: true, tipoCompanhia: 'sozinho' });
   // Forca flag de hidratacao via API interna do persist.
-  const persistApiOnb = (useOnboarding as unknown as {
-    persist?: { setHasHydrated?: (b: boolean) => void };
-  }).persist;
+  const persistApiOnb = (
+    useOnboarding as unknown as {
+      persist?: { setHasHydrated?: (b: boolean) => void };
+    }
+  ).persist;
   persistApiOnb?.setHasHydrated?.(true);
-  const persistApiVault = (useVault as unknown as {
-    persist?: { setHasHydrated?: (b: boolean) => void };
-  }).persist;
+  const persistApiVault = (
+    useVault as unknown as {
+      persist?: { setHasHydrated?: (b: boolean) => void };
+    }
+  ).persist;
   persistApiVault?.setHasHydrated?.(true);
 });
 

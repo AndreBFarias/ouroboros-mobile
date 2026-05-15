@@ -75,9 +75,7 @@ export function SparklineMedida({
   const w = Math.max(0, largura - PADDING_X * 2);
   const h = Math.max(0, altura - PADDING_Y * 2);
 
-  const xs = dados.map((_, i) =>
-    PADDING_X + (i / (dados.length - 1)) * w
-  );
+  const xs = dados.map((_, i) => PADDING_X + (i / (dados.length - 1)) * w);
   const ys = dados.map((d) => PADDING_Y + h - ((d.valor - min) / range) * h);
 
   const polyPoints = xs.map((x, i) => `${x},${ys[i]}`).join(' ');
@@ -92,11 +90,7 @@ export function SparklineMedida({
       accessibilityLabel={`grafico medida ${dados.length} pontos`}
     >
       <Svg width={largura} height={altura}>
-        <Polygon
-          points={fillPoints}
-          fill={colors.cyan}
-          fillOpacity={0.18}
-        />
+        <Polygon points={fillPoints} fill={colors.cyan} fillOpacity={0.18} />
         <Polyline
           points={polyPoints}
           fill="none"

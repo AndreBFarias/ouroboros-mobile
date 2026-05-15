@@ -30,7 +30,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { adicionarFotoManual } from '@/lib/midia/adicionarFotoManual';
 
-const permSpy = ImagePicker.requestMediaLibraryPermissionsAsync as unknown as jest.Mock;
+const permSpy =
+  ImagePicker.requestMediaLibraryPermissionsAsync as unknown as jest.Mock;
 const launchSpy = ImagePicker.launchImageLibraryAsync as unknown as jest.Mock;
 const copySpy = FileSystem.copyAsync as unknown as jest.Mock;
 

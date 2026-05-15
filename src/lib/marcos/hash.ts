@@ -93,7 +93,8 @@ function sha256(message: string): string {
         ((bytes[chunk + i * 4] << 24) |
           (bytes[chunk + i * 4 + 1] << 16) |
           (bytes[chunk + i * 4 + 2] << 8) |
-          bytes[chunk + i * 4 + 3]) >>> 0;
+          bytes[chunk + i * 4 + 3]) >>>
+        0;
     }
     for (let i = 16; i < 64; i++) {
       const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);

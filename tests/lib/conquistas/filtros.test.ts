@@ -43,7 +43,13 @@ function fake(
     intensidade: partial.intensidade ?? 3,
     bairro: partial.bairro ?? null,
     midiaPrincipal: m,
-    tipoCover: m.tipo === 'foto' || m.tipo === 'youtube' || m.tipo === 'spotify' || m.tipo === 'audio' ? m.tipo : 'foto',
+    tipoCover:
+      m.tipo === 'foto' ||
+      m.tipo === 'youtube' ||
+      m.tipo === 'spotify' ||
+      m.tipo === 'audio'
+        ? m.tipo
+        : 'foto',
     midias: [m],
     meta: { tipo: 'evento' } as never,
   };
@@ -186,7 +192,12 @@ describe('filtrarPorBairro', () => {
   const lista: Conquista[] = [
     fake({ id: '1', data: '2026-04-01', bairro: 'Pinheiros' }),
     fake({ id: '2', data: '2026-04-02', bairro: 'Vila Madalena' }),
-    fake({ id: '3', data: '2026-04-03', bairro: null, lugar: 'Pinheiros Plaza' }),
+    fake({
+      id: '3',
+      data: '2026-04-03',
+      bairro: null,
+      lugar: 'Pinheiros Plaza',
+    }),
     fake({ id: '4', data: '2026-04-04', bairro: null, lugar: null }),
   ];
 

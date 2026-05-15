@@ -43,9 +43,24 @@ const ESPERADO: ReadonlyArray<{
   rgbRegex: RegExp;
   nomeCor: string;
 }> = [
-  { slug: 'trabalho', label: 'Trabalho', rgbRegex: /139,\s*233,\s*253/, nomeCor: 'cyan' },
-  { slug: 'saude',    label: 'Saúde',    rgbRegex: /255,\s*85,\s*85/,   nomeCor: 'red' },
-  { slug: 'outro',    label: 'Outro',    rgbRegex: /201,\s*201,\s*204/, nomeCor: 'muted (ghost)' },
+  {
+    slug: 'trabalho',
+    label: 'Trabalho',
+    rgbRegex: /139,\s*233,\s*253/,
+    nomeCor: 'cyan',
+  },
+  {
+    slug: 'saude',
+    label: 'Saúde',
+    rgbRegex: /255,\s*85,\s*85/,
+    nomeCor: 'red',
+  },
+  {
+    slug: 'outro',
+    label: 'Outro',
+    rgbRegex: /201,\s*201,\s*204/,
+    nomeCor: 'muted (ghost)',
+  },
 ];
 
 export default async function caseMDebitoCategoriaIcone(
@@ -143,10 +158,8 @@ export default async function caseMDebitoCategoriaIcone(
     // NOTA: PlaywrightPageLike.evaluate aceita so 1 argumento (sem
     // injecao de variaveis). Cada bloco evaluate hard-codeia label/slug
     // dentro do closure, espelhando ESPERADO acima.
-    const resultados: Record<
-      string,
-      { stroke: string; encontrado: boolean }
-    > = {};
+    const resultados: Record<string, { stroke: string; encontrado: boolean }> =
+      {};
 
     // ----- Trabalho (cyan) -----
     const okTrabalho = await page.evaluate(() => {
@@ -301,7 +314,9 @@ export default async function caseMDebitoCategoriaIcone(
       status: 'PASS',
       detalhe: `icone Lucide reflete accent semantico em 3 categorias amostradas: ${ESPERADO.map(
         (e) => `${e.slug}=${e.nomeCor}`
-      ).join(', ')}. Cores distintas confirmadas via getComputedStyle.stroke do svg.`,
+      ).join(
+        ', '
+      )}. Cores distintas confirmadas via getComputedStyle.stroke do svg.`,
       screenshots,
     };
   } catch (err) {

@@ -153,7 +153,7 @@ export async function saveRecordingToVault(
   const destinoBin = vaultUriJoin(vaultRoot, binarioRel);
   const destinoCompanion = vaultUriJoin(vaultRoot, companionRel);
 
-  const basename = (binarioRel.split('/').pop() ?? binarioRel);
+  const basename = binarioRel.split('/').pop() ?? binarioRel;
 
   await FileSystem.copyAsync({ from: uri, to: destinoBin });
 

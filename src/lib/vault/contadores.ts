@@ -39,9 +39,7 @@ import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 // Lista todos os contadores do Vault. Pasta inexistente => []. Retorna
 // asc por titulo (localeCompare PT-BR) para a tela de listagem não
 // mostrar ordem aleatoria de filesystem.
-export async function listarContadores(
-  vaultRoot: string
-): Promise<Contador[]> {
+export async function listarContadores(vaultRoot: string): Promise<Contador[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter(

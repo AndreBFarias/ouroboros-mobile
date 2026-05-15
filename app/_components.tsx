@@ -109,19 +109,14 @@ export default function ComponentsStory() {
             className="font-mono text-muted text-xs"
             style={{ lineHeight: 18 }}
           >
-            Limpa nome, foto, vault e flag de onboarding. O app
-            redireciona para o fluxo de boas-vindas. Usado em
-            desenvolvimento.
+            Limpa nome, foto, vault e flag de onboarding. O app redireciona para
+            o fluxo de boas-vindas. Usado em desenvolvimento.
           </Text>
         </Section>
 
         <Section title="Botões">
           <Button label="Ação primária" onPress={() => undefined} />
-          <Button
-            label="Sucesso"
-            onPress={() => undefined}
-            variant="success"
-          />
+          <Button label="Sucesso" onPress={() => undefined} variant="success" />
           <Button label="Ghost" onPress={() => undefined} variant="ghost" />
           <Button
             label="Destrutivo"
@@ -232,20 +227,13 @@ export default function ComponentsStory() {
             <PersonAvatar pessoa="pessoa_b" size="lg" />
           </View>
           <View className="flex-row" style={{ gap: 14 }}>
-            <PersonAvatar
-              pessoa="ambos"
-              size="md"
-              onPress={() => undefined}
-            />
+            <PersonAvatar pessoa="ambos" size="md" onPress={() => undefined} />
           </View>
         </Section>
 
         <Section title="Empty state">
           <Card>
-            <EmptyState
-              frase="Nada anotado por enquanto."
-              Icon={Heart}
-            />
+            <EmptyState frase="Nada anotado por enquanto." Icon={Heart} />
           </Card>
         </Section>
 
@@ -304,8 +292,8 @@ export default function ComponentsStory() {
             className="font-mono text-muted text-xs"
             style={{ lineHeight: 18 }}
           >
-            Abre o MenuLateral global diretamente via store useNavegacao
-            para inspecao das 3 secoes.
+            Abre o MenuLateral global diretamente via store useNavegacao para
+            inspecao das 3 secoes.
           </Text>
           <Button
             label="Abrir menu lateral"

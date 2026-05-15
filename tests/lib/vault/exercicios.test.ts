@@ -216,9 +216,7 @@ describe('escreverExercicio', () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const rootSujo = `${VAULT_ROOT}%20`;
     const { uri } = await escreverExercicio(rootSujo, exercicioPernas, '');
-    expect(uri).toBe(
-      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`
-    );
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`);
     // Sem barras duplas no path final (so a do scheme content://).
     expect(uri.split('//').length).toBe(2);
   });
@@ -227,9 +225,7 @@ describe('escreverExercicio', () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const rootSujo = `${VAULT_ROOT}//`;
     const { uri } = await escreverExercicio(rootSujo, exercicioPernas, '');
-    expect(uri).toBe(
-      `${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`
-    );
+    expect(uri).toBe(`${VAULT_ROOT}/markdown/exercicio-agachamento-livre.md`);
   });
 
   // I-EXERCICIO: vaultUriJoin lanca erro claro quando root vazio

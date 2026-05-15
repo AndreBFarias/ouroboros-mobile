@@ -14,8 +14,7 @@ jest.mock('@/lib/vault', () => {
     ...actual,
     writeVaultFile: (...args: [string, unknown, string]) =>
       mockWriteVaultFile(...args),
-    readVaultFile: (...args: [string, unknown]) =>
-      mockReadVaultFile(...args),
+    readVaultFile: (...args: [string, unknown]) => mockReadVaultFile(...args),
   };
 });
 

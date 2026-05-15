@@ -36,7 +36,16 @@ const VOCABULARIO: ReadonlyArray<{
   },
   {
     categoria: 'transporte',
-    termos: ['uber', '99', 'taxi', 'metro', 'onibus', 'estacionamento', 'gasolina', 'posto'],
+    termos: [
+      'uber',
+      '99',
+      'taxi',
+      'metro',
+      'onibus',
+      'estacionamento',
+      'gasolina',
+      'posto',
+    ],
   },
   {
     categoria: 'alimentacao',
@@ -46,10 +55,7 @@ const VOCABULARIO: ReadonlyArray<{
 
 // Remove acentos para comparacao case-insensitive contra vocabulario.
 function normalizar(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 // Extrai valor monetario do texto. Estrategia:

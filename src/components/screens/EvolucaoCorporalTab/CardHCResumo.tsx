@@ -13,11 +13,7 @@ import { useCallback, useRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Activity, Footprints, Scale } from '@/lib/icons';
-import {
-  BottomSheet,
-  SHEET_70,
-  type BottomSheetRef,
-} from '@/components/ui';
+import { BottomSheet, SHEET_70, type BottomSheetRef } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import { useHealthConnectResumo } from '@/lib/hooks/useHealthConnectResumo';
@@ -78,7 +74,14 @@ interface CardProps {
   accessibilityLabel: string;
 }
 
-function MiniCard({ icone, label, valor, detalhe, onPress, accessibilityLabel }: CardProps): ReactNode {
+function MiniCard({
+  icone,
+  label,
+  valor,
+  detalhe,
+  onPress,
+  accessibilityLabel,
+}: CardProps): ReactNode {
   const conteudo = (
     <View
       style={{
@@ -90,7 +93,9 @@ function MiniCard({ icone, label, valor, detalhe, onPress, accessibilityLabel }:
         gap: spacing.xs,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}
+      >
         {icone}
         <Text
           {...textPropsDecor()}
@@ -153,7 +158,9 @@ function CardPassos({ resumo }: { resumo: ResumoPassos | null }): ReactNode {
       icone={<Footprints size={14} color={colors.cyan} strokeWidth={2} />}
       label="passos 7d"
       valor={resumo ? formatarMilhar(total) : '—'}
-      detalhe={resumo ? `${formatarDeltaInt(delta)} vs semana anterior` : 'Sem dados'}
+      detalhe={
+        resumo ? `${formatarDeltaInt(delta)} vs semana anterior` : 'Sem dados'
+      }
       accessibilityLabel="passos da semana"
     />
   );
@@ -198,7 +205,8 @@ function CardTreinos({
 }
 
 export function CardHCResumo(): ReactNode {
-  const { habilitado, loading, passos, peso, treinos } = useHealthConnectResumo();
+  const { habilitado, loading, passos, peso, treinos } =
+    useHealthConnectResumo();
   const sheetRef = useRef<BottomSheetRef>(null);
   const router = useRouter();
 
@@ -213,7 +221,11 @@ export function CardHCResumo(): ReactNode {
   if (!habilitado) {
     return (
       <Pressable
-        onPress={() => router.push('/settings/integracoes' as Parameters<typeof router.push>[0])}
+        onPress={() =>
+          router.push(
+            '/settings/integracoes' as Parameters<typeof router.push>[0]
+          )
+        }
         accessibilityRole="button"
         accessibilityLabel="conectar conexao saude"
         style={{
@@ -235,7 +247,8 @@ export function CardHCResumo(): ReactNode {
             lineHeight: 18,
           }}
         >
-          Conecte sua Conexão Saúde para ver passos, peso e treinos importados aqui.
+          Conecte sua Conexão Saúde para ver passos, peso e treinos importados
+          aqui.
         </Text>
       </Pressable>
     );
@@ -288,7 +301,11 @@ export function CardHCResumo(): ReactNode {
   );
 }
 
-function ListaTreinosHC({ treinos }: { treinos: ResumoTreinos | null }): ReactNode {
+function ListaTreinosHC({
+  treinos,
+}: {
+  treinos: ResumoTreinos | null;
+}): ReactNode {
   if (!treinos || treinos.lista.length === 0) {
     return (
       <View style={{ padding: spacing.lg }}>

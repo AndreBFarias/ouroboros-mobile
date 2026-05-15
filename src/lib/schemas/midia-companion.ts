@@ -101,9 +101,7 @@ export function subpastaPara(tipo: TipoMidiaCanonico): string {
 // Inverso de subpastaPara: dado o nome da subpasta, devolve o tipo
 // canonico de midia. Usado por migrarAssetsLegacyParaMedia para
 // inferir tipo a partir do path destino.
-export function tipoPorSubpasta(
-  subpasta: string
-): TipoMidiaCanonico | null {
+export function tipoPorSubpasta(subpasta: string): TipoMidiaCanonico | null {
   switch (subpasta) {
     case 'fotos':
       return 'midia_foto';
@@ -129,7 +127,13 @@ export function tipoPorExtensao(ext: string): TipoMidiaCanonico | null {
   if (e === 'jpg' || e === 'jpeg' || e === 'png' || e === 'webp') {
     return 'midia_foto';
   }
-  if (e === 'm4a' || e === 'mp3' || e === 'wav' || e === 'ogg' || e === 'opus') {
+  if (
+    e === 'm4a' ||
+    e === 'mp3' ||
+    e === 'wav' ||
+    e === 'ogg' ||
+    e === 'opus'
+  ) {
     return 'midia_audio';
   }
   if (e === 'mp4' || e === 'mov' || e === 'webm') {

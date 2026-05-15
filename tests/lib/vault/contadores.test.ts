@@ -273,9 +273,9 @@ describe('registrarReset', () => {
 
   it('lanca quando contador nao existe', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
-    await expect(
-      registrarReset(VAULT_ROOT, 'inexistente')
-    ).rejects.toThrow(/nao encontrado/);
+    await expect(registrarReset(VAULT_ROOT, 'inexistente')).rejects.toThrow(
+      /nao encontrado/
+    );
   });
 
   it('preserva criado_em ao atualizar', async () => {
@@ -295,10 +295,7 @@ describe('registrarReset', () => {
 
   it('acumula resets em ordem cronologica', async () => {
     const atual = fixture({
-      resets: [
-        '2026-03-04T10:30:00Z',
-        '2026-04-01T08:00:00Z',
-      ],
+      resets: ['2026-03-04T10:30:00Z', '2026-04-01T08:00:00Z'],
     });
     mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
     mockWriteVaultFile.mockResolvedValueOnce(undefined);

@@ -42,14 +42,54 @@ const ESPERADO: ReadonlyArray<{
   rgbRegex: RegExp;
   nomeCor: string;
 }> = [
-  { slug: 'trabalho',                label: 'Trabalho',                rgbRegex: /139,\s*233,\s*253/, nomeCor: 'cyan' },
-  { slug: 'casa',                    label: 'Casa',                    rgbRegex: /255,\s*121,\s*198/, nomeCor: 'pink' },
-  { slug: 'rotina',                  label: 'Rotina',                  rgbRegex: /189,\s*147,\s*249/, nomeCor: 'purple' },
-  { slug: 'financas',                label: 'Finanças',                rgbRegex: /80,\s*250,\s*123/,  nomeCor: 'green' },
-  { slug: 'desenvolvimento_pessoal', label: 'Desenvolvimento pessoal', rgbRegex: /241,\s*250,\s*140/, nomeCor: 'yellow' },
-  { slug: 'obrigacoes',              label: 'Obrigações',              rgbRegex: /255,\s*184,\s*108/, nomeCor: 'orange' },
-  { slug: 'saude',                   label: 'Saúde',                   rgbRegex: /255,\s*85,\s*85/,   nomeCor: 'red' },
-  { slug: 'outro',                   label: 'Outro',                   rgbRegex: /98,\s*114,\s*164/,  nomeCor: 'ghost' },
+  {
+    slug: 'trabalho',
+    label: 'Trabalho',
+    rgbRegex: /139,\s*233,\s*253/,
+    nomeCor: 'cyan',
+  },
+  {
+    slug: 'casa',
+    label: 'Casa',
+    rgbRegex: /255,\s*121,\s*198/,
+    nomeCor: 'pink',
+  },
+  {
+    slug: 'rotina',
+    label: 'Rotina',
+    rgbRegex: /189,\s*147,\s*249/,
+    nomeCor: 'purple',
+  },
+  {
+    slug: 'financas',
+    label: 'Finanças',
+    rgbRegex: /80,\s*250,\s*123/,
+    nomeCor: 'green',
+  },
+  {
+    slug: 'desenvolvimento_pessoal',
+    label: 'Desenvolvimento pessoal',
+    rgbRegex: /241,\s*250,\s*140/,
+    nomeCor: 'yellow',
+  },
+  {
+    slug: 'obrigacoes',
+    label: 'Obrigações',
+    rgbRegex: /255,\s*184,\s*108/,
+    nomeCor: 'orange',
+  },
+  {
+    slug: 'saude',
+    label: 'Saúde',
+    rgbRegex: /255,\s*85,\s*85/,
+    nomeCor: 'red',
+  },
+  {
+    slug: 'outro',
+    label: 'Outro',
+    rgbRegex: /98,\s*114,\s*164/,
+    nomeCor: 'ghost',
+  },
 ];
 
 export default async function caseMDebitoCategoriaCores(
@@ -153,7 +193,10 @@ export default async function caseMDebitoCategoriaCores(
         'Saúde',
         'Outro',
       ];
-      const out: Record<string, { borderColor: string; backgroundColor: string }> = {};
+      const out: Record<
+        string,
+        { borderColor: string; backgroundColor: string }
+      > = {};
       for (const lbl of rotulos) {
         const el = document.querySelector(
           `[aria-label="chip ${lbl}"]`

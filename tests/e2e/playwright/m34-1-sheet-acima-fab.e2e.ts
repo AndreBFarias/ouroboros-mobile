@@ -154,7 +154,8 @@ export default async function caseM341SheetAcimaFab(
       };
     }
 
-    const abertoShot = 'docs/sprints/M34.1-screenshots-gauntlet/A-sheet-aberto.png';
+    const abertoShot =
+      'docs/sprints/M34.1-screenshots-gauntlet/A-sheet-aberto.png';
     await page.screenshot({ path: abertoShot });
     screenshots.push(abertoShot);
 
@@ -276,15 +277,18 @@ export default async function caseM341SheetAcimaFab(
 
       // Hit-test: o que o navegador devolve no centro do botao?
       const noTopo = document.elementFromPoint(c1.centroX, c1.centroY);
-      const cancelarContemTopo = noTopo === cancelar || cancelar.contains(noTopo);
+      const cancelarContemTopo =
+        noTopo === cancelar || cancelar.contains(noTopo);
 
       return {
         ok: cancelarContemTopo,
         motivo: cancelarContemTopo
           ? 'hit-test no centro do Cancelar devolve o proprio botao'
-          : `hit-test devolve outro elemento (${(noTopo as HTMLElement | null)?.getAttribute(
-              'aria-label'
-            ) ?? (noTopo as HTMLElement | null)?.tagName ?? 'desconhecido'})`,
+          : `hit-test devolve outro elemento (${
+              (noTopo as HTMLElement | null)?.getAttribute('aria-label') ??
+              (noTopo as HTMLElement | null)?.tagName ??
+              'desconhecido'
+            })`,
         rectCancelar: c1,
         rectFab: c2,
       };
@@ -300,7 +304,8 @@ export default async function caseM341SheetAcimaFab(
       };
     }
 
-    const validShot = 'docs/sprints/M34.1-screenshots-gauntlet/B-cancelar-acessivel.png';
+    const validShot =
+      'docs/sprints/M34.1-screenshots-gauntlet/B-cancelar-acessivel.png';
     await page.screenshot({ path: validShot });
     screenshots.push(validShot);
 

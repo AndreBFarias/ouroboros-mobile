@@ -17,13 +17,17 @@
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
 interface HealthConnectModule {
-  readRecords: (recordType: string, options: unknown) => Promise<{ records: unknown[] }>;
+  readRecords: (
+    recordType: string,
+    options: unknown
+  ) => Promise<{ records: unknown[] }>;
   insertRecords: (records: unknown[]) => Promise<string[]>;
 }
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod = require('react-native-health-connect') as Partial<HealthConnectModule>;
+    const mod =
+      require('react-native-health-connect') as Partial<HealthConnectModule>;
     if (
       typeof mod.readRecords !== 'function' ||
       typeof mod.insertRecords !== 'function'
@@ -40,7 +44,13 @@ function carregarModulo(): HealthConnectModule | null {
 // do SDK. Mantem o componente desacoplado da versao do pacote.
 export interface RegistroExternoHC {
   uuid: string;
-  tipo: 'exercise' | 'steps' | 'weight' | 'heart_rate' | 'sleep' | 'menstruation';
+  tipo:
+    | 'exercise'
+    | 'steps'
+    | 'weight'
+    | 'heart_rate'
+    | 'sleep'
+    | 'menstruation';
   inicio: string;
   fim: string;
   rotulo: string;
@@ -185,9 +195,7 @@ export async function sincronizarPesoDeHC(
 // quando nao sabemos o tipo especifico (running, cycling, etc.).
 const HC_EXERCISE_TYPE_GENERIC = 2;
 
-export async function escreverTreinoEmHC(
-  meta: TreinoSessao
-): Promise<boolean> {
+export async function escreverTreinoEmHC(meta: TreinoSessao): Promise<boolean> {
   const mod = carregarModulo();
   if (!mod) return false;
   try {

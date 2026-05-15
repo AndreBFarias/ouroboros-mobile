@@ -26,7 +26,8 @@ describe('useFrasesMock.adicionar - espelhamento vault mock (V4.0.1)', () => {
       companion,
       data: '2026-05-08T10:00:00Z',
     });
-    const uri = 'web://mock-vault/Ouroboros/markdown/frase-2026-05-08-tudo-bem.md';
+    const uri =
+      'web://mock-vault/Ouroboros/markdown/frase-2026-05-08-tudo-bem.md';
     expect(useVaultMock.getState().getArquivo(uri)).toBe(companion);
     expect(useVaultMock.getState().listar()).toContain(uri);
   });

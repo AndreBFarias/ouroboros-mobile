@@ -62,14 +62,14 @@ function anoMesDeIso(iso: string): { ano: number; mes: number } {
 
 // Calcula ano/mes de referencia para 'este_mes' e 'mes_passado'.
 // Recebe `agora` como parametro para testabilidade (default = new Date()).
-function refMes(agora: Date): { atual: { ano: number; mes: number }; passado: { ano: number; mes: number } } {
+function refMes(agora: Date): {
+  atual: { ano: number; mes: number };
+  passado: { ano: number; mes: number };
+} {
   const ano = agora.getUTCFullYear();
   const mes = agora.getUTCMonth() + 1;
   const atual = { ano, mes };
-  const passado =
-    mes === 1
-      ? { ano: ano - 1, mes: 12 }
-      : { ano, mes: mes - 1 };
+  const passado = mes === 1 ? { ano: ano - 1, mes: 12 } : { ano, mes: mes - 1 };
   return { atual, passado };
 }
 

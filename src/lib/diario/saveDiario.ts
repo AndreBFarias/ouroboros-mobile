@@ -61,10 +61,7 @@ async function resolvePath(
   relCanonico: string
 ): Promise<string> {
   const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
-  const existente = await readVaultFile(
-    uriCanonico,
-    DiarioEmocionalSchema
-  );
+  const existente = await readVaultFile(uriCanonico, DiarioEmocionalSchema);
   if (!existente) return relCanonico;
 
   const deviceId = await getDeviceId();

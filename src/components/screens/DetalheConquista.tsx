@@ -9,7 +9,14 @@
 // Strings de UI em sentence case PT-BR com acentuação completa.
 // Comentários em PT-BR com acentuação correta.
 import { useEffect, useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  Linking,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { ExternalLink, MapPin, X } from '@/lib/icons';
 import { Image as ExpoImage } from 'react-native';
 import { Screen, Header } from '@/components/ui';

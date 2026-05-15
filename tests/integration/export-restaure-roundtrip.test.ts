@@ -24,7 +24,10 @@ jest.mock('expo-file-system/legacy', () => {
   // para distinguir o tipo de leitura. Diretorios em set separado.
   // factory do jest.mock nao aceita declaracao de type em escopo
   // local; usamos generics inline.
-  const arquivos = new Map<string, { content: string; encoding: 'utf8' | 'base64' }>();
+  const arquivos = new Map<
+    string,
+    { content: string; encoding: 'utf8' | 'base64' }
+  >();
   const dirs = new Set<string>();
   // Pasta documents/cache padrao de RN.
   dirs.add('file:///mock/cache/');
@@ -82,7 +85,11 @@ jest.mock('expo-file-system/legacy', () => {
       return Promise.resolve([...filhos]);
     }),
     writeAsStringAsync: jest.fn(
-      (uri: string, content: string, opt?: { encoding?: 'utf8' | 'base64' }) => {
+      (
+        uri: string,
+        content: string,
+        opt?: { encoding?: 'utf8' | 'base64' }
+      ) => {
         const encoding = opt?.encoding ?? 'utf8';
         const sem = uri.replace(/\/$/, '');
         arquivos.set(sem, { content, encoding });
@@ -104,7 +111,9 @@ jest.mock('expo-file-system/legacy', () => {
         // Conversao entre representacoes para que o mock se comporte
         // como o filesystem real (que armazena bytes, nao strings).
         if (entry.encoding === 'utf8' && wanted === 'base64') {
-          return Promise.resolve(Buffer.from(entry.content, 'utf8').toString('base64'));
+          return Promise.resolve(
+            Buffer.from(entry.content, 'utf8').toString('base64')
+          );
         }
         // base64 -> utf8: assume conteudo decodifica para utf8 valido.
         return Promise.resolve(
@@ -261,7 +270,10 @@ describe('export -> restaure roundtrip (M-EXPORT-COMPLETO A5)', () => {
       );
     }
     for (let m = 1; m <= 5; m++) {
-      escreverUtf8(`markdown/marco-2026-04-${String(m).padStart(2, '0')}-marco-${m}.md`, `marco ${m}\n`);
+      escreverUtf8(
+        `markdown/marco-2026-04-${String(m).padStart(2, '0')}-marco-${m}.md`,
+        `marco ${m}\n`
+      );
     }
     for (let me = 1; me <= 5; me++) {
       escreverUtf8(
@@ -290,7 +302,10 @@ describe('export -> restaure roundtrip (M-EXPORT-COMPLETO A5)', () => {
       '---\ntipo: foto\narquivo: 2026-04-03-cccc.jpg\n---\n'
     );
     // 1 audio mock + companion (binario em m4a/, companion em markdown/).
-    escreverBase64('m4a/audio-2026-04-01-dddd.m4a', blobDeterministico(7, 2048));
+    escreverBase64(
+      'm4a/audio-2026-04-01-dddd.m4a',
+      blobDeterministico(7, 2048)
+    );
     escreverUtf8(
       'markdown/audio-2026-04-01-dddd.md',
       '---\ntipo: audio\narquivo: 2026-04-01-dddd.m4a\n---\n'
@@ -378,7 +393,13 @@ describe('export -> restaure roundtrip (M-EXPORT-COMPLETO A5)', () => {
     z.file('daily/2026-05-01.md', 'x');
     z.file(
       'MANIFEST.json',
-      JSON.stringify({ schema: 999, exportadoEm: '', totalArquivos: 0, porSubpasta: {}, arquivos: [] })
+      JSON.stringify({
+        schema: 999,
+        exportadoEm: '',
+        totalArquivos: 0,
+        porSubpasta: {},
+        arquivos: [],
+      })
     );
     const b64 = await z.generateAsync({ type: 'base64' });
     const fake = `file:///mock/cache/zip-schema-x.zip`;

@@ -11,7 +11,13 @@
 // a esquerda. Quando não ha fotos, mostra empty muted-decor.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { ChevronDown } from '@/lib/icons';
@@ -127,11 +133,7 @@ function DropdownData({
         >
           {formatarDataBR(selecionada)}
         </Text>
-        <ChevronDown
-          size={14}
-          color={colors.muted}
-          strokeWidth={1.6}
-        />
+        <ChevronDown size={14} color={colors.muted} strokeWidth={1.6} />
       </Pressable>
       {aberto ? (
         <View
@@ -158,8 +160,7 @@ function DropdownData({
             >
               <Text
                 style={{
-                  color:
-                    opt === selecionada ? colors.purple : colors.fg,
+                  color: opt === selecionada ? colors.purple : colors.fg,
                   fontFamily: 'JetBrainsMono_400Regular',
                   fontSize: 12,
                   lineHeight: 18,
@@ -196,7 +197,7 @@ function LadoComparativo({
   // não houver, mostra placeholder.
   const fotoSelecionada =
     dataSelecionada !== null
-      ? fotos.find((f) => f.data === dataSelecionada) ?? null
+      ? (fotos.find((f) => f.data === dataSelecionada) ?? null)
       : null;
 
   return (
@@ -325,9 +326,7 @@ export function SliderFotos({ fotos, largura }: SliderFotosProps) {
       atual !== null && datas.includes(atual) ? atual : datas[0]
     );
     setDir((atual) =>
-      atual !== null && datas.includes(atual)
-        ? atual
-        : datas[datas.length - 1]
+      atual !== null && datas.includes(atual) ? atual : datas[datas.length - 1]
     );
   }, [datas]);
 
@@ -356,10 +355,7 @@ export function SliderFotos({ fotos, largura }: SliderFotosProps) {
   }
 
   // Largura útil de cada lado: total - gap entre eles.
-  const ladoLargura = Math.max(
-    0,
-    Math.floor((largura - spacing.sm) / 2)
-  );
+  const ladoLargura = Math.max(0, Math.floor((largura - spacing.sm) / 2));
 
   return (
     <View

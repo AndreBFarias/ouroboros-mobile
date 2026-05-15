@@ -21,8 +21,7 @@ jest.mock('expo-file-system/legacy', () => ({
   moveAsync: (...args: unknown[]) => mockMoveAsync(...args),
   deleteAsync: (...args: unknown[]) => mockDeleteAsync(...args),
   StorageAccessFramework: {
-    writeAsStringAsync: (...args: unknown[]) =>
-      mockWriteAsStringAsync(...args),
+    writeAsStringAsync: (...args: unknown[]) => mockWriteAsStringAsync(...args),
   },
 }));
 
@@ -31,8 +30,8 @@ jest.mock('expo-file-system/legacy', () => ({
 // a sequencia tmp -> move.
 jest.mock('@/lib/vault/frontmatter', () => ({
   __esModule: true,
-  stringifyFrontmatter: jest.fn((_meta: unknown, body: string) =>
-    `---\nstub: 1\n---\n${body}`
+  stringifyFrontmatter: jest.fn(
+    (_meta: unknown, body: string) => `---\nstub: 1\n---\n${body}`
   ),
 }));
 

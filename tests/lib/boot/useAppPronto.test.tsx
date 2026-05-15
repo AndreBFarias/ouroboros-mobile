@@ -19,7 +19,10 @@ import { useSessao } from '@/lib/stores/sessao';
 // chamado, mas algumas suites podem comecar antes. Garantimos via
 // setOptions(rehydrated=true) ou chamando rehydrate() direto.
 function forcaHidratado(useStore: {
-  persist: { rehydrate: () => Promise<void> | void; hasHydrated: () => boolean };
+  persist: {
+    rehydrate: () => Promise<void> | void;
+    hasHydrated: () => boolean;
+  };
 }): Promise<void> | void {
   if (useStore.persist.hasHydrated()) return;
   return useStore.persist.rehydrate();
@@ -67,9 +70,7 @@ describe('useAppPronto', () => {
   });
 
   it('com fontes nao prontas, retorna false mesmo com stores hidratadas', () => {
-    const { result } = renderHook(() =>
-      useAppPronto({ fontesProntas: false })
-    );
+    const { result } = renderHook(() => useAppPronto({ fontesProntas: false }));
     expect(result.current).toBe(false);
   });
 

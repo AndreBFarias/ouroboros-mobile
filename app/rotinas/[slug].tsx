@@ -10,15 +10,14 @@ import { Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Play } from '@/lib/icons';
 import { Header, Screen, useToast } from '@/components/ui';
-import { FormRotina, type FormRotinaSubmit } from '@/components/treino/FormRotina';
+import {
+  FormRotina,
+  type FormRotinaSubmit,
+} from '@/components/treino/FormRotina';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
-import {
-  escreverRotina,
-  lerRotina,
-  removerRotina,
-} from '@/lib/vault/rotina';
+import { escreverRotina, lerRotina, removerRotina } from '@/lib/vault/rotina';
 import { RotinaSchema, type RotinaMeta } from '@/lib/schemas/rotina';
 import { comTimeout } from '@/lib/util/comTimeout';
 

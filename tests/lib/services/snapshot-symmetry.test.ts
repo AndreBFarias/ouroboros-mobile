@@ -68,10 +68,9 @@ describe('snapshot symmetry — export -> aplicarSnapshot -> getState byte-a-byt
     useSettings.getState().setSomVibracao('geral', false);
     useSettings.getState().setSomVibracao('botoes', false);
     useSettings.getState().setFeatureToggle('cicloMenstrual', false);
-    useSettings.getState().setFeatureToggle(
-      'mostrarFinancasEmDesenvolvimento',
-      true
-    );
+    useSettings
+      .getState()
+      .setFeatureToggle('mostrarFinancasEmDesenvolvimento', true);
     useSettings.getState().setPrivacidade('biometriaAbrir', true);
     useSettings.getState().setMidia('capPorRegistro', 12);
     useSettings.getState().setMidia('permitirAudio', false);

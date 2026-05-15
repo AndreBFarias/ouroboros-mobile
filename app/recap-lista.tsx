@@ -46,8 +46,18 @@ interface ItemRender {
 }
 
 const MESES_ABREV = [
-  'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-  'jul', 'ago', 'set', 'out', 'nov', 'dez',
+  'jan',
+  'fev',
+  'mar',
+  'abr',
+  'mai',
+  'jun',
+  'jul',
+  'ago',
+  'set',
+  'out',
+  'nov',
+  'dez',
 ];
 
 function formatarData(iso: string): string {
@@ -197,10 +207,7 @@ export default function RecapListaTela() {
 
   return (
     <Screen>
-      <Header
-        title={ROTULO_POR_TIPO[tipo]}
-        onBack={() => router.back()}
-      />
+      <Header title={ROTULO_POR_TIPO[tipo]} onBack={() => router.back()} />
 
       {loading ? (
         <View
@@ -210,10 +217,7 @@ export default function RecapListaTela() {
         </View>
       ) : itens.length === 0 ? (
         <View style={{ paddingTop: spacing.huge }}>
-          <EmptyState
-            frase="Nenhum item neste período."
-            Icon={Activity}
-          />
+          <EmptyState frase="Nenhum item neste período." Icon={Activity} />
         </View>
       ) : (
         <ScrollView

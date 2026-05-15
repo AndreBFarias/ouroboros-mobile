@@ -69,9 +69,7 @@ describe('listarMarcos', () => {
       i++;
       return {
         meta:
-          i === 1
-            ? marcoBase
-            : { ...marcoBase, autor: 'pessoa_b' as const },
+          i === 1 ? marcoBase : { ...marcoBase, autor: 'pessoa_b' as const },
         body: '',
       };
     });

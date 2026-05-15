@@ -13,7 +13,10 @@ import {
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
-import { GrupoTreinoSchema, type GrupoTreino } from '@/lib/schemas/grupo_treino';
+import {
+  GrupoTreinoSchema,
+  type GrupoTreino,
+} from '@/lib/schemas/grupo_treino';
 
 export async function listarGrupos(
   vaultRoot: string,

@@ -84,7 +84,8 @@ export default async function caseQ17dEvolucaoHcResumo(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'CardHCResumo apareceu mesmo com toggle off (deveria estar oculto)',
+        detalhe:
+          'CardHCResumo apareceu mesmo com toggle off (deveria estar oculto)',
         screenshots,
       };
     }

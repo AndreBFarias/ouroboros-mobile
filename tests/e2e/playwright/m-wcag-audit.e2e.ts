@@ -34,7 +34,7 @@ interface Violacao {
 const ROTAS = ['/saude-fisica', '/humor', '/eventos', '/todo', '/financas'];
 
 export default async function caseWcagAudit(
-  page: PlaywrightPageLike,
+  page: PlaywrightPageLike
 ): Promise<ResultadoE2E> {
   const sprint = 'M-WCAG-COMPLETO';
   const aspecto = 'auditoria-contraste-runtime';
@@ -77,12 +77,10 @@ export default async function caseWcagAudit(
       const violacoesRota = await page.evaluate(() => {
         function srgbToLin(c: number): number {
           const x = c / 255;
-          return x <= 0.03928
-            ? x / 12.92
-            : Math.pow((x + 0.055) / 1.055, 2.4);
+          return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
         }
         function parseRgb(
-          s: string,
+          s: string
         ): { r: number; g: number; b: number; a: number } | null {
           const m = s.match(/rgba?\(([^)]+)\)/i);
           if (m) {
@@ -136,14 +134,14 @@ export default async function caseWcagAudit(
           fontSize: number;
         }> = [];
         const todos = Array.from(
-          document.querySelectorAll('*'),
+          document.querySelectorAll('*')
         ) as HTMLElement[];
         todos.forEach((el) => {
           const txt = (el.textContent ?? '').trim();
           if (!txt || txt.length > 200) return;
           // Apenas elementos que contem texto direto, nao aninhado.
           const filhosTexto = Array.from(el.childNodes).some(
-            (n) => n.nodeType === 3 && (n.textContent ?? '').trim(),
+            (n) => n.nodeType === 3 && (n.textContent ?? '').trim()
           );
           if (!filhosTexto) return;
           // Override decorativo via atributo (opt-in explicito do
@@ -189,7 +187,7 @@ export default async function caseWcagAudit(
         .slice(0, 10)
         .map(
           (v) =>
-            `[${v.rota}] ${v.tag} "${v.texto}" -> ratio=${v.ratio} fs=${v.fontSize} fg=${v.color} bg=${v.bg}`,
+            `[${v.rota}] ${v.tag} "${v.texto}" -> ratio=${v.ratio} fs=${v.fontSize} fg=${v.color} bg=${v.bg}`
         )
         .join(' | ');
       return {

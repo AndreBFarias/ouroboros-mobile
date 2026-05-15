@@ -28,7 +28,9 @@ function Item({ item }: ItemProps) {
     fontFamily: 'JetBrainsMono_400Regular',
     fontSize: 14,
     lineHeight: 22,
-    ...(item.feita ? { textDecorationLine: 'line-through' as const, color: colors.muted } : {}),
+    ...(item.feita
+      ? { textDecorationLine: 'line-through' as const, color: colors.muted }
+      : {}),
   };
 
   return (
@@ -88,7 +90,12 @@ export function SecaoProximos() {
       </Text>
       {loading ? (
         <Card>
-          <Text style={{ color: colors.muted, fontFamily: 'JetBrainsMono_400Regular' }}>
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+            }}
+          >
             Carregando...
           </Text>
         </Card>

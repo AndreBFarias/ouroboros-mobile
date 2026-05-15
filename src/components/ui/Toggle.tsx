@@ -46,8 +46,7 @@ export function Toggle({
   const responder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
-      onMoveShouldSetPanResponder: (_e, g) =>
-        !disabled && Math.abs(g.dx) > 4,
+      onMoveShouldSetPanResponder: (_e, g) => !disabled && Math.abs(g.dx) > 4,
       onPanResponderGrant: () => {
         startValue.current = value;
         setDragging(true);

@@ -168,9 +168,7 @@ export default async function caseMDebitoUIUXSeedDuo(
     // ---------------------------------------------------------------
     // OFF inicial: bloco expandido NAO esta no DOM.
     const offEstado = await page.evaluate(() => {
-      return !!document.querySelector(
-        '[aria-label="bloco alarme expandido"]'
-      );
+      return !!document.querySelector('[aria-label="bloco alarme expandido"]');
     });
     if (offEstado) {
       return {
@@ -208,9 +206,7 @@ export default async function caseMDebitoUIUXSeedDuo(
     await page.waitForTimeout(500);
 
     const onEstado = await page.evaluate(() => {
-      return !!document.querySelector(
-        '[aria-label="bloco alarme expandido"]'
-      );
+      return !!document.querySelector('[aria-label="bloco alarme expandido"]');
     });
     if (!onEstado) {
       return {

@@ -38,7 +38,8 @@ export default async function caseM34MenuCaptura(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
+        detalhe:
+          'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
         screenshots,
       };
     }
@@ -59,12 +60,14 @@ export default async function caseM34MenuCaptura(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'FAB verde "abrir menu de captura" ausente no DOM da rota /memoria',
+        detalhe:
+          'FAB verde "abrir menu de captura" ausente no DOM da rota /memoria',
         screenshots,
       };
     }
 
-    const fab = 'docs/sprints/M34-screenshots-gauntlet/A-fab-verde-memorias.png';
+    const fab =
+      'docs/sprints/M34-screenshots-gauntlet/A-fab-verde-memorias.png';
     await page.screenshot({ path: fab });
     screenshots.push(fab);
 

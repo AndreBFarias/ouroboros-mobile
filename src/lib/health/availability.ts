@@ -30,7 +30,8 @@ const STATUS_PROVIDER_UPDATE_REQUIRED = 3;
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod = require('react-native-health-connect') as Partial<HealthConnectModule>;
+    const mod =
+      require('react-native-health-connect') as Partial<HealthConnectModule>;
     if (
       typeof mod.getSdkStatus !== 'function' ||
       typeof mod.initialize !== 'function' ||

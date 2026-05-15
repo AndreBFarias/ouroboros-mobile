@@ -25,10 +25,7 @@
 // menstrua); melhor pedir confirmacao.
 //
 // Comentarios sem acento (convencao shell/CI).
-import type {
-  SexoDeclarado,
-  TipoCompanhia,
-} from '@/lib/stores/onboarding';
+import type { SexoDeclarado, TipoCompanhia } from '@/lib/stores/onboarding';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 export function autorPadrao(

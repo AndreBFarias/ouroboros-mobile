@@ -43,10 +43,8 @@ export const usePessoa = create<PessoaStore>()(
       },
       setPessoaAtiva: (pessoaAtiva) => set({ pessoaAtiva }),
       setFiltroPessoa: (filtroPessoa) => set({ filtroPessoa }),
-      setNome: (p, nome) =>
-        set((s) => ({ nomes: { ...s.nomes, [p]: nome } })),
-      setFoto: (p, uri) =>
-        set((s) => ({ fotos: { ...s.fotos, [p]: uri } })),
+      setNome: (p, nome) => set((s) => ({ nomes: { ...s.nomes, [p]: nome } })),
+      setFoto: (p, uri) => set((s) => ({ fotos: { ...s.fotos, [p]: uri } })),
       resetar: () =>
         set({
           pessoaAtiva: 'pessoa_a',

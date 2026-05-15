@@ -25,7 +25,10 @@ function humorFake(autor: 'pessoa_a' | 'pessoa_b', iso: string): HumorMeta {
   };
 }
 
-function diarioFake(autor: 'pessoa_a' | 'pessoa_b', iso: string): DiarioEmocionalMeta {
+function diarioFake(
+  autor: 'pessoa_a' | 'pessoa_b',
+  iso: string
+): DiarioEmocionalMeta {
   // Cast amplo: o teste so consome `autor` e `data` do meta (campos
   // que calcularStatus usa). Evita carregar o schema completo no fake.
   return {
@@ -88,12 +91,18 @@ test('calcularStatus: agrega humor + diario + evento, devolve mais recente', () 
   const evento = eventoFake('pessoa_a', '2026-05-04T18:30:00-03:00');
   const status = calcularStatus('pessoa_a', humor, [diario], [evento]);
   expect(status.humor).toEqual(humor);
-  expect(status.ultima).toEqual({ tipo: 'evento', iso: '2026-05-04T18:30:00-03:00' });
+  expect(status.ultima).toEqual({
+    tipo: 'evento',
+    iso: '2026-05-04T18:30:00-03:00',
+  });
 });
 
 test('calcularStatus: filtra por autor — diario de outra pessoa ignorado', () => {
   const humor = humorFake('pessoa_a', '2026-05-04T07:00:00-03:00');
   const diarioOutra = diarioFake('pessoa_b', '2026-05-04T20:00:00-03:00');
   const status = calcularStatus('pessoa_a', humor, [diarioOutra], []);
-  expect(status.ultima).toEqual({ tipo: 'humor', iso: '2026-05-04T07:00:00-03:00' });
+  expect(status.ultima).toEqual({
+    tipo: 'humor',
+    iso: '2026-05-04T07:00:00-03:00',
+  });
 });

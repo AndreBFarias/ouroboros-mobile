@@ -115,10 +115,7 @@ export {
   type RotinaMeta,
   type ExercicioRotina,
 } from './rotina';
-export {
-  GrupoTreinoSchema,
-  type GrupoTreino,
-} from './grupo_treino';
+export { GrupoTreinoSchema, type GrupoTreino } from './grupo_treino';
 export {
   MidiaSchema,
   MidiaSpotifySchema,

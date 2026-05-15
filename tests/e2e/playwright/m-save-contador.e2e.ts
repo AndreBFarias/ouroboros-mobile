@@ -61,9 +61,7 @@ async function abrirNovoContador(page: PlaywrightPageLike): Promise<void> {
 
 async function formMontou(page: PlaywrightPageLike): Promise<boolean> {
   return page.evaluate(() => {
-    return !!document.querySelector(
-      'input[aria-label="titulo do contador"]'
-    );
+    return !!document.querySelector('input[aria-label="titulo do contador"]');
   });
 }
 
@@ -94,9 +92,7 @@ async function tapCriar(page: PlaywrightPageLike): Promise<boolean> {
     const buttons = Array.from(
       document.querySelectorAll('[role="button"]')
     ) as HTMLElement[];
-    const alvo = buttons.find(
-      (b) => (b.textContent ?? '').trim() === 'Criar'
-    );
+    const alvo = buttons.find((b) => (b.textContent ?? '').trim() === 'Criar');
     if (!alvo) return false;
     alvo.click();
     return true;

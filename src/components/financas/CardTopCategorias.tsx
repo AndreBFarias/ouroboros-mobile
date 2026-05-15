@@ -46,7 +46,8 @@ export function CardTopCategorias({
             color: colors.orange,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: typography.heading2.size,
-            lineHeight: typography.heading2.size * typography.heading2.lineHeight,
+            lineHeight:
+              typography.heading2.size * typography.heading2.lineHeight,
           }}
         >
           Categorias mais frequentes

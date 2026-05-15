@@ -236,7 +236,10 @@ export function MemoriasTreinosTab({
             : `${total} ${total === 1 ? 'treino' : 'treinos'} em 90 dias.`}
         </Text>
 
-        <View style={{ alignItems: 'center' }} accessibilityLabel="container heatmap centralizado">
+        <View
+          style={{ alignItems: 'center' }}
+          accessibilityLabel="container heatmap centralizado"
+        >
           <HeatmapBase
             celulas={celulas}
             paleta={PALETA_TREINOS}

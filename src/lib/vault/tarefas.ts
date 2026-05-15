@@ -233,8 +233,7 @@ async function reagendarAlarmeCompanion(
   // Detecta mudanca real: data_hora_iso, recorrencia ou ativo
   // (false -> true). Se nada relevante mudou, no-op (evita custo de
   // reescrita do .md e re-schedule no SO).
-  const dataMudou =
-    alarmeAntigo?.data_hora_iso !== alarmeNovo?.data_hora_iso;
+  const dataMudou = alarmeAntigo?.data_hora_iso !== alarmeNovo?.data_hora_iso;
   const recorrenciaMudou =
     alarmeAntigo?.recorrencia !== alarmeNovo?.recorrencia;
   const ativoMudou = alarmeAntigo?.ativo !== alarmeNovo?.ativo;
@@ -339,8 +338,7 @@ function construirAlarmeDeTarefa(meta: Tarefa, slug: string): Alarme | null {
   // semanalmente sem especificar dia (caso comum: "todo dia da semana
   // util" pode ser refinado em UI futura). Conservador: cobre todos
   // para nao silenciar trigger.
-  const diasSemana =
-    recorrencia === 'semanal' ? [0, 1, 2, 3, 4, 5, 6] : [];
+  const diasSemana = recorrencia === 'semanal' ? [0, 1, 2, 3, 4, 5, 6] : [];
   const proposto: Alarme = {
     tipo: 'alarme',
     slug,

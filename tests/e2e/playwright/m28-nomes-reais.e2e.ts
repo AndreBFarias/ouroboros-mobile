@@ -3,9 +3,14 @@
 // renderiza titulo TESTA (uppercase) e input com TestA.
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
-export default async function caseM28(page: PlaywrightPageLike): Promise<ResultadoE2E> {
+export default async function caseM28(
+  page: PlaywrightPageLike
+): Promise<ResultadoE2E> {
   const sprint = 'M28';
   const aspecto = 'nomes-reais';
   const screenshots: string[] = [];
@@ -33,15 +38,34 @@ export default async function caseM28(page: PlaywrightPageLike): Promise<Resulta
       preview: document.body.innerText.slice(0, 300),
     }));
 
-    const path = 'docs/validacao-gauntlet-2026-05-03/screenshots/M28/B-nomes-testa-renderizado.png';
+    const path =
+      'docs/validacao-gauntlet-2026-05-03/screenshots/M28/B-nomes-testa-renderizado.png';
     await page.screenshot({ path });
     screenshots.push(path);
 
     if (!r.hasTestA) {
-      return { sprint, aspecto, status: 'FAIL', detalhe: `TESTA ausente. preview=${r.preview}`, screenshots };
+      return {
+        sprint,
+        aspecto,
+        status: 'FAIL',
+        detalhe: `TESTA ausente. preview=${r.preview}`,
+        screenshots,
+      };
     }
-    return { sprint, aspecto, status: 'PASS', detalhe: 'header TESTA renderiza apos setNomes', screenshots };
+    return {
+      sprint,
+      aspecto,
+      status: 'PASS',
+      detalhe: 'header TESTA renderiza apos setNomes',
+      screenshots,
+    };
   } catch (err) {
-    return { sprint, aspecto, status: 'FAIL', detalhe: `erro: ${(err as Error).message}`, screenshots };
+    return {
+      sprint,
+      aspecto,
+      status: 'FAIL',
+      detalhe: `erro: ${(err as Error).message}`,
+      screenshots,
+    };
   }
 }

@@ -1,7 +1,4 @@
-import {
-  classificar,
-  descreverDelta,
-} from '@/lib/services/syncStatus';
+import { classificar, descreverDelta } from '@/lib/services/syncStatus';
 
 describe('syncStatus', () => {
   describe('classificar', () => {

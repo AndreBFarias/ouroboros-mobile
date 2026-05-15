@@ -12,9 +12,7 @@ jest.mock('expo-file-system/legacy', () => {
     __esModule: true,
     cacheDirectory: memoria.cacheDirectory,
     readDirectoryAsync: jest.fn(() =>
-      Promise.resolve(
-        memoria.files.filter((f) => !memoria.deleted.has(f))
-      )
+      Promise.resolve(memoria.files.filter((f) => !memoria.deleted.has(f)))
     ),
     deleteAsync: jest.fn((path: string) => {
       const nome = path.replace(memoria.cacheDirectory, '');

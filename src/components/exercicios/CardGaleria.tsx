@@ -37,7 +37,9 @@ export function CardGaleria({
   const vaultRoot = useVault((s) => s.vaultRoot);
   const gifUri = useMemo(() => {
     if (!vaultRoot || !exercicio.gif || exercicio.gif.length === 0) return null;
-    const trimmed = vaultRoot.endsWith('/') ? vaultRoot.slice(0, -1) : vaultRoot;
+    const trimmed = vaultRoot.endsWith('/')
+      ? vaultRoot.slice(0, -1)
+      : vaultRoot;
     return `${trimmed}/${exercicio.gif}`;
   }, [vaultRoot, exercicio.gif]);
   const [pressed, setPressed] = useState(false);
@@ -89,11 +91,7 @@ export function CardGaleria({
             />
           ) : (
             <View style={{ alignItems: 'center', gap: 6 }}>
-              <Dumbbell
-                size={48}
-                color={colors.mutedDecor}
-                strokeWidth={1.5}
-              />
+              <Dumbbell size={48} color={colors.mutedDecor} strokeWidth={1.5} />
               <Text
                 style={{
                   color: colors.muted,

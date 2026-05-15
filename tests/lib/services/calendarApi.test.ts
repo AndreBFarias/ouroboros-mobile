@@ -92,13 +92,9 @@ describe('listarEventos', () => {
       fakeResponse(401, { error: 'invalid_credentials' })
     );
     await expect(
-      listarEventos(
-        TOKEN,
-        new Date(),
-        new Date(),
-        'pessoa_a',
-        { fetchImpl: fetchImpl as unknown as typeof fetch }
-      )
+      listarEventos(TOKEN, new Date(), new Date(), 'pessoa_a', {
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      })
     ).rejects.toMatchObject({ name: 'ApiError', code: 'invalido' });
 
     expect(useGoogleAuth.getState().contas.pessoa_a.invalido).toBe(true);
@@ -108,13 +104,9 @@ describe('listarEventos', () => {
     const fetchImpl = jest.fn(async () =>
       fakeResponse(403, { error: 'quotaExceeded' })
     );
-    const promessa = listarEventos(
-      TOKEN,
-      new Date(),
-      new Date(),
-      'pessoa_a',
-      { fetchImpl: fetchImpl as unknown as typeof fetch }
-    );
+    const promessa = listarEventos(TOKEN, new Date(), new Date(), 'pessoa_a', {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
     await expect(promessa).rejects.toMatchObject({
       name: 'ApiError',
       code: 'quota',
@@ -151,17 +143,11 @@ describe('listarEventos', () => {
     const fetchImpl = jest.fn(async () => fakeResponse(503, 'down'));
     const delay = jest.fn(async () => undefined);
     await expect(
-      listarEventos(
-        TOKEN,
-        new Date(),
-        new Date(),
-        'pessoa_a',
-        {
-          fetchImpl: fetchImpl as unknown as typeof fetch,
-          delay,
-          maxRetry: 1,
-        }
-      )
+      listarEventos(TOKEN, new Date(), new Date(), 'pessoa_a', {
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+        delay,
+        maxRetry: 1,
+      })
     ).rejects.toMatchObject({ name: 'ApiError', code: 'erro_google' });
     // Tenta uma vez + retry uma = 2 calls
     expect(fetchImpl).toHaveBeenCalledTimes(2);
@@ -172,13 +158,9 @@ describe('listarEventos', () => {
       throw new Error('network down');
     });
     await expect(
-      listarEventos(
-        TOKEN,
-        new Date(),
-        new Date(),
-        'pessoa_a',
-        { fetchImpl: fetchImpl as unknown as typeof fetch }
-      )
+      listarEventos(TOKEN, new Date(), new Date(), 'pessoa_a', {
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+      })
     ).rejects.toMatchObject({ name: 'ApiError', code: 'rede' });
   });
 });

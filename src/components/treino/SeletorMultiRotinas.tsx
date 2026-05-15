@@ -98,7 +98,11 @@ export function SeletorMultiRotinas({
         >
           Nenhuma rotina cadastrada. Crie uma antes para montar o grupo.
         </Text>
-        <Button label="Criar rotina" onPress={irParaCriarRotina} variant="ghost" />
+        <Button
+          label="Criar rotina"
+          onPress={irParaCriarRotina}
+          variant="ghost"
+        />
       </View>
     );
   }
@@ -145,7 +149,9 @@ export function SeletorMultiRotinas({
                 justifyContent: 'center',
               }}
             >
-              {ativa ? <Check size={16} color={colors.bg} strokeWidth={3} /> : null}
+              {ativa ? (
+                <Check size={16} color={colors.bg} strokeWidth={3} />
+              ) : null}
             </View>
             <View style={{ flex: 1, gap: spacing.xs }}>
               <Text

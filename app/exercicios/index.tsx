@@ -27,9 +27,7 @@ import { CardGaleria } from '@/components/exercicios';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
 import { listarExercicios } from '@/lib/vault/exercicios';
-import {
-  GRUPOS_MUSCULARES_OPTIONS,
-} from '@/lib/exercicios/grupos';
+import { GRUPOS_MUSCULARES_OPTIONS } from '@/lib/exercicios/grupos';
 import type { Exercicio } from '@/lib/schemas/exercicio';
 
 export default function GaleriaExercicios() {

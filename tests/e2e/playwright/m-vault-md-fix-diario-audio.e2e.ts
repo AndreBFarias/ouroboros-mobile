@@ -8,7 +8,10 @@
 // real ao navegador (que exigiria interacao humana).
 //
 // Comentarios sem acento.
-import type { PlaywrightPageLike, ResultadoE2E } from '../../../docs/templates/e2e-template.e2e';
+import type {
+  PlaywrightPageLike,
+  ResultadoE2E,
+} from '../../../docs/templates/e2e-template.e2e';
 
 export default async function caseDiarioAudioVaultFix(
   page: PlaywrightPageLike
@@ -37,7 +40,8 @@ export default async function caseDiarioAudioVaultFix(
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
+        detalhe:
+          'window.__gauntlet ausente; flag EXPO_PUBLIC_GAUNTLET nao ativa?',
         screenshots,
       };
     }
@@ -69,7 +73,8 @@ export default async function caseDiarioAudioVaultFix(
       const relBin = `media/audios/${ymd}-${rand}.m4a`;
       const relCompanion = relBin.replace(/\.m4a$/, '.md');
       const padraoBin = /^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.m4a$/;
-      const padraoCompanion = /^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/;
+      const padraoCompanion =
+        /^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/;
       return {
         relBin,
         relCompanion,

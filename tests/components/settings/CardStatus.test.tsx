@@ -43,9 +43,7 @@ describe('CardStatus', () => {
   });
 
   it('subtitulo opcional nao renderiza Text quando ausente', () => {
-    const { queryByText } = render(
-      <CardStatus cor="verde" titulo="Pronto" />
-    );
+    const { queryByText } = render(<CardStatus cor="verde" titulo="Pronto" />);
     expect(queryByText('Vault')).toBeNull();
   });
 });

@@ -82,14 +82,20 @@ export default async function caseMVaultMdFixMedidasFotos(
     const tituloOk = await page.evaluate(() => {
       // Procura por texto exato em qualquer Text do header.
       const corpo = document.body.innerText ?? '';
-      return corpo.includes('Novas medidas') && corpo.includes('Frente') && corpo.includes('Costas') && corpo.includes('Lado');
+      return (
+        corpo.includes('Novas medidas') &&
+        corpo.includes('Frente') &&
+        corpo.includes('Costas') &&
+        corpo.includes('Lado')
+      );
     });
     if (!tituloOk) {
       return {
         sprint,
         aspecto,
         status: 'FAIL',
-        detalhe: 'titulo "Novas medidas" ou labels Frente/Costas/Lado ausentes no DOM',
+        detalhe:
+          'titulo "Novas medidas" ou labels Frente/Costas/Lado ausentes no DOM',
         screenshots,
       };
     }

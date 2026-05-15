@@ -58,7 +58,11 @@ export function resumirPassos(
 export function resumirPeso(registros: RegistroExternoHC[]): ResumoPeso | null {
   const pesos = registros
     .filter((r) => r.tipo === 'weight' && typeof r.valor === 'number')
-    .map((r) => ({ kg: r.valor as number, data: r.inicio, t: Date.parse(r.inicio) }))
+    .map((r) => ({
+      kg: r.valor as number,
+      data: r.inicio,
+      t: Date.parse(r.inicio),
+    }))
     .filter((p) => !Number.isNaN(p.t))
     .sort((a, b) => b.t - a.t);
   if (pesos.length === 0) return null;
@@ -86,7 +90,12 @@ export function resumirTreinos(
     if (Number.isNaN(tInicio) || Number.isNaN(tFim)) continue;
     if (tInicio < limite) continue;
     const duracaoMin = Math.max(1, Math.round((tFim - tInicio) / 60_000));
-    lista.push({ uuid: r.uuid, rotulo: r.rotulo, inicio: r.inicio, duracaoMin });
+    lista.push({
+      uuid: r.uuid,
+      rotulo: r.rotulo,
+      inicio: r.inicio,
+      duracaoMin,
+    });
   }
   lista.sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio));
   return { ultimos30dias: lista.length, lista };

@@ -74,7 +74,8 @@ export default async function caseM111Marcos(
     }
     await page.waitForTimeout(700);
 
-    const formPath = 'docs/sprints/M11.1-screenshots-gauntlet/A-marcos-novo-form.png';
+    const formPath =
+      'docs/sprints/M11.1-screenshots-gauntlet/A-marcos-novo-form.png';
     await page.screenshot({ path: formPath });
     screenshots.push(formPath);
 
@@ -130,7 +131,8 @@ export default async function caseM111Marcos(
       return txt.includes('Salvar') && txt.includes('Cancelar');
     });
 
-    const aposFAB = 'docs/sprints/M11.1-screenshots-gauntlet/B-marcos-salvo.png';
+    const aposFAB =
+      'docs/sprints/M11.1-screenshots-gauntlet/B-marcos-salvo.png';
     await page.screenshot({ path: aposFAB });
     screenshots.push(aposFAB);
 
@@ -139,7 +141,8 @@ export default async function caseM111Marcos(
         sprint,
         aspecto,
         status: 'INCONCLUSIVO',
-        detalhe: 'sheet novo marco nao detectado no DOM (gorhom em web limitacao A17). FAB clicou ok.',
+        detalhe:
+          'sheet novo marco nao detectado no DOM (gorhom em web limitacao A17). FAB clicou ok.',
         screenshots,
       };
     }

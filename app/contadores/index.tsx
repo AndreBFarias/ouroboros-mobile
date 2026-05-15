@@ -17,22 +17,13 @@ import { useCallback, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Sigma } from '@/lib/icons';
-import {
-  EmptyState,
-  FAB,
-  Header,
-  Screen,
-  useToast,
-} from '@/components/ui';
+import { EmptyState, FAB, Header, Screen, useToast } from '@/components/ui';
 import { CardContador } from '@/components/contadores/CardContador';
 import { ModalConfirmaReset } from '@/components/contadores/ModalConfirmaReset';
 import { spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
-import {
-  listarContadores,
-  registrarReset,
-} from '@/lib/vault/contadores';
+import { listarContadores, registrarReset } from '@/lib/vault/contadores';
 import type { Contador } from '@/lib/schemas/contador';
 
 export default function ContadoresIndex() {

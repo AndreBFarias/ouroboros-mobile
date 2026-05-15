@@ -190,7 +190,10 @@ export const useGoogleAuth = create<GoogleAuthState>()(
       revogar: async (pessoa) => {
         const conta = get().contas[pessoa];
         const tokenParaRevogar = conta.refreshToken ?? conta.accessToken;
-        if (typeof tokenParaRevogar === 'string' && tokenParaRevogar.length > 0) {
+        if (
+          typeof tokenParaRevogar === 'string' &&
+          tokenParaRevogar.length > 0
+        ) {
           // Best-effort: ignora erro de rede para nao travar revogacao
           // local. Se servidor recusou, conta ainda fica zerada local.
           try {
@@ -250,7 +253,8 @@ export const useGoogleAuth = create<GoogleAuthState>()(
                 ...s.contas[pessoa],
                 accessToken: novo.access_token,
                 expiraEm: Date.now() + novo.expires_in * 1000,
-                refreshToken: novo.refresh_token ?? s.contas[pessoa].refreshToken,
+                refreshToken:
+                  novo.refresh_token ?? s.contas[pessoa].refreshToken,
                 invalido: false,
               },
             },
@@ -303,8 +307,9 @@ function decodeEmailDoIdToken(idToken: string): string | null {
     const raw =
       typeof atob === 'function'
         ? atob(padded)
-        : (globalThis as any).Buffer?.from(padded, 'base64').toString('utf8') ??
-          '';
+        : ((globalThis as any).Buffer?.from(padded, 'base64').toString(
+            'utf8'
+          ) ?? '');
     const json = JSON.parse(raw) as { email?: unknown };
     return typeof json.email === 'string' ? json.email : null;
   } catch {

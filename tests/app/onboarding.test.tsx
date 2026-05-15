@@ -31,7 +31,11 @@ jest.mock('expo-router', () => ({
 }));
 
 const mockInicializarEscolhido = jest.fn<
-  Promise<{ vaultRoot: string; criado: boolean; modo: 'auto' | 'saf-fallback' | 'web' }>,
+  Promise<{
+    vaultRoot: string;
+    criado: boolean;
+    modo: 'auto' | 'saf-fallback' | 'web';
+  }>,
   [string]
 >();
 const mockPedirPermissaoStorage = jest.fn<Promise<boolean>, []>();
@@ -93,9 +97,7 @@ beforeEach(() => {
   mockPedirPermissaoStorage.mockResolvedValue(true);
   // V4.0.2: requestVaultPermission converte SAF tree URI para file://
   // antes de retornar ao caller.
-  mockRequestVaultPermission.mockResolvedValue(
-    'file:///sdcard/Download'
-  );
+  mockRequestVaultPermission.mockResolvedValue('file:///sdcard/Download');
   mockReqCamera.mockResolvedValue(true);
   mockReqMicrofone.mockResolvedValue(true);
   mockReqNotificacoes.mockResolvedValue(true);
@@ -181,7 +183,9 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
     // ser chamado.
     expect(mockPedirPermissaoStorage).not.toHaveBeenCalled();
     await waitFor(() => {
-      expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
+      expect(
+        api.getByText('Para a melhor experiência, libere o acesso a:')
+      ).toBeTruthy();
     });
     expect(useOnboarding.getState().permissoes.storage).toBe(true);
   });
@@ -200,7 +204,9 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
       expect(mockInicializarEscolhido).toHaveBeenCalledTimes(2);
     });
     await waitFor(() => {
-      expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
+      expect(
+        api.getByText('Para a melhor experiência, libere o acesso a:')
+      ).toBeTruthy();
     });
   });
 
@@ -218,7 +224,9 @@ describe('Onboarding J1 - 5 frames com permissoes', () => {
       );
     });
     await waitFor(() => {
-      expect(api.getByText('Para a melhor experiência, libere o acesso a:')).toBeTruthy();
+      expect(
+        api.getByText('Para a melhor experiência, libere o acesso a:')
+      ).toBeTruthy();
     });
   });
 

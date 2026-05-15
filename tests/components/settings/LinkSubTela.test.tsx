@@ -29,10 +29,7 @@ describe('LinkSubTela', () => {
 
   it('a11y default deriva do titulo lowercase', () => {
     const { getByLabelText } = render(
-      <LinkSubTela
-        titulo="Editar nomes e fotos"
-        onPress={() => undefined}
-      />
+      <LinkSubTela titulo="Editar nomes e fotos" onPress={() => undefined} />
     );
     expect(getByLabelText('editar nomes e fotos')).toBeTruthy();
   });

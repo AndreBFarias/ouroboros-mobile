@@ -34,9 +34,7 @@ export function CardStatus({
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={
-        accessibilityLabel ?? `card status sync ${cor}`
-      }
+      accessibilityLabel={accessibilityLabel ?? `card status sync ${cor}`}
       style={{
         backgroundColor: colors.bgAlt,
         borderRadius: radius.card,

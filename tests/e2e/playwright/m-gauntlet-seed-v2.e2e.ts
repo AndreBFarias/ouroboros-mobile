@@ -80,7 +80,8 @@ export default async function caseSeedV2Heatmap(
       return labels.length;
     });
 
-    const sshot = 'docs/sprints/M-GAUNTLET-SEED-V2-screenshots-gauntlet/A-heatmap-colorido.png';
+    const sshot =
+      'docs/sprints/M-GAUNTLET-SEED-V2-screenshots-gauntlet/A-heatmap-colorido.png';
     await page.screenshot({ path: sshot, fullPage: false });
     screenshots.push(sshot);
 

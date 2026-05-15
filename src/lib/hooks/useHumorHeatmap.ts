@@ -73,16 +73,17 @@ export function useHumorHeatmap(): UseHumorHeatmapResult {
   // via require lazy guardado por __DEV__. Em release Android, o
   // branch e DCE-ado e celulasMock fica permanentemente []. Em mobile
   // dev/web ou web release o guard MODO_DEV_WEB tambem bloqueia.
-  const [celulasMock, setCelulasMock] = useState<
-    HumorHeatmapCache['celulas']
-  >([]);
+  const [celulasMock, setCelulasMock] = useState<HumorHeatmapCache['celulas']>(
+    []
+  );
   useEffect(() => {
     // M-GAUNTLET-DEAD-CODE-V2: __DEV__ como guard top-level. Metro DCE
     // remove este branch em release Android, eliminando referencia
     // estatica a useHumorMock e mantendo o modulo fora do bundle.
     if (__DEV__) {
       if (!MODO_DEV_WEB) return;
-      const humor = require('@/lib/dev/humorMock') as typeof import('@/lib/dev/humorMock');
+      const humor =
+        require('@/lib/dev/humorMock') as typeof import('@/lib/dev/humorMock');
       setCelulasMock(humor.useHumorMock.getState().celulas);
       return humor.useHumorMock.subscribe((s) => setCelulasMock(s.celulas));
     }

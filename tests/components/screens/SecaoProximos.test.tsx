@@ -53,7 +53,11 @@ test('proximoDisparo: alarme inativo devolve null', () => {
 });
 
 test('proximoDisparo: alarme diario futuro hoje entra', () => {
-  const alarme = alarmeBase({ recorrencia: 'diaria', horario: '10:00', dias_semana: [] });
+  const alarme = alarmeBase({
+    recorrencia: 'diaria',
+    horario: '10:00',
+    dias_semana: [],
+  });
   const agora = new Date('2026-05-04T08:00:00-03:00');
   const iso = proximoDisparo(alarme, agora);
   expect(iso).not.toBeNull();
@@ -61,7 +65,11 @@ test('proximoDisparo: alarme diario futuro hoje entra', () => {
 });
 
 test('proximoDisparo: alarme diario passado vai para amanha', () => {
-  const alarme = alarmeBase({ recorrencia: 'diaria', horario: '06:00', dias_semana: [] });
+  const alarme = alarmeBase({
+    recorrencia: 'diaria',
+    horario: '06:00',
+    dias_semana: [],
+  });
   const agora = new Date('2026-05-04T08:00:00-03:00');
   const iso = proximoDisparo(alarme, agora);
   expect(iso).not.toBeNull();
@@ -72,7 +80,11 @@ test('proximoDisparo: alarme diario passado vai para amanha', () => {
 
 test('proximoDisparo: alarme semanal pega proximo dia listado', () => {
   // Domingo 2026-05-03; segunda 04. Lista [3=quarta]; pula 3 dias.
-  const alarme = alarmeBase({ recorrencia: 'semanal', dias_semana: [3], horario: '09:00' });
+  const alarme = alarmeBase({
+    recorrencia: 'semanal',
+    dias_semana: [3],
+    horario: '09:00',
+  });
   const agora = new Date('2026-05-04T08:00:00-03:00');
   const iso = proximoDisparo(alarme, agora);
   expect(iso).not.toBeNull();
@@ -82,7 +94,11 @@ test('proximoDisparo: alarme semanal pega proximo dia listado', () => {
 
 test('construirProximos: filtra alarme fora da janela 4h', () => {
   // Alarme as 18h, agora 08h => fora dos 4h.
-  const alarme = alarmeBase({ recorrencia: 'diaria', horario: '18:00', dias_semana: [] });
+  const alarme = alarmeBase({
+    recorrencia: 'diaria',
+    horario: '18:00',
+    dias_semana: [],
+  });
   const agora = new Date('2026-05-04T08:00:00-03:00');
   const itens = construirProximos([alarme], [], agora);
   expect(itens).toEqual([]);
@@ -90,7 +106,11 @@ test('construirProximos: filtra alarme fora da janela 4h', () => {
 
 test('construirProximos: alarme dentro da janela aparece', () => {
   // Alarme as 09:30, agora 08:00 => dentro de 4h.
-  const alarme = alarmeBase({ recorrencia: 'diaria', horario: '09:30', dias_semana: [] });
+  const alarme = alarmeBase({
+    recorrencia: 'diaria',
+    horario: '09:30',
+    dias_semana: [],
+  });
   const agora = new Date('2026-05-04T08:00:00-03:00');
   const itens = construirProximos([alarme], [], agora);
   expect(itens.length).toBe(1);

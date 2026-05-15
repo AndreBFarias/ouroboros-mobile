@@ -13,9 +13,7 @@ const A11Y_LABELS: Record<FABRadialKey, string> = {
 
 describe('FABRadial', () => {
   it('renderiza FAB principal com label de abrir quando fechado', () => {
-    const { getByLabelText } = render(
-      <FABRadial onSelect={() => undefined} />
-    );
+    const { getByLabelText } = render(<FABRadial onSelect={() => undefined} />);
     expect(getByLabelText('abrir acoes')).toBeTruthy();
   });
 
@@ -31,9 +29,7 @@ describe('FABRadial', () => {
 
   it('selecionar uma acao dispara onSelect com a key correta', () => {
     const onSelect = jest.fn();
-    const { getByLabelText } = render(
-      <FABRadial onSelect={onSelect} open />
-    );
+    const { getByLabelText } = render(<FABRadial onSelect={onSelect} open />);
     fireEvent.press(getByLabelText('botao humor'));
     expect(onSelect).toHaveBeenCalledWith('humor');
   });

@@ -22,11 +22,7 @@ const MS_POR_DIA = 86_400_000;
 // completo. Isso evita off-by-one por DST ou fuso (problema comum
 // quando se subtrai timestamps puros).
 function truncarUtcDia(d: Date): number {
-  return Date.UTC(
-    d.getUTCFullYear(),
-    d.getUTCMonth(),
-    d.getUTCDate()
-  );
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
 // Diferenca em dias inteiros entre b e a (b - a). Positivo quando b

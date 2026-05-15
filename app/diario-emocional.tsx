@@ -21,8 +21,8 @@
 // frontmatter so os PessoaId validos e marcamos contexto extra no
 // corpo livre do .md como linha "Com: <quem>." legivel pelo humano.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Text, View } from 'react-native';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
 import {
@@ -442,224 +442,224 @@ export default function DiarioEmocional() {
           if (idx === -1) goBackOnce();
         }}
       >
-      <BottomSheetScrollView
-        contentContainerStyle={{
-          paddingHorizontal: spacing.lg,
-          paddingTop: spacing.md,
-          paddingBottom: spacing.xl,
-          gap: spacing.lg,
-        }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text
-          style={{
-            color: colors.fg,
-            fontFamily: 'JetBrainsMono_500Medium',
-            fontSize: 18,
-          }}
-          accessibilityRole="header"
-          accessibilityLabel="diario emocional"
-        >
-          Diário emocional
-        </Text>
-
-        <View style={{ gap: spacing.sm }}>
-          {tituloSecao('Modo')}
-          <View
-            style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}
-            accessibilityLabel="seletor de modo trigger vitoria ou reflexao"
-          >
-            <Chip
-              label="Trigger"
-              accent="red"
-              selected={modo === 'trigger'}
-              onPress={() => setModo('trigger')}
-            />
-            <Chip
-              label="Vitória" // anonimato-allow: substantivo comum (conquista)
-              accent="green"
-              selected={modo === 'vitoria'}
-              onPress={() => setModo('vitoria')}
-            />
-            <Chip
-              label="Reflexão"
-              accent="cyan"
-              selected={modo === 'reflexao'}
-              onPress={() => setModo('reflexao')}
-            />
-          </View>
-        </View>
-
-        <MotiView
-          // borderColor anima na whitelist do moti; como apenas a
-          // borda esquerda tem largura > 0 (borderLeftWidth: 2), o
-          // efeito visual e a faixa lateral mudando de cor sem que
-          // as outras tres bordas apareceam.
-          animate={{ borderColor: corBordaModo }}
-          transition={springs.subtle}
-          style={{
-            borderLeftWidth: 2,
-            borderTopWidth: 0,
-            borderRightWidth: 0,
-            borderBottomWidth: 0,
-            borderColor: corBordaModo,
-            paddingLeft: spacing.base,
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.xl,
             gap: spacing.lg,
           }}
+          keyboardShouldPersistTaps="handled"
         >
           <Text
             style={{
-              color: colors.muted,
-              fontFamily: 'JetBrainsMono_400Regular',
-              fontSize: 13,
-              lineHeight: 21,
+              color: colors.fg,
+              fontFamily: 'JetBrainsMono_500Medium',
+              fontSize: 18,
             }}
+            accessibilityRole="header"
+            accessibilityLabel="diario emocional"
           >
-            {tituloModo}
+            Diário emocional
           </Text>
 
           <View style={{ gap: spacing.sm }}>
-            {tituloSecao('Emoções')}
-            <EmocaoChips
-              modo={modo}
-              value={emocoes}
-              onChange={setEmocoes}
-            />
-          </View>
-
-          <Slider
-            label="Intensidade"
-            min={1}
-            max={5}
-            step={1}
-            value={intensidade}
-            onChange={setIntensidade}
-            accessibilityLabel="slider intensidade"
-          />
-
-          {permitirAudio ? (
+            {tituloSecao('Modo')}
             <View
               style={{
                 flexDirection: 'row',
-                gap: spacing.lg,
-                justifyContent: 'center',
-                alignItems: 'flex-start',
+                gap: spacing.sm,
+                flexWrap: 'wrap',
               }}
-              accessibilityLabel="botoes de audio e transcricao"
+              accessibilityLabel="seletor de modo trigger vitoria ou reflexao"
             >
-              <MicrofoneButton
-                onAudioGravado={(relPath) => setAudioPath(relPath)}
+              <Chip
+                label="Trigger"
+                accent="red"
+                selected={modo === 'trigger'}
+                onPress={() => setModo('trigger')}
               />
-              {/* Q5.1: botao separado pra transcrever fala em texto
-                  sem gravar audio (evita conflito de microfone com o
-                  expo-av Audio.Recording). */}
-              <TranscreverButton
-                onTextoTranscrito={(transcrito) => {
-                  // Append: preserva digitacao previa do usuario.
-                  // Inclui espaco se ja havia texto, evitando colagem
-                  // "tudoJunto".
-                  setTexto((prev) => {
-                    const limpo = transcrito.trim();
-                    if (limpo.length === 0) return prev;
-                    if (prev.length === 0) return limpo;
-                    return `${prev.trimEnd()} ${limpo}`;
-                  });
-                }}
+              <Chip
+                label="Vitória" // anonimato-allow: substantivo comum (conquista)
+                accent="green"
+                selected={modo === 'vitoria'}
+                onPress={() => setModo('vitoria')}
+              />
+              <Chip
+                label="Reflexão"
+                accent="cyan"
+                selected={modo === 'reflexao'}
+                onPress={() => setModo('reflexao')}
               />
             </View>
-          ) : null}
-
-          <Textarea
-            label="O que aconteceu?"
-            placeholder="Conte com suas palavras."
-            value={texto}
-            onChangeText={setTexto}
-            accessibilityLabel="campo o que aconteceu"
-          />
-
-          {/* M07.x: midia obrigatoria em modo vitoria; opcional em
-              modo trigger. MidiaPicker ja respeita o cap e o toggle
-              permitirAudio internamente. */}
-          <MidiaPicker
-            value={midia}
-            onChange={setMidia}
-            obrigatorio={modo === 'vitoria'}
-          />
-
-          <View style={{ gap: spacing.sm }}>
-            {tituloSecao('Com quem')}
-            <ChipGroup
-              mode="multi"
-              value={com}
-              onChange={(next) => setCom(next as ComQuem[])}
-              options={opcoesComQuem}
-            />
           </View>
 
-          {modo === 'trigger' ? (
-            <View style={{ gap: spacing.lg }}>
-              <Textarea
-                label="Estratégia que tentou"
-                placeholder="Opcional"
-                value={estrategia}
-                onChangeText={setEstrategia}
-                accessibilityLabel="campo estrategia"
-              />
+          <MotiView
+            // borderColor anima na whitelist do moti; como apenas a
+            // borda esquerda tem largura > 0 (borderLeftWidth: 2), o
+            // efeito visual e a faixa lateral mudando de cor sem que
+            // as outras tres bordas apareceam.
+            animate={{ borderColor: corBordaModo }}
+            transition={springs.subtle}
+            style={{
+              borderLeftWidth: 2,
+              borderTopWidth: 0,
+              borderRightWidth: 0,
+              borderBottomWidth: 0,
+              borderColor: corBordaModo,
+              paddingLeft: spacing.base,
+              gap: spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 13,
+                lineHeight: 21,
+              }}
+            >
+              {tituloModo}
+            </Text>
+
+            <View style={{ gap: spacing.sm }}>
+              {tituloSecao('Emoções')}
+              <EmocaoChips modo={modo} value={emocoes} onChange={setEmocoes} />
+            </View>
+
+            <Slider
+              label="Intensidade"
+              min={1}
+              max={5}
+              step={1}
+              value={intensidade}
+              onChange={setIntensidade}
+              accessibilityLabel="slider intensidade"
+            />
+
+            {permitirAudio ? (
               <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: spacing.base,
+                  gap: spacing.lg,
+                  justifyContent: 'center',
+                  alignItems: 'flex-start',
                 }}
+                accessibilityLabel="botoes de audio e transcricao"
               >
-                <Text
-                  style={{
-                    color: colors.muted,
-                    fontFamily: 'JetBrainsMono_400Regular',
-                    fontSize: 13,
+                <MicrofoneButton
+                  onAudioGravado={(relPath) => setAudioPath(relPath)}
+                />
+                {/* Q5.1: botao separado pra transcrever fala em texto
+                  sem gravar audio (evita conflito de microfone com o
+                  expo-av Audio.Recording). */}
+                <TranscreverButton
+                  onTextoTranscrito={(transcrito) => {
+                    // Append: preserva digitacao previa do usuario.
+                    // Inclui espaco se ja havia texto, evitando colagem
+                    // "tudoJunto".
+                    setTexto((prev) => {
+                      const limpo = transcrito.trim();
+                      if (limpo.length === 0) return prev;
+                      if (prev.length === 0) return limpo;
+                      return `${prev.trimEnd()} ${limpo}`;
+                    });
                   }}
-                >
-                  Funcionou?
-                </Text>
-                <Toggle
-                  value={funcionou}
-                  onChange={setFuncionou}
-                  accessibilityLabel="toggle funcionou"
                 />
               </View>
-            </View>
-          ) : null}
-        </MotiView>
+            ) : null}
 
-        {/* M33: destinatario / tema da anotacao. Render dinamico via
+            <Textarea
+              label="O que aconteceu?"
+              placeholder="Conte com suas palavras."
+              value={texto}
+              onChangeText={setTexto}
+              accessibilityLabel="campo o que aconteceu"
+            />
+
+            {/* M07.x: midia obrigatoria em modo vitoria; opcional em
+              modo trigger. MidiaPicker ja respeita o cap e o toggle
+              permitirAudio internamente. */}
+            <MidiaPicker
+              value={midia}
+              onChange={setMidia}
+              obrigatorio={modo === 'vitoria'}
+            />
+
+            <View style={{ gap: spacing.sm }}>
+              {tituloSecao('Com quem')}
+              <ChipGroup
+                mode="multi"
+                value={com}
+                onChange={(next) => setCom(next as ComQuem[])}
+                options={opcoesComQuem}
+              />
+            </View>
+
+            {modo === 'trigger' ? (
+              <View style={{ gap: spacing.lg }}>
+                <Textarea
+                  label="Estratégia que tentou"
+                  placeholder="Opcional"
+                  value={estrategia}
+                  onChangeText={setEstrategia}
+                  accessibilityLabel="campo estrategia"
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: spacing.base,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.muted,
+                      fontFamily: 'JetBrainsMono_400Regular',
+                      fontSize: 13,
+                    }}
+                  >
+                    Funcionou?
+                  </Text>
+                  <Toggle
+                    value={funcionou}
+                    onChange={setFuncionou}
+                    accessibilityLabel="toggle funcionou"
+                  />
+                </View>
+              </View>
+            ) : null}
+          </MotiView>
+
+          {/* M33: destinatario / tema da anotacao. Render dinamico via
             useSettings.pessoa.tipoCompanhia; em modo sozinho retorna
             null e o default {tipo:'mim'} ja esta seedado. */}
-        <SeletorPara value={para} onChange={setPara} disabled={salvando} />
+          <SeletorPara value={para} onChange={setPara} disabled={salvando} />
 
-        <Text
-          style={{
-            color: colors.mutedDecor,
-            fontFamily: 'JetBrainsMono_400Regular',
-            fontSize: 11,
-            lineHeight: 16,
-            textAlign: 'center',
-          }}
-          accessibilityLabel="rodape privacidade"
-        >
-          Salvo localmente. Ninguém vê além de vocês dois.
-        </Text>
+          <Text
+            style={{
+              color: colors.mutedDecor,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 11,
+              lineHeight: 16,
+              textAlign: 'center',
+            }}
+            accessibilityLabel="rodape privacidade"
+          >
+            Salvo localmente. Ninguém vê além de vocês dois.
+          </Text>
 
-        <Button
-          variant={variantBotao}
-          label={labelBotao}
-          onPress={handleSave}
-          disabled={salvando}
-        />
+          <Button
+            variant={variantBotao}
+            label={labelBotao}
+            onPress={handleSave}
+            disabled={salvando}
+          />
 
-        {/* M06.5: gravacao de audio agora vive inline acima do
+          {/* M06.5: gravacao de audio agora vive inline acima do
             textarea via MicrofoneButton; placeholder antigo removido. */}
-      </BottomSheetScrollView>
+        </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );

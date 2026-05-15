@@ -24,7 +24,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from 'react-native';
 import { Plus } from '@/lib/icons';
 import {
   BottomSheet,
@@ -145,7 +145,9 @@ function ItemTimeline({ marco }: { marco: Marco }) {
           {marco.descricao}
         </Text>
         {marco.tags.length > 0 ? (
-          <View style={{ flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' }}>
+          <View
+            style={{ flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' }}
+          >
             {marco.tags.map((tag) => (
               <Text
                 key={tag}

@@ -311,10 +311,7 @@ describe('reabrirTarefa (M31)', () => {
     mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
 
-    const out = await reabrirTarefa(
-      VAULT_ROOT,
-      'markdown/tarefa-foo.md'
-    );
+    const out = await reabrirTarefa(VAULT_ROOT, 'markdown/tarefa-foo.md');
     expect(out.feito).toBe(false);
     expect(out.feito_em).toBeNull();
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
@@ -329,10 +326,7 @@ describe('reabrirTarefa (M31)', () => {
     mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
 
-    const out = await reabrirTarefa(
-      VAULT_ROOT,
-      'markdown/tarefa-foo.md'
-    );
+    const out = await reabrirTarefa(VAULT_ROOT, 'markdown/tarefa-foo.md');
     expect(out.feito).toBe(false);
   });
 
@@ -374,11 +368,7 @@ describe('marcarFeito', () => {
     mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
 
-    const out = await marcarFeito(
-      VAULT_ROOT,
-      'markdown/tarefa-foo.md',
-      false
-    );
+    const out = await marcarFeito(VAULT_ROOT, 'markdown/tarefa-foo.md', false);
     expect(out.feito).toBe(false);
     expect(out.feito_em).toBeNull();
   });
@@ -398,10 +388,7 @@ describe('excluirTarefa', () => {
     mockWriteAsString.mockResolvedValueOnce(undefined);
     mockDeleteAsync.mockResolvedValueOnce(undefined);
 
-    const out = await excluirTarefa(
-      VAULT_ROOT,
-      'markdown/tarefa-foo-bar.md'
-    );
+    const out = await excluirTarefa(VAULT_ROOT, 'markdown/tarefa-foo-bar.md');
     expect(out.lixeiraPath).toMatch(
       /^cache:\/\/test\/lixeira\/tarefas\/\d{8}-\d{6}-tarefa-foo-bar\.md$/
     );
@@ -451,15 +438,15 @@ describe('vaultUriJoin canonico (I-TAREFA)', () => {
 
   it('criarTarefa lanca quando vaultRoot vazio (sem silenciar)', async () => {
     const meta = fixture();
-    await expect(
-      criarTarefa('', meta, 'foo-1234')
-    ).rejects.toThrow(/vaultUriJoin: root vazio/);
+    await expect(criarTarefa('', meta, 'foo-1234')).rejects.toThrow(
+      /vaultUriJoin: root vazio/
+    );
   });
 
   it('lerTarefa lanca quando vaultRoot vazio', async () => {
-    await expect(
-      lerTarefa('', 'markdown/tarefa-x.md')
-    ).rejects.toThrow(/vaultUriJoin: root vazio/);
+    await expect(lerTarefa('', 'markdown/tarefa-x.md')).rejects.toThrow(
+      /vaultUriJoin: root vazio/
+    );
   });
 
   it('normaliza trailing %20 + whitespace no vaultRoot SAF (A29)', async () => {

@@ -71,7 +71,12 @@ jest.mock('expo-document-picker', () => ({
 jest.mock('@/lib/vault/permissions', () => ({
   __esModule: true,
   inicializarVaultEscolhido: jest.fn(() =>
-    Promise.resolve({ ok: true, vaultRoot: '/tmp/vault', criado: true, modo: 'auto' })
+    Promise.resolve({
+      ok: true,
+      vaultRoot: '/tmp/vault',
+      criado: true,
+      modo: 'auto',
+    })
   ),
   sugestaoVaultPathDefault: () => '/sdcard/Ouroboros/',
   sugestaoVaultUriDefault: () => 'file:///sdcard/Ouroboros/',
@@ -218,9 +223,7 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
   });
 
   it('botao "Importar backup" renderiza e dispara restaurarVaultZip', async () => {
-    const {
-      restaurarVaultZip,
-    } = require('@/lib/services/restaurarVault') as {
+    const { restaurarVaultZip } = require('@/lib/services/restaurarVault') as {
       restaurarVaultZip: jest.Mock;
     };
     const tree = render(
@@ -236,9 +239,7 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
   });
 
   it('importar com falhas mostra toast com contagem', async () => {
-    const {
-      restaurarVaultZip,
-    } = require('@/lib/services/restaurarVault') as {
+    const { restaurarVaultZip } = require('@/lib/services/restaurarVault') as {
       restaurarVaultZip: jest.Mock;
     };
     restaurarVaultZip.mockResolvedValueOnce({
@@ -266,9 +267,7 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
     const DocumentPicker = require('expo-document-picker') as {
       getDocumentAsync: jest.Mock;
     };
-    const {
-      restaurarVaultZip,
-    } = require('@/lib/services/restaurarVault') as {
+    const { restaurarVaultZip } = require('@/lib/services/restaurarVault') as {
       restaurarVaultZip: jest.Mock;
     };
     DocumentPicker.getDocumentAsync.mockResolvedValueOnce({

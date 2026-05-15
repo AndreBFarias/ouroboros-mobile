@@ -22,9 +22,18 @@ describe('Button', () => {
   });
 
   it('aceita variantes sem quebrar render', () => {
-    for (const variant of ['primary', 'success', 'ghost', 'destructive'] as const) {
+    for (const variant of [
+      'primary',
+      'success',
+      'ghost',
+      'destructive',
+    ] as const) {
       const { getByLabelText, unmount } = render(
-        <Button label={`v ${variant}`} onPress={() => undefined} variant={variant} />
+        <Button
+          label={`v ${variant}`}
+          onPress={() => undefined}
+          variant={variant}
+        />
       );
       expect(getByLabelText(`v ${variant}`)).toBeTruthy();
       unmount();

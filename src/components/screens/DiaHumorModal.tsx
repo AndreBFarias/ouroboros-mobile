@@ -96,8 +96,7 @@ function BlocoRegistro({
         <PersonAvatar pessoa={registro.autor} size="sm" />
         <Text
           style={{
-            color:
-              registro.autor === 'pessoa_a' ? colors.purple : colors.pink,
+            color: registro.autor === 'pessoa_a' ? colors.purple : colors.pink,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: 14,
             lineHeight: 20,

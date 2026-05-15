@@ -11,8 +11,8 @@ interface ExtraConfig {
   license?: string;
 }
 
-const extra =
-  ((Constants.expoConfig?.extra as ExtraConfig | undefined) ?? {}) as ExtraConfig;
+const extra = ((Constants.expoConfig?.extra as ExtraConfig | undefined) ??
+  {}) as ExtraConfig;
 
 // URL do repositorio. Se ausente, devolve string vazia para evitar
 // abrir Linking com URL invalida.

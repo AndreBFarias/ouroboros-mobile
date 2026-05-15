@@ -42,8 +42,18 @@ function CartaoStatus({ status, fotoUri }: CartaoStatusProps) {
     <View style={{ flex: 1 }}>
       <Card>
         <View style={{ gap: spacing.sm }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <PersonAvatar pessoa={status.pessoa} size="sm" photoUri={fotoUri ?? null} />
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.sm,
+            }}
+          >
+            <PersonAvatar
+              pessoa={status.pessoa}
+              size="sm"
+              photoUri={fotoUri ?? null}
+            />
             <Text
               style={{
                 color: colors.fg,
@@ -98,7 +108,12 @@ export function SecaoStatusCasal() {
           Status do casal
         </Text>
         <Card>
-          <Text style={{ color: colors.muted, fontFamily: 'JetBrainsMono_400Regular' }}>
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+            }}
+          >
             Carregando...
           </Text>
         </Card>

@@ -11,7 +11,12 @@
 // Filtra automaticamente pela pessoa ativa (autor === pessoaAtiva)
 // quando filtro não e 'ambos'. Devolve loading/error simples.
 import { useEffect, useState, useCallback } from 'react';
-import { formatDateYmd, listarDiarios, listarEventos, listarHumor } from '@/lib/vault';
+import {
+  formatDateYmd,
+  listarDiarios,
+  listarEventos,
+  listarHumor,
+} from '@/lib/vault';
 import { type HumorMeta } from '@/lib/schemas/humor';
 import { type DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import { type EventoMeta } from '@/lib/schemas/evento';
@@ -27,12 +32,7 @@ import { useVault } from '@/lib/stores/vault';
 //    'pessoa_b'     : registros para essa pessoa especifica
 //                     (para.tipo === 'outra' && para.pessoa === X).
 //  - 'casal'        : apenas registros do casal (para.tipo === 'casal').
-export type FiltroPara =
-  | 'todos'
-  | 'mim'
-  | 'pessoa_a'
-  | 'pessoa_b'
-  | 'casal';
+export type FiltroPara = 'todos' | 'mim' | 'pessoa_a' | 'pessoa_b' | 'casal';
 
 export interface HojeData {
   humor: HumorMeta | null;
@@ -76,7 +76,7 @@ export interface UseHojeOptions {
 // useHoje('2026-04-29') via overload.
 export function useHoje(arg?: string | UseHojeOptions): HojeData {
   const opts: UseHojeOptions =
-    typeof arg === 'string' ? { ymdOverride: arg } : arg ?? {};
+    typeof arg === 'string' ? { ymdOverride: arg } : (arg ?? {});
   const ymdOverride = opts.ymdOverride;
   const filtroPara: FiltroPara = opts.filtroPara ?? 'todos';
   const vaultRoot = useVault((s) => s.vaultRoot);
@@ -138,9 +138,7 @@ export function useHoje(arg?: string | UseHojeOptions): HojeData {
         // Aplica filtros em cascata: primeiro autor (pessoa ativa),
         // depois `para` (destinatario emocional, M33). Humor nao tem
         // campo `para`, so respeita autor.
-        setHumor(
-          humorRead && matchAutor(humorRead.autor) ? humorRead : null
-        );
+        setHumor(humorRead && matchAutor(humorRead.autor) ? humorRead : null);
         setDiarios(
           diariosDoDia
             .filter((d) => matchAutor(d.autor))

@@ -44,7 +44,8 @@ export function CardHero({
             color: colors.orange,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: typography.heading2.size,
-            lineHeight: typography.heading2.size * typography.heading2.lineHeight,
+            lineHeight:
+              typography.heading2.size * typography.heading2.lineHeight,
           }}
           accessibilityLabel="gasto da semana"
         >
@@ -55,7 +56,8 @@ export function CardHero({
             color: colors.cyan,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: typography.heading1.size,
-            lineHeight: typography.heading1.size * typography.heading1.lineHeight,
+            lineHeight:
+              typography.heading1.size * typography.heading1.lineHeight,
           }}
           accessibilityLabel={`valor ${gastoSemana.toFixed(2)}`}
         >

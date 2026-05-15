@@ -59,9 +59,7 @@ describe('slugifyEvento prioridade texto', () => {
 
 describe('slugifyEvento prioridade categoria', () => {
   it('usa categoria quando bairro e texto vazios', () => {
-    expect(slugifyEvento({ categoria: 'evento_social' })).toBe(
-      'evento-social'
-    );
+    expect(slugifyEvento({ categoria: 'evento_social' })).toBe('evento-social');
   });
 
   it('categoria simples vira o proprio slug', () => {
