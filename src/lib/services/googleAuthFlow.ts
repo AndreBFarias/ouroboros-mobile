@@ -73,6 +73,11 @@ export function getClientIdFromEnv(): string {
 //   'expo'                    -> Expo Go (usa proxy auth.expo.io)
 //   'standalone' / 'guest'    -> dev-client ou release (custom scheme)
 //   undefined em web          -> tratamos como standalone (mock)
+//
+// Lanca quando env.json esta ausente ou sem android.client_id (via
+// getClientIdFromEnv). Callers que querem fluxo throw-then-catch usam
+// esta funcao; callers que preferem ramo defensivo (boot, render
+// inicial) usam pickClientIdSafe abaixo.
 export function pickClientId(): ClientIdInfo {
   const clientId = getClientIdFromEnv();
   const ambiente: ClientIdInfo['ambiente'] =
@@ -110,6 +115,33 @@ export function pickClientId(): ClientIdInfo {
     redirectUri: `${reverso}:/oauthredirect`,
     ambiente,
   };
+}
+
+// Resultado defensivo de pickClientId. Quando env.json esta ausente ou
+// sem android.client_id, retorna { erro } em vez de lancar; permite que
+// callers em boot / render inicial mostrem fallback de UI ("OAuth
+// indisponivel: env.json ausente") sem precisar wrap try/catch local.
+//
+// Discriminado por presenca da chave `erro` para narrowing TypeScript.
+export type PickClientIdResultado = ClientIdInfo | { erro: string };
+
+// Wrap defensivo de pickClientId. Captura QUALQUER erro de
+// getClientIdFromEnv (env.json ausente, json malformado, client_id vazio)
+// e devolve { erro: <mensagem> }. Callers diferenciam pelo discriminante:
+//
+//   const r = pickClientIdSafe();
+//   if ('erro' in r) { /* renderiza fallback */ } else { /* usa r.clientId */ }
+//
+// Erros de outras origens (ex: importacao do Constants quebrada) tambem
+// caem aqui; mensagem repassada para diagnostico de log.
+export function pickClientIdSafe(): PickClientIdResultado {
+  try {
+    return pickClientId();
+  } catch (e) {
+    const mensagem =
+      e instanceof Error ? e.message : 'erro desconhecido em pickClientId';
+    return { erro: mensagem };
+  }
 }
 
 export interface TokenResponse {
