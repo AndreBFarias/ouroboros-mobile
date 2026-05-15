@@ -46,6 +46,8 @@ fi
 echo "OK: git $(git --version | awk '{print $3}')"
 
 echo ""
+echo ">> instalando dependencias (--legacy-peer-deps necessario por"
+echo "   incompatibilidades Expo SDK 54 com React 19; normal)"
 echo ">> instalando dependencias (npm install --legacy-peer-deps)"
 echo "   pode demorar alguns minutos na primeira vez"
 npm install --legacy-peer-deps
