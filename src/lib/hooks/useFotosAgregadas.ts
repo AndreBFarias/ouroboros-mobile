@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import {
   MARKDOWN_FOLDER,
   JPG_FOLDER,
@@ -75,7 +76,9 @@ async function lerEventos(
   autor: string | null
 ): Promise<FotoAgregada[]> {
   const folder = joinUri(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folder, '.md');
+  const todos = (await listVaultFolder(folder, '.md')).filter(
+    (u) => !ehSyncConflict(u)
+  );
   const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'evento-'));
   const out: FotoAgregada[] = [];
 
@@ -115,7 +118,9 @@ async function lerMedidas(
   autor: string | null
 ): Promise<FotoAgregada[]> {
   const folder = joinUri(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folder, '.md');
+  const todos = (await listVaultFolder(folder, '.md')).filter(
+    (u) => !ehSyncConflict(u)
+  );
   // Medidas: 'medidas-YYYY-MM-DD.md' (registro), excluindo
   // 'medidas-foto-...md' (companion).
   const arquivos = todos.filter(
@@ -169,9 +174,9 @@ async function lerGaleriaManual(vaultRoot: string): Promise<FotoAgregada[]> {
     listVaultFolder(folderJpg, '.jpeg'),
     listVaultFolder(folderPng, '.png'),
   ]);
-  const arquivos = [...jpg, ...jpeg, ...png].filter((u) =>
-    matchesFeaturePrefix(u, 'foto-')
-  );
+  const arquivos = [...jpg, ...jpeg, ...png]
+    .filter((u) => !ehSyncConflict(u))
+    .filter((u) => matchesFeaturePrefix(u, 'foto-'));
   const out: FotoAgregada[] = [];
   for (const uri of arquivos) {
     const nome = decodeURIComponent(uri).split('/').pop() ?? '';

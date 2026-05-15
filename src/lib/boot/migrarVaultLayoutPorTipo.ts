@@ -51,6 +51,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { useSessao } from '@/lib/stores/sessao';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 
 function joinUri(root: string, rel: string): string {
   const r = root.endsWith('/') ? root.slice(0, -1) : root;
@@ -61,6 +62,14 @@ function joinUri(root: string, rel: string): string {
 // Lista basenames de uma pasta; retorna [] se inexistente.
 // V4.0.2: dispatcha por scheme. file:// devolve nomes diretos;
 // content:// devolve URIs cheios e extraimos basename.
+//
+// AUDIT-T1B6-MIGRATION-FIX (2026-05-15): filtra copias de conflito do
+// Syncthing (.sync-conflict-<TS>-<dispid>.<ext>) ANTES de devolver ao
+// caller. Sem isso, migration moveria humor-2026-05-06.sync-conflict-...md
+// de daily/ para markdown/humor-2026-05-06.sync-conflict-...md,
+// perpetuando o conflito no layout-por-tipo. Filtro defensivo, nao
+// destrutivo: arquivos sync-conflict permanecem no path original para
+// reconciliacao manual via Obsidian/Syncthing.
 async function listarBasenames(folderUri: string): Promise<string[]> {
   try {
     if (folderUri.startsWith('content://')) {
@@ -69,11 +78,12 @@ async function listarBasenames(folderUri: string): Promise<string[]> {
       for (const u of uris) {
         const decoded = decodeURIComponent(u);
         const last = decoded.split('/').pop() ?? '';
-        if (last.length > 0) out.push(last);
+        if (last.length > 0 && !ehSyncConflict(last)) out.push(last);
       }
       return out;
     }
-    return await FileSystem.readDirectoryAsync(folderUri);
+    const nomes = await FileSystem.readDirectoryAsync(folderUri);
+    return nomes.filter((n) => !ehSyncConflict(n));
   } catch {
     return [];
   }

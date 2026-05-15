@@ -20,6 +20,7 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { listarTreinos } from '@/lib/vault/treinos';
 import { listarMarcos } from '@/lib/vault/marcos';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { saveMarco } from '@/lib/marcos/saveMarco';
 import { hashMarcoConteudo } from '@/lib/marcos/hash';
 import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
@@ -191,7 +192,9 @@ async function lerSinaisDeAutor(vaultRoot: string): Promise<{
   // H2 layout-por-tipo: humor e diario coexistem em markdown/, filtro
   // por prefixo separa as listagens.
   const markdownUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(markdownUri, '.md');
+  const todos = (await listVaultFolder(markdownUri, '.md')).filter(
+    (u) => !ehSyncConflict(u)
+  );
   const arquivosHumor = todos.filter((u) => matchesFeaturePrefix(u, 'humor-'));
   const arquivosDiario = todos.filter((u) =>
     matchesFeaturePrefix(u, 'diario-')

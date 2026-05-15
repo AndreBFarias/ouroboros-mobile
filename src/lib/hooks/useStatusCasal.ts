@@ -13,6 +13,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useState, useCallback } from 'react';
 import { listVaultFolder, readVaultFile } from '@/lib/vault';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import {
   DiarioEmocionalSchema,
@@ -63,14 +64,18 @@ async function listFolderByName(
   folder: string,
   ext: string
 ): Promise<string[]> {
-  const rootEntries = await listVaultFolder(rootUri);
+  const rootEntries = (await listVaultFolder(rootUri)).filter(
+    (u) => !ehSyncConflict(u)
+  );
   const matches: string[] = [];
   for (const entry of rootEntries) {
     if (uriBelongsToFolder(entry, folder)) {
       if (ext && entry.toLowerCase().endsWith(ext.toLowerCase())) {
         matches.push(entry);
       } else {
-        const sub = await listVaultFolder(entry, ext);
+        const sub = (await listVaultFolder(entry, ext)).filter(
+          (u) => !ehSyncConflict(u)
+        );
         matches.push(...sub);
       }
     }
