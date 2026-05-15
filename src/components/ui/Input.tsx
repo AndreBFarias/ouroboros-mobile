@@ -29,6 +29,10 @@ export interface InputProps {
   // (idiomatico para textos PT-BR). keyboardType default 'default'.
   autoCapitalize?: InputAutoCapitalize;
   keyboardType?: KeyboardTypeOptions;
+  // Limite de caracteres aceitos pelo TextInput nativo. Quando omitido
+  // o campo aceita entrada ilimitada (comportamento padrao). Usado pelos
+  // forms de rotina (nome 60), descricao (280), grupo etc.
+  maxLength?: number;
 }
 
 export function Input({
@@ -40,6 +44,7 @@ export function Input({
   accessibilityLabel,
   autoCapitalize = 'sentences',
   keyboardType = 'default',
+  maxLength,
 }: InputProps) {
   const [focused, setFocused] = useState(false);
   const a11y = accessibilityLabel ?? label ?? placeholder ?? 'campo de texto';
@@ -67,6 +72,7 @@ export function Input({
           secureTextEntry={secureTextEntry}
           autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
+          maxLength={maxLength}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className="font-mono text-fg text-base px-4"
