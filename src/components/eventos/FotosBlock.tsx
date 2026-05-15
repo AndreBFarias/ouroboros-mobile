@@ -13,6 +13,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { X } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from '@/components/ui';
+import { useOptionalToast } from '@/components/ui/Toast';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -31,11 +32,17 @@ export function FotosBlock({
   disabled = false,
 }: FotosBlockProps) {
   const cheio = fotos.length >= CAP_FOTOS;
+  const toast = useOptionalToast();
 
   const adicionar = useCallback(async () => {
     if (disabled || cheio) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      // T1B3: permissao negada agora notifica em vez de silenciar.
+      // Sem toast, o press parecia ter dado errado sem motivo aparente.
+      toast.show('Sem permissão de galeria.', 'error');
+      return;
+    }
 
     // SDK 54+ usa array de MediaType (A4 do BRIEF). MediaTypeOptions
     // foi deprecado e some no SDK 55.
@@ -48,7 +55,7 @@ export function FotosBlock({
     const novaUri = result.assets[0].uri;
     haptics.light();
     onChangeFotos([...fotos, novaUri]);
-  }, [cheio, disabled, fotos, onChangeFotos]);
+  }, [cheio, disabled, fotos, onChangeFotos, toast]);
 
   const remover = useCallback(
     (idx: number) => {

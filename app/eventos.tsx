@@ -64,7 +64,7 @@ import {
   EVENTO_CATEGORIAS_OPTIONS,
   type EventoCategoria,
 } from '@/lib/eventos/categorias';
-import { getBairroAtual } from '@/lib/eventos/localizacao';
+import { getBairroAtualDetalhado } from '@/lib/eventos/localizacao';
 import { saveEvento } from '@/lib/eventos/saveEvento';
 import { comTimeout } from '@/lib/util/comTimeout';
 import type { Midia } from '@/lib/schemas/midia';
@@ -200,9 +200,14 @@ export default function Eventos() {
   const handleDetectar = async () => {
     setDetectandoBairro(true);
     try {
-      const detectado = await getBairroAtual();
-      if (detectado) {
-        setBairro(detectado);
+      // T1B3: discriminator distingue permissao negada de outras
+      // falhas (GPS off, sem resultado). Toast especifico melhora UX.
+      const detalhe = await getBairroAtualDetalhado();
+      if (detalhe.ok) {
+        setBairro(detalhe.bairro);
+      } else if (detalhe.razao === 'permissao_negada') {
+        setBairro(null);
+        toast.show('Sem permissão de localização.', 'error');
       } else {
         setBairro(null);
         toast.show('Não foi possível detectar o bairro.', 'info');

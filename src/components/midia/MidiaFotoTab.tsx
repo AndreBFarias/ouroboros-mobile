@@ -6,9 +6,10 @@
 // via onAdd. Sufixo random curto evita colisao quando o usuario
 // adiciona varias fotos no mesmo minuto.
 //
-// Erro silencioso: permissao negada nao mostra toast (consistente
-// com FotosBlock M07); cancel do picker tambem nao notifica. So
-// erro de copia para o Vault dispara toast.
+// T1B3 (2026-05-15): permissao negada agora notifica via toast
+// 'error' (galeria ou camera). Cancel do picker continua silencioso
+// (e' acao do proprio usuario). Erro de copia para o Vault tambem
+// dispara toast.
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -81,6 +82,8 @@ export function MidiaFotoTab({
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
+        // T1B3: permissao negada agora notifica em vez de silenciar.
+        toast.show('Sem permissão de galeria.', 'error');
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -93,7 +96,7 @@ export function MidiaFotoTab({
     } finally {
       setCarregando(false);
     }
-  }, [carregando, desabilitado, persistirEEmitir]);
+  }, [carregando, desabilitado, persistirEEmitir, toast]);
 
   const tirarFoto = useCallback(async () => {
     if (desabilitado || carregando) return;
@@ -101,6 +104,8 @@ export function MidiaFotoTab({
     try {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
+        // T1B3: permissao negada agora notifica em vez de silenciar.
+        toast.show('Sem permissão de câmera.', 'error');
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -112,7 +117,7 @@ export function MidiaFotoTab({
     } finally {
       setCarregando(false);
     }
-  }, [carregando, desabilitado, persistirEEmitir]);
+  }, [carregando, desabilitado, persistirEEmitir, toast]);
 
   return (
     <View style={{ gap: spacing.sm }} accessibilityLabel="aba foto">

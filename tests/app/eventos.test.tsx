@@ -39,8 +39,15 @@ jest.mock('@/lib/eventos/saveEvento', () => ({
 
 const mockGetBairroAtual = jest.fn<Promise<string | null>, []>();
 
+// T1B3: caller agora consome getBairroAtualDetalhado. O mock antigo
+// devolve string|null; convertemos para o discriminator no factory.
 jest.mock('@/lib/eventos/localizacao', () => ({
   getBairroAtual: () => mockGetBairroAtual(),
+  getBairroAtualDetalhado: async () => {
+    const out = await mockGetBairroAtual();
+    if (out === null) return { ok: false, razao: 'sem_resultado' };
+    return { ok: true, bairro: out };
+  },
 }));
 
 // expo-image-picker e expo-location nao chegam a rodar nos testes
