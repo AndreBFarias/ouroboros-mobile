@@ -15,6 +15,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { treinosPath } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import {
   TreinoSessaoSchema,
@@ -42,7 +43,8 @@ export async function listarTreinos(
   // Treinos formais (M11) ainda em layout legado: pasta 'treinos/'.
   // Migracao para layout-por-tipo H2 fica para sprint dedicada.
   const folderUri = joinUri(vaultRoot, 'treinos');
-  const arquivos = await listVaultFolder(folderUri, '.md');
+  const arquivosBrutos = await listVaultFolder(folderUri, '.md');
+  const arquivos = arquivosBrutos.filter((u) => !ehSyncConflict(u));
 
   const lidos: TreinoSessao[] = [];
   for (const arquivoUri of arquivos) {

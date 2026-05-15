@@ -14,6 +14,7 @@ import {
   matchesFeaturePrefix,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MarcoSchema, type Marco } from '@/lib/schemas/marco';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
@@ -33,7 +34,9 @@ export async function listarMarcos(
 ): Promise<Marco[]> {
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'marco-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'marco-')
+  );
 
   const lidos: Marco[] = [];
   for (const arquivoUri of arquivos) {

@@ -18,6 +18,7 @@ import {
   matchesFeaturePrefix,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MedidasSchema, type Medida } from '@/lib/schemas/medidas';
 import { escreverPesoEmHC, escreverBodyFatEmHC } from '@/lib/health/sync';
@@ -69,8 +70,10 @@ export async function listarMedidas(
   // Filtro por prefixo evita confundir medidas-YYYY-MM-DD.md (registro
   // diario) com medidas-foto-YYYY-MM-DD-<lado>.md (companion da foto).
   const arquivos = todos.filter(
-    (u) => matchesFeaturePrefix(u, 'medidas-') &&
-           !matchesFeaturePrefix(u, 'medidas-foto-')
+    (u) =>
+      !ehSyncConflict(u) &&
+      matchesFeaturePrefix(u, 'medidas-') &&
+      !matchesFeaturePrefix(u, 'medidas-foto-')
   );
 
   const lidas: Medida[] = [];

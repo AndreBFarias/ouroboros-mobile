@@ -27,6 +27,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { escreverMenstruacaoEmHC } from '@/lib/health/sync';
 import { useSettings } from '@/lib/stores/settings';
@@ -114,7 +115,9 @@ export async function listarRegistrosCiclo(
 ): Promise<CicloMenstrualMeta[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'ciclo-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'ciclo-')
+  );
 
   const lidas: CicloMenstrualMeta[] = [];
   for (const arquivoUri of arquivos) {

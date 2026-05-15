@@ -17,6 +17,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
@@ -28,7 +29,9 @@ import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 export async function listarAlarmes(vaultRoot: string): Promise<Alarme[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'alarme-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'alarme-')
+  );
 
   const lidos: Alarme[] = [];
   for (const arquivoUri of arquivos) {

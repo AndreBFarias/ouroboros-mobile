@@ -22,6 +22,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { HumorSchema } from '@/lib/schemas/humor';
 import { DiarioEmocionalSchema } from '@/lib/schemas/diario_emocional';
 import { EventoSchema } from '@/lib/schemas/evento';
@@ -284,7 +285,8 @@ export async function listarItensGaleria(
   filtros: FiltrosGaleria = {}
 ): Promise<ItemGaleria[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folderUri, '.md');
+  const todosBrutos = await listVaultFolder(folderUri, '.md');
+  const todos = todosBrutos.filter((u) => !ehSyncConflict(u));
 
   const tipoFiltro = filtros.tipo ?? 'tudo';
   const mesFiltro = filtros.mes ?? null;

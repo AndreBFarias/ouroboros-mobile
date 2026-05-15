@@ -80,6 +80,7 @@ export type { ParsedFrontmatter } from './frontmatter';
 
 export { readVaultFile, listVaultFolder } from './reader';
 export { writeVaultFile } from './writer';
+export { ehSyncConflict, SYNC_CONFLICT_REGEX } from './syncConflict';
 
 export {
   requestVaultPermission,

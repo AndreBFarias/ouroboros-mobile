@@ -38,6 +38,7 @@ import {
   matchesFeaturePrefix,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
 import { escreverAlarme } from '@/lib/vault/alarmes';
@@ -85,7 +86,9 @@ export async function listarTarefas(
 ): Promise<TarefaListada[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'tarefa-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'tarefa-')
+  );
 
   const lidos: TarefaListada[] = [];
   for (const arquivoUri of arquivos) {

@@ -7,6 +7,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 
 function joinUri(root: string, rel: string): string {
@@ -29,7 +30,9 @@ export async function listarEventos(
   }
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'evento-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'evento-')
+  );
 
   const lidos: EventoMeta[] = [];
   for (const arquivoUri of arquivos) {

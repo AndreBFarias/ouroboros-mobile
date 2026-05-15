@@ -37,6 +37,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ExercicioSchema, type Exercicio } from '@/lib/schemas/exercicio';
 
@@ -74,7 +75,9 @@ export async function listarExercicios(
 ): Promise<Exercicio[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'exercicio-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'exercicio-')
+  );
 
   const lidos: Exercicio[] = [];
   for (const arquivoUri of arquivos) {

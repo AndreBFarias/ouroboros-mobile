@@ -21,6 +21,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { RotinaSchema, type RotinaMeta } from '@/lib/schemas/rotina';
 
@@ -32,7 +33,9 @@ export async function listarRotinas(
 ): Promise<RotinaMeta[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'rotina-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'rotina-')
+  );
 
   const lidas: RotinaMeta[] = [];
   for (const arquivoUri of arquivos) {

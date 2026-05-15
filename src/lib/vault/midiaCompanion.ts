@@ -31,6 +31,7 @@ import {
   MP4_FOLDER,
   PDF_FOLDER,
 } from '@/lib/vault/paths';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 
 // Concatena root SAF e path relativo, normalizando barras. Idem
 // helpers locais espalhados (capturarFoto.joinUri etc); centralizado
@@ -313,6 +314,12 @@ export async function migrarAssetsLegacyParaMedia(
 
     // Pula subpastas (assets/exercicios/) e arquivos ocultos.
     if (basename.length === 0 || basename.startsWith('.')) {
+      result.pulados += 1;
+      continue;
+    }
+    // Pula copias de conflito do Syncthing: nao migrar para media/<sub>/
+    // como se fosse binario legitimo (vide ADR-0017 e bug B6).
+    if (ehSyncConflict(basename)) {
       result.pulados += 1;
       continue;
     }

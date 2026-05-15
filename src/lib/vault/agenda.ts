@@ -33,6 +33,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
@@ -94,8 +95,8 @@ export async function listarEventosAgenda(
 ): Promise<AgendaEvento[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) =>
-    matchesFeaturePrefix(u, `agenda-${pessoa}-`)
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, `agenda-${pessoa}-`)
   );
 
   const lidos: AgendaEvento[] = [];
@@ -162,8 +163,8 @@ export async function apagarEventoAgenda(
 ): Promise<void> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) =>
-    matchesFeaturePrefix(u, `agenda-${pessoa}-`)
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, `agenda-${pessoa}-`)
   );
   const idSeguro = sanitizarEventoId(id);
   const sufixo = `-${idSeguro}.md`;

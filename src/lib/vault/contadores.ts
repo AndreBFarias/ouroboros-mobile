@@ -30,6 +30,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ContadorSchema, type Contador } from '@/lib/schemas/contador';
 import { diasEntre } from '@/lib/util/diasEntre';
@@ -43,7 +44,9 @@ export async function listarContadores(
 ): Promise<Contador[]> {
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
-  const arquivos = todos.filter((u) => matchesFeaturePrefix(u, 'contador-'));
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'contador-')
+  );
 
   const lidos: Contador[] = [];
   for (const arquivoUri of arquivos) {
