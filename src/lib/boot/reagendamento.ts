@@ -182,6 +182,22 @@ const atualizarDeviceIndexHook: BootHook = async () => {
   await atualizarDeviceIndex();
 };
 
+// AUDIT-T1-BUGS B1 (2026-05-15): apaga arquivos `*.writing` orfaos
+// deixados por writes interrompidos (app matado entre writeAsStringAsync
+// do tmp e moveAsync do rename atomico em file://). Apenas branch
+// file://; vault root em content:// nao usa o sufixo .writing.
+// Idempotente. Roda apos migrarAssetsHook para nao competir por SAF e
+// antes do reconciliarTipoCompanhiaHook (que so toca stores).
+const limparOrfaosWritingHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { limparArquivosWritingOrfaos } = await import(
+    '@/lib/boot/limparArquivosWritingOrfaos'
+  );
+  await limparArquivosWritingOrfaos(vaultRoot);
+};
+
 // V4.0.2 (2026-05-08): reconcilia useSettings.pessoa.tipoCompanhia
 // com useOnboarding.tipoCompanhia. Cobre usuarios v3 que onboardaram
 // antes do espelhamento automatico (ficaram presos em settings='sozinho'
@@ -225,6 +241,10 @@ BOOT_HOOKS.push(
   // depois de migrarAssets para nao competir por SAF de leitura no
   // arranque. Idempotente (so ultima_atividade muda em boot subsequente).
   atualizarDeviceIndexHook,
+  // AUDIT-T1-BUGS B1: apaga arquivos *.writing orfaos. Idempotente,
+  // best-effort. Roda depois das migracoes para nao competir com
+  // varreduras concorrentes.
+  limparOrfaosWritingHook,
   // V4.0.2: reconcilia tipoCompanhia entre useOnboarding e useSettings.
   // Sem dependencia de I/O (so toca stores em memoria), entao roda por
   // ultimo sem afetar arranque. Idempotente.
