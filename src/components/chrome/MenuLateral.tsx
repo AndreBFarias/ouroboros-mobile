@@ -59,7 +59,6 @@ import {
   Image as ImageIcon,
   Layers,
   ListChecks,
-  Mic,
   Moon,
   Settings as SettingsIcon,
   Sparkles,
@@ -202,13 +201,9 @@ export function MenuLateral() {
         route: rotaCaptura('humor'),
         cor: colors.pink,
       },
-      {
-        label: 'Voz',
-        a11yLabel: 'registrar voz',
-        icone: Mic,
-        route: rotaCaptura('voz'),
-        cor: colors.cyan,
-      },
+      // R-FAB-1: item "Voz" removido. Apontava para
+      // /diario-emocional?modo=audio; o atalho "Reflexao" abaixo (cyan,
+      // pos-R0) e o item "Diario" da secao "Ver" cobrem o caminho.
       // M-CAPTURA-UNIFICADA: Camera passa a apontar para a rota
       // /captura (transparentModal) que ramifica entre "Registrar
       // momento" e "Escanear documento". Em vez do legado

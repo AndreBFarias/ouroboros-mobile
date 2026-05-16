@@ -35,9 +35,11 @@ export interface RouteDescriptor {
 // Mapa imutavel de cada ação para a rota destino. Mantem `as const`
 // para que o TypeScript preserve os literais (necessario para o
 // typed routing do expo-router).
+// R-FAB-1: entry 'voz' removida. Apontava para
+// /diario-emocional?modo=audio; o atalho "Reflexao" (pos-R0) e o item
+// "Diario" do MenuLateral cobrem o caminho de entrada na tela.
 const CAPTURE_ROUTES = {
   humor: { pathname: '/humor-rapido' },
-  voz: { pathname: '/diario-emocional', params: { modo: 'audio' } },
   camera: { pathname: '/scanner' },
   exercicio: { pathname: '/exercicios/novo' },
   vitoria: { pathname: '/diario-emocional', params: { modo: 'conquista' } },

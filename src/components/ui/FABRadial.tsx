@@ -1,8 +1,12 @@
-// FAB Radial: 6 ações em arco semicircular subindo do FAB principal.
+// FAB Radial: 5 ações em arco semicircular subindo do FAB principal.
 // Overlay escuro 50% sobre tela atual. FAB rotaciona 45deg (vira X) ao
 // abrir. Cada botao surge em sequência com 60ms delay (springs.bouncy).
-// Tap fora fecha. Ações: humor, voz, camera, exercício, vitoria, trigger.
+// Tap fora fecha. Ações: humor, camera, exercício, vitoria, trigger.
 // onSelect recebe a key escolhida e o componente fecha automaticamente.
+// R-FAB-1 (Onda R Fase 2): entry "voz" removida. Diario Emocional segue
+// acessivel via MenuLateral + atalho "Reflexao" pos-R0; o botao "Voz"
+// no FAB radial historico apontava para /diario-emocional?modo=audio
+// que ficou sem uso direto. captureRoutes deixou de mapear 'voz'.
 import { useEffect, useState, type ComponentType } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
@@ -18,14 +22,13 @@ import Animated, {
   withSpring,
   withDelay,
 } from 'react-native-reanimated';
-import { Camera, Dumbbell, Heart, Mic, Plus, Trophy, Zap } from '@/lib/icons';
+import { Camera, Dumbbell, Heart, Plus, Trophy, Zap } from '@/lib/icons';
 import { springs } from '@/lib/motion';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
 
 export type FABRadialKey =
   | 'humor'
-  | 'voz'
   | 'camera'
   | 'exercicio'
   | 'vitoria'
@@ -60,7 +63,8 @@ const LABEL_GAP = 12;
 
 // Ordem visual: humor mais a esquerda, trigger mais perto do FAB.
 // Strings visiveis em sentence case + acentuacao PT-BR; labels de a11y
-// sem acento (convencao de screen reader).
+// sem acento (convencao de screen reader). R-FAB-1: 5 acoes (voz fora);
+// gap 22.5deg entre acoes no arco de 180-270deg.
 const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'humor',
@@ -71,20 +75,12 @@ const ACTIONS: readonly ActionDescriptor[] = [
     angleDeg: 180,
   },
   {
-    key: 'voz',
-    label: 'Voz',
-    acentLabel: 'botao voz',
-    color: colors.cyan,
-    Icon: Mic,
-    angleDeg: 198,
-  },
-  {
     key: 'camera',
     label: 'Câmera',
     acentLabel: 'botao camera',
     color: colors.orange,
     Icon: Camera,
-    angleDeg: 216,
+    angleDeg: 202.5,
   },
   {
     key: 'exercicio',
@@ -92,7 +88,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao exercicios',
     color: colors.green,
     Icon: Dumbbell,
-    angleDeg: 234,
+    angleDeg: 225,
   },
   {
     key: 'vitoria',
@@ -100,7 +96,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
     acentLabel: 'botao conquista',
     color: colors.yellow,
     Icon: Trophy,
-    angleDeg: 252,
+    angleDeg: 247.5,
   },
   {
     key: 'trigger',

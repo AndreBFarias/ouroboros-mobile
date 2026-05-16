@@ -75,13 +75,18 @@ describe('MenuLateral', () => {
     expect(queryByLabelText('item financas')).toBeNull();
     // Registrar
     expect(getByLabelText('registrar humor')).toBeTruthy();
-    expect(getByLabelText('registrar voz')).toBeTruthy();
+    // R-FAB-1: item "Voz" REMOVIDO. Diario Emocional acessivel via
+    // "registrar reflexao" + item "diario" (quando aplicavel).
+    expect(queryByLabelText('registrar voz')).toBeNull();
     expect(getByLabelText('registrar camera')).toBeTruthy();
     // L1: item "Exercícios" foi REMOVIDO da secao Registrar (movido
     // para a aba Exercicios em /saude-fisica).
     expect(queryByLabelText('registrar exercicios')).toBeNull();
     expect(getByLabelText('registrar conquista')).toBeTruthy();
     expect(getByLabelText('registrar crise')).toBeTruthy();
+    // Confirma que o atalho "Reflexao" continua presente (caminho
+    // alternativo para /diario-emocional pos-R0).
+    expect(getByLabelText('registrar reflexao')).toBeTruthy();
   });
 
   it('M35: item "financas" aparece quando mostrarFinancasEmDesenvolvimento on', () => {

@@ -4,9 +4,9 @@ import {
 } from '@/lib/navigation/captureRoutes';
 import type { FABRadialKey } from '@/components/ui';
 
+// R-FAB-1: entry 'voz' removida; 5 keys remanescentes.
 const KEYS: readonly FABRadialKey[] = [
   'humor',
-  'voz',
   'camera',
   'exercicio',
   'vitoria',
@@ -14,7 +14,7 @@ const KEYS: readonly FABRadialKey[] = [
 ] as const;
 
 describe('captureRoutes', () => {
-  it('mapeia as 6 FABRadialKey para pathname nao vazio', () => {
+  it('mapeia as 5 FABRadialKey para pathname nao vazio', () => {
     for (const key of KEYS) {
       const route = routeForCapture(key);
       expect(typeof route.pathname).toBe('string');
@@ -44,23 +44,18 @@ describe('captureRoutes', () => {
   // R0 lexical: FABRadialKey internamente segue 'vitoria'/'trigger'
   // (chave estavel de UI), mas o param 'modo' emitido em URL e o
   // canonico 'conquista'/'gatilho'. A tela diario-emocional aceita
-  // ambos os vocabularios via normalizarModoParam.
-  it('voz, vitoria e trigger compartilham /diario-emocional com modo distinto', () => {
-    const voz = routeForCapture('voz');
+  // ambos os vocabularios via normalizarModoParam. R-FAB-1: 'voz' fora.
+  it('vitoria e trigger compartilham /diario-emocional com modo distinto', () => {
     const vitoria = routeForCapture('vitoria');
     const trigger = routeForCapture('trigger');
 
-    expect(voz.pathname).toBe('/diario-emocional');
     expect(vitoria.pathname).toBe('/diario-emocional');
     expect(trigger.pathname).toBe('/diario-emocional');
 
-    expect(voz.params).toEqual({ modo: 'audio' });
     expect(vitoria.params).toEqual({ modo: 'conquista' });
     expect(trigger.params).toEqual({ modo: 'gatilho' });
 
     expect(vitoria.params?.modo).not.toBe(trigger.params?.modo);
-    expect(voz.params?.modo).not.toBe(vitoria.params?.modo);
-    expect(voz.params?.modo).not.toBe(trigger.params?.modo);
   });
 
   it('quando params e declarado, nao e objeto vazio', () => {

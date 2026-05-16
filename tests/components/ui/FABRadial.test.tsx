@@ -2,9 +2,10 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { FABRadial, type FABRadialKey } from '@/components/ui';
 
 // Mapa key -> a11y label (espelha src/components/ui/FABRadial.tsx).
+// R-FAB-1: entry 'voz' removida; sao 5 acoes agora (humor, camera,
+// exercicio, vitoria, trigger).
 const A11Y_LABELS: Record<FABRadialKey, string> = {
   humor: 'botao humor',
-  voz: 'botao voz',
   camera: 'botao camera',
   exercicio: 'botao exercicios',
   vitoria: 'botao conquista',
@@ -17,13 +18,15 @@ describe('FABRadial', () => {
     expect(getByLabelText('abrir acoes')).toBeTruthy();
   });
 
-  it('quando aberto disponibiliza os 6 botoes de acao', () => {
-    const { getByLabelText } = render(
+  it('quando aberto disponibiliza os 5 botoes de acao', () => {
+    const { getByLabelText, queryByLabelText } = render(
       <FABRadial onSelect={() => undefined} open />
     );
     for (const key of Object.keys(A11Y_LABELS) as FABRadialKey[]) {
       expect(getByLabelText(A11Y_LABELS[key])).toBeTruthy();
     }
+    // R-FAB-1: confirma ausencia explicita do botao "voz" removido.
+    expect(queryByLabelText('botao voz')).toBeNull();
     expect(getByLabelText('fechar acoes')).toBeTruthy();
   });
 
