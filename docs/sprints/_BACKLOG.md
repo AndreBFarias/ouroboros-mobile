@@ -85,7 +85,7 @@ Bloqueia `v1.0.0-rc2`.
 | 2 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
 | 2‖ | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
 | 3 | R-INT-1 | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
-| 3‖ | R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
+| 3‖ | R-INT-2 `[ok]` (Onda 2C.1, `b4b33d9`) | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
 | 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
 | 4 | R-FAB-1 `[ok]` (`47c17f9`) | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | 4‖ | R-FAB-2 `[ok]` (Onda 2A.4) | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |

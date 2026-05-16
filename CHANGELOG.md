@@ -5,6 +5,27 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2C.1 — R-INT-2 nome app permissões (AndroidManifest defensivo + fix intent-filter HC) (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `b4b33d9` cherry-pick. Escopo limitado a AndroidManifest + app.json (Cloud Console editing fica em R-CRIT-2 separada).
+
+**Causa raiz spec não confirmada — superfície já estava correta**: `strings.xml` `app_name` resolvia para "Ouroboros" puro; `<application android:label="@string/app_name">` herdava OK. Spec previa fix de `Ouroboros Mobile` mas não foi reproduzido em prebuild atual.
+
+**Fixes entregues (corretivo + defensivo)**:
+- **Corretivo: removeu `intentFilters` manual em `app.json`** que duplicava o intent-filter do Health Connect rationale. Manifest gerado antes tinha 2 intent-filters: 1 correto (do plugin `react-native-health-connect`) + 1 malformado pelo Expo prefix (`android.intent.action.androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE` — prefixo `android.intent.action.` concatenado indevidamente). Após fix: apenas 1 intent-filter correto.
+- **Defensivo: adicionou `expo.android.label = "Ouroboros"`** explícito pra blindar contra mudanças futuras de `expo.name`.
+
+**Verificação prebuild**: `npx expo prebuild --platform android --no-install --clean` executou sem erros; manifest gerado validado. `strings.xml app_name` = "Ouroboros" confirmado via grep.
+
+Métricas inalteradas: **240 suítes / 2251 testes** verde (sprint só toca config, não testes). TS strict 0 · anonimato ok · smoke ok · prebuild ok.
+
+**Confirmação textual obrigatória**: NÃO tocou Google Cloud Console. R-CRIT-2 (responsabilidade humana) permanece em standby.
+
+**Achados colaterais**:
+1. `expo-share-intent v6.1.0 vs SDK 54` warning (débito conhecido da Onda Q, fora escopo).
+2. `env.json` ausente em worktree fresh quebra typecheck (já documentado em R-INFRA-WORKTREE-BOOTSTRAP).
+3. Warning zsh cosmético `compdef:153` (sem impacto exit code).
+
 ### Onda 2B.4 — R-HOME-1 Tela Hoje foco em ação D1=C (2026-05-16 noite)
 
 Sprint da Fase 2 fecha **Onda 2B 4/4**. Commit `43d6266` cherry-pick (orquestrador commitou pelo executor — agent reportou trabalho pronto mas não commitou por self-policy).
