@@ -5,6 +5,22 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2A.2 — R-RECAP-1 itens de agrupamento clicáveis (2026-05-16 noite)
+
+Sprint da Fase 2 entregue **honrando worktree isolation**. Commit `25d4849` cherry-pick.
+
+- **Helper canônico em `src/lib/recap/destinos.ts`**: mapa central de `tipo + id + origem` → `{ pathname, params } | null`. Centraliza lógica que antes estava espalhada em Q24.a (números clicáveis). Cobre `diario_vitoria`/`diario_trigger`/`diario_reflexao` → `/diario-emocional?slug`; `humor` → `/humor?slug`; `marco` → `/galeria/detalhe/[slug]`; `medida_*` → `/contadores/[slug]`; `tarefa` → `/todo?focus`; `evento_positivo`/`evento_negativo` → `null` (descoberta: estes 2 tipos não têm detalhe canônico; comportamento alinhado com `app/recap-lista.tsx` pré-existente; achado já documentado em R-CROSS-FLOW-AUDIT).
+- **5 `RecapSecao*.tsx` atualizados**: Conquistas, Crises, Reflexões, Evoluções, Tarefas — cada item agora é `Pressable` com aria-label canônico (`conquista <id>`, `crise diario_trigger:...`, etc) e dispara `router.push(destino)` ou toast "Edição em breve." quando `destino === null`.
+- **Decisão técnica importante**: spec original usou nomenclatura conceitual (`CardConquistas.tsx`, `/conquista/[id]`, `/tarefas/[id]`) que NÃO casava com o codebase. Executor verificou via grep que esses paths não existiam, leu `app/recap-lista.tsx` (que já usava o padrão Q24.a com rotas reais), e reformulou: estender padrão Q24.a para todos os itens dentro dos `RecapSecao*` via helper canônico. **Hipótese conceitual da spec cumprida; nomes específicos corrigidos contra o codebase real**. Padrão a reforçar: spec deve referenciar codebase, não conceito.
+- **+31 testes** (13 do helper + 18 dos 5 Secao* + 1 E2E playwright). Métricas: **231 suítes / 2132 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **3 screenshots Gauntlet** em `docs/sprints/R-RECAP-1-screenshots-gauntlet/` via playwright local (pipeline 3-tentativas, sucesso na 3ª): Recap com dados (Conquistas/Crises/Reflexões visíveis com aria-labels canônicos), pós-tap (limitação documentada — `router.push` para sheets não atualiza `window.location` em Chromium headless, comportamento esperado por VALIDATOR_BRIEF §1.9), empty state preservando R-RECAP-3.
+
+**Achados colaterais** (todos pré-existentes, NÃO corrigidos inline):
+1. Drift schemas em `docs/CONTRACT-MOBILE-BACKEND.md` (22 schemas mais novos) — R-VAULT-B endereça.
+2. 2 lint warnings: `PreviewSomButton.tsx` (`View` unused), `alarmesNotificacoes.ts` (`ALARME_CHANNEL_ID` unused).
+3. `evento_positivo`/`evento_negativo` sem detalhe canônico — já mapeado.
+4. Limitação Gauntlet web vs nativo em router.push de sheets — testes unit cobrem (5 mocks específicos validando params).
+
 ### Onda 2A.1 — R-VAULT-CANONICAL-COMPLETE-A schemas + writers + migration (2026-05-16 noite)
 
 Sprint da Fase 2 entregue com proof-of-work completo, **honrando worktree isolation** pela primeira vez nesta retomada. Commit `81d4bad` (cherry-pick de `3be9d9d` do branch worktree-agent-a6ccace10cd1793fc).
