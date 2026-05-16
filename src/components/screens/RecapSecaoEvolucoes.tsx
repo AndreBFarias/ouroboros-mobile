@@ -4,12 +4,21 @@
 // mas o detalhe textual ja entrega o numero — mantemos simples para
 // evitar dependencia visual nao validada em producao.
 //
+// R-RECAP-1 (2026-05-16): cada card vira Pressable que navega para
+// a rota de medicao correspondente:
+//   humor_medio       -> /humor
+//   treinos           -> /treinos
+//   contador:<slug>   -> /contadores/<slug>
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { TrendingUp } from '@/lib/icons';
-import { Card } from '@/components/ui';
+import { Card, useToast } from '@/components/ui';
 import { colors } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { destinoEvolucao } from '@/lib/recap/destinos';
 import type { EvolucaoItem } from '@/lib/hooks/useRecap';
 
 interface Props {
@@ -17,7 +26,23 @@ interface Props {
 }
 
 export function RecapSecaoEvolucoes({ itens }: Props) {
+  const router = useRouter();
+  const toast = useToast();
   if (itens.length === 0) return null;
+
+  const abrir = (item: EvolucaoItem) => {
+    const destino = destinoEvolucao(item);
+    if (!destino) {
+      void haptics.selection();
+      toast.show('Edição em breve.', 'info');
+      return;
+    }
+    void haptics.light();
+    router.push({
+      pathname: destino.pathname as never,
+      params: destino.params,
+    });
+  };
 
   return (
     <View style={{ gap: 12 }} accessibilityLabel="secao evolucoes">
@@ -31,7 +56,12 @@ export function RecapSecaoEvolucoes({ itens }: Props) {
         Evoluções
       </Text>
       {itens.map((item) => (
-        <View key={item.id} accessibilityLabel={`evolucao ${item.id}`}>
+        <Pressable
+          key={item.id}
+          onPress={() => abrir(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`evolucao ${item.id}`}
+        >
           <Card>
             <View
               style={{
@@ -68,7 +98,7 @@ export function RecapSecaoEvolucoes({ itens }: Props) {
               </View>
             </View>
           </Card>
-        </View>
+        </Pressable>
       ))}
     </View>
   );

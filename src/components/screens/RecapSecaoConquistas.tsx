@@ -2,12 +2,19 @@
 // discreta, icone por origem (vitoria, marco, contador, tarefa) e
 // frase neutra. ADR-0005: sem celebracao, sem badge, sem confetti.
 //
+// R-RECAP-1 (2026-05-16): cada card agora e' Pressable que navega
+// para o detalhe canonico via destinoConquista() (extensao do padrao
+// Q24.a). Itens sem destino mostram toast "Edicao em breve.".
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Heart, Trophy, Hash, ListChecks, Sparkles } from '@/lib/icons';
-import { Card } from '@/components/ui';
+import { Card, useToast } from '@/components/ui';
 import { colors } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { destinoConquista } from '@/lib/recap/destinos';
 import type { ConquistaItem } from '@/lib/hooks/useRecap';
 
 interface Props {
@@ -23,7 +30,23 @@ function iconeDe(origem: ConquistaItem['origem']) {
 }
 
 export function RecapSecaoConquistas({ itens }: Props) {
+  const router = useRouter();
+  const toast = useToast();
   if (itens.length === 0) return null;
+
+  const abrir = (item: ConquistaItem) => {
+    const destino = destinoConquista(item);
+    if (!destino) {
+      void haptics.selection();
+      toast.show('Edição em breve.', 'info');
+      return;
+    }
+    void haptics.light();
+    router.push({
+      pathname: destino.pathname as never,
+      params: destino.params,
+    });
+  };
 
   return (
     <View style={{ gap: 12 }} accessibilityLabel="secao conquistas">
@@ -50,7 +73,12 @@ export function RecapSecaoConquistas({ itens }: Props) {
       {itens.map((item) => {
         const Icone = iconeDe(item.origem);
         return (
-          <View key={item.id} accessibilityLabel={`conquista ${item.id}`}>
+          <Pressable
+            key={item.id}
+            onPress={() => abrir(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`conquista ${item.id}`}
+          >
             <Card>
               <View
                 style={{
@@ -76,7 +104,7 @@ export function RecapSecaoConquistas({ itens }: Props) {
                 </Text>
               </View>
             </Card>
-          </View>
+          </Pressable>
         );
       })}
     </View>

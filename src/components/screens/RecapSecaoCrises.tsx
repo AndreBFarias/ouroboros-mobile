@@ -2,12 +2,19 @@
 // por intensidade desc. Microcopy "Você passou por isso e está aqui."
 // (ADR-0005: valida sem celebrar; sem motivacional eufórico).
 //
+// R-RECAP-1 (2026-05-16): cada card vira Pressable. Trigger navega
+// para /diario-emocional?slug=<id>; evento negativo ainda nao tem
+// detalhe canonico (achado R-CROSS-FLOW-AUDIT) -> toast neutro.
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AlertTriangle } from '@/lib/icons';
-import { Card } from '@/components/ui';
+import { Card, useToast } from '@/components/ui';
 import { colors } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { destinoCrise } from '@/lib/recap/destinos';
 import type { CriseItem } from '@/lib/hooks/useRecap';
 
 interface Props {
@@ -15,7 +22,23 @@ interface Props {
 }
 
 export function RecapSecaoCrises({ itens }: Props) {
+  const router = useRouter();
+  const toast = useToast();
   if (itens.length === 0) return null;
+
+  const abrir = (item: CriseItem) => {
+    const destino = destinoCrise(item);
+    if (!destino) {
+      void haptics.selection();
+      toast.show('Edição em breve.', 'info');
+      return;
+    }
+    void haptics.light();
+    router.push({
+      pathname: destino.pathname as never,
+      params: destino.params,
+    });
+  };
 
   return (
     <View style={{ gap: 12 }} accessibilityLabel="secao crises">
@@ -39,7 +62,12 @@ export function RecapSecaoCrises({ itens }: Props) {
         Você passou por isso e está aqui.
       </Text>
       {itens.map((item) => (
-        <View key={item.id} accessibilityLabel={`crise ${item.id}`}>
+        <Pressable
+          key={item.id}
+          onPress={() => abrir(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`crise ${item.id}`}
+        >
           <Card>
             <View
               style={{
@@ -75,7 +103,7 @@ export function RecapSecaoCrises({ itens }: Props) {
               </View>
             </View>
           </Card>
-        </View>
+        </Pressable>
       ))}
     </View>
   );

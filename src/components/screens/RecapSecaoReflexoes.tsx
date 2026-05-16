@@ -4,12 +4,19 @@
 // neutra, terceiro modo do diario emocional ao lado de trigger e
 // vitoria (anonimato-allow: substantivo).
 //
+// R-RECAP-1 (2026-05-16): cada card vira Pressable que navega para
+// /diario-emocional?slug=<id> (mesma rota canonica usada por
+// recap-lista para reflexoes).
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { MessageCircle } from '@/lib/icons';
-import { Card } from '@/components/ui';
+import { Card, useToast } from '@/components/ui';
 import { colors } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { destinoReflexao } from '@/lib/recap/destinos';
 import type { ReflexaoItem } from '@/lib/hooks/useRecap';
 
 interface Props {
@@ -17,7 +24,23 @@ interface Props {
 }
 
 export function RecapSecaoReflexoes({ itens }: Props) {
+  const router = useRouter();
+  const toast = useToast();
   if (itens.length === 0) return null;
+
+  const abrir = (item: ReflexaoItem) => {
+    const destino = destinoReflexao(item);
+    if (!destino) {
+      void haptics.selection();
+      toast.show('Edição em breve.', 'info');
+      return;
+    }
+    void haptics.light();
+    router.push({
+      pathname: destino.pathname as never,
+      params: destino.params,
+    });
+  };
 
   return (
     <View style={{ gap: 12 }} accessibilityLabel="secao reflexoes">
@@ -42,7 +65,12 @@ export function RecapSecaoReflexoes({ itens }: Props) {
         no período.
       </Text>
       {itens.map((item) => (
-        <View key={item.id} accessibilityLabel={`reflexao ${item.id}`}>
+        <Pressable
+          key={item.id}
+          onPress={() => abrir(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`reflexao ${item.id}`}
+        >
           <Card>
             <View
               style={{
@@ -78,7 +106,7 @@ export function RecapSecaoReflexoes({ itens }: Props) {
               </View>
             </View>
           </Card>
-        </View>
+        </Pressable>
       ))}
     </View>
   );

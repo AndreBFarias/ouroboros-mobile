@@ -10,7 +10,17 @@
 //
 // Estrategia: mockamos useRecap para devolver RecapData controlada,
 // sem precisar mockar cada helper de vault.
+//
+// R-RECAP-1: cenarios com itens nas listas precisam de ToastProvider
+// na arvore porque RecapSecao* invocam useToast para mostrar
+// "Edicao em breve." em itens sem destino navegavel.
+import type { ReactElement } from 'react';
 import { render, waitFor } from '@testing-library/react-native';
+import { ToastProvider } from '@/components/ui';
+
+function renderComToast(ui: ReactElement) {
+  return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 const mockBack = jest.fn();
 const mockReplace = jest.fn();
@@ -139,7 +149,9 @@ describe('RecapScreen R-RECAP-3 empty states', () => {
       },
       loading: false,
     });
-    const { queryByLabelText, findByLabelText } = render(<RecapScreen />);
+    const { queryByLabelText, findByLabelText } = renderComToast(
+      <RecapScreen />
+    );
     // Grid Numeros visivel.
     expect(await findByLabelText('secao numeros')).toBeTruthy();
     // Nao deve haver EmptyState global.
@@ -166,7 +178,7 @@ describe('RecapScreen R-RECAP-3 empty states', () => {
       },
       loading: false,
     });
-    const { queryByLabelText } = render(<RecapScreen />);
+    const { queryByLabelText } = renderComToast(<RecapScreen />);
     await waitFor(() => {
       // Grid Numeros ocultado (todos os campos zerados).
       expect(queryByLabelText('secao numeros')).toBeNull();

@@ -3,12 +3,18 @@
 // abreviada (direita). Empty state silencioso (nao renderiza secao
 // quando 0 itens).
 //
+// R-RECAP-1 (2026-05-16): cada linha vira Pressable que navega para
+// /todo?focus=<id> (mesma rota canonica usada por recap-lista).
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Check } from '@/lib/icons';
 import { Card } from '@/components/ui';
 import { colors } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { destinoTarefa } from '@/lib/recap/destinos';
 import {
   TAREFA_CATEGORIA_LABELS,
   type TarefaCategoria,
@@ -31,7 +37,18 @@ function formatarData(iso: string): string {
 }
 
 export function RecapSecaoTarefas({ itens }: Props) {
+  const router = useRouter();
   if (itens.length === 0) return null;
+
+  const abrir = (item: TarefaConcluidaItem) => {
+    const destino = destinoTarefa(item);
+    if (!destino) return;
+    void haptics.light();
+    router.push({
+      pathname: destino.pathname as never,
+      params: destino.params,
+    });
+  };
 
   // Agrupa por categoria, preservando ordem de chegada (que ja vem
   // ordenada por feito_em desc).
@@ -73,14 +90,17 @@ export function RecapSecaoTarefas({ itens }: Props) {
           <Card>
             <View style={{ gap: 8 }}>
               {lista.map((item) => (
-                <View
+                <Pressable
                   key={item.id}
+                  onPress={() => abrir(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`tarefa ${item.titulo}`}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 10,
+                    minHeight: 44,
                   }}
-                  accessibilityLabel={`tarefa ${item.titulo}`}
                 >
                   <Check size={16} color={colors.green} strokeWidth={1.5} />
                   <Text
@@ -104,7 +124,7 @@ export function RecapSecaoTarefas({ itens }: Props) {
                   >
                     {formatarData(item.feito_em)}
                   </Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           </Card>
