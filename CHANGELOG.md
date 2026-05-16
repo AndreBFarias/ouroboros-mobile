@@ -5,6 +5,38 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2B.4 — R-HOME-1 Tela Hoje foco em ação D1=C (2026-05-16 noite)
+
+Sprint da Fase 2 fecha **Onda 2B 4/4**. Commit `43d6266` cherry-pick (orquestrador commitou pelo executor — agent reportou trabalho pronto mas não commitou por self-policy).
+
+- **`app/index.tsx` redesenhado** (+558 / -405): cabeçalho data por extenso + saudação personalizada (hora local BRT) + pill "Reflexão" (cyan, ícone Sparkles, abre `/diario-emocional?modo=reflexao`). Seção **Próximos** (até 3 itens, agenda + alarmes merged). Seção **To-do hoje** (até 5, checkboxes inline persist otimista). Botão **Recap**. FAB roxo+verde mantido (em `_layout.tsx`).
+- **Componentes removidos** (D1=C cumprida):
+  - `src/components/screens/SecaoStatusCasal.tsx` (deletado)
+  - `src/components/screens/SecaoDiariosEventosAgrupado.tsx` (deletado)
+  - `src/lib/hooks/useStatusCasal.ts` (deletado)
+  - 2 suites de testes obsoletos (`SecaoStatusCasal.test.tsx`, `useStatusCasal-syncConflict.test.tsx`)
+  - Card "Jornada" também removido
+- **ADR-0026 criado** em `docs/ADRs/0026-tela-hoje-foco-acao-d1-c.md` documenta Opção C escolhida.
+- **2 screenshots Gauntlet** em `docs/sprints/R-HOME-1-screenshots-gauntlet/`: tela Hoje primeira-fold 412dp confirmando ausência de Status Casal + Humor + Jornada; tap Reflexão navega para `/diario-emocional?modo=reflexao` (URL confirmada via CDP).
+- **E2E novo**: `tests/e2e/playwright/r-home-1.e2e.ts`.
+- **2 testes Jest novos** em `tests/app/index.test.tsx` cobrem layout + tap Recap + tap Reflexão + empty state To-do (5 testes total no arquivo).
+- Métricas: **240 suítes / 2251 testes** verde (delta -2 suítes / -6 testes vs 242/2257 — apenas pelo cleanup das suites deletadas; 2 testes novos adicionados). TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- Saudação personalizada via `useNomeDe(pessoaAtiva)`; default genérico `Nome_A` preservado (Regra -1).
+- 11 arquivos modificados/criados/deletados.
+
+**Achados colaterais**:
+1. **`/recap?periodo=dia` não existe** — agent manteve `router.push('/recap')` sem params (igual M40 atual). Sprint nova **R-RECAP-PERIODO-DIA** registrada (P3, decisão pendente do dono se faz sentido).
+2. **Erro pré-existente em web** (`ExpoSecureStore.default.getValueWithKeyAsync`) — já documentado em R-DX-SECURESTORE-WEB-DEV-FALLBACK.
+3. **`EXPO_ROUTER_APP_ROOT` em worktrees aninhados sob `.claude/worktrees/`** não resolve `app/` automaticamente — babel `caller.projectRoot` falha. Workaround usado: aplicar diff temporário no main, capturar, reverter. Documentar em R-INFRA-WORKTREE-BOOTSTRAP (já no backlog).
+
+**Onda 2B fechada (4/4):**
+- 2B.1 R-VAULT-B (`b828384`)
+- 2B.2 R-RECAP-2 (`a4f0d8a`)
+- 2B.3 R-RECAP-4 (`4be8afb`)
+- 2B.4 R-HOME-1 (`43d6266`)
+
+Smoke acumulado: **240 suítes / 2251 testes verde** (+151 testes vs início da sessão 225/2100).
+
 ### Onda 2B.3 — R-RECAP-4 Memórias slideshow v2 (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `afa22bc` cherry-pick.
