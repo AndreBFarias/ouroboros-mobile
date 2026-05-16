@@ -5,6 +5,43 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Higiene de retomada + split R-VAULT-CANONICAL-COMPLETE (2026-05-16 noite)
+
+Sessão fresh do CLI retomando pós-Fase-2.1 da Onda R. Histórico da sessão anterior reconstruido manualmente pelo dono. Estado de retomada:
+
+- HEAD `3f50bbb` em `main`, working tree clean.
+- Smoke baseline atualizado: **225 suítes / 2100 testes** verde (+2 suítes / +19 testes vs `d53d4d9`, ganho do R-RECAP-3 mergeado).
+- 15 worktrees órfãos de sessões anteriores (todos com branches já mergeados) — limpos via `git worktree unlock` + `--force remove` + `git branch -D`. Disco liberado.
+- **R-VAULT-CANONICAL-COMPLETE** quebrado em 2 sub-sprints menores (decisão do dono):
+  - **R-VAULT-CANONICAL-COMPLETE-A** (2-3h) — schemas + writers + migration boot
+  - **R-VAULT-CANONICAL-COMPLETE-B** (2-3h, depende de A) — stats agregadas + UI Settings + cross-repo (issue sibling + drift contract)
+  - Spec original marcado `[split]` apontando pra A e B. Mantida como referência canônica do escopo total.
+- Drift contract avisa schemas mais novos que `docs/CONTRACT-MOBILE-BACKEND.md` (alarme, diário emocional, evento, financas, grupo treino, humor heatmap, midia companion) — esperado pós R0 + R-CRIT-3; será endereçado em R-VAULT-CANONICAL-COMPLETE-B.
+
+Próximo: Onda 2A (4 agentes paralelos via worktree isolation: R-VAULT-A + R-RECAP-1 + R-RECAP-2 + R-MEDIA-1).
+
+### Fase 2 Onda R — R-FAB-1 + R-RECAP-3 + R-CROSS-FLOW-AUDIT + specs derivadas (2026-05-16 madrugada-2)
+
+3 sprints da Fase 2 executadas em paralelo via worktrees isoladas + 3 specs derivadas anti-débito registradas.
+
+- **R-FAB-1** (commit `47c17f9`): remoção do botão Voz do FABRadial. 6 arquivos, smoke verde sem regressão. Achado colateral: `FABRadial` real está em `src/components/ui/` (path corrigido no spec).
+- **R-RECAP-3** (commit `9514061`): empty states não-tóxicos via pool de 10 variações com seed determinística diária (hash de `data + tipo`). Frases PT-BR sóbrias curadas (zero gamificação). 2 suítes novas / 19 testes novos (`useRecap`, `recapMensagens`). Achados colaterais: (1) `useRecap` conta áudios/vídeos mas faltam cards no grid (R-CRIT-3 deixou esse débito); (2) conflito de porta 8081 entre worktrees paralelos impede validação visual em paralelo.
+- **R-CROSS-FLOW-AUDIT** (commit `bebdf12`): auditoria de 12 fluxos cruzados (FAB câmera, menus, captura, cross-repo). 3 fixes in-line + 3 sprints derivadas. Achado mais grave: **drift cross-repo confirmado** — sibling Python ETL não lê `markdown/` (layout H2 pós-refundação); todo vault mobile pós-refundação invisível pro desktop (R-CROSS-FLOW-FIX-2, P1-high).
+
+**Anti-débito** registrado em 5 specs novas pós Fase 2:
+
+- **R-CROSS-FLOW-FIX-1** (1h, P1): `avaliarBackupAutomatico` declarado SEM CALLER no boot path (cenário 10).
+- **R-CROSS-FLOW-FIX-2** (sibling repo, P1-high): sibling ETL não lê layout H2 — CRÍTICO cross-repo.
+- **R-CROSS-FLOW-FIX-3** (1-2h, P2): Scanner OCR duplicata na Galeria (cenário 4).
+- **R-RECAP-NUMEROS-AUDIOVIDEO-CARDS** (1h, P2): cards de áudios/vídeos no grid Números (débito R-CRIT-3).
+- **R-DX-GAUNTLET-MULTI-PORTA** (1-2h, P3): multi-porta no `gauntlet.sh` (paralelismo de validação visual).
+
+**R-RECAP-6** (2-3h, P2): botão compartilhar slide Memórias (PNG 1080×1920 stories IG) — depende de R-RECAP-4 (slideshow v2). Spec criada em `ccfe5ce`, promove Q24.b.c (legado v2 backlog) pra v1.0.
+
+Backlog consolidado atualizado em `db6d02f` e `3f50bbb`.
+
+Métricas pós-Fase-2.1: **225 suítes / 2100 testes** verde · TS strict 0 · drift contract 174 campos (warning esperado pós R-CRIT-3) · zero fantasmas remanescentes.
+
 ### Fase 1.2-1.6 Onda R — R-CRIT-1/3/4 + R-NAV-2 paralelos via worktrees (2026-05-16 madrugada)
 
 4 sprints da Fase 1 executadas em paralelo via worktrees isoladas. Resultados:

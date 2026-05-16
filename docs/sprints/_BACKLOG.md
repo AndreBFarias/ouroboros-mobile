@@ -76,7 +76,7 @@ Bloqueia `v1.0.0-rc2`.
 
 | Ordem | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|---|
-| 1 | R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
+| 1 | R-RECAP-3 `[ok]` (`9514061`) | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
 | 1‖ | R-RECAP-1 | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
 | 1‖ | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
 | 1‖ | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
@@ -87,10 +87,11 @@ Bloqueia `v1.0.0-rc2`.
 | 3 | R-INT-1 | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
 | 3‖ | R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
 | 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
-| 4 | R-FAB-1 | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
+| 4 | R-FAB-1 `[ok]` (`47c17f9`) | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | 4‖ | R-FAB-2 | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
-| 4‖ | R-CROSS-FLOW-AUDIT | Interconexão (12 fluxos cruzados + sibling) | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
-| 4‖ | R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | 4–6h | `R-VAULT-CANONICAL-COMPLETE-spec.md` |
+| 4‖ | R-CROSS-FLOW-AUDIT `[ok]` (`bebdf12`) | Interconexão (12 fluxos cruzados + sibling) | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
+| 4‖ | **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A de 2) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-A-spec.md` |
+| 4‖ | **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-B-spec.md` |
 
 ---
 

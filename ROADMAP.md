@@ -32,11 +32,6 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-CRIT-4 | Loader animation UUID por instância (querySelectorAll defense-in-depth) | fix | P2 | `d53d4d9` | `[ok]` |
 | R-NAV-2 | Alarmes 5 sons CC0 + canal por som | bug | P1 | `83348b6` | `[ok]` |
 | R-CRIT-2 | OAuth consent app name (precisa Cloud Console editing dono) | fix | P1 | — | `[wip-dono]` |
-| R-CRIT-1 | OAuth Unmatched Route regression | fix | P0 | 2–4h | `R-CRIT-1-OAUTH-UNMATCHED-ROUTE-REGRESSION-spec.md` |
-| R-CRIT-3 | Mídia ausente em Recap e Galeria | bug | P0 | 3–5h | `R-CRIT-3-MIDIA-AUSENTE-EM-RECAP-E-GALERIA-spec.md` |
-| R-CRIT-2 | OAuth consent app name | fix | P1 | 1–2h | `R-CRIT-2-OAUTH-CONSENT-APP-NAME-MISSING-spec.md` |
-| R-CRIT-4 | Loader logo gif quebrado | fix | P2 | 1–2h | `R-CRIT-4-LOADER-LOGO-GIF-QUEBRADO-spec.md` |
-| R-NAV-2 | Alarmes sons funcionais | bug | P1 | 2–3h | `R-NAV-2-ALARMES-SONS-FUNCIONAIS-spec.md` |
 
 ### Fase 2 — UX + Recap + Home (bloqueia rc2) — ~25–35h
 
@@ -44,19 +39,23 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 |---|---|---|---|---|---|
 | R-RECAP-1 | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
 | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
-| R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
+| R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | `9514061` | `[ok]` |
+| R-FAB-1 | FAB remover Voz | refactor | P2 | `47c17f9` | `[ok]` |
+| R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | `bebdf12` | `[ok]` |
+| R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | `[split]` | A+B |
+| **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-A-spec.md` |
+| **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-B-spec.md` |
+| R-RECAP-1 | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
+| R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
 | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
 | R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
-| R-HOME-1 | Hoje prioridade e recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` |
+| R-HOME-1 | Hoje prioridade e recorrência (D1=C remover Status+Humor) | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` |
 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
 | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
-| R-INT-1 | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
+| R-INT-1 | Hub Integrações Utilitários (depende VAULT-B) | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
 | R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
 | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
-| R-FAB-1 | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | R-FAB-2 | FAB Câmera repensar (Reflexão com foto) | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
-| R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
-| R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | 4–6h | `R-VAULT-CANONICAL-COMPLETE-spec.md` |
 
 ### Fase 3 — Features secundárias (paralelo a Fase 4) — ~40–55h
 

@@ -1,8 +1,18 @@
 # R-VAULT-CANONICAL-COMPLETE — Tudo em .md (configs + stats + sessão)
 
+**Status**: `[split]` em 2026-05-16 noite — dividido em 2 sub-sprints menores pra reduzir blast radius:
+- [`R-VAULT-CANONICAL-COMPLETE-A-spec.md`](R-VAULT-CANONICAL-COMPLETE-A-spec.md) — schemas + writers + migration boot (2-3h)
+- [`R-VAULT-CANONICAL-COMPLETE-B-spec.md`](R-VAULT-CANONICAL-COMPLETE-B-spec.md) — stats agregadas + UI Settings + cross-repo (2-3h, depende de A)
+
+Esta spec original fica como referência canônica do escopo total.
+Execução real acontece via A e B em ondas separadas. Spec mantida sem
+mudar o conteúdo abaixo (entregáveis + verificação + decisões).
+
+---
+
 **Tipo**: refactor + feature
 **Prioridade**: P1-high
-**Estimativa**: 4-6h
+**Estimativa**: 4-6h (split em A=2-3h + B=2-3h)
 **Tranche**: R-VAULT (nova, derivada do pedido durável do dono em 2026-05-15)
 **Fase**: 2 (UX/integração — bloqueia rc2)
 
