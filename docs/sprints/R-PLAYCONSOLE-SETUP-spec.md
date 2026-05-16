@@ -4,8 +4,14 @@
 **Prioridade**: P1-high
 **Estimativa**: ~40min de trabalho do dono (espalhado em 24-72h por causa de verificação + propagação)
 **Tranche**: R-SEC (complementa R-SEC-2)
-**Fase**: 4
+**Fase**: 4 — **ÚLTIMA sprint antes do build final v1.0.0** (decisão dono 2026-05-15)
 **Decisão**: D4 = SIM (dono autorizou pagar $25 one-time em 2026-05-15)
+**Status atual** (2026-05-15 fim de noite):
+- Conta Developer pessoal **criada e paga** ($25 USD)
+- Verificação de identidade **submetida** (RG/CNH + selfie)
+- **Aguardando aprovação Google** (24-48h)
+- Passos 1-2 da TODO list: **concluídos**
+- Passos 3-8: pendentes (executar após aprovação)
 
 ## Fonte canônica
 
@@ -29,12 +35,13 @@ side-loaded.
 - [ ] RG/CNH disponível pra verificação
 - [ ] Telefone com SMS
 
-### Passo 1 — Criar conta Developer (~15min)
-- [ ] `play.google.com/console/signup`
-- [ ] Tipo: Developer pessoal
-- [ ] Pagar $25 USD
-- [ ] E-mail de confirmação (<30min)
-- [ ] Verificação identidade (foto RG + selfie, aprovação em 24-48h)
+### Passo 1 — Criar conta Developer (~15min) — **CONCLUÍDO 2026-05-15**
+- [x] `play.google.com/console/signup`
+- [x] Tipo: Developer pessoal (não Organização)
+- [x] Pagar $25 USD
+- [x] E-mail de confirmação recebido
+- [x] Verificação identidade submetida (RG/CNH + selfie)
+- [ ] **Aguardando aprovação Google** (24-48h após submissão)
 
 ### Passo 2 — Criar app (5min, pós-aprovação)
 - [ ] Play Console → All apps → Create app
