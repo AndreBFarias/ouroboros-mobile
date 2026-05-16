@@ -7,6 +7,14 @@
 // abrir os registros originais por trás do numero (humor -> sheet
 // humor, diario -> /diario-emocional?slug=, etc).
 //
+// R-RECAP-2 (2026-05-16): accessibilityLabel passa a usar chave
+// canonica do tipo (sem acento) em vez do rotulo PT-BR. Antes,
+// `abrir lista Tarefas concluidas` e `abrir lista Eventos dificeis`
+// viravam strings com acento — screen reader nao lê acento direito
+// (convencao). Padrao novo: `<count> <tipo> no periodo` onde tipo
+// e' a chave canonica sem acento (registros / treinos / fotos /
+// eventos pos / eventos neg / tarefas).
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
 import { Pressable, Text, View } from 'react-native';
@@ -28,6 +36,19 @@ type TipoChave =
   | 'eventos_pos'
   | 'eventos_neg'
   | 'tarefas';
+
+// R-RECAP-2: rotulo screen reader por tipo, sem acentuacao
+// (convencao a11y). Usado em accessibilityLabel para evitar que
+// "Tarefas concluidas" e "Eventos dificeis" virem strings acentuadas
+// que o screen reader le mal. Visual continua com acento (`rotulo`).
+const A11Y_LABEL_POR_TIPO: Record<TipoChave, string> = {
+  registros: 'registros',
+  treinos: 'treinos',
+  fotos: 'fotos',
+  eventos_pos: 'eventos positivos',
+  eventos_neg: 'eventos dificeis',
+  tarefas: 'tarefas concluidas',
+};
 
 interface CardNumero {
   rotulo: string;
@@ -94,7 +115,7 @@ export function RecapSecaoNumeros({ numeros, range }: Props) {
             key={card.rotulo}
             onPress={() => abrir(card.tipo)}
             accessibilityRole="button"
-            accessibilityLabel={`abrir lista ${card.rotulo}`}
+            accessibilityLabel={`${card.valor} ${A11Y_LABEL_POR_TIPO[card.tipo]} no periodo`}
             style={{ width: '48%' }}
           >
             <Card>

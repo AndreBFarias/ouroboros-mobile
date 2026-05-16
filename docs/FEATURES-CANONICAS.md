@@ -473,7 +473,12 @@ malformados são silenciosamente ignorados (mesmo padrão de
     (Trabalho, Casa, Rotina, Finanças, etc.), com data abreviada
     (`seg 28/04`). Subtotais por categoria. Pendentes ignoradas.
   - **Números** — grid 2×3 de cards: registros, treinos, fotos,
-    eventos positivos, eventos difíceis, tarefas concluídas.
+    eventos positivos, eventos difíceis, tarefas concluídas. Cada
+    card é Pressable (Q24.a) e abre `/recap-lista?tipo=<chave>&de=…&ate=…`
+    preservando o período do Recap (R-RECAP-2 revalidou 100% e
+    padronizou accessibilityLabel sem acento — `<count> <tipo> no periodo`).
+    Tap em "fotos" redireciona para `/galeria?filtro=foto`
+    (R-CROSS-FLOW-AUDIT).
 - `<OuroborosLoader compacto />` durante agregação (vault grande pode
   levar 1-3s para o período "Ano").
 - Empty state silencioso por seção; "Nenhum registro neste período."
