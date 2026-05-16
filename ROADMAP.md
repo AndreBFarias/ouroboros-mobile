@@ -44,7 +44,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | `bebdf12` | `[ok]` |
 | R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | `[split]` | A+B |
 | **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A) | refactor+feature | P1 | `81d4bad` | `[ok]` (Onda 2A.1) |
-| **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-B-spec.md` |
+| **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | `62ebcdf` | `[ok]` (Onda 2B.1) |
 | R-RECAP-1 | Lista itens clicáveis | feature | P1 | `25d4849` | `[ok]` (Onda 2A.2) |
 | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
 | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |

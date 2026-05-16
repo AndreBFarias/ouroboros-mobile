@@ -5,6 +5,24 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2B.1 — R-VAULT-CANONICAL-COMPLETE-B stats agregadas + UI export + cross-repo (2026-05-16 noite)
+
+Sprint da Fase 2 entregue **honrando worktree isolation**. Commit `62ebcdf` cherry-pick. Fecha a tese "tudo em .md" iniciada em R-VAULT-A (Onda 2A.1).
+
+- **Schema novo em `src/lib/schemas/vault_estado.ts`** (+77L): `EstadoStatsAgregadasSchema` com `humorMedioXd`, `countPorTipo`, `streaksAtuais`, `topGatilhosUltimos90d`, `topConquistas`, `ultimaAtualizacao`. Constantes `PERIODOS_STATS` (`['7d','30d','90d','all']`) + `STATS_KEY_POR_PERIODO`. 4 keys novas em `ESTADO_SCHEMAS` (uma por período).
+- **Calculador puro em `src/lib/stats/calcular.ts`** (220L): `calcularStatsAgregadas(periodo)` lê dos leitores canônicos (`listarHumor`, `listarDiarios`, `listarEventos`, `listarMarcos`, `listarContadores`, `listarTarefas`). 100% pura, testável em isolamento. Top-5 ranking determinístico (sort estável).
+- **Writer reactivo em `src/lib/stats/escreverStats.ts`** (152L): `escreverStatsAgregadas(periodo)` com debounce 30s agrupado por período. Subscribers dos stores de domínio (humor/diário/conquistas/crise/gatilho/marcos) disparam recálculo. Reusa `escreverEstadoCanonicoImediato` + `ESTADO_FOLDER` da R-VAULT-A.
+- **Gerador ZIP em `src/lib/vault/exportarEstadoCompleto.ts`** (220L): empacota 9 arquivos (`vault/_estado/*.md` 5 estado + 4 stats) + `vault/_meta.md` (totalArquivos, sizeMB, timestamps). Path em `cacheDirectory/<deviceId>-<timestamp>-estado-completo.zip` (efêmero). Compartilha via `expo-sharing`. Usa `jszip ^3.10.1` (já em deps).
+- **UI Settings em `app/settings/index.tsx`** (+35L): handler `exportarEstado` + botão "Exportar estado completo" abaixo da seção do Vault. Toast PT-BR "Estado exportado" no sucesso. accessibilityLabel "Exportar estado completo" (sem acento).
+- **Doc canônico cross-repo em `docs/SCHEMA-VAULT-ESTADO.md`** (290L NOVO): contrato para o sibling Python — paths + frequências + frontmatter + dedup por deviceId + staleness via `ultimaAtualizacao`.
+- **Drift contract atualizado**: `docs/CONTRACT-MOBILE-BACKEND.md` ganhou seções 5.23 a 5.31 (+171L); `docs/CONTRACT-MOBILE-BACKEND.csv` regenerado via `exportar_contrato.py` (174 → **222 campos auditados**). `./scripts/test_contract_drift.sh` retorna `OK: contrato em sync com schemas`.
+- **Issue cross-repo aberta**: [`AndreBFarias/protocolo-ouroboros#32`](https://github.com/AndreBFarias/protocolo-ouroboros/issues/32) (`feat: ler vault/_estado/ pra series historicas`). Labels: `etl-contract`, `cross-repo`, `feat`. Label `cross-repo` criada no sibling (color `#BFE5BF`).
+- **+43 testes** (27 calcular + 9 escreverStats + 7 exportarEstadoCompleto). Métricas: **239 suítes / 2235 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok · drift OK 222 campos.
+
+**Validação visual limitada**: 2 screenshots Gauntlet capturados (app rodando + onboarding gate redirect), mas botão "Exportar estado completo" não aparece nos PNGs porque o Metro do usuário rodava do repo root sem rebundle do worktree. Relatório completo em `docs/sprints/R-VAULT-CANONICAL-COMPLETE-B-screenshots-gauntlet/VALIDACAO-VISUAL-RELATORIO.md`. **Compensação aceita**: 43 testes Jest cobrem toda a lógica end-to-end; template E2E playwright pronto em `tests/e2e/playwright/r-vault-b-settings-export.e2e.ts` para re-validação quando Metro do worktree puder rodar.
+
+**Sem achados colaterais** — sprint executou conforme spec sem detectar bugs adjacentes.
+
 ### Onda 2A.3 — R-MEDIA-1 oEmbed Spotify/YouTube preview (2026-05-16 noite)
 
 Sprint da Fase 2 fecha a Onda 2A (4/4 mergeados). Commit `8088c80` cherry-pick. Re-dispatch após stall do agent original (aad2863a) que parou em 10min sem progresso; trabalho parcial (2 arquivos base) recuperado em wip `df74a12`, agent novo (aa84bc25) honrou worktree e completou em ~27min sobre a base.
