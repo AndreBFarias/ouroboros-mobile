@@ -5,6 +5,41 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Auditoria pré-v1.0 — Sub-sprints T1B3 + T1B6 + T2 (2026-05-15 noite)
+
+Anti-débito das 3 sprints derivadas da auditoria de Tranche 1. Cada
+uma executada em executor isolado via worktree.
+
+- **AUDIT-T1B3-PICKERS-RESTANTES** (commit `00d82ee`): toast em
+  permissão negada em 5 callsites adicionais — `FotosBlock`
+  (galeria), `MidiaFotoTab` (galeria + câmera), `localizacao.ts`
+  (discriminator pattern), `adicionarFotoManual.ts` (discriminator
+  pattern). 4 testes novos. Strings PT-BR com acento completo.
+- **AUDIT-T1B6-MIGRATION-FIX** (commit `a49222f`): filtro
+  `ehSyncConflict` em 5 listadores periféricos.
+  `migrarVaultLayoutPorTipo.ts` (boot hook — CRÍTICO, agora pula
+  `.sync-conflict-*` em todos os 8 blocos de migração),
+  `useFotosAgregadas.ts`, `marcosAuto.ts`, `useStatusCasal.ts`,
+  `conquistas/loader.ts`. 5 testes novos (15 casos).
+- **AUDIT-T2-LOCK-VAULT** (commit `488e7fa`): elimina race
+  read-then-write em saves multi-device via Opção A (sempre suffix
+  `-<deviceId>`). Util novo `forceDeviceIdSuffix` em `deviceId.ts`
+  (idempotente, lança em conflito de devices). 6 callers
+  refactorados: `saveHumor`, `saveDiario`, `saveEvento`, vault
+  `contadores`, `alarmes`, `tarefas`. Campo `conflito` removido de
+  `SaveHumorResult` (perde sentido com Opção A). Migration boot
+  idempotente `migrarArquivosCanonicosParaDeviceId.ts` aplica
+  suffix em registros legados no primeiro boot pós-update (flag
+  `useSessao.flags.t2DeviceIdSuffixMigrado`). 27 testes novos.
+  `applyDeviceIdSuffix` legado preservado como `@deprecated`.
+- **Anti-débito novo registrado**: `AUDIT-T1B7-DRAFT-EXPORT-FIX-spec.md`
+  cobrindo `migrarDraftsParaTreinoSessao.ts` + decisão sobre
+  `exportarVault.ts` (Opção A: filtrar sync-conflict do ZIP).
+
+Métricas após esta tranche: 214 suítes / 2016 testes verde (era
+202/1957 no commit base `5b1cd4e`; ganho desta sessão +12 suítes
+/ +59 testes). TS strict 0. Drift contract 174 campos.
+
 ### Auditoria pré-v1.0 — Tranche 1 (bugs) + Tranche 3 (DX) (2026-05-15)
 
 Auditoria sistemática em 5 eixos (drift docs↔código, bugs latentes,

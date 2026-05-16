@@ -20,13 +20,15 @@ periféricas registradas como anti-débito.
 | AUDIT-T1 | Bugs latentes B1–B6 (atomic write, OAuth wrap, toast permission, slider clamp, input maxLength, sync-conflict filter em 16 listadores) | `0d95b9a` → `6779059` (6 commits) | `[ok]` |
 | AUDIT-T3 | DX: prettier + scripts diag/fix-it/bump-versioncode + OAuth doc consolidado + README clarificado + install legacy-peer-deps | `ec6db3b` → `16eff36` (5 commits) | `[ok]` |
 | AUDIT-NORMALIZE | `prettier --write` em src+app+tests (379 arquivos) | `9609961` | `[ok]` |
-| AUDIT-T1B6-MIGRATION-FIX | Filtro `sync-conflict` em `migrarVaultLayoutPorTipo` + 4 listadores periféricos (achado colateral T1) | — | `[todo]` (alta prioridade pré-v1.0) |
-| AUDIT-T1B3-PICKERS-RESTANTES | Toast em 5 outros pickers silenciosos | — | `[todo]` |
-| AUDIT-T2-LOCK-VAULT | Eliminar race read-then-write em saves multi-device (B7 descopado de T1) | — | `[todo]` (pós validação live alpha-11) |
+| AUDIT-T1B3-PICKERS-RESTANTES | Toast em 5 pickers silenciosos (FotosBlock, MidiaFotoTab×2, localizacao discriminator, adicionarFotoManual discriminator) | `00d82ee` | `[ok]` |
+| AUDIT-T1B6-MIGRATION-FIX | Filtro `sync-conflict` em `migrarVaultLayoutPorTipo` (8 blocos) + 4 listadores periféricos | `a49222f` | `[ok]` |
+| AUDIT-T2-LOCK-VAULT | Opção A: sempre suffix `-<deviceId>` + util `forceDeviceIdSuffix` + migration boot idempotente. Elimina race read-then-write em 6 saves | `488e7fa` | `[ok]` |
+| AUDIT-T1B7-DRAFT-EXPORT-FIX | Anti-débito dos achados de T1B6: `migrarDraftsParaTreinoSessao` + `exportarVault` ZIP filter | — | `[todo]` |
 
-Métricas pós-auditoria: 202 suítes / 1957 testes verde · TS strict 0 ·
-drift contract 174 campos · push em main · `.prettierrc` ativo ·
-hooks/pre-commit com auto-format silencioso.
+Métricas pós-auditoria: 214 suítes / 2016 testes verde (subiu de 202/1957
+após T1B3+T1B6+T2 na noite de 2026-05-15) · TS strict 0 · drift contract
+174 campos · push em main · `.prettierrc` ativo · hooks/pre-commit com
+auto-format silencioso.
 
 ---
 
