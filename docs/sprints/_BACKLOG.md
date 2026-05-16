@@ -110,6 +110,8 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-RECAP-6 | Botão compartilhar slide Memórias (PNG 1080x1920) — depende de R-RECAP-4 | feature | P2 | 2–3h | `R-RECAP-6-SHARE-SLIDE-MEMORIAS-spec.md` |
 | R-INFRA-ENV-JSON-TSCONFIG | Fallback de tipo para env.json em worktrees fresh (achado R-CRIT-4) | infra | P3 | 30min | `R-INFRA-ENV-JSON-TSCONFIG-spec.md` |
 | R-INFRA-WORKTREE-BOOTSTRAP | Script bootstrap automático de node_modules+env.json (achado recorrente) | infra | P3 | 30–45min | `R-INFRA-WORKTREE-BOOTSTRAP-spec.md` |
+| R-RECAP-NUMEROS-AUDIOVIDEO-CARDS | Cards de áudios/vídeos no grid Números (débito R-CRIT-3) | feature | P2 | 1h | `R-RECAP-NUMEROS-AUDIOVIDEO-CARDS-spec.md` |
+| R-DX-GAUNTLET-MULTI-PORTA | Multi-porta no gauntlet.sh (paralelismo de validação visual) | infra | P3 | 1–2h | `R-DX-GAUNTLET-MULTI-PORTA-spec.md` |
 | R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | 1–2h | `R-NAV-1-CICLO-BOTAO-REGISTRAR-MIGRACAO-FAB-spec.md` |
 | R-NAV-3 | FAB consistência edit/delete | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
 | R-WIDG-1 | Widget homescreen to-do | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
