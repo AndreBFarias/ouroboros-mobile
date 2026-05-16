@@ -20,6 +20,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 
 export type TipoCompanhia = 'sozinho' | 'duo';
 
@@ -310,3 +311,19 @@ function filtrarBooleansConhecidos<T extends Record<string, boolean>>(
   }
   return out as Partial<T>;
 }
+
+// R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
+// que espelha o estado em vault/_estado/settings-<deviceId>.md. Debounced
+// 500ms por key dentro de escreverEstadoCanonico. Side-effect do module
+// (registra uma unica vez por bundle). Em web/dev o write cai no
+// useVaultMock (writer trata branch); em mobile real escreve via
+// SAF/file:// atomic.
+useSettings.subscribe((state) => {
+  escreverEstadoCanonico('settings', {
+    somVibracao: { ...state.somVibracao },
+    pessoa: { ...state.pessoa },
+    featureToggles: { ...state.featureToggles },
+    privacidade: { ...state.privacidade },
+    midia: { ...state.midia },
+  });
+});

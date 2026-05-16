@@ -14,6 +14,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
+import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
@@ -91,11 +92,17 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //     deviceId) para a forma '-<deviceIdAtual>.md'. Pos-T2 todos os
 //     saves escrevem com suffix de origem; legado pre-T2 precisa do
 //     rename uma vez por instalacao.
+//   - estadoMigradoParaVault (R-VAULT-CANONICAL-COMPLETE-A 2026-05-16):
+//     indica se a rotina ja escreveu o primeiro snapshot dos 5 stores
+//     canonicos (settings, sessao, onboarding, pessoa, navegacao) em
+//     vault/_estado/. Pos-migration, subscribers de cada store mantem
+//     o vault atualizado.
 export interface FlagsBootState {
   canalV1Deletado: boolean;
   cacheAgendaMigrado: boolean;
   vaultLayoutMigrado: boolean;
   t2DeviceIdSuffixMigrado: boolean;
+  estadoMigradoParaVault: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -139,6 +146,7 @@ const FLAGS_VAZIAS: FlagsBootState = {
   cacheAgendaMigrado: false,
   vaultLayoutMigrado: false,
   t2DeviceIdSuffixMigrado: false,
+  estadoMigradoParaVault: false,
 };
 
 const DEFAULT_STATE: Omit<
@@ -277,7 +285,7 @@ export const useSessao = create<SessaoState>()(
       // /saude-fisica; /(tabs) -> /). Sprint L1 renomeou /memoria
       // para /saude-fisica; ultimaRota=/memoria persistido pre-L1
       // e' migrado abaixo na v3.
-      version: 4,
+      version: 5,
       migrate: (state: any, version: number) => {
         if (version < 2 && state && typeof state.ultimaRota === 'string') {
           if (state.ultimaRota.startsWith('/(tabs)/')) {
@@ -315,8 +323,31 @@ export const useSessao = create<SessaoState>()(
         ) {
           state.flags.t2DeviceIdSuffixMigrado = false;
         }
+        // R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): garante
+        // estadoMigradoParaVault em estados pre-R-VAULT. Sem isso, a
+        // flag fica undefined e a migration boot rodaria a cada boot.
+        if (
+          version < 5 &&
+          state &&
+          state.flags &&
+          state.flags.estadoMigradoParaVault === undefined
+        ) {
+          state.flags.estadoMigradoParaVault = false;
+        }
         return state;
       },
     }
   )
 );
+
+// R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
+// que espelha o estado em vault/_estado/sessao-<deviceId>.md. Debounced
+// 500ms por key dentro de escreverEstadoCanonico. Side-effect do module.
+useSessao.subscribe((state) => {
+  escreverEstadoCanonico('sessao', {
+    ultimaRota: state.ultimaRota,
+    rascunhos: { ...state.rascunhos },
+    permissoesPedidas: { ...state.permissoesPedidas },
+    flags: { ...state.flags },
+  });
+});

@@ -175,6 +175,19 @@ export default function RootLayout() {
     if (MODO_DEV_WEB) iniciarModoDev();
   }, []);
 
+  // R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): migration one-shot que
+  // escreve a primeira copia canonica dos 5 stores em vault/_estado/.
+  // Dispara apenas quando appPronto (stores hidratadas) para garantir
+  // que getState() reflete o estado restaurado do SecureStore. Fire-
+  // and-forget: nao bloqueia primeiro frame nem render. Idempotente
+  // via flag useSessao.flags.estadoMigradoParaVault.
+  useEffect(() => {
+    if (!appPronto) return;
+    void import('@/lib/boot/migrarEstadoParaVault').then(
+      ({ migrarEstadoParaVault }) => migrarEstadoParaVault()
+    );
+  }, [appPronto]);
+
   if (mostrarBootScreen) {
     // M25: enquanto JetBrainsMono carrega, mostra a marca animada em
     // fundo bg-page (Dracula). Substitui o `return null` antigo que

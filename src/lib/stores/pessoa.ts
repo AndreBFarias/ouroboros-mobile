@@ -10,6 +10,7 @@ import { PESSOAS_CONFIG } from '@/config/pessoas.config';
 import type { PessoaAutor, PessoaId } from '@/lib/schemas/pessoa';
 import { secureStorage } from '@/lib/stores/persist';
 import { useOnboarding } from '@/lib/stores/onboarding';
+import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 
 interface PessoaStore {
   pessoaAtiva: PessoaAutor;
@@ -62,6 +63,18 @@ export const usePessoa = create<PessoaStore>()(
     }
   )
 );
+
+// R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
+// que espelha o estado em vault/_estado/pessoa-<deviceId>.md. Debounced
+// 500ms por key dentro de escreverEstadoCanonico.
+usePessoa.subscribe((state) => {
+  escreverEstadoCanonico('pessoa', {
+    pessoaAtiva: state.pessoaAtiva,
+    filtroPessoa: state.filtroPessoa,
+    nomes: { ...state.nomes },
+    fotos: { ...state.fotos },
+  });
+});
 
 // Resolve nome de exibicao para qualquer PessoaId (inclui 'ambos').
 // Para autores (pessoa_a/b), pega do store; para 'ambos', ramifica por

@@ -17,6 +17,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { create } from 'zustand';
+import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 
 export interface NavegacaoState {
   menuAberto: boolean;
@@ -40,3 +41,15 @@ export const useNavegacao = create<NavegacaoState>((set) => ({
   setScrollMenuLateralPosition: (offset) =>
     set({ scrollMenuLateralPosition: offset }),
 }));
+
+// R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
+// que espelha o snapshot transitorio em vault/_estado/navegacao-<deviceId>.md.
+// useNavegacao e runtime-only (sem persist); espelhamos pra que sibling
+// Python possa diagnosticar estado intermediario. Debounced 500ms.
+useNavegacao.subscribe((state) => {
+  escreverEstadoCanonico('navegacao', {
+    menuAberto: state.menuAberto,
+    sheetCapturaAberto: state.sheetCapturaAberto,
+    scrollMenuLateralPosition: state.scrollMenuLateralPosition,
+  });
+});

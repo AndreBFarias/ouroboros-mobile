@@ -19,6 +19,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { useSettings } from '@/lib/stores/settings';
+import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 
 export type TipoCompanhia = 'sozinho' | 'casal' | 'amigos';
 
@@ -115,3 +116,15 @@ export const useOnboarding = create<OnboardingStore>()(
     }
   )
 );
+
+// R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
+// que espelha o estado em vault/_estado/onboarding-<deviceId>.md.
+// Debounced 500ms por key dentro de escreverEstadoCanonico.
+useOnboarding.subscribe((state) => {
+  escreverEstadoCanonico('onboarding', {
+    done: state.done,
+    tipoCompanhia: state.tipoCompanhia,
+    sexoDeclarado: { ...state.sexoDeclarado },
+    permissoes: { ...state.permissoes },
+  });
+});
