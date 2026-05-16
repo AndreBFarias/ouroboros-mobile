@@ -1,7 +1,15 @@
 // Sprint M-CAPTURA-UNIFICADA. Sheet 60% que ramifica o item "Camera"
 // do MenuLateral em duas decisoes:
-//   - Registrar momento (Foto/Musica/Video/Frase em Memorias).
+//   - Reflexao com foto (camera -> /diario-emocional?modo=reflexao
+//     com foto pre-anexada via rascunho).
 //   - Escanear documento (nota fiscal, comprovante via Scanner M09).
+//
+// R-FAB-2 (Onda R Fase 2): "Registrar momento" renomeado para
+// "Reflexao com foto". Comportamento muda: em vez de abrir o
+// MenuCapturaVerde em Saude Fisica, captura foto direto pela camera
+// e navega para o Diario Emocional em modo Reflexao com a foto ja
+// anexada como rascunho (em-memoria via useSessao). Alinhamento
+// lexical com R0 (Reflexao e modo canonico do Diario).
 //
 // Renderizado pela rota raiz transparentModal app/captura.tsx (padrao
 // M26 z-index, Armadilha A18 mitigada com Screen opaco por tras).
@@ -10,8 +18,11 @@
 //   - 2 cards verticais grandes (area de toque >=64dp), sem cor de
 //     festa, sem badge "novo" (ADR-010 estetica).
 //   - Sheet abre com index={0} direto (Armadilhas A17/A18).
-//   - Cores discretas: ImagePlus em green; ScanLine em cyan. Reusa
-//     paleta Dracula sem chamar a atencao alem do necessario.
+//   - Cores discretas: ImagePlus em cyan (cor canonica de Reflexao,
+//     espelhando o Chip 'Reflexao' em diario-emocional); ScanLine em
+//     cyan. Reusa paleta Dracula. R-FAB-2 troca de green para cyan
+//     porque o ramo agora termina no Diario em modo Reflexao, nao
+//     mais no MenuCapturaVerde.
 //   - Subtitulo curto explicando o que cada ramo faz, evitando que o
 //     usuario precise tentar para descobrir.
 //
@@ -25,10 +36,12 @@ import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 
 export interface SheetEscolhaCapturaProps {
-  // Disparado quando o usuario escolhe "Registrar momento". O caller
-  // (app/captura.tsx) e' responsavel por dismissar a rota e navegar
-  // para /saude-fisica?abrirCaptura=1 (sprint L1 renomeou /memoria).
-  onRegistrarMomento: () => void;
+  // R-FAB-2: disparado quando o usuario escolhe "Reflexao com foto".
+  // O caller (app/captura.tsx) abre a camera, copia a foto para o
+  // Vault, seta o rascunho diarioEmocional com modo='reflexao' e
+  // midia=[{tipo:'foto', path}], e navega para /diario-emocional
+  // ?modo=reflexao. Cancel da camera dismissa o modal sem navegar.
+  onReflexaoComFoto: () => void;
   // Disparado quando o usuario escolhe "Escanear documento". O caller
   // dismissa e navega para /scanner.
   onEscanearDocumento: () => void;
@@ -113,7 +126,7 @@ function OpcaoCaptura({
 }
 
 export function SheetEscolhaCaptura({
-  onRegistrarMomento,
+  onReflexaoComFoto,
   onEscanearDocumento,
 }: SheetEscolhaCapturaProps): ReactNode {
   return (
@@ -142,11 +155,11 @@ export function SheetEscolhaCaptura({
         <View style={{ gap: spacing.md }}>
           <OpcaoCaptura
             Icon={ImagePlus}
-            cor={colors.green}
-            titulo="Registrar momento"
-            subtitulo="Foto, música, vídeo ou frase."
-            a11yLabel="registrar momento"
-            onPress={onRegistrarMomento}
+            cor={colors.cyan}
+            titulo="Reflexão com foto"
+            subtitulo="Foto + diário emocional."
+            a11yLabel="reflexao com foto"
+            onPress={onReflexaoComFoto}
           />
           <OpcaoCaptura
             Icon={ScanLine}

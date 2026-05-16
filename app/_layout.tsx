@@ -268,10 +268,10 @@ export default function RootLayout() {
                 }}
               />
               {/* M-CAPTURA-UNIFICADA: rota modal de decisao entre
-                "Registrar momento" e "Escanear documento". Mesmo
-                padrao M26 (transparentModal + bg Dracula opaco)
-                para mitigar Armadilha A18 (tela preta se sheet
-                falha em expand). */}
+                "Reflexao com foto" (R-FAB-2 renomeou de "Registrar
+                momento") e "Escanear documento". Mesmo padrao M26
+                (transparentModal + bg Dracula opaco) para mitigar
+                Armadilha A18 (tela preta se sheet falha em expand). */}
               <Stack.Screen
                 name="captura"
                 options={{

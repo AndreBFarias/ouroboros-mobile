@@ -134,27 +134,33 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   arquivos saem do `inbox/` quando classificados como evento, diário
   ou conquista (sprint de triagem futura).
 
-### 2.8 Captura unificada — M-CAPTURA-UNIFICADA
+### 2.8 Captura unificada — M-CAPTURA-UNIFICADA (atualizada em R-FAB-2)
 
 - Item "Câmera" do MenuLateral abre a rota `/captura` (modal raiz
   `transparentModal`, padrão M26) com `<SheetEscolhaCaptura>`:
   dois cards verticais grandes, área de toque ≥ 88dp, sem badge
   e sem cor de festa.
-  - **Registrar momento** (`ImagePlus` verde, "Foto, música, vídeo
-    ou frase.") → dismissa o sheet e navega para
-    `/saude-fisica?abrirCaptura=1` (sprint L1 renomeou `/memoria`).
-    `SaudeFisicaScreen` lê a query via `useLocalSearchParams` e
-    expande o `<MenuCapturaVerde>` automaticamente 1 frame após
-    mount via prop `abrirNoMount`.
+  - **Reflexão com foto** (`ImagePlus` cyan, "Foto + diário
+    emocional.") — renomeado em R-FAB-2 (Onda R Fase 2) a partir
+    do antigo "Registrar momento". Comportamento novo: dismissa o
+    sheet, abre `capturarFoto({origem: 'camera'})` direto, em
+    sucesso seedeia o rascunho `diarioEmocional` em `useSessao`
+    com `modo='reflexao'` + `midia=[{tipo:'foto', path}]`, e
+    navega para `/diario-emocional?modo=reflexao`. O Diário
+    Emocional inicializa o form a partir do rascunho — chip
+    "Reflexão" pré-selecionado, foto pré-anexada via `MidiaPicker`.
+    Cancel da câmera → `router.back()` sem rascunho residual.
   - **Escanear documento** (`ScanLine` cyan, "Nota fiscal,
     comprovante.") → dismissa e navega para `/scanner`
     (`<ScannerSheet>` M09 quando dev-client; em ambiente sem ML
     Kit nativo o sheet mostra `EmptyState` honesto via
     comportamento existente).
 - `<MenuCapturaVerde>` permanece em Saúde Física como atalho
-  rápido contextualizado; `/captura` é o ponto de decisão único do
-  menu lateral. Rota está na lista `ROTAS_SEM_FAB` para o `<FABMenu>`
-  não competir z-index com o sheet de decisão.
+  rápido contextualizado para Foto/Música/Vídeo/Frase; `/captura`
+  é o ponto de decisão único do menu lateral, agora focado em
+  Reflexão (R-FAB-2) ou Documento. Rota está na lista
+  `ROTAS_SEM_FAB` para o `<FABMenu>` não competir z-index com o
+  sheet de decisão.
 
 ### 2.9 MenuCapturaVerde — M34 + M34.3 (em Saúde Física)
 

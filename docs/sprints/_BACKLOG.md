@@ -88,7 +88,7 @@ Bloqueia `v1.0.0-rc2`.
 | 3‖ | R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
 | 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
 | 4 | R-FAB-1 `[ok]` (`47c17f9`) | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
-| 4‖ | R-FAB-2 | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
+| 4‖ | R-FAB-2 `[ok]` (Onda 2A.4) | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
 | 4‖ | R-CROSS-FLOW-AUDIT `[ok]` (`bebdf12`) | Interconexão (12 fluxos cruzados + sibling) | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
 | 4‖ | **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A de 2) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-A-spec.md` |
 | 4‖ | **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-B-spec.md` |
@@ -113,6 +113,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-INFRA-WORKTREE-BOOTSTRAP | Script bootstrap automático de node_modules+env.json (achado recorrente) | infra | P3 | 30–45min | `R-INFRA-WORKTREE-BOOTSTRAP-spec.md` |
 | R-RECAP-NUMEROS-AUDIOVIDEO-CARDS | Cards de áudios/vídeos no grid Números (débito R-CRIT-3) | feature | P2 | 1h | `R-RECAP-NUMEROS-AUDIOVIDEO-CARDS-spec.md` |
 | R-DX-GAUNTLET-MULTI-PORTA | Multi-porta no gauntlet.sh (paralelismo de validação visual) | infra | P3 | 1–2h | `R-DX-GAUNTLET-MULTI-PORTA-spec.md` |
+| R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente: AUTOMATIZAR-FANTASMAS, R-FAB-2 v1, R-FAB-2 v2) | infra+DX | P2 | 1-2h | `R-DX-EXECUTOR-WORKTREE-ENFORCE-spec.md` |
 | **R-CROSS-FLOW-FIX-2** | **CRÍTICO cross-repo**: sibling ETL não lê `markdown/` (layout H2). Todo vault pós-refundação invisível pro desktop. | bug+cross-repo | **P1-high** | sibling | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |
 | R-CROSS-FLOW-FIX-1 | `avaliarBackupAutomatico` declarado SEM CALLER no boot path (achado cenário 10) | fix | P1 | 1h | `R-CROSS-FLOW-FIX-1-BACKUP-AUTOMATICO-ORFAO-spec.md` |
 | R-CROSS-FLOW-FIX-3 | Scanner OCR duplicata na Galeria (achado cenário 4) | fix | P2 | 1-2h | `R-CROSS-FLOW-FIX-3-SCANNER-DUPLICATA-GALERIA-spec.md` |

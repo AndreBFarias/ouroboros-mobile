@@ -5,6 +5,22 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2A.4 — R-FAB-2 FAB Câmera "Reflexão com foto" (2026-05-16 noite)
+
+Primeira sprint da Onda 2A entregue. Renomeação lexical pós R0 + alinhamento de rota de captura.
+
+- **R-FAB-2** (pending commit no main, bypass de worktree pelo executor): FAB Câmera → sheet com 2 opções:
+  - **"Reflexão com foto"** (renomeado de "Registrar Momento"): captura → `/diario-emocional?modo=reflexao` com foto pré-anexada em memória.
+  - **"Escanear documento"**: fluxo Q9/M09 mantido intacto.
+- Componente `SheetEscolhaCaptura.tsx` atualizado (label + cor cyan + subtítulo).
+- Rota `/captura` mantém entrada, navega para destino correto via `modo=reflexao` query param.
+- 1 teste novo (`SheetEscolhaCaptura.test.tsx` atualizado), +1 teste no jest (225 suítes / 2102 testes verde).
+- Gauntlet validation 3/3: sheet com "Reflexão com foto" + diário em modo Reflexão + menu lateral com item Câmera. Screenshots em `docs/sprints/R-FAB-2-screenshots-gauntlet/`.
+- E2E novo: `tests/e2e/playwright/r-fab-2.e2e.ts`.
+- FEATURES-CANONICAS.md atualizado.
+
+**Achado de protocolo**: o executor R-FAB-2 bypassou novamente o worktree isolation e trabalhou direto no main local — mesmo padrão de AUTOMATIZAR-FANTASMAS na sessão anterior. Reforça que a instrução no prompt não é suficiente; **sprint nova R-DX-EXECUTOR-WORKTREE-ENFORCE** registrada como anti-débito (constraint técnico no agent runtime).
+
 ### Higiene de retomada + split R-VAULT-CANONICAL-COMPLETE (2026-05-16 noite)
 
 Sessão fresh do CLI retomando pós-Fase-2.1 da Onda R. Histórico da sessão anterior reconstruido manualmente pelo dono. Estado de retomada:

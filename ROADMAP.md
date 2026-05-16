@@ -55,7 +55,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INT-1 | Hub Integrações Utilitários (depende VAULT-B) | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
 | R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
 | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
-| R-FAB-2 | FAB Câmera repensar (Reflexão com foto) | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
+| R-FAB-2 | FAB Câmera repensar (Reflexão com foto) | refactor | P2 | `pending` | `[ok]` (Onda 2A.4) |
 
 ### Fase 3 — Features secundárias (paralelo a Fase 4) — ~40–55h
 
@@ -75,6 +75,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
 | R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` |
+| R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | 1-2h | `R-DX-EXECUTOR-WORKTREE-ENFORCE-spec.md` |
 | R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
 | R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
