@@ -79,7 +79,7 @@ Bloqueia `v1.0.0-rc2`.
 | 1 | R-RECAP-3 `[ok]` (`9514061`) | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
 | 1‖ | R-RECAP-1 `[ok]` (Onda 2A.2, `25d4849`) | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
 | 1‖ | R-RECAP-2 `[ok]` (Onda 2B.2, `a4f0d8a`) | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
-| 1‖ | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
+| 1‖ | R-RECAP-4 `[ok]` (Onda 2B.3, `afa22bc`) | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
 | 1‖ | R-MEDIA-1 `[ok]` (Onda 2A.3, `8088c80`) | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
 | 1‖ | R-HOME-1 | Hoje prioridade + recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` (precisa D1) |
 | 2 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
@@ -115,6 +115,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-DX-GAUNTLET-MULTI-PORTA | Multi-porta no gauntlet.sh (paralelismo de validação visual) | infra | P3 | 1–2h | `R-DX-GAUNTLET-MULTI-PORTA-spec.md` |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente: AUTOMATIZAR-FANTASMAS, R-FAB-2 v1, R-FAB-2 v2) | infra+DX | P2 | 1-2h | `R-DX-EXECUTOR-WORKTREE-ENFORCE-spec.md` |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | 30min | `R-MEDIA-LINKEXTERNO-CLEANUP-spec.md` |
+| R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | 1-2h | `R-DX-SECURESTORE-WEB-DEV-FALLBACK-spec.md` |
 | **R-CROSS-FLOW-FIX-2** | **CRÍTICO cross-repo**: sibling ETL não lê `markdown/` (layout H2). Todo vault pós-refundação invisível pro desktop. | bug+cross-repo | **P1-high** | sibling | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |
 | R-CROSS-FLOW-FIX-1 | `avaliarBackupAutomatico` declarado SEM CALLER no boot path (achado cenário 10) | fix | P1 | 1h | `R-CROSS-FLOW-FIX-1-BACKUP-AUTOMATICO-ORFAO-spec.md` |
 | R-CROSS-FLOW-FIX-3 | Scanner OCR duplicata na Galeria (achado cenário 4) | fix | P2 | 1-2h | `R-CROSS-FLOW-FIX-3-SCANNER-DUPLICATA-GALERIA-spec.md` |

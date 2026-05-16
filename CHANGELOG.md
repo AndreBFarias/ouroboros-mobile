@@ -5,6 +5,26 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2B.3 — R-RECAP-4 Memórias slideshow v2 (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `afa22bc` cherry-pick.
+
+- **Auto-avanço configurável** em `app/recap-memorias.tsx`: `useSettings(s => s.recap.slideshowIntervaloS)` lê valor (default 4s, clamp 2-10s). Slider em `app/settings/index.tsx` permite ajustar.
+- **Áudio ambient com fade 500ms** em `app/recap-memorias.tsx`: cria `Audio.Sound` com loop + volume. Fade-in/out em 5 passos de 100ms.
+- **Track ambient CC0 480KB** em `assets/sounds/ambient/recap-memorias.mp3`: drone harmônico gerado via ffmpeg synth (4 senóides A2/E3/A3/E4 × 60s). Licença CC0 documentada em `assets/sounds/ambient/CREDITS.md` + `docs/SOUNDS-LICENSES.md`. Bundle delta +480K (dentro do limite ≤500KB).
+- **Ken Burns 4 presets** em `src/components/recap/KenBurns.tsx` (146L novo): `zoom-in-top-left`, `zoom-out-center`, `pan-left-right`, `pan-bottom-top`. Função `presetParaSlide(slideId)` faz hash determinístico (soma char codes mod 4). Reanimated `useSharedValue` + `withTiming(4000)`.
+- **Frases de transição** em `src/lib/copy/recap-transicoes.ts` (45L novo): 12 frases sentence case + acento + sem exclamação (ADR-0005). Seed determinístico via hash.
+- **Botão pausar** em `recap-memorias.tsx`: Pressable com ícone `Pause`/`Play`, controla auto-advance + áudio + Ken Burns. PNG `D-recap-memorias-pausado.png` confirma toggle.
+- **Settings com SecaoRecapMemorias** em `app/settings/index.tsx` (+70L): rótulo "MODO MEMÓRIAS DO RECAP", ToggleRow "Áudio ambient" (toggle OFF default conforme D3=Sim), card "Intervalo entre slides" com slider 2-10s.
+- **+12 testes** (4 KenBurns + 4 recap-transicoes + 4 settings). Métricas: **242 suítes / 2257 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **5 screenshots Gauntlet via playwright contra bundle exportado** em `docs/sprints/R-RECAP-4-screenshots-gauntlet/`: settings com nova seção, slideshow frame 1 (fundo roxo), frame 2 (fundo azul/teal — anim Background withRepeat rodando), pausado.
+
+**Bug interno corrigido durante sprint**: hooks após early return em `recap-memorias.tsx` (React error #300 "Rendered fewer hooks than expected") — agent moveu hook antes do early return. Fix dentro do escopo permitido pela spec.
+
+**Achados colaterais**:
+1. **A15/A20 SecureStore web dev** — `getValueWithKeyAsync is not a function` em web dev quando subscriber `escreverEstadoCanonico` chama `getDeviceId()`. Pré-existente desde R-VAULT-A; reportado por R-RECAP-2, R-VAULT-B, R-RECAP-4. Sprint nova **R-DX-SECURESTORE-WEB-DEV-FALLBACK** registrada (P2) com Opção A (try/catch + webStorage fallback).
+2. **TS `Omit` em `SnapshotSettings`**: precisou estender com `setRecap`. Análogo direto à mudança de schema, corrigido inline.
+
 ### Onda 2B.2 — R-RECAP-2 big numbers clicáveis 100% (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `a4f0d8a` cherry-pick.
