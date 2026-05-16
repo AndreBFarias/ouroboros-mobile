@@ -57,7 +57,17 @@ export type AlarmeTag = z.infer<typeof AlarmeTagSchema>;
 
 // Som mapeado para arquivo .wav empacotado. 'gentle' default conservador
 // (sons CC0 documentados em assets/sounds/alarmes/CREDITS.md).
-export const AlarmeSomSchema = z.enum(['gentle', 'normal', 'forte']);
+// R-NAV-2 (2026-05-15): expandido de 3 para 5 sons. chime (acorde C
+// maj suave) e marimba (C6 com decay) cobrem perfis ausentes no
+// trio original gentle/normal/forte - chime para acordar gradual e
+// marimba para alerta curto.
+export const AlarmeSomSchema = z.enum([
+  'gentle',
+  'normal',
+  'forte',
+  'chime',
+  'marimba',
+]);
 export type AlarmeSom = z.infer<typeof AlarmeSomSchema>;
 
 // Recorrencia v2 (M30):
@@ -164,6 +174,8 @@ export const SOM_LABELS: Record<AlarmeSom, string> = {
   gentle: 'Suave',
   normal: 'Normal',
   forte: 'Forte',
+  chime: 'Sino',
+  marimba: 'Marimba',
 };
 
 // Ordem canonica de iteracao na UI (form e leitura).
@@ -177,6 +189,8 @@ export const SONS_CANONICOS = [
   'gentle',
   'normal',
   'forte',
+  'chime',
+  'marimba',
 ] as const satisfies ReadonlyArray<AlarmeSom>;
 
 // Labels curtos dos dias da semana (1 char), sentence case. Ordem

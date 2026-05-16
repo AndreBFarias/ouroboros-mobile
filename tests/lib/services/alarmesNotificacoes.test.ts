@@ -153,7 +153,10 @@ describe('agendarAlarme', () => {
     );
   });
 
-  it('inclui categoria e canal no schedule', async () => {
+  it('inclui categoria e canal por som no schedule (R-NAV-2)', async () => {
+    // R-NAV-2: channelId agora deriva do som (1 canal por som).
+    // Som no canal e imutavel apos create no Android Oreo+, entao
+    // cada som tem canal proprio. Sem isso o alarme dispara mudo.
     const a = fixture({ slug: 'cat', dias_semana: [2] });
     await agendarAlarme(a);
     expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
@@ -165,10 +168,28 @@ describe('agendarAlarme', () => {
           sound: 'gentle.wav',
         }),
         trigger: expect.objectContaining({
-          channelId: 'ouroboros-default-v2',
+          channelId: 'ouroboros-alarme-gentle',
         }),
       })
     );
+  });
+
+  it('escolhe canal especifico para cada som (R-NAV-2)', async () => {
+    // Verifica que cada som mapeia para channel id distinto.
+    const sons = ['gentle', 'normal', 'forte', 'chime', 'marimba'] as const;
+    for (const som of sons) {
+      memInterna.clear();
+      jest.clearAllMocks();
+      const a = fixture({ slug: `t-${som}`, dias_semana: [1], som });
+      await agendarAlarme(a);
+      expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          trigger: expect.objectContaining({
+            channelId: `ouroboros-alarme-${som}`,
+          }),
+        })
+      );
+    }
   });
 });
 
@@ -219,7 +240,9 @@ describe('agendarSnooze / cancelarSnooze', () => {
     expect(memInterna.has('ouroboros.alarme.teste.snooze')).toBe(false);
   });
 
-  it('passa categoria e canal no snooze', async () => {
+  it('passa categoria e canal no snooze (R-NAV-2)', async () => {
+    // R-NAV-2: snooze cai em ouroboros-alarme-gentle (sound:false
+    // no content garante mudo, canal e nominal).
     await agendarSnooze('cat-snooze', 5);
     expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -229,7 +252,7 @@ describe('agendarSnooze / cancelarSnooze', () => {
           title: 'Soneca',
         }),
         trigger: expect.objectContaining({
-          channelId: 'ouroboros-default-v2',
+          channelId: 'ouroboros-alarme-gentle',
           repeats: false,
         }),
       })
@@ -280,7 +303,7 @@ describe('agendarAlarme — recorrencias v2 (M30)', () => {
         identifier: 'ouroboros.alarme.consulta.once',
         trigger: expect.objectContaining({
           type: 'date',
-          channelId: 'ouroboros-default-v2',
+          channelId: 'ouroboros-alarme-gentle',
         }),
       })
     );
@@ -302,7 +325,7 @@ describe('agendarAlarme — recorrencias v2 (M30)', () => {
           type: 'daily',
           hour: 8,
           minute: 30,
-          channelId: 'ouroboros-default-v2',
+          channelId: 'ouroboros-alarme-gentle',
         }),
       })
     );
@@ -339,7 +362,7 @@ describe('agendarAlarme — recorrencias v2 (M30)', () => {
           day: 15,
           hour: 8,
           minute: 30,
-          channelId: 'ouroboros-default-v2',
+          channelId: 'ouroboros-alarme-gentle',
         }),
       })
     );

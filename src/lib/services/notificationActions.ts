@@ -15,22 +15,38 @@
 //     so REGISTRA a categoria; o listener vai numa sprint futura.
 //
 // Comentarios sem acento (convencao shell/CI).
+//
+// R-NAV-2 (2026-05-15) - alarmes mudos:
+//   Bug raiz: canal 'ouroboros-default-v2' nao tinha campo `sound`
+//   em setNotificationChannelAsync. Android Oreo+ trata o canal
+//   como fonte unica de verdade do som; content.sound vira nominal
+//   apenas. Solucao: 1 canal por som (canalIdParaSom), cada um com
+//   sound apontando para o resource raw correspondente.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import {
+  SONS_CANONICOS,
+  type AlarmeSom,
+} from '@/lib/schemas/alarme';
 
 export const ALARME_CATEGORY_ID = 'alarme';
-// M30: novo channel id v2. Android nao permite editar channel
-// existente (vibrationPattern, importance, etc fica congelado depois
-// do create). Apos v1.0-rc1 ter criado 'alarmes' sem padrao de
-// vibracao explicito + 'default' antigo, criamos um channel novo
-// 'ouroboros-default-v2' e apagamos os legados via boot one-shot
-// guardado por useSessao.flags.canalV1Deletado. Assim devices que
-// rodaram v1 anterior passam a vibrar corretamente sem reinstall.
+// Channel id legado (M30 v2). Mantido como fallback nominal e como
+// identifier para limpeza one-shot em devices upgradados. Novos
+// schedules usam canalIdParaSom() baseado em alarme.som.
 export const ALARME_CHANNEL_ID = 'ouroboros-default-v2';
 // Channel ids legados que devem ser apagados na primeira execucao
-// pos-M30 (one-shot). Idempotente: apagar channel inexistente nao
-// falha. Ordem nao importa.
-export const CHANNEL_IDS_LEGADOS = ['default', 'alarmes'] as const;
+// pos-M30/R-NAV-2 (one-shot). Idempotente: apagar channel inexistente
+// nao falha. Ordem nao importa.
+//
+// R-NAV-2: 'ouroboros-default-v2' entra na limpeza porque foi criado
+// sem `sound` em devices upgradados (Android trava configuracao do
+// canal apos primeira criacao). Sem deletar+recriar, som nunca
+// dispara nesses devices.
+export const CHANNEL_IDS_LEGADOS = [
+  'default',
+  'alarmes',
+  'ouroboros-default-v2',
+] as const;
 // M30: padrao de vibracao canonico [0, 250, 500, 250]. 250ms de
 // pulse, 500ms pausa, 250ms pulse. Nem invasivo nem fraco (decisao
 // §9 do M30-spec).
@@ -38,8 +54,23 @@ export const ALARME_VIBRATION_PATTERN: readonly number[] = [0, 250, 500, 250];
 export const SONECA_ACTION_ID = 'alarme.soneca';
 export const DESLIGAR_ACTION_ID = 'alarme.desligar';
 
-// Registra a categoria 'alarme' (action buttons) e o canal Android
-// dedicado 'alarmes'. Em Web vira no-op silencioso.
+// R-NAV-2: nome do canal por som. Sufixo do som vira identifier
+// estavel ('ouroboros-alarme-gentle'). Mantemos prefixo distinto
+// dos legados para limpeza retroativa quando precisar recriar.
+export function canalIdParaSom(som: AlarmeSom): string {
+  return `ouroboros-alarme-${som}`;
+}
+
+// R-NAV-2: nome do recurso raw que Android resolve.
+// expo-notifications no Android aceita string sem extensao em
+// channel.sound; ele resolve para R.raw.<nome>. Os arquivos .wav
+// sao copiados via plugin (app.json sounds:[]).
+function nomeResourceSom(som: AlarmeSom): string {
+  return som;
+}
+
+// Registra a categoria 'alarme' (action buttons) e N canais Android
+// (1 por som canonico). Em Web vira no-op silencioso.
 export async function registrarCategoriasAlarme(): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
@@ -63,21 +94,30 @@ export async function registrarCategoriasAlarme(): Promise<void> {
     ]);
 
     if (Platform.OS === 'android') {
-      // M30 v2: canal Android com vibrationPattern explicito + flag
-      // enableVibrate. importance HIGH mantem heads-up. lightColor
-      // purple Dracula (--purple #bd93f9) reforca identidade visual em
-      // notificacoes ambient.
-      await Notifications.setNotificationChannelAsync(ALARME_CHANNEL_ID, {
-        name: 'Ouroboros',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [...ALARME_VIBRATION_PATTERN],
-        enableVibrate: true,
-        lightColor: '#bd93f9',
-        // Trava na tela de bloqueio: alarme tem que aparecer.
-        lockscreenVisibility:
-          Notifications.AndroidNotificationVisibility.PUBLIC,
-        bypassDnd: false,
-      });
+      // R-NAV-2: 1 canal por som. Som no canal e IMUTAVEL apos
+      // setNotificationChannelAsync. Sem isso o alarme dispara sem
+      // audio (bug raiz que motivou a refundacao v1.0).
+      // vibrationPattern + enableVibrate + lightColor purple Dracula
+      // (--purple #bd93f9) preservados em todos os canais.
+      for (const som of SONS_CANONICOS) {
+        await Notifications.setNotificationChannelAsync(
+          canalIdParaSom(som),
+          {
+            name: `Ouroboros (${som})`,
+            importance: Notifications.AndroidImportance.HIGH,
+            vibrationPattern: [...ALARME_VIBRATION_PATTERN],
+            enableVibrate: true,
+            lightColor: '#bd93f9',
+            // Trava na tela de bloqueio: alarme tem que aparecer.
+            lockscreenVisibility:
+              Notifications.AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: false,
+            // Audio: nome do resource raw correspondente ao som.
+            // Sem este campo o canal cai em "Sem som" pelo SO.
+            sound: nomeResourceSom(som),
+          }
+        );
+      }
     }
   } catch {
     // Plataforma sem suporte ou falha temporaria; falha silenciosa

@@ -89,7 +89,14 @@
         {
           "icon": "./assets/icon-foreground.png",
           "color": "#bd93f9",
-          "defaultChannel": "default"
+          "defaultChannel": "default",
+          "sounds": [
+            "./assets/sounds/alarmes/gentle.wav",
+            "./assets/sounds/alarmes/normal.wav",
+            "./assets/sounds/alarmes/forte.wav",
+            "./assets/sounds/alarmes/chime.wav",
+            "./assets/sounds/alarmes/marimba.wav"
+          ]
         }
       ],
       [

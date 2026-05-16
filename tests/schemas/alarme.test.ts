@@ -150,8 +150,16 @@ describe('AlarmeSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('aceita os 3 sons canonicos', () => {
+  it('aceita os 5 sons canonicos', () => {
+    // R-NAV-2: expandido de 3 para 5 sons.
     for (const som of SONS_CANONICOS) {
+      const result = AlarmeSchema.safeParse({ ...minimo, som });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it('aceita chime e marimba como sons novos (R-NAV-2)', () => {
+    for (const som of ['chime', 'marimba'] as const) {
       const result = AlarmeSchema.safeParse({ ...minimo, som });
       expect(result.success).toBe(true);
     }
@@ -231,9 +239,10 @@ describe('AlarmeTagSchema / AlarmeSomSchema', () => {
     expect(new Set(TAGS_CANONICAS).size).toBe(3);
   });
 
-  it('SONS_CANONICOS tem 3 itens distintos', () => {
-    expect(SONS_CANONICOS.length).toBe(3);
-    expect(new Set(SONS_CANONICOS).size).toBe(3);
+  it('SONS_CANONICOS tem 5 itens distintos', () => {
+    // R-NAV-2: gentle, normal, forte, chime, marimba.
+    expect(SONS_CANONICOS.length).toBe(5);
+    expect(new Set(SONS_CANONICOS).size).toBe(5);
   });
 
   it('AlarmeTagSchema rejeita string vazia', () => {

@@ -32,6 +32,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { SeletorDias } from '@/components/alarmes/SeletorDias';
+import { PreviewSomButton } from '@/components/alarmes/PreviewSomButton';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
@@ -448,7 +449,14 @@ export default function AlarmesNovoOuEditar() {
   }, []);
 
   const handleSomChange = useCallback((next: string | null) => {
-    if (next === 'gentle' || next === 'normal' || next === 'forte') {
+    // R-NAV-2: 5 sons canonicos (gentle, normal, forte, chime, marimba).
+    if (
+      next === 'gentle' ||
+      next === 'normal' ||
+      next === 'forte' ||
+      next === 'chime' ||
+      next === 'marimba'
+    ) {
       setSom(next);
     }
   }, []);
@@ -653,6 +661,7 @@ export default function AlarmesNovoOuEditar() {
               onChange={handleSomChange}
               options={SOM_OPTIONS}
             />
+            <PreviewSomButton som={som} />
           </View>
 
           <Slider

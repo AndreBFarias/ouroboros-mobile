@@ -28,6 +28,7 @@ import {
 import {
   ALARME_CATEGORY_ID,
   ALARME_CHANNEL_ID,
+  canalIdParaSom,
 } from '@/lib/services/notificationActions';
 
 // Prefixo canonico dos identifiers desta feature.
@@ -45,10 +46,14 @@ function idSnooze(slug: string): string {
 // Mapa interno: slug do som -> arquivo .wav empacotado. O nome do
 // arquivo (sem extensao) e o que expo-notifications resolve via
 // Android resource. SDK 54: a string vai direto em content.sound.
+// R-NAV-2 (2026-05-15): expandido para 5 sons. chime e marimba sao
+// novos perfis CC0 documentados em assets/sounds/alarmes/CREDITS.md.
 const SOM_FILE: Record<AlarmeSom, string> = {
   gentle: 'gentle.wav',
   normal: 'normal.wav',
   forte: 'forte.wav',
+  chime: 'chime.wav',
+  marimba: 'marimba.wav',
 };
 
 export function nomeArquivoSom(som: AlarmeSom): string {
@@ -145,10 +150,17 @@ export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
     return { ids: [], estourou: true };
   }
 
+  // R-NAV-2: canal escolhido por som. Som no canal e IMUTAVEL apos
+  // create no Android, entao cada som tem seu canal proprio. Sem isso
+  // o alarme dispara mudo (bug raiz que motivou a refundacao v1.0).
+  const channelId = canalIdParaSom(parsed.data.som);
+
   const baseContent = {
     title: parsed.data.titulo,
     // Body vazio: notificação simples (decisão do spec, seção 5).
     body: '',
+    // content.sound preservado para iOS (no Android e ignorado em
+    // favor do canal, mas e necessario para iOS).
     sound: nomeArquivoSom(parsed.data.som),
     categoryIdentifier: ALARME_CATEGORY_ID,
   };
@@ -172,7 +184,7 @@ export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
           date,
-          channelId: ALARME_CHANNEL_ID,
+          channelId,
         },
       });
       return { ids: [identifier], estourou: false };
@@ -189,7 +201,7 @@ export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour: tempo.hour,
           minute: tempo.minute,
-          channelId: ALARME_CHANNEL_ID,
+          channelId,
         },
       });
       return { ids: [identifier], estourou: false };
@@ -215,7 +227,7 @@ export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
           day,
           hour: tempo.hour,
           minute: tempo.minute,
-          channelId: ALARME_CHANNEL_ID,
+          channelId,
         },
       });
       return { ids: [identifier], estourou: false };
@@ -239,7 +251,7 @@ export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
             weekday,
             hour: tempo.hour,
             minute: tempo.minute,
-            channelId: ALARME_CHANNEL_ID,
+            channelId,
           },
         });
         ids.push(identifier);
@@ -281,6 +293,9 @@ export async function agendarSnooze(
   await cancelarSnooze(slug);
 
   const identifier = idSnooze(slug);
+  // R-NAV-2: snooze cai no canal 'gentle' (qualquer canal valido
+  // serve - sound:false no content garante mudo). canal antigo
+  // ALARME_CHANNEL_ID virou legado e sera deletado no boot one-shot.
   await Notifications.scheduleNotificationAsync({
     identifier,
     content: {
@@ -297,7 +312,7 @@ export async function agendarSnooze(
       seconds: minutos * 60,
       // One-shot: não repete.
       repeats: false,
-      channelId: ALARME_CHANNEL_ID,
+      channelId: canalIdParaSom('gentle'),
     },
   });
   return identifier;
