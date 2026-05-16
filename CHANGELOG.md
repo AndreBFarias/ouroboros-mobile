@@ -5,6 +5,27 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2B.2 — R-RECAP-2 big numbers clicáveis 100% (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `a4f0d8a` cherry-pick.
+
+- **`src/components/screens/RecapSecaoNumeros.tsx`** (+23L cirúrgica): 6 big numbers no grid Recap > Números agora 100% `Pressable` com `accessibilityLabel` no padrão `<count> <tipo> no periodo` (sem acento, convenção screen reader). onPress navega para `/recap-lista?tipo=<canonico>&de=<iso>&ate=<iso>`.
+- **Auditoria 100% dos tipos** (proof-of-work obrigatório):
+  - `registros` -> `/recap-lista?tipo=registros` (clicável OK)
+  - `treinos` -> empty state Q24.a.b pendente (clicável OK)
+  - `fotos` -> `/galeria?filtro=foto` (redirect R-CROSS-FLOW-AUDIT) (clicável OK)
+  - `eventos_pos` / `eventos_neg` / `tarefas` -> `/recap-lista?tipo=<id>` (clicável OK)
+- **Helper `destinos.ts` (R-RECAP-1) preservado** — não modificado, só Read (OFF-LIMITS respeitado).
+- **+10 testes** novos (`RecapSecaoNumeros.test.tsx` 10 asserts via `mockPush.toHaveBeenCalledWith` cobrindo os 6 tipos). E2E novo: `tests/e2e/playwright/r-recap-2.e2e.ts`.
+- **3 screenshots Gauntlet via playwright headless** contra Metro do worktree em `:8082` com seed real (`humores-30d` + `diarios-3` + `eventos-7`). Confirmação visual: grid 2x3 com "16 Registros", "0 Treinos", "7 Fotos", "6 Eventos positivos", "0 Eventos difíceis", "0 Tarefas concluídas". Acentuação PT-BR completa nos rótulos UI.
+- Métricas: **240 suítes / 2245 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- FEATURES-CANONICAS.md atualizado.
+
+**Achados colaterais** (todos pré-documentados, não novos):
+1. Cards `audios` e `videos` ausentes no grid (debt de R-CRIT-3) — spec **R-RECAP-NUMEROS-AUDIOVIDEO-CARDS** já existe (`db6d02f`).
+2. `/recap-lista?tipo=treinos` retorna empty state — Q24.a.b já mencionada no código.
+3. Error overlay `ExpoSecureStore.default.getValueWithKeyAsync is not a function` em web dev — pré-existente, sem impacto mobile real.
+
 ### Onda 2B.1 — R-VAULT-CANONICAL-COMPLETE-B stats agregadas + UI export + cross-repo (2026-05-16 noite)
 
 Sprint da Fase 2 entregue **honrando worktree isolation**. Commit `62ebcdf` cherry-pick. Fecha a tese "tudo em .md" iniciada em R-VAULT-A (Onda 2A.1).
