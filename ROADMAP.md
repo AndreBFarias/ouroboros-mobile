@@ -64,6 +64,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
 | R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
 | R-MEDIA-2 | Recap autoplay áudio | feature | P2 | 2–3h | `R-MEDIA-2-RECAP-AUTOPLAY-AUDIO-spec.md` |
+| R-RECAP-6 | Botão compartilhar slide Memórias (PNG 1080x1920) | feature | P2 | 2–3h | `R-RECAP-6-SHARE-SLIDE-MEMORIAS-spec.md` |
 | R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | 1–2h | `R-NAV-1-CICLO-BOTAO-REGISTRAR-MIGRACAO-FAB-spec.md` |
 | R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
