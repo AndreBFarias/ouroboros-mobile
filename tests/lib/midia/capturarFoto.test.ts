@@ -21,6 +21,7 @@ jest.mock('expo-file-system/legacy', () => ({
   __esModule: true,
   copyAsync: jest.fn(),
   writeAsStringAsync: jest.fn(),
+  deleteAsync: jest.fn(),
 }));
 
 import * as ImagePicker from 'expo-image-picker';
@@ -36,6 +37,7 @@ const launchGaleriaSpy =
 const launchCamSpy = ImagePicker.launchCameraAsync as unknown as jest.Mock;
 const copySpy = FileSystem.copyAsync as unknown as jest.Mock;
 const writeSpy = FileSystem.writeAsStringAsync as unknown as jest.Mock;
+const deleteSpy = FileSystem.deleteAsync as unknown as jest.Mock;
 
 describe('capturarFoto (M34 / I-FOTO)', () => {
   beforeEach(() => {
@@ -45,6 +47,8 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
     launchCamSpy.mockReset();
     copySpy.mockReset();
     writeSpy.mockReset();
+    deleteSpy.mockReset();
+    deleteSpy.mockResolvedValue(undefined);
     useVault.setState({ vaultRoot: 'file:///mock/vault' });
     usePessoa.setState({ pessoaAtiva: 'pessoa_a' });
   });
@@ -259,5 +263,34 @@ describe('capturarFoto (M34 / I-FOTO)', () => {
 
     const writeArgs = writeSpy.mock.calls[0] as [string, string];
     expect(writeArgs[1]).toContain(`arquivo: ${basenameBin}`);
+  });
+
+  // R-CRIT-3 (2026-05-16): atomicidade do par binario+companion. Se o
+  // write do companion falha, o helper deleta o binario orfao para
+  // nao deixar JPG fantasma sem metadata. Cobre o caminho mais comum
+  // de erro: SAF write sucesso no copy mas falha no writeAsStringAsync
+  // (espaco em disco esgotado, permissao SAF revogada entre as duas
+  // chamadas, etc).
+  it('atomicidade: write companion falha -> delete do binario orfao', async () => {
+    permGaleriaSpy.mockResolvedValue({ granted: true });
+    launchGaleriaSpy.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///origem/foto.jpg', mimeType: 'image/jpeg' }],
+    });
+    copySpy.mockResolvedValue(undefined);
+    writeSpy.mockRejectedValue(new Error('ENOSPC'));
+
+    const r = await capturarFoto({ origem: 'galeria' });
+
+    // Helper continua silenciando em ok=false (caller decide UI).
+    expect(r.ok).toBe(false);
+    // Mas o binario orfao foi deletado em best-effort.
+    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    const [deletedUri, opts] = deleteSpy.mock.calls[0] as [
+      string,
+      { idempotent: boolean },
+    ];
+    expect(deletedUri).toMatch(/\/jpg\/foto-/);
+    expect(opts.idempotent).toBe(true);
   });
 });

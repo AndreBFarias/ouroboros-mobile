@@ -14,6 +14,7 @@ export type SlideId =
   | 'abertura'
   | 'numeros'
   | 'vitorias'
+  | 'midias'
   | 'crises'
   | 'encerramento';
 
@@ -34,6 +35,18 @@ export interface SlideVitorias /* anonimato-allow: categoria do diario emocional
   frasePrincipal: string | null; // frase da vitoria mais recente
 }
 
+// R-CRIT-3 (2026-05-16): slide novo das midias capturadas no periodo.
+// Contagens vem de RecapData.numeros (fotos / audios / videos). Quando
+// nao houver nenhuma midia no periodo o slide e' pulado (filtro em
+// useRecapMemorias). Tom sobrio (ADR-0005): sem exclamacao, sem
+// celebracao -- so o numero e o rotulo.
+export interface SlideMidias {
+  id: 'midias';
+  fotos: number;
+  audios: number;
+  videos: number;
+}
+
 export interface SlideCrises {
   id: 'crises';
   contagem: number;
@@ -47,6 +60,7 @@ export type Slide =
   | SlideAbertura
   | SlideNumeros
   | SlideVitorias /* anonimato-allow: categoria do diario emocional */
+  | SlideMidias
   | SlideCrises
   | SlideEncerramento;
 
@@ -89,6 +103,23 @@ export function useRecapMemorias(input: UseRecapMemoriasInput): Slide[] {
         id: 'vitorias',
         contagem: vitorias.length,
         frasePrincipal: ordenadas[0]?.frase ?? null,
+      });
+    }
+
+    // R-CRIT-3 (2026-05-16): slide de midias capturadas. Aparece quando
+    // ha pelo menos 1 foto/audio/video no periodo (independente da
+    // origem -- standalone via FAB ou embutida em diario/evento, ambos
+    // somados em RecapData.numeros). Sem nenhuma midia, slide pulado.
+    if (
+      d.numeros.fotos > 0 ||
+      d.numeros.audios > 0 ||
+      d.numeros.videos > 0
+    ) {
+      slides.push({
+        id: 'midias',
+        fotos: d.numeros.fotos,
+        audios: d.numeros.audios,
+        videos: d.numeros.videos,
       });
     }
 

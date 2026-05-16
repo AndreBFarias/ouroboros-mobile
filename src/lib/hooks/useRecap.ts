@@ -22,6 +22,10 @@ import { listarMarcos } from '@/lib/vault/marcos';
 import { listarContadores } from '@/lib/vault/contadores';
 import { listarTreinos } from '@/lib/vault/treinos';
 import { listarTarefas } from '@/lib/vault/tarefas';
+import {
+  listarMidiasStandalone,
+  type ItemMidiaStandalone,
+} from '@/lib/vault/midiaCompanion';
 import { diasEntre } from '@/lib/util/diasEntre';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
@@ -124,11 +128,17 @@ export interface TarefaConcluidaItem {
   feito_em: string;
 }
 
-// Numeros agregados (grid 2x3 da seção Numeros).
+// Numeros agregados (grid 2x3 da seção Numeros). R-CRIT-3 (2026-05-16):
+// audios e videos viraram contadores proprios; fotos agora inclui as
+// standalone do FAB (markdown/foto-*) somadas as embutidas em
+// diario.midia[] e evento.midia[]. Ate R-CRIT-3 fotos so contava as
+// embutidas, e audios/videos nao apareciam em lugar nenhum.
 export interface NumerosRecap {
   registros: number;
   treinos: number;
   fotos: number;
+  audios: number;
+  videos: number;
   eventos_positivos: number;
   eventos_negativos: number;
   tarefas_concluidas: number;
@@ -196,7 +206,10 @@ function truncar(texto: string, max: number): string {
 
 // Funcao pura testavel: agrega RecapData a partir das listas brutas
 // e do range. Caller (hook ou teste) e responsavel por carregar as
-// listas via helpers do vault.
+// listas via helpers do vault. R-CRIT-3 (2026-05-16): `midiasStandalone`
+// (foto/audio/video standalone do FAB) entra opcional para preservar
+// chamadas legadas em testes; quando ausente, conta como [] (zero
+// fotos/audios/videos standalone, fallback ao comportamento antigo).
 export function agregarRecap(input: {
   humor: HumorMeta[];
   diarios: DiarioEmocionalMeta[];
@@ -205,6 +218,7 @@ export function agregarRecap(input: {
   contadores: Contador[];
   treinos: TreinoSessao[];
   tarefas: { meta: Tarefa; rel: string }[];
+  midiasStandalone?: ItemMidiaStandalone[];
   de: Date;
   ate: Date;
   agora?: Date;
@@ -220,6 +234,7 @@ export function agregarRecap(input: {
     de,
     ate,
   } = input;
+  const midiasStandalone = input.midiasStandalone ?? [];
   const agora = input.agora ?? new Date();
 
   // Filtros por periodo.
@@ -404,7 +419,24 @@ export function agregarRecap(input: {
   const eventosNegativos = eventosFiltrados.filter(
     (e) => e.modo === 'negativo'
   ).length;
-  const fotos = contarFotos(diariosFiltrados, eventosFiltrados);
+  // R-CRIT-3 (2026-05-16): filtra midia standalone do FAB pelo periodo.
+  // Predicado por YYYY-MM-DD: midia.data ja vem normalizado em
+  // listarMidiasStandalone; transforma para Date meio-dia local para
+  // alinhar com dentroDoPeriodo.
+  const midiasFiltradas = midiasStandalone.filter((m) =>
+    dentroDoPeriodo(m.data, de, ate)
+  );
+  const fotosEmbutidas = contarFotos(diariosFiltrados, eventosFiltrados);
+  const fotosStandalone = midiasFiltradas.filter(
+    (m) => m.tipo === 'midia_foto'
+  ).length;
+  const audiosStandalone = midiasFiltradas.filter(
+    (m) => m.tipo === 'midia_audio'
+  ).length;
+  const videosStandalone = midiasFiltradas.filter(
+    (m) => m.tipo === 'midia_video'
+  ).length;
+  const fotos = fotosEmbutidas + fotosStandalone;
   const totalRegistros =
     humorFiltrado.length +
     diariosFiltrados.length +
@@ -417,6 +449,8 @@ export function agregarRecap(input: {
     registros: totalRegistros,
     treinos: treinosFiltrados.length,
     fotos,
+    audios: audiosStandalone,
+    videos: videosStandalone,
     eventos_positivos: eventosPositivos,
     eventos_negativos: eventosNegativos,
     tarefas_concluidas: tarefasFiltradas.length,
@@ -458,16 +492,29 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
 
     (async () => {
       try {
-        const [humor, diarios, eventos, marcos, contadores, treinos, tarefas] =
-          await Promise.all([
-            listarHumor(vaultRoot),
-            listarDiarios(vaultRoot),
-            listarEventos(vaultRoot),
-            listarMarcos(vaultRoot),
-            listarContadores(vaultRoot),
-            listarTreinos(vaultRoot),
-            listarTarefas(vaultRoot),
-          ]);
+        // R-CRIT-3 (2026-05-16): inclui midias standalone (foto-,
+        // audio-, video- via FAB) para que o agregador conte alem das
+        // embutidas em diario.midia[] e evento.midia[]. Antes, fotos
+        // standalone via FAB nao apareciam no Recap.
+        const [
+          humor,
+          diarios,
+          eventos,
+          marcos,
+          contadores,
+          treinos,
+          tarefas,
+          midiasStandalone,
+        ] = await Promise.all([
+          listarHumor(vaultRoot),
+          listarDiarios(vaultRoot),
+          listarEventos(vaultRoot),
+          listarMarcos(vaultRoot),
+          listarContadores(vaultRoot),
+          listarTreinos(vaultRoot),
+          listarTarefas(vaultRoot),
+          listarMidiasStandalone(vaultRoot),
+        ]);
         if (cancelado) return;
         const agregado = agregarRecap({
           humor,
@@ -477,6 +524,7 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
           contadores,
           treinos,
           tarefas,
+          midiasStandalone,
           de: new Date(deMs),
           ate: new Date(ateMs),
         });
@@ -495,6 +543,8 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
               registros: 0,
               treinos: 0,
               fotos: 0,
+              audios: 0,
+              videos: 0,
               eventos_positivos: 0,
               eventos_negativos: 0,
               tarefas_concluidas: 0,

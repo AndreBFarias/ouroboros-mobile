@@ -136,7 +136,20 @@ async function gravar(
     para,
     legenda,
   });
-  await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+  // R-CRIT-3 (2026-05-16): atomicidade best-effort. Se write companion
+  // falhar, deleta binario orfao para nao deixar mp4 fantasma na pasta
+  // mp4/ (que listarItensGaleria ignora; mas qualquer listador futuro
+  // que escaneie binarios encontraria sem metadata).
+  try {
+    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+  } catch (errCompanion) {
+    try {
+      await FileSystem.deleteAsync(destinoBin, { idempotent: true });
+    } catch {
+      // best-effort; falha de delete nao deve mascarar a do write.
+    }
+    throw errCompanion;
+  }
 
   return {
     ok: true,

@@ -166,7 +166,21 @@ export async function saveRecordingToVault(
     legenda: opcoes.legenda,
     transcricao: opcoes.transcricao,
   });
-  await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+  // R-CRIT-3 (2026-05-16): atomicidade best-effort. Se write companion
+  // falhar, deleta binario orfao para nao deixar m4a sem metadata em
+  // m4a/. Particularmente importante aqui porque o caller (saveDiario)
+  // embute meta.audio com o path; sem companion, o frontmatter aponta
+  // para um binario que existe mas nao tem origem rastreavel.
+  try {
+    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+  } catch (errCompanion) {
+    try {
+      await FileSystem.deleteAsync(destinoBin, { idempotent: true });
+    } catch {
+      // best-effort; falha de delete nao deve mascarar a do write.
+    }
+    throw errCompanion;
+  }
 
   return binarioRel;
 }

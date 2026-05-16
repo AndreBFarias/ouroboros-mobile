@@ -65,11 +65,14 @@ describe('capturarMusica (M34)', () => {
 
     const r = await capturarMusica({ para: { tipo: 'mim' } });
     expect(r.ok).toBe(true);
+    // R-CRIT-3: basename agora inclui prefixo canonico `audio-` para
+    // que listarItensGaleria detecte o item (casa por prefixo de
+    // feature). Sem prefixo, o item silenciava na galeria.
     expect(r.arquivo).toMatch(
-      /^m4a\/(audio-)?\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.mp3$/
+      /^m4a\/audio-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.mp3$/
     );
     expect(r.companion).toMatch(
-      /^markdown\/(audio-)?\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
+      /^markdown\/audio-\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.md$/
     );
 
     const copyArgs = copySpy.mock.calls[0][0] as { from: string; to: string };

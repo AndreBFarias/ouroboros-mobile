@@ -162,9 +162,11 @@ export { listarEventos } from './eventos';
 export {
   escreverMidiaComCompanion,
   lerCompanion,
+  listarMidiasStandalone,
   migrarAssetsLegacyParaMedia,
 } from './midiaCompanion';
 export type {
   EscreverMidiaResultado,
+  ItemMidiaStandalone,
   MigracaoResultado,
 } from './midiaCompanion';

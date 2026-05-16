@@ -73,19 +73,23 @@ export async function capturarMusica(
 
     const agora = new Date();
     const ext = extrairExtensao(asset.name);
+    // R-CRIT-3 (2026-05-15): basename ganha prefixo canonico `audio-`
+    // para que o companion seja detectado pelos listadores agregadores
+    // (`listarItensGaleria.inferirTipoDoFilename`, que casa por prefixo
+    // de feature). Sem o prefixo, companion nasce em
+    // markdown/<YYYY-MM-DD>-<rand>.md e nao casa com `audio-`,
+    // `foto-`, `video-`, nem nenhum outro: galeria silencia o item.
+    //
     // M39.1: writer migrado para escreverMidiaComCompanion. O helper
     // canonico extrai a extensao do binarioUri, mas como
     // expo-document-picker devolve cache temporario sem extensao
     // confiavel, embutimos no asset URI (sintetico) ou explicitamente
-    // via meta.arquivo. Aqui usamos meta.arquivo no formato canonico
-    // <YYYY-MM-DD>-<rand4>.<ext> para preservar match dos testes
-    // (regex /^media\/audios\/\d{4}-\d{2}-\d{2}-[0-9a-f]{4}\.<ext>$/).
-    // O canonico vai re-extrair ext de meta.arquivo via extOf(),
-    // entao basename serializa identico.
+    // via meta.arquivo. O canonico vai re-extrair ext de meta.arquivo
+    // via extOf(), entao basename serializa identico.
     const rand = Math.floor(Math.random() * 0xffff)
       .toString(16)
       .padStart(4, '0');
-    const arquivo = `${formatDateYmd(agora)}-${rand}.${ext}`;
+    const arquivo = `audio-${formatDateYmd(agora)}-${rand}.${ext}`;
     const autor = usePessoa.getState().pessoaAtiva;
     const r = await escreverMidiaComCompanion(vaultRoot, asset.uri, {
       tipo: 'midia_audio',

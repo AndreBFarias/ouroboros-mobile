@@ -234,7 +234,21 @@ async function gravar(
       para,
       legenda,
     });
-    await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+    // R-CRIT-3 (2026-05-16): atomicidade best-effort. Se write
+    // companion falhar, deleta binario orfao para nao deixar JPG sem
+    // metadata na pasta. listarItensGaleria ignora binarios sem
+    // companion, mas useFotosAgregadas lista a pasta jpg/ -- orfao
+    // viraria foto "fantasma" sem origem.
+    try {
+      await FileSystem.writeAsStringAsync(destinoCompanion, conteudo);
+    } catch (errCompanion) {
+      try {
+        await FileSystem.deleteAsync(destinoBin, { idempotent: true });
+      } catch {
+        // best-effort; falha de delete nao deve mascarar a do write.
+      }
+      throw errCompanion;
+    }
 
     return {
       ok: true,

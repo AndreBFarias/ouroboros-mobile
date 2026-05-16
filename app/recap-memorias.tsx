@@ -216,6 +216,39 @@ function SlideRender({ slide }: { slide: Slide }) {
           </Text>
         </View>
       );
+    case 'midias': {
+      // R-CRIT-3 (2026-05-16): slide das midias capturadas no periodo.
+      // Numero grande = total foto+audio+video; linhas auxiliares
+      // detalham por tipo apenas quando >0 (evita mostrar "0 vídeos").
+      const total = slide.fotos + slide.audios + slide.videos;
+      return (
+        <View style={styles.slideCentral}>
+          <Text style={styles.numeroEnorme}>{total}</Text>
+          <Text style={styles.rotuloMaiusculo}>
+            {total === 1 ? 'Mídia' : 'Mídias'}
+          </Text>
+          <View style={styles.dividerCurto} />
+          {slide.fotos > 0 ? (
+            <Text style={styles.subTexto}>
+              {`${slide.fotos} foto${slide.fotos > 1 ? 's' : ''}.`}
+            </Text>
+          ) : null}
+          {slide.audios > 0 ? (
+            <Text style={styles.subTexto}>
+              {`${slide.audios} áudio${slide.audios > 1 ? 's' : ''}.`}
+            </Text>
+          ) : null}
+          {slide.videos > 0 ? (
+            <Text style={styles.subTexto}>
+              {`${slide.videos} vídeo${slide.videos > 1 ? 's' : ''}.`}
+            </Text>
+          ) : null}
+          <Text style={[styles.fraseInferior, { marginTop: 24 }]}>
+            Ficou registrado.
+          </Text>
+        </View>
+      );
+    }
     case 'crises':
       return (
         <View style={styles.slideCentral}>
