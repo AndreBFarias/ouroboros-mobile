@@ -22,6 +22,7 @@ import { Image as ExpoImage } from 'react-native';
 import { Screen, Header } from '@/components/ui';
 import { CoverMidia } from '@/components/data/CoverMidia';
 import { WaveformPreview } from '@/components/midia/WaveformPreview';
+import { MidiaPreviewSpotifyYoutube } from '@/components/midia/MidiaPreviewSpotifyYoutube';
 import { lerConquistas } from '@/lib/conquistas/loader';
 import { useVault } from '@/lib/stores/vault';
 import { colors } from '@/theme/tokens';
@@ -244,9 +245,11 @@ function Conteudo({ conquista }: { conquista: Conquista }) {
 
 function MidiaInterativa({ midia }: { midia: Midia }) {
   if (midia.tipo === 'youtube') {
+    // R-MEDIA-1: substitui o link cru por preview enriquecido com
+    // thumbnail/titulo/autor via oEmbed cacheado. Fallback offline
+    // renderiza logo + CTA "Abrir externamente".
     return (
-      <LinkExterno
-        rotulo="Abrir no YouTube"
+      <MidiaPreviewSpotifyYoutube
         url={`https://www.youtube.com/watch?v=${midia.video_id}`}
       />
     );
@@ -254,7 +257,7 @@ function MidiaInterativa({ midia }: { midia: Midia }) {
   if (midia.tipo === 'spotify') {
     const url =
       midia.url_oembed ?? `https://open.spotify.com/track/${midia.track_id}`;
-    return <LinkExterno rotulo="Abrir no Spotify" url={url} />;
+    return <MidiaPreviewSpotifyYoutube url={url} />;
   }
   if (midia.tipo === 'audio') {
     // Q6 (Onda Q): substituido o fallback "indisponivel" pelo player
