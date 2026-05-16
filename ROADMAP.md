@@ -50,6 +50,8 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
 | R-FAB-1 | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | R-FAB-2 | FAB Câmera repensar (Reflexão com foto) | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
+| R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
+| R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | 4–6h | `R-VAULT-CANONICAL-COMPLETE-spec.md` |
 
 ### Fase 3 — Features secundárias (paralelo a Fase 4) — ~40–55h
 
@@ -77,6 +79,8 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
 | R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
 | R-OPS-5 | Release notes auto | infra | — | 1–2h | `R-OPS-5-RELEASE-NOTES-AUTO-spec.md` |
+| R-BACKUP-AUTO | Backup semanal silencioso pro Vault | feature | P2 | 3–4h | `R-BACKUP-AUTO-spec.md` |
+| R-A11Y-TALKBACK | Auditoria + correção navegação screen reader | audit+feature | P2 | 3–5h | `R-A11Y-TALKBACK-spec.md` |
 
 ### Fase 4 — Segurança + release (bloqueia v1.0.0 production) — ~12–18h
 
@@ -87,6 +91,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-SEC-3 | Privacy policy + terms | docs | P1 | 2–3h | `R-SEC-3-PRIVACY-POLICY-TERMS-spec.md` |
 | R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
 | R-SEC-5 | Secret leak audit | infra+audit | P1 | 1–2h | `R-SEC-5-SECRET-LEAK-AUDIT-spec.md` |
+| R-PLAYCONSOLE-SETUP | TODO Play Console (dono executa, sibling R-SEC-2) | docs+cloud | P1 | 40min dono + propagação | `R-PLAYCONSOLE-SETUP-spec.md` |
 
 ### Sprint anti-débito derivada (independente das 4 fases)
 
@@ -94,18 +99,20 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 |---|---|---|---|---|
 | AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS | Script cruza ROADMAP × git × código pra detectar fantasmas | infra+automation | 2–3h | `AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS-spec.md` |
 
-### Decisões abertas (precisam do dono antes da execução)
+### Decisões tomadas (2026-05-15 noite)
 
-| D# | Decisão | Bloqueia |
+Todas resolvidas. Detalhes em [`docs/sprints/_BACKLOG.md`](docs/sprints/_BACKLOG.md).
+
+| D# | Resposta | Sprint afetada |
 |---|---|---|
-| D1 | Status do Casal + Humor+Última na Home: A/B/C? | R-HOME-1 |
-| D2 | Spotify/YouTube como integrações (rompe "sem rede de saída")? | R-INT-4, R-MEDIA-1 |
-| D3 | Track ambient embutido no slideshow Memórias OK? | R-RECAP-4 |
-| D4 | Registrar app no Play Console ($25 one-time)? | R-SEC-2 |
-| D5 | AUDIT-T2-LOCK-VAULT já está OK? (resposta: SIM, mergeado em `488e7fa`) | — |
-| D6 | Backup automático semanal silencioso? | achado #6 do briefing |
-| D7 | Pasta `versão desktop/` mantém no repo ou move? | achado #8 |
-| D8 | Auditoria a11y TalkBack agora ou v1.1? | achado #7 |
+| D1 | **C** (remover Status Casal + Humor+Última) | R-HOME-1 |
+| D2 | **A** (Spotify + YouTube ambos OK) | R-INT-4, R-MEDIA-1 |
+| D3 | **Sim** (track ambient, toggle default OFF) | R-RECAP-4 |
+| D4 | **Sim** ($25 Play Console — sprint R-PLAYCONSOLE-SETUP criada) | R-SEC-2 |
+| D5 | **Sim** (T2 já mergeado `488e7fa`) | — |
+| D6 | **Sim** (sprint R-BACKUP-AUTO criada) | nova |
+| D7 | **Deletado** (`versão desktop/` removida 2026-05-15) | — |
+| D8 | **Agora** (sprint R-A11Y-TALKBACK criada Fase 3) | nova |
 
 ### Ordem de execução resumida
 

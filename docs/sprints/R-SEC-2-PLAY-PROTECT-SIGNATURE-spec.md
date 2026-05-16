@@ -12,7 +12,10 @@ Briefing em [`/ONDA-R-BRIEFING.md`](../../ONDA-R-BRIEFING.md) §R-SEC → R-SEC-
 
 Q17.e fechou keystore EAS em GitHub Secrets. Esta sprint valida flow completo + **registra keystore no Play Console** como app interno (não publica). Play Protect deixa de avisar após registro propagar (até 48h).
 
-**Decisão pendente D4**: criar conta Google Play Developer ($25 one-time)? Alternativa sem custo: status quo (usuário aceita manualmente).
+**Decisão D4 = Sim** (dono autorizou em 2026-05-15): pago $25
+one-time. Setup completo do Play Console é a sprint sibling
+[`R-PLAYCONSOLE-SETUP-spec.md`](R-PLAYCONSOLE-SETUP-spec.md)
+(TODO list executável pro dono).
 
 ## Dependências
 

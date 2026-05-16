@@ -95,6 +95,8 @@ Bloqueia `v1.0.0-rc2`.
 | 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
 | 4 | R-FAB-1 | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | 4‖ | R-FAB-2 | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
+| 4‖ | R-CROSS-FLOW-AUDIT | Interconexão (12 fluxos cruzados + sibling) | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
+| 4‖ | R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | 4–6h | `R-VAULT-CANONICAL-COMPLETE-spec.md` |
 
 ---
 
@@ -126,6 +128,8 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
 | R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
 | R-OPS-5 | Release notes auto | infra | — | 1–2h | `R-OPS-5-RELEASE-NOTES-AUTO-spec.md` |
+| R-BACKUP-AUTO | Backup semanal silencioso pro Vault | feature | P2 | 3–4h | `R-BACKUP-AUTO-spec.md` |
+| R-A11Y-TALKBACK | Auditoria + correção navegação screen reader | audit+feature | P2 | 3–5h | `R-A11Y-TALKBACK-spec.md` |
 
 ---
 
@@ -140,6 +144,7 @@ Bloqueia `v1.0.0` production.
 | 3 | R-SEC-1 | Google OAuth verification (testers) | docs+cloud | P1 | 2–3h | `R-SEC-1-GOOGLE-OAUTH-VERIFICATION-spec.md` |
 | 4 | R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` (precisa D4) |
 | 5 | R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
+| 4‖ | R-PLAYCONSOLE-SETUP | TODO Play Console (dono executa) | docs+cloud | P1 | 40min dono + 24-72h propagação | `R-PLAYCONSOLE-SETUP-spec.md` |
 
 ---
 
@@ -152,18 +157,37 @@ Bloqueia `v1.0.0` production.
 
 ---
 
-## Decisões abertas (precisam do dono antes da execução)
+## Decisões tomadas (2026-05-15 noite)
 
-| D# | Decisão | Bloqueia |
-|---|---|---|
-| D1 | Home: Status do Casal + Humor+Última — A/B/C? | R-HOME-1 |
-| D2 | Spotify/YouTube como integrações (filosofia "sem rede de saída")? | R-INT-4, R-MEDIA-1 (parcial) |
-| D3 | Track ambient embutido no slideshow Memórias OK? | R-RECAP-4 |
-| D4 | Conta Google Play Developer ($25 one-time)? | R-SEC-2 |
-| D5 | AUDIT-T2-LOCK-VAULT já está OK? | **Resposta**: SIM, mergeado em `488e7fa` |
-| D6 | Backup automático semanal silencioso para Vault? | achado #6 briefing |
-| D7 | Pasta `versão desktop/` mantém no repo ou move? | achado #8 briefing |
-| D8 | Auditoria a11y TalkBack agora ou v1.1? | achado #7 briefing |
+Todas as D# foram resolvidas pelo dono. Sprints liberadas pra
+execução. Detalhes em cada spec individual.
+
+| D# | Decisão | Resposta | Sprint afetada |
+|---|---|---|---|
+| D1 | Home Status Casal + Humor+Última | **C** (remover ambos) | R-HOME-1 |
+| D2 | Spotify/YouTube integrações | **A** (ambos OK) | R-INT-4, R-MEDIA-1 |
+| D3 | Track ambient slideshow Memórias | **Sim** (toggle default OFF) | R-RECAP-4 |
+| D4 | Conta Play Console $25 | **Sim** (pagar + setup) | R-SEC-2 → R-PLAYCONSOLE-SETUP (nova) |
+| D5 | AUDIT-T2-LOCK-VAULT OK | **Sim** (mergeado `488e7fa`) | — |
+| D6 | Backup automático semanal | **Sim** (cria sprint) | R-BACKUP-AUTO (nova) |
+| D7 | Pasta `versão desktop/` | **Deletar** | feito em 2026-05-15 |
+| D8 | Auditoria a11y TalkBack | **Agora** (não v1.1) | R-A11Y-TALKBACK (nova) |
+
+### Sprints novas derivadas de decisões + pedidos durá­veis
+
+- **R-PLAYCONSOLE-SETUP** (D4): checklist executável do dono pra
+  registrar app no Play Console. Sibling de R-SEC-2. Fase 4.
+- **R-BACKUP-AUTO** (D6): backup semanal silencioso pro Vault
+  Syncthing. Fase 3.
+- **R-A11Y-TALKBACK** (D8): auditoria + correção de navegação
+  por screen reader. Fase 3.
+- **R-CROSS-FLOW-AUDIT** (pedido durá­vel — "validar interconexão
+  entre features"): auditoria de 12 fluxos cruzados (FAB câmera,
+  menus, captura, cross-repo). Fase 2.
+- **R-VAULT-CANONICAL-COMPLETE** (pedido durá­vel — "tudo do app em
+  .md, integrar com desktop"): migrar settings/sessão/stats de
+  SecureStore + RAM para `vault/_estado/*.md`. Sibling lê em
+  séries históricas. Fase 2.
 
 ---
 

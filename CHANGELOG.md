@@ -5,6 +5,60 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Decisões D1-D8 resolvidas + 5 sprints novas + pasta legada deletada (2026-05-15 fim de noite)
+
+Dono respondeu todas as 8 decisões abertas do `_BACKLOG.md` em uma
+única rodada. Resultado:
+
+- **D1 = C**: Tela Hoje sem Status do Casal + sem Humor+Última.
+  R-HOME-1 spec atualizada com escopo final.
+- **D2 = A**: Spotify (OAuth) + YouTube (oEmbed) ambos liberados.
+  Exceção explícita à filosofia "sem rede de saída" registrada
+  nas specs R-INT-4 e R-MEDIA-1.
+- **D3 = Sim**: track ambient embutido OK como opção (toggle
+  settings default OFF). R-RECAP-4 spec atualizada.
+- **D4 = Sim**: $25 pago para Play Console. Sprint nova
+  **R-PLAYCONSOLE-SETUP** criada com TODO list executável de 8
+  passos pro dono (~40min de trabalho + 24-72h de propagação).
+  R-SEC-2 cross-ref atualizada.
+- **D5 = Sim**: AUDIT-T2-LOCK-VAULT já mergeado em `488e7fa`.
+- **D6 = Sim**: sprint nova **R-BACKUP-AUTO** criada (backup
+  semanal silencioso pro Vault Syncthing, JSZip, sha256 checksum,
+  toggle Settings).
+- **D7 = Deletar**: pasta `versão desktop/` (1.9MB, mockups
+  antigos) removida via `git rm -rf`. Conteúdo era ouroboros-redesign-v1
+  + uploads + screenshots — todos legados pré-refundação. Repo
+  sibling `protocolo-ouroboros` (Python ETL, 6094 transações)
+  continua canônico pra parte desktop.
+- **D8 = Agora**: sprint nova **R-A11Y-TALKBACK** criada
+  (auditoria + correção de 10 rotas via TalkBack no Xiaomi,
+  WCAG visual já estava coberto, esta é navegação assistiva).
+
+**2 sprints adicionais derivadas de pedidos durá­veis do dono**:
+- **R-CROSS-FLOW-AUDIT**: validar interconexão (12 fluxos cruzados
+  + sibling Python). Bug clássico exemplificado pelo dono: "foto
+  via FAB Câmera não aparece em /galeria". Inclui validação cross-repo
+  (ETL Python lê tudo que mobile escreve).
+- **R-VAULT-CANONICAL-COMPLETE**: TUDO em `.md` (settings + sessão
+  + stats agregadas migrados de SecureStore/RAM para
+  `vault/_estado/*.md`). Sibling desktop passa a ler séries
+  históricas completas — pedido durá­vel do dono pra "criar diário
+  de fato + analisar profundamente nossa própria vida".
+
+**Sprint da automação dos fantasmas** (já criada anteriormente):
+**AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS** continua pendente —
+detecta drift `[todo]` × código automaticamente.
+
+**Total Onda R + adicionais**: 52 sprints (46 do briefing + 1
+automação + 5 pós-decisões). Estimativa total revisada:
+~107–148h ativas + 7d field test + 1d release ≈ 19–28 dias
+até `v1.0.0` production (3-5 dias acima da estimativa original
+por causa das 5 novas).
+
+Smoke verde 214/2016. Sem mudanças de código — só specs novas,
+4 specs atualizadas com decisões, deletion da pasta legada,
+ROADMAP + BACKLOG + CHANGELOG.
+
 ### Onda R consolidada + ROADMAP limpo (2026-05-15 fim de noite)
 
 Sessão de consolidação pós-auditoria. Resultado:

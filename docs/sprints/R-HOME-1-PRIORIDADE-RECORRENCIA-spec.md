@@ -21,9 +21,9 @@ Tela Hoje repensada: prioridade + recorrência. Layout proposto:
 
 **Remover**: card "Jornada".
 
-**Decisão pendente D1**: Opções A/B/C para Status do Casal + Humor+Última. Sprint **para o ciclo** antes da execução, pede decisão ao dono.
-
-ADR-0026 a registrar com a opção escolhida.
+**Decisão D1 = C** (dono confirmou em 2026-05-15): **remover ambos**
+"Status do Casal" e "Humor+Última". Tela Hoje fica enxuta, foco
+em ação (próximos + tarefas). ADR-0026 a registrar com Opção C.
 
 ## Dependências
 

@@ -12,7 +12,10 @@ Briefing em [`/ONDA-R-BRIEFING.md`](../../ONDA-R-BRIEFING.md) §R-INT → R-INT-
 
 Spotify: OAuth + leitura track atual / playlist. YouTube: oEmbed metadados (não requer OAuth).
 
-**Decisão pendente D2**: aceita exceção à filosofia "sem rede de saída" para essas 2 integrações? oEmbed YouTube é GET único anonimizável. Spotify exige OAuth permanente.
+**Decisão D2 = A** (dono confirmou em 2026-05-15): **ambos OK** —
+Spotify (OAuth) + YouTube (oEmbed). Exceção explícita à filosofia
+"sem rede de saída" autorizada para essas 2 integrações. ADR a
+registrar documentando a exceção.
 
 ## Dependências
 

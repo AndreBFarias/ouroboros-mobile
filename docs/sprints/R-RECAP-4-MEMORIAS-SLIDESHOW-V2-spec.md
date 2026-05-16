@@ -19,7 +19,8 @@ Adicionais:
 - Ken Burns 4 presets (zoom-in-top-left, zoom-out-center, pan-left-right, pan-bottom-top)
 - Botão pausar
 
-**Decisão pendente D3**: track ambient embutido OK? Confirmar com dono.
+**Decisão D3 = Sim** (dono confirmou em 2026-05-15): track ambient
+embutido OK como opção (toggle settings default OFF — usuário escolhe).
 
 ## Dependências
 
