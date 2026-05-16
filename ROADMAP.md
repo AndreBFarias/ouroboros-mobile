@@ -38,7 +38,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
 | R-RECAP-1 | Lista itens clicáveis | feature | P1 | `25d4849` | `[ok]` (Onda 2A.2) |
-| R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
+| R-RECAP-2 | Números big clicáveis | feature | P1 | `a4f0d8a` | `[ok]` (Onda 2B.2) |
 | R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | `9514061` | `[ok]` |
 | R-FAB-1 | FAB remover Voz | refactor | P2 | `47c17f9` | `[ok]` |
 | R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | `bebdf12` | `[ok]` |
@@ -46,7 +46,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A) | refactor+feature | P1 | `81d4bad` | `[ok]` (Onda 2A.1) |
 | **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | `62ebcdf` | `[ok]` (Onda 2B.1) |
 | R-RECAP-1 | Lista itens clicáveis | feature | P1 | `25d4849` | `[ok]` (Onda 2A.2) |
-| R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
+| R-RECAP-2 | Números big clicáveis | feature | P1 | `a4f0d8a` | `[ok]` (Onda 2B.2) |
 | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
 | R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | `8088c80` | `[ok]` (Onda 2A.3) |
 | R-HOME-1 | Hoje prioridade e recorrência (D1=C remover Status+Humor) | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` |
