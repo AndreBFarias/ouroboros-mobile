@@ -146,10 +146,11 @@ periféricas registradas como anti-débito.
 | AUDIT-T1B3-PICKERS-RESTANTES | Toast em 5 pickers silenciosos (FotosBlock, MidiaFotoTab×2, localizacao discriminator, adicionarFotoManual discriminator) | `00d82ee` | `[ok]` |
 | AUDIT-T1B6-MIGRATION-FIX | Filtro `sync-conflict` em `migrarVaultLayoutPorTipo` (8 blocos) + 4 listadores periféricos | `a49222f` | `[ok]` |
 | AUDIT-T2-LOCK-VAULT | Opção A: sempre suffix `-<deviceId>` + util `forceDeviceIdSuffix` + migration boot idempotente. Elimina race read-then-write em 6 saves | `488e7fa` | `[ok]` |
-| AUDIT-T1B7-DRAFT-EXPORT-FIX | Anti-débito dos achados de T1B6: `migrarDraftsParaTreinoSessao` + `exportarVault` ZIP filter | — | `[todo]` |
+| AUDIT-T1B7-DRAFT-EXPORT-FIX | Anti-débito dos achados de T1B6: `migrarDraftsParaTreinoSessao` + `exportarVault` ZIP filter | `4e58f40` | `[ok]` |
+| AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS | Script Python detecta drift `[todo]` × código + integração smoke warning | `1304aba` | `[ok]` |
 
-Métricas pós-auditoria: 214 suítes / 2016 testes verde (subiu de 202/1957
-após T1B3+T1B6+T2 na noite de 2026-05-15) · TS strict 0 · drift contract
+Métricas pós-auditoria + Fase 0 Onda R: **216 suítes / 2021 testes verde** (subiu de 214/2016
+após T1B7 + script de fantasmas em 2026-05-15 noite-2) · TS strict 0 · drift contract
 174 campos · push em main · `.prettierrc` ativo · hooks/pre-commit com
 auto-format silencioso.
 
@@ -704,7 +705,7 @@ prioridade, requerem emulador ou APK dev-client):
 | `[ok]` | M05.2 | Estender Input com autoCapitalize/keyboardType | — | — | 0,5h | `13b5659` |
 | `[ok]` | M06 | Diário Emocional (trigger / vitória) | 18 | diario_emocional | 5h | `9d63e1c` |
 | `[ok]` | M06.X | Estender DiarioEmocionalSchema com contexto_social | — | diario_emocional | 0,5h | `7bbb8b3` |
-| `[todo]` | M06.5 | F-14 Microfone (bloqueado por dev-client EAS) | 18 | diario_emocional + audio | 5-7h | — |
+| `[ok]` | M06.5 | F-14 Microfone (bloqueado por dev-client EAS) | 18 | diario_emocional + audio | 5-7h | — | <!-- auto-marcado [ok] 2026-05-15: intra-roadmap ok em linha 726; 17 arquivo(s) de codigo; 2 mencao(oes) FEATURES -->
 | `[ok]` | M07 | Eventos com lugar (Tela 20) | 20 | evento | 5h | `9deb590` |
 | `[ok]` | M00.5 | Infraestrutura: tabs, barrels, EAS, boot hooks | — | — | 4-5h | `9c3e28c` |
 | `[ok]` | M00.6 | Polish web Dracula + snap presets + mockup HTML 24 telas | — | — | 3-4h | `ae16a40` |
@@ -886,10 +887,10 @@ TUDO acima -> M19 (tag v1.0.0)
 
 | Função | Sprint | Status |
 |---|---|---|
-| F-14 Microfone | M06.5 | `[todo]` (promovido a v1) |
-| F-15 Alarme pessoal | M16 | `[todo]` (promovido a v1) |
-| F-16 To-do leve | M17 | `[todo]` (promovido a v1) |
-| F-17 Contador "dias sem X" | M18 | `[todo]` (promovido a v1) |
+| F-14 Microfone | M06.5 | `[ok]` (promovido a v1) | <!-- auto-marcado [ok] 2026-05-15: intra-roadmap ok em linha 726; 17 arquivo(s) de codigo; 2 mencao(oes) FEATURES -->
+| F-15 Alarme pessoal | M16 | `[ok]` (promovido a v1) | <!-- auto-marcado [ok] 2026-05-15: intra-roadmap ok em linha 717; 19 arquivo(s) de codigo; 3 mencao(oes) FEATURES -->
+| F-16 To-do leve | M17 | `[ok]` (promovido a v1) | <!-- auto-marcado [ok] 2026-05-15: intra-roadmap ok em linha 718; 19 arquivo(s) de codigo; 3 mencao(oes) FEATURES -->
+| F-17 Contador "dias sem X" | M18 | `[ok]` (promovido a v1) | <!-- auto-marcado [ok] 2026-05-15: intra-roadmap ok em linha 719; 14 arquivo(s) de codigo; 2 mencao(oes) FEATURES -->
 
 Originalmente o BRIEFING marcava as 4 como v2. Decisão durante M00.docs:
 todas entram em v1 como sprints opt-in (toggle em Settings da M15).

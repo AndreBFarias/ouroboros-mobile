@@ -32,22 +32,16 @@ Depois disso a Onda R abre.
 
 ## Anti-débito imediato (Tier 0 — antes da Onda R)
 
-### 0.1 AUDIT-T1B7-DRAFT-EXPORT-FIX
-- **Spec**: [`AUDIT-T1B7-DRAFT-EXPORT-FIX-spec.md`](AUDIT-T1B7-DRAFT-EXPORT-FIX-spec.md)
-- **Escopo**: filtro `ehSyncConflict` em `migrarDraftsParaTreinoSessao.ts`
-  (M11 boot) + `exportarVault.ts` (ZIP filter — Opção A já decidida).
-- **Estimativa**: ~30min. 2 fixes triviais + 2 testes.
-- **Origem**: anti-débito dos achados colaterais de T1B6.
+### 0.1 AUDIT-T1B7-DRAFT-EXPORT-FIX `[ok]` (commit `4e58f40`)
+- **Entregue**: 2026-05-15 noite-2.
+- Filtro `ehSyncConflict` aplicado em `migrarDraftsParaTreinoSessao.ts` + `exportarVault.ts`.
+- 5 testes novos (216 suítes / 2021 testes).
 
-### 0.2 AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS
-- **Spec**: [`AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS-spec.md`](AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS-spec.md)
-- **Escopo**: script Python/bash que cruza ROADMAP × git × código
-  pra detectar `[todo]` que já foram entregues. Modo report-only
-  por padrão; `--fix` opcional. Integra como warning não-bloqueante
-  no smoke.
-- **Estimativa**: 2–3h.
-- **Origem**: pedido do dono em 2026-05-15 — automatizar a auditoria
-  manual de fantasmas que detectou 25 entradas drift no ROADMAP.
+### 0.2 AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS `[ok]` (commit `1304aba`)
+- **Entregue**: 2026-05-15 noite-2.
+- Script `scripts/check_roadmap_fantasmas.py` operante.
+- Integrado no smoke como warning não-bloqueante.
+- **Descobriu 5 fantasmas reais** que minha auditoria manual deixou passar (linhas 707, 889-892 do ROADMAP — tabelas redundantes não foram propagadas). Auto-fix aplicado.
 
 ### 0.3 Validação live alpha-11 (não é sprint de código)
 - **Spec**: [`/PROMPT-CONTINUACAO-2026-05-14.md`](../../PROMPT-CONTINUACAO-2026-05-14.md)

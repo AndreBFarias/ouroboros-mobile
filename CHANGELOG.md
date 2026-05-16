@@ -5,6 +5,44 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 0 Onda R fechada — T1B7 + automação fantasmas (2026-05-15 noite-2)
+
+Primeiros 2 executores da Onda R rodaram em paralelo via worktree
+isolation. Resultado:
+
+- **AUDIT-T1B7-DRAFT-EXPORT-FIX** (commit `4e58f40`): filtro
+  `ehSyncConflict` aplicado em `migrarDraftsParaTreinoSessao.ts`
+  (M11 boot hook) + `exportarVault.ts` (ZIP filter). 4 arquivos,
+  398 linhas (+0 -0 baseline), 5 testes novos (216 suítes / 2021
+  testes — era 214/2016). Anti-débito dos achados colaterais
+  reportados pelo executor T1B6 em sessão anterior. Worktree
+  isolation funcionou conforme protocolo.
+- **AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS** (commit `1304aba`):
+  script Python `scripts/check_roadmap_fantasmas.py` (696 linhas).
+  Cross-reference ROADMAP × git log × `src/`+`app/` × FEATURES-CANONICAS.
+  Classifica FANTASMA (alta confiança 3 evidências) / SUSPEITO
+  (1-2) / REAL (0). Flags `--warn-only` (exit 0 no smoke) e
+  `--fix` (auto-marca `[ok]` com tag inline). Integrado no
+  `scripts/smoke.sh` como warning não-bloqueante.
+- **Auto-fix aplicado**: script detectou 5 fantasmas reais que a
+  auditoria manual deixou passar (linhas 707, 889, 890, 891, 892
+  do ROADMAP — tabelas redundantes "Linha do tempo" e "Funções
+  F-N → Sprint" não foram propagadas durante a auditoria manual
+  da sessão anterior). `--fix` marcou M06.5, M16, M17, M18 como
+  `[ok]` com tag `<!-- auto-marcado [ok] 2026-05-15: <evidência> -->`.
+  Validação: zero fantasmas remanescentes após o fix.
+
+**Nota operacional**: o segundo executor (AUTOMATIZAR-FANTASMAS)
+bypassou o worktree isolado e commitou direto em main via `cd
+absoluto`. Trabalho preservado (`1304aba`), sem retrabalho
+necessário. Padrão a reforçar em futuros executores: usar `git rev-parse
+--show-toplevel` em vez de `cd` absoluto para honrar worktree
+boundaries.
+
+Métricas: 216 suítes / 2021 testes verde · TS strict 0 · drift
+contract 174 campos · smoke verde com novo warning não-bloqueante
+auto-aplicado.
+
 ### Decisões D1-D8 resolvidas + 5 sprints novas + pasta legada deletada (2026-05-15 fim de noite)
 
 Dono respondeu todas as 8 decisões abertas do `_BACKLOG.md` em uma
