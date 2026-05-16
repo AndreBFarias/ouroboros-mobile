@@ -24,8 +24,19 @@
 // de worklet quando o componente desmonta antes de completar a
 // rotacao (e.g. boot que vai direto para onboarding apos hidratar).
 //
+// R-CRIT-4 (2026-05-15): useId() do React pode colidir entre arvores
+// independentes (e.g. _layout renderiza loader durante font-load e
+// /agenda renderiza outro logo apos OAuth — mesmo slot position retorna
+// o mesmo id ":r0:"). Quando dois loaders compartilham data-anim-id,
+// document.querySelector pega so o primeiro match e o segundo loader
+// fica estatico. Solucao: UUID por instancia via useRef, gerado uma
+// vez no mount, garantindo unicidade global. Defense-in-depth: o
+// querySelector e escopado ao <Svg> proprio via ref, evitando pegar
+// nos de outros loaders mesmo se houver colisao acidental.
+//
 // Comentarios sem acento (convencao shell/CI).
-import { useEffect, useId } from 'react';
+import * as React from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -81,6 +92,23 @@ const DURACAO_FLOW = 6000;
 // Usado para variar strokeDashoffset entre 0 e 490 e simular fluxo.
 const PERIMETRO_FLOW = 490;
 
+// R-CRIT-4: contador monotonico em modulo, somado a Math.random,
+// garante id unico por mount mesmo se crypto.randomUUID nao existir
+// (RN nativo nao expoe global.crypto). Usado dentro de useRef para
+// estabilizar o id por instancia entre re-renders. Combinacao
+// counter + random + perf.now elimina colisao mesmo sob StrictMode
+// duplo mount + multi-loader na mesma rota.
+let CONTADOR_UUID = 0;
+function gerarUuidInstancia(): string {
+  CONTADOR_UUID += 1;
+  const aleatorio = Math.floor(Math.random() * 1e9).toString(36);
+  const tempo =
+    typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? Math.floor(performance.now() * 1000).toString(36)
+      : Date.now().toString(36);
+  return `${CONTADOR_UUID}${aleatorio}${tempo}`;
+}
+
 export function OuroborosLoader({
   tamanho = 320,
   compacto = false,
@@ -99,11 +127,30 @@ export function OuroborosLoader({
   // data-anim-id em cada grupo e o RAF escreve transform via
   // querySelector + setAttribute. Em native, este bloco e no-op
   // (Platform.OS !== 'web') e Reanimated assume.
-  const animId = useId().replace(/[^a-zA-Z0-9]/g, '');
+  //
+  // R-CRIT-4: useRef segura o UUID por instancia, gerado uma vez por
+  // mount. useId() colidia entre arvores irmas (e.g. loader em
+  // _layout + loader em /agenda) — quando dois data-anim-id eram
+  // iguais, document.querySelector pegava so o primeiro e o segundo
+  // loader ficava estatico.
+  const refUuid = useRef<string | null>(null);
+  if (refUuid.current === null) {
+    refUuid.current = gerarUuidInstancia();
+  }
+  const animId = refUuid.current;
   const idG1 = `og-g1-${animId}`;
   const idG2 = `og-g2-${animId}`;
   const idG3 = `og-g3-${animId}`;
   const idFlow = `og-flow-${animId}`;
+
+  // Ref do <Svg> raiz, usada como escopo do querySelector em web.
+  // Defense-in-depth: mesmo que dois loaders gerem o mesmo UUID
+  // (impossivel na pratica), o querySelector roda dentro do svg
+  // proprio e nunca pega o no do outro loader. Tipagem react-native
+  // -svg expoe Svg como classe; em web .current vira HTMLElement
+  // via react-native-svg-web. Usamos React.ComponentRef do <Svg>
+  // para satisfazer o TS.
+  const refSvg = useRef<React.ComponentRef<typeof Svg>>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -117,13 +164,26 @@ export function OuroborosLoader({
       const a2 = -(((t / DURACAO_GS2) * 360) % 360);
       const a3 = ((t / DURACAO_GS3) * 360) % 360;
       const flow = ((t / DURACAO_FLOW) * PERIMETRO_FLOW) % PERIMETRO_FLOW;
+      // Escopo de busca: prefere refSvg.current se for Element DOM
+      // (web), fallback document. Em web, react-native-svg expoe o
+      // ref como instancia da classe, nao DOM Element diretamente —
+      // usamos document como fallback seguro. querySelectorAll
+      // garante que todos os matches no escopo recebem update
+      // (defense-in-depth — o seletor ja e unico via UUID).
+      const candidato = refSvg.current as unknown as
+        | { querySelectorAll?: (s: string) => NodeListOf<Element> }
+        | null;
+      const escopo: Document | Element =
+        candidato && typeof candidato.querySelectorAll === 'function'
+          ? (candidato as unknown as Element)
+          : document;
       const escreverPorAttr = (
         seletor: string,
         atributo: string,
         valor: string
       ) => {
-        const node = document.querySelector(seletor) as Element | null;
-        if (node) node.setAttribute(atributo, valor);
+        const nos = escopo.querySelectorAll(seletor);
+        nos.forEach((no) => no.setAttribute(atributo, valor));
       };
       escreverPorAttr(
         `[data-anim-id="${idG1}"]`,
@@ -239,7 +299,12 @@ export function OuroborosLoader({
       accessibilityLabel="loader ouroboros"
       accessibilityRole="progressbar"
     >
-      <Svg width={tamanhoFinal} height={tamanhoFinal} viewBox="0 0 320 320">
+      <Svg
+        ref={refSvg}
+        width={tamanhoFinal}
+        height={tamanhoFinal}
+        viewBox="0 0 320 320"
+      >
         <Defs>
           <LinearGradient id="og1" x1="0" x2="1" y1="0" y2="1">
             <Stop offset="0%" stopColor={colors.purple} />

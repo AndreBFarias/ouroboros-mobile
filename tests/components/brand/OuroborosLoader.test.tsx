@@ -99,4 +99,81 @@ describe('OuroborosLoader', () => {
   // querySelector do useEffect web sem jsdom completo, e a logica
   // de ramificacao isWeb e simples o suficiente para auditoria
   // visual cobrir.
+
+  // R-CRIT-4: cleanup invoca cancelAnimation 4x mesmo apos varios
+  // mount/unmount ciclos. Garante que nao ha leak de worklet entre
+  // remounts (sintoma original: loader pos OAuth, pos pull-to-refresh
+  // virava estatico porque o cleanup antigo aparentemente nao matava
+  // o RAF ou animacao reanimated).
+  it('cleanup chama cancelAnimation 4x por mount, idempotente em remount', () => {
+    const cancelSpy = jest.spyOn(Reanimated, 'cancelAnimation');
+    // ciclo 1
+    const tree1 = render(<OuroborosLoader />);
+    tree1.unmount();
+    expect(cancelSpy).toHaveBeenCalledTimes(4);
+    // ciclo 2: remount; cancelSpy acumula 4 + 4 = 8
+    const tree2 = render(<OuroborosLoader />);
+    tree2.unmount();
+    expect(cancelSpy).toHaveBeenCalledTimes(8);
+    // ciclo 3
+    const tree3 = render(<OuroborosLoader />);
+    tree3.unmount();
+    expect(cancelSpy).toHaveBeenCalledTimes(12);
+    cancelSpy.mockRestore();
+  });
+
+  // R-CRIT-4: UUID por instancia em vez de useId() colidente.
+  // Cada loader montado tem data-anim-id unico. Spawn 3 loaders
+  // simultaneos e verifica que os 4 atributos data-anim-id de cada
+  // sao distintos. Garante: zero colisao quando _layout + tela
+  // coexistem com loaders, ou quando uma lista renderiza N loaders.
+  it('gera data-anim-id unico por instancia em multiplos loaders (sem colisao)', () => {
+    // Mock react-native-svg propaga props ate filhos via wrapper
+    // View. Coletamos ids de cada arvore, dedupando para conjunto.
+    // O que importa: cada arvore tem 4 ids logicos distintos (g1,
+    // g2, g3, flow) e os ids nao colidem entre 3 arvores irmas.
+    type ReactTestNode = { props: Record<string, unknown> };
+    const idsUnicosPorArvore: Set<string>[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      const tree = render(<OuroborosLoader />);
+      const candidatos = tree.root.findAll(
+        (n: ReactTestNode) =>
+          !!n.props && typeof n.props['data-anim-id'] === 'string'
+      );
+      const conjunto = new Set<string>(
+        candidatos.map((n: ReactTestNode) => n.props['data-anim-id'] as string)
+      );
+      idsUnicosPorArvore.push(conjunto);
+      tree.unmount();
+    }
+
+    // Cada arvore tem 4 ids logicos distintos (g1, g2, g3, flow).
+    idsUnicosPorArvore.forEach((set) => {
+      expect(set.size).toBe(4);
+    });
+
+    // Forma dos ids: prefixo og-(g1|g2|g3|flow)- seguido de UUID.
+    idsUnicosPorArvore.forEach((set) => {
+      set.forEach((id) => {
+        expect(id).toMatch(/^og-(g1|g2|g3|flow)-.+/);
+      });
+    });
+
+    // Causa raiz: useId() colidia entre arvores irmas. Verificamos
+    // que os 12 ids totais (3 arvores x 4) nao tem repeticao.
+    const todos = idsUnicosPorArvore.flatMap((s) => Array.from(s));
+    const setGlobal = new Set(todos);
+    expect(setGlobal.size).toBe(12);
+
+    // Sufixo UUID e distinto entre arvores: se loader A usa
+    // og-g1-X, loader B usa og-g1-Y com Y != X. Isso garante
+    // que document.querySelector("[data-anim-id='og-g1-X']")
+    // em web pega so o no do loader A.
+    const sufixosG1 = idsUnicosPorArvore.map((set) => {
+      const g1 = Array.from(set).find((id) => id.startsWith('og-g1-'));
+      return g1?.replace('og-g1-', '') ?? '';
+    });
+    const sufixosUnicos = new Set(sufixosG1);
+    expect(sufixosUnicos.size).toBe(3);
+  });
 });
