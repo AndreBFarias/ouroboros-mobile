@@ -31,8 +31,10 @@ jest.mock('expo-router', () => {
   };
 });
 
+// T2-LOCK-VAULT (2026-05-15): SaveHumorResult perdeu o campo
+// `conflito`. saveHumor sempre escreve com suffix de deviceId.
 const mockSaveHumor = jest.fn<
-  Promise<{ uri: string; conflito: boolean }>,
+  Promise<{ uri: string }>,
   [unknown, string]
 >();
 
@@ -64,8 +66,7 @@ beforeEach(() => {
   useVault.getState().setVaultRoot(VAULT_ROOT);
   usePessoa.getState().setPessoaAtiva('pessoa_a');
   mockSaveHumor.mockResolvedValue({
-    uri: `${VAULT_ROOT}/daily/2026-04-29.md`,
-    conflito: false,
+    uri: `${VAULT_ROOT}/markdown/humor-2026-04-29-ouro-abc123.md`,
   });
 });
 

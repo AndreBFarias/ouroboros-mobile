@@ -57,8 +57,52 @@ function randomShort(): string {
 //   'tarefas/2026-05-04-comprar-pao.md' + 'ouro-xyz' ->
 //     'tarefas/2026-05-04-comprar-pao-ouro-xyz.md'
 // Helper puro: nao toca I/O. Caller decide quando aplicar.
+//
+// @deprecated T2: preferir forceDeviceIdSuffix (sempre aplica, com
+// idempotencia explicita e erro em colisao de outro device). Este
+// helper M38 permanece para callers fora do escopo dos saves
+// auditados em T2-LOCK-VAULT (verificar via grep antes de remover).
 export function applyDeviceIdSuffix(rel: string, deviceId: string): string {
   const dotIdx = rel.lastIndexOf('.');
   if (dotIdx === -1) return `${rel}-${deviceId}`;
   return `${rel.slice(0, dotIdx)}-${deviceId}${rel.slice(dotIdx)}`;
+}
+
+// Regex canonico do suffix de deviceId. Captura "-ouro-XXXXXX" antes
+// da extensao (ou no fim). M38 sempre prefixou com 'ouro-' + 6 chars
+// alfanumericos. T2: usado para deteccao idempotente e checagem de
+// cross-device em forceDeviceIdSuffix.
+const DEVICE_ID_SUFFIX_REGEX = /-ouro-[a-z0-9]{6}(?=\.[^.]+$|$)/;
+
+// T2-LOCK-VAULT: sempre garante suffix do deviceId no rel. Idempotente
+// quando ja existe suffix do MESMO deviceId. Lanca erro quando ja
+// existe suffix de OUTRO deviceId (caller estaria sobrescrevendo
+// arquivo de outro device, o que nunca deve acontecer em fluxo
+// normal de save).
+//
+// Exemplos:
+//   forceDeviceIdSuffix('markdown/humor-2026-05-15.md', 'ouro-a4b2cd')
+//     -> 'markdown/humor-2026-05-15-ouro-a4b2cd.md'
+//
+//   forceDeviceIdSuffix('markdown/humor-2026-05-15-ouro-a4b2cd.md', 'ouro-a4b2cd')
+//     -> 'markdown/humor-2026-05-15-ouro-a4b2cd.md' (inalterado)
+//
+//   forceDeviceIdSuffix('markdown/humor-2026-05-15-ouro-xxxxxx.md', 'ouro-a4b2cd')
+//     -> Error: caller tentaria escrever arquivo de outro device.
+//
+// Helper puro: nao toca I/O.
+export function forceDeviceIdSuffix(rel: string, deviceId: string): string {
+  const match = rel.match(DEVICE_ID_SUFFIX_REGEX);
+  if (match) {
+    const suffixExistente = match[0].slice(1); // remove '-' inicial
+    if (suffixExistente === deviceId) {
+      // Idempotente: ja tem suffix do mesmo device.
+      return rel;
+    }
+    throw new Error(
+      `forceDeviceIdSuffix: rel "${rel}" ja tem suffix "${suffixExistente}" ` +
+        `mas deviceId atual e "${deviceId}". Save cross-device nao permitido.`
+    );
+  }
+  return applyDeviceIdSuffix(rel, deviceId);
 }

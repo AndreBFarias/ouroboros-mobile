@@ -167,12 +167,13 @@ export default function ContadoresNovo() {
         return;
       }
 
-      // M38: criacao -> aplica suffix '-<deviceId>' se outro device
-      // ja criou contador com mesmo slug (conflict resolution Syncthing).
-      // I-CONTADOR: escreverContador sob comTimeout 10s default
-      // (helper canonico @/lib/util/comTimeout). Em web mock vira no-op
-      // rapido; em SAF Android cobre p99 de write em /sdcard/Documents/.
-      await comTimeout(escreverContador(vaultRoot, parsed.data, '', true));
+      // T2-LOCK-VAULT (2026-05-15): escreverContador agora sempre
+      // aplica suffix '-<deviceId>'. Race condition Syncthing
+      // eliminada estruturalmente; parametro legado `modoCriacao`
+      // removido. I-CONTADOR: comTimeout 10s default (helper canonico
+      // @/lib/util/comTimeout). Em web mock vira no-op rapido; em SAF
+      // Android cobre p99 de write em /sdcard/Documents/.
+      await comTimeout(escreverContador(vaultRoot, parsed.data, ''));
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('contadoresNovo');
       void haptics.light();

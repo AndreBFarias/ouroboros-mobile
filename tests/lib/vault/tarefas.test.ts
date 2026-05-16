@@ -221,12 +221,14 @@ describe('escreverTarefa', () => {
   });
 });
 
-describe('criarTarefa', () => {
-  it('deriva path markdown/tarefa-<slug>.md (H2 layout-por-tipo)', async () => {
+describe('criarTarefa T2-LOCK-VAULT', () => {
+  it('deriva path markdown/tarefa-<slug>-ouro-<id>.md com suffix sempre', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture({ data: '2026-04-29' });
     const { rel } = await criarTarefa(VAULT_ROOT, meta, 'comprar-pao-7k2x');
-    expect(rel).toBe('markdown/tarefa-comprar-pao-7k2x.md');
+    expect(rel).toMatch(
+      /^markdown\/tarefa-comprar-pao-7k2x-ouro-[a-z0-9]{6}\.md$/
+    );
   });
 
   it('M31: nao cria alarme companion quando meta.alarme === null', async () => {
@@ -270,9 +272,12 @@ describe('criarTarefa', () => {
 
     expect(mockEscreverAlarme).toHaveBeenCalledTimes(1);
     expect(mockAgendarAlarme).toHaveBeenCalledTimes(1);
-    // Tarefa final tem slug_vinculado canonico (<slug>-alarme).
+    // T2: tarefa final tem slug_vinculado canonico (<slug>-alarme) e
+    // path com suffix de deviceId.
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      expect.stringContaining('markdown/tarefa-foo-1234.md'),
+      expect.stringMatching(
+        /markdown\/tarefa-foo-1234-ouro-[a-z0-9]{6}\.md$/
+      ),
       expect.objectContaining({
         alarme: expect.objectContaining({
           slug_vinculado: 'foo-1234-alarme',
@@ -296,7 +301,9 @@ describe('criarTarefa', () => {
     await expect(
       criarTarefa(VAULT_ROOT, meta, 'foo-1234')
     ).resolves.toMatchObject({
-      rel: 'markdown/tarefa-foo-1234.md',
+      rel: expect.stringMatching(
+        /^markdown\/tarefa-foo-1234-ouro-[a-z0-9]{6}\.md$/
+      ),
     });
     expect(mockWriteVaultFile).toHaveBeenCalled();
   });
@@ -414,7 +421,7 @@ describe('excluirTarefa', () => {
 // ofensivo normalizado + trailing whitespace tratado. Espelha o
 // padrao de M-SAVE-AUDIO-VALIDA (I-AUDIO).
 describe('vaultUriJoin canonico (I-TAREFA)', () => {
-  it('criarTarefa monta uri via markdown/tarefa-<slug>.md e vaultUriJoin', async () => {
+  it('criarTarefa T2 monta uri via markdown/tarefa-<slug>-ouro-<id>.md', async () => {
     mockReadVaultFile.mockResolvedValueOnce(null);
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
 
@@ -425,8 +432,11 @@ describe('vaultUriJoin canonico (I-TAREFA)', () => {
       'limpar-gatos-7k2x'
     );
 
-    expect(rel).toBe('markdown/tarefa-limpar-gatos-7k2x.md');
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/tarefa-limpar-gatos-7k2x.md`);
+    // T2: suffix sempre presente.
+    expect(rel).toMatch(
+      /^markdown\/tarefa-limpar-gatos-7k2x-ouro-[a-z0-9]{6}\.md$/
+    );
+    expect(uri).toBe(`${VAULT_ROOT}/${rel}`);
   });
 
   it('escreverTarefa lanca quando vaultRoot vazio', async () => {
@@ -460,7 +470,10 @@ describe('vaultUriJoin canonico (I-TAREFA)', () => {
     const meta = fixture({ titulo: 'Comprar pão' });
     const { uri } = await criarTarefa(VAULT_SUJO, meta, 'comprar-pao-7k2x');
 
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/tarefa-comprar-pao-7k2x.md`);
+    // T2: suffix sempre + root limpo.
+    expect(uri).toMatch(
+      /^content:\/\/test\/vault\/markdown\/tarefa-comprar-pao-7k2x-ouro-[a-z0-9]{6}\.md$/
+    );
     expect(uri).not.toMatch(/%20/);
     expect(uri).not.toMatch(/\s/);
   });

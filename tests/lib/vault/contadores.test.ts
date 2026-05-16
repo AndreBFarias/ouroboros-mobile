@@ -5,6 +5,10 @@
 //
 // Mocks: reader/writer/SAF para isolar I/O.
 //
+// T2-LOCK-VAULT (2026-05-15): escreverContador agora sempre aplica
+// suffix '-<deviceId>'. lerContador busca suffix do device atual com
+// fallback no canonico. excluirContador apaga ambos.
+//
 // Comentarios sem acento (convencao shell/CI).
 import type { Contador } from '@/lib/schemas/contador';
 
@@ -53,6 +57,11 @@ function fixture(over: Partial<Contador> = {}): Contador {
     ...over,
   };
 }
+
+// Regex matcher canonico para path do contador com suffix de deviceId
+// no formato T2: markdown/contador-<slug>-ouro-<6chars>.md.
+const CONTADOR_T2_URI =
+  /\/markdown\/contador-sem-cigarro-ouro-[a-z0-9]{6}\.md$/;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -114,39 +123,49 @@ describe('listarContadores', () => {
   });
 });
 
-describe('lerContador', () => {
-  it('chama reader com URI correto', async () => {
-    mockReadVaultFile.mockResolvedValueOnce(null);
-    await lerContador(VAULT_ROOT, 'sem-cigarro');
-    expect(mockReadVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`,
-      expect.anything()
-    );
-  });
-
-  it('retorna meta quando existe', async () => {
+describe('lerContador T2-LOCK-VAULT', () => {
+  it('busca arquivo com suffix do device atual primeiro', async () => {
     mockReadVaultFile.mockResolvedValueOnce({ meta: fixture(), body: '' });
     const out = await lerContador(VAULT_ROOT, 'sem-cigarro');
+    expect(mockReadVaultFile).toHaveBeenCalledTimes(1);
+    const [uri] = mockReadVaultFile.mock.calls[0];
+    // T2: tenta path com suffix antes do canonico.
+    expect(uri).toMatch(CONTADOR_T2_URI);
     expect(out).not.toBeNull();
     expect(out?.titulo).toBe('Sem cigarro');
   });
 
-  it('retorna null quando nao existe', async () => {
-    mockReadVaultFile.mockResolvedValueOnce(null);
+  it('fallback no canonico (legado pre-migration) quando suffix ausente', async () => {
+    // T2: arquivo do device nao existe; busca no canonico.
+    mockReadVaultFile
+      .mockResolvedValueOnce(null) // T2 path (com suffix)
+      .mockResolvedValueOnce({ meta: fixture(), body: '' }); // canonico
+    const out = await lerContador(VAULT_ROOT, 'sem-cigarro');
+    expect(mockReadVaultFile).toHaveBeenCalledTimes(2);
+    const [uriSuffix] = mockReadVaultFile.mock.calls[0];
+    const [uriCanonico] = mockReadVaultFile.mock.calls[1];
+    expect(uriSuffix).toMatch(CONTADOR_T2_URI);
+    expect(uriCanonico).toBe(`${VAULT_ROOT}/markdown/contador-sem-cigarro.md`);
+    expect(out).not.toBeNull();
+  });
+
+  it('retorna null quando nao existe (nem com suffix nem canonico)', async () => {
+    mockReadVaultFile.mockResolvedValue(null);
     const out = await lerContador(VAULT_ROOT, 'inexistente');
     expect(out).toBeNull();
   });
 });
 
-describe('escreverContador', () => {
-  it('grava em path canonico markdown/contador-<slug>.md (H2 layout-por-tipo)', async () => {
+describe('escreverContador T2-LOCK-VAULT', () => {
+  it('grava sempre com suffix de deviceId', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture();
     const { rel, uri } = await escreverContador(VAULT_ROOT, meta);
-    expect(rel).toBe('markdown/contador-sem-cigarro.md');
+    expect(rel).toMatch(/^markdown\/contador-sem-cigarro-ouro-[a-z0-9]{6}\.md$/);
     expect(uri).toBe(`${VAULT_ROOT}/${rel}`);
+    expect(uri).toMatch(CONTADOR_T2_URI);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/${rel}`,
+      uri,
       expect.objectContaining({ titulo: 'Sem cigarro' }),
       ''
     );
@@ -174,18 +193,14 @@ describe('escreverContador', () => {
   //  2. replace(/\s+$/, '') trailing whitespace,
   //  3. replace(/%20+$/, '') trailing %20 percent-encoded,
   //  4. replace(/\/+$/, '') trailing slashes.
-  //
-  // Para um root tipico SAF contaminado com trailing %20 (sintoma A29
-  // em OEMs MIUI/OneUI), o path final fica limpo. Cobertura aqui
-  // garante que o caller (escreverContador) realmente roteia pelo
-  // helper canonico, e nao mais pelo joinUri local que existia antes
-  // desta sprint.
   it('produz path final via vaultUriJoin (limpa trailing %20 do SAF)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const rootSujo = `${VAULT_ROOT}%20`;
     const meta = fixture();
     const { uri } = await escreverContador(rootSujo, meta);
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/contador-sem-cigarro.md`);
+    // T2: suffix sempre, mas o trim do root acontece antes.
+    expect(uri).toMatch(CONTADOR_T2_URI);
+    expect(uri.startsWith(VAULT_ROOT)).toBe(true);
     // Sem barras duplas no path final (so a do scheme content://).
     expect(uri.split('//').length).toBe(2);
   });
@@ -195,21 +210,25 @@ describe('escreverContador', () => {
     const rootSujo = `${VAULT_ROOT}//`;
     const meta = fixture();
     const { uri } = await escreverContador(rootSujo, meta);
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/contador-sem-cigarro.md`);
+    expect(uri).toMatch(CONTADOR_T2_URI);
+    expect(uri.startsWith(VAULT_ROOT)).toBe(true);
   });
 });
 
-describe('excluirContador', () => {
-  it('chama SAF.deleteAsync com URI correto', async () => {
-    mockDeleteAsync.mockResolvedValueOnce(undefined);
+describe('excluirContador T2-LOCK-VAULT', () => {
+  it('apaga tanto arquivo com suffix (T2) quanto canonico (legado)', async () => {
+    mockDeleteAsync.mockResolvedValue(undefined);
     await excluirContador(VAULT_ROOT, 'sem-cigarro');
-    expect(mockDeleteAsync).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`
-    );
+    // T2: tenta apagar 2 paths (suffix do device + canonico legado).
+    expect(mockDeleteAsync).toHaveBeenCalledTimes(2);
+    const [uriSuffix] = mockDeleteAsync.mock.calls[0];
+    const [uriCanonico] = mockDeleteAsync.mock.calls[1];
+    expect(uriSuffix).toMatch(CONTADOR_T2_URI);
+    expect(uriCanonico).toBe(`${VAULT_ROOT}/markdown/contador-sem-cigarro.md`);
   });
 
   it('e idempotente quando arquivo nao existe', async () => {
-    mockDeleteAsync.mockRejectedValueOnce(new Error('nao existe'));
+    mockDeleteAsync.mockRejectedValue(new Error('nao existe'));
     await expect(
       excluirContador(VAULT_ROOT, 'sem-cigarro')
     ).resolves.toBeUndefined();
@@ -223,6 +242,7 @@ describe('registrarReset', () => {
       recorde: 10,
       resets: [],
     });
+    // T2: lerContador busca suffix primeiro.
     mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
 
@@ -232,8 +252,11 @@ describe('registrarReset', () => {
     expect(out.recorde).toBe(28);
     expect(out.resets).toEqual([agora.toISOString()]);
     expect(out.inicio).toBe('2026-04-29');
+    // T2: write em path com suffix.
+    const [uri] = mockWriteVaultFile.mock.calls[0];
+    expect(uri).toMatch(CONTADOR_T2_URI);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`,
+      uri,
       expect.objectContaining({ recorde: 28 }),
       ''
     );
@@ -272,7 +295,8 @@ describe('registrarReset', () => {
   });
 
   it('lanca quando contador nao existe', async () => {
-    mockReadVaultFile.mockResolvedValueOnce(null);
+    // T2: lerContador tenta suffix e canonico; ambos null.
+    mockReadVaultFile.mockResolvedValue(null);
     await expect(registrarReset(VAULT_ROOT, 'inexistente')).rejects.toThrow(
       /nao encontrado/
     );
@@ -352,11 +376,9 @@ describe('registrarReset', () => {
       'sem-cigarro',
       new Date('2026-04-29T15:30:00Z')
     );
-    // O write final usa path limpo, mesmo o root tendo trailing %20.
-    expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/contador-sem-cigarro.md`,
-      expect.anything(),
-      ''
-    );
+    // O write final usa path limpo + suffix T2 (root trim acontece antes).
+    const [uri] = mockWriteVaultFile.mock.calls[0];
+    expect(uri).toMatch(CONTADOR_T2_URI);
+    expect(uri.startsWith(VAULT_ROOT)).toBe(true);
   });
 });

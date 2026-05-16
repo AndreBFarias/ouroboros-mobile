@@ -9,8 +9,10 @@
 //  - Medicacao e texto livre opcional. Vazio = campo omitido.
 //
 // Conflito A5 (Syncthing entre celulares no mesmo dia): tratado
-// dentro de saveHumor; aqui apenas mostramos toast diferenciado se
-// retornar conflito=true.
+// dentro de saveHumor via suffix '-<deviceId>' aplicado sempre
+// (T2-LOCK-VAULT, 2026-05-15). Toast unico 'Humor salvo.' nao
+// distingue mais o caso de conflito porque, com suffix sempre, nao
+// ha conflito a relatar: cada device tem seu proprio arquivo.
 //
 // I-HUMOR (M-SAVE-HUMOR-VALIDA, 2026-05-07): aplica padrao canonico
 // de save resilient do template Bloco I (§2.2): try/catch + timeout
@@ -159,17 +161,12 @@ export default function HumorRapido() {
     }
 
     try {
-      const { conflito } = await comTimeout(
-        saveHumor(validacao.data, vaultRoot)
-      );
+      await comTimeout(saveHumor(validacao.data, vaultRoot));
       // M24: limpa o rascunho pos-save para nao restaurar dados ja
       // persistidos no Vault no proximo boot.
       useSessao.getState().limparRascunho('humorRapido');
       sheetRef.current?.close();
-      toast.show(
-        conflito ? 'Salvo com sufixo de pessoa.' : 'Humor salvo.',
-        'success'
-      );
+      toast.show('Humor salvo.', 'success');
       // Contextual: respeita Settings.somVibracao.humor. Registro de
       // humor é a interação central da Tela 16, tem toggle dedicado.
       await haptics.humor();

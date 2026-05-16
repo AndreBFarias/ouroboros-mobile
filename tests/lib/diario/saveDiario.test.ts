@@ -1,5 +1,9 @@
 // Testes da funcao saveDiario. Mocka writeVaultFile e readVaultFile
 // do barrel '@/lib/vault' para isolar a logica pura sem tocar SAF.
+//
+// T2-LOCK-VAULT (2026-05-15): saveDiario agora sempre aplica suffix
+// '-<deviceId>'. Race condition de read-then-write foi eliminada
+// estruturalmente.
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 
 const mockWriteVaultFile = jest.fn<Promise<void>, [string, unknown, string]>();
@@ -71,13 +75,17 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('saveDiario caminho feliz', () => {
-  it('grava no path canonico com slug da primeira emocao', async () => {
+describe('saveDiario T2-LOCK-VAULT', () => {
+  it('grava sempre com suffix de deviceId no path canonico', async () => {
     const out = await saveDiario(baseTrigger, 'corpo livre.', VAULT_ROOT);
-    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-raiva\.md$/);
+    expect(out.uri).toMatch(
+      /markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
+    );
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('markdown/diario-2026-04-29-0900-raiva.md');
+    expect(uri).toMatch(
+      /markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
+    );
     expect(meta).toMatchObject({
       tipo: 'diario_emocional',
       modo: 'trigger',
@@ -86,15 +94,17 @@ describe('saveDiario caminho feliz', () => {
     expect(body).toBe('corpo livre.');
   });
 
-  it('usa slug "registro" quando emocoes esta vazio', async () => {
+  it('usa slug "registro" quando emocoes esta vazio (com suffix)', async () => {
     const sem: DiarioEmocionalMeta = { ...baseSucesso, emocoes: [] };
     const out = await saveDiario(sem, 'sem emocoes.', VAULT_ROOT);
-    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-registro\.md$/);
+    expect(out.uri).toMatch(
+      /markdown\/diario-2026-04-29-0900-registro-ouro-[a-z0-9]{6}\.md$/
+    );
   });
 
-  it('grava modo vitoria sem funcionou', async () => {
+  it('grava modo vitoria sem funcionou (com suffix)', async () => {
     const out = await saveDiario(baseSucesso, 'feliz.', VAULT_ROOT);
-    expect(out.uri).toMatch(/-gratidao\.md$/);
+    expect(out.uri).toMatch(/-gratidao-ouro-[a-z0-9]{6}\.md$/);
     const [, meta] = mockWriteVaultFile.mock.calls[0];
     expect((meta as DiarioEmocionalMeta).funcionou).toBeUndefined();
   });
@@ -104,6 +114,22 @@ describe('saveDiario caminho feliz', () => {
     const [uri] = mockWriteVaultFile.mock.calls[0];
     expect(uri).not.toContain('//markdown/');
     expect(uri).toMatch(/\/markdown\/diario-/);
+  });
+
+  it('read-previo do canonico nao influencia path final (T2)', async () => {
+    // T2: arquivo existente nao muda a decisao do path. Save sempre
+    // escreve no rel com suffix do device atual.
+    mockReadVaultFile.mockImplementation((uri) => {
+      if (typeof uri !== 'string') return Promise.resolve(null);
+      if (/-raiva\.md$/.test(uri)) {
+        return Promise.resolve({ meta: baseTrigger, body: '' });
+      }
+      return Promise.resolve(null);
+    });
+    const out = await saveDiario(baseTrigger, 'corpo.', VAULT_ROOT);
+    // T2: suffix sempre presente. Sem fallback timestamp porque sem
+    // race condition existir.
+    expect(out.uri).toMatch(/-raiva-ouro-[a-z0-9]{6}\.md$/);
   });
 });
 
@@ -130,53 +156,29 @@ describe('saveDiario validacao', () => {
   });
 });
 
-describe('saveDiario conflito de path', () => {
-  it('M38: aplica suffix deviceId quando arquivo canonico ja existe', async () => {
-    mockReadVaultFile.mockImplementation((uri) => {
-      if (typeof uri !== 'string') return Promise.resolve(null);
-      // Canonico existe; suffix deviceId nao existe ainda.
-      if (/-raiva\.md$/.test(uri)) {
-        return Promise.resolve({ meta: baseTrigger, body: '' });
-      }
-      return Promise.resolve(null);
-    });
-    const out = await saveDiario(baseTrigger, 'corpo.', VAULT_ROOT);
-    // M38: cobre 4 nos (2 desktops + 2 celulares) via -<deviceId>.
-    expect(out.uri).toMatch(/-raiva-ouro-[a-z0-9]{6}\.md$/);
-  });
-
-  it('M38: fallback timestamp se ate suffix deviceId colidir', async () => {
-    mockReadVaultFile.mockImplementation((uri) => {
-      if (typeof uri !== 'string') return Promise.resolve(null);
-      // Tudo existe -- canonico, deviceId. Cai no fallback ts.
-      if (/-raiva(-ouro-[a-z0-9]{6})?\.md$/.test(uri)) {
-        return Promise.resolve({ meta: baseTrigger, body: '' });
-      }
-      return Promise.resolve(null);
-    });
-    const out = await saveDiario(baseTrigger, 'corpo.', VAULT_ROOT);
-    // Fallback: deviceId + timestamp ms.
-    expect(out.uri).toMatch(/-raiva-ouro-[a-z0-9]{6}-\d{10,}\.md$/);
-  });
-});
-
 // I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): cobertura explicita
 // dos 2 modos canonicos do schema (trigger, vitoria), edge case
 // vaultRoot vazio, path final via vaultUriJoin (sem trailing space,
 // sem %20 ofensivo, sem barras duplas) e save com audio companion
 // presente (campo audio: string apontando para m4a/...).
 describe('I-DIARIO modos canonicos', () => {
-  it('modo trigger gera path com slug da emocao primaria', async () => {
+  it('modo trigger gera path com slug da emocao primaria (com suffix)', async () => {
     const out = await saveDiario(baseTrigger, 'corpo trigger.', VAULT_ROOT);
-    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-raiva\.md$/);
+    expect(out.uri).toMatch(
+      /markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
+    );
     const [uri, meta] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('markdown/diario-2026-04-29-0900-raiva.md');
+    expect(uri).toMatch(
+      /markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
+    );
     expect(meta).toMatchObject({ modo: 'trigger', funcionou: true });
   });
 
-  it('modo vitoria gera path com slug da emocao primaria', async () => {
+  it('modo vitoria gera path com slug da emocao primaria (com suffix)', async () => {
     const out = await saveDiario(baseSucesso, 'corpo vitoria.', VAULT_ROOT);
-    expect(out.uri).toMatch(/markdown\/diario-2026-04-29-0900-gratidao\.md$/);
+    expect(out.uri).toMatch(
+      /markdown\/diario-2026-04-29-0900-gratidao-ouro-[a-z0-9]{6}\.md$/
+    );
     const [, meta] = mockWriteVaultFile.mock.calls[0];
     expect(meta).toMatchObject({ modo: 'vitoria' });
     // funcionou nao se aplica em vitoria; nao deve aparecer.
@@ -218,8 +220,8 @@ describe('I-DIARIO vaultRoot e path canonico', () => {
     const ROOT_SUJO =
       'content://com.android.externalstorage/tree/primary:Test%20';
     const out = await saveDiario(baseTrigger, 'corpo.', ROOT_SUJO);
-    expect(out.uri).toBe(
-      'content://com.android.externalstorage/tree/primary:Test/markdown/diario-2026-04-29-0900-raiva.md'
+    expect(out.uri).toMatch(
+      /^content:\/\/com\.android\.externalstorage\/tree\/primary:Test\/markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
     );
     const [uri] = mockWriteVaultFile.mock.calls[0];
     expect(uri).not.toMatch(/%20\/markdown/);

@@ -1,21 +1,19 @@
-// Persiste um registro de humor (Tela 15) em daily/YYYY-MM-DD.md no
-// Vault. Função pura: recebe meta validado e vaultRoot, devolve URI
-// final e flag de conflito A5.
+// Persiste um registro de humor (Tela 15) em
+// markdown/humor-YYYY-MM-DD-<deviceId>.md no Vault. Função pura:
+// recebe meta validado e vaultRoot, devolve URI final.
 //
-// A5 (Armadilha do BRIEF seção 4): Syncthing entre N celulares pode
-// gerar colisao quando dois ou mais registram humor no mesmo dia.
-// Estrategia M38: se já existe arquivo no path canonico escrito por
-// outra instalacao (mesmo autor ou nao), gravamos em
-// daily/YYYY-MM-DD-<deviceId>.md. Cobre 4 nos (2 desktops + 2 celulares)
-// sem perder dado em sync.
+// T2-LOCK-VAULT (2026-05-15): substituida a decisao dinamica
+// read-then-write (M38 resolvePath) por suffix-de-deviceId
+// determinista. Antes: arquivo canonico humor-YYYY-MM-DD.md so
+// recebia suffix em colisao detectada por leitura previa, abrindo
+// race condition Syncthing entre dois devices que capturassem no
+// mesmo segundo. Agora: todo save inclui '-<deviceId>' desde o
+// inicio. Listadores agregam por dia ignorando suffix. Migration
+// boot canonico renomeia legado.
 //
-// Backward-compat: arquivos legados '-pessoa_a.md'/'-pessoa_b.md'
-// continuam sendo lidos por listarHumor (filtra por basename data sem
-// olhar suffix). M38 so altera o futuro padrao de naming.
-//
-// Importante: esta função não decide o que mostrar na UI quando ha
-// conflito; apenas grava na variante segura e devolve o flag para o
-// caller logar/avisar se desejar.
+// Backward-compat: arquivos legados (sem suffix, com '-pessoa_a/b'
+// ou com '-ouro-XXXXXX' de outro device) continuam sendo lidos por
+// listarHumor (filtra por prefix 'humor-' sem olhar suffix).
 //
 // I-HUMOR (M-SAVE-HUMOR-VALIDA, 2026-05-07): substitui joinUri local
 // pelo helper canonico vaultUriJoin de @/lib/vault, eliminando
@@ -26,17 +24,15 @@
 // em vez de gerar URI invalida silenciosa.
 import {
   humorPath,
-  readVaultFile,
   vaultUriJoin,
   writeVaultFile,
 } from '@/lib/vault';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 import { useSettings } from '@/lib/stores/settings';
-import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
+import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 export interface SaveHumorResult {
   uri: string;
-  conflito: boolean;
 }
 
 // Monta o corpo .md a partir do meta. Hoje colocamos a frase apenas
@@ -45,34 +41,6 @@ export interface SaveHumorResult {
 // frase para o corpo se ficar mais idiomatico no Obsidian.
 function buildBody(_meta: HumorMeta): string {
   return '';
-}
-
-// Decide qual path usar: canonico ou com sufixo de deviceId. M38:
-// trocamos o suffix '-pessoa_<a|b>' (cobria so 2 devices) por
-// '-<deviceId>' (cobre 4+ devices). Caminho feliz mantem nome
-// canonico (daily/YYYY-MM-DD.md) tanto em escrita inicial quanto em
-// reescrita pelo mesmo deviceId (mesmo autor, mesma instalacao).
-async function resolvePath(
-  vaultRoot: string,
-  relCanonico: string,
-  autor: HumorMeta['autor']
-): Promise<{ rel: string; conflito: boolean }> {
-  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
-  const existente = await readVaultFile<HumorMeta>(uriCanonico, HumorSchema);
-  if (!existente) {
-    return { rel: relCanonico, conflito: false };
-  }
-  if (existente.meta.autor === autor) {
-    // Mesmo autor regravando o dia: sobrescreve no canonico.
-    return { rel: relCanonico, conflito: false };
-  }
-  // Outra instalacao ja escreveu: usamos suffix de deviceId para
-  // evitar colisao. Cobre 4 nos sem perder dado.
-  const deviceId = await getDeviceId();
-  return {
-    rel: applyDeviceIdSuffix(relCanonico, deviceId),
-    conflito: true,
-  };
 }
 
 export async function saveHumor(
@@ -87,11 +55,11 @@ export async function saveHumor(
   }
 
   const relCanonico = humorPath(new Date());
-  const { rel, conflito } = await resolvePath(
-    vaultRoot,
-    relCanonico,
-    parsed.data.autor
-  );
+  // T2-LOCK-VAULT: sempre escreve com suffix do device atual.
+  // Elimina race condition Syncthing entre devices que capturem no
+  // mesmo segundo (read-then-write antes da T2).
+  const deviceId = await getDeviceId();
+  const rel = forceDeviceIdSuffix(relCanonico, deviceId);
   const uri = vaultUriJoin(vaultRoot, rel);
   const body = buildBody(parsed.data);
   await writeVaultFile<HumorMeta>(uri, parsed.data, body);
@@ -110,5 +78,5 @@ export async function saveHumor(
     // Falha do widget não bloqueia save do humor.
   }
 
-  return { uri, conflito };
+  return { uri };
 }

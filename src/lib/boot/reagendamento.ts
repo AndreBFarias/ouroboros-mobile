@@ -159,6 +159,22 @@ const migrarLayoutVaultHook: BootHook = async () => {
   await migrarVaultLayoutPorTipo(vaultRoot);
 };
 
+// AUDIT-T2-LOCK-VAULT (2026-05-15): renomeia arquivos canonicos
+// (.md sem suffix de deviceId) para a forma '-<deviceIdAtual>.md'.
+// Idempotente via flag useSessao.flags.t2DeviceIdSuffixMigrado. Roda
+// DEPOIS de migrarLayoutVaultHook (que prepara `markdown/`) e ANTES de
+// atualizarDeviceIndexHook (que escreve em `markdown/_devices.md` ja
+// no layout final pos-T2).
+const migrarT2DeviceIdSuffixHook: BootHook = async () => {
+  const { useVault } = await import('@/lib/stores/vault');
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) return;
+  const { migrarArquivosCanonicosParaDeviceId } = await import(
+    '@/lib/boot/migrarArquivosCanonicosParaDeviceId'
+  );
+  await migrarArquivosCanonicosParaDeviceId(vaultRoot);
+};
+
 // M38: registra/atualiza este dispositivo no inbox/_devices.md a cada
 // boot. Idempotente. Marca dispositivos antigos com mesma pessoa como
 // 'substituido_por: <novoId>' quando SecureStore foi zerado por
@@ -226,6 +242,12 @@ BOOT_HOOKS.push(
   // migrations M37.1.2 e M39 para que essas terminem no layout antigo
   // antes de ser reorganizado por tipo (markdown/, jpg/, m4a/, etc.).
   migrarLayoutVaultHook,
+  // AUDIT-T2-LOCK-VAULT (2026-05-15): renomeia arquivos canonicos
+  // pre-T2 (sem suffix de deviceId) para o layout '-<deviceId>.md'.
+  // Idempotente. Roda DEPOIS de migrarLayoutVaultHook (precisa que
+  // arquivos ja estejam em `markdown/`) e ANTES de atualizarDeviceIndex
+  // (que escreve em `markdown/_devices.md` ja no layout final).
+  migrarT2DeviceIdSuffixHook,
   // M38: registra/atualiza dispositivo atual no devices index. Roda
   // depois de migrarAssets para nao competir por SAF de leitura no
   // arranque. Idempotente (so ultima_atividade muda em boot subsequente).

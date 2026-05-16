@@ -7,6 +7,10 @@
 //
 // Mocks: reader/writer/SAF deleteAsync para isolar I/O.
 //
+// T2-LOCK-VAULT (2026-05-15): escreverAlarme agora sempre aplica suffix
+// '-<deviceId>'. lerAlarme busca suffix do device atual com fallback no
+// canonico. excluirAlarme apaga ambos.
+//
 // Comentarios sem acento (convencao shell/CI).
 import type { Alarme } from '@/lib/schemas/alarme';
 
@@ -59,6 +63,12 @@ function fixture(over: Partial<Alarme> = {}): Alarme {
     snooze_id: null,
     ...over,
   };
+}
+
+// Regex matcher canonico para path do alarme com suffix de deviceId
+// no formato T2: markdown/alarme-<slug>-ouro-<6chars>.md.
+function alarmeT2Regex(slug: string): RegExp {
+  return new RegExp(`/markdown/alarme-${slug}-ouro-[a-z0-9]{6}\\.md$`);
 }
 
 beforeEach(() => {
@@ -138,42 +148,51 @@ describe('listarAlarmes', () => {
   });
 });
 
-describe('lerAlarme', () => {
-  it('retorna meta quando arquivo existe', async () => {
-    mockReadVaultFile.mockResolvedValueOnce({
-      meta: fixture(),
-      body: '',
-    });
+describe('lerAlarme T2-LOCK-VAULT', () => {
+  it('busca arquivo com suffix do device atual primeiro', async () => {
+    mockReadVaultFile.mockResolvedValueOnce({ meta: fixture(), body: '' });
     const out = await lerAlarme(VAULT_ROOT, 'medicacao-manha');
+    expect(mockReadVaultFile).toHaveBeenCalledTimes(1);
+    const [uri] = mockReadVaultFile.mock.calls[0];
+    expect(uri).toMatch(alarmeT2Regex('medicacao-manha'));
     expect(out).not.toBeNull();
     expect(out?.slug).toBe('medicacao-manha');
   });
 
-  it('retorna null quando arquivo nao existe', async () => {
-    mockReadVaultFile.mockResolvedValueOnce(null);
+  it('fallback no canonico (legado pre-migration) quando suffix ausente', async () => {
+    mockReadVaultFile
+      .mockResolvedValueOnce(null) // T2 path
+      .mockResolvedValueOnce({ meta: fixture(), body: '' }); // canonico
+    const out = await lerAlarme(VAULT_ROOT, 'medicacao-manha');
+    expect(mockReadVaultFile).toHaveBeenCalledTimes(2);
+    const [uriSuffix] = mockReadVaultFile.mock.calls[0];
+    const [uriCanonico] = mockReadVaultFile.mock.calls[1];
+    expect(uriSuffix).toMatch(alarmeT2Regex('medicacao-manha'));
+    expect(uriCanonico).toBe(
+      `${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`
+    );
+    expect(out).not.toBeNull();
+  });
+
+  it('retorna null quando arquivo nao existe (nem suffix nem canonico)', async () => {
+    mockReadVaultFile.mockResolvedValue(null);
     const out = await lerAlarme(VAULT_ROOT, 'nada');
     expect(out).toBeNull();
   });
-
-  it('chama reader com URI markdown/alarme-<slug>.md (H2 layout-por-tipo)', async () => {
-    mockReadVaultFile.mockResolvedValueOnce(null);
-    await lerAlarme(VAULT_ROOT, 'meu-alarme');
-    expect(mockReadVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/alarme-meu-alarme.md`,
-      expect.anything()
-    );
-  });
 });
 
-describe('escreverAlarme', () => {
-  it('grava em markdown/alarme-<slug>.md (H2 layout-por-tipo)', async () => {
+describe('escreverAlarme T2-LOCK-VAULT', () => {
+  it('grava sempre com suffix de deviceId em markdown/alarme-<slug>-ouro-<id>.md', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
     const meta = fixture();
     const { rel, uri } = await escreverAlarme(VAULT_ROOT, meta, '');
-    expect(rel).toBe('markdown/alarme-medicacao-manha.md');
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`);
+    expect(rel).toMatch(
+      /^markdown\/alarme-medicacao-manha-ouro-[a-z0-9]{6}\.md$/
+    );
+    expect(uri).toBe(`${VAULT_ROOT}/${rel}`);
+    expect(uri).toMatch(alarmeT2Regex('medicacao-manha'));
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`,
+      uri,
       expect.objectContaining({ slug: 'medicacao-manha' }),
       ''
     );
@@ -199,9 +218,9 @@ describe('escreverAlarme', () => {
       data_unica: '2026-06-10T14:00:00-03:00',
     });
     const { rel } = await escreverAlarme(VAULT_ROOT, meta, '');
-    expect(rel).toBe('markdown/alarme-consulta-unica.md');
+    expect(rel).toMatch(/^markdown\/alarme-consulta-unica-ouro-[a-z0-9]{6}\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/alarme-consulta-unica.md`,
+      expect.stringMatching(alarmeT2Regex('consulta-unica')),
       expect.objectContaining({
         recorrencia: 'unica',
         data_unica: '2026-06-10T14:00:00-03:00',
@@ -219,9 +238,9 @@ describe('escreverAlarme', () => {
       dias_semana: [],
     });
     const { rel } = await escreverAlarme(VAULT_ROOT, meta, '');
-    expect(rel).toBe('markdown/alarme-agua-diaria.md');
+    expect(rel).toMatch(/^markdown\/alarme-agua-diaria-ouro-[a-z0-9]{6}\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      expect.stringContaining('alarme-agua-diaria.md'),
+      expect.stringMatching(alarmeT2Regex('agua-diaria')),
       expect.objectContaining({ recorrencia: 'diaria' }),
       ''
     );
@@ -237,9 +256,9 @@ describe('escreverAlarme', () => {
       tag: 'treino',
     });
     const { rel } = await escreverAlarme(VAULT_ROOT, meta, '');
-    expect(rel).toBe('markdown/alarme-treino-3x.md');
+    expect(rel).toMatch(/^markdown\/alarme-treino-3x-ouro-[a-z0-9]{6}\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      expect.stringContaining('alarme-treino-3x.md'),
+      expect.stringMatching(alarmeT2Regex('treino-3x')),
       expect.objectContaining({
         recorrencia: 'semanal',
         dias_semana: [1, 3, 5],
@@ -259,9 +278,9 @@ describe('escreverAlarme', () => {
       tag: 'outro',
     });
     const { rel } = await escreverAlarme(VAULT_ROOT, meta, '');
-    expect(rel).toBe('markdown/alarme-aluguel-mensal.md');
+    expect(rel).toMatch(/^markdown\/alarme-aluguel-mensal-ouro-[a-z0-9]{6}\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      expect.stringContaining('alarme-aluguel-mensal.md'),
+      expect.stringMatching(alarmeT2Regex('aluguel-mensal')),
       expect.objectContaining({
         recorrencia: 'mensal',
         data_unica: '2026-06-05T09:00:00-03:00',
@@ -280,50 +299,43 @@ describe('escreverAlarme', () => {
     expect(mockWriteVaultFile).not.toHaveBeenCalled();
   });
 
-  // I-ALARME: vaultUriJoin canonico (paths.ts:27) faz, em ordem:
-  //  1. trim() externo,
-  //  2. replace(/\s+$/, '') trailing whitespace,
-  //  3. replace(/%20+$/, '') trailing %20 percent-encoded,
-  //  4. replace(/\/+$/, '') trailing slashes.
-  //
-  // Para um root tipico SAF contaminado com trailing %20 (sintoma A29),
-  // o path final fica limpo. Cobertura aqui garante que o caller
-  // (escreverAlarme) realmente roteia pelo helper canonico, e nao mais
-  // pelo joinUri local que existia antes desta sprint.
+  // I-ALARME: vaultUriJoin canonico (paths.ts:27) faz trim de
+  // trailing whitespace, %20 e barras. Mesmo com root sujo, path
+  // final fica limpo + suffix T2 (a ordem: trim root, depois suffix).
   it('produz path final via vaultUriJoin (limpa trailing %20 do SAF)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
-    // Root contaminado: trailing %20 (sintoma A29 em OEMs MIUI/OneUI).
     const rootSujo = `${VAULT_ROOT}%20`;
     const meta = fixture();
     const { uri } = await escreverAlarme(rootSujo, meta, '');
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`);
+    expect(uri).toMatch(alarmeT2Regex('medicacao-manha'));
+    expect(uri.startsWith(VAULT_ROOT)).toBe(true);
     // Sem barras duplas no path final (so a do scheme content://).
     expect(uri.split('//').length).toBe(2);
   });
 
   it('produz path final via vaultUriJoin (limpa trailing slashes)', async () => {
     mockWriteVaultFile.mockResolvedValueOnce(undefined);
-    // Root contaminado: barras duplicadas no fim.
     const rootSujo = `${VAULT_ROOT}//`;
     const meta = fixture();
     const { uri } = await escreverAlarme(rootSujo, meta, '');
-    expect(uri).toBe(`${VAULT_ROOT}/markdown/alarme-medicacao-manha.md`);
+    expect(uri).toMatch(alarmeT2Regex('medicacao-manha'));
+    expect(uri.startsWith(VAULT_ROOT)).toBe(true);
   });
 });
 
-describe('excluirAlarme', () => {
-  it('chama SAF.deleteAsync com URI correto', async () => {
-    mockDeleteAsync.mockResolvedValueOnce(undefined);
+describe('excluirAlarme T2-LOCK-VAULT', () => {
+  it('apaga tanto arquivo com suffix (T2) quanto canonico (legado)', async () => {
+    mockDeleteAsync.mockResolvedValue(undefined);
     await excluirAlarme(VAULT_ROOT, 'teste');
-    expect(mockDeleteAsync).toHaveBeenCalledWith(
-      `${VAULT_ROOT}/markdown/alarme-teste.md`
-    );
+    expect(mockDeleteAsync).toHaveBeenCalledTimes(2);
+    const [uriSuffix] = mockDeleteAsync.mock.calls[0];
+    const [uriCanonico] = mockDeleteAsync.mock.calls[1];
+    expect(uriSuffix).toMatch(alarmeT2Regex('teste'));
+    expect(uriCanonico).toBe(`${VAULT_ROOT}/markdown/alarme-teste.md`);
   });
 
   it('nao propaga erro quando arquivo nao existe', async () => {
-    mockDeleteAsync.mockRejectedValueOnce(new Error('nao existe'));
-    await expect(
-      excluirAlarme(VAULT_ROOT, 'fantasma')
-    ).resolves.toBeUndefined();
+    mockDeleteAsync.mockRejectedValue(new Error('nao existe'));
+    await expect(excluirAlarme(VAULT_ROOT, 'fantasma')).resolves.toBeUndefined();
   });
 });

@@ -1,5 +1,9 @@
 // Testes da funcao saveHumor. Mockamos writeVaultFile e readVaultFile
 // do barrel '@/lib/vault' para isolar a logica pura sem tocar SAF.
+//
+// T2-LOCK-VAULT (2026-05-15): saveHumor agora sempre aplica suffix
+// '-<deviceId>'. Race condition de read-then-write foi eliminada
+// estruturalmente; SaveHumorResult perdeu o campo `conflito`.
 import type { HumorMeta } from '@/lib/schemas/humor';
 
 const mockWriteVaultFile = jest.fn<Promise<void>, [string, unknown, string]>();
@@ -47,13 +51,13 @@ afterEach(() => {
 });
 
 describe('saveHumor', () => {
-  it('caminho feliz: escreve no path canonico sem conflito', async () => {
+  it('grava sempre com suffix de deviceId T2-LOCK-VAULT', async () => {
     const out = await saveHumor(baseHumor, VAULT_ROOT);
-    expect(out.conflito).toBe(false);
-    expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
+    // T2: suffix sempre, mesmo em primeiro save do dia.
+    expect(out.uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('markdown/humor-2026-04-29.md');
+    expect(uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
     expect(meta).toMatchObject({
       tipo: 'humor',
       data: '2026-04-29',
@@ -63,28 +67,34 @@ describe('saveHumor', () => {
     expect(body).toBe('');
   });
 
-  it('mesmo autor regravando: sobrescreve no canonico sem conflito', async () => {
+  it('mesmo autor regravando: mesmo path (suffix do device atual)', async () => {
+    // T2: existencia do canonico nao muda o path (sempre suffix).
     mockReadVaultFile.mockResolvedValueOnce({
       meta: { ...baseHumor, humor: 1 },
       body: '',
     });
     const out = await saveHumor(baseHumor, VAULT_ROOT);
-    expect(out.conflito).toBe(false);
-    expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
+    expect(out.uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
   });
 
-  it('outra instalacao ja gravou: aplica sufixo deviceId M38', async () => {
+  it('outra instalacao ja gravou: suffix sempre presente (sem race)', async () => {
+    // T2: read-previo nao influencia path. Cada device escreve no seu
+    // arquivo proprio sem competir pelo canonico.
     mockReadVaultFile.mockResolvedValueOnce({
       meta: { ...baseHumor, autor: 'pessoa_b' },
       body: '',
     });
     const out = await saveHumor(baseHumor, VAULT_ROOT);
-    expect(out.conflito).toBe(true);
-    // M38: suffix mudou de '-pessoa_<a|b>' para '-ouro-<6chars>' para
-    // cobrir 4+ devices em vez de so 2.
     expect(out.uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
     const [uri] = mockWriteVaultFile.mock.calls[0];
     expect(uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
+  });
+
+  it('SaveHumorResult nao expoe mais o campo conflito (T2)', async () => {
+    const out = await saveHumor(baseHumor, VAULT_ROOT);
+    // T2-LOCK-VAULT: removeu o campo conflito; cada device tem seu
+    // proprio arquivo, conceito de conflito perde sentido no save.
+    expect((out as { conflito?: boolean }).conflito).toBeUndefined();
   });
 
   it('rejeita payload invalido (humor=0)', async () => {
@@ -98,36 +108,40 @@ describe('saveHumor', () => {
   it('normaliza root com barra final na concatenacao', async () => {
     await saveHumor(baseHumor, `${VAULT_ROOT}/`);
     const [uri] = mockWriteVaultFile.mock.calls[0];
-    // Nao deve haver '//' antes de daily/.
+    // Nao deve haver '//' antes de markdown/.
     expect(uri).not.toContain('//markdown/');
-    expect(uri).toMatch(/\/markdown\/humor-2026-04-29\.md$/);
+    expect(uri).toMatch(
+      /\/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/
+    );
   });
 
   // I-HUMOR (M-SAVE-HUMOR-VALIDA): cobertura explicita dos 3 cenarios
   // de autor + edge case vaultRoot vazio + path final via vaultUriJoin
   // canonico (sem trailing space, sem %20 ofensivo, sem barras duplas).
   describe('I-HUMOR cenarios de autor', () => {
-    it('autor pessoa_a grava no path canonico do dia', async () => {
+    it('autor pessoa_a grava no path canonico com suffix', async () => {
       const out = await saveHumor(
         { ...baseHumor, autor: 'pessoa_a' },
         VAULT_ROOT
       );
-      expect(out.conflito).toBe(false);
-      expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
+      expect(out.uri).toMatch(
+        /markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/
+      );
       const [uri, meta] = mockWriteVaultFile.mock.calls[0];
-      expect(uri).toContain('markdown/humor-2026-04-29.md');
+      expect(uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
       expect(meta).toMatchObject({ autor: 'pessoa_a' });
     });
 
-    it('autor pessoa_b grava no path canonico do dia', async () => {
+    it('autor pessoa_b grava no path canonico com suffix', async () => {
       const out = await saveHumor(
         { ...baseHumor, autor: 'pessoa_b' },
         VAULT_ROOT
       );
-      expect(out.conflito).toBe(false);
-      expect(out.uri).toMatch(/markdown\/humor-2026-04-29\.md$/);
+      expect(out.uri).toMatch(
+        /markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/
+      );
       const [uri, meta] = mockWriteVaultFile.mock.calls[0];
-      expect(uri).toContain('markdown/humor-2026-04-29.md');
+      expect(uri).toMatch(/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/);
       expect(meta).toMatchObject({ autor: 'pessoa_b' });
     });
 
@@ -157,8 +171,9 @@ describe('saveHumor', () => {
       const ROOT_SUJO =
         'content://com.android.externalstorage/tree/primary:Test%20';
       const out = await saveHumor(baseHumor, ROOT_SUJO);
-      expect(out.uri).toBe(
-        'content://com.android.externalstorage/tree/primary:Test/markdown/humor-2026-04-29.md'
+      // T2: suffix sempre presente.
+      expect(out.uri).toMatch(
+        /^content:\/\/com\.android\.externalstorage\/tree\/primary:Test\/markdown\/humor-2026-04-29-ouro-[a-z0-9]{6}\.md$/
       );
       const [uri] = mockWriteVaultFile.mock.calls[0];
       expect(uri).not.toMatch(/%20\/markdown/);

@@ -86,10 +86,16 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //   - vaultLayoutMigrado (H2 ADR-0023): indica se a rotina ja migrou
 //     o Vault do layout legado por feature (daily/, eventos/, etc.)
 //     para o layout-por-tipo (markdown/, jpg/, m4a/, etc.).
+//   - t2DeviceIdSuffixMigrado (T2-LOCK-VAULT 2026-05-15): indica se a
+//     rotina ja renomeou arquivos canonicos (.md sem suffix de
+//     deviceId) para a forma '-<deviceIdAtual>.md'. Pos-T2 todos os
+//     saves escrevem com suffix de origem; legado pre-T2 precisa do
+//     rename uma vez por instalacao.
 export interface FlagsBootState {
   canalV1Deletado: boolean;
   cacheAgendaMigrado: boolean;
   vaultLayoutMigrado: boolean;
+  t2DeviceIdSuffixMigrado: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -132,6 +138,7 @@ const FLAGS_VAZIAS: FlagsBootState = {
   canalV1Deletado: false,
   cacheAgendaMigrado: false,
   vaultLayoutMigrado: false,
+  t2DeviceIdSuffixMigrado: false,
 };
 
 const DEFAULT_STATE: Omit<
@@ -270,7 +277,7 @@ export const useSessao = create<SessaoState>()(
       // /saude-fisica; /(tabs) -> /). Sprint L1 renomeou /memoria
       // para /saude-fisica; ultimaRota=/memoria persistido pre-L1
       // e' migrado abaixo na v3.
-      version: 3,
+      version: 4,
       migrate: (state: any, version: number) => {
         if (version < 2 && state && typeof state.ultimaRota === 'string') {
           if (state.ultimaRota.startsWith('/(tabs)/')) {
@@ -296,6 +303,17 @@ export const useSessao = create<SessaoState>()(
         // M30: garante flags ausentes em estados pre-M30 (v2 sem flags).
         if (state && typeof state === 'object' && !state.flags) {
           state.flags = { ...FLAGS_VAZIAS };
+        }
+        // T2-LOCK-VAULT (2026-05-15): garante t2DeviceIdSuffixMigrado
+        // em estados pre-T2. Sem isso, useSessao.flags.t2DeviceIdSuffixMigrado
+        // ficaria undefined e a migration boot rodaria a cada boot.
+        if (
+          version < 4 &&
+          state &&
+          state.flags &&
+          state.flags.t2DeviceIdSuffixMigrado === undefined
+        ) {
+          state.flags.t2DeviceIdSuffixMigrado = false;
         }
         return state;
       },

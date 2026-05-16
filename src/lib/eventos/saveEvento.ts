@@ -1,7 +1,7 @@
 // Persiste um registro de evento (Tela 20) em
-// markdown/evento-YYYY-MM-DD-<slug>.md no Vault (layout H2 por tipo).
-// Funcao pura: recebe meta validado, body livre, vaultRoot e lista
-// de URIs locais de fotos; devolve URI final. Antes de chamar
+// markdown/evento-YYYY-MM-DD-<slug>-<deviceId>.md no Vault (layout H2
+// por tipo). Funcao pura: recebe meta validado, body livre, vaultRoot
+// e lista de URIs locais de fotos; devolve URI final. Antes de chamar
 // writeVaultFile, copia cada foto para
 // jpg/<YYYY-MM-DD>-eventos-<rand>-<idx>.jpg e grava um companion
 // markdown/<YYYY-MM-DD>-eventos-<rand>-<idx>.md ao lado (frontmatter
@@ -9,9 +9,15 @@
 // para o frontmatter canonico apontar para os arquivos novos.
 //
 // Slug do nome do arquivo: deriva do bairro detectado, do texto
-// livre ou da categoria via slugifyEvento. Em colisao real entre
-// devices via Syncthing (M38), aplica suffix '-<deviceId>' alinhado
-// com saveHumor/saveDiario (cobre 4 nos sem perder dado).
+// livre ou da categoria via slugifyEvento.
+//
+// T2-LOCK-VAULT (2026-05-15): substituida a decisao dinamica
+// read-then-write (M38 resolvePath) por suffix-de-deviceId
+// determinista. Antes: path canonico recebia suffix apenas em colisao
+// detectada por leitura previa, abrindo race condition Syncthing
+// entre dois devices que registrassem evento no mesmo dia com mesmo
+// slug. Agora: todo save inclui '-<deviceId>' desde o inicio.
+// Listadores agregam por dia ignorando suffix.
 //
 // Backward-compat: arquivos legados sob assets/ continuam visiveis
 // na galeria via useFotosAgregadas (que resolve qualquer path
@@ -28,14 +34,13 @@
 import {
   eventoPath,
   formatDateYmd,
-  readVaultFile,
   vaultUriJoin,
   writeVaultFile,
 } from '@/lib/vault';
 import { EventoSchema, type EventoMeta } from '@/lib/schemas/evento';
 import { slugifyEvento } from '@/lib/eventos/slug';
 import { escreverMidiaComCompanion } from '@/lib/vault/midiaCompanion';
-import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
+import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 export interface SaveEventoArgs {
   meta: EventoMeta;
@@ -51,33 +56,6 @@ export interface SaveEventoResult {
   // Paths relativos ao Vault que foram efetivamente escritos em
   // assets/. Útil para o caller logar ou exibir.
   fotosGravadas: string[];
-}
-
-// Tenta gravar no path canonico. Se ja existir (colisao real entre
-// devices via Syncthing), aplica suffix '-<deviceId>' M38 alinhado
-// com saveHumor/saveDiario; cobre 4 nos sem perder dado.
-//
-// Fallback: deviceId + timestamp ms para o caso raro de mesmo device
-// regravando mesmo dia/slug em tempo identico.
-async function resolvePath(
-  vaultRoot: string,
-  relCanonico: string
-): Promise<string> {
-  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
-  const existente = await readVaultFile(uriCanonico, EventoSchema);
-  if (!existente) return relCanonico;
-
-  const deviceId = await getDeviceId();
-  const relComDevice = applyDeviceIdSuffix(relCanonico, deviceId);
-  const uriComDevice = vaultUriJoin(vaultRoot, relComDevice);
-  const jaComDevice = await readVaultFile(uriComDevice, EventoSchema);
-  if (!jaComDevice) return relComDevice;
-
-  // Fallback: deviceId + timestamp ms.
-  const dotIdx = relComDevice.lastIndexOf('.');
-  const ts = Date.now();
-  if (dotIdx === -1) return `${relComDevice}-${ts}`;
-  return `${relComDevice.slice(0, dotIdx)}-${ts}${relComDevice.slice(dotIdx)}`;
 }
 
 // Sufixo random curto (4 chars hex) para deduplicar fotos do mesmo
@@ -177,7 +155,9 @@ export async function saveEvento(
   };
 
   const relCanonico = eventoPath(agora, slug);
-  const rel = await resolvePath(vaultRoot, relCanonico);
+  // T2-LOCK-VAULT: suffix sempre, mesmo em primeiro save do dia/slug.
+  const deviceId = await getDeviceId();
+  const rel = forceDeviceIdSuffix(relCanonico, deviceId);
   const uri = vaultUriJoin(vaultRoot, rel);
 
   await writeVaultFile<EventoMeta>(uri, metaComFotos, body);

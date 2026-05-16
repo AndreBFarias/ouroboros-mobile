@@ -34,7 +34,7 @@ import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ContadorSchema, type Contador } from '@/lib/schemas/contador';
 import { diasEntre } from '@/lib/util/diasEntre';
-import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
+import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 // Lista todos os contadores do Vault. Pasta inexistente => []. Retorna
 // asc por titulo (localeCompare PT-BR) para a tela de listagem não
@@ -62,63 +62,73 @@ export async function listarContadores(vaultRoot: string): Promise<Contador[]> {
   return lidos;
 }
 
-// Le um contador específico por slug. Retorna null se não existir.
+// Le um contador específico por slug do device atual. T2-LOCK-VAULT
+// (2026-05-15): saves sempre suffixam '-<deviceId>'; leitura agora
+// busca pelo arquivo com suffix do device atual. Fallback no path
+// canonico (sem suffix) para legado pre-migration, onde arquivos
+// criados antes da T2 ainda existem sem suffix no Vault.
 export async function lerContador(
   vaultRoot: string,
   slug: string
 ): Promise<Contador | null> {
-  const rel = contadorPath(slug);
-  const uri = vaultUriJoin(vaultRoot, rel);
-  const result = await readVaultFile(uri, ContadorSchema);
-  return result ? result.meta : null;
+  const relCanonico = contadorPath(slug);
+  const deviceId = await getDeviceId();
+  const relComSuffix = forceDeviceIdSuffix(relCanonico, deviceId);
+  // T2: tenta arquivo deste device primeiro.
+  const uriComSuffix = vaultUriJoin(vaultRoot, relComSuffix);
+  const resultSuffix = await readVaultFile(uriComSuffix, ContadorSchema);
+  if (resultSuffix) return resultSuffix.meta;
+  // Fallback legado: arquivo canonico sem suffix (pre-T2 ou pre-migration).
+  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
+  const resultCanonico = await readVaultFile(uriCanonico, ContadorSchema);
+  return resultCanonico ? resultCanonico.meta : null;
 }
 
 // Persiste um contador. Caller fornece meta já validado (revalidamos
 // defensivamente). Body opcional para anotacao livre (motivo opcional
 // em prosa, conforme spec seção 3).
 //
-// M38: parametro opcional modoCriacao. Quando true, se ja existe
-// arquivo no path canonico (outro device criou contador com mesmo
-// slug), aplica suffix '-<deviceId>' para evitar overwrite cego.
-// Quando false (default = edicao), preserva comportamento legacy de
-// sobrescrita -- usuario esta editando seu proprio contador.
+// T2-LOCK-VAULT (2026-05-15): suffix '-<deviceId>' aplicado sempre,
+// eliminando race condition read-then-write entre devices via
+// Syncthing. O parametro legado `modoCriacao` foi removido por perder
+// sentido (sempre suffix). Callers de criacao e edicao agora chamam
+// a mesma assinatura simples; cada device tem seu proprio arquivo.
 export async function escreverContador(
   vaultRoot: string,
   meta: Contador,
-  body: string = '',
-  modoCriacao: boolean = false
+  body: string = ''
 ): Promise<{ uri: string; rel: string }> {
   const parsed = ContadorSchema.safeParse(meta);
   if (!parsed.success) {
     throw new Error(`contador invalido: ${parsed.error.message}`);
   }
   const relCanonico = contadorPath(parsed.data.slug);
-  let rel = relCanonico;
-  if (modoCriacao) {
-    const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
-    const existente = await readVaultFile(uriCanonico, ContadorSchema);
-    if (existente) {
-      const deviceId = await getDeviceId();
-      rel = applyDeviceIdSuffix(relCanonico, deviceId);
-    }
-  }
+  const deviceId = await getDeviceId();
+  const rel = forceDeviceIdSuffix(relCanonico, deviceId);
   const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<Contador>(uri, parsed.data, body);
   return { uri, rel };
 }
 
 // Apaga arquivo de contador. Idempotente: não falha se não existe.
-// SAF.deleteAsync no nativo; em Web cai em no-op silencioso.
+// T2-LOCK-VAULT (2026-05-15): tenta apagar tanto o arquivo canonico
+// (legado pre-migration) quanto o com suffix do device atual. Em Web,
+// no-op silencioso (não ha vault real).
 export async function excluirContador(
   vaultRoot: string,
   slug: string
 ): Promise<void> {
-  const rel = contadorPath(slug);
-  const uri = vaultUriJoin(vaultRoot, rel);
-  try {
-    await StorageAccessFramework.deleteAsync(uri);
-  } catch {
-    // Sem arquivo previo ou plataforma sem SAF; ok.
+  const relCanonico = contadorPath(slug);
+  const deviceId = await getDeviceId();
+  const relComSuffix = forceDeviceIdSuffix(relCanonico, deviceId);
+  // Tenta apagar ambos: legado (pre-migration) e do device atual (T2).
+  for (const rel of [relComSuffix, relCanonico]) {
+    const uri = vaultUriJoin(vaultRoot, rel);
+    try {
+      await StorageAccessFramework.deleteAsync(uri);
+    } catch {
+      // Sem arquivo previo ou plataforma sem SAF; ok.
+    }
   }
 }
 

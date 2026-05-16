@@ -4,6 +4,10 @@
 // validar a copia das fotos e do companion .md sem mexer no
 // filesystem real.
 //
+// T2-LOCK-VAULT (2026-05-15): saveEvento agora sempre aplica suffix
+// '-<deviceId>' no path do evento. Race condition de read-then-write
+// foi eliminada estruturalmente.
+//
 // M-VAULT-MD-FIX-evento-fotos (2026-05-04): destino dos binarios
 // migrou de assets/<prefixo>-evento-<idx>.jpg para
 // media/fotos/<YYYY-MM-DD>-eventos-<rand4>-<idx>.jpg + companion .md
@@ -78,19 +82,24 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('saveEvento caminho feliz', () => {
-  it('grava no path canonico com slug do bairro', async () => {
+describe('saveEvento T2-LOCK-VAULT', () => {
+  it('grava sempre com suffix de deviceId no path canonico', async () => {
     const out = await saveEvento({
       meta: baseMeta,
       body: 'cafe da manha gostoso.',
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/markdown\/evento-2026-04-29-vila-madalena\.md$/);
+    // T2: suffix sempre.
+    expect(out.uri).toMatch(
+      /markdown\/evento-2026-04-29-vila-madalena-ouro-[a-z0-9]{6}\.md$/
+    );
     expect(out.fotosGravadas).toEqual([]);
     expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
     const [uri, meta, body] = mockWriteVaultFile.mock.calls[0];
-    expect(uri).toContain('markdown/evento-2026-04-29-vila-madalena.md');
+    expect(uri).toMatch(
+      /markdown\/evento-2026-04-29-vila-madalena-ouro-[a-z0-9]{6}\.md$/
+    );
     expect(meta).toMatchObject({
       tipo: 'evento',
       autor: 'pessoa_a',
@@ -103,7 +112,7 @@ describe('saveEvento caminho feliz', () => {
     expect(mockCopyAsync).not.toHaveBeenCalled();
   });
 
-  it('usa slug do texto quando bairro vazio', async () => {
+  it('usa slug do texto quando bairro vazio (com suffix)', async () => {
     const semBairro: EventoMeta = { ...baseMeta, bairro: undefined };
     const out = await saveEvento({
       meta: semBairro,
@@ -111,10 +120,12 @@ describe('saveEvento caminho feliz', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/markdown\/evento-2026-04-29-cafe-da-manha\.md$/);
+    expect(out.uri).toMatch(
+      /markdown\/evento-2026-04-29-cafe-da-manha-ouro-[a-z0-9]{6}\.md$/
+    );
   });
 
-  it('usa slug da categoria quando bairro e texto vazios', async () => {
+  it('usa slug da categoria quando bairro e texto vazios (com suffix)', async () => {
     const minimo: EventoMeta = {
       ...baseMeta,
       bairro: undefined,
@@ -126,7 +137,9 @@ describe('saveEvento caminho feliz', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toMatch(/markdown\/evento-2026-04-29-evento-social\.md$/);
+    expect(out.uri).toMatch(
+      /markdown\/evento-2026-04-29-evento-social-ouro-[a-z0-9]{6}\.md$/
+    );
   });
 
   it('normaliza root com barra final na concatenacao', async () => {
@@ -139,6 +152,24 @@ describe('saveEvento caminho feliz', () => {
     const [uri] = mockWriteVaultFile.mock.calls[0];
     expect(uri).not.toContain('//markdown/');
     expect(uri).toMatch(/\/markdown\/evento-/);
+  });
+
+  it('read-previo nao influencia path do evento (T2)', async () => {
+    // T2: existencia do canonico nao muda path. Sem race condition.
+    mockReadVaultFile.mockImplementation((uri) => {
+      if (typeof uri !== 'string') return Promise.resolve(null);
+      if (/-vila-madalena\.md$/.test(uri)) {
+        return Promise.resolve({ meta: baseMeta, body: '' });
+      }
+      return Promise.resolve(null);
+    });
+    const out = await saveEvento({
+      meta: baseMeta,
+      body: '',
+      vaultRoot: VAULT_ROOT,
+      fotos: [],
+    });
+    expect(out.uri).toMatch(/-vila-madalena-ouro-[a-z0-9]{6}\.md$/);
   });
 });
 
@@ -270,21 +301,23 @@ describe('saveEvento I-EVENTO vaultUriJoin canonico', () => {
     expect(uri).toMatch(/Vault\/markdown\/evento-/);
   });
 
-  it('salva modo positivo no path canonico via vaultUriJoin', async () => {
+  it('salva modo positivo no path canonico via vaultUriJoin (com suffix)', async () => {
     const out = await saveEvento({
       meta: { ...baseMeta, modo: 'positivo' },
       body: '',
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toBe(
-      `${VAULT_ROOT}/markdown/evento-2026-04-29-vila-madalena.md`
+    expect(out.uri).toMatch(
+      new RegExp(
+        `^${VAULT_ROOT.replace(/[/.]/g, '\\$&')}/markdown/evento-2026-04-29-vila-madalena-ouro-[a-z0-9]{6}\\.md$`
+      )
     );
     const [, metaGravado] = mockWriteVaultFile.mock.calls[0];
     expect((metaGravado as EventoMeta).modo).toBe('positivo');
   });
 
-  it('salva modo negativo no path canonico via vaultUriJoin', async () => {
+  it('salva modo negativo no path canonico via vaultUriJoin (com suffix)', async () => {
     const negativo: EventoMeta = {
       ...baseMeta,
       modo: 'negativo',
@@ -299,8 +332,10 @@ describe('saveEvento I-EVENTO vaultUriJoin canonico', () => {
       vaultRoot: VAULT_ROOT,
       fotos: [],
     });
-    expect(out.uri).toBe(
-      `${VAULT_ROOT}/markdown/evento-2026-04-29-vila-madalena.md`
+    expect(out.uri).toMatch(
+      new RegExp(
+        `^${VAULT_ROOT.replace(/[/.]/g, '\\$&')}/markdown/evento-2026-04-29-vila-madalena-ouro-[a-z0-9]{6}\\.md$`
+      )
     );
     const [, metaGravado] = mockWriteVaultFile.mock.calls[0];
     expect((metaGravado as EventoMeta).modo).toBe('negativo');
@@ -326,7 +361,7 @@ describe('saveEvento I-EVENTO vaultUriJoin canonico', () => {
     expect(copyTo).toBe(`${VAULT_ROOT}/jpg/2026-04-29-eventos-0000-1.jpg`);
   });
 
-  it('sem bairro: slug deriva do texto livre via vaultUriJoin', async () => {
+  it('sem bairro: slug deriva do texto livre via vaultUriJoin (com suffix)', async () => {
     const semBairro: EventoMeta = { ...baseMeta, bairro: undefined };
     const out = await saveEvento({
       meta: semBairro,
@@ -335,48 +370,12 @@ describe('saveEvento I-EVENTO vaultUriJoin canonico', () => {
       fotos: [],
     });
     // Slug deriva do texto via slugifyEvento (kebab-case ASCII).
+    // T2: suffix sempre presente.
     expect(out.uri).toMatch(
       new RegExp(
-        `^${VAULT_ROOT.replace(/[/.]/g, '\\$&')}/markdown/evento-2026-04-29-[a-z0-9-]+\\.md$`
+        `^${VAULT_ROOT.replace(/[/.]/g, '\\$&')}/markdown/evento-2026-04-29-[a-z0-9-]+-ouro-[a-z0-9]{6}\\.md$`
       )
     );
     expect(out.uri).not.toContain('//markdown/');
-  });
-});
-
-describe('saveEvento conflito de path', () => {
-  it('M38: aplica suffix deviceId quando arquivo canonico ja existe', async () => {
-    mockReadVaultFile.mockImplementation((uri) => {
-      if (typeof uri !== 'string') return Promise.resolve(null);
-      if (/-vila-madalena\.md$/.test(uri)) {
-        return Promise.resolve({ meta: baseMeta, body: '' });
-      }
-      return Promise.resolve(null);
-    });
-    const out = await saveEvento({
-      meta: baseMeta,
-      body: '',
-      vaultRoot: VAULT_ROOT,
-      fotos: [],
-    });
-    // M38: cobre 4 nos via -<deviceId> (substituiu -1/-2 numericos).
-    expect(out.uri).toMatch(/-vila-madalena-ouro-[a-z0-9]{6}\.md$/);
-  });
-
-  it('M38: fallback timestamp se ate suffix deviceId colidir', async () => {
-    mockReadVaultFile.mockImplementation((uri) => {
-      if (typeof uri !== 'string') return Promise.resolve(null);
-      if (/-vila-madalena(-ouro-[a-z0-9]{6})?\.md$/.test(uri)) {
-        return Promise.resolve({ meta: baseMeta, body: '' });
-      }
-      return Promise.resolve(null);
-    });
-    const out = await saveEvento({
-      meta: baseMeta,
-      body: '',
-      vaultRoot: VAULT_ROOT,
-      fotos: [],
-    });
-    expect(out.uri).toMatch(/-vila-madalena-ouro-[a-z0-9]{6}-\d{10,}\.md$/);
   });
 });

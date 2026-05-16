@@ -47,7 +47,7 @@ import {
   cancelarAlarme,
 } from '@/lib/services/alarmesNotificacoes';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
-import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
+import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 // Item lido do Vault: meta + path relativo ao root (ex:
 // 'tarefas/2026-04-29-comprar-pao.md'). UI usa esse path como id estavel
@@ -303,17 +303,12 @@ export async function criarTarefa(
   // sufixo random para deduplicar; data de criacao vive no frontmatter.
   const relCanonico = tarefaPath(slug);
 
-  // M38: conflict resolution. Se ja existe arquivo no path canonico
-  // com autor diferente (outro device criou tarefa de mesmo dia/slug),
-  // aplica suffix '-<deviceId>' pra evitar overwrite cego em sync.
-  // Mesmo autor regravando = edicao legitima -> mantem canonico.
-  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
-  const existente = await readVaultFile(uriCanonico, TarefaSchema);
-  let rel = relCanonico;
-  if (existente && existente.meta.autor !== metaFinal.autor) {
-    const deviceId = await getDeviceId();
-    rel = applyDeviceIdSuffix(relCanonico, deviceId);
-  }
+  // T2-LOCK-VAULT (2026-05-15): sempre suffix '-<deviceId>'. Antes:
+  // read-then-write canonico-com-autor-diferente abria race condition
+  // Syncthing entre dois devices que criassem tarefa de mesmo slug
+  // simultaneamente. Agora cada device tem seu arquivo desde o inicio.
+  const deviceId = await getDeviceId();
+  const rel = forceDeviceIdSuffix(relCanonico, deviceId);
 
   return escreverTarefa(vaultRoot, rel, metaFinal, body);
 }

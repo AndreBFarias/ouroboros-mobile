@@ -21,7 +21,7 @@ import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
-import { applyDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
+import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
 // Lista todos os alarmes do Vault. Pasta inexistente => []. Retorna
 // asc por horario (HH:MM lex), depois por titulo, para a tela de
@@ -52,63 +52,72 @@ export async function listarAlarmes(vaultRoot: string): Promise<Alarme[]> {
   return lidos;
 }
 
-// Le um alarme específico por slug. Retorna null se não existir.
+// Le um alarme específico por slug do device atual. T2-LOCK-VAULT
+// (2026-05-15): saves sempre suffixam '-<deviceId>'; leitura busca
+// pelo arquivo com suffix do device atual primeiro, com fallback no
+// canonico (legado pre-migration).
 export async function lerAlarme(
   vaultRoot: string,
   slug: string
 ): Promise<Alarme | null> {
-  const rel = alarmePath(slug);
-  const uri = vaultUriJoin(vaultRoot, rel);
-  const result = await readVaultFile(uri, AlarmeSchema);
-  return result ? result.meta : null;
+  const relCanonico = alarmePath(slug);
+  const deviceId = await getDeviceId();
+  const relComSuffix = forceDeviceIdSuffix(relCanonico, deviceId);
+  // T2: tenta arquivo deste device primeiro.
+  const uriComSuffix = vaultUriJoin(vaultRoot, relComSuffix);
+  const resultSuffix = await readVaultFile(uriComSuffix, AlarmeSchema);
+  if (resultSuffix) return resultSuffix.meta;
+  // Fallback legado: arquivo canonico sem suffix.
+  const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
+  const resultCanonico = await readVaultFile(uriCanonico, AlarmeSchema);
+  return resultCanonico ? resultCanonico.meta : null;
 }
 
 // Persiste um alarme. Caller fornece meta já validado (revalidamos
 // defensivamente). Escreve em alarmes/<slug>.md derivando o nome do
 // slug. Body opcional para anotacao livre (tipicamente vazio).
 //
-// M38: parametro opcional modoCriacao. Quando true, se ja existe
-// arquivo no path canonico (outro device criou alarme com mesmo
-// slug), aplica suffix '-<deviceId>'. Quando false (default = edicao),
-// preserva sobrescrita -- usuario esta editando seu proprio alarme.
+// T2-LOCK-VAULT (2026-05-15): suffix '-<deviceId>' aplicado sempre,
+// eliminando race condition read-then-write entre devices via
+// Syncthing. O parametro legado `modoCriacao` foi removido por perder
+// sentido (sempre suffix). Callers de criacao e edicao agora chamam
+// a mesma assinatura simples; cada device tem seu proprio arquivo.
 export async function escreverAlarme(
   vaultRoot: string,
   meta: Alarme,
-  body: string = '',
-  modoCriacao: boolean = false
+  body: string = ''
 ): Promise<{ uri: string; rel: string }> {
   const parsed = AlarmeSchema.safeParse(meta);
   if (!parsed.success) {
     throw new Error(`alarme invalido: ${parsed.error.message}`);
   }
   const relCanonico = alarmePath(parsed.data.slug);
-  let rel = relCanonico;
-  if (modoCriacao) {
-    const uriCanonico = vaultUriJoin(vaultRoot, relCanonico);
-    const existente = await readVaultFile(uriCanonico, AlarmeSchema);
-    if (existente) {
-      const deviceId = await getDeviceId();
-      rel = applyDeviceIdSuffix(relCanonico, deviceId);
-    }
-  }
+  const deviceId = await getDeviceId();
+  const rel = forceDeviceIdSuffix(relCanonico, deviceId);
   const uri = vaultUriJoin(vaultRoot, rel);
   await writeVaultFile<Alarme>(uri, parsed.data, body);
   return { uri, rel };
 }
 
 // Apaga arquivo de alarme. Idempotente: não falha se não existe.
-// SAF.deleteAsync no nativo; em Web cai em no-op silencioso (não ha
-// vault real). Caller responsável por cancelar schedules antes (caso
-// contrario as notificações persistem orfas).
+// T2-LOCK-VAULT (2026-05-15): tenta apagar tanto o arquivo canonico
+// (legado pre-migration) quanto o com suffix do device atual. Em Web,
+// no-op silencioso. Caller responsável por cancelar schedules antes
+// (caso contrario as notificações persistem orfas).
 export async function excluirAlarme(
   vaultRoot: string,
   slug: string
 ): Promise<void> {
-  const rel = alarmePath(slug);
-  const uri = vaultUriJoin(vaultRoot, rel);
-  try {
-    await StorageAccessFramework.deleteAsync(uri);
-  } catch {
-    // Sem arquivo previo ou plataforma sem SAF; ok.
+  const relCanonico = alarmePath(slug);
+  const deviceId = await getDeviceId();
+  const relComSuffix = forceDeviceIdSuffix(relCanonico, deviceId);
+  // Tenta apagar ambos: legado (pre-migration) e do device atual.
+  for (const rel of [relComSuffix, relCanonico]) {
+    const uri = vaultUriJoin(vaultRoot, rel);
+    try {
+      await StorageAccessFramework.deleteAsync(uri);
+    } catch {
+      // Sem arquivo previo ou plataforma sem SAF; ok.
+    }
   }
 }

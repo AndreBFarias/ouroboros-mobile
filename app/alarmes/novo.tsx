@@ -387,12 +387,12 @@ export default function AlarmesNovoOuEditar() {
         ...parsed.data,
         notification_ids: notificationIds,
       };
-      // M38: passa modoCriacao=!editando para que escreverAlarme
-      // aplique suffix '-<deviceId>' caso outro device ja tenha
-      // criado alarme com mesmo slug (conflict resolution Syncthing).
-      // I-ALARME: comTimeout impede loader infinito quando SAF write
-      // trava (A29 - URI corrupta em OEMs).
-      await comTimeout(escreverAlarme(vaultRoot, persistido, '', !editando));
+      // T2-LOCK-VAULT (2026-05-15): escreverAlarme agora sempre aplica
+      // suffix '-<deviceId>' (parametro legado `modoCriacao` removido).
+      // Race condition Syncthing eliminada estruturalmente. I-ALARME:
+      // comTimeout impede loader infinito quando SAF write trava (A29
+      // - URI corrupta em OEMs).
+      await comTimeout(escreverAlarme(vaultRoot, persistido, ''));
       // M24: limpa rascunho de criacao pos-save bem-sucedido. Em
       // modo edicao tambem limpamos para nao recarregar dados antigos
       // se o usuario abrir /alarmes/novo depois.
