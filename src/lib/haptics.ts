@@ -68,6 +68,10 @@ export const haptics = {
     tomVibracaoLigado('botoes')
       ? ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light)
       : Promise.resolve(),
+  // R0 lexical: 'vitoria' e 'trigger' permanecem como nomes de
+  // metodo (estaveis para callers existentes; renomear quebraria 30+
+  // pontos de uso sem ganho). Aliases canonicos 'conquista' e 'gatilho'
+  // foram adicionados abaixo apontando para a mesma implementacao.
   vitoria: (): Promise<void> =>
     tomVibracaoLigado('conquista')
       ? ExpoHaptics.notificationAsync(
@@ -75,6 +79,23 @@ export const haptics = {
         )
       : Promise.resolve(),
   trigger: (): Promise<void> =>
+    tomVibracaoLigado('botoes')
+      ? ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Medium)
+      : Promise.resolve(),
+  /**
+   * Alias canonico (R0) de `vitoria`. Use este nome em codigo novo;
+   * `vitoria` permanece compativel mas marcado @deprecated.
+   */
+  conquista: (): Promise<void> =>
+    tomVibracaoLigado('conquista')
+      ? ExpoHaptics.notificationAsync(
+          ExpoHaptics.NotificationFeedbackType.Success
+        )
+      : Promise.resolve(),
+  /**
+   * Alias canonico (R0) de `trigger`. Use este nome em codigo novo.
+   */
+  gatilho: (): Promise<void> =>
     tomVibracaoLigado('botoes')
       ? ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Medium)
       : Promise.resolve(),

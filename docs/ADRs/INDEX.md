@@ -28,3 +28,4 @@ com referência "Supersedes ADR-NNNN" no cabeçalho.
 | 0022 | Vault em pasta escolhida pelo usuário (onboarding pergunta) | Aceito (substitui parte de ADR-0014 / 0016) | M-VAULT-PASTA-NAO-HARDCODED / H3 (golden-zebra v1.0.0) |
 | 0023 | Vault organizado por tipo de arquivo (`markdown/`, `jpg/`, `m4a/`, …) | Aceito (substitui parte de ADR-0017) | M-VAULT-LAYOUT-POR-TIPO / H2 (golden-zebra v1.0.0) |
 | 0024 | Share Intent grava em `inbox/` como exceção parcial ao layout-por-tipo | Aceito (substitui parte de ADR-0023) | M-SHARE-INTENT-LAYOUT / G1 |
+| 0025 | Renomeação lexical canônica: Crise / Conquista / Gatilho / Reflexão | Aceito | R0 (M-LEX-CRISE-CONQUISTA-GATILHO-REFLEXAO / Onda R Fase 1) |

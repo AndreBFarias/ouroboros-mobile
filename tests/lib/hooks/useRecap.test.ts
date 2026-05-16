@@ -35,7 +35,7 @@ function humor(data: string, valor: number): HumorMeta {
 
 function diario(
   data: string,
-  modo: 'trigger' | 'vitoria',
+  modo: 'gatilho' | 'conquista',
   intensidade = 3,
   texto = 'texto'
 ): DiarioEmocionalMeta {
@@ -50,7 +50,9 @@ function diario(
     contexto_social: [],
     texto,
     midia:
-      modo === 'vitoria' ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }] : [],
+      modo === 'conquista'
+        ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }]
+        : [],
     para: { tipo: 'mim' },
   };
   return base;
@@ -196,7 +198,7 @@ describe('agregarRecap', () => {
     const data = agregarRecap({
       humor: [],
       diarios: [
-        diario('2026-05-02T10:00:00-03:00', 'vitoria', 5, 'concluí o projeto'),
+        diario('2026-05-02T10:00:00-03:00', 'conquista', 5, 'concluí o projeto'),
       ],
       eventos: [evento('2026-05-01T10:00:00-03:00', 'positivo')],
       marcos: [marco('2026-04-30T10:00:00-03:00', 'novo recorde de leitura')],
@@ -245,9 +247,9 @@ describe('agregarRecap', () => {
     const data = agregarRecap({
       humor: [],
       diarios: [
-        diario('2026-05-01T10:00:00-03:00', 'trigger', 2, 'leve'),
-        diario('2026-05-02T10:00:00-03:00', 'trigger', 5, 'pico'),
-        diario('2026-05-03T10:00:00-03:00', 'trigger', 3, 'medio'),
+        diario('2026-05-01T10:00:00-03:00', 'gatilho', 2, 'leve'),
+        diario('2026-05-02T10:00:00-03:00', 'gatilho', 5, 'pico'),
+        diario('2026-05-03T10:00:00-03:00', 'gatilho', 3, 'medio'),
       ],
       eventos: [evento('2026-05-02T11:00:00-03:00', 'negativo', 4)],
       marcos: [],
@@ -285,7 +287,7 @@ describe('agregarRecap', () => {
   it('numeros agregados batem com soma das listas filtradas', () => {
     const data = agregarRecap({
       humor: [humor('2026-05-03', 3), humor('2026-05-02', 4)],
-      diarios: [diario('2026-05-02T10:00:00-03:00', 'vitoria')],
+      diarios: [diario('2026-05-02T10:00:00-03:00', 'conquista')],
       eventos: [
         evento('2026-05-01T10:00:00-03:00', 'positivo'),
         evento('2026-05-03T10:00:00-03:00', 'negativo'),

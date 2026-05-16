@@ -102,19 +102,24 @@ describe('seedDeterministico (M-GAUNTLET-SEED-V2)', () => {
   });
 
   describe('seedDiarios', () => {
-    it('produz 3 entradas: 1 trigger, 1 vitoria, 1 reflexao', () => {
+    // R0 lexical: fixture v2 mistura legacy ('trigger') e canonico
+    // ('conquista', 'reflexao') para exercitar compat de leitura.
+    // O mock store useDiarioMock guarda os valores exatamente como
+    // gravados (sem normalizacao); a normalizacao acontece apenas em
+    // memoria via z.preprocess do schema quando o reader le do Vault.
+    it('produz 3 entradas com vocabulario misto (trigger legacy + conquista/reflexao canonicos)', () => {
       seedDiarios(3);
       const ents = lerDiariosMock();
       expect(ents.length).toBe(3);
       const modos = ents.map((e) => e.modo).sort();
-      expect(modos).toEqual(['reflexao', 'trigger', 'vitoria']);
+      expect(modos).toEqual(['conquista', 'reflexao', 'trigger']);
     });
 
-    it('vitoria carrega midia (mock satisfaz contrato visual)', () => {
+    it('conquista carrega midia (mock satisfaz contrato visual)', () => {
       seedDiarios(3);
-      const vitoria = lerDiariosMock().find((e) => e.modo === 'vitoria');
-      expect(vitoria).toBeDefined();
-      expect(vitoria?.midia.length).toBeGreaterThanOrEqual(1);
+      const conquista = lerDiariosMock().find((e) => e.modo === 'conquista');
+      expect(conquista).toBeDefined();
+      expect(conquista?.midia.length).toBeGreaterThanOrEqual(1);
     });
 
     it('todas entradas tem data ISO 8601 valida', () => {

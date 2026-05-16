@@ -61,9 +61,11 @@ describe('seedDeterministico -> vault mock -> reader (V4.0.1)', () => {
     seedDiarios(3);
     const lidos = await listarDiarios('web://mock-vault/Ouroboros');
     expect(lidos.length).toBe(3);
-    // Modos esperados do fixture: trigger, vitoria, reflexao.
+    // R0 lexical: fixture grava modos legacy (trigger/vitoria/reflexao)
+    // no .md, mas o schema normaliza para canonico ao ler. Esperamos
+    // os tres modos canonicos apos a leitura.
     const modos = lidos.map((d) => d.modo).sort();
-    expect(modos).toEqual(['reflexao', 'trigger', 'vitoria']);
+    expect(modos).toEqual(['conquista', 'gatilho', 'reflexao']);
   });
 
   it('seedEventos popula vault mock com .md em markdown/evento-...md', () => {

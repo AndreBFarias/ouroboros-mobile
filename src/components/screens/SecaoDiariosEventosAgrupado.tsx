@@ -1,10 +1,10 @@
-// SecaoDiariosEventosAgrupado (M40). Substitui as duas listas
+// SecaoDiariosEventosAgrupado (M40, R0 lexical). Substitui as duas listas
 // separadas (Diario emocional + Eventos) por uma timeline cronologica
 // unica, ordenada por hora descendente. Cor da borda esquerda
 // diferencia o registro:
-//   - diario.modo === 'trigger'   -> red
-//   - diario.modo === 'reflexao'  -> cyan (G2.1, anotacao contemplativa)
-//   - diario.modo === 'vitoria'   -> green (anonimato-allow: substantivo)
+//   - diario.modo === 'gatilho'   -> red   (legado: 'trigger')
+//   - diario.modo === 'reflexao'  -> cyan  (G2.1, anotacao contemplativa)
+//   - diario.modo === 'conquista' -> green (legado: 'vitoria')
 //   - evento.modo === 'positivo'  -> green
 //   - evento.modo !== 'positivo'  -> red (negativo)
 //
@@ -87,7 +87,7 @@ function ItemLinha({ item }: ItemLinhaProps) {
     // G2.1: 3 cores por modo do diario emocional. Reflexao (modo
     // contemplativo introduzido em G2) ganha cyan, coerente com os
     // chips accent cyan da paleta de emocoes.
-    if (item.meta.modo === 'trigger') corBorda = colors.red;
+    if (item.meta.modo === 'gatilho') corBorda = colors.red;
     else if (item.meta.modo === 'reflexao') corBorda = colors.cyan;
     else corBorda = colors.green;
     rotulo = 'Diário';

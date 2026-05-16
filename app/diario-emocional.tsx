@@ -1,18 +1,22 @@
 // Tela 18 — Diario emocional. Bottom sheet 90% com toggle inicial
-// trigger <-> vitoria que muda a borda esquerda do form (red 2px /
+// gatilho <-> conquista que muda a borda esquerda do form (red 2px /
 // green 2px). Grid de chips de emocao multi-select (negativas em
-// trigger, positivas em vitoria). Slider de intensidade 1-5.
-// Textarea livre obrigatória. ChipGroup multi "com quem" com 4
-// opcoes fixas. Bloco condicional em modo trigger: textarea
+// gatilho, positivas em conquista). Slider de intensidade 1-5.
+// Textarea livre obrigatoria. ChipGroup multi "com quem" com 4
+// opcoes fixas. Bloco condicional em modo gatilho: textarea
 // estrategia + toggle "Funcionou?". Botao final destructive
-// (trigger) ou success (vitoria). Persiste em
+// (gatilho) ou success (conquista). Persiste em
 // inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md via saveDiario.
+//
+// R0 lexical: modos canonicos sao 'gatilho' | 'conquista' | 'reflexao'.
+// Query string ainda aceita 'trigger'/'vitoria' para deeplinks legacy
+// (normalizados via normalizarDiarioModo do lexicon).
 //
 // Decisões M06 (spec seção 9):
 //  - Texto livre obrigatório (minimo 1 caractere).
 //  - Listas de emocoes e "com quem" fechadas; expansao em sprint
 //    futura se demanda surgir.
-//  - modo=audio inicializa como vitoria e marca audioRequested
+//  - modo=audio inicializa como conquista e marca audioRequested
 //    interno; gravação real chega na M06.5.
 //
 // Restricao do schema (achado registrado para sprint nova): o
@@ -58,6 +62,7 @@ import {
   type DiarioEmocionalMeta,
   type DiarioEmocionalModo,
 } from '@/lib/schemas/diario_emocional';
+import { normalizarDiarioModo } from '@/lib/migration/lexicon';
 import type { Para } from '@/lib/schemas/para';
 import { saveDiario } from '@/lib/diario/saveDiario';
 import { formatEmocao } from '@/lib/diario/emocoes';
@@ -96,18 +101,33 @@ function labelComQuem(c: ComQuem): string {
   return nomeDe(c);
 }
 
-const MODOS_VALIDOS: readonly ModoParam[] = [
+// R0: aceita tanto valores canonicos quanto legacy. Normalizamos via
+// normalizarDiarioModo antes de usar como DiarioEmocionalModo.
+const MODOS_VALIDOS_INPUT: readonly string[] = [
+  'gatilho',
+  'conquista',
+  'reflexao',
   'trigger',
   'vitoria',
-  'reflexao',
   'audio',
 ];
 
 function isModoParam(value: unknown): value is ModoParam {
   return (
     typeof value === 'string' &&
-    (MODOS_VALIDOS as readonly string[]).includes(value)
+    MODOS_VALIDOS_INPUT.includes(value)
   );
+}
+
+// Normaliza um param da rota para o vocabulario canonico. 'audio' e
+// preservado (e flag interno do FAB, nao e modo de diario).
+function normalizarModoParam(raw: ModoParam): ModoParam {
+  if (raw === 'audio') return 'audio';
+  try {
+    return normalizarDiarioModo(raw);
+  } catch {
+    return 'conquista';
+  }
 }
 
 const INTENSIDADE_DEFAULT = 3;
@@ -171,14 +191,19 @@ export default function DiarioEmocional() {
   };
   const params = useLocalSearchParams<{ modo?: string }>();
   const modoBruto = Array.isArray(params.modo) ? params.modo[0] : params.modo;
-  const modoParam: ModoParam = isModoParam(modoBruto) ? modoBruto : 'vitoria';
+  // R0: param 'trigger'/'vitoria' legacy passa por normalizarModoParam
+  // (idempotente para 'gatilho'/'conquista'/'reflexao'). Default canonico
+  // = 'conquista'.
+  const modoParam: ModoParam = normalizarModoParam(
+    isModoParam(modoBruto) ? modoBruto : 'conquista'
+  );
 
-  // Modo inicial: 'audio' inicializa como 'vitoria' por default. A
+  // Modo inicial: 'audio' inicializa como 'conquista' por default. A
   // partir da M06.5 o MicrofoneButton fica sempre disponivel
   // (gated em useSettings.midia.permitirAudio); modoParam === 'audio'
   // do FAB so serve para escolher o tom inicial do form.
   const modoInicial: DiarioEmocionalModo =
-    modoParam === 'audio' ? 'vitoria' : modoParam;
+    modoParam === 'audio' ? 'conquista' : modoParam;
 
   const vaultRoot = useVault((s) => s.vaultRoot);
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
@@ -249,8 +274,8 @@ export default function DiarioEmocional() {
       texto,
       com: comPessoaIds,
       contexto_social: contextoSocial,
-      ...(modo === 'trigger' ? { funcionou } : {}),
-      ...(modo === 'trigger' && estrategia.trim().length > 0
+      ...(modo === 'gatilho' ? { funcionou } : {}),
+      ...(modo === 'gatilho' && estrategia.trim().length > 0
         ? { estrategia }
         : {}),
       audio: audioPath,
@@ -300,28 +325,29 @@ export default function DiarioEmocional() {
   // Sprint G2: borda/variant/label/titulo agora cobrem 3 modos.
   // Reflexao usa cyan (contemplativo, sem polaridade) e variant
   // primary (default neutro) com label "Refletir".
+  // R0: modos canonicos 'gatilho' / 'conquista' / 'reflexao'.
   const corBordaModo =
-    modo === 'trigger'
+    modo === 'gatilho'
       ? colors.red
-      : modo === 'vitoria'
+      : modo === 'conquista'
         ? colors.green
         : colors.cyan;
   const variantBotao: 'destructive' | 'success' | 'primary' =
-    modo === 'trigger'
+    modo === 'gatilho'
       ? 'destructive'
-      : modo === 'vitoria'
+      : modo === 'conquista'
         ? 'success'
         : 'primary';
   const labelBotao =
-    modo === 'trigger'
+    modo === 'gatilho'
       ? 'Registrar'
-      : modo === 'vitoria'
+      : modo === 'conquista'
         ? 'Anotar'
         : 'Refletir';
   const tituloModo =
-    modo === 'trigger'
+    modo === 'gatilho'
       ? 'O que aconteceu agora.'
-      : modo === 'vitoria'
+      : modo === 'conquista'
         ? 'O que rolou de bom.'
         : 'O que está passando pela cabeça.';
 
@@ -343,15 +369,15 @@ export default function DiarioEmocional() {
       toast.show('Escreva pelo menos uma palavra antes de salvar.', 'warn');
       return;
     }
-    // Midia obrigatoria em modo vitoria (M07.x). Bloqueio antecipado
+    // Midia obrigatoria em modo conquista (M07.x). Bloqueio antecipado
     // melhora UX em relacao ao refine do zod (que daria erro generico).
-    if (modo === 'vitoria' && midia.length === 0) {
+    if (modo === 'conquista' && midia.length === 0) {
       toast.show('Adicione pelo menos uma mídia para conquista.', 'warn');
       return;
     }
     setSalvando(true);
 
-    const ehTrigger = modo === 'trigger';
+    const ehGatilho = modo === 'gatilho';
     const comPessoaIds = com.filter(ehPessoaAutor);
     // Contexto social: amigos / sozinho viram campo estruturado no
     // frontmatter desde M06.X. O corpo livre do .md mantem a linha
@@ -371,10 +397,10 @@ export default function DiarioEmocional() {
       com: comPessoaIds,
       contexto_social: contextoSocial,
       texto: texto.trim(),
-      ...(ehTrigger && estrategiaTrim.length > 0
+      ...(ehGatilho && estrategiaTrim.length > 0
         ? { estrategia: estrategiaTrim }
         : {}),
-      ...(ehTrigger ? { funcionou } : {}),
+      ...(ehGatilho ? { funcionou } : {}),
       audio: audioPath,
       midia,
       para,
@@ -389,7 +415,7 @@ export default function DiarioEmocional() {
 
     const body = buildBody({
       texto: texto.trim(),
-      ...(ehTrigger ? { estrategia: estrategiaTrim } : {}),
+      ...(ehGatilho ? { estrategia: estrategiaTrim } : {}),
       com,
       emocoes,
       intensidade,
@@ -399,13 +425,12 @@ export default function DiarioEmocional() {
       await comTimeout(saveDiario(validacao.data, body, vaultRoot));
       // M24: limpa rascunho pos-save bem-sucedido.
       useSessao.getState().limparRascunho('diarioEmocional');
-      if (modo === 'vitoria') {
-        // anonimato-allow: substantivo comum (conquista) na frase abaixo.
-        // Conquista registrada — respeita Settings.somVibracao.vitoria.
+      if (modo === 'conquista') {
+        // Conquista registrada — respeita Settings.somVibracao.conquista.
         await haptics.vitoria();
         toast.show('Diário salvo.', 'success');
-      } else if (ehTrigger) {
-        // Gatilho emocional — respeita Settings.somVibracao.trigger.
+      } else if (ehGatilho) {
+        // Gatilho emocional — respeita Settings.somVibracao.botoes.
         await haptics.trigger();
         toast.show('Diário salvo.', 'success');
       } else {
@@ -471,19 +496,19 @@ export default function DiarioEmocional() {
                 gap: spacing.sm,
                 flexWrap: 'wrap',
               }}
-              accessibilityLabel="seletor de modo trigger vitoria ou reflexao"
+              accessibilityLabel="seletor de modo gatilho conquista ou reflexao"
             >
               <Chip
-                label="Trigger"
+                label="Crise"
                 accent="red"
-                selected={modo === 'trigger'}
-                onPress={() => setModo('trigger')}
+                selected={modo === 'gatilho'}
+                onPress={() => setModo('gatilho')}
               />
               <Chip
-                label="Vitória" // anonimato-allow: substantivo comum (conquista)
+                label="Conquista"
                 accent="green"
-                selected={modo === 'vitoria'}
-                onPress={() => setModo('vitoria')}
+                selected={modo === 'conquista'}
+                onPress={() => setModo('conquista')}
               />
               <Chip
                 label="Reflexão"
@@ -577,13 +602,13 @@ export default function DiarioEmocional() {
               accessibilityLabel="campo o que aconteceu"
             />
 
-            {/* M07.x: midia obrigatoria em modo vitoria; opcional em
-              modo trigger. MidiaPicker ja respeita o cap e o toggle
+            {/* M07.x: midia obrigatoria em modo conquista; opcional em
+              modo gatilho. MidiaPicker ja respeita o cap e o toggle
               permitirAudio internamente. */}
             <MidiaPicker
               value={midia}
               onChange={setMidia}
-              obrigatorio={modo === 'vitoria'}
+              obrigatorio={modo === 'conquista'}
             />
 
             <View style={{ gap: spacing.sm }}>
@@ -596,7 +621,7 @@ export default function DiarioEmocional() {
               />
             </View>
 
-            {modo === 'trigger' ? (
+            {modo === 'gatilho' ? (
               <View style={{ gap: spacing.lg }}>
                 <Textarea
                   label="Estratégia que tentou"

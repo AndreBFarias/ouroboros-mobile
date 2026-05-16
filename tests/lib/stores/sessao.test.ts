@@ -86,7 +86,7 @@ describe('useSessao', () => {
     it('cap de RASCUNHO_TEXTO_CAP em texto livre', () => {
       const longo = 'x'.repeat(RASCUNHO_TEXTO_CAP + 500);
       useSessao.getState().salvarRascunho('diarioEmocional', {
-        modo: 'trigger',
+        modo: 'gatilho',
         texto: longo,
         emocoes: [],
         intensidade: 3,
@@ -117,7 +117,7 @@ describe('useSessao', () => {
 
     it('texto curto passa intacto', () => {
       useSessao.getState().salvarRascunho('diarioEmocional', {
-        modo: 'vitoria',
+        modo: 'conquista',
         emocoes: [],
         intensidade: 3,
         texto: 'Algo bom hoje',
@@ -136,7 +136,7 @@ describe('useSessao', () => {
       // longos para exceder so quando ambos ja estao gravados.
       const grande = 'A'.repeat(RASCUNHO_TEXTO_CAP);
       useSessao.getState().salvarRascunho('diarioEmocional', {
-        modo: 'vitoria',
+        modo: 'conquista',
         emocoes: [],
         intensidade: 3,
         texto: grande,

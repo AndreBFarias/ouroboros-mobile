@@ -26,11 +26,15 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import type { Marco } from '@/lib/schemas/marco';
 import type { Para } from '@/lib/schemas/para';
 
+// R0 lexical: label "Conquista" substitui termo legado (substantivo
+// comum sucesso). Slug 'conquista' canonico; tags em .md antigos com
+// slug 'vitoria' permanecem legiveis (sao apenas strings livres sem
+// schema enum).
 const TAGS_SUGERIDAS: ChipOption[] = [
   { value: 'treino', label: 'Treino', accent: 'green' },
   { value: 'consistencia', label: 'Consistência', accent: 'cyan' },
   { value: 'emocional', label: 'Emocional', accent: 'purple' },
-  { value: 'vitoria', label: 'Vitória', accent: 'green' }, // anonimato-allow: substantivo comum sucesso/conquista
+  { value: 'conquista', label: 'Conquista', accent: 'green' },
   { value: 'retomada', label: 'Retomada', accent: 'yellow' },
 ];
 
@@ -94,7 +98,7 @@ export function SheetNovoMarco({
       };
 
       await saveMarco({ meta, vaultRoot });
-      // Marco anotado é vitória — respeita Settings.somVibracao.vitoria.
+      // Marco anotado e conquista — respeita Settings.somVibracao.conquista.
       haptics.vitoria();
       toast.show('Marco anotado.', 'success');
       onSalvo();

@@ -41,17 +41,24 @@ function fakeEvento(
   } as EventoMeta;
 }
 
+// R0 lexical: aceita ambos vocabularios (canonico + legacy) para
+// flexibilidade nos cenarios de teste; consumidor real le via
+// DiarioEmocionalSchema que normaliza para canonico em runtime.
 function fakeDiario(
   data: string,
-  modo: 'vitoria' | 'trigger',
+  modo: 'conquista' | 'gatilho' | 'vitoria' | 'trigger',
   midia: Midia[],
   extras: Partial<DiarioEmocionalMeta> = {}
 ): DiarioEmocionalMeta {
+  // Normaliza para canonico antes de criar o meta -- simula o
+  // comportamento do schema (z.preprocess) sem chamar parse() aqui.
+  const modoCanonico: 'gatilho' | 'conquista' =
+    modo === 'trigger' || modo === 'gatilho' ? 'gatilho' : 'conquista';
   return {
     tipo: 'diario_emocional',
     data,
     autor: 'pessoa_b',
-    modo,
+    modo: modoCanonico,
     intensidade: 3,
     estrategia: 'respiracao',
     texto: 'Texto qualquer.',

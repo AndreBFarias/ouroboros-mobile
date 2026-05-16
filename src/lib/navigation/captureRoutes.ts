@@ -5,9 +5,14 @@
 // Decisões registradas em docs/sprints/M04-spec.md seção 9,
 // docs/sprints/M13-spec.md seção 10 e docs/sprints/M27-spec.md:
 //   1. /diario-emocional recebe modo via query string
-//      (audio | vitoria | trigger).
+//      (audio | conquista | gatilho | reflexao).
 //   2. exercício aponta para /exercicios/novo (M27 removeu o grupo
 //      (tabs); M13 antes apontava para /(tabs)/exercicios/novo).
+//
+// R0 lexical: param 'modo' emitido com vocabulario canonico
+// (conquista/gatilho/reflexao). A tela diario-emocional aceita os
+// valores legacy via normalizarModoParam, mas as rotas internas
+// emitem apenas canonico em codigo novo.
 //
 // Comentarios em código sem acentuacao (convencao shell/CI).
 import type { FABRadialKey } from '@/components/ui';
@@ -35,8 +40,8 @@ const CAPTURE_ROUTES = {
   voz: { pathname: '/diario-emocional', params: { modo: 'audio' } },
   camera: { pathname: '/scanner' },
   exercicio: { pathname: '/exercicios/novo' },
-  vitoria: { pathname: '/diario-emocional', params: { modo: 'vitoria' } },
-  trigger: { pathname: '/diario-emocional', params: { modo: 'trigger' } },
+  vitoria: { pathname: '/diario-emocional', params: { modo: 'conquista' } },
+  trigger: { pathname: '/diario-emocional', params: { modo: 'gatilho' } },
 } as const satisfies Readonly<Record<FABRadialKey, RouteDescriptor>>;
 
 // Devolve uma copia rasa e segura da rota associada a `key`. Copia

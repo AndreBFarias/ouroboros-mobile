@@ -1,7 +1,7 @@
 {
   "schema": "diarios-3",
-  "versao": 1,
-  "descricao": "Tres entradas de diario emocional: 1 trigger, 1 vitoria, 1 reflexao. offsetHoras relativo a agora.",
+  "versao": 2,
+  "descricao": "Tres entradas de diario emocional R0: 1 gatilho (legacy 'trigger' em fixture v1, mantido para exercitar compat), 1 conquista, 1 reflexao. offsetHoras relativo a agora.",
   "total": 3,
   "entradas": [
     {
@@ -28,7 +28,7 @@
     {
       "offsetHoras": -36,
       "autor": "pessoa_b",
-      "modo": "vitoria",
+      "modo": "conquista",
       "intensidade": 5,
       "emocoes": [
         "alegria",
@@ -46,7 +46,7 @@
         "presente"
       ],
       "midia": [
-        "media/fotos/2026-05-02-mock-vitoria.jpg"
+        "media/fotos/2026-05-02-mock-conquista.jpg"
       ]
     },
     {

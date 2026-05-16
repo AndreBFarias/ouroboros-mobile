@@ -101,15 +101,17 @@ describe('Tela 18 — diario emocional render', () => {
     expect(sheet.props.accessibilityHint).toBe('index=0');
   });
 
-  it('renderiza o bottom sheet em modo vitoria por default', () => {
+  it('renderiza o bottom sheet em modo conquista por default', () => {
     const { getByLabelText } = renderTela();
     expect(getByLabelText('bottom-sheet-mock')).toBeTruthy();
-    // Em modo vitoria os chips positivos aparecem.
+    // Em modo conquista os chips positivos aparecem.
     expect(getByLabelText('chip Gratidão')).toBeTruthy();
     expect(getByLabelText('chip Alegria')).toBeTruthy();
   });
 
-  it('parametro modo=trigger inicializa em trigger e mostra chips negativos', () => {
+  it('parametro modo=trigger legacy inicializa em gatilho e mostra chips negativos', () => {
+    // R0: param 'trigger' aceito por compat de deeplink; normalizado
+    // para 'gatilho' canonico pela tela.
     mockSearchParams.modo = 'trigger';
     const { getByLabelText, queryByLabelText } = renderTela();
     expect(getByLabelText('chip Frustração')).toBeTruthy();
@@ -117,10 +119,23 @@ describe('Tela 18 — diario emocional render', () => {
     expect(queryByLabelText('chip Gratidão')).toBeNull();
   });
 
-  it('parametro modo=audio inicializa em vitoria e expoe MicrofoneButton', () => {
+  it('parametro modo=gatilho canonico inicializa em gatilho', () => {
+    mockSearchParams.modo = 'gatilho';
+    const { getByLabelText, queryByLabelText } = renderTela();
+    expect(getByLabelText('chip Frustração')).toBeTruthy();
+    expect(queryByLabelText('chip Gratidão')).toBeNull();
+  });
+
+  it('parametro modo=conquista canonico inicializa em conquista', () => {
+    mockSearchParams.modo = 'conquista';
+    const { getByLabelText } = renderTela();
+    expect(getByLabelText('chip Gratidão')).toBeTruthy();
+  });
+
+  it('parametro modo=audio inicializa em conquista e expoe MicrofoneButton', () => {
     mockSearchParams.modo = 'audio';
     const { getByLabelText } = renderTela();
-    // Modo audio cai em vitoria por default (chips positivos
+    // Modo audio cai em conquista por default (chips positivos
     // aparecem). M06.5 substituiu o aviso placeholder pelo
     // MicrofoneButton inline acima do textarea.
     expect(getByLabelText('chip Gratidão')).toBeTruthy();
@@ -143,10 +158,10 @@ describe('Tela 18 — diario emocional render', () => {
 });
 
 describe('Tela 18 — troca de modo', () => {
-  it('clicar no chip Trigger troca o conjunto de chips de emocao', () => {
+  it('clicar no chip Crise troca o conjunto de chips de emocao', () => {
     const { getByLabelText, queryByLabelText } = renderTela();
     expect(getByLabelText('chip Gratidão')).toBeTruthy();
-    fireEvent.press(getByLabelText('chip Trigger'));
+    fireEvent.press(getByLabelText('chip Crise'));
     expect(getByLabelText('chip Frustração')).toBeTruthy();
     expect(queryByLabelText('chip Gratidão')).toBeNull();
   });
@@ -154,7 +169,7 @@ describe('Tela 18 — troca de modo', () => {
   it('trocar modo limpa as emocoes selecionadas anteriormente', async () => {
     const { getByLabelText } = renderTela();
     fireEvent.press(getByLabelText('chip Gratidão'));
-    fireEvent.press(getByLabelText('chip Trigger'));
+    fireEvent.press(getByLabelText('chip Crise'));
     fireEvent.changeText(
       getByLabelText('campo o que aconteceu'),
       'agora estou triste.'
@@ -165,8 +180,8 @@ describe('Tela 18 — troca de modo', () => {
       emocoes: string[];
       modo: string;
     };
-    expect(meta.modo).toBe('trigger');
-    // Emocoes resetadas: 'gratidao' nao deve persistir em modo trigger.
+    expect(meta.modo).toBe('gatilho');
+    // Emocoes resetadas: 'gratidao' nao deve persistir em modo gatilho.
     expect(meta.emocoes).not.toContain('gratidao');
   });
 });
@@ -179,7 +194,7 @@ describe('Tela 18 — validacao do save', () => {
     await waitFor(() => expect(queryByLabelText('toast warn')).toBeTruthy());
   });
 
-  it('save em modo vitoria chama saveDiario com payload valido', async () => {
+  it('save em modo conquista chama saveDiario com payload valido', async () => {
     const utils = renderTela();
     const { getByLabelText } = utils;
     fireEvent.press(getByLabelText('chip Gratidão'));
@@ -187,7 +202,7 @@ describe('Tela 18 — validacao do save', () => {
       getByLabelText('campo o que aconteceu'),
       'consegui fechar a tarefa.'
     );
-    // M07.x: vitoria exige midia. Helper adiciona youtube valido.
+    // M07.x: conquista exige midia. Helper adiciona youtube valido.
     adicionarMidiaYoutube(utils);
     fireEvent.press(getByLabelText('Anotar'));
 
@@ -201,17 +216,19 @@ describe('Tela 18 — validacao do save', () => {
       expect(parsed.data).toMatchObject({
         tipo: 'diario_emocional',
         autor: 'pessoa_a',
-        // anonimato-allow: substantivo comum 'vitoria'
-        modo: 'vitoria',
+        modo: 'conquista',
         emocoes: ['gratidao'],
         intensidade: 3,
       });
-      // funcionou nao deve aparecer em modo vitoria.
+      // funcionou nao deve aparecer em modo conquista.
       expect(parsed.data.funcionou).toBeUndefined();
     }
   });
 
-  it('save em modo trigger inclui funcionou e estrategia opcionais', async () => {
+  it('save em modo gatilho inclui funcionou e estrategia opcionais', async () => {
+    // R0: param 'trigger' legacy normalizado para 'gatilho' pelo
+    // normalizarModoParam da tela. mockSearchParams ainda usa o valor
+    // legacy pra exercitar a compat de query string.
     mockSearchParams.modo = 'trigger';
     const { getByLabelText } = renderTela();
     fireEvent.press(getByLabelText('chip Raiva'));
@@ -229,7 +246,7 @@ describe('Tela 18 — validacao do save', () => {
     await waitFor(() => expect(mockSaveDiario).toHaveBeenCalledTimes(1));
     const [meta] = mockSaveDiario.mock.calls[0];
     expect(meta).toMatchObject({
-      modo: 'trigger',
+      modo: 'gatilho',
       emocoes: ['raiva'],
       estrategia: 'respirei e sai do comodo.',
       funcionou: true,
@@ -248,7 +265,7 @@ describe('Tela 18 — validacao do save', () => {
     await waitFor(() => expect(mockBack).toHaveBeenCalled());
   });
 
-  it('toast de sucesso "Anotado." em modo vitoria', async () => {
+  it('toast de sucesso "Anotado." em modo conquista', async () => {
     const utils = renderTela();
     const { getByLabelText, queryByLabelText } = utils;
     fireEvent.changeText(
@@ -260,7 +277,7 @@ describe('Tela 18 — validacao do save', () => {
     await waitFor(() => expect(queryByLabelText('toast success')).toBeTruthy());
   });
 
-  it('toast de sucesso "Registrado." em modo trigger', async () => {
+  it('toast de sucesso "Registrado." em modo gatilho', async () => {
     mockSearchParams.modo = 'trigger';
     const { getByLabelText, queryByLabelText } = renderTela();
     fireEvent.changeText(

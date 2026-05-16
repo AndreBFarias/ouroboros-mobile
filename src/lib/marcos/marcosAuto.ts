@@ -4,12 +4,12 @@
 // (mesma frase + autor produz mesmo hash, e saveMarco grava na pasta
 // marcos/<data>-<slug>.md - mesmo path se mesmo dia).
 //
-// 5 criterios canonicos (spec M11 §10):
+// 5 criterios canonicos (spec M11 §10, R0 lexical update):
 //   1. 3 treinos em 7 dias    -> "Tres treinos nesta semana."
-//   2. Retorno após hiato 5+d -> "Voltou após N dias parados."
+//   2. Retorno apos hiato 5+d -> "Voltou apos N dias parados."
 //   3. 7 dias humor seguidos  -> "Sete dias acompanhando."
-//   4. 30 dias sem trigger    -> "Trinta dias sem trigger."
-//   5. Primeira vitoria semana-> "Primeira vitoria desta semana."
+//   4. 30 dias sem gatilho    -> "Trinta dias sem gatilho." (legado: "trigger")
+//   5. Primeira conquista sem.-> "Primeira conquista desta semana." (legado: "vitoria")
 //
 // Função roda 1x/dia via BOOT_HOOKS. Idempotente: sempre que rodar
 // sem mudanca de estado, retorna 0 marcos novos.
@@ -130,35 +130,37 @@ function avaliarSeteDiasConsecutivos(
   };
 }
 
-// Verifica criterio 4: 30 dias sem trigger registrado.
-function avaliarTrintaDiasSemTrigger(
+// Verifica criterio 4: 30 dias sem gatilho registrado.
+// R0: modo canonico 'gatilho' (legado 'trigger' aceito em leitura via
+// preprocess do schema). Texto exibido fica em PT-BR canonico.
+function avaliarTrintaDiasSemGatilho(
   diarios: Array<DiarioEmocionalMeta>,
   autor: PessoaAutor,
   agora: Date
 ): CandidatoMarco | null {
-  const triggers = diarios
-    .filter((d) => d.autor === autor && d.modo === 'trigger')
+  const gatilhos = diarios
+    .filter((d) => d.autor === autor && d.modo === 'gatilho')
     .sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
-  if (triggers.length === 0) {
-    // Nunca houve trigger para este autor: não podemos afirmar
+  if (gatilhos.length === 0) {
+    // Nunca houve gatilho para este autor: nao podemos afirmar
     // "trinta dias sem" sem ponto de partida. Skip.
     return null;
   }
-  const ultimoTrigger = new Date(triggers[0].data);
+  const ultimoGatilho = new Date(gatilhos[0].data);
   const dias = Math.floor(
-    (agora.getTime() - ultimoTrigger.getTime()) / (24 * 60 * 60 * 1000)
+    (agora.getTime() - ultimoGatilho.getTime()) / (24 * 60 * 60 * 1000)
   );
   if (dias >= 30) {
     return {
-      descricao: 'Trinta dias sem trigger.',
+      descricao: 'Trinta dias sem gatilho.',
       tags: ['emocional', 'consistencia'],
     };
   }
   return null;
 }
 
-// Verifica criterio 5: primeira vitoria desta semana (segunda como
-// início de semana).
+// Verifica criterio 5: primeira conquista desta semana (segunda como
+// inicio de semana).
 function avaliarPrimeiraConquistaSemana(
   diarios: Array<DiarioEmocionalMeta>,
   autor: PessoaAutor,
@@ -171,14 +173,14 @@ function avaliarPrimeiraConquistaSemana(
   segunda.setDate(segunda.getDate() + diff);
   segunda.setHours(0, 0, 0, 0);
 
-  const vitorias = diarios
-    .filter((d) => d.autor === autor && d.modo === 'vitoria')
+  const conquistas = diarios
+    .filter((d) => d.autor === autor && d.modo === 'conquista')
     .filter((d) => new Date(d.data).getTime() >= segunda.getTime())
     .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0));
-  if (vitorias.length >= 1) {
+  if (conquistas.length >= 1) {
     return {
-      descricao: 'Primeira vitoria desta semana.',
-      tags: ['emocional', 'vitoria'],
+      descricao: 'Primeira conquista desta semana.',
+      tags: ['emocional', 'conquista'],
     };
   }
   return null;
@@ -256,7 +258,7 @@ export async function verificarMarcosAuto(
     avaliarTresTreinosSemana(treinos, autor, agora),
     avaliarRetornoAposHiato(treinos, autor),
     avaliarSeteDiasConsecutivos(humores, autor, agora),
-    avaliarTrintaDiasSemTrigger(diarios, autor, agora),
+    avaliarTrintaDiasSemGatilho(diarios, autor, agora),
     avaliarPrimeiraConquistaSemana(diarios, autor, agora),
   ];
 

@@ -1,6 +1,10 @@
-// Loader cruzado de conquistas (M11.5). Le duas pastas do Vault:
+// Loader cruzado de conquistas (M11.5, R0 lexical). Le duas pastas do Vault:
 //   - eventos/      (modo === 'positivo' + midia.length > 0)
-//   - inbox/mente/diario/ (modo === 'vitoria' + midia.length > 0)
+//   - inbox/mente/diario/ (modo === 'conquista' + midia.length > 0)
+//
+// Compat de leitura: schema DiarioEmocionalSchema normaliza
+// 'vitoria' (legacy) -> 'conquista' (canonico) via z.preprocess.
+// Origem 'diario_vitoria' do contrato ConquistaOrigem mantida estavel.
 //
 // Decisao A5 do adendo M11.5: nao filtramos arquivos de midia
 // orfaos aqui. Leitura otimista do Vault — a UI degrada graciosamente
@@ -50,7 +54,7 @@ function fraseDoEvento(meta: EventoMeta): string {
 
 function fraseDoDiario(meta: DiarioEmocionalMeta): string {
   if (!meta.texto || meta.texto.trim().length === 0) {
-    return 'Vitória sem descrição.'; // anonimato-allow: substantivo comum sucesso/conquista
+    return 'Conquista sem descrição.';
   }
   return truncarFrase(meta.texto, 120);
 }
@@ -115,7 +119,7 @@ async function lerEventosPositivos(vaultRoot: string): Promise<Conquista[]> {
   return out;
 }
 
-async function lerDiarioVitorias(vaultRoot: string): Promise<Conquista[]> { // anonimato-allow: substantivo comum sucesso/conquista
+async function lerDiarioConquistas(vaultRoot: string): Promise<Conquista[]> {
   const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
   const todos = (await listVaultFolder(folderUri, '.md')).filter(
     (u) => !ehSyncConflict(u)
@@ -128,7 +132,7 @@ async function lerDiarioVitorias(vaultRoot: string): Promise<Conquista[]> { // a
       const lido = await readVaultFile(arquivoUri, DiarioEmocionalSchema);
       if (!lido) continue;
       const meta = lido.meta;
-      if (meta.modo !== 'vitoria') continue;
+      if (meta.modo !== 'conquista') continue;
       if (meta.midia.length === 0) continue;
 
       const principal = meta.midia[0];
@@ -177,19 +181,26 @@ export async function lerConquistas(
     };
   }
 
-  const [eventos, vitorias] = await Promise.all([
+  const [eventos, diarioConquistas] = await Promise.all([
     lerEventosPositivos(vaultRoot),
-    lerDiarioVitorias(vaultRoot), // anonimato-allow: substantivo comum
+    lerDiarioConquistas(vaultRoot),
   ]);
 
-  const todas: Conquista[] = [...eventos, ...vitorias];
+  const todas: Conquista[] = [...eventos, ...diarioConquistas];
   todas.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 
   return {
     conquistas: todas,
     totaisPorOrigem: {
       evento_positivo: eventos.length,
-      diario_vitoria: vitorias.length,
+      diario_vitoria: diarioConquistas.length,
     },
   };
 }
+
+/**
+ * @deprecated Use `lerDiarioConquistas` (R0 lexical). Mantido por 1
+ * versao para nao quebrar callers internos que ainda referenciam o
+ * nome legado. Sera removido apos validacao live em alpha-12.
+ */
+export const lerDiarioVitorias = lerDiarioConquistas; // anonimato-allow: substantivo comum (sucesso)

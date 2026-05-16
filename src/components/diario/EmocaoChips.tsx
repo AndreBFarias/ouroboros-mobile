@@ -1,13 +1,15 @@
 // Wrapper sobre <ChipGroup mode="multi"> que devolve a lista de
-// emocoes correspondente ao modo do diario (negativas para trigger,
-// positivas para vitoria, reflexivas para reflexao). A troca de modo
+// emocoes correspondente ao modo do diario (negativas para gatilho,
+// positivas para conquista, reflexivas para reflexao). A troca de modo
 // dispara um spring subtle no opacity do bloco para sinalizar a
 // mudanca de paleta sem cortar a visao do usuario (jump-cut quebraria
 // a regra de fisica natural, ADR-010).
 //
-// Slugs guardados são snake_case ASCII; renderizacao via formatEmocao
+// Slugs guardados sao snake_case ASCII; renderizacao via formatEmocao
 // gera Sentence case com diacriticos PT-BR. Accent dos chips segue a
-// borda do form: red em trigger, green em vitoria, cyan em reflexao.
+// borda do form: red em gatilho, green em conquista, cyan em reflexao.
+//
+// R0 lexical: modos canonicos sao 'gatilho' | 'conquista' | 'reflexao'.
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { MotiView } from 'moti';
@@ -19,7 +21,7 @@ import {
   EMOCOES_REFLEXIVAS_OPTIONS,
 } from '@/lib/diario/emocoes';
 
-export type EmocaoChipsModo = 'trigger' | 'vitoria' | 'reflexao';
+export type EmocaoChipsModo = 'gatilho' | 'conquista' | 'reflexao';
 
 export interface EmocaoChipsProps {
   modo: EmocaoChipsModo;
@@ -43,9 +45,9 @@ export function EmocaoChips({
   }, [modo]);
 
   const options =
-    modo === 'trigger'
+    modo === 'gatilho'
       ? EMOCOES_NEGATIVAS_OPTIONS
-      : modo === 'vitoria'
+      : modo === 'conquista'
         ? EMOCOES_POSITIVAS_OPTIONS
         : EMOCOES_REFLEXIVAS_OPTIONS;
 

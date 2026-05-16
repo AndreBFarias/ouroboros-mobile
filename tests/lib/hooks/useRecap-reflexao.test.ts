@@ -1,9 +1,10 @@
-// Testes do hook useRecap (G2.1) — modo 'reflexao' do diario emocional.
+// Testes do hook useRecap (G2.1, R0 lexical) — modo 'reflexao' do
+// diario emocional.
 //
 // Cobre:
 //  - reflexoes sao filtradas em lista paralela a conquistas/crises.
-//  - Mix 2 vitoria + 1 trigger + 3 reflexao no periodo: conquistas=2,
-//    crises=1, reflexoes=3 (zero contaminacao cruzada).
+//  - Mix 2 conquista + 1 gatilho + 3 reflexao no periodo:
+//    conquistas=2, crises=1, reflexoes=3 (zero contaminacao cruzada).
 //  - Reflexoes ordenadas por data desc.
 //  - Reflexao com texto vazio recebe frase fallback "Reflexão sem
 //    descrição.".
@@ -15,7 +16,7 @@ import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 
 function diario(
   data: string,
-  modo: 'trigger' | 'vitoria' | 'reflexao',
+  modo: 'gatilho' | 'conquista' | 'reflexao',
   intensidade = 3,
   texto = 'texto'
 ): DiarioEmocionalMeta {
@@ -30,7 +31,9 @@ function diario(
     contexto_social: [],
     texto,
     midia:
-      modo === 'vitoria' ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }] : [],
+      modo === 'conquista'
+        ? [{ tipo: 'foto', path: 'media/fotos/x.jpg' }]
+        : [],
     para: { tipo: 'mim' },
   };
 }
@@ -39,13 +42,13 @@ describe('agregarRecap — modo reflexao (G2.1)', () => {
   const agora = new Date('2026-05-04T20:00:00-03:00');
   const range = resolverPeriodo('semana', agora);
 
-  it('separa em listas paralelas: 2 vitoria + 1 trigger + 3 reflexao', () => {
+  it('separa em listas paralelas: 2 conquista + 1 gatilho + 3 reflexao', () => {
     const data = agregarRecap({
       humor: [],
       diarios: [
-        diario('2026-05-02T10:00:00-03:00', 'vitoria', 4, 'concluí leitura'),
-        diario('2026-05-03T11:00:00-03:00', 'vitoria', 5, 'projeto entregue'),
-        diario('2026-05-01T09:00:00-03:00', 'trigger', 4, 'discussão tensa'),
+        diario('2026-05-02T10:00:00-03:00', 'conquista', 4, 'concluí leitura'),
+        diario('2026-05-03T11:00:00-03:00', 'conquista', 5, 'projeto entregue'),
+        diario('2026-05-01T09:00:00-03:00', 'gatilho', 4, 'discussão tensa'),
         diario(
           '2026-05-02T15:00:00-03:00',
           'reflexao',
@@ -167,7 +170,7 @@ describe('agregarRecap — modo reflexao (G2.1)', () => {
     const data = agregarRecap({
       humor: [],
       diarios: [
-        diario('2026-05-02T10:00:00-03:00', 'vitoria', 4, 'so vitoria'),
+        diario('2026-05-02T10:00:00-03:00', 'conquista', 4, 'so conquista'),
       ],
       eventos: [],
       marcos: [],

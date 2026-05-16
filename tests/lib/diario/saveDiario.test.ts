@@ -30,7 +30,7 @@ const baseTrigger: DiarioEmocionalMeta = {
   tipo: 'diario_emocional',
   data: '2026-04-29T15:30:00-03:00',
   autor: 'pessoa_a',
-  modo: 'trigger',
+  modo: 'gatilho',
   emocoes: ['raiva', 'frustracao'],
   intensidade: 4,
   com: ['pessoa_b'],
@@ -47,14 +47,14 @@ const baseSucesso: DiarioEmocionalMeta = {
   tipo: 'diario_emocional',
   data: '2026-04-29T19:45:00-03:00',
   autor: 'pessoa_a',
-  modo: 'vitoria',
+  modo: 'conquista',
   emocoes: ['gratidao', 'alegria'],
   intensidade: 4,
   com: [],
   contexto_social: ['sozinho'],
   texto: 'consegui terminar o que comecei hoje.',
   audio: null,
-  // M07.x: vitoria exige midia, mas o teste deste modulo so checa
+  // M07.x: conquista exige midia, mas o teste deste modulo so checa
   // o saveDiario (writeVaultFile + path canonico). Como o modulo
   // recebe meta ja validado e nao reaplica refine, manter midia
   // populada com um item reduz risco de mock futuro pegar refine.
@@ -88,7 +88,7 @@ describe('saveDiario T2-LOCK-VAULT', () => {
     );
     expect(meta).toMatchObject({
       tipo: 'diario_emocional',
-      modo: 'trigger',
+      modo: 'gatilho',
       autor: 'pessoa_a',
     });
     expect(body).toBe('corpo livre.');
@@ -102,7 +102,7 @@ describe('saveDiario T2-LOCK-VAULT', () => {
     );
   });
 
-  it('grava modo vitoria sem funcionou (com suffix)', async () => {
+  it('grava modo conquista sem funcionou (com suffix)', async () => {
     const out = await saveDiario(baseSucesso, 'feliz.', VAULT_ROOT);
     expect(out.uri).toMatch(/-gratidao-ouro-[a-z0-9]{6}\.md$/);
     const [, meta] = mockWriteVaultFile.mock.calls[0];
@@ -134,7 +134,7 @@ describe('saveDiario T2-LOCK-VAULT', () => {
 });
 
 describe('saveDiario validacao', () => {
-  it('rejeita payload com funcionou em modo vitoria', async () => {
+  it('rejeita payload com funcionou em modo conquista', async () => {
     const invalido = {
       ...baseSucesso,
       funcionou: true,
@@ -156,13 +156,13 @@ describe('saveDiario validacao', () => {
   });
 });
 
-// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07): cobertura explicita
-// dos 2 modos canonicos do schema (trigger, vitoria), edge case
-// vaultRoot vazio, path final via vaultUriJoin (sem trailing space,
-// sem %20 ofensivo, sem barras duplas) e save com audio companion
+// I-DIARIO (M-SAVE-DIARIO-VALIDA, 2026-05-07; R0 lexical 2026-05-15):
+// cobertura explicita dos modos canonicos do schema (gatilho, conquista),
+// edge case vaultRoot vazio, path final via vaultUriJoin (sem trailing
+// space, sem %20 ofensivo, sem barras duplas) e save com audio companion
 // presente (campo audio: string apontando para m4a/...).
 describe('I-DIARIO modos canonicos', () => {
-  it('modo trigger gera path com slug da emocao primaria (com suffix)', async () => {
+  it('modo gatilho gera path com slug da emocao primaria (com suffix)', async () => {
     const out = await saveDiario(baseTrigger, 'corpo trigger.', VAULT_ROOT);
     expect(out.uri).toMatch(
       /markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
@@ -171,16 +171,16 @@ describe('I-DIARIO modos canonicos', () => {
     expect(uri).toMatch(
       /markdown\/diario-2026-04-29-0900-raiva-ouro-[a-z0-9]{6}\.md$/
     );
-    expect(meta).toMatchObject({ modo: 'trigger', funcionou: true });
+    expect(meta).toMatchObject({ modo: 'gatilho', funcionou: true });
   });
 
-  it('modo vitoria gera path com slug da emocao primaria (com suffix)', async () => {
+  it('modo conquista gera path com slug da emocao primaria (com suffix)', async () => {
     const out = await saveDiario(baseSucesso, 'corpo vitoria.', VAULT_ROOT);
     expect(out.uri).toMatch(
       /markdown\/diario-2026-04-29-0900-gratidao-ouro-[a-z0-9]{6}\.md$/
     );
     const [, meta] = mockWriteVaultFile.mock.calls[0];
-    expect(meta).toMatchObject({ modo: 'vitoria' });
+    expect(meta).toMatchObject({ modo: 'conquista' });
     // funcionou nao se aplica em vitoria; nao deve aparecer.
     expect((meta as DiarioEmocionalMeta).funcionou).toBeUndefined();
   });

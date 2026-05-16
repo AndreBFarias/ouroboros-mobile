@@ -187,7 +187,8 @@ describe('feature diario emocional (M06 + M06.5)', () => {
       tipo: 'diario_emocional',
       data: '2026-05-04T15:00:00-03:00',
       autor: 'pessoa_a',
-      modo: 'trigger',
+      // R0 lexical: modo canonico 'gatilho' substitui 'trigger'.
+      modo: 'gatilho',
       emocoes: ['ansiedade'],
       intensidade: 3,
       com: [],
@@ -207,7 +208,7 @@ describe('feature diario emocional (M06 + M06.5)', () => {
     expect(fs.existsSync(full)).toBe(true);
     const raw = fs.readFileSync(full, 'utf8');
     const parsed = parseFrontmatter(raw, DiarioEmocionalSchema);
-    expect(parsed.meta.modo).toBe('trigger');
+    expect(parsed.meta.modo).toBe('gatilho');
     expect(parsed.body).toContain('Texto livre');
   });
 });

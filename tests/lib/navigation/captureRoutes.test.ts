@@ -41,6 +41,10 @@ describe('captureRoutes', () => {
     expect(route.params).toBeUndefined();
   });
 
+  // R0 lexical: FABRadialKey internamente segue 'vitoria'/'trigger'
+  // (chave estavel de UI), mas o param 'modo' emitido em URL e o
+  // canonico 'conquista'/'gatilho'. A tela diario-emocional aceita
+  // ambos os vocabularios via normalizarModoParam.
   it('voz, vitoria e trigger compartilham /diario-emocional com modo distinto', () => {
     const voz = routeForCapture('voz');
     const vitoria = routeForCapture('vitoria');
@@ -51,8 +55,8 @@ describe('captureRoutes', () => {
     expect(trigger.pathname).toBe('/diario-emocional');
 
     expect(voz.params).toEqual({ modo: 'audio' });
-    expect(vitoria.params).toEqual({ modo: 'vitoria' });
-    expect(trigger.params).toEqual({ modo: 'trigger' });
+    expect(vitoria.params).toEqual({ modo: 'conquista' });
+    expect(trigger.params).toEqual({ modo: 'gatilho' });
 
     expect(vitoria.params?.modo).not.toBe(trigger.params?.modo);
     expect(voz.params?.modo).not.toBe(vitoria.params?.modo);
@@ -78,7 +82,7 @@ describe('captureRoutes', () => {
       a.params.modo = 'mutado';
     }
     const c = routeForCapture('vitoria');
-    expect(c.params).toEqual({ modo: 'vitoria' });
+    expect(c.params).toEqual({ modo: 'conquista' });
   });
 
   it('CAPTURE_ROUTES expoe entrada para cada FABRadialKey', () => {

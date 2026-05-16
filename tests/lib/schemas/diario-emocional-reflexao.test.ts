@@ -1,9 +1,11 @@
-// Sprint G2 (I-DIARIO-REFLEXAO): cobre o terceiro modo do
+// Sprint G2 (I-DIARIO-REFLEXAO, R0 lexical): cobre o terceiro modo do
 // DiarioEmocionalSchema. Modo reflexao nao tem polaridade
-// (nem trigger negativo, nem vitoria positiva): aceita registros
+// (nem gatilho negativo, nem conquista positiva): aceita registros
 // sem midia, sem funcionou e sem estrategia. Os refines existentes
-// (funcionou so em trigger; vitoria exige midia) seguem ativos
+// (funcionou so em gatilho; conquista exige midia) seguem ativos
 // para os outros dois modos.
+// Compat: schema aceita valores legacy 'trigger'/'vitoria' e
+// remapeia para canonicos 'gatilho'/'conquista' via z.preprocess.
 import {
   DiarioEmocionalModoSchema,
   DiarioEmocionalSchema,
@@ -21,10 +23,17 @@ const baseReflexao = {
 };
 
 describe('DiarioEmocionalModoSchema enum', () => {
-  it('aceita os 3 modos canonicos', () => {
-    expect(DiarioEmocionalModoSchema.parse('trigger')).toBe('trigger');
-    expect(DiarioEmocionalModoSchema.parse('vitoria')).toBe('vitoria');
+  it('aceita os 3 modos canonicos (gatilho/conquista/reflexao)', () => {
+    expect(DiarioEmocionalModoSchema.parse('gatilho')).toBe('gatilho');
+    expect(DiarioEmocionalModoSchema.parse('conquista')).toBe('conquista');
     expect(DiarioEmocionalModoSchema.parse('reflexao')).toBe('reflexao');
+  });
+
+  it('aceita legacy trigger/vitoria e normaliza para canonicos', () => {
+    // R0 backward-compat: .md antigo com modo legacy le como canonico
+    // em runtime, sem rewrite do arquivo.
+    expect(DiarioEmocionalModoSchema.parse('trigger')).toBe('gatilho');
+    expect(DiarioEmocionalModoSchema.parse('vitoria')).toBe('conquista');
   });
 
   it('rejeita modo desconhecido', () => {
@@ -41,10 +50,10 @@ describe('DiarioEmocionalSchema modo reflexao', () => {
     expect(out.midia).toEqual([]);
   });
 
-  it('rejeita funcionou em modo reflexao (so trigger pode setar funcionou)', () => {
+  it('rejeita funcionou em modo reflexao (so gatilho pode setar funcionou)', () => {
     expect(() =>
       DiarioEmocionalSchema.parse({ ...baseReflexao, funcionou: true })
-    ).toThrow(/funcionou so pode ser definido em modo trigger/);
+    ).toThrow(/funcionou so pode ser definido em modo gatilho/);
   });
 
   it('NAO exige midia em modo reflexao (refine vitoria nao se aplica)', () => {

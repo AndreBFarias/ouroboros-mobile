@@ -51,14 +51,18 @@ function fakeEvento(
 
 function fakeDiario(
   data: string,
-  modo: 'vitoria' | 'trigger',
+  modo: 'conquista' | 'gatilho' | 'vitoria' | 'trigger',
   midia: Midia[]
 ): DiarioEmocionalMeta {
+  // R0: normaliza modo legacy para canonico (espelha o que o schema
+  // faz com z.preprocess ao ler .md antigos do disco).
+  const modoCanonico: 'gatilho' | 'conquista' =
+    modo === 'trigger' || modo === 'gatilho' ? 'gatilho' : 'conquista';
   return {
     tipo: 'diario_emocional',
     data,
     autor: 'pessoa_b',
-    modo,
+    modo: modoCanonico,
     intensidade: 3,
     emocoes: [],
     com: [],
@@ -101,13 +105,13 @@ describe('lerConquistas — filtro sync-conflict (T1B6)', () => {
     expect(urisLidos.some((u) => u.includes('sync-conflict'))).toBe(false);
   });
 
-  it('descarta diario-<slug>.sync-conflict-...md mesmo com modo vitoria', async () => { // anonimato-allow: substantivo comum
+  it('descarta diario-<slug>.sync-conflict-...md mesmo com modo conquista', async () => {
     mockListVaultFolder.mockImplementation(async () => [
       `${VAULT_ROOT}/markdown/diario-2026-05-06.md`,
       `${VAULT_ROOT}/markdown/diario-2026-05-06.sync-conflict-20260506-093412-OURO1.md`,
     ]);
     mockReadVaultFile.mockImplementation(async () => {
-      const meta = fakeDiario('2026-05-06', 'vitoria', [midiaFoto('v.jpg')]);
+      const meta = fakeDiario('2026-05-06', 'conquista', [midiaFoto('v.jpg')]);
       return { meta, body: '' };
     });
 

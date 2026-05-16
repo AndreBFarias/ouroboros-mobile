@@ -241,16 +241,20 @@ export function agregarRecap(input: {
       meta.feito && meta.feito_em && dentroDoPeriodo(meta.feito_em, de, ate)
   );
 
-  // Conquistas: vitorias do diario + eventos positivos + marcos +
+  // Conquistas: conquistas do diario + eventos positivos + marcos +
   // contadores em sequencia (>=7 dias atuais) + tarefas concluidas.
+  // R0: modo canonico 'conquista' (legado 'vitoria' aceito em leitura
+  // do Vault via z.preprocess; campo `origem` mantem id estavel
+  // 'diario_vitoria' para nao quebrar consumidores existentes —
+  // refator do id e sprint separada na Onda R).
   const conquistas: ConquistaItem[] = [];
   for (const d of diariosFiltrados) {
-    if (d.modo === 'vitoria') {
+    if (d.modo === 'conquista') {
       conquistas.push({
         id: `diario_vitoria:${d.data}:${d.autor}`,
         origem: 'diario_vitoria',
         data: d.data,
-        frase: truncar(d.texto || 'Vitória sem descrição.', 120), // anonimato-allow: substantivo comum sucesso/conquista
+        frase: truncar(d.texto || 'Conquista sem descrição.', 120),
       });
     }
   }
@@ -299,11 +303,14 @@ export function agregarRecap(input: {
   }
   conquistas.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 
-  // Crises: triggers do diario (todos) + eventos negativos.
+  // Crises: gatilhos do diario (todos) + eventos negativos.
   // Ordenacao por intensidade desc; empate vira data desc.
+  // R0: modo canonico 'gatilho' (legado 'trigger' aceito em leitura
+  // do Vault via z.preprocess; campo `origem` mantem id estavel
+  // 'diario_trigger' para preservar contrato cross-platform).
   const crises: CriseItem[] = [];
   for (const d of diariosFiltrados) {
-    if (d.modo === 'trigger') {
+    if (d.modo === 'gatilho') {
       crises.push({
         id: `diario_trigger:${d.data}:${d.autor}`,
         origem: 'diario_trigger',

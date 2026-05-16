@@ -1,9 +1,11 @@
-// Helpers de leitura/listagem de registros de diario emocional (M06).
+// Helpers de leitura/listagem de registros de diario emocional (M06, R0).
 // Cada registro vive em inbox/mente/diario/YYYY-MM-DD-HHmm-slug.md
-// com modo 'trigger' ou 'vitoria'.
+// com modo 'gatilho' | 'conquista' | 'reflexao' (canonico). Schema
+// aceita os valores legacy 'trigger'/'vitoria' do .md antigo via
+// z.preprocess e remapeia ao parsear; nao reescreve arquivos.
 //
-// Criado em M36 para o Recap agregar conquistas (modo='vitoria') e
-// crises (modo='trigger') por periodo. Espelha padrao de listarMarcos:
+// Criado em M36 para o Recap agregar conquistas (modo='conquista') e
+// crises (modo='gatilho') por periodo. Espelha padrao de listarMarcos:
 // pasta inexistente => [], arquivos malformados descartados em silencio.
 //
 // Comentarios sem acento (convencao shell/CI).

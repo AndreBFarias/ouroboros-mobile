@@ -51,7 +51,10 @@ interface HumorFixtureCelula {
 interface DiarioFixtureEntrada {
   offsetHoras: number;
   autor: 'pessoa_a' | 'pessoa_b';
-  modo: 'trigger' | 'vitoria' | 'reflexao';
+  // R0 lexical: aceita ambos vocabularios (legacy + canonico).
+  // Fixtures antigas com 'trigger'/'vitoria' permanecem validas; novas
+  // entradas devem usar 'gatilho'/'conquista'.
+  modo: 'trigger' | 'vitoria' | 'gatilho' | 'conquista' | 'reflexao';
   intensidade: number;
   emocoes: string[];
   com: string[];

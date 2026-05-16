@@ -62,6 +62,7 @@ import {
   Mic,
   Moon,
   Settings as SettingsIcon,
+  Sparkles,
   Trophy,
   Wallet,
   type LucideProps,
@@ -238,6 +239,16 @@ export function MenuLateral() {
         icone: AlertTriangle,
         route: rotaCaptura('trigger'),
         cor: colors.red,
+      },
+      // R0 lexical: atalho "Reflexao" (substitui o antigo Humor Rapido
+      // no slot de acesso rapido). Abre diretamente /diario-emocional
+      // com a aba Reflexao pre-selecionada, sem passar por intermediario.
+      {
+        label: 'Reflexão',
+        a11yLabel: 'registrar reflexao',
+        icone: Sparkles,
+        route: '/diario-emocional?modo=reflexao',
+        cor: colors.cyan,
       },
     ];
 
