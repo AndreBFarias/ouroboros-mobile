@@ -5,6 +5,53 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda R consolidada + ROADMAP limpo (2026-05-15 fim de noite)
+
+Sessão de consolidação pós-auditoria. Resultado:
+
+- **Briefing canônico Onda R adicionado**: `ONDA-R-BRIEFING.md`
+  (1299 linhas, versionado na raiz). Define 14 tranches (R-LEX,
+  R-CRIT, R-RECAP, R-HOME, R-INT, R-MEDIA, R-SF, R-ROT, R-NAV,
+  R-FAB, R-WIDG, R-SEC, R-DX, R-OPS) com 46 sprints novas,
+  estimativa total ~93–130h + 7d field test + 1d release ≈ 17–25
+  dias até `v1.0.0` production.
+- **47 specs leves criadas** em `docs/sprints/`:
+  - 46 derivadas do briefing (R0, R-CRIT-1/2/3/4, R-RECAP-1/2/3/4/5,
+    R-HOME-1/2/3, R-INT-1/2/3/4, R-MEDIA-1/2, R-SF-1/2/3, R-ROT-1/2,
+    R-NAV-1/2/3, R-FAB-1/2, R-WIDG-1, R-SEC-1/2/3/4/5, R-DX-1/2/3/4/5/6,
+    R-OPS-1/2/3/4/5)
+  - 1 anti-débito derivada (AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS —
+    script que cruza ROADMAP × git × código pra detectar fantasmas
+    automaticamente; pedido durável do dono pra eliminar drift recorrente
+    sem auditoria manual)
+- **ROADMAP limpo de fantasmas**: auditoria detectou 25 entradas
+  `[todo]` que eram features já entregues em refundação v1.0 ou
+  Onda Q. Batch update marcou todas `[ok]` com referência ao commit/
+  feature de origem (M06.5→Q5.1+5.2, M07.x→refundação, M08→Q10+Q22.G,
+  M09→ScannerPreview, M11→L1+Q11, M11.5→Q24.a/b+ADR-0021,
+  M12→Q17.c.b/c/d, M13→Q9+Q18.b, M14.5→Q8+Q17.c.c, M15→M29,
+  M16→M30, M17→M31, M18→M32, M34.1/2/3→refundação,
+  M35→`app/financas.tsx`, M36→Q24.a/b+RecapScreen, M37.1→Q0+Q22.B,
+  M38→AUDIT-T2-LOCK-VAULT, M39→ADR-0017, M40→`app/index.tsx`).
+- **Pendências REAIS finais** restantes pra v1.0.0:
+  - `AUDIT-T1B7-DRAFT-EXPORT-FIX` (anti-débito imediato)
+  - Validação live alpha-11 (gate)
+  - Onda R Fase 1 → Fase 2 → Fase 4 (Fase 3 paralela)
+  - `M-GAUNTLET-DEAD-CODE-V2` (legado, bloqueia M41)
+  - `M37.2` (Calendar escrita — descopável v1.1)
+  - `M41` (release final)
+- **`docs/sprints/_BACKLOG.md` reescrito**: agora documento canônico
+  de "o que falta executar" com tabelas por fase + decisões abertas
+  (D1–D8) + descopadas.
+- **Decisões abertas mapeadas**: D1 (Home Status Casal A/B/C), D2
+  (Spotify/YouTube rompe sem-rede-saída?), D3 (track ambient OK?),
+  D4 (conta Play Console $25?), D6 (backup automático semanal?),
+  D7 (pasta `versão desktop/`?), D8 (a11y TalkBack agora?). Sprint
+  R-HOME-1 e algumas outras `pausam` aguardando essas decisões.
+
+Smoke verde 214/2016. Sem mudanças de código nesta tranche
+documental — só specs novas, ROADMAP, _BACKLOG, briefing, CHANGELOG.
+
 ### Auditoria pré-v1.0 — Sub-sprints T1B3 + T1B6 + T2 (2026-05-15 noite)
 
 Anti-débito das 3 sprints derivadas da auditoria de Tranche 1. Cada

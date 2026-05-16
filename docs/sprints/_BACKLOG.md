@@ -1,0 +1,185 @@
+# Backlog consolidado — Ouroboros Mobile
+
+> Documento canônico de **sprints pendentes** após auditoria
+> 2026-05-15 + briefing Onda R. Fonte autoritativa do que falta
+> executar até `v1.0.0`. Para sprints concluídas, consulte
+> `ROADMAP.md`.
+>
+> **Atualizado**: 2026-05-15 noite (após auditoria + Onda R
+> consolidada).
+
+## Resumo executivo
+
+| Fase | Tema | # sprints | Estim. ativa | Bloqueia release |
+|---|---|---|---|---|
+| Anti-débito imediato | T1B7 + automação roadmap | 2 | ~1h | Não |
+| Fase 1 (Onda R) | Crítico (OAuth, mídia, alarmes mudos, lexical) | 6 | ~10–14h | Sim (F1) |
+| Fase 2 (Onda R) | UX + Recap + Home + Integrações | 13 | ~25–35h | Sim (rc2) |
+| Fase 3 (Onda R) | Features secundárias + DX + OPS | 21 | ~40–55h | Não |
+| Fase 4 (Onda R) | Segurança + verificação Google | 5 | ~12–18h | Sim (v1.0.0 prod) |
+| Pós release | F1 field test + G1 release oficial | 2 | ~8h | — |
+
+**Total estimado**: ~93–130h ativas + 7 dias field test ≈ 17–25 dias
+até `v1.0.0` production.
+
+**Próxima ação imediata**:
+- AUDIT-T1B7-DRAFT-EXPORT-FIX (~30min — anti-débito direto do T1B6)
+- Validação live alpha-11 pelo dono (4 testes — gate atual de v1.0)
+
+Depois disso a Onda R abre.
+
+---
+
+## Anti-débito imediato (Tier 0 — antes da Onda R)
+
+### 0.1 AUDIT-T1B7-DRAFT-EXPORT-FIX
+- **Spec**: [`AUDIT-T1B7-DRAFT-EXPORT-FIX-spec.md`](AUDIT-T1B7-DRAFT-EXPORT-FIX-spec.md)
+- **Escopo**: filtro `ehSyncConflict` em `migrarDraftsParaTreinoSessao.ts`
+  (M11 boot) + `exportarVault.ts` (ZIP filter — Opção A já decidida).
+- **Estimativa**: ~30min. 2 fixes triviais + 2 testes.
+- **Origem**: anti-débito dos achados colaterais de T1B6.
+
+### 0.2 AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS
+- **Spec**: [`AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS-spec.md`](AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS-spec.md)
+- **Escopo**: script Python/bash que cruza ROADMAP × git × código
+  pra detectar `[todo]` que já foram entregues. Modo report-only
+  por padrão; `--fix` opcional. Integra como warning não-bloqueante
+  no smoke.
+- **Estimativa**: 2–3h.
+- **Origem**: pedido do dono em 2026-05-15 — automatizar a auditoria
+  manual de fantasmas que detectou 25 entradas drift no ROADMAP.
+
+### 0.3 Validação live alpha-11 (não é sprint de código)
+- **Spec**: [`/PROMPT-CONTINUACAO-2026-05-14.md`](../../PROMPT-CONTINUACAO-2026-05-14.md)
+- **Escopo**: 4 testes manuais pelo dono — OAuth Google, share Pix,
+  Recap navegável, Recap Memórias slideshow.
+- **Estimativa**: ~30min com dono + maestro acompanhando.
+- **Importante**: bloqueia decisão sobre prosseguir com Onda R Fase 1
+  via alpha-12 (se houver falha, vira sprint Q22.H+ corretiva).
+
+---
+
+## Onda R — Fase 1 (Crítico) — ~10–14h
+
+Bloqueia `v1.0.0-alpha-12` e F1.
+
+| Ordem | ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|---|
+| 1 | R0 | Renomeação Crise/Conquista/Gatilho/Reflexão | refactor+migration | P1 | 3–4h | `R0-LEX-CRISE-CONQUISTA-GATILHO-REFLEXAO-spec.md` |
+| 2 | R-CRIT-1 | OAuth Unmatched Route regression | fix | P0 | 2–4h | `R-CRIT-1-OAUTH-UNMATCHED-ROUTE-REGRESSION-spec.md` |
+| 2‖ | R-CRIT-3 | Mídia ausente em Recap e Galeria | bug | P0 | 3–5h | `R-CRIT-3-MIDIA-AUSENTE-EM-RECAP-E-GALERIA-spec.md` |
+| 3 | R-CRIT-2 | OAuth consent app name | fix | P1 | 1–2h | `R-CRIT-2-OAUTH-CONSENT-APP-NAME-MISSING-spec.md` |
+| 3‖ | R-CRIT-4 | Loader logo gif quebrado | fix | P2 | 1–2h | `R-CRIT-4-LOADER-LOGO-GIF-QUEBRADO-spec.md` |
+| 3‖ | R-NAV-2 | Alarmes sons funcionais | bug | P1 | 2–3h | `R-NAV-2-ALARMES-SONS-FUNCIONAIS-spec.md` |
+
+Símbolo `‖` significa pode rodar em paralelo via worktree.
+
+---
+
+## Onda R — Fase 2 (UX + Recap + Home) — ~25–35h
+
+Bloqueia `v1.0.0-rc2`.
+
+| Ordem | ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|---|
+| 1 | R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
+| 1‖ | R-RECAP-1 | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
+| 1‖ | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
+| 1‖ | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
+| 1‖ | R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
+| 1‖ | R-HOME-1 | Hoje prioridade + recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` (precisa D1) |
+| 2 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
+| 2‖ | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
+| 3 | R-INT-1 | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
+| 3‖ | R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
+| 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
+| 4 | R-FAB-1 | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
+| 4‖ | R-FAB-2 | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
+
+---
+
+## Onda R — Fase 3 (Features secundárias) — ~40–55h
+
+Paralelo a Fase 4. Não bloqueia release.
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-SF-1 | Grupos de Treino em Saúde Física | feature | P1 | 2–3h | `R-SF-1-GRUPOS-DE-TREINO-spec.md` |
+| R-SF-2 | Exercício GIF cadastro (validation) | validation | P2 | 1–2h | `R-SF-2-EXERCICIO-GIF-CADASTRO-spec.md` |
+| R-SF-3 | Marcação rápida (Venvanse) | feature | P2 | 2–3h | `R-SF-3-MARCACAO-RAPIDA-MED-spec.md` |
+| R-ROT-1 | Rotinas inteligência temporal | feature | P1 | 2–3h | `R-ROT-1-INTELIGENCIA-TEMPORAL-spec.md` |
+| R-ROT-2 | Rotinas escopo expandido | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
+| R-RECAP-5 | Recap Contadores eventos | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
+| R-MEDIA-2 | Recap autoplay áudio | feature | P2 | 2–3h | `R-MEDIA-2-RECAP-AUTOPLAY-AUDIO-spec.md` |
+| R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | 1–2h | `R-NAV-1-CICLO-BOTAO-REGISTRAR-MIGRACAO-FAB-spec.md` |
+| R-NAV-3 | FAB consistência edit/delete | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
+| R-WIDG-1 | Widget homescreen to-do | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
+| R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` (precisa D2) |
+| R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
+| R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
+| R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
+| R-DX-4 | ADB workflow helpers | infra | — | 1–2h | `R-DX-4-ADB-WORKFLOW-HELPERS-spec.md` |
+| R-DX-5 | EAS local build docs | docs | — | 1h | `R-DX-5-EAS-LOCAL-BUILD-DOCS-spec.md` |
+| R-DX-6 | Anonimato pre-push | infra | — | 0.5–1h | `R-DX-6-ANONIMATO-PRE-PUSH-spec.md` |
+| R-OPS-1 | GitHub Actions release flow | infra | — | 3–4h | `R-OPS-1-GITHUB-ACTIONS-RELEASE-FLOW-spec.md` |
+| R-OPS-2 | Dependabot config | infra | — | 0.5h | `R-OPS-2-DEPENDABOT-CONFIG-spec.md` |
+| R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
+| R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
+| R-OPS-5 | Release notes auto | infra | — | 1–2h | `R-OPS-5-RELEASE-NOTES-AUTO-spec.md` |
+
+---
+
+## Onda R — Fase 4 (Segurança + release) — ~12–18h
+
+Bloqueia `v1.0.0` production.
+
+| Ordem | ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|---|
+| 1 | R-SEC-5 | Secret leak audit (gitleaks) | infra+audit | P1 | 1–2h | `R-SEC-5-SECRET-LEAK-AUDIT-spec.md` |
+| 2 | R-SEC-3 | Privacy policy + terms | docs | P1 | 2–3h | `R-SEC-3-PRIVACY-POLICY-TERMS-spec.md` |
+| 3 | R-SEC-1 | Google OAuth verification (testers) | docs+cloud | P1 | 2–3h | `R-SEC-1-GOOGLE-OAUTH-VERIFICATION-spec.md` |
+| 4 | R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` (precisa D4) |
+| 5 | R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
+
+---
+
+## Pós-Onda R — F1 + G1
+
+| ID | Sprint | Descrição | Estim. |
+|---|---|---|---|
+| F1 | Field test | 7 dias de uso real (dono + Vitória) com checklist diário. Bug crítico vira sprint imediata; bug menor vira issue v1.1 | 7d passivos |
+| G1 | Release v1.0.0 | Tag final, `gh release create v1.0.0`, README com screenshots, CHANGELOG estável, retirar `[Unreleased]` | 3–4h |
+
+---
+
+## Decisões abertas (precisam do dono antes da execução)
+
+| D# | Decisão | Bloqueia |
+|---|---|---|
+| D1 | Home: Status do Casal + Humor+Última — A/B/C? | R-HOME-1 |
+| D2 | Spotify/YouTube como integrações (filosofia "sem rede de saída")? | R-INT-4, R-MEDIA-1 (parcial) |
+| D3 | Track ambient embutido no slideshow Memórias OK? | R-RECAP-4 |
+| D4 | Conta Google Play Developer ($25 one-time)? | R-SEC-2 |
+| D5 | AUDIT-T2-LOCK-VAULT já está OK? | **Resposta**: SIM, mergeado em `488e7fa` |
+| D6 | Backup automático semanal silencioso para Vault? | achado #6 briefing |
+| D7 | Pasta `versão desktop/` mantém no repo ou move? | achado #8 briefing |
+| D8 | Auditoria a11y TalkBack agora ou v1.1? | achado #7 briefing |
+
+---
+
+## Descopadas / v2
+
+| ID | Razão |
+|---|---|
+| G7 — M-SCHEMA-CONTADOR-V2 | Explicitamente descopada pré-v1.0 (`[v2]`) |
+| PARALELO-E — M-BUNDLE-DIET-MOTI-REPLACE | 16-21h vs 4-6h estimadas; ganho 4% bundle não justifica risco |
+| Q24.b.c — Export PNG stories IG | Mantido `[v2]` (Q24.b.a/b promovidos para R-RECAP-4) |
+
+---
+
+## Cross-reference rápido
+
+- **Briefing canônico Onda R**: [`/ONDA-R-BRIEFING.md`](../../ONDA-R-BRIEFING.md) (1299 linhas)
+- **ROADMAP geral**: [`/ROADMAP.md`](../../ROADMAP.md) seção "Onda R"
+- **Auditoria 2026-05-15**: [`/CHANGELOG.md`](../../CHANGELOG.md) seção "[Unreleased]"
+- **Sprints específicas**: cada arquivo `docs/sprints/<id>-spec.md`

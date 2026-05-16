@@ -9,6 +9,122 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+## Onda R — Refinamentos pós alpha-11 + Segurança v1.0.0 (2026-05-15+)
+
+Continuação da Onda Q. Briefing canônico:
+[`ONDA-R-BRIEFING.md`](ONDA-R-BRIEFING.md) (1299 linhas).
+Backlog consolidado: [`docs/sprints/_BACKLOG.md`](docs/sprints/_BACKLOG.md).
+
+**47 sprints novas** (46 do briefing + 1 anti-débito automação)
+organizadas em 4 fases. Estimativa total ~93–130h ativas + 7d field
+test (F1) + 1d release (G1) ≈ 17–25 dias até v1.0.0.
+
+Versões alvo: `v1.0.0-alpha-12` após Fase 1; `v1.0.0-rc2` após
+Fase 2; `v1.0.0` após Fase 4 + F1 verde.
+
+### Fase 1 — Crítico (bloqueia F1) — ~10–14h
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R0 | Renomeação Crise/Conquista/Gatilho/Reflexão | refactor+migration | P1 | 3–4h | `R0-LEX-CRISE-CONQUISTA-GATILHO-REFLEXAO-spec.md` |
+| R-CRIT-1 | OAuth Unmatched Route regression | fix | P0 | 2–4h | `R-CRIT-1-OAUTH-UNMATCHED-ROUTE-REGRESSION-spec.md` |
+| R-CRIT-3 | Mídia ausente em Recap e Galeria | bug | P0 | 3–5h | `R-CRIT-3-MIDIA-AUSENTE-EM-RECAP-E-GALERIA-spec.md` |
+| R-CRIT-2 | OAuth consent app name | fix | P1 | 1–2h | `R-CRIT-2-OAUTH-CONSENT-APP-NAME-MISSING-spec.md` |
+| R-CRIT-4 | Loader logo gif quebrado | fix | P2 | 1–2h | `R-CRIT-4-LOADER-LOGO-GIF-QUEBRADO-spec.md` |
+| R-NAV-2 | Alarmes sons funcionais | bug | P1 | 2–3h | `R-NAV-2-ALARMES-SONS-FUNCIONAIS-spec.md` |
+
+### Fase 2 — UX + Recap + Home (bloqueia rc2) — ~25–35h
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-RECAP-1 | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
+| R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
+| R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
+| R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
+| R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
+| R-HOME-1 | Hoje prioridade e recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` |
+| R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
+| R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
+| R-INT-1 | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
+| R-INT-2 | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
+| R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
+| R-FAB-1 | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
+| R-FAB-2 | FAB Câmera repensar (Reflexão com foto) | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
+
+### Fase 3 — Features secundárias (paralelo a Fase 4) — ~40–55h
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-SF-1 | Grupos de Treino em Saúde Física | feature | P1 | 2–3h | `R-SF-1-GRUPOS-DE-TREINO-spec.md` |
+| R-SF-2 | Exercício GIF cadastro (validation) | validation | P2 | 1–2h | `R-SF-2-EXERCICIO-GIF-CADASTRO-spec.md` |
+| R-SF-3 | Marcação rápida (Venvanse, hábitos) | feature | P2 | 2–3h | `R-SF-3-MARCACAO-RAPIDA-MED-spec.md` |
+| R-ROT-1 | Rotinas inteligência temporal | feature | P1 | 2–3h | `R-ROT-1-INTELIGENCIA-TEMPORAL-spec.md` |
+| R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
+| R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
+| R-MEDIA-2 | Recap autoplay áudio | feature | P2 | 2–3h | `R-MEDIA-2-RECAP-AUTOPLAY-AUDIO-spec.md` |
+| R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | 1–2h | `R-NAV-1-CICLO-BOTAO-REGISTRAR-MIGRACAO-FAB-spec.md` |
+| R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
+| R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
+| R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` |
+| R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
+| R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
+| R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
+| R-DX-4 | ADB workflow helpers | infra | — | 1–2h | `R-DX-4-ADB-WORKFLOW-HELPERS-spec.md` |
+| R-DX-5 | EAS local build docs | docs | — | 1h | `R-DX-5-EAS-LOCAL-BUILD-DOCS-spec.md` |
+| R-DX-6 | Anonimato pre-push | infra | — | 0.5–1h | `R-DX-6-ANONIMATO-PRE-PUSH-spec.md` |
+| R-OPS-1 | GitHub Actions release flow | infra | — | 3–4h | `R-OPS-1-GITHUB-ACTIONS-RELEASE-FLOW-spec.md` |
+| R-OPS-2 | Dependabot config | infra | — | 0.5h | `R-OPS-2-DEPENDABOT-CONFIG-spec.md` |
+| R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
+| R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
+| R-OPS-5 | Release notes auto | infra | — | 1–2h | `R-OPS-5-RELEASE-NOTES-AUTO-spec.md` |
+
+### Fase 4 — Segurança + release (bloqueia v1.0.0 production) — ~12–18h
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-SEC-1 | Google OAuth verification (testers) | docs+cloud-config | P1 | 2–3h | `R-SEC-1-GOOGLE-OAUTH-VERIFICATION-spec.md` |
+| R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` |
+| R-SEC-3 | Privacy policy + terms | docs | P1 | 2–3h | `R-SEC-3-PRIVACY-POLICY-TERMS-spec.md` |
+| R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
+| R-SEC-5 | Secret leak audit | infra+audit | P1 | 1–2h | `R-SEC-5-SECRET-LEAK-AUDIT-spec.md` |
+
+### Sprint anti-débito derivada (independente das 4 fases)
+
+| ID | Sprint | Tipo | Estim. | Spec |
+|---|---|---|---|---|
+| AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS | Script cruza ROADMAP × git × código pra detectar fantasmas | infra+automation | 2–3h | `AUDIT-AUTOMATIZAR-ROADMAP-FANTASMAS-spec.md` |
+
+### Decisões abertas (precisam do dono antes da execução)
+
+| D# | Decisão | Bloqueia |
+|---|---|---|
+| D1 | Status do Casal + Humor+Última na Home: A/B/C? | R-HOME-1 |
+| D2 | Spotify/YouTube como integrações (rompe "sem rede de saída")? | R-INT-4, R-MEDIA-1 |
+| D3 | Track ambient embutido no slideshow Memórias OK? | R-RECAP-4 |
+| D4 | Registrar app no Play Console ($25 one-time)? | R-SEC-2 |
+| D5 | AUDIT-T2-LOCK-VAULT já está OK? (resposta: SIM, mergeado em `488e7fa`) | — |
+| D6 | Backup automático semanal silencioso? | achado #6 do briefing |
+| D7 | Pasta `versão desktop/` mantém no repo ou move? | achado #8 |
+| D8 | Auditoria a11y TalkBack agora ou v1.1? | achado #7 |
+
+### Ordem de execução resumida
+
+```
+Fase 1 (sequencial parcial):
+  R0 → R-CRIT-1 ‖ R-CRIT-3 → R-CRIT-2 ‖ R-CRIT-4 ‖ R-NAV-2
+
+Fase 2 (muito paralelizável):
+  R-RECAP-1/2/3/4 ‖ R-MEDIA-1 ‖ R-HOME-1 (após D1) → R-HOME-2/3 → R-INT-1/2/3 → R-FAB-1/2
+
+Fase 3 (paralelo a Fase 4):
+  R-SF-* ‖ R-ROT-* ‖ R-RECAP-5 ‖ R-MEDIA-2 ‖ R-NAV-1/3 ‖ R-WIDG-1 ‖ R-INT-4 (após D2) ‖ R-DX-* ‖ R-OPS-*
+
+Fase 4 (sequencial):
+  R-SEC-1 → R-SEC-3 → R-SEC-2 (após D4) → R-SEC-4 → R-SEC-5 → F1 → G1 (release)
+```
+
+---
+
 ## Auditoria pré-v1.0 — 2026-05-15
 
 Auditoria sistemática em 5 eixos. Tranches 1 + 3 entregues em paralelo
@@ -600,25 +716,25 @@ prioridade, requerem emulador ou APK dev-client):
 | `[ok]` | INFRA-acentuacao-comentarios | Varrer `app/` e `src/` corrigindo comentários PT-BR sem acento — 145 arquivos, 715 substituições 1:1, residual 3 (paths legítimos sem acento), redução 99.3% | — | — | 3h | `a792156` |
 | `[ok]` | M19.x | Inventário de mockups + stub build-mockups + seção CONTEXTO §7.1 (fechada parcialmente; toolchain JSX→HTML completa fica para M19 final) | — | — | 1,5h | `ce0b187` |
 | `[todo]` | M20.x | Validação Nível B real do widget no emulador `ouroboros-test` (4 screenshots: 4x2, 4x4, pós-humor, toggle off) | 26 | — | 1-2h | `M20.x-spec.md` |
-| `[todo]` | M06.5 | F-14 Microfone (transcrição on-device) | 18 | diario_emocional + audio | 5-7h | — |
-| `[todo]` | M07.x | Conquistas com mídia obrigatória (4 tipos) | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
-| `[todo]` | M08 | Share Intent Receiver (flow PIX <5s) | 17 | inbox_arquivo + financeiro | 4-5h | — |
-| `[todo]` | M09 | Scanner OCR + multipágina + bairro auto | 16 | financeiro_nota | 7-9h | — |
+| `[ok]` | M06.5 | F-14 Microfone — entregue via Q5.1+Q5.2 (Onda Q); `src/components/diario/MicrofoneButton.tsx` + speech-recognition contínuo. FEATURES-CANONICAS §2.5 | 18 | diario_emocional + audio | 5-7h | — |
+| `[ok]` | M07.x | Conquistas com mídia obrigatória — entregue na refundação (4 tipos: foto/áudio/vídeo/oEmbed). FEATURES-CANONICAS §2.4 | 18, 20 | diario_emocional, evento, midia | 5-7h | — |
+| `[ok]` | M08 | Share Intent Receiver — entregue via Q10 (regex Pix/boleto) + Q22.G (`expo-share-intent` + listener `_layout`). FEATURES-CANONICAS §2.7 | 17 | inbox_arquivo + financeiro | 4-5h | — |
+| `[ok]` | M09 | Scanner OCR — entregue. `ScannerPreview` + ML Kit on-device + multipágina. FEATURES-CANONICAS §2.6 | 16 | financeiro_nota | 7-9h | — |
 | `[ok]` | M10 | Mini Humor Tela 21 — heatmap 13x7 (91 dias), modo sobreposto pessoa_a+pessoa_b 50% opacity, stats 30d, modal detalhe dia, empty state. Cache readonly via SAF (ADR-0012). +23 testes (889→912 / 100→103 suites). Validacao Nivel A capturou empty state (SAF Android-only); render colorido fica para M10-checkpoint-visual em Nivel B/C | 21 | humor_heatmap_cache | 4-5h | `b98458e` |
-| `[todo]` | M10-checkpoint-visual | Capturar 4 screenshots em Nível B (emulador) com cache real: heatmap pessoa_a, heatmap pessoa_b, modo sobreposto, DiaHumorModal | 21 | — | 0,5-1h | `M10-checkpoint-visual-spec.md` |
-| `[todo]` | M11 | Memórias e Marcos (CRUD completo + galeria fotos agregada) | 09, 10, 11 | treino_sessao, marco | 8-10h | — |
-| `[todo]` | M11.5 | Calendário visual de conquistas (oEmbed + filtros) | 25 | evento, diario_emocional + media | 5-7h | — |
-| `[todo]` | M12 | Medidas (form + comparativo) | 12, 13 | medidas | 5-6h | — |
-| `[todo]` | M13 | Galeria + Detalhe + Cadastro Exercícios (CRUD) | 07, 08, 02 | exercicio | 8-10h | — |
+| `[v1.1]` | M10-checkpoint-visual | Validação Nível B opcional (4 screenshots emulador) — runtime live no Xiaomi cobre Nível C, suficiente pra v1.0 | 21 | — | 0,5-1h | `M10-checkpoint-visual-spec.md` |
+| `[ok]` | M11 | Memórias e Marcos — entregue via L1 (Saúde Física) + Q11.a/b/c. FEATURES-CANONICAS §3 | 09, 10, 11 | treino_sessao, marco | 8-10h | — |
+| `[ok]` | M11.5 | Calendário visual conquistas — entregue. ADR-0021 unificou Recap+Calendário; Q24.a/b consolidaram. FEATURES-CANONICAS §5 | 25 | evento, diario_emocional + media | 5-7h | — |
+| `[ok]` | M12 | Medidas form/comparativo — entregue. Q17.c.b/c/d cobriu peso/ciclo/gordura + escreverMedida em HC. FEATURES-CANONICAS §3.2 | 12, 13 | medidas | 5-6h | — |
+| `[ok]` | M13 | Galeria + Cadastro Exercícios — entregue. Q9 (Galeria unificada) + Q18.b (player). FEATURES-CANONICAS §4 | 07, 08, 02 | exercicio | 8-10h | — |
 | `[ok]` | M14 | Mini Financeiro Tela 22 readonly — header laranja, banner modo leitura, CardHero (gasto semana cyan + delta), top 5 categorias com barras, lista virtualizada de 20 últimas transações (despesa cyan, crédito green), empty state, hook `useFinancasCache`, fixture web. +25 testes (912→937 / 103→108 suites). Reader em `src/lib/cache/` (uniformidade canônica com M10). Validação Nível A capturou render real via fixture | 22 | financas_cache | 4-5h | `29f0472` |
-| `[todo]` | M14-checkpoint-visual | Capturar 4 screenshots em Nível B com cache real: hero gasto semana, categorias, lista transações, banner modo leitura | 22 | — | 0,5-1h | `M14-checkpoint-visual-spec.md` |
+| `[v1.1]` | M14-checkpoint-visual | Validação Nível B opcional (4 screenshots emulador) — runtime live cobre Nível C | 22 | — | 0,5-1h | `M14-checkpoint-visual-spec.md` |
 | `[todo]` `[para]` | M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL | Backend Python: corrigir `delta_textual` para emitir acentuação PT-BR completa | 22 | financas_cache | 0,5h | `M14-FOLLOWUP-BACKEND-DELTA-TEXTUAL-spec.md` |
 | `[ok]` | M14.1 | Micro-fix: warning eslint `unused-disable` em `src/lib/hooks/useFinancasCache.ts:40` (disable do `no-require-imports` sem problema reportado). Remoção trivial. Fechado 2026-05-03 no ciclo corretivo M14.1+M25.1+M27.1 | — | — | 0,1h | — |
-| `[todo]` | M14.5 | Acompanhador de Ciclo Menstrual (opt-in) | nova | ciclo_menstrual | 5-6h | — |
-| `[todo]` | M15 | Settings (7 grupos + biometria + export) | 23 | (vários) | 7-8h | — |
-| `[todo]` | M16 | F-15 Alarme pessoal opt-in (com snooze + actions) | nova | alarme | 5-6h | — |
-| `[todo]` | M17 | F-16 To-do leve opt-in (com drag&drop + busca) | nova | tarefa | 4-5h | — |
-| `[todo]` | M18 | F-17 Contador "dias sem X" opt-in (com histórico) | nova | contador | 4h | — |
+| `[ok]` | M14.5 | Ciclo Menstrual — entregue na refundação + Q8 (autorPadrao) + Q17.c.c (HC). FEATURES-CANONICAS §3.6 | nova | ciclo_menstrual | 5-6h | — |
+| `[ok]` | M15 | Settings 7 grupos — entregue via M29 (Settings v2 refactor). FEATURES-CANONICAS §7 | 23 | (vários) | 7-8h | — |
+| `[ok]` | M16 | F-15 Alarme pessoal — entregue via M30 (AlarmeSchema v2 + recorrência) | nova | alarme | 5-6h | — |
+| `[ok]` | M17 | F-16 To-do leve — entregue via M31 (TarefaSchema v2 + drag&drop) | nova | tarefa | 4-5h | — |
+| `[ok]` | M18 | F-17 Contador "dias sem X" — entregue via M32 (mensagemApoio 6 faixas, ADR-0005 zero gamificação) | nova | contador | 4h | — |
 | `[ok]` | M19 | APK Release Hardening v1.0.0-rc1 — RETIRADO em 2026-05-02 (refundação M21-M41). 1057 testes / 121 suites. APK preservado em `builds/` localmente. | — | — | 6-8h | tag `v1.0.0` (mantida) |
 | `[done]` | — | **MVP v1.0-rc1 retirado — refundação em curso** | — | — | — | — |
 
@@ -662,18 +778,18 @@ prioridade, requerem emulador ou APK dev-client):
 | `[ok]` | M32 | Contador v2: `mensagemApoio(dias)` 6 faixas (0/<5/<30/<100/<365/≥365), `marcoAtingido(dias)` retorna marco em `[5,30,100,365]`. `app/contadores/[slug].tsx` ganha 2 `<Text>` em muted/mutedDecor 11dp letter-spacing 1 (ADR-0005 zero gamificação). 1207→1221 testes (+14), 136→137 suítes | nova | — | 2-3h | `M32-spec.md` |
 | `[ok]` | M33 | Campo `para` discriminatedUnion (mim/outra/casal) em 4 schemas + componente `<SeletorPara>` plugado em 4 telas. Esconde em modo sozinho. Default `{tipo:'mim'}` backward-compat. 1221→1257 testes (+36), 137→138 suítes. TODO `useHoje` filtro adiado para M40 | múltiplas | 4 schemas | 3-4h | `M33-spec.md` |
 | `[ok]` | M34 | MenuCapturaVerde tab Memórias. FAB verde Dracula `#50fa7b` canto inferior direito + BottomSheet com 4 ações (Foto/Música/Vídeo/Frase). 4 wrappers em `src/lib/midia/` + helper `companion.ts` (DRY) + `SheetFrase` com SeletorPara M33. `useFotosAgregadas` varre extensões ampliadas. Companion .md preliminar (M39 expande). 1260→1289 testes (+29), 139→144 suítes (+5). 5 screenshots Gauntlet validados. 3 sub-sprints colaterais: M34.1 (FABMenu z-index sobrepõe sheet), M34.2 (botão Registrar foto contraste), M11.3 (grid useWindowDimensions ignora frame) | 09-11 | — | 6-7h | `M34-spec.md` |
-| `[todo]` | M34.1 | FABMenu z-index sobrepõe SheetFrase — `BottomSheet` default `containerStyle.zIndex: 30` | — | — | 1-2h | `M34.1-spec.md` |
-| `[todo]` | M34.2 | Botão "Registrar foto" empty state Fotos com contraste insuficiente — diagnosticar + fix | — | — | 0,5h | `M34.2-spec.md` |
+| `[ok]` | M34.1 | FABMenu z-index — endereçado via M-CAPTURA-UNIFICADA (`/captura` modal raiz centraliza decisão) | — | — | 1-2h | `M34.1-spec.md` |
+| `[ok]` | M34.2 | Contraste empty state Fotos — aba Fotos removida em L1; MenuCapturaVerde cobre via FAB+ | — | — | 0,5h | `M34.2-spec.md` |
 | `[ok]` | M11.3 | `useLarguraFrame()` hook centralizador: web → constante 412, native → `useWindowDimensions().width` real. 3 consumidores migrados (`MemoriasFotosTab`, `medidas`, `exercicios/[slug]`). Validação Gauntlet: 4 thumbs 118×118 em grid 3+1 contidas no frame (left=455, right=825). Bug pré-existente RTCSliderWebComponent revelado em /medidas + /exercicios — sub-sprint M-SLIDER-WEB-LOOP criada. 1289→1292 testes (+3), 144→145 suítes (+1). Bundle Hermes 8.84 MB | — | — | 1h | `M11.3-spec.md` |
 | `[ok]` | M-SLIDER-WEB-LOOP | Wrapper `<Slider>` ramifica por `Platform.OS`: web → `<input type="range">` com CSS Dracula injetado idempotente, native → `RNSlider` preservado. Interface pública intacta — 8 consumidores migrados sem mudança. Bug original RTCSliderWebComponent loop infinito em /medidas + /exercicios resolvido. 1292→1293 testes (+1). Bundle Hermes 8.85 MB | — | — | 1-2h | `M-SLIDER-WEB-LOOP-spec.md` |
-| `[todo]` | M34.3 | FAB verde do `MenuCapturaVerde` sobrepõe FABs próprios das abas (Fotos "adicionar foto" + Marcos "adicionar marco" — coordenadas 769,900 batem 1:1). Caminho A: FAB verde absorve ações contextuais por tab. Caminho C: M-CAPTURA-UNIFICADA já endereça via `/captura` modal. Bloqueia M-CAPTURA-UNIFICADA até decisão UX | — | — | 1-2h | `M34.3-spec.md` |
-| `[todo]` | M35 | Aba Finanças: empty state honesto "Em desenvolvimento" | 22 | — | 1-2h | `M35-spec.md` |
-| `[todo]` | M36 | Tela Recap: agregação de período (Conquistas/Crises/Evoluções/Números) | nova | — | 6-8h | `M36-spec.md` |
-| `[todo]` | M37.1 | Google Calendar OAuth + leitura de eventos (rota /agenda) | nova | googleAuth | 6-7h | `M37.1-spec.md` (split do M37 original) |
+| `[ok]` | M34.3 | FAB verde unificado — entregue na refundação. FEATURES-CANONICAS §2.8/§2.9 | — | — | 1-2h | `M34.3-spec.md` |
+| `[ok]` | M35 | Finanças empty state — entregue. `app/financas.tsx` → `MiniFinanceiroScreen` honesto sem cache | 22 | — | 1-2h | `M35-spec.md` |
+| `[ok]` | M36 | Recap agregação — entregue via Q24.a (navegável) + Q24.b (Memórias slideshow). `app/recap.tsx` + `RecapScreen.tsx` + `useRecap.ts` | nova | — | 6-8h | `M36-spec.md` |
+| `[ok]` | M37.1 | Google Calendar OAuth + leitura — entregue via Q0 (scope `calendar.events.readonly`) + Q22.B (client iOS reverso-DNS). Rota `/agenda` ativa | nova | googleAuth | 6-7h | `M37.1-spec.md` (split do M37 original) |
 | `[todo]` | M37.2 | Google Calendar escrita (criar e deletar evento) | nova | googleAuth | 4-5h | `M37.2-spec.md` (split do M37 original) |
-| `[todo]` | M38 | Conflict resolution para 4 dispositivos via deviceId no slug | — | — | 4-5h | `M38-spec.md` |
-| `[todo]` | M39 | Estrutura canônica de mídia + .md companion (formal ADR-0017) | — | midia-companion | 4-5h | `M39-spec.md` |
-| `[todo]` | M40 | Tela 01 Hoje v2: Recap + status do casal + próximos | 01 | — | 4-5h | `M40-spec.md` |
+| `[ok]` | M38 | Conflict resolution multi-device — entregue. Base (`getDeviceId` + `applyDeviceIdSuffix`) já existia; AUDIT-T2-LOCK-VAULT (`488e7fa`) completou com Opção A (sempre suffix) + migration boot | — | — | 4-5h | `M38-spec.md` |
+| `[ok]` | M39 | Estrutura mídia + companion — entregue. ADR-0017 ratificado; `src/lib/midia/companion.ts` + `MidiaCompanionSchema` em uso | — | midia-companion | 4-5h | `M39-spec.md` |
+| `[ok]` | M40 | Tela 01 Hoje v2 — entregue. `app/index.tsx` com header avatar + botão Recap + SecaoStatusCasal + SecaoProximos + SecaoHumor + SecaoDiariosEventosAgrupado | 01 | — | 4-5h | `M40-spec.md` |
 | `[todo]` | M41 | APK Release v1.0.0 final + GitHub Release público | — | — | 3-4h | `M41-spec.md` |
 
 **Total estimado refundação**: 85–110h. Plano em
