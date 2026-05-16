@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 1.1 Onda R — R0 lexical (Crise/Conquista/Gatilho/Reflexão) (2026-05-16 madrugada)
+
+Refactor de vocabulário com backward-compat em ~35min via executor worktree-isolated. Commit `b010660`.
+
+- **Vocabulário canônico**:
+  - `Vitória` → `Conquista` (UI + schemas)
+  - `Trigger` → `Gatilho` (UI + schemas)
+  - `Humor Rápido` (atalho) → `Reflexão` (botão acesso rápido abre `/diario` com aba Reflexão)
+  - `Vitória/Trigger` (par exibido) → `Crise/Conquista`
+- **Schema migration**: `z.preprocess` no `DiarioEmocionalSchema` lê `.md` antigo com chave `vitoria:`/`trigger:` e remapeia em runtime. Novos writes usam chave canônica. `.md` antigos no Vault permanecem legíveis indefinidamente sem rewrite forçado.
+- **Helper canônico**: `src/lib/migration/lexicon.ts` com `DIARIO_MODO_LEGADO_TO_CANONICO` (bidirecional) + `normalizarDiarioModo()` + 16 testes.
+- **ADR-0025**: `docs/ADRs/0025-lex-crise-conquista-gatilho-reflexao.md` registra decisão durável.
+- **Migration doc**: `docs/SCHEMA-MIGRATION.md` documenta mapping bi-direcional para sibling Python ETL.
+- **Sibling**: issue `etl-contract` aberta — https://github.com/AndreBFarias/protocolo-ouroboros/issues/31 com critérios de aceitação para pipeline desktop.
+- **Aliases @deprecated** mantidos por 1 versão: `haptics.vitoria()`, `haptics.trigger()`, `lerDiarioVitorias()`.
+- **IDs cross-platform preservados** intencionalmente: `ConquistaItem.origem === 'diario_vitoria'`, `CriseItem.origem === 'diario_trigger'` — contrato estável entre mobile/widget/cache/desktop. Renomear esses ids requer sprint dedicada com migração de cache coordenada.
+
+35 arquivos modificados, +901/-269 linhas. Métricas: **217 suítes / 2045 testes** verde (era 216/2021 — +1 suíte / +24 testes). TS strict 0. Smoke OK com warning não-bloqueante de fantasmas (zero detectados pós Fase 0).
+
+Redução de `vitoria|trigger` em src/app/tests: **449 → 317 ocorrências** (132 removidas). Restantes são todas legítimas (API expo-notifications externa, FABRadialKey UI interna, IDs cross-platform documentados).
+
+Próximo: Fase 1.2-1.6 (R-CRIT-1/3/4 + R-NAV-2 em paralelo). R-CRIT-2 aguarda Cloud Console editing do dono.
+
 ### Fase 0 Onda R fechada — T1B7 + automação fantasmas (2026-05-15 noite-2)
 
 Primeiros 2 executores da Onda R rodaram em paralelo via worktree

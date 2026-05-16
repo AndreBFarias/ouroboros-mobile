@@ -26,7 +26,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
-| R0 | Renomeação Crise/Conquista/Gatilho/Reflexão | refactor+migration | P1 | 3–4h | `R0-LEX-CRISE-CONQUISTA-GATILHO-REFLEXAO-spec.md` |
+| R0 | Renomeação Crise/Conquista/Gatilho/Reflexão | refactor+migration | P1 | `b010660` | `[ok]` |
 | R-CRIT-1 | OAuth Unmatched Route regression | fix | P0 | 2–4h | `R-CRIT-1-OAUTH-UNMATCHED-ROUTE-REGRESSION-spec.md` |
 | R-CRIT-3 | Mídia ausente em Recap e Galeria | bug | P0 | 3–5h | `R-CRIT-3-MIDIA-AUSENTE-EM-RECAP-E-GALERIA-spec.md` |
 | R-CRIT-2 | OAuth consent app name | fix | P1 | 1–2h | `R-CRIT-2-OAUTH-CONSENT-APP-NAME-MISSING-spec.md` |
