@@ -17,6 +17,14 @@ python3 scripts/check_strings_ui_ptbr.py
 echo ">> contract drift (Mobile <-> Backend Python)"
 ./scripts/test_contract_drift.sh || true
 
+echo ">> auditoria fantasmas ROADMAP (warning, nao-bloqueante)"
+if python3 scripts/check_roadmap_fantasmas.py --warn-only > /tmp/roadmap-fantasmas.log 2>&1; then
+  n=$(grep -cE "^  FANTASMA: [A-Z]" /tmp/roadmap-fantasmas.log || true)
+  if [[ "$n" -gt 0 ]]; then
+    echo "AVISO: ROADMAP pode ter $n fantasma(s) - rode 'python3 scripts/check_roadmap_fantasmas.py' pra auditar"
+  fi
+fi
+
 # Typecheck, lint e testes so rodam quando o projeto Expo existir
 if [[ -f package.json ]]; then
   echo ">> typecheck"
