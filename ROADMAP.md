@@ -27,6 +27,11 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
 | R0 | Renomeação Crise/Conquista/Gatilho/Reflexão | refactor+migration | P1 | `b010660` | `[ok]` |
+| R-CRIT-1 | OAuth Unmatched Route regression + sanitização +not-found | fix | P0 | `17ad84b` | `[ok]` |
+| R-CRIT-3 | Mídia ausente em Recap/Galeria + writers atômicos + slide 'midias' | bug | P0 | `c722538` | `[ok]` |
+| R-CRIT-4 | Loader animation UUID por instância (querySelectorAll defense-in-depth) | fix | P2 | `d53d4d9` | `[ok]` |
+| R-NAV-2 | Alarmes 5 sons CC0 + canal por som | bug | P1 | `83348b6` | `[ok]` |
+| R-CRIT-2 | OAuth consent app name (precisa Cloud Console editing dono) | fix | P1 | — | `[wip-dono]` |
 | R-CRIT-1 | OAuth Unmatched Route regression | fix | P0 | 2–4h | `R-CRIT-1-OAUTH-UNMATCHED-ROUTE-REGRESSION-spec.md` |
 | R-CRIT-3 | Mídia ausente em Recap e Galeria | bug | P0 | 3–5h | `R-CRIT-3-MIDIA-AUSENTE-EM-RECAP-E-GALERIA-spec.md` |
 | R-CRIT-2 | OAuth consent app name | fix | P1 | 1–2h | `R-CRIT-2-OAUTH-CONSENT-APP-NAME-MISSING-spec.md` |
@@ -65,6 +70,8 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
 | R-MEDIA-2 | Recap autoplay áudio | feature | P2 | 2–3h | `R-MEDIA-2-RECAP-AUTOPLAY-AUDIO-spec.md` |
 | R-RECAP-6 | Botão compartilhar slide Memórias (PNG 1080x1920) | feature | P2 | 2–3h | `R-RECAP-6-SHARE-SLIDE-MEMORIAS-spec.md` |
+| R-INFRA-ENV-JSON-TSCONFIG | Fallback tipo env.json (achado R-CRIT-4) | infra | P3 | 30min | `R-INFRA-ENV-JSON-TSCONFIG-spec.md` |
+| R-INFRA-WORKTREE-BOOTSTRAP | Script bootstrap automático worktrees (achado recorrente) | infra | P3 | 30–45min | `R-INFRA-WORKTREE-BOOTSTRAP-spec.md` |
 | R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | 1–2h | `R-NAV-1-CICLO-BOTAO-REGISTRAR-MIGRACAO-FAB-spec.md` |
 | R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |

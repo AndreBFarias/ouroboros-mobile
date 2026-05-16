@@ -5,6 +5,30 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 1.2-1.6 Onda R — R-CRIT-1/3/4 + R-NAV-2 paralelos via worktrees (2026-05-16 madrugada)
+
+4 sprints da Fase 1 executadas em paralelo via worktrees isoladas. Resultados:
+
+- **R-CRIT-1** (commit `17ad84b`): OAuth Unmatched Route regression. Causa raiz: faltava rota declarativa `app/oauthredirect.tsx` — `+not-found` default exibia URL bruta com `code` OAuth. Fix em 2 arquivos novos (`app/oauthredirect.tsx` + `app/+not-found.tsx` sóbrio que NUNCA renderiza URL). Sub-sprint R-CRIT-1.a (sanitização Unmatched Route) também coberta. 16 testes novos. Sem tocar `_layout.tsx`, `googleAuthFlow.ts` ou `app.json`.
+- **R-NAV-2** (commit `83348b6`): alarmes 5 sons CC0 funcionais. Causa raiz: `setNotificationChannelAsync` não passava campo `sound`; Android Oreo+ usa canal como source-of-truth. Fix: 1 canal por som (`ouroboros-alarme-<som>`). 5 sons CC0 (gentle/normal/forte/chime/marimba, WAVs ≤155KB cada) gerados via ffmpeg, documentados em `docs/SOUNDS-LICENSES.md` + `assets/sounds/alarmes/CREDITS.md`. Novo `<PreviewSomButton>` com expo-av Audio.Sound. `ouroboros-default-v2` movido para `CHANNEL_IDS_LEGADOS` (limpeza one-shot). Schema `AlarmeSomSchema` expandido para 5 sons.
+- **R-CRIT-3** (commit `c722538`): mídia ausente em Recap/Galeria. 5 causas raiz identificadas:
+  1. `useRecap.contarFotos` só contava mídia anexada a diário/evento — perdia capturas standalone via FAB Câmera direto
+  2. `useRecapMemorias` enum `SlideId` faltava `'midias'` — slide novo no slideshow Memórias
+  3. `capturarMusica` gerava basename SEM prefixo `audio-` — companion não casava com galeria
+  4. Atomicidade ausente em 4 writers (foto/vídeo/áudio/companion) — write falha = binário órfão
+  5. `escreverMidiaComCompanion` validava schema DEPOIS de copy — meta malformado gerava binário órfão antes do erro
+  Fix em 9 arquivos source + 17 testes novos. `INVESTIGACAO.md` em `docs/auditoria-r-crit-3-2026-05-15/`.
+- **R-CRIT-4** (commit `d53d4d9`): loader animation estático em alguns mounts. Causa raiz: `useId()` colidia entre árvores irmãs (React reciclava slots em remount). Fix: UUID por instância via ref + counter + Math.random + performance.now. Defense-in-depth: `querySelector` → `querySelectorAll` escopado ao Svg próprio. 3 screenshots Gauntlet em `docs/sprints/R-CRIT-4-screenshots-gauntlet/` com hashes distintos confirmam animação rodando (spy SVG capturou rotações reais 0.8° → 2.8° → 5.2°).
+- **R-CRIT-2** permanece `[wip-dono]` — bloqueada por edição do Google Cloud Console (mudar App name = "Ouroboros" + upload logo 120×120). Trabalho do dono ~5min quando puder.
+
+**Anti-débito derivado dos achados de R-CRIT-4**:
+- **R-INFRA-ENV-JSON-TSCONFIG**: fallback de tipo para env.json gitignored (worktrees fresh quebram tsc até linkar manualmente). Sprint nova Fase 3.
+- **R-INFRA-WORKTREE-BOOTSTRAP**: script de bootstrap automático para `node_modules` + `env.json` em worktrees agent-*. Sprint nova Fase 3. Achado recorrente desde T1B3/T1B6.
+
+Métricas pós-Fase 1.2-1.6: **223 suítes / 2081 testes** verde (era 217/2045 antes) · TS strict 0 · drift contract 174 campos · warning fantasmas zero · push em main.
+
+**Próximo gate**: validação live alpha-12 quando dono tiver tempo + Cloud Console editado. Build via GH Actions local (cota EAS continua esgotada até 01/Jun).
+
 ### Fase 1.1 Onda R — R0 lexical (Crise/Conquista/Gatilho/Reflexão) (2026-05-16 madrugada)
 
 Refactor de vocabulário com backward-compat em ~35min via executor worktree-isolated. Commit `b010660`.
