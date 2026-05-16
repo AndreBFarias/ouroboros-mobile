@@ -78,7 +78,7 @@ Bloqueia `v1.0.0-rc2`.
 |---|---|---|---|---|---|---|
 | 1 | R-RECAP-3 `[ok]` (`9514061`) | Empty states não-tóxicos | feature+copy | P1 | 2–3h | `R-RECAP-3-EMPTY-STATES-NAO-TOXICOS-spec.md` |
 | 1‖ | R-RECAP-1 `[ok]` (Onda 2A.2, `25d4849`) | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
-| 1‖ | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
+| 1‖ | R-RECAP-2 `[ok]` (Onda 2B.2, `a4f0d8a`) | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
 | 1‖ | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
 | 1‖ | R-MEDIA-1 `[ok]` (Onda 2A.3, `8088c80`) | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
 | 1‖ | R-HOME-1 | Hoje prioridade + recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` (precisa D1) |
