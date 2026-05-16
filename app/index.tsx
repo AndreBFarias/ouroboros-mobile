@@ -1,42 +1,40 @@
-// Tela 01 (hoje) — entrada do app v2 (M40). Le do Vault os registros
-// do dia e renderiza em sentence case com acentuacao PT-BR completa.
-// Se o onboarding não foi concluido, redireciona para /onboarding
+// Tela 01 (hoje) — entrada do app v3 (R-HOME-1, ADR-0026). Foco em
+// acao: cabecalho com saudacao e atalho Reflexao, Proximos (alarmes
+// 4h + tarefas com alarme hoje), To-do hoje (ate 5 tarefas pendentes
+// com checkbox inline), botao Recap. FAB roxo + verde global vive em
+// _layout.tsx.
+//
+// Removido em R-HOME-1 (Decisao D1=C, 2026-05-15):
+//   - SecaoStatusCasal (duo-only) -- redundante com Recap modo casal.
+//   - SecaoHumor (sliders disabled) -- redundante com Recap diario.
+//   - SecaoDiariosEventosAgrupado (timeline "Esta jornada") -- prioriza
+//     acao em vez de leitura cronologica.
+//
+// Se o onboarding nao foi concluido, redireciona para /onboarding
 // (substituiu o PermissaoVaultModal da M02 a partir da M03).
 //
-// M27: a Tela Hoje deixou de hospedar FABRadial. O FAB principal
-// virou item global (FABMenu, canto inferior esquerdo) renderizado
-// no _layout raiz e o menu de captura migrou para o MenuLateral.
-//
-// M40: layout v2.
-//   - Header: avatar(es) + botao "Recap" -> /recap.
-//     -- sozinho: 1 avatar md.
-//     -- duo: 2 avatares sm lado a lado.
-//   - SecaoStatusCasal so em duo (humor + ultima atividade de cada).
-//   - SecaoProximos: alarmes 4h + tarefas com alarme hoje.
-//   - SecaoHumor: bloco do dia (humor/energia/ansiedade/foco).
-//   - SecaoDiariosEventosAgrupado: timeline cronologica unica
-//     substituindo as duas secoes separadas.
-//   - Botao storybook so em __DEV__.
-//
 // Fonte de verdade visual: docs/Ouroboros_24_telas-standalone.html
-// artboard 'tela 01 — hoje'. Fonte de verdade de schemas:
-// docs/BRIEFING.md secao 7.
-import { useEffect, useState } from 'react';
+// artboard 'tela 01 -- hoje'. Layout v3 documentado em ADR-0026.
+//
+// Comentarios sem acento (convencao shell/CI).
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Redirect, useRouter } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
-import {
-  Card,
-  EmptyState,
-  Header,
-  PersonAvatar,
-  Screen,
-  Slider,
-  ChipGroup,
-  Button,
-} from '@/components/ui';
+import { Redirect, useRouter, useFocusEffect } from 'expo-router';
+import { Check, Sparkles } from 'lucide-react-native';
+import { Card, EmptyState, Header, Screen, Button } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
-import { colors, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
+import { useVault } from '@/lib/stores/vault';
+import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { useHasHydrated } from '@/lib/stores/hydrated';
+import { loadVaultRoot } from '@/lib/vault';
+import {
+  listarTarefas,
+  marcarFeito,
+  type TarefaListada,
+} from '@/lib/vault/tarefas';
+import { SecaoProximos } from '@/components/screens/SecaoProximos';
 
 // Q2.2 (Onda Q): Recap inline. Pressable direto resolve o problema do
 // Button generico colapsar layout flex no celular real (W1 do M-AUDIT
@@ -94,15 +92,57 @@ function BotaoRecap({ onPress }: BotaoRecapProps) {
     </Pressable>
   );
 }
-import { useVault } from '@/lib/stores/vault';
-import { usePessoa } from '@/lib/stores/pessoa';
-import { useOnboarding } from '@/lib/stores/onboarding';
-import { useHasHydrated } from '@/lib/stores/hydrated';
-import { loadVaultRoot } from '@/lib/vault';
-import { useHoje } from '@/lib/hooks/useHoje';
-import { SecaoStatusCasal } from '@/components/screens/SecaoStatusCasal';
-import { SecaoProximos } from '@/components/screens/SecaoProximos';
-import { SecaoDiariosEventosAgrupado } from '@/components/screens/SecaoDiariosEventosAgrupado';
+
+// R-HOME-1: atalho Reflexao (cyan + Sparkles). Abre o diario emocional
+// em modo reflexao (terceiro modo neutro, introduzido em G2). Pill
+// inline na primeira linha do header, ao lado da data.
+interface AtalhoReflexaoProps {
+  onPress: () => void;
+}
+function AtalhoReflexao({ onPress }: AtalhoReflexaoProps) {
+  const [pressed, setPressed] = useState(false);
+  return (
+    <Pressable
+      onPressIn={() => {
+        setPressed(true);
+        haptics.light();
+      }}
+      onPressOut={() => setPressed(false)}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="reflexao"
+      hitSlop={8}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexShrink: 0,
+        alignSelf: 'flex-end',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+        backgroundColor: 'rgba(139,233,253,0.14)',
+        borderWidth: 1,
+        borderColor: 'rgba(139,233,253,0.42)',
+        opacity: pressed ? 0.85 : 1,
+      }}
+    >
+      <Sparkles size={13} color={colors.cyan} strokeWidth={2.25} />
+      <Text
+        numberOfLines={1}
+        style={{
+          color: colors.cyan,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: 13,
+          lineHeight: 18,
+          flexShrink: 0,
+        }}
+      >
+        Reflexão
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function TelaHoje() {
   const router = useRouter();
@@ -163,6 +203,10 @@ export default function TelaHoje() {
       // /recap criado em paralelo (M36/B5). Cast para evitar dependencia
       // dura no tipo gerado pelo expo-router antes do paralelo fechar.
       onRecapPress={() => router.push('/recap' as never)}
+      onReflexaoPress={() =>
+        router.push('/diario-emocional?modo=reflexao' as never)
+      }
+      onTodoLongPress={() => router.push('/todo' as never)}
     />
   );
 }
@@ -173,65 +217,33 @@ interface ConteudoProps {
   onAvatarPress: (() => void) | undefined;
   onComponentsPress: () => void;
   onRecapPress: () => void;
+  onReflexaoPress: () => void;
+  onTodoLongPress: () => void;
 }
 
 function TelaHojeConteudo({
   ehSozinho,
-  onAvatarPress,
+  onAvatarPress: _onAvatarPress,
   onComponentsPress,
   onRecapPress,
+  onReflexaoPress,
+  onTodoLongPress,
 }: ConteudoProps) {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
-  const fotos = usePessoa((s) => s.fotos);
-  const fotoAtiva = fotos[pessoaAtiva];
-  const { humor, diarios, eventos, loading, error } = useHoje();
+  const nomeAtivo = useNomeDe(pessoaAtiva);
+
+  // _onAvatarPress mantido na assinatura para compat retrocedida com
+  // chamadas que injetam o toggle de pessoa. Header agora so mostra
+  // titulo simples (sem avatar) -- decisao R-HOME-1: o avatar perdeu
+  // valor sem o Status do Casal, que era o unico lugar onde refletia
+  // pessoa selecionada na home. Filtro de pessoa fica acessivel via
+  // MenuLateral.
+  void _onAvatarPress;
+  void ehSozinho;
 
   return (
     <Screen>
-      <Header
-        title="Hoje"
-        right={
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: spacing.sm,
-              alignItems: 'center',
-            }}
-          >
-            {ehSozinho ? (
-              <PersonAvatar
-                pessoa={pessoaAtiva}
-                size="md"
-                onPress={onAvatarPress}
-                photoUri={fotoAtiva}
-              />
-            ) : (
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                <PersonAvatar
-                  pessoa="pessoa_a"
-                  size="sm"
-                  onPress={onAvatarPress}
-                  photoUri={fotos.pessoa_a}
-                />
-                <PersonAvatar
-                  pessoa="pessoa_b"
-                  size="sm"
-                  onPress={onAvatarPress}
-                  photoUri={fotos.pessoa_b}
-                />
-              </View>
-            )}
-            {/* Q2/Q2.1/Q2.2 (Onda Q): Recap como Pressable custom em vez
-                de Button generico — Button mete justifyContent center no
-                MotiView e o filho View com flex row colapsava no celular
-                real (mostrava so o icone). Aqui controlamos o layout
-                direto: pill purple/16 + borda purple/45 + Sparkles 14dp
-                + label 14dp, padding 20dp horizontal + 10dp vertical,
-                radius 999 chip, gap 6dp. */}
-            <BotaoRecap onPress={onRecapPress} />
-          </View>
-        }
-      />
+      <Header title="Hoje" />
 
       <ScrollView
         style={{ flex: 1 }}
@@ -242,16 +254,18 @@ function TelaHojeConteudo({
         }}
         showsVerticalScrollIndicator={false}
       >
-        {error ? <BannerErro mensagem={error} /> : null}
-
-        {!ehSozinho ? <SecaoStatusCasal /> : null}
-        <SecaoProximos />
-        <SecaoHumor humor={humor} loading={loading} />
-        <SecaoDiariosEventosAgrupado
-          diarios={diarios}
-          eventos={eventos}
-          loading={loading}
+        <CabecalhoHoje
+          nome={nomeAtivo}
+          onReflexaoPress={onReflexaoPress}
         />
+
+        <SecaoProximos />
+
+        <SecaoTodoHoje onLongPress={onTodoLongPress} />
+
+        <View style={{ alignItems: 'center', paddingTop: spacing.base }}>
+          <BotaoRecap onPress={onRecapPress} />
+        </View>
 
         {__DEV__ ? (
           <Button
@@ -265,51 +279,193 @@ function TelaHojeConteudo({
   );
 }
 
-interface BannerErroProps {
-  mensagem: string;
+// Cabecalho R-HOME-1. Duas linhas:
+//  - Linha 1: data por extenso ("Quarta, 16 de maio") em muted +
+//    atalho Reflexao (cyan) a direita.
+//  - Linha 2: saudacao personalizada ("Boa noite, <nome>") em fg.
+interface CabecalhoProps {
+  nome: string;
+  onReflexaoPress: () => void;
 }
+function CabecalhoHoje({ nome, onReflexaoPress }: CabecalhoProps) {
+  const agora = useMemo(() => new Date(), []);
+  const dataExtenso = useMemo(() => formatarDataExtenso(agora), [agora]);
+  const saudacao = useMemo(() => saudacaoPorHora(agora), [agora]);
 
-function BannerErro({ mensagem }: BannerErroProps) {
   return (
-    <View
-      style={{
-        backgroundColor: colors.bgElev,
-        borderLeftWidth: 3,
-        borderLeftColor: colors.red,
-        borderRadius: 8,
-        padding: spacing.base,
-      }}
-      accessibilityRole="alert"
-    >
+    <View style={{ gap: spacing.sm }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing.sm,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.muted,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: 13,
+            lineHeight: 20,
+            flex: 1,
+          }}
+          numberOfLines={1}
+        >
+          {dataExtenso}
+        </Text>
+        <AtalhoReflexao onPress={onReflexaoPress} />
+      </View>
       <Text
         style={{
           color: colors.fg,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: 13,
-          lineHeight: 20,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: 22,
+          lineHeight: 30,
         }}
+        numberOfLines={2}
       >
-        Não foi possível ler o Vault: {mensagem}
+        {`${saudacao}, ${nome}`}
       </Text>
     </View>
   );
 }
 
-// Converte slug snake_case do YAML em rotulo legivel:
-//   'trabalho_pesado' -> 'Trabalho pesado'
-//   'boa_conversa'    -> 'Boa conversa'
-function formatTag(slug: string): string {
-  const limpo = slug.replace(/_/g, ' ').trim();
-  if (limpo.length === 0) return slug;
-  return limpo.charAt(0).toUpperCase() + limpo.slice(1);
+// Formata data em PT-BR sentence case: "Quarta, 16 de maio".
+// Sem ano (a Tela Hoje sempre se refere ao dia corrente).
+function formatarDataExtenso(date: Date): string {
+  const local = new Date(date.getTime() + -180 * 60_000);
+  const diasSemana = [
+    'Domingo',
+    'Segunda',
+    'Terça',
+    'Quarta',
+    'Quinta',
+    'Sexta',
+    'Sábado',
+  ];
+  const meses = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+  ];
+  const dow = diasSemana[local.getUTCDay()];
+  const dia = local.getUTCDate();
+  const mes = meses[local.getUTCMonth()];
+  return `${dow}, ${dia} de ${mes}`;
 }
 
-interface SecaoHumorProps {
-  humor: ReturnType<typeof useHoje>['humor'];
-  loading: boolean;
+// Saudacao por faixa horaria local BRT. Limites canonicos M01:
+//   05..11 -> Bom dia
+//   12..17 -> Boa tarde
+//   18..04 -> Boa noite
+function saudacaoPorHora(date: Date): string {
+  const local = new Date(date.getTime() + -180 * 60_000);
+  const h = local.getUTCHours();
+  if (h >= 5 && h < 12) return 'Bom dia';
+  if (h >= 12 && h < 18) return 'Boa tarde';
+  return 'Boa noite';
 }
 
-function SecaoHumor({ humor, loading }: SecaoHumorProps) {
+// Secao To-do hoje (R-HOME-1). Mostra ate 5 tarefas pendentes. Tap no
+// checkbox alterna feito (otimista). Long-press na lista navega para
+// /todo. Empty state breve quando nao ha tarefas.
+//
+// Filtro: tarefas com data === hoje OU pendentes mais recentes ate
+// completar 5. Conservador: usuario que registrou tarefa ontem ainda
+// ve hoje, sem precisar reabrir /todo. Concluidas nao aparecem aqui;
+// vao para a secao Concluidas dentro de /todo.
+const LIMITE_TODO_HOJE = 5;
+
+interface SecaoTodoProps {
+  onLongPress: () => void;
+}
+function SecaoTodoHoje({ onLongPress }: SecaoTodoProps) {
+  const vaultRoot = useVault((s) => s.vaultRoot);
+  const [tarefas, setTarefas] = useState<TarefaListada[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const carregar = useCallback(async () => {
+    if (!vaultRoot) {
+      setTarefas([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const lista = await listarTarefas(vaultRoot);
+      setTarefas(lista);
+    } finally {
+      setLoading(false);
+    }
+  }, [vaultRoot]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void carregar();
+    }, [carregar])
+  );
+
+  const pendentes = useMemo(() => {
+    return tarefas
+      .filter((t) => !t.meta.feito)
+      .slice(0, LIMITE_TODO_HOJE);
+  }, [tarefas]);
+
+  const handleToggle = useCallback(
+    async (rel: string) => {
+      if (!vaultRoot) return;
+      const alvo = tarefas.find((t) => t.rel === rel);
+      if (!alvo) return;
+      // Otimista: atualiza local imediato, persist em paralelo.
+      setTarefas((cur) =>
+        cur.map((t) =>
+          t.rel === rel
+            ? {
+                ...t,
+                meta: {
+                  ...t.meta,
+                  feito: !t.meta.feito,
+                  feito_em: !t.meta.feito ? new Date().toISOString() : null,
+                },
+              }
+            : t
+        )
+      );
+      haptics.selection();
+      try {
+        await marcarFeito(vaultRoot, rel, !alvo.meta.feito);
+      } catch {
+        // Reverte estado local em caso de falha.
+        setTarefas((cur) =>
+          cur.map((t) =>
+            t.rel === rel
+              ? {
+                  ...t,
+                  meta: {
+                    ...t.meta,
+                    feito: alvo.meta.feito,
+                    feito_em: alvo.meta.feito_em,
+                  },
+                }
+              : t
+          )
+        );
+        haptics.error();
+      }
+    },
+    [vaultRoot, tarefas]
+  );
+
   return (
     <View style={{ gap: spacing.md }}>
       <Text
@@ -319,7 +475,7 @@ function SecaoHumor({ humor, loading }: SecaoHumorProps) {
           fontSize: 16,
         }}
       >
-        Humor do dia
+        To-do hoje
       </Text>
       {loading ? (
         <Card>
@@ -332,74 +488,96 @@ function SecaoHumor({ humor, loading }: SecaoHumorProps) {
             Carregando...
           </Text>
         </Card>
-      ) : !humor ? (
+      ) : pendentes.length === 0 ? (
         <Card>
-          <EmptyState frase="Nenhum registro de humor hoje. Toque + para começar." />
+          <EmptyState frase="Sem tarefas pendentes. Toque + para criar." />
         </Card>
       ) : (
-        <Card>
-          <View style={{ gap: spacing.md }}>
-            <Slider
-              value={humor.humor}
-              min={1}
-              max={5}
-              onChange={() => undefined}
-              disabled
-              label="Humor"
+        <View style={{ gap: spacing.sm }}>
+          {pendentes.map((t) => (
+            <ItemTodoInline
+              key={t.rel}
+              item={t}
+              onToggle={() => void handleToggle(t.rel)}
+              onLongPress={onLongPress}
             />
-            <Slider
-              value={humor.energia}
-              min={1}
-              max={5}
-              onChange={() => undefined}
-              disabled
-              label="Energia"
-            />
-            <Slider
-              value={humor.ansiedade}
-              min={1}
-              max={5}
-              onChange={() => undefined}
-              disabled
-              label="Ansiedade"
-            />
-            <Slider
-              value={humor.foco}
-              min={1}
-              max={5}
-              onChange={() => undefined}
-              disabled
-              label="Foco"
-            />
-            {humor.frase ? (
-              <Text
-                style={{
-                  color: colors.muted,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 13,
-                  fontStyle: 'italic',
-                  lineHeight: 22,
-                }}
-              >
-                {humor.frase}
-              </Text>
-            ) : null}
-            {humor.tags.length > 0 ? (
-              <ChipGroup
-                mode="multi"
-                value={humor.tags}
-                onChange={() => undefined}
-                options={humor.tags.map((t) => ({
-                  value: t,
-                  label: formatTag(t),
-                  accent: 'cyan',
-                }))}
-                disabled
-              />
-            ) : null}
-          </View>
-        </Card>
+          ))}
+        </View>
       )}
     </View>
+  );
+}
+
+// Item de tarefa inline na home: checkbox 22dp a esquerda + titulo
+// (line-through se feito). Tap em qualquer lugar do item alterna o
+// estado (mesmo padrao da Tela /todo). Long-press navega para /todo
+// para edicao detalhada.
+interface ItemTodoProps {
+  item: TarefaListada;
+  onToggle: () => void;
+  onLongPress: () => void;
+}
+function ItemTodoInline({ item, onToggle, onLongPress }: ItemTodoProps) {
+  const [pressed, setPressed] = useState(false);
+  const titulo = item.meta.titulo;
+  const feito = item.meta.feito;
+  const a11y = `tarefa ${titulo}${feito ? ' feita' : ' pendente'}`;
+
+  return (
+    <Pressable
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      onPress={onToggle}
+      onLongPress={() => {
+        haptics.medium();
+        onLongPress();
+      }}
+      delayLongPress={400}
+      accessibilityRole="checkbox"
+      accessibilityLabel={a11y}
+      accessibilityState={{ checked: feito }}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.base,
+        backgroundColor: colors.bg,
+        borderRadius: radius.card,
+        opacity: pressed ? 0.85 : 1,
+      }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: radius.input,
+          borderWidth: feito ? 0 : 2,
+          borderColor: colors.mutedDecor,
+          backgroundColor: feito ? colors.green : 'transparent',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {feito ? (
+          <Check size={14} color={colors.bg} strokeWidth={3} />
+        ) : null}
+      </View>
+      <Text
+        numberOfLines={2}
+        style={{
+          flex: 1,
+          color: feito ? colors.muted : colors.fg,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: 14,
+          lineHeight: 22,
+          textDecorationLine: feito ? 'line-through' : 'none',
+        }}
+      >
+        {titulo}
+      </Text>
+    </Pressable>
   );
 }
