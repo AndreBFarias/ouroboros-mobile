@@ -28,6 +28,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import JSZip from 'jszip';
 import { VAULT_FOLDERS } from '@/lib/vault/paths';
 import { loadVaultRoot } from '@/lib/vault/permissions';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { sha256Base64, sha256Utf8 } from '@/lib/crypto/sha256';
 import { useSettings } from '@/lib/stores/settings';
 import { useOnboarding } from '@/lib/stores/onboarding';
@@ -133,6 +134,12 @@ async function listarRecursivo(
   const filhos = await FileSystem.readDirectoryAsync(target);
   const out: string[] = [];
   for (const filho of filhos) {
+    // Filtro defensivo: copias .sync-conflict-* geradas pelo Syncthing
+    // nao entram no ZIP de export. Restaurar essa copia num device
+    // limpo perpetuaria o conflito; reconciliacao e responsabilidade
+    // do usuario via Obsidian/explorer no proprio filesystem.
+    // (sprint AUDIT-T1B7-DRAFT-EXPORT-FIX, opcao A da spec)
+    if (ehSyncConflict(filho)) continue;
     const filhoRel = `${rel}/${filho}`;
     const filhoTarget = `${base}/${filhoRel}`;
     let finfo: FileSystem.FileInfo;

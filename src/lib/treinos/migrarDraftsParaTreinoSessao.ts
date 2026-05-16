@@ -22,6 +22,7 @@ import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { useVault } from '@/lib/stores/vault';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { treinosPath } from '@/lib/vault/paths';
 import {
   TreinoSessaoSchema,
@@ -79,6 +80,13 @@ export async function migrarDraftsParaTreinoSessao(
   let ignorados = 0;
 
   for (const draftUri of arquivos) {
+    // Filtro defensivo: copias geradas pelo Syncthing em janela de
+    // conflito (sync-conflict-<YYYYMMDD>-<HHMMSS>-<dispid>) nao
+    // viram TreinoSessao espelho. O arquivo continua no path
+    // original para reconciliacao manual via Obsidian/Syncthing.
+    // (sprint AUDIT-T1B7-DRAFT-EXPORT-FIX)
+    if (ehSyncConflict(draftUri)) continue;
+
     const partes = parseDraftFilename(draftUri);
     if (!partes) {
       ignorados++;
