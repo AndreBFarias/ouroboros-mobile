@@ -22,6 +22,7 @@
     },
     "android": {
       "package": "com.ouroboros.mobile",
+      "label": "Ouroboros",
       "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon-foreground.png",
@@ -52,14 +53,6 @@
         "android.permission.health.READ_SLEEP",
         "android.permission.health.READ_MENSTRUATION",
         "android.permission.health.WRITE_MENSTRUATION"
-      ],
-      "intentFilters": [
-        {
-          "action": "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE",
-          "category": [
-            "DEFAULT"
-          ]
-        }
       ]
     },
     "web": {
