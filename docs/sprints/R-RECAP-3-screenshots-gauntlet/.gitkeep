@@ -1,0 +1,32 @@
+R-RECAP-3 — Empty states nao-toxicos
+Screenshot ausente por colisao de porta com executor paralelo.
+
+PIPELINE 3-TENTATIVAS executado:
+
+Tentativa 1 (CLI X11):
+  DISPLAY=:1 OK, scrot/import disponiveis.
+  Mas o app eh RN web — precisa Metro respondendo em localhost:8081.
+  curl http://localhost:8081 → HTTP 000 (sem servidor).
+
+Tentativa 2 (claude-in-chrome MCP):
+  Sem aba Chrome com Metro aberta neste worktree.
+
+Tentativa 3 (playwright MCP / subir Metro proprio):
+  Executor paralelo PID 625540 ja segura `./run.sh --gauntlet`
+  na porta 8081. Iniciar segundo Metro causaria colisao.
+  Aguardei 25s o Metro do outro executor responder — nada.
+
+ESCOPO DA MUDANCA (justificativa para evidencia substitutiva):
+- Conditional render em src/components/screens/RecapScreen.tsx:
+  - Grid Numeros ocultado quando totalNumeros === 0
+  - EmptyState global usa frase do pool determinista
+- Pool de 12 frases em src/lib/copy/recap-empty-states.ts
+- Sem mudanca de tokens, motion, layout, fontes ou spacing
+- EmptyState component preexistente e testado
+
+EVIDENCIA SUBSTITUTIVA:
+- 2 testes unitarios cobrem conditional render (RecapScreen-empty.test.tsx)
+- 1 teste de idempotencia (recap-empty-states.test.ts) com 14/14 verde
+- Smoke completo 225/225 suites + 2100/2100 testes verdes
+- Typecheck npx tsc --noEmit exit 0
+- Snapshot textual em /tmp/ouroboros_R-RECAP-3_evidencia_*.txt

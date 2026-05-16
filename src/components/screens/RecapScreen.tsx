@@ -35,6 +35,7 @@ import {
   type PeriodoChave,
   type PeriodoRange,
 } from '@/lib/hooks/useRecap';
+import { escolherFrase, seedDeRange } from '@/lib/copy/recap-empty-states';
 import { RecapSecaoConquistas } from './RecapSecaoConquistas';
 import { RecapSecaoCrises } from './RecapSecaoCrises';
 import { RecapSecaoReflexoes } from './RecapSecaoReflexoes';
@@ -155,7 +156,7 @@ export function RecapScreen() {
     setModo(proximo);
   };
 
-  const totalSecoes =
+  const totalListas =
     data === null
       ? 0
       : data.conquistas.length +
@@ -163,6 +164,32 @@ export function RecapScreen() {
         data.reflexoes.length +
         data.evolucoes.length +
         data.tarefasConcluidas.length;
+
+  // R-RECAP-3: soma dos contadores do grid Numeros. Se tudo zero,
+  // a secao some — evita exibir "0 Registros / 0 Fotos / 0 Treinos"
+  // que lia como acusacao (ADR-0005).
+  const totalNumeros =
+    data === null
+      ? 0
+      : data.numeros.registros +
+        data.numeros.treinos +
+        data.numeros.fotos +
+        data.numeros.audios +
+        data.numeros.videos +
+        data.numeros.eventos_positivos +
+        data.numeros.eventos_negativos +
+        data.numeros.tarefas_concluidas;
+
+  const totalRecap = totalListas + totalNumeros;
+
+  // R-RECAP-3: frase de empty state vem de pool determinista por
+  // periodo+ano+semana. Mesma seed -> mesma frase em todo render,
+  // garantindo que reabrir o Recap na mesma semana nao surpreenda
+  // o usuario com texto diferente a cada toque.
+  const fraseVazio = useMemo(
+    () => escolherFrase(seedDeRange(periodo, range.de)),
+    [periodo, range.de]
+  );
 
   return (
     <Screen>
@@ -331,9 +358,9 @@ export function RecapScreen() {
               <OuroborosLoader compacto />
             </View>
           ) : data === null ? (
-            <EmptyState frase="Nenhum registro neste período." />
-          ) : totalSecoes === 0 ? (
-            <EmptyState frase="Nenhum registro neste período." />
+            <EmptyState frase={fraseVazio} />
+          ) : totalRecap === 0 ? (
+            <EmptyState frase={fraseVazio} />
           ) : (
             <ScrollView
               style={{ flex: 1 }}
@@ -345,7 +372,9 @@ export function RecapScreen() {
               <RecapSecaoReflexoes itens={data.reflexoes} />
               <RecapSecaoEvolucoes itens={data.evolucoes} />
               <RecapSecaoTarefas itens={data.tarefasConcluidas} />
-              <RecapSecaoNumeros numeros={data.numeros} range={range} />
+              {totalNumeros > 0 ? (
+                <RecapSecaoNumeros numeros={data.numeros} range={range} />
+              ) : null}
             </ScrollView>
           )}
         </Animated.View>

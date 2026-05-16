@@ -124,8 +124,28 @@ describe('RecapScreen', () => {
   });
 
   it('mostra empty state quando o vault nao tem registros no periodo', async () => {
-    const { findByText } = render(<RecapScreen />);
-    expect(await findByText('Nenhum registro neste período.')).toBeTruthy();
+    // R-RECAP-3: frase vem de pool determinista. Validamos via
+    // accessibilityLabel "vazio: <frase>" emitido pelo EmptyState.
+    const { findByLabelText } = render(<RecapScreen />);
+    const empty = await findByLabelText(/^vazio: /);
+    expect(empty).toBeTruthy();
+    // A frase escolhida pertence ao pool curado.
+    const label = String(empty.props.accessibilityLabel);
+    expect(label.startsWith('vazio: ')).toBe(true);
+    expect(label.length).toBeGreaterThan('vazio: '.length);
+  });
+
+  // R-RECAP-3: empty state global e' idempotente — mesma seed
+  // (semana atual) deve retornar a mesma frase em renders repetidos.
+  it('frase do empty state e idempotente entre renders', async () => {
+    const { findByLabelText, unmount } = render(<RecapScreen />);
+    const empty1 = await findByLabelText(/^vazio: /);
+    const label1 = String(empty1.props.accessibilityLabel);
+    unmount();
+    const segundo = render(<RecapScreen />);
+    const empty2 = await segundo.findByLabelText(/^vazio: /);
+    const label2 = String(empty2.props.accessibilityLabel);
+    expect(label1).toBe(label2);
   });
 
   // L2 (M-RECAP-CALENDARIO-UNIFICAR)
