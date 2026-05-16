@@ -78,6 +78,10 @@ export const EstadoSettingsSchema = z.object({
     capPorRegistro: z.number().int().min(1),
     permitirAudio: z.boolean(),
   }),
+  // R-RECAP-4 (2026-05-16): configuracoes do modo Memorias do Recap.
+  recap: z.object({
+    slideshowIntervaloS: z.number().int().min(2).max(10),
+  }),
   atualizadoEm: IsoDatetime,
 });
 export type EstadoSettings = z.infer<typeof EstadoSettingsSchema>;

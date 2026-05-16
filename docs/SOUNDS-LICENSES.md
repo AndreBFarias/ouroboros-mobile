@@ -52,9 +52,22 @@ de sino físico, marimba acústica, etc.), o procedimento canônico
 6. Validar Nível B (emulador) ou Nível C (celular físico): criar
    alarme com som novo, confirmar disparo audível.
 
+### `assets/sounds/ambient/` — Áudio ambient do Recap Memórias (R-RECAP-4)
+
+Detalhes técnicos completos em
+[`assets/sounds/ambient/CREDITS.md`](../assets/sounds/ambient/CREDITS.md).
+
+| Arquivo | Licença | Origem | Comando de geração |
+|---|---|---|---|
+| `recap-memorias.mp3` | CC0 / domínio público | ffmpeg synth (R-RECAP-4, 2026-05-16) | drone harmônico 4 senóides A2/E3/A3/E4 × 60s × MP3 64kbit/s mono |
+
+Tom de pad discreto pensado para servir de fundo ao slideshow
+Memórias quando o usuário liga o toggle `recapAmbientAudio` em
+Configurações. Default OFF — usuário escolhe explicitamente.
+
 ## Outros assets sonoros
 
-Atualmente o app não usa nenhum outro asset sonoro além dos sons
-de alarme. Caso uma sprint futura adicione (haptic-like UI sounds,
-voz sintetizada, ringtones), criar nova seção neste arquivo + um
-`CREDITS.md` na pasta correspondente.
+Atualmente o app usa apenas os sons de alarme e o ambient do
+Recap Memórias. Caso uma sprint futura adicione (haptic-like UI
+sounds, voz sintetizada, ringtones), criar nova seção neste
+arquivo + um `CREDITS.md` na pasta correspondente.

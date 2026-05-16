@@ -101,6 +101,25 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       useSettings.getState().setPrivacidade('biometriaAbrir', true);
       expect(useSettings.getState().privacidade.biometriaAbrir).toBe(true);
     });
+
+    // R-RECAP-4 (2026-05-16): novo campo recap.slideshowIntervaloS.
+    it('recap.slideshowIntervaloS default 4s', () => {
+      // Reseta para garantir defaults.
+      useSettings.getState().resetar();
+      expect(useSettings.getState().recap.slideshowIntervaloS).toBe(4);
+    });
+
+    it('setRecap.slideshowIntervaloS aceita valor customizado', () => {
+      useSettings.getState().setRecap('slideshowIntervaloS', 6);
+      expect(useSettings.getState().recap.slideshowIntervaloS).toBe(6);
+    });
+
+    it('featureToggles.recapAmbientAudio default OFF (ADR-0005)', () => {
+      useSettings.getState().resetar();
+      expect(useSettings.getState().featureToggles.recapAmbientAudio).toBe(
+        false
+      );
+    });
   });
 
   describe('reset', () => {
@@ -108,6 +127,7 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       useSettings.getState().setFeatureToggle('cicloMenstrual', false);
       useSettings.getState().setSomVibracao('geral', false);
       useSettings.getState().setMidia('capPorRegistro', 12);
+      useSettings.getState().setRecap('slideshowIntervaloS', 9);
 
       useSettings.getState().resetar();
 
@@ -115,6 +135,8 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       expect(s.featureToggles.cicloMenstrual).toBe(true);
       expect(s.somVibracao.geral).toBe(true);
       expect(s.midia.capPorRegistro).toBe(4);
+      // R-RECAP-4: novo campo bate o default.
+      expect(s.recap.slideshowIntervaloS).toBe(4);
     });
   });
 });

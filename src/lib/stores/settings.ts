@@ -82,6 +82,13 @@ export interface SettingsState {
     capPorRegistro: number;
     permitirAudio: boolean;
   };
+  // R-RECAP-4 (2026-05-16): configuracoes do modo Memorias do Recap.
+  // slideshowIntervaloS controla o auto-avance entre slides (default 4s,
+  // range 2-10s). Sem boolean isolado para "pausar permanentemente" —
+  // o botao pausar dentro do slideshow ja faz toggle por sessao.
+  recap: {
+    slideshowIntervaloS: number;
+  };
   // Mutators canonicos. Sprints opt-in chamam apenas os toggles
   // relevantes; setSync/setLembrete foram removidos no shape v2.
   setSomVibracao: <K extends keyof SettingsState['somVibracao']>(
@@ -104,6 +111,10 @@ export interface SettingsState {
     chave: K,
     valor: SettingsState['midia'][K]
   ) => void;
+  setRecap: <K extends keyof SettingsState['recap']>(
+    chave: K,
+    valor: SettingsState['recap'][K]
+  ) => void;
   resetar: () => void;
 }
 
@@ -118,6 +129,7 @@ const DEFAULT_STATE_V2: Omit<
   | 'setFeatureToggle'
   | 'setPrivacidade'
   | 'setMidia'
+  | 'setRecap'
   | 'resetar'
 > = {
   somVibracao: {
@@ -160,6 +172,11 @@ const DEFAULT_STATE_V2: Omit<
     capPorRegistro: 4,
     permitirAudio: true,
   },
+  // R-RECAP-4: default 4s (sweet spot ux). User pode customizar de 2 a
+  // 10s via slider em Configuracoes > Modo Memorias.
+  recap: {
+    slideshowIntervaloS: 4,
+  },
 };
 
 export const useSettings = create<SettingsState>()(
@@ -185,6 +202,10 @@ export const useSettings = create<SettingsState>()(
       setMidia: (chave, valor) =>
         set((s) => ({
           midia: { ...s.midia, [chave]: valor },
+        })),
+      setRecap: (chave, valor) =>
+        set((s) => ({
+          recap: { ...s.recap, [chave]: valor },
         })),
       resetar: () => set({ ...DEFAULT_STATE_V2 }),
     }),
@@ -294,6 +315,10 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ...DEFAULT_STATE_V2.midia,
       ...((ps.midia as Record<string, unknown>) ?? {}),
     } as SettingsState['midia'],
+    recap: {
+      ...DEFAULT_STATE_V2.recap,
+      ...((ps.recap as Record<string, unknown>) ?? {}),
+    } as SettingsState['recap'],
   } as SettingsState;
 }
 
@@ -325,5 +350,6 @@ useSettings.subscribe((state) => {
     featureToggles: { ...state.featureToggles },
     privacidade: { ...state.privacidade },
     midia: { ...state.midia },
+    recap: { ...state.recap },
   });
 });

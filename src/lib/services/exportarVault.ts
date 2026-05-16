@@ -74,6 +74,7 @@ export interface SnapshotSettings {
     | 'setFeatureToggle'
     | 'setPrivacidade'
     | 'setMidia'
+    | 'setRecap'
     | 'resetar'
   >;
   onboarding: {
@@ -203,6 +204,7 @@ export function gerarSnapshotSettings(): SnapshotSettings {
       featureToggles: s.featureToggles,
       privacidade: s.privacidade,
       midia: s.midia,
+      recap: s.recap,
     },
     onboarding: {
       done: o.done,

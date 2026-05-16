@@ -128,6 +128,7 @@ describe('escreverEstado: escreverEstadoCanonicoImediato', () => {
       },
       privacidade: { biometriaAbrir: false, ocultarTranscricoes: false },
       midia: { capPorRegistro: 4, permitirAudio: true },
+      recap: { slideshowIntervaloS: 4 },
     };
     await escreverEstadoCanonicoImediato('settings', payload);
 
@@ -225,6 +226,7 @@ describe('escreverEstado: escreverEstadoCanonicoImediato', () => {
       },
       privacidade: { biometriaAbrir: false, ocultarTranscricoes: false },
       midia: { capPorRegistro: 4, permitirAudio: true },
+      recap: { slideshowIntervaloS: 4 },
     });
     expect(mockWriteVaultFile).not.toHaveBeenCalled();
   });

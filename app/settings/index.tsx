@@ -23,7 +23,14 @@ import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import { Button, Header, Screen, Toggle, useToast } from '@/components/ui';
+import {
+  Button,
+  Header,
+  Screen,
+  Slider,
+  Toggle,
+  useToast,
+} from '@/components/ui';
 import { useSafeBottomMargin } from '@/components/chrome/safeBottom';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { LinkSubTela } from '@/components/settings/LinkSubTela';
@@ -65,6 +72,7 @@ export default function SettingsTela() {
         <SecaoSomVibracao />
         <SecaoPessoa />
         <SecaoFeatures />
+        <SecaoRecapMemorias />
         <SecaoBackupAutomatico />
         <SecaoPrivacidade />
         <SecaoSobre />
@@ -360,6 +368,66 @@ function SecaoFeatures() {
         }
         a11y="toggle mostrar financas em desenvolvimento"
       />
+    </SecaoLista>
+  );
+}
+
+// === Secao 3.5: Modo Memorias do Recap (R-RECAP-4, 2026-05-16) ===
+//
+// Expoe duas configuracoes:
+//   - Toggle de audio ambient embutido (CC0 drone). Default OFF
+//     ("sem rede de saida" preservada pelo default - ADR-0005).
+//   - Slider de intervalo do auto-avance (2-10s, default 4s).
+// O botao "Pausar" durante o slideshow nao tem persistencia — e'
+// estado de sessao apenas.
+
+function SecaoRecapMemorias() {
+  const featureToggles = useSettings((s) => s.featureToggles);
+  const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
+  const recap = useSettings((s) => s.recap);
+  const setRecap = useSettings((s) => s.setRecap);
+
+  return (
+    <SecaoLista
+      titulo="Modo Memórias do Recap"
+      accessibilityLabel="secao recap memorias"
+    >
+      <ToggleRow
+        label="Áudio ambient"
+        subtitulo="Trilha sonora discreta CC0 durante o slideshow."
+        valor={featureToggles.recapAmbientAudio}
+        onChange={(v) => setFeatureToggle('recapAmbientAudio', v)}
+        a11y="toggle audio ambient recap"
+      />
+      <View
+        accessibilityLabel="linha intervalo slideshow"
+        style={{
+          backgroundColor: colors.bgAlt,
+          borderRadius: radius.card,
+          padding: spacing.base,
+          gap: spacing.xs,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.fg,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: typography.body.size,
+            lineHeight: typography.body.size * typography.body.lineHeight,
+          }}
+        >
+          Intervalo entre slides
+        </Text>
+        <Slider
+          value={recap.slideshowIntervaloS}
+          min={2}
+          max={10}
+          step={1}
+          label="segundos"
+          onChange={(v) => setRecap('slideshowIntervaloS', v)}
+          accessibilityLabel="slider intervalo slideshow"
+        />
+      </View>
     </SecaoLista>
   );
 }

@@ -166,6 +166,9 @@ function snapshotValido(): SnapshotSettings {
         capPorRegistro: 8,
         permitirAudio: false,
       },
+      recap: {
+        slideshowIntervaloS: 4,
+      },
     },
     onboarding: {
       done: true,
