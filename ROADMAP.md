@@ -48,7 +48,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-1 | Lista itens clicáveis | feature | P1 | `25d4849` | `[ok]` (Onda 2A.2) |
 | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |
 | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
-| R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
+| R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | `8088c80` | `[ok]` (Onda 2A.3) |
 | R-HOME-1 | Hoje prioridade e recorrência (D1=C remover Status+Humor) | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` |
 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
 | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
@@ -76,6 +76,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
 | R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | 1-2h | `R-DX-EXECUTOR-WORKTREE-ENFORCE-spec.md` |
+| R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | 30min | `R-MEDIA-LINKEXTERNO-CLEANUP-spec.md` |
 | R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
 | R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |

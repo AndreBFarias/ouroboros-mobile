@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2A.3 — R-MEDIA-1 oEmbed Spotify/YouTube preview (2026-05-16 noite)
+
+Sprint da Fase 2 fecha a Onda 2A (4/4 mergeados). Commit `8088c80` cherry-pick. Re-dispatch após stall do agent original (aad2863a) que parou em 10min sem progresso; trabalho parcial (2 arquivos base) recuperado em wip `df74a12`, agent novo (aa84bc25) honrou worktree e completou em ~27min sobre a base.
+
+- **Cliente oEmbed em `src/lib/midia/oembedClient.ts`** (3349 bytes, do wip): detecta serviço via `extractYouTubeId`/`extractSpotifyTrackId` (reuso), GET único com timeout 5s, retorna `OembedData | null`. Exceção explícita à filosofia "sem rede de saída" (D2 = A).
+- **Schema em `src/lib/midia/oembedSchema.ts`** (1612 bytes, do wip): Zod com `optional()` em campos variantes (forward-compat). Tipo `ServicoMidia` = `'youtube' | 'spotify' | 'audio' | 'desconhecido'`.
+- **Cache persistente em `src/lib/cache/oembedCache.ts`**: hash FNV-1a + TTL 7d. Path em `cacheDirectory/oembed/<hash-url>.json` via `expo-file-system`. Filtro `.sync-conflict-*` defensivo. Cross-session.
+- **Wrapper em `src/lib/midia/oembedFetch.ts`**: `obterOembed(url)` = cache hit → fetch + populate cache → null. É o ponto de entrada do UI.
+- **Componente em `src/components/midia/MidiaPreviewSpotifyYoutube.tsx`**: 4 estados (loading skeleton, sucesso YouTube, sucesso Spotify, fallback offline). Botão "Abrir externamente" via `Linking.openURL`. accessibilityLabel sem acento.
+- **Integração em `DetalheConquista.tsx`**: `MidiaInterativa` agora chama `MidiaPreviewSpotifyYoutube` para `youtube` e `spotify`; fallback antigo via `LinkExterno` ficou dead code (sprint **R-MEDIA-LINKEXTERNO-CLEANUP** registrada como anti-débito P3).
+- **+36 testes** (18 cache + 5 wrapper + 13 componente). Métricas: **236 suítes / 2192 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+
+**Bug interno descoberto e corrigido durante a sprint** (não-débito): `useEffect(..., [url, visual])` com `visual` sendo objeto recriado a cada render causava loop infinito de fetch — componente nunca saía de loading. Fix: trocar `visual` por `suportado: boolean` derivado. Detectado pelos próprios testes (5/13 falharam antes do fix).
+
+**Achados colaterais** (registrados pra futura sprint):
+1. **Dead code `LinkExterno`** em `DetalheConquista.tsx` (~30 linhas + import `ExternalLink`) — sprint **R-MEDIA-LINKEXTERNO-CLEANUP** criada (P3, 30min).
+2. **Caches duplos coexistindo**: `spotifyOEmbedCache.ts` (memória — dedup intra-process) + `oembedCache.ts` novo (disco — cross-session). Responsabilidades distintas, sem overlap. Oportunidade futura de composição (memória sobre disco) — não prioridade.
+3. **env.json gitignored não copia para worktree** — precisou symlink manual pra typecheck. R-INFRA-WORKTREE-BOOTSTRAP cobre.
+4. **node_modules symlink não capturado por `.gitignore`** (gitignore casa pasta, não link). R-INFRA-WORKTREE-BOOTSTRAP cobre.
+
+**Validação visual limitada**: capturou onboarding real do app via X11 scrot, mas componente requer Vault com conquista contendo URL anexada (fluxo full E2E exigiria seed completo, fora do escopo). 13 testes Jest cobrem todos os 4 estados visuais via `accessibilityLabel`.
+
 ### Onda 2A.2 — R-RECAP-1 itens de agrupamento clicáveis (2026-05-16 noite)
 
 Sprint da Fase 2 entregue **honrando worktree isolation**. Commit `25d4849` cherry-pick.
