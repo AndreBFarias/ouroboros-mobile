@@ -35,6 +35,7 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { exportarVaultZip } from '@/lib/services/exportarVault';
 import { restaurarVaultZip } from '@/lib/services/restaurarVault';
 import { limparCache } from '@/lib/services/limparCache';
+import { exportarEstadoCompletoZip } from '@/lib/vault/exportarEstadoCompleto';
 import {
   APP_GITHUB_LABEL,
   APP_LICENSE,
@@ -394,6 +395,34 @@ function SecaoPrivacidade() {
     }
   };
 
+  // R-VAULT-CANONICAL-COMPLETE-B (2026-05-16): export do estado canonico
+  // em ZIP leve (so o que vive em vault/_estado/, sem binarios nem
+  // cache). Use case: enviar para sibling Python diagnosticar estado,
+  // debug rapido, share compacto.
+  const exportarEstado = async () => {
+    haptics.light();
+    toast.show('Exportando estado…', 'info');
+    const res = await exportarEstadoCompletoZip();
+    if (!res.uri) {
+      toast.show(res.motivo ?? 'Falha ao exportar estado.', 'error');
+      return;
+    }
+    try {
+      const disponivel = await Sharing.isAvailableAsync();
+      if (disponivel) {
+        await Sharing.shareAsync(res.uri, {
+          mimeType: 'application/zip',
+          dialogTitle: 'Compartilhar estado',
+        });
+        toast.show('Estado exportado.', 'success');
+      } else {
+        toast.show('Compartilhamento indisponível.', 'warn');
+      }
+    } catch {
+      toast.show('Compartilhamento cancelado.', 'info');
+    }
+  };
+
   const limpar = async () => {
     haptics.medium();
     const r = await limparCache();
@@ -474,6 +503,12 @@ function SecaoPrivacidade() {
         label="Exportar todos os meus dados"
         variant="primary"
         onPress={exportar}
+      />
+      <Button
+        label="Exportar estado completo"
+        variant="ghost"
+        onPress={exportarEstado}
+        accessibilityLabel="exportar estado completo"
       />
       <Button label="Importar backup" variant="ghost" onPress={importar} />
       <Button label="Limpar cache local" variant="ghost" onPress={limpar} />

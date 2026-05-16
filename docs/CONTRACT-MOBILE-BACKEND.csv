@@ -173,3 +173,51 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.22,grupo_treino,1,rotina_slugs,string[] 1..10,sim,Referência por slug; não duplica dados.
 5.22,grupo_treino,1,data_criacao,YYYY-MM-DD,sim,
 5.22,grupo_treino,1,autor,pessoa_a` | `pessoa_b,sim,
+5.23,estado_settings,1,_schema_version,inteiro,sim (escrita),
+5.23,estado_settings,1,version,literal `1,sim,Versão interna do schema de estado.
+5.23,estado_settings,1,somVibracao,object,sim,"{ geral, despertar, conquista, botoes }` booleans."
+5.23,estado_settings,1,pessoa,object,sim,"{ ativa, vaultCompartilhado, tipoCompanhia }`."
+5.23,estado_settings,1,featureToggles,object,sim,11 booleans cobrindo features opcionais.
+5.23,estado_settings,1,privacidade,object,sim,"{ biometriaAbrir, ocultarTranscricoes }`."
+5.23,estado_settings,1,midia,object,sim,"{ capPorRegistro >= 1, permitirAudio }`."
+5.23,estado_settings,1,atualizadoEm,ISO 8601,sim,Carimbo do writer canônico.
+5.24,estado_sessao,1,_schema_version,inteiro,sim (escrita),
+5.24,estado_sessao,1,version,literal `1,sim,
+5.24,estado_sessao,1,ultimaRota,string | null,sim,Path da última tela visitada.
+5.24,estado_sessao,1,rascunhos,object,sim,"7 keys (humorRapido, diarioEmocional, eventos, cicloRegistrar, alarmesNovo, contadoresNovo, tarefasNova); cada uma `record` ou `null`."
+5.24,estado_sessao,1,permissoesPedidas,object,sim,"4 booleans (storage, notif, camera, mic)."
+5.24,estado_sessao,1,flags,object,sim,5 booleans de migração.
+5.24,estado_sessao,1,atualizadoEm,ISO 8601,sim,
+5.25,estado_onboarding,1,_schema_version,inteiro,sim (escrita),
+5.25,estado_onboarding,1,version,literal `1,sim,
+5.25,estado_onboarding,1,done,boolean,sim,
+5.25,estado_onboarding,1,tipoCompanhia,sozinho` | `casal` | `amigos,sim,
+5.25,estado_onboarding,1,sexoDeclarado,object,sim,"{ pessoa_a: enum|null, pessoa_b: enum|null }`."
+5.25,estado_onboarding,1,permissoes,object,sim,"5 booleans (storage, camera, microfone, notificacoes, localizacao)."
+5.25,estado_onboarding,1,atualizadoEm,ISO 8601,sim,
+5.26,estado_pessoa,1,_schema_version,inteiro,sim (escrita),
+5.26,estado_pessoa,1,version,literal `1,sim,
+5.26,estado_pessoa,1,pessoaAtiva,pessoa_a` | `pessoa_b,sim,
+5.26,estado_pessoa,1,filtroPessoa,pessoa_a` | `pessoa_b` | `ambos,sim,
+5.26,estado_pessoa,1,nomes,object,sim,"{ pessoa_a: string, pessoa_b: string }` (nomes reais)."
+5.26,estado_pessoa,1,fotos,object,sim,"{ pessoa_a: string|null, pessoa_b: string|null }` (URIs locais)."
+5.26,estado_pessoa,1,atualizadoEm,ISO 8601,sim,
+5.27,estado_navegacao,1,_schema_version,inteiro,sim (escrita),
+5.27,estado_navegacao,1,version,literal `1,sim,
+5.27,estado_navegacao,1,menuAberto,boolean,sim,
+5.27,estado_navegacao,1,sheetCapturaAberto,boolean,sim,
+5.27,estado_navegacao,1,scrollMenuLateralPosition,number,sim,
+5.27,estado_navegacao,1,atualizadoEm,ISO 8601,sim,
+5.28,stats_agregadas_7d,1,_schema_version,inteiro,sim (escrita),
+5.28,stats_agregadas_7d,1,version,literal `1,sim,
+5.28,stats_agregadas_7d,1,periodo,literal `'7d',sim,
+5.28,stats_agregadas_7d,1,humorMedio7d,number 0..5 | null,sim,Null = sem registro.
+5.28,stats_agregadas_7d,1,humorMedio30d,number 0..5 | null,sim,
+5.28,stats_agregadas_7d,1,humorMedio90d,number 0..5 | null,sim,
+5.28,stats_agregadas_7d,1,humorMedioAll,number 0..5 | null,sim,
+5.28,stats_agregadas_7d,1,countPorTipo,record `string -> int >= 0,sim,"9 chaves canônicas: `humor`, `diario_gatilho`, `diario_conquista`, `diario_reflexao`, `marco`, `evento_positivo`, `evento_negativo`, `contador`, `tarefa_concluida`."
+5.28,stats_agregadas_7d,1,streaksAtuais,record `slug -> int >= 0,sim,Apenas contadores com dias >= 1; sort slug ASC.
+5.28,stats_agregadas_7d,1,topGatilhosUltimos90d,"array max 5 `{ chave, n >= 1 }",sim,Sort n desc; empate chave ASC.
+5.28,stats_agregadas_7d,1,topConquistas,"array max 5 `{ chave, n >= 1 }",sim,"Chaves: `diario_vitoria`, `evento_positivo`, `marco`, `tarefa_concluida`."
+5.28,stats_agregadas_7d,1,ultimaAtualizacao,ISO 8601,sim,Alias de `atualizadoEm`.
+5.28,stats_agregadas_7d,1,atualizadoEm,ISO 8601,sim,

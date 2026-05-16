@@ -36,6 +36,15 @@ em todo arquivo persistido a partir da sprint Q12, 2026-05-12).
    - [5.20 devices_index](#520-devices_index)
    - [5.21 rotina_treino](#521-rotina_treino)
    - [5.22 grupo_treino](#522-grupo_treino)
+   - [5.23 estado_settings](#523-estado_settings)
+   - [5.24 estado_sessao](#524-estado_sessao)
+   - [5.25 estado_onboarding](#525-estado_onboarding)
+   - [5.26 estado_pessoa](#526-estado_pessoa)
+   - [5.27 estado_navegacao](#527-estado_navegacao)
+   - [5.28 stats_agregadas_7d](#528-stats_agregadas_7d)
+   - [5.29 stats_agregadas_30d](#529-stats_agregadas_30d)
+   - [5.30 stats_agregadas_90d](#530-stats_agregadas_90d)
+   - [5.31 stats_agregadas_all](#531-stats_agregadas_all)
 6. [Caches que NÃO são contrato](#caches-que-não-são-contrato)
 7. [Migração defensiva](#migração-defensiva)
 8. [Próximos passos backend Python](#próximos-passos-backend-python)
@@ -818,6 +827,168 @@ Nomes reais NUNCA aparecem em Vault. Mapeamento `pessoa_a →
 | `autor` | `pessoa_a` \| `pessoa_b` | sim | |
 
 Container que agrupa até 10 rotinas existentes para o ciclo de treino do usuário ("Treino do Quaresma" → Treino A/B/C). Backend Python pode resolver `rotina_slugs` em paralelo via `markdown/rotina-<slug>.md` para gerar visões agregadas (Q19.b).
+
+---
+
+### 5.23 estado_settings
+
+- **Tipo canônico**: `estado_settings`
+- **Path canônico**: `_estado/settings-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoSettingsSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `version` | literal `1` | sim | Versão interna do schema de estado. |
+| `somVibracao` | object | sim | `{ geral, despertar, conquista, botoes }` booleans. |
+| `pessoa` | object | sim | `{ ativa, vaultCompartilhado, tipoCompanhia }`. |
+| `featureToggles` | object | sim | 11 booleans cobrindo features opcionais. |
+| `privacidade` | object | sim | `{ biometriaAbrir, ocultarTranscricoes }`. |
+| `midia` | object | sim | `{ capPorRegistro >= 1, permitirAudio }`. |
+| `atualizadoEm` | ISO 8601 | sim | Carimbo do writer canônico. |
+
+Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem este `.md` a cada toggle (debounced 500ms). Sibling Python lê para saber configurações do usuário sem reler SecureStore.
+
+---
+
+### 5.24 estado_sessao
+
+- **Tipo canônico**: `estado_sessao`
+- **Path canônico**: `_estado/sessao-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoSessaoSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `version` | literal `1` | sim | |
+| `ultimaRota` | string \| null | sim | Path da última tela visitada. |
+| `rascunhos` | object | sim | 7 keys (humorRapido, diarioEmocional, eventos, cicloRegistrar, alarmesNovo, contadoresNovo, tarefasNova); cada uma `record` ou `null`. |
+| `permissoesPedidas` | object | sim | 4 booleans (storage, notif, camera, mic). |
+| `flags` | object | sim | 5 booleans de migração. |
+| `atualizadoEm` | ISO 8601 | sim | |
+
+---
+
+### 5.25 estado_onboarding
+
+- **Tipo canônico**: `estado_onboarding`
+- **Path canônico**: `_estado/onboarding-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoOnboardingSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `version` | literal `1` | sim | |
+| `done` | boolean | sim | |
+| `tipoCompanhia` | `sozinho` \| `casal` \| `amigos` | sim | |
+| `sexoDeclarado` | object | sim | `{ pessoa_a: enum\|null, pessoa_b: enum\|null }`. |
+| `permissoes` | object | sim | 5 booleans (storage, camera, microfone, notificacoes, localizacao). |
+| `atualizadoEm` | ISO 8601 | sim | |
+
+---
+
+### 5.26 estado_pessoa
+
+- **Tipo canônico**: `estado_pessoa`
+- **Path canônico**: `_estado/pessoa-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoPessoaSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `version` | literal `1` | sim | |
+| `pessoaAtiva` | `pessoa_a` \| `pessoa_b` | sim | |
+| `filtroPessoa` | `pessoa_a` \| `pessoa_b` \| `ambos` | sim | |
+| `nomes` | object | sim | `{ pessoa_a: string, pessoa_b: string }` (nomes reais). |
+| `fotos` | object | sim | `{ pessoa_a: string\|null, pessoa_b: string\|null }` (URIs locais). |
+| `atualizadoEm` | ISO 8601 | sim | |
+
+---
+
+### 5.27 estado_navegacao
+
+- **Tipo canônico**: `estado_navegacao`
+- **Path canônico**: `_estado/navegacao-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoNavegacaoSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `version` | literal `1` | sim | |
+| `menuAberto` | boolean | sim | |
+| `sheetCapturaAberto` | boolean | sim | |
+| `scrollMenuLateralPosition` | number | sim | |
+| `atualizadoEm` | ISO 8601 | sim | |
+
+Estado runtime do `useNavegacao`. Utilidade primária: debug. Sibling pode ignorar em ETL de produção.
+
+---
+
+### 5.28 stats_agregadas_7d
+
+- **Tipo canônico**: `stats_agregadas_7d`
+- **Path canônico**: `_estado/stats-7d-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoStatsAgregadasSchema`)
+- **Versão**: 1
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `version` | literal `1` | sim | |
+| `periodo` | literal `'7d'` | sim | |
+| `humorMedio7d` | number 0..5 \| null | sim | Null = sem registro. |
+| `humorMedio30d` | number 0..5 \| null | sim | |
+| `humorMedio90d` | number 0..5 \| null | sim | |
+| `humorMedioAll` | number 0..5 \| null | sim | |
+| `countPorTipo` | record `string -> int >= 0` | sim | 9 chaves canônicas: `humor`, `diario_gatilho`, `diario_conquista`, `diario_reflexao`, `marco`, `evento_positivo`, `evento_negativo`, `contador`, `tarefa_concluida`. |
+| `streaksAtuais` | record `slug -> int >= 0` | sim | Apenas contadores com dias >= 1; sort slug ASC. |
+| `topGatilhosUltimos90d` | array max 5 `{ chave, n >= 1 }` | sim | Sort n desc; empate chave ASC. |
+| `topConquistas` | array max 5 `{ chave, n >= 1 }` | sim | Chaves: `diario_vitoria`, `evento_positivo`, `marco`, `tarefa_concluida`. |
+| `ultimaAtualizacao` | ISO 8601 | sim | Alias de `atualizadoEm`. |
+| `atualizadoEm` | ISO 8601 | sim | |
+
+Read-model derivado dos 7 últimos dias. Recalculado pelo writer reativo a cada mutação relevante (debounced 30s).
+
+---
+
+### 5.29 stats_agregadas_30d
+
+- **Tipo canônico**: `stats_agregadas_30d`
+- **Path canônico**: `_estado/stats-30d-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoStatsAgregadasSchema`)
+- **Versão**: 1
+- **Frontmatter**: igual a 5.28, com `periodo` = `'30d'`. Recorte temporal cobre os últimos 30 dias.
+
+---
+
+### 5.30 stats_agregadas_90d
+
+- **Tipo canônico**: `stats_agregadas_90d`
+- **Path canônico**: `_estado/stats-90d-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoStatsAgregadasSchema`)
+- **Versão**: 1
+- **Frontmatter**: igual a 5.28, com `periodo` = `'90d'`.
+
+---
+
+### 5.31 stats_agregadas_all
+
+- **Tipo canônico**: `stats_agregadas_all`
+- **Path canônico**: `_estado/stats-all-<deviceId>.md`
+- **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoStatsAgregadasSchema`)
+- **Versão**: 1
+- **Frontmatter**: igual a 5.28, com `periodo` = `'all'`. Recorte temporal inclui todo o histórico do Vault.
 
 ---
 

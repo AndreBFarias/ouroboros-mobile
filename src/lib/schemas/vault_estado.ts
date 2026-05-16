@@ -180,17 +180,92 @@ export const EstadoNavegacaoSchema = z.object({
 });
 export type EstadoNavegacao = z.infer<typeof EstadoNavegacaoSchema>;
 
+// ===== Stats agregadas (R-VAULT-CANONICAL-COMPLETE-B) =====
+//
+// Stats derivadas (read-model) do humor, diario, conquistas, marcos,
+// contadores e gatilhos. Calculadas em src/lib/stats/calcular.ts e
+// persistidas em vault/_estado/stats-<periodo>-<deviceId>.md.
+//
+// Sibling Python consome direto: pode plotar serie historica ou
+// dashboard agregado sem ter que reler Vault inteiro.
+//
+// Periodos canonicos:
+//   - '7d'  -> ultimos 7 dias completos (hoje inclusive).
+//   - '30d' -> ultimos 30 dias.
+//   - '90d' -> ultimos 90 dias.
+//   - 'all' -> historico completo no Vault.
+//
+// Top-5 fixo (gatilhos, conquistas): sort estavel ASC por chave em
+// empate de frequencia, garante determinismo cross-device.
+const PeriodoStatsSchema = z.enum(['7d', '30d', '90d', 'all']);
+
+const TopItemSchema = z.object({
+  chave: z.string(),
+  n: z.number().int().min(1),
+});
+export type TopItem = z.infer<typeof TopItemSchema>;
+
+export const EstadoStatsAgregadasSchema = z.object({
+  version: z.literal(ESTADO_SCHEMA_VERSION),
+  periodo: PeriodoStatsSchema,
+  // Medias de humor 1..5 com 2 casas decimais. null quando o periodo
+  // nao tem nenhum registro de humor (Vault novo, periodo curto).
+  humorMedio7d: z.number().min(0).max(5).nullable(),
+  humorMedio30d: z.number().min(0).max(5).nullable(),
+  humorMedio90d: z.number().min(0).max(5).nullable(),
+  humorMedioAll: z.number().min(0).max(5).nullable(),
+  // Contagem por tipo de registro dentro do periodo. Chaves canonicas:
+  // 'humor' | 'diario_gatilho' | 'diario_conquista' | 'diario_reflexao' |
+  // 'marco' | 'evento_positivo' | 'evento_negativo' | 'contador' |
+  // 'tarefa_concluida'.
+  countPorTipo: z.record(z.string(), z.number().int().min(0)),
+  // Streaks atuais (slug -> dias). Inclui contadores que tem dias >= 1.
+  // Sort por slug ASC para determinismo no .md final.
+  streaksAtuais: z.record(z.string(), z.number().int().min(0)),
+  // Top 5 gatilhos por frequencia nos ultimos 90 dias. Cada item:
+  // emocao mais ocorrente em diario.modo='gatilho' + intensidade media.
+  // Sort: n desc; empate -> chave ASC (estavel).
+  topGatilhosUltimos90d: z.array(TopItemSchema).max(5),
+  // Top 5 origens de conquista no mesmo recorte (diario_conquista,
+  // evento_positivo, marco, tarefa_concluida).
+  topConquistas: z.array(TopItemSchema).max(5),
+  ultimaAtualizacao: IsoDatetime,
+  atualizadoEm: IsoDatetime,
+});
+export type EstadoStatsAgregadas = z.infer<typeof EstadoStatsAgregadasSchema>;
+export type PeriodoStats = z.infer<typeof PeriodoStatsSchema>;
+
+export const PERIODOS_STATS: ReadonlyArray<PeriodoStats> = [
+  '7d',
+  '30d',
+  '90d',
+  'all',
+] as const;
+
 // ===== Mapa key -> schema =====
 //
 // Usado por escreverEstadoCanonico pra resolver schema dado o nome
 // da chave. Caller passa 'settings' | 'sessao' | 'onboarding' |
-// 'pessoa' | 'navegacao'.
+// 'pessoa' | 'navegacao' | 'stats-7d' | 'stats-30d' | 'stats-90d' |
+// 'stats-all'.
 export const ESTADO_SCHEMAS = {
   settings: EstadoSettingsSchema,
   sessao: EstadoSessaoSchema,
   onboarding: EstadoOnboardingSchema,
   pessoa: EstadoPessoaSchema,
   navegacao: EstadoNavegacaoSchema,
+  'stats-7d': EstadoStatsAgregadasSchema,
+  'stats-30d': EstadoStatsAgregadasSchema,
+  'stats-90d': EstadoStatsAgregadasSchema,
+  'stats-all': EstadoStatsAgregadasSchema,
 } as const;
 
 export type EstadoKey = keyof typeof ESTADO_SCHEMAS;
+
+// Mapa periodo -> chave canonica para o writer.
+export const STATS_KEY_POR_PERIODO: Record<PeriodoStats, EstadoKey> = {
+  '7d': 'stats-7d',
+  '30d': 'stats-30d',
+  '90d': 'stats-90d',
+  all: 'stats-all',
+};
