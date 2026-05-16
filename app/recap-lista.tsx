@@ -10,7 +10,7 @@
 // que ainda nao existem: treinos detalhe, eventos detalhe).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Header, Screen, EmptyState, useToast } from '@/components/ui';
@@ -105,6 +105,19 @@ export default function RecapListaTela() {
   };
 
   const { data, loading } = useRecap(range);
+
+  // R-CROSS-FLOW-AUDIT (2026-05-16): tipo='fotos' no recap-lista nao tem
+  // dado direto (numeros.fotos e' contagem). Redirect para /galeria com
+  // filtro inicial 'foto' em vez de empty state. Q24.a.d original ficava
+  // sem destino navegavel — redirect rosa cirurgicamente em vez de mostrar
+  // "nenhum item neste periodo".
+  useEffect(() => {
+    if (tipo === 'fotos') {
+      router.replace(
+        '/galeria?filtro=foto' as Parameters<typeof router.replace>[0]
+      );
+    }
+  }, [tipo, router]);
 
   const itens: ItemRender[] = useMemo(() => {
     if (!data) return [];

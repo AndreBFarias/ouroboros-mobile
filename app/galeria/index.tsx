@@ -10,7 +10,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmptyState, Header, Screen } from '@/components/ui';
 import { Image as ImageIcon } from '@/lib/icons';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -100,10 +100,31 @@ function formatarData(ymd: string): string {
   return `${d}/${m}/${y}`;
 }
 
+// R-CROSS-FLOW-AUDIT (2026-05-16): parse query param ?filtro=<aba>
+// para permitir deeplink a partir do recap-lista (tipo=fotos redireciona
+// para /galeria?filtro=foto). Aceita apenas valores canonicos do enum
+// FiltroLogico; qualquer outra string cai em 'tudo'.
+function parseFiltroQuery(raw: string | string[] | undefined): FiltroLogico {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  switch (v) {
+    case 'foto':
+    case 'audio':
+    case 'video':
+    case 'texto':
+    case 'mais':
+      return v;
+    default:
+      return 'tudo';
+  }
+}
+
 export default function GaleriaIndex() {
   const router = useRouter();
   const vaultRoot = useVault((s) => s.vaultRoot);
-  const [filtro, setFiltro] = useState<FiltroLogico>('tudo');
+  const params = useLocalSearchParams<{ filtro?: string }>();
+  const [filtro, setFiltro] = useState<FiltroLogico>(() =>
+    parseFiltroQuery(params.filtro)
+  );
   const [itens, setItens] = useState<ItemGaleria[]>([]);
   const [carregando, setCarregando] = useState(true);
 

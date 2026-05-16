@@ -144,6 +144,18 @@ function ItemTimeline({ marco }: { marco: Marco }) {
         >
           {marco.descricao}
         </Text>
+        {marco.medidaRef ? (
+          <Text
+            style={{
+              color: colors.purple,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 11,
+              lineHeight: 16,
+            }}
+          >
+            {`Vinculado a medida ${formatarDataCurta(`${marco.medidaRef}T12:00:00-03:00`)}.`}
+          </Text>
+        ) : null}
         {marco.tags.length > 0 ? (
           <View
             style={{ flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' }}
