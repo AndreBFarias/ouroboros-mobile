@@ -43,7 +43,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-FAB-1 | FAB remover Voz | refactor | P2 | `47c17f9` | `[ok]` |
 | R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | `bebdf12` | `[ok]` |
 | R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | `[split]` | A+B |
-| **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-A-spec.md` |
+| **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A) | refactor+feature | P1 | `81d4bad` | `[ok]` (Onda 2A.1) |
 | **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-B-spec.md` |
 | R-RECAP-1 | Lista itens clicáveis | feature | P1 | 3–4h | `R-RECAP-1-LISTA-ITENS-CLICAVEIS-spec.md` |
 | R-RECAP-2 | Números big clicáveis | feature | P1 | 2–3h | `R-RECAP-2-NUMEROS-BIG-CLICAVEIS-LISTAS-spec.md` |

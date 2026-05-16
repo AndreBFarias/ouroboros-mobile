@@ -5,6 +5,24 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2A.1 — R-VAULT-CANONICAL-COMPLETE-A schemas + writers + migration (2026-05-16 noite)
+
+Sprint da Fase 2 entregue com proof-of-work completo, **honrando worktree isolation** pela primeira vez nesta retomada. Commit `81d4bad` (cherry-pick de `3be9d9d` do branch worktree-agent-a6ccace10cd1793fc).
+
+- **Schemas em `src/lib/schemas/vault_estado.ts`** (186L): 5 schemas Zod com `version: 1` cobrindo settings/sessao/onboarding/pessoa/navegacao. Forward-compat via `z.preprocess` quando necessário.
+- **Writer canônico em `src/lib/vault/escreverEstado.ts`** (220L): `escreverEstadoCanonico(key, schemaName, payload)` com validação + debounce 500ms agrupado por key. Reutilizou `writeVaultFile` de `src/lib/vault/writer.ts` (que já implementa `.writing+rename`). Reutilizou `forceDeviceIdSuffix` de `src/lib/util/deviceId.ts` e `ehSyncConflict` de `src/lib/vault/syncConflict.ts`.
+- **Hook em cada store** (5 arquivos): subscriber não-mutativo via `useStore.subscribe(callback)` dispara writer ao mudar state. SecureStore (zustand persist) permanece como cache. Stores tocados: `settings.ts`, `sessao.ts`, `onboarding.ts`, `pessoa.ts`, `navegacao.ts`.
+- **Migration boot em `src/lib/boot/migrarEstadoParaVault.ts`** (145L): idempotente via flag `useSessao.flags.estadoMigradoParaVault` (FlagsBootState bumped v4→v5 com migration). Dispara 5 writes one-shot em cold start, após `gauntletBootstrap`. Roda no `app/_layout.tsx` via `useEffect` dependente de `appPronto` (fire-and-forget).
+- **+23 testes** (`escreverEstado.test.ts` 15 + `migrarEstadoParaVault.test.ts` 8). Métricas: **227 suítes / 2125 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **Path canônico**: `vault/_estado/<key>-<deviceId>.md`.
+- `useNavegacao` é runtime-only (sem persist) — subscriber escreve snapshot transiente.
+
+**Achados colaterais**:
+1. `vault_estado.ts` ainda não documentado em `docs/CONTRACT-MOBILE-BACKEND.md` (drift warning não-bloqueante). **R-VAULT-B vai endereçar** (já no escopo da sprint).
+2. Mitigação `typeof jest !== 'undefined'` em `escreverEstadoCanonico` pra silenciar warns de subscribers em testes existentes (poluição de output). Em produção `__DEV__` continua warn-friendly.
+
+Sprint A desbloqueia Sprint B (stats + UI Settings + cross-repo), que será dispatched na Onda 2B.
+
 ### Onda 2A.4 — R-FAB-2 FAB Câmera "Reflexão com foto" (2026-05-16 noite)
 
 Primeira sprint da Onda 2A entregue. Renomeação lexical pós R0 + alinhamento de rota de captura.

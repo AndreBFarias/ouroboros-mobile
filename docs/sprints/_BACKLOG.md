@@ -90,7 +90,7 @@ Bloqueia `v1.0.0-rc2`.
 | 4 | R-FAB-1 `[ok]` (`47c17f9`) | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | 4‖ | R-FAB-2 `[ok]` (Onda 2A.4) | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
 | 4‖ | R-CROSS-FLOW-AUDIT `[ok]` (`bebdf12`) | Interconexão (12 fluxos cruzados + sibling) | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
-| 4‖ | **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A de 2) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-A-spec.md` |
+| 4‖ | **R-VAULT-CANONICAL-COMPLETE-A** `[ok]` (Onda 2A.1, `81d4bad`) | Schemas + writers + migration boot (split A de 2) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-A-spec.md` |
 | 4‖ | **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | 2-3h | `R-VAULT-CANONICAL-COMPLETE-B-spec.md` |
 
 ---
