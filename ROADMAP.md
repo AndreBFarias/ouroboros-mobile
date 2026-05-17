@@ -51,7 +51,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | `8088c80` | `[ok]` (Onda 2A.3) |
 | R-HOME-1 | Hoje prioridade e recorrência (D1=C remover Status+Humor) | refactor+redesign | P1 | `43d6266` | `[ok]` (Onda 2B.4) |
 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | `249f91e` | `[ok]` (Onda 2C.3) |
-| R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
+| R-HOME-3 | Hoje to-do inline check | feature | P1 | `dd833a8` | `[ok]` (Onda 2C.4) |
 | R-INT-1 | Hub Integrações Utilitários (depende VAULT-B) | feature | P1 | `946855d` | `[ok]` (Onda 2C.2) |
 | R-INT-2 | Nome do app em permissões | fix | P1 | `b4b33d9` | `[ok]` (Onda 2C.1) |
 | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |

@@ -83,7 +83,7 @@ Bloqueia `v1.0.0-rc2`.
 | 1‖ | R-MEDIA-1 `[ok]` (Onda 2A.3, `8088c80`) | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
 | 1‖ | R-HOME-1 `[ok]` (Onda 2B.4, `43d6266`) | Hoje prioridade + recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` (D1=C aplicada) |
 | 2 | R-HOME-2 `[ok]` (Onda 2C.3, `249f91e`) | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
-| 2‖ | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
+| 2‖ | R-HOME-3 `[ok]` (Onda 2C.4, `dd833a8`) | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
 | 3 | R-INT-1 `[ok]` (Onda 2C.2, `946855d`) | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
 | 3‖ | R-INT-2 `[ok]` (Onda 2C.1, `b4b33d9`) | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
 | 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |

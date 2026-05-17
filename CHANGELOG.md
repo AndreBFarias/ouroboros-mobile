@@ -5,6 +5,32 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2C.4 — R-HOME-3 Checkbox tarefa inline + toast undo (2026-05-16 noite) — **Onda 2C 4/4 fechada**
+
+Sprint da Fase 2 fecha a Onda 2C. Commit `dd833a8` cherry-pick (orquestrador commitou pelo executor — agent reportou trabalho pronto mas honrou self-policy de não commitar).
+
+- **`src/components/tarefas/CheckboxTarefaInline.tsx`** (161L novo): checkbox 32dp + hitSlop 16 = 64dp efetivo (WCAG AAA). Moti spring (`snappy` damping 26 / stiffness 320) — sem timing linear. Strike-through em `feita`. Persistência otimista via `marcarFeito` canônico (reuso). Rollback em erro + `haptics.error`. `accessibilityRole="checkbox"` + label sem acento.
+- **`src/lib/hooks/useToastUndo.tsx`** (174L novo): overlay próprio Material Design 5s. API `{ mostrarUndo, dismiss, UndoOverlay }`. `accessibilityRole="alert"`. Padrão Material com botão "Desfazer" cyan.
+- **`app/index.tsx`** redesenhado (-112 / +110L): `SecaoTodoHoje` usa `CheckboxTarefaInline` + `useToastUndo`. Componente `ItemTodoInline` extraído (584L → 544L).
+- **+16 testes** Jest (9 `CheckboxTarefaInline` + 7 `useToastUndo`). Métricas: **245 suítes / 2297 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **3 screenshots Gauntlet via playwright headless**: A (tela com 2 tarefas), B (toast undo visível após check), C (pós-undo reverteu). SHA-256 A === C confirma reversão visual perfeita.
+- E2E novo: `tests/e2e/playwright/r-home-3.e2e.ts` cobre mark + reload + undo.
+- FEATURES-CANONICAS §9.3 atualizada com v3 Home.
+
+**Achados colaterais** (todos pré-existentes ou já cobertos):
+1. Metro web cache stale com symlinks env.json (já R-INFRA-WORKTREE-BOOTSTRAP).
+2. SecureStore web sem polyfill (já R-DX-SECURESTORE-WEB-DEV-FALLBACK).
+3. Acentuação pré-existente em `FEATURES-CANONICAS.md` linhas 479/665 (M-PT-BR-RETROFIT futura).
+4. Inconsistência `src/components/tarefas/` vs `src/components/todo/` (spec foi explícito sobre path; consolidar em sprint INFRA futura).
+
+**Onda 2C fechada (4/4):**
+- 2C.1 R-INT-2 (`6b2636f`) — label android + fix intent-filter HC
+- 2C.2 R-INT-1 (`946855d`) — Hub Integrações 5 cards
+- 2C.3 R-HOME-2 (`249f91e`) — Próximos mescla agenda + alarmes
+- 2C.4 R-HOME-3 (`dd833a8`) — Checkbox inline + toast undo
+
+Smoke acumulado: **245 suítes / 2297 testes verde** (+197 testes vs início 225/2100).
+
 ### Onda 2C.3 — R-HOME-2 Próximos mescla agenda Google + alarmes locais (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `249f91e` cherry-pick.
