@@ -20,7 +20,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Header, Input, Screen, Slider, Textarea, useToast } from '@/components/ui';
+import {
+  Button,
+  ConfirmarExclusao,
+  Header,
+  Input,
+  Screen,
+  Slider,
+  Textarea,
+  useToast,
+} from '@/components/ui';
 import { ModalConfirmaReset } from '@/components/contadores/ModalConfirmaReset';
 import { RecapContador } from '@/components/screens/RecapContador';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -688,71 +697,15 @@ export default function ContadorDetalhe() {
         </View>
       </Modal>
 
-      {/* Modal confirmar exclusao */}
-      <Modal
+      {/* R-NAV-3-V2: Modal confirmar exclusao agora via ConfirmarExclusao. */}
+      <ConfirmarExclusao
         visible={modalExcluir}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalExcluir(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(20, 21, 26, 0.85)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: spacing.lg,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.bg,
-              borderRadius: radius.modal,
-              padding: spacing.lg,
-              gap: spacing.base,
-              width: '100%',
-              maxWidth: 360,
-            }}
-            accessibilityLabel="modal confirmar exclusao contador"
-          >
-            <Text
-              style={{
-                color: colors.fg,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: 16,
-                lineHeight: 24,
-              }}
-            >
-              Excluir contador?
-            </Text>
-            <Text
-              style={{
-                color: colors.muted,
-                fontFamily: 'JetBrainsMono_400Regular',
-                fontSize: 13,
-                lineHeight: 20,
-              }}
-            >
-              O arquivo do contador será removido. Esta ação não pode ser
-              desfeita.
-            </Text>
-            <View style={{ gap: spacing.sm }}>
-              <Button
-                label="Confirmar exclusão"
-                onPress={() => void handleConfirmarExcluir()}
-                variant="destructive"
-                disabled={excluindo}
-              />
-              <Button
-                label="Cancelar"
-                onPress={() => setModalExcluir(false)}
-                variant="ghost"
-                disabled={excluindo}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        titulo="Excluir contador?"
+        descricao="O arquivo do contador será removido. Esta ação não pode ser desfeita." // ptbr-allow: 'Esta' pronome demonstrativo, nao verbo 'esta'
+        onConfirmar={() => void handleConfirmarExcluir()}
+        onCancelar={() => setModalExcluir(false)}
+        excluindo={excluindo}
+      />
     </Screen>
   );
 }

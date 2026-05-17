@@ -9,10 +9,10 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Trash2 } from '@/lib/icons';
-import { Button, Input, Textarea } from '@/components/ui';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { Button, ConfirmarExclusao, Input, Textarea } from '@/components/ui';
+import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { SeletorMultiRotinas } from './SeletorMultiRotinas';
 
@@ -200,69 +200,15 @@ export function FormGrupo({
         ) : null}
       </View>
 
+      {/* R-NAV-3-V2: confirmacao de apagar grupo via componente canonico. */}
       {onApagar ? (
-        <Modal
+        <ConfirmarExclusao
           visible={modalApagarVisivel}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setModalApagarVisivel(false)}
-        >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: 'rgba(20, 21, 26, 0.85)',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: spacing.lg,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: colors.bg,
-                borderRadius: radius.modal,
-                padding: spacing.lg,
-                gap: spacing.base,
-                width: '100%',
-                maxWidth: 360,
-              }}
-              accessibilityLabel="modal confirmar exclusao do grupo"
-            >
-              <Text
-                style={{
-                  color: colors.fg,
-                  fontFamily: 'JetBrainsMono_500Medium',
-                  fontSize: 16,
-                  lineHeight: 22,
-                }}
-              >
-                Apagar grupo?
-              </Text>
-              <Text
-                style={{
-                  color: colors.muted,
-                  fontFamily: 'JetBrainsMono_400Regular',
-                  fontSize: 13,
-                  lineHeight: 20,
-                }}
-              >
-                Apenas o agrupamento será removido. As rotinas vinculadas
-                permanecem disponíveis em /rotinas.
-              </Text>
-              <View style={{ gap: spacing.sm }}>
-                <Button
-                  label="Confirmar exclusão"
-                  onPress={() => void handleConfirmarApagar()}
-                  variant="destructive"
-                />
-                <Button
-                  label="Cancelar"
-                  onPress={() => setModalApagarVisivel(false)}
-                  variant="ghost"
-                />
-              </View>
-            </View>
-          </View>
-        </Modal>
+          titulo="Excluir grupo?"
+          descricao="Apenas o agrupamento será removido. As rotinas vinculadas permanecem disponíveis em /rotinas."
+          onConfirmar={() => void handleConfirmarApagar()}
+          onCancelar={() => setModalApagarVisivel(false)}
+        />
       ) : null}
     </ScrollView>
   );

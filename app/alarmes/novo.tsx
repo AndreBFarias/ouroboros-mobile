@@ -24,6 +24,7 @@ import DateTimePicker, {
 import {
   Button,
   ChipGroup,
+  ConfirmarExclusao,
   Header,
   Input,
   Screen,
@@ -191,6 +192,8 @@ export default function AlarmesNovoOuEditar() {
   const [pickerDataAberto, setPickerDataAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [carregando, setCarregando] = useState(editando);
+  // R-NAV-3-V2: modal de confirmacao de exclusao (estava ausente).
+  const [modalExcluir, setModalExcluir] = useState<boolean>(false);
 
   // Original carregado em edicao (usado para preservar criado_em e
   // notification_ids pre-existentes até re-agendar).
@@ -432,6 +435,7 @@ export default function AlarmesNovoOuEditar() {
 
   const handleExcluir = useCallback(async () => {
     if (!vaultRoot || !original) return;
+    setModalExcluir(false);
     try {
       await cancelarAlarme(original.slug);
       await excluirAlarme(vaultRoot, original.slug);
@@ -714,7 +718,7 @@ export default function AlarmesNovoOuEditar() {
             <View style={{ marginTop: spacing.base }}>
               <Button
                 label="Excluir alarme"
-                onPress={() => void handleExcluir()}
+                onPress={() => setModalExcluir(true)}
                 variant="destructive"
               />
             </View>
@@ -730,6 +734,15 @@ export default function AlarmesNovoOuEditar() {
           disabled={salvando || !formValido || !vaultRoot}
         />
       </View>
+
+      {/* R-NAV-3-V2: confirmacao de exclusao via componente canonico. */}
+      <ConfirmarExclusao
+        visible={modalExcluir}
+        titulo="Excluir alarme?"
+        descricao="O alarme será removido e as notificações canceladas. Esta ação não pode ser desfeita." // ptbr-allow: 'Esta' pronome demonstrativo, nao verbo 'esta'
+        onConfirmar={() => void handleExcluir()}
+        onCancelar={() => setModalExcluir(false)}
+      />
     </Screen>
   );
 }

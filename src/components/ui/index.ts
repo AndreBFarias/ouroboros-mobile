@@ -43,3 +43,5 @@ export { FABRadial } from './FABRadial';
 export type { FABRadialKey, FABRadialProps } from './FABRadial';
 export { SeletorPara } from './SeletorPara';
 export type { SeletorParaProps } from './SeletorPara';
+export { ConfirmarExclusao } from './ConfirmarExclusao';
+export type { ConfirmarExclusaoProps } from './ConfirmarExclusao';

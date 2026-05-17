@@ -11,12 +11,13 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Dumbbell } from '@/lib/icons';
 import {
   Button,
   Chip,
+  ConfirmarExclusao,
   EmptyState,
   Header,
   Screen,
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui';
 import { BlocoInstrucao, HistoricoSparkline } from '@/components/exercicios';
 import { MidiaExecucaoPlayer } from '@/components/exercicios/MidiaExecucaoPlayer';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
@@ -337,69 +338,14 @@ export default function DetalheExercicio() {
         </View>
       </ScrollView>
 
-      {/* Modal destrutivo confirmar exclusao */}
-      <Modal
+      {/* R-NAV-3-V2: Modal exclusao agora via ConfirmarExclusao. */}
+      <ConfirmarExclusao
         visible={modalExcluirVisivel}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalExcluirVisivel(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(20, 21, 26, 0.85)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: spacing.lg,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.bg,
-              borderRadius: radius.modal,
-              padding: spacing.lg,
-              gap: spacing.base,
-              width: '100%',
-              maxWidth: 360,
-            }}
-            accessibilityLabel="modal confirmar exclusao"
-          >
-            <Text
-              style={{
-                color: colors.fg,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: 16,
-                lineHeight: 22,
-              }}
-            >
-              Excluir exercício?
-            </Text>
-            <Text
-              style={{
-                color: colors.muted,
-                fontFamily: 'JetBrainsMono_400Regular',
-                fontSize: 13,
-                lineHeight: 20,
-              }}
-            >
-              O arquivo será movido para a lixeira. Você pode recuperá-lo
-              manualmente em até 30 dias.
-            </Text>
-            <View style={{ gap: spacing.sm }}>
-              <Button
-                label="Confirmar exclusão"
-                onPress={() => void confirmarExclusao()}
-                variant="destructive"
-              />
-              <Button
-                label="Cancelar"
-                onPress={() => setModalExcluirVisivel(false)}
-                variant="ghost"
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        titulo="Excluir exercício?"
+        descricao="O arquivo será movido para a lixeira. Você pode recuperá-lo manualmente em até 30 dias."
+        onConfirmar={() => void confirmarExclusao()}
+        onCancelar={() => setModalExcluirVisivel(false)}
+      />
     </Screen>
   );
 }

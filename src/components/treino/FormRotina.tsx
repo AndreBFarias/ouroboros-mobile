@@ -25,7 +25,7 @@ import {
   View,
 } from 'react-native';
 import { Trash2 } from '@/lib/icons';
-import { Button, Input, Textarea } from '@/components/ui';
+import { Button, ConfirmarExclusao, Input, Textarea } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import type { ExercicioRotina } from '@/lib/schemas/rotina';
@@ -458,74 +458,18 @@ export function FormRotina({
         ) : null}
       </View>
 
-      {/* Modal confirmar apagar rotina */}
-      <Modal
+      {/* R-NAV-3-V2: confirmacao de apagar rotina via componente canonico. */}
+      <ConfirmarExclusao
         visible={modalApagar}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalApagar(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(20, 21, 26, 0.85)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: spacing.lg,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.bg,
-              borderRadius: radius.modal,
-              padding: spacing.lg,
-              gap: spacing.base,
-              width: '100%',
-              maxWidth: 360,
-            }}
-            accessibilityLabel="modal confirmar apagar rotina"
-          >
-            <Text
-              style={{
-                color: colors.fg,
-                fontFamily: 'JetBrainsMono_500Medium',
-                fontSize: 16,
-                lineHeight: 24,
-              }}
-            >
-              Apagar rotina?
-            </Text>
-            <Text
-              style={{
-                color: colors.muted,
-                fontFamily: 'JetBrainsMono_400Regular',
-                fontSize: 13,
-                lineHeight: 20,
-              }}
-            >
-              A rotina será removida. Sessões de treino já salvas com esta
-              rotina continuam intactas.
-            </Text>
-            <View style={{ gap: spacing.sm }}>
-              <Button
-                label="Confirmar"
-                onPress={() => {
-                  setModalApagar(false);
-                  if (onApagar) void onApagar();
-                }}
-                variant="destructive"
-                disabled={salvando}
-              />
-              <Button
-                label="Cancelar"
-                onPress={() => setModalApagar(false)}
-                variant="ghost"
-                disabled={salvando}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        titulo="Excluir rotina?"
+        descricao="A rotina será removida. Sessões de treino já salvas com esta rotina continuam intactas." // ptbr-allow: 'esta' pronome demonstrativo (esta rotina), nao verbo
+        onConfirmar={() => {
+          setModalApagar(false);
+          if (onApagar) void onApagar();
+        }}
+        onCancelar={() => setModalApagar(false)}
+        excluindo={salvando}
+      />
 
       {/* Modal confirmar remover exercicio (apenas se tinha dados) */}
       <Modal
