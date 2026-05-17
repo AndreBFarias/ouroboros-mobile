@@ -5,6 +5,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3C.2 — R-WIDG-1 Widget homescreen to-do (2026-05-17)
+
+Sprint Fase 3 entregue honrando worktree isolation. Commit `97106e1` cherry-pick. Validação Nível C (celular real) fica como FOLLOW-UP.
+
+- **Android nativo (`modules/widget-homescreen/android/`)**:
+  - `OuroborosTodoWidgetProvider.kt` novo: widget 4x2 com layout EditText + Button "+", RemoteInput broadcast handler, count rendering plural
+  - `widget_todo_4x2.xml` + `widget_info_todo_4x2.xml`: layout RemoteViews
+  - 3 strings novas em `values/strings.xml` + plurals
+  - `AndroidManifest.xml`: 3º receiver registrado
+- **Bridge JS (`modules/widget-homescreen/src/index.ts`)**: 3 funções novas — `atualizarCountTodoWidget`, `lerFilaTodoWidget`, `limparFilaTodoWidget`. Native: 3 AsyncFunctions + `forcarUpdateTodo`.
+- **`app/widget-config.tsx`** novo: tela de configuração acessível via deep link (após widget já estar na home). Toggle on/off + lista de tarefas via widget.
+- **`src/lib/widget/sincronizarWidget.ts`** novo: drenar fila do widget pro Vault de tarefas via `criarTarefa` canônico. +12 testes (`sincronizarWidget.test.ts`).
+- Métricas: **265 suítes / 2473 testes** verde (worktree side; pós cherry-pick deve dar 266/2495).
+- Screenshot Gauntlet via playwright (após workaround manual de copy temp pra main).
+
+**Limitações documentadas**:
+- Parte Kotlin estruturalmente correta mas validação end-to-end exige Nível B (emulador) ou Nível C (celular). Jest cobre lado JS 100%.
+- Configuration Activity nativa (auto-abre ao arrastar widget) NÃO implementada — spec autorizou "opcional, pode usar default".
+- BOOT_HOOK não plugado em `src/lib/boot/reagendamento.ts` — fora dos touches autorizados; sprint follow-up se necessário.
+
+**Achado infra documentado**: Metro web não resolve `../../../env.json` quando é symlink (atinge limite em todas as sprints UI em worktree). Recomendações: (a) cópia de arquivos via hook, (b) `resolver.disableHierarchicalLookup` + path mapping, (c) injetar `EXPO_PUBLIC_GOOGLE_*` via process.env. Mesma família que R-INFRA-GAUNTLET-WORKTREE-SYMLINK (DX.4 já mergeada) e R-DX-GAUNTLET-MULTI-PORTA (P2 pendente).
+
+**Onda 3C fechada (2 mergeadas + 1 rejeitado/replan):**
+- 3C.1 R-BACKUP-AUTO (`88fe9be`)
+- 3C.2 R-WIDG-1 (atual)
+- ~~3C.3 R-NAV-3~~ rejeitado, replan-spec com 2 decisões a/b pendentes
+
 ### Fase 3 Onda 3C.1 — R-BACKUP-AUTO Backup semanal Vault (2026-05-17)
 
 Sprint Fase 3 entregue honrando worktree isolation. Commit `88fe9be` cherry-pick. **Default ON** (D6=SIM).
