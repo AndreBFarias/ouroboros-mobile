@@ -27,5 +27,20 @@
         android:name="android.appwidget.provider"
         android:resource="@xml/widget_info_4x4" />
     </receiver>
+
+    <!-- R-WIDG-1: widget Quick To-do 4x2. Receiver dedicado para
+         responder ao broadcast ACTION_TODO_ADD com RemoteInput. -->
+    <receiver
+      android:name=".OuroborosTodoWidgetProvider"
+      android:exported="true"
+      android:label="@string/widget_label_todo">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="expo.modules.widgethomescreen.ACTION_TODO_ADD" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_info_todo_4x2" />
+    </receiver>
   </application>
 </manifest>

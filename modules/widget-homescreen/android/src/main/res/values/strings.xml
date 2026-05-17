@@ -12,4 +12,14 @@
   <string name="widget_desativado_titulo">Widget desativado</string>
   <string name="widget_desativado_sub">Ative em Configurações para voltar a ver o resumo do dia.</string>
   <string name="widget_frase_default">Pequenos passos contam.</string>
+  <!-- R-WIDG-1: widget Quick To-do 4x2. -->
+  <string name="widget_label_todo">Ouroboros tarefas</string>
+  <string name="widget_todo_titulo">Tarefas</string>
+  <string name="widget_todo_input_hint">Nova tarefa</string>
+  <string name="widget_todo_btn_add">+</string>
+  <string name="widget_todo_sem_pendentes">Sem pendentes</string>
+  <plurals name="widget_todo_pendentes">
+    <item quantity="one">%1$d pendente</item>
+    <item quantity="other">%1$d pendentes</item>
+  </plurals>
 </resources>
