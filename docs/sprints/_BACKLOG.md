@@ -86,7 +86,7 @@ Bloqueia `v1.0.0-rc2`.
 | 2‖ | R-HOME-3 `[ok]` (Onda 2C.4, `dd833a8`) | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
 | 3 | R-INT-1 `[ok]` (Onda 2C.2, `946855d`) | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
 | 3‖ | R-INT-2 `[ok]` (Onda 2C.1, `b4b33d9`) | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
-| 3‖ | R-INT-3 | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
+| 3‖ | R-INT-3 `[ok-jest]` (Onda 2D.3, `726dec4`, Nível C follow-up) | Health Connect não funciona | bug | P1 | 2–4h | `R-INT-3-HEALTH-CONNECT-NAO-FUNCIONA-spec.md` |
 | 4 | R-FAB-1 `[ok]` (`47c17f9`) | FAB remover Voz | refactor | P2 | 0.5h | `R-FAB-1-REMOVER-VOZ-spec.md` |
 | 4‖ | R-FAB-2 `[ok]` (Onda 2A.4) | FAB Câmera repensar | refactor | P2 | 1.5–2h | `R-FAB-2-CAMERA-REPENSAR-spec.md` |
 | 4‖ | R-CROSS-FLOW-AUDIT `[ok]` (`bebdf12`) | Interconexão (12 fluxos cruzados + sibling) | audit+fix | P1 | 4–6h | `R-CROSS-FLOW-AUDIT-spec.md` |
@@ -119,6 +119,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API __gauntlet.setEventosAgendaMock para E2E mescla | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
+| R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lancante de react-native-health-connect 3.5.0 via Reflect.get | hardening+DX | P2 | 1h | `R-INT-3-HC-PROXY-REFLECT-HARDENING-spec.md` |
 | **R-CROSS-FLOW-FIX-2** | **CRÍTICO cross-repo**: sibling ETL não lê `markdown/` (layout H2). Todo vault pós-refundação invisível pro desktop. | bug+cross-repo | **P1-high** | sibling | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |
 | R-CROSS-FLOW-FIX-1 `[ok]` (Onda 2D.1, `ef8fab0`) | `avaliarBackupAutomatico` declarado SEM CALLER no boot path (achado cenário 10) | fix | P1 | 1h | `R-CROSS-FLOW-FIX-1-BACKUP-AUTOMATICO-ORFAO-spec.md` |
 | R-CROSS-FLOW-FIX-3 `[ok]` (Onda 2D.2, `7a2a898`) | Scanner OCR duplicata na Galeria (achado cenário 4) | fix | P2 | 1-2h | `R-CROSS-FLOW-FIX-3-SCANNER-DUPLICATA-GALERIA-spec.md` |

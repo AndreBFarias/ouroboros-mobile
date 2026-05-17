@@ -5,6 +5,25 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2D.3 — R-INT-3 Health Connect toast explícito + eventBus (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `726dec4` cherry-pick. Validação Nível C (celular live) fica como FOLLOW-UP — orquestrador valida quando dono conectar.
+
+- **Causa raiz documentada**: combinação de hipóteses 2 (catch silencioso) + 3 (`react-native-health-connect` 3.5.0 Proxy ambíguo). O `catch {}` original engolia erros de permissão/API; toast agora aparece explícito em runtime real.
+- **Padrão T1B3 replicado** nos 4 writers HC (`escreverTreinoEmHC`, `escreverPesoEmHC`, `escreverBodyFatEmHC`, `escreverMenstruacaoEmHC`): falha emite evento via eventBus → bridge React → ToastProvider exibe toast PT-BR com acentuação completa.
+- **`src/lib/health/eventBus.ts`** (84L novo): pub/sub puro com `mensagemCanonica(tipo, motivo)`. 3 motivos canônicos: `no_module`, `permission_denied`, `api_error`.
+- **`src/lib/health/useHCToast.ts`** (45L novo): hook React subscriber do eventBus, monta dentro do ToastProvider via `_layout.tsx` (+7L).
+- **`src/lib/health/sync.ts`** (+47L / -5L): `classificarErroHC(err)` via regex `/permission|denied|SecurityException/i`; emit em cada catch path.
+- **+15 testes** Jest (8 sync + 7 eventBus + 3 useHCToast bridge cobrindo `accessibilityLabel="toast warn"`). Métricas: **249 suítes / 2308 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **Strings UI** com acentuação completa: "Conexão Saúde indisponível neste aparelho.", "Sem permissão para gravar na Conexão Saúde.", "Falha ao sincronizar com Conexão Saúde.", "Treino salvo localmente.", etc.
+
+**Validação Nível C como follow-up**: orquestrador faz `adb logcat -s ReactNativeJS:V | grep '\[hc-sync\]'` + salvar treino/peso no app real quando dono conectar celular. Confirma entre hipóteses 2+3 ou 4 (HyperOS exige grant manual).
+
+**Achados colaterais**:
+1. **`react-native-health-connect` 3.5.0 Proxy não-bloqueante**: `typeof mod.readRecords !== 'function'` pode passar inadvertidamente em Proxy que lança no getter. Sprint nova **R-INT-3-HC-PROXY-REFLECT-HARDENING** registrada (P2, 1h) com fix via `Reflect.get`.
+2. Worktree sem `node_modules` (já R-INFRA-WORKTREE-BOOTSTRAP).
+3. `CardHCResumo.tsx` real em `src/components/screens/EvolucaoCorporalTab/`, não em `src/components/saude-fisica/` como spec apontava. Sprint não precisou tocar (componente só consome leitura).
+
 ### Onda 2D.2 — R-CROSS-FLOW-FIX-3 scanner dedup galeria (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `7a2a898` cherry-pick.
