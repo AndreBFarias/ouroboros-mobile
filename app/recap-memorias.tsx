@@ -104,12 +104,28 @@ export default function RecapMemoriasTela() {
     (s) => s.featureToggles.recapAudioAnexadoAutoplay
   );
 
-  const hoje = new Date();
-  const seteDiasAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const range: PeriodoRange = {
-    de: parseDate(params.de, seteDiasAtras),
-    ate: parseDate(params.ate, hoje),
-  };
+  // R-RECAP-FIX-LOOP (2026-05-17): estabilizar `range` para nao
+  // disparar Maximum update depth no useRecap. Antes, `hoje =
+  // new Date()` e `seteDiasAtras = new Date(...)` eram recalculados
+  // a cada render com Date.now() ligeiramente diferente, o que fazia
+  // `range.de.getTime()` mudar entre renders e re-disparar o
+  // useEffect interno do useRecap (setLoading -> re-render -> loop).
+  // Solucao: memoizar via strings primitivas params.de/params.ate;
+  // fallbacks (hoje/seteDiasAtras) so' sao calculados quando o param
+  // correspondente esta ausente, e ficam estaveis enquanto as strings
+  // de entrada nao mudarem.
+  const deString = Array.isArray(params.de) ? params.de[0] : params.de;
+  const ateString = Array.isArray(params.ate) ? params.ate[0] : params.ate;
+  const range: PeriodoRange = useMemo(() => {
+    const hoje = new Date();
+    const seteDiasAtras = new Date(
+      hoje.getTime() - 7 * 24 * 60 * 60 * 1000
+    );
+    return {
+      de: parseDate(deString, seteDiasAtras),
+      ate: parseDate(ateString, hoje),
+    };
+  }, [deString, ateString]);
   const { data, loading } = useRecap(range);
   const slides = useRecapMemorias({ data });
 
