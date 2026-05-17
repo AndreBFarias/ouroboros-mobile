@@ -5,6 +5,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2D.2 — R-CROSS-FLOW-FIX-3 scanner dedup galeria (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `7a2a898` cherry-pick.
+
+- **Bug fixado**: `listarItensGaleria` em `src/lib/vault/galeria.ts` lia `nota-` e `scanner-` como tipos canônicos distintos, gerando 2 entradas na galeria por escaneamento (uma como "Nota" categoria, outra como "Documento" legenda).
+- **Solução Opção A** (preferida pelo spec): filtrar entradas `scanner-` quando existe `nota-` com mesmo stem (`<YYYY-MM-DD>-<slug>`). Em `listarItensGaleria`, construir Set de stems de notas e pular companions scanner que casem.
+- **`src/lib/vault/galeria.ts`** (+40L): dedup logic no reader.
+- **+3 testes** em `tests/lib/vault/galeria.test.ts` (76L):
+  1. Oculta companion scanner quando existe nota par com mesmo stem
+  2. Mantém scanner solto quando NÃO existe nota par (saveguard)
+  3. Filtro `tipo=foto` não expõe nota deduplicada como foto
+- Métricas: **247 suítes / 2308 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+
+**Achados colaterais** (não disparam sprints novas):
+1. `slugifyDescricao` usa regex `[̀-ͯ]` com caractere literal — funcional mas frágil; usar unicode escape `̀-ͯ` em sprint estética futura.
+2. node_modules ausente no worktree (já R-INFRA-WORKTREE-BOOTSTRAP).
+
 ### Onda 2D.1 — R-CROSS-FLOW-FIX-1 backup automático órfão (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `ef8fab0` cherry-pick.
