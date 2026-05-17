@@ -23,7 +23,7 @@
     "android": {
       "package": "com.ouroboros.mobile",
       "label": "Ouroboros",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon-foreground.png",
         "backgroundColor": "#14151a"
