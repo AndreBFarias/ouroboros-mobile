@@ -1,0 +1,77 @@
+# Dependabot config — atualizacoes automaticas de dependencias.
+#
+# Politica:
+# - npm semanal, com agrupamento de security updates em um unico PR.
+# - github-actions mensal (versionamento mais estavel, baixa rotatividade).
+# - gradle mensal (modulo Android nativo widget-homescreen, baixa rotatividade).
+#
+# Exclusoes (ignore):
+# - react-native e expo nao recebem major bumps automaticos. Major destes
+#   pacotes costuma quebrar New Arch, polyfills, ou bridge nativa em
+#   producao. Patch e minor seguem normalmente. Major bumps entram via
+#   sprint manual com regressao completa (smoke + Gauntlet + dev-client).
+#
+# Referencias:
+# - Spec: docs/sprints/R-OPS-2-DEPENDABOT-CONFIG-spec.md
+# - Briefing: ONDA-R-BRIEFING.md secao R-OPS-2
+
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "react-native"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "expo"
+        update-types:
+          - "version-update:semver-major"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  - package-ecosystem: "gradle"
+    directory: "/modules/widget-homescreen/android"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(android)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "gradle"
+      - "android"
