@@ -446,6 +446,44 @@ mudança no main.
 `hooks/` não é registrado e o bootstrap não dispara automaticamente
 — neste caso, rodar o script manualmente.
 
+### Gauntlet multi-porta em worktree paralelo (r-dx-gauntlet-multi-porta, 2026-05-17)
+
+Quando 2+ agentes rodam em worktrees paralelos e ambos precisam
+validar visualmente via Gauntlet, a porta 8081 fixa serializava
+o trabalho artificialmente. A partir desta sprint:
+
+```bash
+./gauntlet.sh                # default 8081 (compat reversa)
+./gauntlet.sh --port 8082    # porta explícita
+./gauntlet.sh --auto-port    # detecta primeira livre em [8081-8099]
+```
+
+**Helper:** `scripts/auto-port.sh` retorna primeira porta TCP livre
+na faixa (default 8081-8099) usando `ss -tln`. Usado pelo modo
+`--auto-port` do gauntlet.
+
+**Lock cooperativo:** `/tmp/gauntlet-port-<PORT>.lock` registra o
+PID do filho Metro. Segundo gauntlet na mesma porta com Metro
+vivo é recusado; lock órfão (processo morreu) é limpo silencioso.
+
+**Cache cleanup per-porta:** em worktree, `.expo` local é limpo
+sempre. Caches globais `/tmp/metro-file-map-*` só são limpos
+quando **não há outras instâncias gauntlet ativas** (detectado
+via presença de `/tmp/gauntlet-port-*.lock`). Em paralelo: cada
+worktree preserva seu file-map para não invalidar o do vizinho.
+
+**Shim de `expo-router/_ctx.web`:** em worktree (detectado via
+`EXPO_ROUTER_APP_ROOT` exportado pelo gauntlet.sh) o
+`metro.config.js` re-roteia o require de `expo-router/_ctx.web`
+para `<projectRoot>/_ctx.web.local.js`, que chama
+`require.context('./app', ...)` com path literal. Isso bypassa o
+inline-env do babel-preset-expo, que em cache compartilhado entre
+worktrees paralelos pode pegar o `app/` errado e gerar "Welcome
+to Expo" no Chrome.
+
+Documentação detalhada: `docs/GAUNTLET.md` seção "Validação
+visual em paralelo".
+
 ---
 
 ## 6. Princípios Fundamentais Que Guiam Decisões

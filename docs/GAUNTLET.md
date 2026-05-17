@@ -31,6 +31,76 @@ O script:
 Em sessão fresca, `useFonts` SDK 54 web demora ~30-60s para resolver
 na primeira navegação. Aguarde antes de interagir.
 
+## Validação visual em paralelo (multi-worktree, multi-porta)
+
+> **R-DX-GAUNTLET-MULTI-PORTA (2026-05-17)** — `gauntlet.sh` suporta
+> múltiplos Metros simultâneos quando agentes rodam em worktrees
+> paralelos via `.claude/worktrees/<id>/`.
+
+Flags de porta:
+
+```bash
+# Default (porta 8081, compat reversa)
+./gauntlet.sh
+
+# Porta explícita (multi-worktree)
+./gauntlet.sh --port 8082
+
+# Auto-detect primeira porta livre em [8081-8099]
+./gauntlet.sh --auto-port
+```
+
+Em paralelo:
+
+```bash
+# Worktree A
+cd .claude/worktrees/agent-aaa
+./gauntlet.sh --auto-port   # pega 8081
+
+# Worktree B (em outro terminal)
+cd .claude/worktrees/agent-bbb
+./gauntlet.sh --auto-port   # pega 8082
+```
+
+Cada instância roda em sua própria porta com:
+
+- Lock cooperativo em `/tmp/gauntlet-port-<PORT>.lock` (PID do
+  filho; recusa dupla instância).
+- Log por porta em `/tmp/gauntlet-expo-<PORT>.log`.
+- `EXPO_DEV_SERVER_PORT` e `RCT_METRO_PORT` exportados ao filho.
+
+### Shim de `expo-router/_ctx.web` em worktree
+
+`metro.config.js` instala `resolveRequest` que, quando
+`EXPO_ROUTER_APP_ROOT` está exportado (gauntlet.sh em worktree
+exporta), re-roteia `require('expo-router/_ctx.web')` para o shim
+local `<projectRoot>/_ctx.web.local.js`.
+
+Motivo: o `_ctx.web.js` canônico do expo-router usa
+`require.context(process.env.EXPO_ROUTER_APP_ROOT, ...)` onde
+`EXPO_ROUTER_APP_ROOT` é inlinado pelo babel-preset-expo em
+build-time como string literal computada via
+`path.relative(node_modules/expo-router/_ctx.web.js físico, appFolder)`.
+Em sessão paralela com 2+ worktrees, o transform cache do Metro
+(em `/tmp/metro-cache`) pode contaminar entre processos: o
+segundo worktree reutiliza o transform do primeiro com
+`EXPO_ROUTER_APP_ROOT` apontando para o `app/` do primeiro
+worktree (sintoma: Chrome mostra "Welcome to Expo" em vez das
+rotas reais).
+
+O shim `<projectRoot>/_ctx.web.local.js` vive na raiz do worktree
+e chama `require.context('./app', ...)` com path literal estático
+— Metro resolve `./app` relativo ao shim, ou seja, sempre o `app/`
+do worktree atual. Bypass completo do babel-inline-env.
+
+### Cache cleanup per-porta
+
+`gauntlet.sh` em worktree limpa `.expo` local sempre. Limpeza de
+caches globais `/tmp/metro-file-map-*` só ocorre quando **não há
+outras instâncias gauntlet ativas** (detectado via presença de
+`/tmp/gauntlet-port-*.lock`). Em paralelo: cada worktree preserva
+seu file-map para não invalidar o do vizinho.
+
 ## Alternativa manual
 
 ```bash
