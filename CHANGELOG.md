@@ -5,6 +5,32 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2C.2 — R-INT-1 Hub Integrações Utilitários (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `946855d` cherry-pick.
+
+- **Rota canônica `app/integracoes.tsx`** (15L) com wrapper expo-router.
+- **`src/components/screens/IntegracoesScreen.tsx`** (424L novo): 5 cards na ordem fixa:
+  - **Health Connect** (Q17) — estado real via `verificarDisponibilidade` + `listarPermissoesConcedidas`, toggle on/off
+  - **Google Calendar** (Q22.B + R-CRIT-1) — estado via `useGoogleAuth`, conectar/desconectar
+  - **Spotify** (R-INT-4 futura) — placeholder badge "Em breve"
+  - **YouTube** (R-INT-4 futura) — placeholder; ícone `Video` (alternativa: `Youtube` não existe em `lucide-react-native`)
+  - **Google Drive** (futura) — placeholder
+- **MenuLateral entry "Integrações"** em `src/components/chrome/MenuLateral.tsx` (+12L): ícone `Plug` laranja, seção Utilitários.
+- **`src/lib/icons.ts`**: `Plug` + `Cloud` exports (+2L).
+- **FEATURES-CANONICAS §3.8** atualizado com nova seção.
+- **Retrocompatibilidade preservada**: `/settings/integracoes` e `/settings/contas-google` continuam funcionando intactos. Hub apenas agrega.
+- **+8 testes Jest** (`IntegracoesScreen.test.tsx`) cobrindo 5 cards + estados via `accessibilityLabel` específicos. E2E template em `tests/e2e/playwright/r-int-1.e2e.ts`. Métricas: **241 suítes / 2259 testes** verde · TS strict 0 · ESLint 0 · anonimato ok · PT-BR ok.
+
+**Achado durá­vel — Gauntlet web não funciona em worktree**: agent tentou capturar screenshot, página exibiu "Welcome to Expo" em vez do hub. Causa raiz documentada: `require.context('./app')` em `expo-router/_ctx.web.js` resolve relativo ao path real do bundle entry, que está em `node_modules/expo-router/`. Como `node_modules` no worktree é symlink, `require.context` resolve pro `app/` do REPO PRINCIPAL, não do worktree. 50+ rotas do worktree não entram no bundle. Sprint nova **R-INFRA-GAUNTLET-WORKTREE-SYMLINK** registrada (P2, 2-3h) com 3 opções técnicas avaliadas.
+
+Compensação: 8 testes Jest cobrem exatamente os elementos visuais via `accessibilityLabel`. Validação visual end-to-end fica como follow-up Nível C (celular real) ou após R-INFRA-GAUNTLET-WORKTREE-SYMLINK.
+
+**Achados colaterais**:
+1. `R-INFRA-GAUNTLET-WORKTREE-SYMLINK` novo (P2) — descrito acima.
+2. R-INFRA-WORKTREE-BOOTSTRAP recorrente — já existia spec; agent precisou linkar `node_modules` + `env.json` manualmente.
+3. Ícone `Youtube` ausente em `lucide-react-native` — usado `Video`. Se R-INT-4 quiser logo oficial, precisará SVG custom ou outro pacote.
+
 ### Onda 2C.1 — R-INT-2 nome app permissões (AndroidManifest defensivo + fix intent-filter HC) (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `b4b33d9` cherry-pick. Escopo limitado a AndroidManifest + app.json (Cloud Console editing fica em R-CRIT-2 separada).
