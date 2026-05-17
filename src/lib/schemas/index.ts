@@ -110,6 +110,12 @@ export {
   type Contador,
 } from './contador';
 export {
+  EventoContadorSchema,
+  slugifyDescricao as slugifyEventoContador,
+  sufixoRandomEvento as sufixoRandomEventoContador,
+  type EventoContador,
+} from './evento_contador';
+export {
   RotinaSchema,
   ExercicioRotinaSchema,
   type RotinaMeta,

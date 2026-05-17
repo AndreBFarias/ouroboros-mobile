@@ -191,6 +191,19 @@ export function contadorPath(slug: string): string {
   return `markdown/contador-${slug}.md`;
 }
 
+// markdown/evento-contador-<contadorId>-<YYYY-MM-DD>-<slug>.md
+// (R-RECAP-5, 2026-05-16). Evento pontual associado a um Contador.
+// contadorId e a chave estavel do contador-pai; data e o dia do
+// evento; slug deriva da descricao + sufixo random. Listagem por
+// contador filtra por prefixo "evento-contador-<contadorId>-".
+export function eventoContadorPath(
+  contadorId: string,
+  date: Date,
+  slug: string
+): string {
+  return `markdown/evento-contador-${contadorId}-${formatDateYmd(date)}-${slug}.md`;
+}
+
 // markdown/nota-YYYY-MM-DD-HHmmss-<slug>.md
 // Companion .md de uma nota fiscal capturada pelo scanner ou recebida
 // via share intent. Spec H2 §2: sempre em markdown/.

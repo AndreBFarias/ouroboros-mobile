@@ -45,6 +45,7 @@ em todo arquivo persistido a partir da sprint Q12, 2026-05-12).
    - [5.29 stats_agregadas_30d](#529-stats_agregadas_30d)
    - [5.30 stats_agregadas_90d](#530-stats_agregadas_90d)
    - [5.31 stats_agregadas_all](#531-stats_agregadas_all)
+   - [5.32 evento_contador](#532-evento_contador)
 6. [Caches que NÃO são contrato](#caches-que-não-são-contrato)
 7. [Migração defensiva](#migração-defensiva)
 8. [Próximos passos backend Python](#próximos-passos-backend-python)
@@ -989,6 +990,39 @@ Read-model derivado dos 7 últimos dias. Recalculado pelo writer reativo a cada 
 - **Schema**: `src/lib/schemas/vault_estado.ts` (`EstadoStatsAgregadasSchema`)
 - **Versão**: 1
 - **Frontmatter**: igual a 5.28, com `periodo` = `'all'`. Recorte temporal inclui todo o histórico do Vault.
+
+### 5.32 evento_contador
+
+- **Tipo canônico**: `evento_contador`
+- **Path canônico**:
+  `markdown/evento-contador-<contadorId>-<YYYY-MM-DD>-<slug>-<deviceId>.md`
+  (helper `eventoContadorPath(contadorId, date, slug)` + T2-LOCK-VAULT suffix)
+- **Schema**: `src/lib/schemas/evento_contador.ts`
+- **Versão**: 1
+- **Origem**: Sprint R-RECAP-5 (2026-05-16). Evento pontual associado
+  a um Contador (M18). Permite que cada Contador acumule registros
+  ricos (humor, descrição, mídias, tags) além do simples número de
+  dias. Listagem por contador filtra arquivos por prefixo
+  `evento-contador-<contadorId>-`.
+- **Frontmatter**:
+
+| Campo | Tipo | Obrigatório | Notas |
+|---|---|---|---|
+| `_schema_version` | inteiro | sim (escrita) | |
+| `tipo` | literal `'evento_contador'` | sim | |
+| `contadorId` | kebab-case ASCII | sim | FK para `contador.slug`. |
+| `data` | `YYYY-MM-DD` | sim | Dia do evento. |
+| `slug` | kebab-case ASCII | sim | Inclui sufixo random 4-char. |
+| `humor` | int 1..5 | sim | Slider per-evento (não entra no heatmap). |
+| `descricao` | string 0..280 | não | Default `""`. Vazia exige `midias` não vazias. |
+| `tags` | string[] (max 5, cada 1..16 chars) | não | Default `[]`. Aceita acentuação PT-BR. |
+| `midias` | `Midia[]` (foto / audio / spotify / youtube) | não | Default `[]`. |
+| `criado_em` | ISO datetime | sim | |
+| `autor` | `pessoa_a` \| `pessoa_b` | sim | |
+| `para` | `Para` | sim | Default `{ tipo: 'mim' }`. |
+
+- **Refine**: `descricao.trim().length > 0 || midias.length > 0`
+  (evento precisa de conteúdo).
 
 ---
 

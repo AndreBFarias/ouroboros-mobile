@@ -221,3 +221,15 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.28,stats_agregadas_7d,1,topConquistas,"array max 5 `{ chave, n >= 1 }",sim,"Chaves: `diario_vitoria`, `evento_positivo`, `marco`, `tarefa_concluida`."
 5.28,stats_agregadas_7d,1,ultimaAtualizacao,ISO 8601,sim,Alias de `atualizadoEm`.
 5.28,stats_agregadas_7d,1,atualizadoEm,ISO 8601,sim,
+5.32,evento_contador,1,_schema_version,inteiro,sim (escrita),
+5.32,evento_contador,1,tipo,literal `'evento_contador',sim,
+5.32,evento_contador,1,contadorId,kebab-case ASCII,sim,FK para `contador.slug`.
+5.32,evento_contador,1,data,YYYY-MM-DD,sim,Dia do evento.
+5.32,evento_contador,1,slug,kebab-case ASCII,sim,Inclui sufixo random 4-char.
+5.32,evento_contador,1,humor,int 1..5,sim,Slider per-evento (não entra no heatmap).
+5.32,evento_contador,1,descricao,string 0..280,não,"Default `""""`. Vazia exige `midias` não vazias."
+5.32,evento_contador,1,tags,"string[] (max 5, cada 1..16 chars)",não,Default `[]`. Aceita acentuação PT-BR.
+5.32,evento_contador,1,midias,Midia[]` (foto / audio / spotify / youtube),não,Default `[]`.
+5.32,evento_contador,1,criado_em,ISO datetime,sim,
+5.32,evento_contador,1,autor,pessoa_a` | `pessoa_b,sim,
+5.32,evento_contador,1,para,Para,sim,Default `{ tipo: 'mim' }`.

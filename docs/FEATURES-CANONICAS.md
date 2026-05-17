@@ -669,7 +669,7 @@ R-HOME-3 (refinamento do checkbox de R-HOME-1):
 - **Long-press em concluída**: Reabrir / Apagar definitivo.
 - Lixeira soft (apagar não é definitivo até 30 dias).
 
-### 10.4 Contador "Dias sem X" — F-17 / M18 + M32 v2
+### 10.4 Contador "Dias sem X" — F-17 / M18 + M32 v2 + R-RECAP-5
 
 - CRUD de contadores.
 - Reset preserva histórico (recorde + lista de resets).
@@ -678,6 +678,16 @@ R-HOME-3 (refinamento do checkbox de R-HOME-1):
 - **Indicador de marcos** discreto: 5d / 30d / 100d / 365d
   (cinza-violeta 11dp letter-spacing 1, sem cor de festa).
 - Campo `para` (M33).
+- **Eventos pontuais do Contador** (R-RECAP-5, 2026-05-16): cada
+  contador aceita registros pontuais com humor (slider 1-5),
+  descrição livre (até 280 caracteres), tags (até 5 de 16 chars
+  cada com acentuação PT-BR) e mídias opcionais (foto, áudio,
+  Spotify, YouTube). Persistido em
+  `markdown/evento-contador-<contadorId>-<YYYY-MM-DD>-<slug>.md`
+  com schema `evento_contador` versão 1. Exibido como timeline
+  vertical na tela de detalhe do contador, com slideshow básico
+  quando há fotos. Sem celebração visual (ADR-0005): cards são
+  cyan discreto, mesmo padrão dos demais Recap.
 
 ## 11. Configurações — M15 + M29
 

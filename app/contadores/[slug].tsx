@@ -8,6 +8,11 @@
 //     (mais recente no topo). Linha --bg-elev, dots --muted-decor
 //     8dp, data formatada e duracao da sequência ao lado.
 //
+// R-RECAP-5 (2026-05-16): adicionado botao "+ Evento" + Modal para
+// criar evento pontual no contador (humor 1-5, descricao, tags),
+// alem da secao "Recap" abaixo da timeline com listagem dos eventos
+// via useEventosContador + RecapContador.
+//
 // Sem celebracao visual (ADR-0005). Sem cor especial em sequências
 // longas. Sem icones de trofeu, chama, badge.
 //
@@ -15,17 +20,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Header, Input, Screen, useToast } from '@/components/ui';
+import { Button, Header, Input, Screen, Slider, Textarea, useToast } from '@/components/ui';
 import { ModalConfirmaReset } from '@/components/contadores/ModalConfirmaReset';
+import { RecapContador } from '@/components/screens/RecapContador';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
+import { usePessoa } from '@/lib/stores/pessoa';
 import {
   escreverContador,
   excluirContador,
   lerContador,
   registrarReset,
 } from '@/lib/vault/contadores';
+import { escreverEventoContador } from '@/lib/contadores/escreverEvento';
+import { useEventosContador } from '@/lib/hooks/useEventosContador';
+import {
+  slugifyDescricao,
+  sufixoRandomEvento,
+  type EventoContador,
+} from '@/lib/schemas/evento_contador';
 import { diasEntre } from '@/lib/util/diasEntre';
 import { mensagemApoio, marcoAtingido } from '@/lib/contadores/mensagens';
 import type { Contador } from '@/lib/schemas/contador';
@@ -62,6 +76,7 @@ export default function ContadorDetalhe() {
   const params = useLocalSearchParams<{ slug?: string }>();
   const slugParam = typeof params.slug === 'string' ? params.slug : null;
   const vaultRoot = useVault((s) => s.vaultRoot);
+  const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const toast = useToast();
 
   const [contador, setContador] = useState<Contador | null>(null);
@@ -73,6 +88,19 @@ export default function ContadorDetalhe() {
   const [salvandoEdicao, setSalvandoEdicao] = useState<boolean>(false);
   const [modalExcluir, setModalExcluir] = useState<boolean>(false);
   const [excluindo, setExcluindo] = useState<boolean>(false);
+
+  // R-RECAP-5: estado do modal de adicionar evento.
+  const [modalEvento, setModalEvento] = useState<boolean>(false);
+  const [eventoHumor, setEventoHumor] = useState<number>(3);
+  const [eventoDescricao, setEventoDescricao] = useState<string>('');
+  const [eventoTags, setEventoTags] = useState<string>('');
+  const [salvandoEvento, setSalvandoEvento] = useState<boolean>(false);
+
+  // R-RECAP-5: hook que carrega eventos do contador.
+  const {
+    eventos,
+    recarregar: recarregarEventos,
+  } = useEventosContador(slugParam);
 
   const carregar = useCallback(async () => {
     if (!vaultRoot || !slugParam) {
@@ -171,6 +199,76 @@ export default function ContadorDetalhe() {
   const handleAbrirExcluir = useCallback(() => {
     setModalExcluir(true);
   }, []);
+
+  // R-RECAP-5: abre o modal de adicionar evento. Reseta campos.
+  const handleAbrirEvento = useCallback(() => {
+    setEventoHumor(3);
+    setEventoDescricao('');
+    setEventoTags('');
+    setModalEvento(true);
+  }, []);
+
+  // R-RECAP-5: salva o evento via escreverEventoContador.
+  const handleSalvarEvento = useCallback(async () => {
+    if (!vaultRoot || !contador || salvandoEvento) return;
+    const descricaoLimpa = eventoDescricao.trim();
+    if (descricaoLimpa.length === 0) {
+      void haptics.error();
+      toast.show('Adicione uma descrição.', 'error');
+      return;
+    }
+    setSalvandoEvento(true);
+    try {
+      // Parse de tags: separa por virgula, trim, max 5, max 16 chars cada.
+      const tags = eventoTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0 && t.length <= 16)
+        .slice(0, 5);
+
+      // Data e slug a partir de "agora" no fuso local.
+      const agora = new Date();
+      const ymd = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+      const slug = `${slugifyDescricao(descricaoLimpa)}-${sufixoRandomEvento()}`;
+
+      const meta: EventoContador = {
+        tipo: 'evento_contador',
+        contadorId: contador.slug,
+        data: ymd,
+        slug,
+        humor: eventoHumor,
+        descricao: descricaoLimpa,
+        tags,
+        midias: [],
+        criado_em: agora.toISOString(),
+        autor: pessoaAtiva,
+        para: contador.para,
+      };
+
+      await comTimeout(escreverEventoContador({ vaultRoot, meta, body: '' }));
+      void haptics.light();
+      toast.show('Evento adicionado.', 'success');
+      setModalEvento(false);
+      void recarregarEventos();
+    } catch (e) {
+      void haptics.error();
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível salvar: ${msg}`, 'error');
+      console.error('save evento contador fail', e);
+    } finally {
+      setSalvandoEvento(false);
+    }
+  }, [
+    vaultRoot,
+    contador,
+    eventoDescricao,
+    eventoTags,
+    eventoHumor,
+    pessoaAtiva,
+    salvandoEvento,
+    toast,
+    recarregarEventos,
+  ]);
 
   const handleConfirmarExcluir = useCallback(async () => {
     if (!vaultRoot || !contador || excluindo) return;
@@ -308,6 +406,11 @@ export default function ContadorDetalhe() {
         {/* Ações */}
         <View style={{ gap: spacing.sm }}>
           <Button
+            label="+ Evento"
+            onPress={handleAbrirEvento}
+            variant="primary"
+          />
+          <Button
             label="Resetei"
             onPress={handleAbrirReset}
             variant="destructive"
@@ -317,6 +420,11 @@ export default function ContadorDetalhe() {
             onPress={handleAbrirEditar}
             variant="ghost"
           />
+        </View>
+
+        {/* R-RECAP-5: Recap do Contador (timeline de eventos + slideshow). */}
+        <View accessibilityLabel="recap do contador">
+          <RecapContador eventos={eventos} vaultRoot={vaultRoot} />
         </View>
 
         {/* Timeline de resets */}
@@ -493,6 +601,87 @@ export default function ContadorDetalhe() {
                 onPress={() => setModalEditar(false)}
                 variant="ghost"
                 disabled={salvandoEdicao}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* R-RECAP-5: Modal adicionar evento (humor + descricao + tags). */}
+      <Modal
+        visible={modalEvento}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalEvento(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(20, 21, 26, 0.85)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: spacing.lg,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.bg,
+              borderRadius: radius.modal,
+              padding: spacing.lg,
+              gap: spacing.base,
+              width: '100%',
+              maxWidth: 360,
+            }}
+            accessibilityLabel="modal adicionar evento contador"
+          >
+            <Text
+              style={{
+                color: colors.fg,
+                fontFamily: 'JetBrainsMono_500Medium',
+                fontSize: 16,
+                lineHeight: 24,
+              }}
+            >
+              Adicionar evento
+            </Text>
+
+            <Slider
+              value={eventoHumor}
+              min={1}
+              max={5}
+              step={1}
+              onChange={setEventoHumor}
+              label="Humor"
+              accessibilityLabel="humor do evento"
+            />
+
+            <Textarea
+              value={eventoDescricao}
+              onChangeText={setEventoDescricao}
+              placeholder="Descrição"
+              label="Descrição"
+              accessibilityLabel="descricao do evento"
+            />
+
+            <Input
+              value={eventoTags}
+              onChangeText={setEventoTags}
+              placeholder="Tags separadas por vírgula"
+              accessibilityLabel="tags do evento"
+            />
+
+            <View style={{ gap: spacing.sm }}>
+              <Button
+                label="Salvar"
+                onPress={() => void handleSalvarEvento()}
+                variant="primary"
+                disabled={salvandoEvento || eventoDescricao.trim().length === 0}
+              />
+              <Button
+                label="Cancelar"
+                onPress={() => setModalEvento(false)}
+                variant="ghost"
+                disabled={salvandoEvento}
               />
             </View>
           </View>

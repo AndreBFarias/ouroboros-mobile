@@ -20,6 +20,7 @@ export {
   rotinaPath,
   grupoPath,
   contadorPath,
+  eventoContadorPath,
   notaPath,
   notaArquivoPath,
   fotoPath,
