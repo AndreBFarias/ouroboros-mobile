@@ -5,6 +5,23 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3C.1 — R-BACKUP-AUTO Backup semanal Vault (2026-05-17)
+
+Sprint Fase 3 entregue honrando worktree isolation. Commit `88fe9be` cherry-pick. **Default ON** (D6=SIM).
+
+- **`src/lib/schemas/backup_snapshot.ts`** novo (130L): Zod `BackupSnapshotSchema` versão 1 com serializar/parse frontmatter (`tipo: backup_snapshot`, `criado_em`, `origem: deviceId`, `arquivos_incluidos`, `bytes_totais`, `sha256`).
+- **`src/lib/backup/executarBackup.ts`** estendido (+175L): deviceId no nome do ZIP, companion `.md` com frontmatter Schema, sha256 do ZIP, `listarBackupsArquivados`, regex `BACKUP_FILENAME_RE`. Reutilizou `executarBackup` existente (M-BACKUP-AUTOMATICO) em vez de duplicar.
+- **`src/lib/stores/settings.ts`**: `backupAutomaticoSemanal: false → true` (default ON conforme D6).
+- **`src/components/settings/SecaoBackupAutomatico.tsx`** reescrito: botão "Fazer backup agora" + lista 4 últimos backups + botão "Restaurar" por linha com Alert.alert confirm + `useToast` feedback.
+- **+21 testes** (11 schema + 8 backup execucao + 6 componente settings). Métricas: **265 suítes / 2483 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+
+**Divergências da spec literal, justificadas** ("ESTENDER, não duplicar"):
+- Path destino: spec sugeria `<vault>/backups/`; mantido `Documents/Ouroboros-Backups/auto/` (canônico desde M-BACKUP-AUTOMATICO). Põe dentro do Vault duplicaria Syncthing replicação.
+- Nome arquivo: spec sugeria `auto-<YYYY-MM-DD-HHMM>-<deviceId>.zip`; mantido `backup-<YYYYMMDDTHHmmss>-<deviceId>.zip` (ordenação lexicográfica + retrocompat com 4 backups antigos).
+- `restaurarVaultZip` em `services/restaurarVault.ts` (existente, valida sha256) cobre MVP de restore — não duplicado.
+
+**Achado colateral pré-existente NÃO-relacionado**: `googleAuthFlow-pickClientIdSafe.test.ts` flakiness quando `env.json` real está acessível ao Node (symlink no worktree). 4 fails em 1ª run, clean em 2ª. Sugestão DX futura: usar `jest.isolateModules` ou env factory. NÃO dispatch.
+
 ### Fase 3 Onda 3B.2 — R-NAV-1 Ciclo botão registrar → FAB+ canônico (2026-05-17)
 
 Sprint Fase 3 (refactor UX) entregue honrando worktree isolation. Commit `c77b891` cherry-pick.

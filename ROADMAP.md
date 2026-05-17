@@ -97,7 +97,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
 | R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
 | R-OPS-5 | Release notes auto | infra | — | 1–2h | `R-OPS-5-RELEASE-NOTES-AUTO-spec.md` |
-| R-BACKUP-AUTO | Backup semanal silencioso pro Vault | feature | P2 | 3–4h | `R-BACKUP-AUTO-spec.md` |
+| R-BACKUP-AUTO | Backup semanal silencioso pro Vault | feature | P2 | `88fe9be` | `[ok]` (3C.1) |
 | R-A11Y-TALKBACK | Auditoria + correção navegação screen reader | audit+feature | P2 | 3–5h | `R-A11Y-TALKBACK-spec.md` |
 
 ### Fase 4 — Segurança + release (bloqueia v1.0.0 production) — ~12–18h
