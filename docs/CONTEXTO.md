@@ -491,6 +491,29 @@ falha só aparece sob carga em paralelo competindo por CPU.
 Histórico empírico no spec
 `docs/sprints/R-INFRA-JEST-FLAKY-TIMEOUT-spec.md` Anexo A.
 
+### Template canônico v2 de spec de sprint (r-dx-1, 2026-05-17)
+
+`docs/templates/sprint-spec.md` consolida o padrão observado em
+48+ sprints da Onda R (R-CRIT, R-RECAP, R-HOME, R-FAB, R-MEDIA,
+R-CROSS-FLOW, R-DX, R-OPS). Quando criar
+`docs/sprints/<ID>-spec.md`, copie a estrutura entre os marcadores
+`<!-- TEMPLATE-INICIO -->` e `<!-- TEMPLATE-FIM -->`.
+
+A v2 incorpora 10 lições duráveis (validar identifiers via grep,
+reutilizar antes de criar, worktree isolation, acentuação,
+testes-primeiro, aritmética de refactor, decisões explícitas,
+OFF-LIMITS explícito, fonte canônica). Cada lição mapeia para
+seção específica do template.
+
+**Templates relacionados** (não substituídos):
+
+- `docs/sprints/_template-spec.md` — template v1 padrão Onda M.
+  Mantido para retrofit histórico.
+- `docs/sprints/_TEMPLATE-SAVE-FEATURE.md` — template específico
+  para sprints `M-SAVE-<FEATURE>-VALIDA` do Bloco I.
+- `docs/templates/e2e-template.e2e.ts` — template de caso E2E
+  Gauntlet.
+
 ### Geração automática de spec a partir de issue (r-dx-3, 2026-05-17)
 
 Quando feature/bug nova chega via GitHub Issues em vez de já entrar
