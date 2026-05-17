@@ -5,6 +5,24 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3I — DX template/record/issue-to-spec + Spotify/YouTube OAuth (2026-05-17)
+
+4 sprints paralelas via worktree:
+
+- **R-DX-2** (`e770004`) — `scripts/gauntlet-record.sh` (197L) + flag `--record` em `gauntlet.sh`. ffmpeg x11grab grava interações no Gauntlet em MP4 H.264 (532x892, ~284kbps). Doc em `docs/GAUNTLET.md` seção "Gravação de vídeo". Validado: 5s → 180KB MP4 válido (ffprobe OK).
+- **R-DX-3** (`ea815bf`) — `scripts/issue-to-spec.sh` (269L). Lê `gh issue view --json` e gera spec skeleton em `docs/sprints/ISSUE-N-SLUG-spec.md` aplicando template canônico. Exit codes 0-4 documentados. Idempotência via verificação de arquivo existente. Marker `<!-- entries auto-geradas vao aqui -->` em `_BACKLOG.md` para entries auto.
+- **R-DX-1** (`45d2b33`) — `docs/templates/sprint-spec.md` (363L) consolidando 10 lições durávels de 94 specs R-* (validar identifiers via grep, reutilizar antes de criar, worktree isolation, acentuação, testes-primeiro, aritmética de refactor, decisões explícitas, OFF-LIMITS, fonte canônica). Template v1 e `_TEMPLATE-SAVE-FEATURE.md` mantidos para retrofit histórico.
+- **R-INT-4** (`dd37f26`) — Spotify Web API (read-only via OAuth PKCE) + YouTube Data API v3 (Google OAuth scope `youtube.readonly`). 6 arquivos lib (`src/lib/integracoes/{spotify,youtube}/{oauth,client,store}.ts`) + 5 testes (+51 testes passados). Cards Spotify/YouTube em `IntegracoesScreen` ganham estados conectado/desconectado/expirado. Decisão D2=A: ambos liberados como exceção explícita à política "sem rede de saída". YouTube store separado de Calendar (escopos distintos). Spotify desconectar não chama revoke (API não expõe endpoint público); usuário revoga em https://www.spotify.com/account/apps/.
+
+**Achado crítico de processo (durável):** 3/4 agents desta Onda (R-DX-1, R-DX-3, R-INT-4) bypassaram worktree e escreveram direto no main por aplicação de paths absolutos vindos do Read inicial. Hook detective `agent-worktree-check.sh` é só pre-commit — não bloqueia escrita. Sprint candidata R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 para PreToolUse hook em `settings.json` registrada como pendência durável.
+
+**Pendências operacionais R-INT-4 (não-código):**
+
+- `env.json.spotify.client_id` — dono precisa cadastrar app em https://developer.spotify.com/dashboard e adicionar a chave.
+- YouTube Data API v3 — habilitar no Google Cloud Console (mesmo projeto OAuth do Calendar).
+
+Sem essas configs, OAuth retorna `{ ok: false, motivo: 'sem_client_id' }` ou 403.
+
 ### Infra — R-INFRA-JEST-FLAKY-TIMEOUT diagnóstico aprofundado (2026-05-17) — **FASE 1 PARCIAL, segue débito**
 
 Sprint puramente de infraestrutura de testes. Origem: achado colateral de R-RECAP-LISTA-FIX-LOOP. Smoke `./scripts/smoke.sh` alternava entre verde e 2-8 testes falhando aleatoriamente entre runs sem mudança no código, erodindo confiança no guard-rail de pre-push.

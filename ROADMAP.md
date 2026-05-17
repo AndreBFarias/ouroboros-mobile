@@ -78,7 +78,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | `[rejeitado-replan]` → V2 mergeada | `R-NAV-3-REPLAN-spec.md` |
 | R-NAV-3-V2 | ConfirmarExclusao Modal Dracula (a2+b2 do replan) | refactor | P2 | `3c54009` | `[ok]` (3D.3) |
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | `97106e1` | `[ok]` (3C.2) Nível C follow-up |
-| R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` |
+| R-INT-4 | Spotify/YouTube conectar | feature | P3 | `dd37f26` | `[ok]` (3I.4) follow-up nivel C |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | `e53fb54` | `[ok]` (DX.2) |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | `9cb8f6a` | `[ok]` (3D.1) |
 | R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | `cb2c02d` | `[ok]` (3D.2) |
@@ -90,9 +90,9 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API `__gauntlet.setEventosAgendaMock` para E2E mescla agenda+alarmes (achado R-HOME-2) | infra+DX | P3 | `8ce899d` | `[ok]` (3F.3) |
 | R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lançante de react-native-health-connect 3.5.0 via Reflect.get (achado R-INT-3) | hardening+DX | P2 | `5d41ca6` | `[ok]` (DX.1) |
-| R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
-| R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
-| R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
+| R-DX-1 | Sprint template v2 | infra | — | `45d2b33` | `[ok]` (3I.3) |
+| R-DX-2 | Gauntlet record video | infra | — | `e770004` | `[ok]` (3I.1) |
+| R-DX-3 | Auto-generate spec from issue | infra+automation | — | `ea815bf` | `[ok]` (3I.2) |
 | R-DX-4 | ADB workflow helpers | infra | — | `6a86a05` | `[ok]` (3G.4) |
 | R-DX-5 | EAS local build docs | docs | — | `c5721ba` | `[ok]` (3G.2) |
 | R-DX-6 | Anonimato pre-push | infra | — | `6188c49` | `[ok]` (3G.1) |
