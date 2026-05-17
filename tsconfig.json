@@ -13,6 +13,7 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
-    "lucide-icons.d.ts"
+    "lucide-icons.d.ts",
+    "react-native-view-shot.d.ts"
   ]
 }

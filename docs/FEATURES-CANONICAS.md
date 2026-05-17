@@ -551,6 +551,53 @@ malformados são silenciosamente ignorados (mesmo padrão de
 - Helpers de leitura novos: `listarHumor`, `listarDiarios`,
   `listarEventos` (`src/lib/vault/`).
 
+### 7.1 Modo Memórias (slideshow Wrapped) — Q24.b / R-RECAP-3 a R-RECAP-6
+
+Slideshow full-screen estilo Instagram Stories/Spotify Wrapped acessado
+do Recap. Rota: `/recap-memorias?de=…&ate=…`.
+
+- **Slides candidatos** gerados por `useRecapMemorias` a partir do
+  agregado de `useRecap`: abertura, números (registros/treinos/tarefas),
+  vitórias com frase principal, mídias capturadas (fotos/áudios/vídeos),
+  crises/triggers, encerramento.
+- **Auto-advance configurável** (R-RECAP-4) via
+  `settings.recap.slideshowIntervaloS` (default 4s, range 2-10s).
+- **Tap-right avança, tap-left volta, long-press pausa** (zonas
+  invisíveis sobre o conteúdo).
+- **Background animado** entre 3 cores do gradient
+  `colorsMemorias.bgGradient` (roxo → magenta → cyan). Re-anima
+  ciclicamente via Reanimated puro.
+- **Ken Burns** (R-RECAP-4): 4 presets rotativos determinísticos por
+  hash do slide id; respeita `pausado`.
+- **Frase de transição** rotativa por slide id (pool curado, sem
+  exclamação nem comparativo).
+- **Áudio ambient embutido CC0** (R-RECAP-4): toggle off por default
+  via `settings.featureToggles.recapAmbientAudio`. Loop com fade-in/out
+  500ms ao pausar/fechar.
+- **Áudio anexado por slide** (R-MEDIA-2): slides `vitorias`/`crises`
+  carregam `audioPath` da última conquista/trigger relevante; tocam em
+  cross-fade com o ambient. Toggle on por default via
+  `settings.featureToggles.recapAudioAnexadoAutoplay`.
+- **Header**:
+  - Esquerda: Pausar (Play/Pause toggle) + Compartilhar (R-RECAP-6,
+    `Share2`, left=64dp, ao lado direito do Pausar).
+  - Direita: Fechar (X) — volta ao Recap.
+- **Compartilhamento** (R-RECAP-6, 2026-05-16): tap em Compartilhar
+  pausa o slideshow, captura o slide visível como PNG **1080×1920**
+  (formato Instagram Stories, dimensões forçadas via
+  `react-native-view-shot` `captureRef` com `width`/`height`), salva
+  em `cacheDirectory/recap-share-<slideId>-<timestamp>.png` e dispara
+  share intent nativo via `expo-sharing` (`mimeType: 'image/png'`,
+  `dialogTitle: 'Compartilhar'`). **Export efêmero** — não persiste
+  no Vault. Cleanup do PNG temp após o share sheet fechar
+  (best-effort). Em web devolve toast "Compartilhamento indisponível.";
+  erros de captura mostram toast "Não foi possível capturar." sem
+  travar a UI. Double-tap protegido pelo estado `compartilhando`.
+- **Tom ADR-0005** preservado: zero exclamação, frases de testemunha
+  calma ("Você esteve presente.", "Passaram por aqui.", "Continue.").
+- Paleta `colorsMemorias` exclusiva (gradient + dourado pálido)
+  — quebra visual intencional vs cotidiano sóbrio Dracula.
+
 ## 8. Calendário Visual de Conquistas — consolidado em §7 (L2)
 
 > **Histórico:** M11.5 / Tela 25 entregou esta tela como rota

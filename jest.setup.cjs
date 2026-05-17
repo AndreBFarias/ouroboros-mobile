@@ -433,6 +433,16 @@ jest.mock('expo-file-system/legacy', () => {
       memory.delete(uri);
       return Promise.resolve();
     }),
+    copyAsync: jest.fn(({ from, to }) => {
+      // Best-effort: copia o conteudo se origem ja gravada (caso de
+      // recap-share e similares onde captureRef escreve em tmpfile);
+      // caso contrario marca o destino como existente com placeholder.
+      // Suficiente para asserts de "destino criado" sem precisar de
+      // bytes reais. Mantem idempotencia.
+      const conteudo = memory.has(from) ? memory.get(from) : 'mock-binary';
+      memory.set(to, conteudo);
+      return Promise.resolve();
+    }),
     StorageAccessFramework: {
       requestDirectoryPermissionsAsync: jest.fn().mockResolvedValue({
         granted: true,
@@ -543,3 +553,21 @@ jest.mock('react-native-calendars', () => {
     LocaleConfig,
   };
 });
+
+// R-RECAP-6 (2026-05-16): react-native-view-shot. captureRef devolve
+// URI tmpfile previsivel para o teste assertar dimensoes alvo
+// (1080x1920) sem dependencia de runtime nativo. Testes que precisam
+// simular erro de captura sobrescrevem com jest.mock local.
+// `virtual: true` porque o pacote esta em package.json mas pode nao
+// estar instalado no node_modules durante CI/test (modulo nativo;
+// instalacao real acontece no `npx expo prebuild` ou `npm install`).
+jest.mock(
+  'react-native-view-shot',
+  () => ({
+    __esModule: true,
+    captureRef: jest.fn(() =>
+      Promise.resolve('file:///mock/tmp/recap-share-capture.png')
+    ),
+  }),
+  { virtual: true }
+);

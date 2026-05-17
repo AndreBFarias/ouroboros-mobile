@@ -20,6 +20,12 @@
 // ADR-0005: frases sobrias, sem exclamacao, sem comparativo, sem
 // emoji. Tom de testemunha calma.
 //
+// R-RECAP-6 (2026-05-16) -- botao Compartilhar (Share2) no header
+// ao lado do Pausar. Tap pausa, captura slide visivel como PNG
+// 1080x1920 (formato Instagram Stories) via react-native-view-shot,
+// dispara share intent nativo via expo-sharing. Export efemero
+// (cacheDirectory), nao persiste no Vault.
+//
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -40,14 +46,25 @@ import Animated, {
   withSequence,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Pause, Play, X } from '@/lib/icons';
+import { Pause, Play, Share2, X } from '@/lib/icons';
 import { useRecap, type PeriodoRange } from '@/lib/hooks/useRecap';
 import { useRecapMemorias, type Slide } from '@/lib/hooks/useRecapMemorias';
 import { useSettings } from '@/lib/stores/settings';
 import { OuroborosLoader } from '@/components/brand';
+// R-RECAP-6: useOptionalToast (nao useToast) para nao explodir em
+// rotas/testes que renderizam sem ToastProvider acima. Fallback
+// no-op silencioso quando o provider esta ausente.
+import { useOptionalToast } from '@/components/ui';
 import { KenBurns } from '@/components/recap/KenBurns';
 import { fraseTransicaoPara } from '@/lib/copy/recap-transicoes';
 import { colorsMemorias } from '@/theme/tokens';
+// R-RECAP-6: export PNG 1080x1920 + share intent. Export efemero
+// (cacheDirectory), nao persiste no Vault.
+import {
+  exportarSlideMemorias,
+  compartilharSlidePng,
+  removerSlidePngTemp,
+} from '@/lib/midia/exportarSlideMemorias';
 
 // Track ambient CC0 (drone harmonico 60s loop). Require estatico:
 // bundler precisa de literal para empacotar.
@@ -98,7 +115,20 @@ export default function RecapMemoriasTela() {
 
   const [index, setIndex] = useState(0);
   const [pausado, setPausado] = useState(false);
+  // R-RECAP-6: estado de captura em andamento. Habilita guard contra
+  // double-tap durante a captura/share (caller seta true ao iniciar,
+  // false no finally).
+  const [compartilhando, setCompartilhando] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // R-RECAP-6: ref do container do slide capturavel. Posicionado no
+  // mesmo n'o do <View style={styles.conteudo}>. captureRef captura
+  // o que estiver renderizado ali (inclui Background + KenBurns ao
+  // fundo? nao -- KenBurns esta em layer separada; capturamos apenas
+  // o conteudo central. Decisao: capturar o container raiz (toda a
+  // tela) para incluir o gradient e Ken Burns -- comporta-se melhor
+  // visualmente como "stories share".
+  const slideViewRef = useRef<View | null>(null);
+  const toast = useOptionalToast();
 
   // R-MEDIA-2: audio anexado do slide corrente (se houver). Slides
   // 'vitorias' e 'crises' carregam audioPath?: string | null derivado
@@ -321,6 +351,51 @@ export default function RecapMemoriasTela() {
     if (index > 0) setIndex(index - 1);
   };
 
+  // R-RECAP-6: handler de tap em Compartilhar. Pausa o slideshow,
+  // captura o slide visivel via captureRef (PNG 1080x1920), dispara
+  // share intent, e ao final retoma se nao estava pausado por outro
+  // motivo. Guard contra double-tap via `compartilhando`. Erros sao
+  // toast-feedback (nao trava UI).
+  const compartilharSlide = useCallback(async () => {
+    if (compartilhando) return;
+    const slideId = slides[index]?.id ?? `idx-${index}`;
+    // Memoriza se o usuario ja tinha o slide pausado manualmente.
+    // Retomada so acontece se o estado anterior estava ativo (nao
+    // pausado).
+    const estavaPausado = pausado;
+    setCompartilhando(true);
+    setPausado(true);
+    toast.show('Preparando…', 'info');
+    try {
+      const res = await exportarSlideMemorias({
+        slideRef: slideViewRef,
+        slideId,
+      });
+      if (!res.uri) {
+        if (res.motivo === 'web') {
+          toast.show('Compartilhamento indisponível.', 'warn');
+        } else {
+          toast.show('Não foi possível capturar.', 'error');
+        }
+        return;
+      }
+      const ok = await compartilharSlidePng(res.uri);
+      if (!ok) {
+        toast.show('Compartilhamento cancelado.', 'info');
+      }
+      // Cleanup best-effort do PNG temporario (apos share sheet
+      // fechar). Falha silenciosa: o OS pode limpar cache sozinho.
+      await removerSlidePngTemp(res.uri);
+    } catch {
+      toast.show('Não foi possível capturar.', 'error');
+    } finally {
+      setCompartilhando(false);
+      if (!estavaPausado) {
+        setPausado(false);
+      }
+    }
+  }, [compartilhando, slides, index, pausado, toast]);
+
   // IMPORTANTE: hooks abaixo (useMemo) DEVEM rodar antes do early return
   // de loading. Senao react quebra a contagem de hooks entre renders
   // (Minified React error #300/#310: "Rendered fewer hooks than expected").
@@ -340,7 +415,7 @@ export default function RecapMemoriasTela() {
   }
 
   return (
-    <View style={styles.container}>
+    <View ref={slideViewRef} collapsable={false} style={styles.container}>
       <Background />
 
       {/* Ken Burns no fundo do slide. Re-anima a cada troca de slide
@@ -372,7 +447,8 @@ export default function RecapMemoriasTela() {
         ))}
       </View>
 
-      {/* Botoes do header: fechar (direita) e pausar (esquerda). */}
+      {/* Botoes do header: fechar (direita), pausar e compartilhar
+          (esquerda). R-RECAP-6: Share2 ao lado do Pausar. */}
       <Pressable
         onPress={() => router.back()}
         accessibilityRole="button"
@@ -397,6 +473,17 @@ export default function RecapMemoriasTela() {
         ) : (
           <Pause size={22} color={colorsMemorias.fg} strokeWidth={1.6} />
         )}
+      </Pressable>
+
+      <Pressable
+        onPress={compartilharSlide}
+        disabled={compartilhando}
+        accessibilityRole="button"
+        accessibilityLabel="compartilhar slide"
+        style={styles.compartilhar}
+        hitSlop={12}
+      >
+        <Share2 size={22} color={colorsMemorias.fg} strokeWidth={1.6} />
       </Pressable>
 
       {/* Conteudo do slide */}
@@ -623,6 +710,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     left: 16,
+    zIndex: 20,
+    padding: 8,
+  },
+  // R-RECAP-6: compartilhar fica ao lado direito do pausar. Pausar
+  // ocupa left=16 com padding=8 + icone 22 = ~46dp de largura util.
+  // Compartilhar comeca em left=64 (46 + 8 de gap + 10 de respiro).
+  // Mesmo top do pausar para alinhamento visual no header.
+  compartilhar: {
+    position: 'absolute',
+    top: 60,
+    left: 64,
     zIndex: 20,
     padding: 8,
   },
