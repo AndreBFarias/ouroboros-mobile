@@ -215,7 +215,20 @@ jobs:
             echo "[ok] release $REF_NAME ja existe — sera reutilizada"
           else
             echo "[info] release $REF_NAME nao existe — criando como draft"
+            # R-OPS-1 (2026-05-17): notas curadas extraidas do CHANGELOG.
             ./scripts/extract-changelog-section.sh CHANGELOG.md > /tmp/release-notes.md
+            # R-OPS-5 (2026-05-17): notas auto-geradas a partir dos commits
+            # desde a tag anterior, anexadas abaixo das curadas. O checkout
+            # com fetch-depth=1 nao tem historico — unshallow primeiro.
+            git fetch --unshallow --tags 2>/dev/null || git fetch --tags
+            {
+              echo ""
+              echo "---"
+              echo ""
+              echo "## Histórico bruto de commits"
+              echo ""
+              ./scripts/release-notes-from-commits.sh "$REF_NAME"
+            } >> /tmp/release-notes.md
             wc -l /tmp/release-notes.md
             gh release create "$REF_NAME" \
               --title "$REF_NAME" \

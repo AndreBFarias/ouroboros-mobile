@@ -329,3 +329,85 @@ Se você precisa de notas customizadas (não o extrato do CHANGELOG):
    ```
 2. Empurre a tag — o workflow detecta que a release existe,
    reusa, anexa o APK, e publica.
+
+## R-OPS-5 — Notas auto-geradas a partir dos commits (2026-05-17)
+
+R-OPS-1 entregou o pipeline idempotente lendo CHANGELOG curado. Como
+complemento, R-OPS-5 anexa um **histórico bruto de commits**
+agrupado por tipo, gerado por
+[`scripts/release-notes-from-commits.sh`](../scripts/release-notes-from-commits.sh).
+
+### Por que ambos
+
+- **CHANGELOG curado** (R-OPS-1) — texto humano da release, prosa, fica
+  no topo das notas. Fonte de verdade narrativa.
+- **Histórico de commits** (R-OPS-5) — listagem completa de cada
+  commit desde a tag anterior, agrupado por tipo
+  (`feat:`, `fix:`, `refactor:`, `docs:`, `perf:`, `test:`, `style:`,
+  `chore:`). Útil pra auditoria pós-release e como rede de segurança
+  caso o CHANGELOG esteja desatualizado.
+
+### Saída final do workflow
+
+```markdown
+### Fase 3 Onda 3G.5 — R-OPS-5 ... (2026-05-17)
+<conteúdo curado do CHANGELOG>
+
+---
+
+## Histórico bruto de commits
+
+## Mudanças desde v1.0.0-alpha-12
+
+### Features
+- feat: ...
+- feat: ...
+
+### Fixes
+- fix: ...
+
+### Refactor
+- refactor: ...
+
+### Docs
+- docs: ...
+
+### Performance
+- Nenhuma
+
+### Testes
+- Nenhuma
+
+### Estilo
+- Nenhuma
+
+### Chore
+- chore: ...
+```
+
+### Uso isolado do script
+
+Fora do workflow, o script pode rodar local pra preview do que vai
+sair na próxima release:
+
+```bash
+# Default: HEAD desde a última tag alcançável.
+./scripts/release-notes-from-commits.sh
+
+# Com ref específica: notas entre a tag anterior a alpha-13 e alpha-13.
+./scripts/release-notes-from-commits.sh v1.0.0-alpha-13
+
+# Redirecionando pra arquivo.
+./scripts/release-notes-from-commits.sh > /tmp/preview.md
+```
+
+Exit codes:
+- `0` sucesso (sempre quando a ref é válida; imprime "- Nenhuma" para
+  seções vazias).
+- `1` ref inválida.
+
+Limitações conscientes:
+- Não filtra por escopo (`feat(modulo):` vai junto com `feat:`).
+- Não agrupa por área funcional (todo `feat:` cai em "Features").
+- Não detecta breaking changes (`feat!:`); são listados como features
+  normais. Curadoria fica no CHANGELOG.
