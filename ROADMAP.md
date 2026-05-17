@@ -96,7 +96,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-DX-4 | ADB workflow helpers | infra | — | 1–2h | `R-DX-4-ADB-WORKFLOW-HELPERS-spec.md` |
 | R-DX-5 | EAS local build docs | docs | — | `c5721ba` | `[ok]` (3G.2) |
 | R-DX-6 | Anonimato pre-push | infra | — | `6188c49` | `[ok]` (3G.1) |
-| R-OPS-1 | GitHub Actions release flow | infra | — | 3–4h | `R-OPS-1-GITHUB-ACTIONS-RELEASE-FLOW-spec.md` |
+| R-OPS-1 | GitHub Actions release flow | infra | — | `c8673b6` | `[ok]` (3G.3) |
 | R-OPS-2 | Dependabot config | infra | — | 0.5h | `R-OPS-2-DEPENDABOT-CONFIG-spec.md` |
 | R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
 | R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
