@@ -412,6 +412,40 @@ ativar `core.hooksPath = hooks/`; esse trade-off é aceito porque
 os checks do projeto são autossuficientes para identidade
 (via `check_anonimato.sh`).
 
+### Bootstrap automático de worktree (r-infra-worktree-bootstrap, 2026-05-17)
+
+Worktree fresh em `.claude/worktrees/agent-<id>/` precisa de
+symlinks `node_modules`, `env.json` e `.env` (opcional) apontando
+pro main repo. Sem eles: jest falha em resolver `yaml`, typecheck
+falha em `env.json` e `./scripts/smoke.sh` quebra. Achado
+recorrente em 10+ sprints (R-CRIT-4, T1B3, T1B6, etc) consumindo
+~5 min por sprint quando o agente esquecia o bootstrap manual.
+
+**Script standalone:** `./scripts/bootstrap-worktree.sh`. Detecta
+se está em worktree (toplevel contém `.claude/worktrees/`),
+calcula main repo (3 níveis acima) e cria os symlinks faltantes.
+Idempotente; exit 0 sempre; no-op silencioso fora de worktree.
+
+**Hook automático:** `hooks/post-checkout` chama o script após
+cada branch checkout (`git checkout <branch>` ou
+`git worktree add ...`). Não roda em checkout de arquivos isolados
+(`git checkout -- <arquivo>`).
+
+**Symlinks criados:**
+
+- `node_modules` → `<main>/node_modules`
+- `env.json` → `<main>/env.json`
+- `.env` → `<main>/.env` (apenas se existir no main, gitignored)
+
+Mensagens `OK: <alvo> symlink criado` por symlink novo; silencioso
+se já existir. Alerta `AVISO:` se symlink ficar broken por
+mudança no main.
+
+**Pré-requisito:** `./scripts/install-hooks.sh` rodado uma vez
+(seta `core.hooksPath = hooks/`). Sem isso, o `post-checkout` em
+`hooks/` não é registrado e o bootstrap não dispara automaticamente
+— neste caso, rodar o script manualmente.
+
 ---
 
 ## 6. Princípios Fundamentais Que Guiam Decisões

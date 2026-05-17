@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Hook post-checkout: dispara bootstrap-worktree.sh apos qualquer
+# checkout/branch switch. Idempotente: no-op fora de worktree.
+#
+# Sprint r-infra-worktree-bootstrap (2026-05-17).
+#
+# Argumentos passados pelo git:
+#   $1 = ref do HEAD anterior
+#   $2 = ref do novo HEAD
+#   $3 = flag (1 = branch checkout, 0 = file checkout)
+#
+# So executa em branch checkout (nao em checkout de arquivos individuais).
+
+set -euo pipefail
+
+# $3 == 1 = branch checkout; nao roda em git checkout <arquivo>
+if [[ "${3:-0}" != "1" ]]; then
+  exit 0
+fi
+
+TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+if [[ -z "$TOPLEVEL" ]]; then
+  exit 0
+fi
+
+# Roda bootstrap; tolerante a falhas (|| true) pra nunca bloquear checkout
+if [[ -x "$TOPLEVEL/scripts/bootstrap-worktree.sh" ]]; then
+  "$TOPLEVEL/scripts/bootstrap-worktree.sh" || true
+fi
+
+exit 0
