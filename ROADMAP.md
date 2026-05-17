@@ -98,7 +98,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-DX-6 | Anonimato pre-push | infra | — | `6188c49` | `[ok]` (3G.1) |
 | R-OPS-1 | GitHub Actions release flow | infra | — | `c8673b6` | `[ok]` (3G.3) |
 | R-OPS-2 | Dependabot config | infra | — | `4dcd4b2` | `[ok]` (3H.1) |
-| R-OPS-3 | Cache CI | infra | — | 1–2h | `R-OPS-3-CACHE-CI-spec.md` |
+| R-OPS-3 | Cache CI | infra | — | `ecdd197` | `[ok]` (3H.2) |
 | R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
 | R-OPS-5 | Release notes auto | infra | — | 1–2h | `R-OPS-5-RELEASE-NOTES-AUTO-spec.md` |
 | R-BACKUP-AUTO | Backup semanal silencioso pro Vault | feature | P2 | `88fe9be` | `[ok]` (3C.1) |
