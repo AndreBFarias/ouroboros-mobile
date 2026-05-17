@@ -29,6 +29,10 @@ import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 import { useAppPronto } from '@/lib/boot/useAppPronto';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { pedirPermissao as pedirPermissaoNotificacao } from '@/lib/services/alarmesNotificacoes';
+import {
+  avaliarBackupAutomatico,
+  cancelarTimer as cancelarTimerBackup,
+} from '@/lib/backup/agendarBackup';
 import { applyDraculaWeb } from '@/lib/web/draculaPolish';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
@@ -186,6 +190,22 @@ export default function RootLayout() {
     void import('@/lib/boot/migrarEstadoParaVault').then(
       ({ migrarEstadoParaVault }) => migrarEstadoParaVault()
     );
+  }, [appPronto]);
+
+  // R-CROSS-FLOW-FIX-1 (2026-05-16): aciona avaliarBackupAutomatico no
+  // boot apos appPronto, mesma janela do migrarEstadoParaVault. Antes,
+  // o helper existia + era testado mas nao tinha caller -- toggle
+  // backupAutomaticoSemanal em Settings nunca disparava o backup
+  // semanal no boot. Helper e idempotente (defesa contra dupla-
+  // registro de timer via timerHandle de modulo). Fire-and-forget:
+  // nao bloqueia render. Em web ou toggle OFF, e no-op. Cleanup
+  // chama cancelarTimer (no-op se nao havia).
+  useEffect(() => {
+    if (!appPronto) return;
+    void avaliarBackupAutomatico();
+    return () => {
+      cancelarTimerBackup();
+    };
   }, [appPronto]);
 
   if (mostrarBootScreen) {
