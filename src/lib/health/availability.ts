@@ -30,12 +30,23 @@ const STATUS_PROVIDER_UPDATE_REQUIRED = 3;
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod =
-      require('react-native-health-connect') as Partial<HealthConnectModule>;
+    const mod = require('react-native-health-connect');
+    // R-INT-3-HC-PROXY-REFLECT-HARDENING: Reflect.get forca evaluation
+    // do getter dentro do try/catch. react-native-health-connect@3.5.0
+    // retorna Proxy nao-bloqueante em ambientes nao-Android (Expo Go,
+    // Jest, web) que lanca ao acessar qualquer propriedade. `typeof`
+    // direto em getter que lanca comporta-se de forma inconsistente
+    // entre engines JS; Reflect.get garante captura.
+    const getSdkStatus = Reflect.get(mod, 'getSdkStatus');
+    const initialize = Reflect.get(mod, 'initialize');
+    const openHealthConnectSettings = Reflect.get(
+      mod,
+      'openHealthConnectSettings'
+    );
     if (
-      typeof mod.getSdkStatus !== 'function' ||
-      typeof mod.initialize !== 'function' ||
-      typeof mod.openHealthConnectSettings !== 'function'
+      typeof getSdkStatus !== 'function' ||
+      typeof initialize !== 'function' ||
+      typeof openHealthConnectSettings !== 'function'
     ) {
       return null;
     }

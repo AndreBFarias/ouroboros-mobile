@@ -39,11 +39,18 @@ interface HealthConnectModule {
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod =
-      require('react-native-health-connect') as Partial<HealthConnectModule>;
+    const mod = require('react-native-health-connect');
+    // R-INT-3-HC-PROXY-REFLECT-HARDENING: Reflect.get forca evaluation
+    // do getter dentro do try/catch. react-native-health-connect@3.5.0
+    // retorna Proxy nao-bloqueante em ambientes nao-Android (Expo Go,
+    // Jest, web) que lanca ao acessar qualquer propriedade. `typeof`
+    // direto em getter que lanca comporta-se de forma inconsistente
+    // entre engines JS; Reflect.get garante captura.
+    const readRecords = Reflect.get(mod, 'readRecords');
+    const insertRecords = Reflect.get(mod, 'insertRecords');
     if (
-      typeof mod.readRecords !== 'function' ||
-      typeof mod.insertRecords !== 'function'
+      typeof readRecords !== 'function' ||
+      typeof insertRecords !== 'function'
     ) {
       return null;
     }
@@ -205,11 +212,7 @@ export async function sincronizarPesoDeHC(
 // Quando nao bate em pattern conhecido, cai em 'api_error'.
 function classificarErroHC(erro: unknown): HCSyncMotivo {
   const msg =
-    erro instanceof Error
-      ? erro.message
-      : typeof erro === 'string'
-        ? erro
-        : '';
+    erro instanceof Error ? erro.message : typeof erro === 'string' ? erro : '';
   if (/permission|denied|unauthorized|SecurityException/i.test(msg)) {
     return 'permission_denied';
   }

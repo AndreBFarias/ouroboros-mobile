@@ -28,11 +28,18 @@ interface HealthConnectModule {
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod =
-      require('react-native-health-connect') as Partial<HealthConnectModule>;
+    const mod = require('react-native-health-connect');
+    // R-INT-3-HC-PROXY-REFLECT-HARDENING: Reflect.get forca evaluation
+    // do getter dentro do try/catch. react-native-health-connect@3.5.0
+    // retorna Proxy nao-bloqueante em ambientes nao-Android (Expo Go,
+    // Jest, web) que lanca ao acessar qualquer propriedade. `typeof`
+    // direto em getter que lanca comporta-se de forma inconsistente
+    // entre engines JS; Reflect.get garante captura.
+    const requestPermission = Reflect.get(mod, 'requestPermission');
+    const getGrantedPermissions = Reflect.get(mod, 'getGrantedPermissions');
     if (
-      typeof mod.requestPermission !== 'function' ||
-      typeof mod.getGrantedPermissions !== 'function'
+      typeof requestPermission !== 'function' ||
+      typeof getGrantedPermissions !== 'function'
     ) {
       return null;
     }

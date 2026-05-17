@@ -67,7 +67,9 @@ describe('escreverTreinoEmHC — emit de falha', () => {
         insertRecords: jest
           .fn()
           .mockRejectedValue(
-            new Error('SecurityException: permission denied for ExerciseSession')
+            new Error(
+              'SecurityException: permission denied for ExerciseSession'
+            )
           ),
       }),
       { virtual: true }
@@ -166,6 +168,137 @@ describe('escreverPesoEmHC — emit de falha', () => {
   });
 });
 
+describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HARDENING)', () => {
+  it('Proxy lancante em getter: nao propaga excecao e cai em no_module', async () => {
+    // Simula react-native-health-connect@3.5.0 em ambiente nao-Android:
+    // o pacote retorna Proxy nao-bloqueante que lanca ao acessar
+    // qualquer propriedade. Antes do Reflect.get, `typeof mod.readRecords`
+    // podia comportar-se de forma inconsistente entre engines JS. Apos
+    // hardening, Reflect.get forca evaluation dentro do try/catch e
+    // captura corretamente.
+    jest.doMock(
+      'react-native-health-connect',
+      () =>
+        new Proxy(
+          {},
+          {
+            get: () => {
+              throw new Error(
+                'TurboModuleRegistry: HealthConnect not available'
+              );
+            },
+          }
+        ),
+      { virtual: true }
+    );
+    const eventBus = require('@/lib/health/eventBus');
+    const eventos: HCSyncFailEvent[] = [];
+    eventBus.subscribeHCSyncFail((e: HCSyncFailEvent) => eventos.push(e));
+
+    const { escreverTreinoEmHC } = require('@/lib/health/sync');
+    const ok = await escreverTreinoEmHC(TREINO_BASE);
+
+    expect(ok).toBe(false);
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0].motivo).toBe('no_module');
+    expect(eventos[0].tipo).toBe('treino');
+  });
+
+  it('plain object sem readRecords: retorna null e cai em no_module', async () => {
+    // Modulo presente mas sem o metodo obrigatorio. Cobertura explicita
+    // do branch typeof !== 'function'.
+    jest.doMock(
+      'react-native-health-connect',
+      () => ({
+        insertRecords: jest.fn(),
+        // readRecords ausente
+      }),
+      { virtual: true }
+    );
+    const eventBus = require('@/lib/health/eventBus');
+    const eventos: HCSyncFailEvent[] = [];
+    eventBus.subscribeHCSyncFail((e: HCSyncFailEvent) => eventos.push(e));
+
+    const { escreverTreinoEmHC } = require('@/lib/health/sync');
+    const ok = await escreverTreinoEmHC(TREINO_BASE);
+
+    expect(ok).toBe(false);
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0].motivo).toBe('no_module');
+  });
+
+  it('plain object completo: carrega modulo e executa save', async () => {
+    // Caminho feliz: modulo presente com todos os metodos. Garante
+    // que o hardening Reflect.get nao quebra carregamento normal.
+    const insertRecords = jest.fn().mockResolvedValue(['uuid-treino-1']);
+    jest.doMock(
+      'react-native-health-connect',
+      () => ({
+        readRecords: jest.fn(),
+        insertRecords,
+      }),
+      { virtual: true }
+    );
+    const eventBus = require('@/lib/health/eventBus');
+    const eventos: HCSyncFailEvent[] = [];
+    eventBus.subscribeHCSyncFail((e: HCSyncFailEvent) => eventos.push(e));
+
+    const { escreverTreinoEmHC } = require('@/lib/health/sync');
+    const ok = await escreverTreinoEmHC(TREINO_BASE);
+
+    expect(ok).toBe(true);
+    expect(eventos).toHaveLength(0);
+    expect(insertRecords).toHaveBeenCalledTimes(1);
+  });
+
+  it('Proxy lancante via availability.verificarDisponibilidade retorna unavailable', async () => {
+    // Cobertura cruzada: o hardening Reflect.get tambem se aplica a
+    // availability.ts. Proxy lancante em qualquer getter cai em
+    // 'unavailable' sem propagar excecao.
+    jest.doMock(
+      'react-native-health-connect',
+      () =>
+        new Proxy(
+          {},
+          {
+            get: () => {
+              throw new Error('LINKING_ERROR: HealthConnect not linked');
+            },
+          }
+        ),
+      { virtual: true }
+    );
+
+    const { verificarDisponibilidade } = require('@/lib/health/availability');
+    const status = await verificarDisponibilidade();
+
+    expect(status).toBe('unavailable');
+  });
+
+  it('Proxy lancante via permissions.listarPermissoesConcedidas retorna []', async () => {
+    // Cobertura cruzada: hardening em permissions.ts. Proxy lancante
+    // em getter retorna lista vazia sem propagar excecao.
+    jest.doMock(
+      'react-native-health-connect',
+      () =>
+        new Proxy(
+          {},
+          {
+            get: () => {
+              throw new Error('Platform not supported');
+            },
+          }
+        ),
+      { virtual: true }
+    );
+
+    const { listarPermissoesConcedidas } = require('@/lib/health/permissions');
+    const lista = await listarPermissoesConcedidas();
+
+    expect(lista).toEqual([]);
+  });
+});
+
 describe('escreverBodyFatEmHC e escreverMenstruacaoEmHC — cobertura mínima', () => {
   it('body fat permission_denied emite tipo=gordura', async () => {
     jest.doMock(
@@ -207,7 +340,10 @@ describe('escreverBodyFatEmHC e escreverMenstruacaoEmHC — cobertura mínima', 
     eventBus.subscribeHCSyncFail((e: HCSyncFailEvent) => eventos.push(e));
 
     const { escreverMenstruacaoEmHC } = require('@/lib/health/sync');
-    const ok = await escreverMenstruacaoEmHC(new Date('2026-05-13T08:00:00Z'), 2);
+    const ok = await escreverMenstruacaoEmHC(
+      new Date('2026-05-13T08:00:00Z'),
+      2
+    );
 
     expect(ok).toBe(false);
     expect(eventos).toHaveLength(1);
