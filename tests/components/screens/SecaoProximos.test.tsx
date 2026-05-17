@@ -1,13 +1,18 @@
-// Testes da logica pura de useProximos (M40). Cobre:
+// Testes da logica pura de useProximos (M40, estendido em R-HOME-2).
+// Cobre:
 //  - Alarme inativo nao entra.
 //  - Alarme diario com horario futuro hoje entra.
 //  - Alarme fora da janela 4h nao entra.
 //  - Alarme semanal pega o dia da semana correto.
 //  - Tarefa com alarme hoje entra; tarefa de outro dia nao.
 //  - Ordenacao cronologica.
+//  - R-HOME-2: eventos da agenda Google entram, ordem cronologica unica.
+//  - R-HOME-2: limite hard de 3 itens respeitado.
+//  - R-HOME-2: fallback sem OAuth (eventos===[]) preserva comportamento.
 import { construirProximos, __test__ } from '@/lib/hooks/useProximos';
 import type { Alarme } from '@/lib/schemas/alarme';
 import type { Tarefa } from '@/lib/schemas/tarefa';
+import type { AgendaEvento } from '@/lib/vault/agenda';
 
 const { proximoDisparo } = __test__;
 
@@ -169,4 +174,127 @@ test('construirProximos: ordenacao cronologica asc', () => {
   const agora = new Date('2026-05-04T08:00:00-03:00');
   const itens = construirProximos([a1, a2], [], agora);
   expect(itens.map((i) => i.titulo)).toEqual(['Manhã cedo', 'Tarde']);
+});
+
+// ----------------------------------------------------------------------
+// R-HOME-2: mescla agenda + alarmes/tarefas
+// ----------------------------------------------------------------------
+
+function eventoBase(over: Partial<AgendaEvento> = {}): AgendaEvento {
+  return {
+    id: 'ev-reuniao',
+    pessoa: 'pessoa_a',
+    titulo: 'Reuniao 1:1',
+    inicio: '2026-05-04T09:30:00-03:00',
+    fim: '2026-05-04T10:00:00-03:00',
+    fonte: 'google_calendar',
+    sincronizado_em: '2026-05-04T07:00:00-03:00',
+    ...over,
+  };
+}
+
+test('construirProximos R-HOME-2: 2 eventos + 1 alarme -> ordem cronologica unica', () => {
+  const agora = new Date('2026-05-04T08:00:00-03:00');
+  const alarme = alarmeBase({
+    slug: 'medicacao',
+    titulo: 'Medicação',
+    recorrencia: 'diaria',
+    horario: '09:00',
+    dias_semana: [],
+  });
+  const eventos = [
+    eventoBase({
+      id: 'ev-A',
+      titulo: 'Cafe da manha',
+      inicio: '2026-05-04T08:30:00-03:00',
+    }),
+    eventoBase({
+      id: 'ev-B',
+      titulo: 'Reuniao tarde',
+      inicio: '2026-05-04T11:00:00-03:00',
+    }),
+  ];
+  const itens = construirProximos([alarme], [], agora, eventos);
+  expect(itens.length).toBe(3);
+  expect(itens.map((i) => i.titulo)).toEqual([
+    'Cafe da manha',
+    'Medicação',
+    'Reuniao tarde',
+  ]);
+  expect(itens.map((i) => i.tipo)).toEqual(['evento', 'alarme', 'evento']);
+  // Cada evento expoe id estavel do Google.
+  expect(itens[0].id).toBe('ev-A');
+  expect(itens[2].id).toBe('ev-B');
+});
+
+test('construirProximos R-HOME-2: fallback sem OAuth (eventos===undefined) preserva legado', () => {
+  const agora = new Date('2026-05-04T08:00:00-03:00');
+  const alarme = alarmeBase({
+    slug: 'medicacao',
+    titulo: 'Medicação',
+    recorrencia: 'diaria',
+    horario: '09:00',
+    dias_semana: [],
+  });
+  const itens = construirProximos([alarme], [], agora);
+  expect(itens.length).toBe(1);
+  expect(itens[0].tipo).toBe('alarme');
+  expect(itens[0].titulo).toBe('Medicação');
+});
+
+test('construirProximos R-HOME-2: fallback explicito eventos=[] e identico a undefined', () => {
+  const agora = new Date('2026-05-04T08:00:00-03:00');
+  const alarme = alarmeBase({
+    slug: 'medicacao',
+    titulo: 'Medicação',
+    recorrencia: 'diaria',
+    horario: '09:00',
+    dias_semana: [],
+  });
+  const semParam = construirProximos([alarme], [], agora);
+  const comArrayVazio = construirProximos([alarme], [], agora, []);
+  expect(comArrayVazio).toEqual(semParam);
+});
+
+test('construirProximos R-HOME-2: limite hard de 3 itens', () => {
+  const agora = new Date('2026-05-04T08:00:00-03:00');
+  const eventos = [
+    eventoBase({
+      id: 'ev-1',
+      titulo: 'E1',
+      inicio: '2026-05-04T08:30:00-03:00',
+    }),
+    eventoBase({
+      id: 'ev-2',
+      titulo: 'E2',
+      inicio: '2026-05-04T09:00:00-03:00',
+    }),
+    eventoBase({
+      id: 'ev-3',
+      titulo: 'E3',
+      inicio: '2026-05-04T09:30:00-03:00',
+    }),
+    eventoBase({
+      id: 'ev-4',
+      titulo: 'E4',
+      inicio: '2026-05-04T10:00:00-03:00',
+    }),
+  ];
+  const itens = construirProximos([], [], agora, eventos);
+  expect(itens.length).toBe(3);
+  expect(itens.map((i) => i.titulo)).toEqual(['E1', 'E2', 'E3']);
+});
+
+test('construirProximos R-HOME-2: evento fora janela 4h e filtrado', () => {
+  const agora = new Date('2026-05-04T08:00:00-03:00');
+  const eventos = [
+    eventoBase({
+      id: 'ev-tarde',
+      titulo: 'Tarde demais',
+      // 14h: alem da janela [08, 12].
+      inicio: '2026-05-04T14:00:00-03:00',
+    }),
+  ];
+  const itens = construirProximos([], [], agora, eventos);
+  expect(itens.length).toBe(0);
 });

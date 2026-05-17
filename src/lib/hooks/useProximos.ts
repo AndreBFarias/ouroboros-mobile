@@ -1,13 +1,18 @@
-// Hook agregador "proximos" da Tela 01 v2 (M40). Combina duas
-// fontes:
+// Hook agregador "proximos" da Tela 01 v2 (M40, estendido em R-HOME-2).
+// Combina tres fontes:
 //  1. Alarmes pessoais (M16/M30) cujo proximo disparo cai nas
 //     proximas 4h a partir de agora.
 //  2. Tarefas (M17/M31) com alarme vinculado ativo e data_hora_iso
 //     no dia de hoje (independente de feita ou pendente; a UI pode
 //     decidir riscar feitas).
+//  3. Eventos da agenda Google (M37.1.2) cujo `inicio` cai nas
+//     proximas 4h (R-HOME-2). Le do cache do Vault via
+//     listarEventosAgenda - leitura local, sem rede. Quando OAuth
+//     nao conectou, listarEventosAgenda devolve [] e a secao mostra
+//     apenas alarmes/tarefas (graceful fallback).
 //
 // Ordenado cronologicamente. Cada item carrega `tipo` para a UI
-// rotular icone/cor.
+// rotular icone/cor. Limite hard de 3 itens.
 //
 // Sem julgamento, sem priorizacao automatica (ADR-0005). Apenas
 // "o que esta vindo nas proximas horas".
@@ -16,11 +21,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { listarAlarmes } from '@/lib/vault/alarmes';
 import { listarTarefas } from '@/lib/vault/tarefas';
+import { listarEventosAgenda, type AgendaEvento } from '@/lib/vault/agenda';
 import type { Alarme } from '@/lib/schemas/alarme';
 import type { Tarefa } from '@/lib/schemas/tarefa';
 import { useVault } from '@/lib/stores/vault';
+import {
+  mesclarAgendaAlarmes,
+  LIMITE_PROXIMOS,
+} from '@/lib/proximos/mesclarAgendaAlarmes';
 
-export type ProximoTipo = 'alarme' | 'tarefa';
+export type ProximoTipo = 'alarme' | 'tarefa' | 'evento';
 
 export interface ItemProximo {
   tipo: ProximoTipo;
@@ -165,15 +175,21 @@ function ymdHoje(agora: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-// Construtor puro (testavel sem mock de Vault). Recebe alarmes ja
-// listados, tarefas ja listadas e timestamp de referencia, devolve
-// itens ordenados.
+// Construtor puro (testavel sem mock de Vault). Recebe alarmes,
+// tarefas e (opcionalmente em R-HOME-2) eventos de agenda ja
+// listados + timestamp de referencia, devolve itens ordenados.
+//
+// Pre-R-HOME-2 a assinatura tinha 3 parametros (sem eventos);
+// R-HOME-2 adicionou eventos como ultimo parametro opcional para
+// nao quebrar callers de testes legados. Quando eventos === [] ou
+// ausente, comportamento e identico ao M40 original.
 export function construirProximos(
   alarmes: Alarme[],
   tarefas: { meta: Tarefa; rel: string }[],
-  agora: Date
+  agora: Date,
+  eventos: AgendaEvento[] = []
 ): ItemProximo[] {
-  const itens: ItemProximo[] = [];
+  const itensAlarmesETarefas: ItemProximo[] = [];
   const limiteSuperior = new Date(agora.getTime() + JANELA_MS);
 
   for (const alarme of alarmes) {
@@ -182,7 +198,7 @@ export function construirProximos(
     const data = new Date(iso);
     if (data < agora) continue;
     if (data > limiteSuperior) continue;
-    itens.push({
+    itensAlarmesETarefas.push({
       tipo: 'alarme',
       id: alarme.slug,
       titulo: alarme.titulo,
@@ -199,7 +215,7 @@ export function construirProximos(
     const data = new Date(alarme.data_hora_iso);
     const ymdAlarme = ymdHoje(data);
     if (ymdAlarme !== ymd) continue;
-    itens.push({
+    itensAlarmesETarefas.push({
       tipo: 'tarefa',
       id: t.rel,
       titulo: t.meta.titulo,
@@ -209,8 +225,14 @@ export function construirProximos(
     });
   }
 
-  itens.sort((a, b) => (a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : 0));
-  return itens;
+  // Delegamos a mesclagem final (incluindo eventos + sort + limite 3)
+  // ao helper de R-HOME-2. Quando eventos===[] e itens<=3, helper
+  // devolve mesma lista pre-existente sem alterar ordem.
+  return mesclarAgendaAlarmes({
+    eventos,
+    itensAlarmesETarefas,
+    agora,
+  });
 }
 
 export function useProximos(): ProximosData {
@@ -233,12 +255,22 @@ export function useProximos(): ProximosData {
 
     (async () => {
       try {
-        const [alarmes, tarefas] = await Promise.all([
+        // Eventos da agenda Google sao cache local (.md no Vault
+        // sincronizado pelo OAuth flow em app/agenda.tsx). Quando o
+        // usuario nunca conectou OAuth, listarEventosAgenda devolve []
+        // (pasta nao existe ou esta vazia). Isso e graceful fallback:
+        // a secao mostra apenas alarmes/tarefas. Cobrir ambas as pessoas
+        // para que duo veja eventos do parceiro tambem; em sozinho
+        // pessoa_b retorna [] (zero penalidade).
+        const [alarmes, tarefas, eventosA, eventosB] = await Promise.all([
           listarAlarmes(vaultRoot),
           listarTarefas(vaultRoot),
+          listarEventosAgenda(vaultRoot, 'pessoa_a').catch(() => []),
+          listarEventosAgenda(vaultRoot, 'pessoa_b').catch(() => []),
         ]);
         if (cancelled) return;
-        setItens(construirProximos(alarmes, tarefas, new Date()));
+        const eventos = [...eventosA, ...eventosB];
+        setItens(construirProximos(alarmes, tarefas, new Date(), eventos));
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -257,4 +289,10 @@ export function useProximos(): ProximosData {
 }
 
 // Exporto helpers internos para testes unitarios sem Vault real.
-export const __test__ = { proximoDisparo, horaDeIso, ymdHoje, JANELA_MS };
+export const __test__ = {
+  proximoDisparo,
+  horaDeIso,
+  ymdHoje,
+  JANELA_MS,
+  LIMITE_PROXIMOS,
+};

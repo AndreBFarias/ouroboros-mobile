@@ -549,10 +549,16 @@ malformados são silenciosamente ignorados (mesmo padrão de
   cards lado a lado com foto, nome (via `useNomeDe`), humor 1-5 ou
   "—" e última atividade do dia ("Última: 14:30 evento" / "Última:
   09:15 humor"). Sem comparativo, sem julgamento (ADR-0005).
-- **Próximos** — agrega alarmes pessoais (M16/M30) cujo próximo
-  disparo cai nas próximas 4h e tarefas (M17/M31) com alarme
-  vinculado ainda hoje. Lista compacta com hora à esquerda + título;
-  cor da borda diferencia alarme (cyan) de tarefa (purple).
+- **Próximos** — agrega três fontes em timeline única ordenada
+  cronologicamente, limitada a 3 itens (R-HOME-1 estabeleceu o
+  contrato visual): eventos da agenda Google (M37.1.2 - cache local
+  pós sync OAuth), alarmes pessoais (M16/M30) cujo próximo disparo
+  cai nas próximas 4h e tarefas (M17/M31) com alarme vinculado
+  ainda hoje. Lista compacta com micro-ícone de origem + hora à
+  esquerda + título; cor diferencia evento (purple/`Calendar`),
+  alarme (cyan/`Bell`) e tarefa (green/`Check`). Devices sem OAuth
+  conectado: graceful fallback mostrando apenas alarmes/tarefas,
+  sem mensagem de erro de auth (R-HOME-2).
 - **Humor do dia** — mantida.
 - **Esta jornada** — substitui as duas listas separadas
   (Diário emocional + Eventos) por uma timeline cronológica única
