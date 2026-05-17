@@ -20,6 +20,13 @@
 # Em sessao fresca, useFonts SDK 54 web demora 30-60s para resolver
 # na primeira navegacao. Aguarde antes de interagir.
 #
+# Suporte a git worktree (R-INFRA-GAUNTLET-WORKTREE-SYMLINK): se rodado
+# de .claude/worktrees/<id>/, exporta EXPO_ROUTER_APP_ROOT,
+# EXPO_PROJECT_ROOT e EXPO_NO_METRO_WORKSPACE_ROOT pra forcar Metro
+# a coletar rotas do worktree, nao do main (node_modules symlinkado
+# resolve via realpath e contamina o `require.context` do
+# expo-router/_ctx.web.js). Em main repo nao faz nada.
+#
 # Comentarios sem acento.
 set -euo pipefail
 
@@ -29,6 +36,61 @@ cd "$ROOT"
 LOG_FILE="/tmp/gauntlet-expo.log"
 URL_GAUNTLET="http://localhost:8081/_dev/gauntlet"
 URL_METRO="http://localhost:8081"
+
+# R-INFRA-GAUNTLET-WORKTREE-SYMLINK: detecta git worktree e aplica
+# workaround Metro. Quando rodando em worktree
+# (.claude/worktrees/<id>/), node_modules e env.json sao symlinks para
+# o repo principal. Como expo-router/_ctx.web.js usa
+# `require.context(process.env.EXPO_ROUTER_APP_ROOT, ...)` resolvido
+# relativo ao path real do bundle entry (que pelo symlink resolve
+# em node_modules do main), o `require.context` recolhe rotas do
+# `app/` do REPO PRINCIPAL, nao do worktree -- Chrome exibe "Welcome
+# to Expo" em vez das rotas reais.
+#
+# Workaround (Opcao C do spec): forca `EXPO_ROUTER_APP_ROOT` para o
+# `app/` absoluto do worktree e desabilita resolucao de workspace
+# do Metro. Em main repo vira no-op (variaveis nao exportadas).
+WORKTREE_MODE=0
+if [[ "$ROOT" == *"/.claude/worktrees/"* ]]; then
+  WORKTREE_MODE=1
+  export EXPO_ROUTER_APP_ROOT="$ROOT/app"
+  export EXPO_PROJECT_ROOT="$ROOT"
+  export EXPO_NO_METRO_WORKSPACE_ROOT=1
+  echo "Worktree detectado em $ROOT"
+  echo "  EXPO_ROUTER_APP_ROOT=$EXPO_ROUTER_APP_ROOT"
+  echo "  EXPO_PROJECT_ROOT=$EXPO_PROJECT_ROOT"
+  echo "  EXPO_NO_METRO_WORKSPACE_ROOT=1"
+  echo "  (workaround Metro/expo-router symlink ativo)"
+
+  # Garante que env.json seja arquivo regular no worktree, nao symlink.
+  # Metro TreeFS so indexa arquivos dentro de rootDir; se env.json e'
+  # symlink apontando pra fora do worktree (main repo), o resolver
+  # devolve UnableToResolveError em '../../../env.json' importado por
+  # src/lib/services/googleAuthFlow.ts (e mais 2 lugares). Solucao:
+  # copia o env.json real do main pro worktree assim que detectar
+  # symlink. Idempotente: se ja' for arquivo regular, no-op.
+  if [[ -L "$ROOT/env.json" ]]; then
+    MAIN_REPO=$(git -C "$ROOT" rev-parse --git-common-dir 2>/dev/null)
+    if [[ -n "$MAIN_REPO" ]]; then
+      MAIN_REPO=$(dirname "$MAIN_REPO")
+      if [[ -f "$MAIN_REPO/env.json" ]]; then
+        rm "$ROOT/env.json"
+        cp "$MAIN_REPO/env.json" "$ROOT/env.json"
+        echo "  env.json: symlink -> arquivo regular (copiado de $MAIN_REPO)"
+      fi
+    fi
+  fi
+
+  # node_modules pode permanecer como symlink: pacotes sao resolvidos
+  # via nodeModulesPaths que percorre realpath. Mas se for tambem
+  # arquivo regular ausente, alerta pra rodar o bootstrap.
+  if [[ ! -e "$ROOT/node_modules" ]]; then
+    echo "  AVISO: node_modules ausente. Rode:" >&2
+    echo "    ln -sfn ../../../node_modules $ROOT/node_modules" >&2
+  fi
+else
+  echo "Main repo detectado em $ROOT (modo normal)"
+fi
 
 CLEAR=0
 VERBOSE=0
@@ -63,9 +125,17 @@ fi
 # 2. Rotaciona log
 [[ -f "$LOG_FILE" ]] && mv "$LOG_FILE" "${LOG_FILE}.prev" 2>/dev/null || true
 
-# 3. Limpa cache se pedido
-if [[ $CLEAR -eq 1 ]]; then
-  rm -rf .expo node_modules/.cache 2>/dev/null || true
+# 3. Limpa cache se pedido (em worktree e auto-limpado pra evitar
+#    transform cache contaminado por worktree anterior ou main)
+if [[ $CLEAR -eq 1 || $WORKTREE_MODE -eq 1 ]]; then
+  rm -rf .expo 2>/dev/null || true
+  # /tmp/metro-cache e file-map sao globais por usuario; em worktree
+  # eles guardam refs ao path real do worktree antigo. Sem limpar,
+  # bundle gera erros tipo "Unable to resolve ../../../env.json"
+  # apontando pra agent-XXX que nao existe mais.
+  rm -rf /tmp/metro-cache /tmp/metro-file-map-* /tmp/haste-* 2>/dev/null || true
+  # node_modules/.cache esta no symlink para o main; nao mexer ali
+  # pra nao corromper o main repo
 fi
 
 # 4. Sobe Metro + Web em background, process group proprio
