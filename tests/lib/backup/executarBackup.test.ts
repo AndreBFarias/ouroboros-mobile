@@ -41,12 +41,21 @@ jest.mock('expo-file-system/legacy', () => {
     getInfoAsync: jest.fn((uri: string) => {
       const dirHit = memoria.dirs.has(uri) || memoria.dirs.has(`${uri}/`);
       const arqHit = memoria.arquivos.has(uri);
+      const conteudo = memoria.arquivos.get(uri);
       return Promise.resolve({
         exists: dirHit || arqHit,
         isDirectory: dirHit,
         uri,
         modificationTime: memoria.mtimesS.get(uri),
+        // R-BACKUP-AUTO: writer e listador agora leem .size do .zip para
+        // popular bytes_totais no companion .md e na UI.
+        size: typeof conteudo === 'string' ? conteudo.length : undefined,
       });
+    }),
+    readAsStringAsync: jest.fn((uri: string) => {
+      const v = memoria.arquivos.get(uri);
+      if (v === undefined) return Promise.reject(new Error(`ENOENT ${uri}`));
+      return Promise.resolve(v);
     }),
     readDirectoryAsync: jest.fn((uri: string) => {
       const base = uri.endsWith('/') ? uri : `${uri}/`;
@@ -97,11 +106,15 @@ jest.mock('react-native', () => ({
 import * as FS from 'expo-file-system/legacy';
 import {
   BACKUP_AUTO_SUBDIR,
+  BACKUP_FILENAME_RE,
   MAX_BACKUPS_AUTO,
+  companionMdName,
   descreverUltimoBackup,
   executarBackup,
   lerUltimoBackupMs,
+  listarBackupsArquivados,
 } from '@/lib/backup/executarBackup';
+import { parseFrontmatter } from '@/lib/schemas/backup_snapshot';
 
 const memoria = (
   FS as unknown as {
@@ -136,7 +149,11 @@ describe('executarBackup — happy path', () => {
     const r = await executarBackup();
     expect(r.uri).not.toBeNull();
     expect(r.uri!.startsWith(PASTA_AUTO)).toBe(true);
-    expect(r.uri!).toMatch(/backup-\d{8}T\d{6}\.zip$/);
+    // R-BACKUP-AUTO: nome do arquivo agora pode ter sufixo opcional
+    // -<deviceId> (ex: backup-20260504T120000-ouro-abc123.zip). Sufixo
+    // ausente continua aceito para backups gerados sem getDeviceId
+    // (web/test fallback).
+    expect(r.uri!).toMatch(/backup-\d{8}T\d{6}(-[a-zA-Z0-9-]+)?\.zip$/);
     expect(r.totalArquivos).toBe(12);
     expect(r.rotacionados).toBe(0);
     // Arquivo origem foi movido (nao existe mais no cache).
@@ -226,5 +243,141 @@ describe('lerUltimoBackupMs + descreverUltimoBackup', () => {
     expect(descreverUltimoBackup(agora - 7 * 24 * 60 * 60 * 1000)).toBe(
       'Último backup: há 7 dias.'
     );
+  });
+});
+
+// R-BACKUP-AUTO -- comportamento novo (companion .md + listador).
+
+describe('R-BACKUP-AUTO -- companion .md gravado ao lado do .zip', () => {
+  it('gera companion .md valido com schema BackupSnapshot', async () => {
+    const cacheZip = `${memoria.cacheDirectory}ouroboros-export-r-backup-auto.zip`;
+    // Payload base64-valido (PK\x03\x04 minimal zip header, b64 encoded).
+    // sha256Base64 decodifica antes de hashear; precisa de string b64
+    // valida para nao explodir.
+    memoria.arquivos.set(cacheZip, 'UEsDBA==');
+    mockExportarVaultZip.mockResolvedValue({
+      uri: cacheZip,
+      totalArquivos: 9,
+    });
+    const r = await executarBackup();
+    expect(r.uri).not.toBeNull();
+    // Companion .md tem mesmo basename, extensao .md.
+    const companionUri = r.uri!.replace(/\.zip$/, '.md');
+    expect(memoria.arquivos.has(companionUri)).toBe(true);
+    const md = memoria.arquivos.get(companionUri)!;
+    const parsed = parseFrontmatter(md);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.tipo).toBe('backup_snapshot');
+    expect(parsed!.versao).toBe(1);
+    expect(parsed!.arquivos_incluidos).toBe(9);
+    // sha256 e' hex 64.
+    expect(parsed!.sha256).toMatch(/^[0-9a-f]{64}$/);
+    // origem nao-vazia (deviceId fallback ou real).
+    expect(parsed!.origem.length).toBeGreaterThan(0);
+    // r.snapshot exposto no resultado.
+    expect(r.snapshot).toBeDefined();
+    expect(r.snapshot!.sha256).toBe(parsed!.sha256);
+  });
+
+  it('rotacao apaga companion .md correspondente ao .zip descartado', async () => {
+    memoria.dirs.add(PASTA_AUTO);
+    const antigos = [
+      'backup-20260101T000000-ouro-aaaaaa.zip',
+      'backup-20260201T000000-ouro-bbbbbb.zip',
+      'backup-20260301T000000-ouro-cccccc.zip',
+      'backup-20260401T000000-ouro-dddddd.zip',
+    ];
+    for (const nome of antigos) {
+      memoria.arquivos.set(`${PASTA_AUTO}${nome}`, 'OLD-ZIP');
+      memoria.arquivos.set(
+        `${PASTA_AUTO}${companionMdName(nome)}`,
+        '---\ntipo: backup_snapshot\n---\n'
+      );
+    }
+    const cacheZip = `${memoria.cacheDirectory}export-novo.zip`;
+    memoria.arquivos.set(cacheZip, 'NEW');
+    mockExportarVaultZip.mockResolvedValue({
+      uri: cacheZip,
+      totalArquivos: 20,
+    });
+    const r = await executarBackup();
+    expect(r.rotacionados).toBe(1);
+    // .zip mais antigo (Janeiro) descartado.
+    expect(memoria.arquivos.has(`${PASTA_AUTO}${antigos[0]}`)).toBe(false);
+    // Companion .md de Janeiro tambem descartado.
+    expect(
+      memoria.arquivos.has(`${PASTA_AUTO}${companionMdName(antigos[0])}`)
+    ).toBe(false);
+  });
+});
+
+describe('R-BACKUP-AUTO -- listarBackupsArquivados', () => {
+  it('lista backups com data + tamanho + snapshot quando companion existe', async () => {
+    memoria.dirs.add(PASTA_AUTO);
+    const nome = 'backup-20260516T120000-ouro-abc123.zip';
+    const uri = `${PASTA_AUTO}${nome}`;
+    memoria.arquivos.set(uri, 'ZIP-PAYLOAD');
+    memoria.mtimesS.set(uri, 1714824000);
+    // Companion .md ao lado.
+    const companion = `${PASTA_AUTO}${companionMdName(nome)}`;
+    memoria.arquivos.set(
+      companion,
+      '---\n' +
+        'tipo: backup_snapshot\n' +
+        'versao: 1\n' +
+        'criado_em: "2026-05-16T12:00:00Z"\n' +
+        'origem: "ouro-abc123"\n' +
+        'arquivos_incluidos: 42\n' +
+        'bytes_totais: 1024\n' +
+        'sha256: "' +
+        'a'.repeat(64) +
+        '"\n' +
+        '---\n'
+    );
+    const lista = await listarBackupsArquivados();
+    expect(lista.length).toBe(1);
+    expect(lista[0].nome).toBe(nome);
+    expect(lista[0].uri).toBe(uri);
+    expect(lista[0].modificadoEmMs).toBe(1714824000 * 1000);
+    expect(lista[0].bytes).toBeGreaterThan(0);
+    expect(lista[0].snapshot).not.toBeNull();
+    expect(lista[0].snapshot!.arquivos_incluidos).toBe(42);
+  });
+
+  it('lista backups antigos sem companion mantem snapshot=null', async () => {
+    memoria.dirs.add(PASTA_AUTO);
+    const nome = 'backup-20260101T000000.zip';
+    memoria.arquivos.set(`${PASTA_AUTO}${nome}`, 'ZIP-OLD');
+    const lista = await listarBackupsArquivados();
+    expect(lista.length).toBe(1);
+    expect(lista[0].snapshot).toBeNull();
+  });
+
+  it('ignora arquivos que nao casam o padrao backup-<TS>.zip', async () => {
+    memoria.dirs.add(PASTA_AUTO);
+    memoria.arquivos.set(`${PASTA_AUTO}arquivo-fora-do-padrao.zip`, 'X');
+    memoria.arquivos.set(`${PASTA_AUTO}README.txt`, 'X');
+    memoria.arquivos.set(`${PASTA_AUTO}backup-20260516T120000.zip`, 'OK');
+    const lista = await listarBackupsArquivados();
+    expect(lista.length).toBe(1);
+    expect(lista[0].nome).toBe('backup-20260516T120000.zip');
+  });
+});
+
+describe('R-BACKUP-AUTO -- BACKUP_FILENAME_RE', () => {
+  it('aceita formato historico backup-<TS>.zip', () => {
+    expect(BACKUP_FILENAME_RE.test('backup-20260516T120000.zip')).toBe(true);
+  });
+
+  it('aceita formato novo com deviceId backup-<TS>-<deviceId>.zip', () => {
+    expect(BACKUP_FILENAME_RE.test('backup-20260516T120000-ouro-abc123.zip')).toBe(
+      true
+    );
+  });
+
+  it('recusa formatos fora do padrao', () => {
+    expect(BACKUP_FILENAME_RE.test('arquivo-fora-do-padrao.zip')).toBe(false);
+    expect(BACKUP_FILENAME_RE.test('backup-20260516.zip')).toBe(false);
+    expect(BACKUP_FILENAME_RE.test('backup-20260516T120000.md')).toBe(false);
   });
 });

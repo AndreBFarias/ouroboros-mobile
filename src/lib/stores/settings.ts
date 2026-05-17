@@ -160,9 +160,13 @@ const DEFAULT_STATE_V2: Omit<
     // M35: default OFF. v1.0 nao publica cache de financas; a aba so
     // volta a aparecer quando o usuario liga este toggle conscientemente.
     mostrarFinancasEmDesenvolvimento: false,
-    // M-BACKUP-AUTOMATICO: default OFF (privacy-first). Usuario ativa
-    // conscientemente. Quando OFF, agendarBackup nem registra timer.
-    backupAutomaticoSemanal: false,
+    // R-BACKUP-AUTO (D6=SIM, 2026-05-15): dono autorizou default ON.
+    // Backup automatico semanal em Documents/Ouroboros-Backups/auto/
+    // sem rede externa (local-only, ADR-0007), rotacao em 4. Pode ser
+    // desligado a qualquer momento em Settings > Backup automatico.
+    // Migracao v3 garante que instalacoes pre-R-BACKUP-AUTO continuam
+    // respeitando a escolha previa do usuario.
+    backupAutomaticoSemanal: true,
     // Q17 (Onda Q): default OFF. Usuario opt-in via
     // /settings/integracoes apos aceitar permissions do Health Connect.
     healthConnectSync: false,

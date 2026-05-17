@@ -20,6 +20,14 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { exportarVaultZip } from '@/lib/services/exportarVault';
+import { getDeviceId } from '@/lib/util/deviceId';
+import { sha256Base64 } from '@/lib/crypto/sha256';
+import {
+  BACKUP_SNAPSHOT_SCHEMA_VERSION,
+  type BackupSnapshot,
+  serializarFrontmatter as serializarBackupSnapshot,
+  parseFrontmatter as parseBackupSnapshot,
+} from '@/lib/schemas/backup_snapshot';
 
 // Quantos backups guardamos no destino auto/. Ao chegar no quinto, o
 // mais antigo e descartado pre-grava (rotacao). Spec §5.
@@ -43,6 +51,73 @@ export interface BackupResultado {
   // motivos para manter compat com testing-library getByText quando
   // necessario; texto humano vai pelos toasts da UI (§Settings).
   motivo?: string;
+  // R-BACKUP-AUTO: snapshot do backup gerado (tipo/versao/origem/
+  // contagem/sha256/criado_em). Ausente quando companion .md falhou
+  // ou quando o backup nao foi gravado (uri null).
+  snapshot?: BackupSnapshot;
+}
+
+// R-BACKUP-AUTO: descritor de um backup arquivado para a UI listar
+// os 4 ultimos backups com data + tamanho + checksum (quando companion
+// .md ja existe). Backups gerados pela sprint M-BACKUP-AUTOMATICO
+// (sem companion) entram na lista com snapshot=null mas com bytes
+// vindos do FileSystem.getInfoAsync.
+export interface BackupArquivado {
+  // Caminho absoluto do .zip (passar para restaurarVaultZip).
+  uri: string;
+  // Nome do arquivo (sem path), util para ordenacao.
+  nome: string;
+  // Timestamp do modificationTime do .zip (ms epoch). Cai para 0 quando
+  // nao foi possivel ler.
+  modificadoEmMs: number;
+  // Tamanho em bytes do .zip. 0 quando nao foi possivel ler.
+  bytes: number;
+  // Snapshot canonico do companion .md (R-BACKUP-AUTO). Null em
+  // backups antigos (pre-R-BACKUP-AUTO) ou quando companion falhou.
+  snapshot: BackupSnapshot | null;
+}
+
+// R-BACKUP-AUTO: lista os <=4 backups arquivados em
+// Documents/Ouroboros-Backups/auto/. Ordenacao desc por nome (que
+// inclui timestamp lexicografico). Em web/sem-vault devolve [].
+export async function listarBackupsArquivados(): Promise<BackupArquivado[]> {
+  if (Platform.OS === 'web') return [];
+  const dir = await garantirPastaAuto();
+  if (!dir) return [];
+  const nomes = await listarBackupsOrdenadosDesc(dir);
+  const out: BackupArquivado[] = [];
+  for (const nome of nomes) {
+    const uri = `${dir}${nome}`;
+    let modificadoEmMs = 0;
+    let bytes = 0;
+    try {
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.exists) {
+        const mtime = (info as { modificationTime?: number }).modificationTime;
+        if (typeof mtime === 'number') modificadoEmMs = Math.floor(mtime * 1000);
+        const sz = (info as { size?: number }).size;
+        if (typeof sz === 'number') bytes = sz;
+      }
+    } catch {
+      // ignora; entra com defaults 0
+    }
+    // Tenta ler companion .md correspondente.
+    let snapshot: BackupSnapshot | null = null;
+    try {
+      const companionUri = `${dir}${companionMdName(nome)}`;
+      const info = await FileSystem.getInfoAsync(companionUri);
+      if (info.exists) {
+        const md = await FileSystem.readAsStringAsync(companionUri, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        snapshot = parseBackupSnapshot(md);
+      }
+    } catch {
+      // companion ausente/ilegivel: tudo bem, .zip continua restauravel.
+    }
+    out.push({ uri, nome, modificadoEmMs, bytes, snapshot });
+  }
+  return out;
 }
 
 // Helper exposto para a UI exibir "Ultimo backup: ha X dias.". A unica
@@ -120,7 +195,7 @@ async function listarBackupsOrdenadosDesc(dir: string): Promise<string[]> {
     return [];
   }
   return filhos
-    .filter((n) => /^backup-\d{8}T\d{6}\.zip$/.test(n))
+    .filter((n) => BACKUP_FILENAME_RE.test(n))
     .sort()
     .reverse();
 }
@@ -128,6 +203,11 @@ async function listarBackupsOrdenadosDesc(dir: string): Promise<string[]> {
 // Aplica rotacao mantendo no maximo MAX_BACKUPS_AUTO arquivos no
 // destino. Roda APOS gravar o backup novo: assim, se o write falhar,
 // nao apagamos historico bom.
+//
+// R-BACKUP-AUTO: ao deletar um .zip, deletamos tambem o companion
+// .md de mesmo basename (best-effort). Companions orfaos sem .zip
+// correspondente sao ignorados pela listagem da UI; nao precisam ser
+// agressivamente limpos aqui.
 async function rotacionar(dir: string): Promise<number> {
   const ordenados = await listarBackupsOrdenadosDesc(dir);
   if (ordenados.length <= MAX_BACKUPS_AUTO) return 0;
@@ -141,6 +221,15 @@ async function rotacionar(dir: string): Promise<number> {
       // Falha em deletar nao aborta a sprint. Proxima execucao tenta
       // de novo (idempotente).
     }
+    // Tenta apagar companion .md correspondente. Idempotente; se nao
+    // existe (backup gerado antes da R-BACKUP-AUTO) ignora.
+    try {
+      await FileSystem.deleteAsync(`${dir}${companionMdName(nome)}`, {
+        idempotent: true,
+      });
+    } catch {
+      // ignora
+    }
   }
   return removidos;
 }
@@ -150,7 +239,12 @@ async function rotacionar(dir: string): Promise<number> {
 // formato com tracos, dois pontos e ponto; substituimos esses tres
 // separadores por string vazia para chegar ao formato compacto
 // ordenavel sem essas marcas.
-function carimboNome(now: Date = new Date()): string {
+//
+// R-BACKUP-AUTO: opcionalmente sufixa com -<deviceId> para distinguir
+// backups originados em devices diferentes (multi-device Syncthing).
+// Quando deviceId omitido, mantem o formato historico
+// `backup-<TS>.zip` da sprint M-BACKUP-AUTOMATICO.
+function carimboNome(now: Date = new Date(), deviceId?: string): string {
   const iso = now.toISOString();
   const semSeparadores = iso
     .split('-')
@@ -160,7 +254,22 @@ function carimboNome(now: Date = new Date()): string {
     .split('.')
     .join('');
   const ts = semSeparadores.slice(0, 15);
+  if (deviceId && deviceId.length > 0) {
+    return `backup-${ts}-${deviceId}.zip`;
+  }
   return `backup-${ts}.zip`;
+}
+
+// R-BACKUP-AUTO: padrao regex para reconhecer arquivos de backup
+// gerados pelo executarBackup, com ou sem deviceId. Usado pela
+// rotacao + listagem na UI. Aceita variantes:
+//   backup-YYYYMMDDTHHMMSS.zip            (M-BACKUP-AUTOMATICO)
+//   backup-YYYYMMDDTHHMMSS-<deviceId>.zip (R-BACKUP-AUTO)
+export const BACKUP_FILENAME_RE = /^backup-\d{8}T\d{6}(-[a-zA-Z0-9-]+)?\.zip$/;
+// Companion .md serializado de BackupSnapshot. Mesmo basename do .zip,
+// extensao .md.
+export function companionMdName(zipName: string): string {
+  return zipName.replace(/\.zip$/, '.md');
 }
 
 // Move o arquivo do cacheDirectory (onde exportarVaultZip grava) para
@@ -228,8 +337,17 @@ export async function executarBackup(): Promise<BackupResultado> {
       motivo: 'documentDirectory ausente.',
     };
   }
-  // 3. Move para o destino com nome carimbado.
-  const nomeFinal = carimboNome();
+  // 3. Move para o destino com nome carimbado (com sufixo deviceId
+  // quando disponivel). R-BACKUP-AUTO: sufixo facilita distinguir
+  // backups multi-device num Vault compartilhado via Syncthing.
+  let deviceId: string | null = null;
+  try {
+    deviceId = await getDeviceId();
+  } catch {
+    // deviceId pode falhar em web/test environment; mantemos formato
+    // historico backup-<TS>.zip nesses casos.
+  }
+  const nomeFinal = carimboNome(new Date(), deviceId ?? undefined);
   const destinoFinal = `${destino}${nomeFinal}`;
   const moveOk = await moverParaDestino(exportado.uri, destinoFinal);
   if (!moveOk) {
@@ -240,12 +358,56 @@ export async function executarBackup(): Promise<BackupResultado> {
       motivo: 'Falha ao mover backup para o destino.',
     };
   }
-  // 4. Rotaciona mantendo MAX_BACKUPS_AUTO. Roda DEPOIS do write para
-  // nao apagar historico bom em caso de falha.
+  // 4. Companion .md: calcula sha256 do zip, monta BackupSnapshot e
+  // grava ao lado com o mesmo basename. Best-effort: falha aqui nao
+  // invalida o backup em si (o .zip ja foi gravado e e' a fonte de
+  // verdade).
+  let snapshot: BackupSnapshot | null = null;
+  try {
+    const zipB64 = await FileSystem.readAsStringAsync(destinoFinal, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const sha = sha256Base64(zipB64);
+    // bytes_totais = tamanho do .zip gravado. Usamos esse numero como
+    // proxy do "bytes_totais" do BackupSnapshot por nao termos o
+    // somatorio de bytes originais sem reabrir o ZIP (decisao
+    // pragmatica documentada no schema). UI exibe tamanho do .zip mesmo.
+    let bytesTotais = 0;
+    try {
+      const info = await FileSystem.getInfoAsync(destinoFinal);
+      if (info.exists) {
+        const sz = (info as { size?: number }).size;
+        if (typeof sz === 'number') bytesTotais = sz;
+      }
+    } catch {
+      // segue com 0; companion ainda e' util para tipo/origem/sha.
+    }
+    snapshot = {
+      tipo: 'backup_snapshot',
+      versao: BACKUP_SNAPSHOT_SCHEMA_VERSION,
+      criado_em: new Date().toISOString(),
+      origem: deviceId ?? 'desconhecido',
+      arquivos_incluidos: exportado.totalArquivos,
+      bytes_totais: bytesTotais,
+      sha256: sha,
+    };
+    const md = serializarBackupSnapshot(snapshot);
+    const companionUri = destino + companionMdName(nomeFinal);
+    await FileSystem.writeAsStringAsync(companionUri, md, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+  } catch {
+    // Companion falhou. Backup .zip continua valido e e' a fonte
+    // canonica. Sem rethrow.
+  }
+  // 5. Rotaciona mantendo MAX_BACKUPS_AUTO. Roda DEPOIS do write para
+  // nao apagar historico bom em caso de falha. Companion .md tambem
+  // entra na rotacao em rotacionar() abaixo.
   const rotacionados = await rotacionar(destino);
   return {
     uri: destinoFinal,
     totalArquivos: exportado.totalArquivos,
     rotacionados,
+    snapshot: snapshot ?? undefined,
   };
 }

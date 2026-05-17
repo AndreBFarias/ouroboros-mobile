@@ -167,3 +167,10 @@ export {
   type FinanceiroNotaMeta,
   type CategoriaNota,
 } from './financeiro_nota';
+export {
+  BackupSnapshotSchema,
+  BACKUP_SNAPSHOT_SCHEMA_VERSION,
+  serializarFrontmatter as serializarBackupSnapshot,
+  parseFrontmatter as parseBackupSnapshot,
+  type BackupSnapshot,
+} from './backup_snapshot';

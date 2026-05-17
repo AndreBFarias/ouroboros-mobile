@@ -22,9 +22,12 @@ import {
 import { useSettings } from '@/lib/stores/settings';
 
 beforeEach(() => {
-  // Garante toggle limpo entre testes. resetar() restaura defaults
-  // (backupAutomaticoSemanal: false).
+  // Garante toggle limpo entre testes. resetar() restaura defaults v2;
+  // R-BACKUP-AUTO mudou backupAutomaticoSemanal para default TRUE
+  // (D6=SIM), entao desligamos explicitamente quando o teste precisa
+  // do estado OFF.
   useSettings.getState().resetar();
+  useSettings.getState().setFeatureToggle('backupAutomaticoSemanal', false);
   cancelarTimer();
 });
 
@@ -33,7 +36,7 @@ afterEach(() => {
 });
 
 describe('avaliarBackupAutomatico', () => {
-  it('quando toggle OFF (default), nao dispara executor nem registra timer', async () => {
+  it('quando toggle OFF, nao dispara executor nem registra timer', async () => {
     const executor = jest.fn();
     const leitor = jest.fn();
     const r = await avaliarBackupAutomatico({

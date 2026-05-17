@@ -35,7 +35,10 @@ import { useSettings } from '@/lib/stores/settings';
 const LAYOUT_PATH = resolve(__dirname, '../../../app/_layout.tsx');
 
 beforeEach(() => {
+  // R-BACKUP-AUTO: default mudou para TRUE; desligamos explicitamente
+  // para os casos de "OFF" abaixo.
   useSettings.getState().resetar();
+  useSettings.getState().setFeatureToggle('backupAutomaticoSemanal', false);
   cancelarTimer();
 });
 
@@ -90,7 +93,7 @@ describe('R-CROSS-FLOW-FIX-1 — caller de avaliarBackupAutomatico no boot', () 
     expect(OITO_DIAS_MS).toBeGreaterThan(INTERVALO_BACKUP_MS);
   });
 
-  it('smoke: chamada com toggle OFF e no-op silencioso (comportamento que o boot exerce com default)', async () => {
+  it('smoke: chamada com toggle OFF e no-op silencioso (caso usuario desligou em Settings)', async () => {
     const executor = jest.fn();
     const leitor = jest.fn();
     const r = await avaliarBackupAutomatico({
