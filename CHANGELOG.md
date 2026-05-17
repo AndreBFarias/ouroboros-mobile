@@ -5,6 +5,34 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Build alpha-12 disparado + Sub-onda DX em execução (2026-05-16 noite)
+
+- **`versionCode` bumpado 4 → 5** em `app.json` (commit `4b449cc`).
+- **Tag `v1.0.0-alpha-12` pushed** → GH Actions `build-android-apk.yml` run `25977218049` em execução.
+- **Sub-onda DX anti-débito P2** dispatched em paralelo (4 agents):
+  - R-DX-EXECUTOR-WORKTREE-ENFORCE (hook detective)
+  - R-DX-SECURESTORE-WEB-DEV-FALLBACK (web localStorage)
+  - R-INT-3-HC-PROXY-REFLECT-HARDENING (Reflect.get)
+  - R-INFRA-GAUNTLET-WORKTREE-SYMLINK (Gauntlet em worktree)
+
+### Sub-onda DX.1 — R-INT-3-HC-PROXY-REFLECT-HARDENING (2026-05-16 noite)
+
+Sprint anti-débito entregue honrando worktree isolation. Commit `5d41ca6` cherry-pick.
+
+- **`carregarModulo` hardened** em 3 arquivos (`src/lib/health/sync.ts`, `availability.ts`, `permissions.ts`): `typeof check` substituído por `Reflect.get` dentro de try/catch. Captura Proxy lançante de `react-native-health-connect@3.5.0` em ambientes não-Android sem propagar exception.
+- **Decisão técnica**: `carregarModulo` mantido **inline em cada arquivo** (não extraído pra util compartilhado) — cada implementação checa conjunto distinto de métodos; extração forçaria genéricos verbose. KISS preferido.
+- **+5 testes** em `tests/lib/health/sync.test.ts`:
+  1. Proxy lançante em getter → não propaga + cai em `no_module`
+  2. Plain object sem `readRecords` → null + `no_module`
+  3. Plain object completo → carrega módulo + executa save
+  4. Cross-module `availability.verificarDisponibilidade` lança → retorna `unavailable`
+  5. Cross-module `permissions.listarPermissoesConcedidas` lança → retorna `[]`
+- Métricas: **249 suítes / 2325 testes** verde · TS strict 0 · smoke ok.
+
+**Achados colaterais** (registrados, sem dispatch — lição 5 "não corrijo inline sem evidência"):
+1. `carregarModulo` padrão similar em `src/lib/diario/transcribe.ts` (speech recognition). Especulação, sem bug observado.
+2. Warnings "Jest environment torn down" pré-existentes em testes vault/midia.
+
 ### Onda 2D.4 — R-CROSS-FLOW-FIX-2 sibling Python ETL lê layout H2 (2026-05-16 noite) — **Onda 2D 4/4 fechada**
 
 Sprint **cross-repo** entregue no sibling Python ETL. Mobile **zero toques** (read-only por design). Commit no sibling: [`AndreBFarias/protocolo-ouroboros@96f2167`](https://github.com/AndreBFarias/protocolo-ouroboros/commit/96f2167). Issue rastreadora: [#33](https://github.com/AndreBFarias/protocolo-ouroboros/issues/33).

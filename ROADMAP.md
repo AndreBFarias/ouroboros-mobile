@@ -84,7 +84,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API `__gauntlet.setEventosAgendaMock` para E2E mescla agenda+alarmes (achado R-HOME-2) | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
-| R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lançante de react-native-health-connect 3.5.0 via Reflect.get (achado R-INT-3) | hardening+DX | P2 | 1h | `R-INT-3-HC-PROXY-REFLECT-HARDENING-spec.md` |
+| R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lançante de react-native-health-connect 3.5.0 via Reflect.get (achado R-INT-3) | hardening+DX | P2 | `5d41ca6` | `[ok]` (DX.1) |
 | R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
 | R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
