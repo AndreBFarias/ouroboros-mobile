@@ -67,7 +67,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-SF-1 | Grupos de Treino em Saúde Física | feature | P1 | 2–3h | `R-SF-1-GRUPOS-DE-TREINO-spec.md` |
 | R-SF-2 | Exercício GIF cadastro (validation) | validation | P2 | 1–2h | `R-SF-2-EXERCICIO-GIF-CADASTRO-spec.md` |
 | R-SF-3 | Marcação rápida (Venvanse, hábitos) | feature | P2 | 2–3h | `R-SF-3-MARCACAO-RAPIDA-MED-spec.md` |
-| R-ROT-1 | Rotinas inteligência temporal | feature | P1 | 2–3h | `R-ROT-1-INTELIGENCIA-TEMPORAL-spec.md` |
+| R-ROT-1 | Rotinas inteligência temporal | feature | P1 | `[rejeitado-replan]` | `R-ROT-1-REPLAN-spec.md` |
 | R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
 | R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
 | R-MEDIA-2 | Recap autoplay áudio | feature | P2 | 2–3h | `R-MEDIA-2-RECAP-AUTOPLAY-AUDIO-spec.md` |
