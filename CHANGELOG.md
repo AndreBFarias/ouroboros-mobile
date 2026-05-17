@@ -5,6 +5,20 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2D.1 — R-CROSS-FLOW-FIX-1 backup automático órfão (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `ef8fab0` cherry-pick.
+
+- **Bug encontrado e fixado**: `avaliarBackupAutomatico` em `src/lib/backup/agendarBackup.ts` estava órfão — declarado, exportado, testado, mas SEM caller em `app/_layout.tsx` ou helpers de boot. Toggle "Backup automático semanal" em Settings nunca disparava o backup.
+- **Fix em `app/_layout.tsx`** (+18L): import + `useEffect` que chama `avaliarBackupAutomatico()` fire-and-forget após mount (idempotente — helper já protege contra dupla-registro de timer). Cleanup chama `cancelarTimer()` (no-op em web).
+- **Teste novo `tests/lib/backup/agendarBackup-boot.test.ts`** (+106L, 5 casos): mount do `_layout` chama `avaliarBackupAutomatico` + spy em casos toggle ON/OFF + idempotência.
+- **+1 suíte / +5 testes**. Métricas: **246 suítes / 2302 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- Comentários nos arquivos seguem convenção sem acento (BRIEF §1.4).
+
+**Achados colaterais** (todos pré-existentes, sem sprints novas):
+1. Worktree limpo sem bootstrap automático (já R-INFRA-WORKTREE-BOOTSTRAP).
+2. `expo export android` rejeita symlinks de `env.json` (A39 do BRIEF; Q17.e mapeado no roadmap).
+
 ### Onda 2C.4 — R-HOME-3 Checkbox tarefa inline + toast undo (2026-05-16 noite) — **Onda 2C 4/4 fechada**
 
 Sprint da Fase 2 fecha a Onda 2C. Commit `dd833a8` cherry-pick (orquestrador commitou pelo executor — agent reportou trabalho pronto mas honrou self-policy de não commitar).

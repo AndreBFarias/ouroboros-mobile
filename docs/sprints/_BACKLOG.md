@@ -120,7 +120,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API __gauntlet.setEventosAgendaMock para E2E mescla | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
 | **R-CROSS-FLOW-FIX-2** | **CRÍTICO cross-repo**: sibling ETL não lê `markdown/` (layout H2). Todo vault pós-refundação invisível pro desktop. | bug+cross-repo | **P1-high** | sibling | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |
-| R-CROSS-FLOW-FIX-1 | `avaliarBackupAutomatico` declarado SEM CALLER no boot path (achado cenário 10) | fix | P1 | 1h | `R-CROSS-FLOW-FIX-1-BACKUP-AUTOMATICO-ORFAO-spec.md` |
+| R-CROSS-FLOW-FIX-1 `[ok]` (Onda 2D.1, `ef8fab0`) | `avaliarBackupAutomatico` declarado SEM CALLER no boot path (achado cenário 10) | fix | P1 | 1h | `R-CROSS-FLOW-FIX-1-BACKUP-AUTOMATICO-ORFAO-spec.md` |
 | R-CROSS-FLOW-FIX-3 | Scanner OCR duplicata na Galeria (achado cenário 4) | fix | P2 | 1-2h | `R-CROSS-FLOW-FIX-3-SCANNER-DUPLICATA-GALERIA-spec.md` |
 | R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | 1–2h | `R-NAV-1-CICLO-BOTAO-REGISTRAR-MIGRACAO-FAB-spec.md` |
 | R-NAV-3 | FAB consistência edit/delete | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
