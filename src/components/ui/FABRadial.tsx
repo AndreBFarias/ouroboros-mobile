@@ -65,11 +65,16 @@ const LABEL_GAP = 12;
 // Strings visiveis em sentence case + acentuacao PT-BR; labels de a11y
 // sem acento (convencao de screen reader). R-FAB-1: 5 acoes (voz fora);
 // gap 22.5deg entre acoes no arco de 180-270deg.
+//
+// R-A11Y-TALKBACK (2026-05-17): acentLabel removeu prefixo "botao "
+// redundante. O Pressable das actions ja tem accessibilityRole="button"
+// (TalkBack anuncia "botao" automaticamente). Antes: "botao botao humor"
+// na leitura. Agora: "botao humor" (anuncio da role + label).
 const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'humor',
     label: 'Humor',
-    acentLabel: 'botao humor',
+    acentLabel: 'humor',
     color: colors.pink,
     Icon: Heart,
     angleDeg: 180,
@@ -77,7 +82,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'camera',
     label: 'Câmera',
-    acentLabel: 'botao camera',
+    acentLabel: 'camera',
     color: colors.orange,
     Icon: Camera,
     angleDeg: 202.5,
@@ -85,7 +90,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'exercicio',
     label: 'Exercícios',
-    acentLabel: 'botao exercicios',
+    acentLabel: 'exercicios',
     color: colors.green,
     Icon: Dumbbell,
     angleDeg: 225,
@@ -93,7 +98,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'vitoria',
     label: 'Conquista', // anonimato-allow: substantivo (vide ressalva acentuacao)
-    acentLabel: 'botao conquista',
+    acentLabel: 'conquista',
     color: colors.yellow,
     Icon: Trophy,
     angleDeg: 247.5,
@@ -101,7 +106,7 @@ const ACTIONS: readonly ActionDescriptor[] = [
   {
     key: 'trigger',
     label: 'Crise',
-    acentLabel: 'botao crise',
+    acentLabel: 'crise',
     color: colors.red,
     Icon: Zap,
     angleDeg: 270,

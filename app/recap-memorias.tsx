@@ -519,7 +519,10 @@ export default function RecapMemoriasTela() {
       ) : null}
 
       {/* Zonas de tap (esquerda volta, direita avanca, longpress pausa).
-          z-index acima do Ken Burns mas abaixo dos botoes. */}
+          z-index acima do Ken Burns mas abaixo dos botoes.
+          R-A11Y-TALKBACK (2026-05-17): role="button" explicito mais
+          accessibilityHint para anunciar o long-press (gesto nao obvio
+          em TalkBack). */}
       <Pressable
         onPress={anterior}
         onLongPress={() => setPausado(true)}
@@ -530,7 +533,9 @@ export default function RecapMemoriasTela() {
           if (pausado) setPausado(false);
         }}
         style={styles.zonaEsq}
+        accessibilityRole="button"
         accessibilityLabel="anterior"
+        accessibilityHint="press-and-hold pausa a reproducao"
       />
       <Pressable
         onPress={proximo}
@@ -539,7 +544,9 @@ export default function RecapMemoriasTela() {
           if (pausado) setPausado(false);
         }}
         style={styles.zonaDir}
+        accessibilityRole="button"
         accessibilityLabel="proximo"
+        accessibilityHint="press-and-hold pausa a reproducao"
       />
     </View>
   );

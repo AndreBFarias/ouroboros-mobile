@@ -375,9 +375,12 @@ export function MenuLateral() {
       }}
       accessibilityViewIsModal
     >
-      {/* Backdrop: tap fecha. */}
+      {/* Backdrop: tap fecha.
+          R-A11Y-TALKBACK (2026-05-17): role="button" explicito para o
+          TalkBack distinguir o backdrop como interativo. */}
       <Pressable
         onPress={fechar}
+        accessibilityRole="button"
         accessibilityLabel="fechar menu lateral"
         style={{
           position: 'absolute',

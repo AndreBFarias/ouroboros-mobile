@@ -62,7 +62,7 @@ function BotaoRecap({ onPress }: BotaoRecapProps) {
       onPressOut={() => setPressed(false)}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Recap"
+      accessibilityLabel="recap"
       hitSlop={8}
       style={{
         // Q2.3 (Onda Q): row + flexShrink 0 evita o wrap "Re/ca/p" que

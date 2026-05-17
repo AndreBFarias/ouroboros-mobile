@@ -94,7 +94,10 @@ export function MenuLongPress({
         accessibilityLabel="fechar menu"
       >
         {/* Pressable interno bloqueia propagacao para nao fechar quando
-            o usuario tocar dentro do cartao. */}
+            o usuario tocar dentro do cartao.
+            R-A11Y-TALKBACK (2026-05-17): role="menu" semantica de
+            container de itens (nao e botao acionavel; o onPress noop
+            so existe para stop-propagation do tap no overlay). */}
         <Pressable
           onPress={() => undefined}
           style={{
@@ -104,6 +107,7 @@ export function MenuLongPress({
             gap: spacing.sm,
             marginBottom: spacing.lg,
           }}
+          accessibilityRole="menu"
           accessibilityLabel="menu de acoes"
         >
           {tituloAlvo ? (

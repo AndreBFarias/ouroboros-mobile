@@ -57,7 +57,7 @@ export default function NotFound() {
             onPress={irParaInicio}
             variant="primary"
             fullWidth
-            accessibilityLabel="Voltar para a tela inicial"
+            accessibilityLabel="voltar para o inicio"
           />
         </View>
       </ScrollView>
