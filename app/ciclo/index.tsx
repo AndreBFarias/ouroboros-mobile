@@ -4,23 +4,36 @@
 //   - Header "Acompanhamento do ciclo".
 //   - Linha micro muted: "Registro voluntario. Pula dias sem culpa."
 //   - CalendarioFases 28-35 dias adaptativo.
-//   - Botao primario "Registrar hoje" no rodape.
+//   - FAB+ verde canonico (MenuCapturaVerde) hospedado a partir de
+//     R-NAV-1 (2026-05-16). Botao "Registrar hoje" inline foi
+//     REMOVIDO; o FAB+ ganhou acao contextual "Registrar ciclo" que
+//     abre SheetRegistroCiclo com 3 atalhos (registrar hoje, sintoma,
+//     anotacao). Padronizacao com Saude Fisica + outras telas que
+//     usam MenuCapturaVerde como ponto unico de captura.
 //
 // Empty state quando não ha registros: frase canonica
-// "Pode registrar o início do primeiro ciclo quando quiser." e
-// botao "Registrar hoje" continua visivel para que o usuario
-// possa criar o primeiro registro.
+// "Pode registrar o início do primeiro ciclo quando quiser." O FAB+
+// canonico permanece visivel (mesmo padrao do SaudeFisicaScreen).
 //
 // Carrega registros do Vault via listarRegistrosCiclo filtrando por
 // pessoaAtiva (privacidade visual entre as duas pessoas, M14.5 spec).
 // Recarrega ao focar (useFocusEffect) para refletir saves recentes.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, EmptyState, Header, Screen } from '@/components/ui';
+import { EmptyState, Header, Screen } from '@/components/ui';
 import { CalendarioFases } from '@/components/ciclo/CalendarioFases';
+import {
+  MenuCapturaVerde,
+  type AcaoExtraCaptura,
+} from '@/components/chrome/MenuCapturaVerde';
+import {
+  SheetRegistroCiclo,
+  montarAcaoExtraCiclo,
+  type SheetRegistroCicloRef,
+} from '@/components/ciclo/SheetRegistroCiclo';
 import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
@@ -131,9 +144,25 @@ export default function CicloIndex() {
 
   const semDados = !carregando && registros.length === 0;
 
-  const handleRegistrarHoje = useCallback(() => {
-    router.push('/ciclo/registrar');
-  }, [router]);
+  // R-NAV-1: ref do SheetRegistroCiclo montado em paralelo ao
+  // MenuCapturaVerde. A acao contextual "Registrar ciclo" injetada no
+  // FAB+ verde dispara abrir() neste ref. Sem botao inline ("Registrar
+  // hoje" foi removido); o FAB+ assume o papel de unico ponto de
+  // entrada para registro.
+  const sheetRegistroRef = useRef<SheetRegistroCicloRef>(null);
+
+  const handleAbrirSheetRegistro = useCallback(() => {
+    sheetRegistroRef.current?.abrir();
+  }, []);
+
+  // R-NAV-1: acao contextual injetada no MenuCapturaVerde. Tap no item
+  // do sheet do FAB+ abre o SheetRegistroCiclo com 3 atalhos. Memo para
+  // estabilidade de referencia (evita re-render do MenuCapturaVerde a
+  // cada render do CicloIndex).
+  const acoesExtras = useMemo<ReadonlyArray<AcaoExtraCaptura>>(
+    () => [montarAcaoExtraCiclo(handleAbrirSheetRegistro)],
+    [handleAbrirSheetRegistro]
+  );
 
   const handleSelectDay = useCallback(
     (data: string) => {
@@ -255,13 +284,12 @@ export default function CicloIndex() {
         )}
       </ScrollView>
 
-      <View style={{ paddingBottom: spacing.base }}>
-        <Button
-          label="Registrar hoje"
-          onPress={handleRegistrarHoje}
-          variant="primary"
-        />
-      </View>
+      {/* R-NAV-1: FAB+ verde canonico assume o papel do antigo botao
+          "Registrar hoje" inline. acoesExtras injeta "Registrar ciclo"
+          como primeiro item do sheet, que abre o SheetRegistroCiclo
+          (3 atalhos). Padrao identico ao SaudeFisicaScreen. */}
+      <MenuCapturaVerde acoesExtras={acoesExtras} />
+      <SheetRegistroCiclo ref={sheetRegistroRef} />
     </Screen>
   );
 }

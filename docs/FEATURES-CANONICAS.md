@@ -685,13 +685,20 @@ R-HOME-3 (refinamento do checkbox de R-HOME-1):
 
 ## 10. Opt-ins (toggle on em Settings, default ON)
 
-### 10.1 Acompanhador de Ciclo Menstrual — M14.5
+### 10.1 Acompanhador de Ciclo Menstrual — M14.5 + R-NAV-1
 
 - Calendário mensal com fases (menstrual / folicular / ovulatória
   / lútea).
 - Tom sóbrio, sem gamificação.
 - Sintomas opcionais.
 - Persiste em `ciclo/YYYY-MM-DD.md`.
+- **R-NAV-1 (2026-05-17):** botão "Registrar hoje" inline do rodapé
+  foi removido. FAB+ verde canônico (`MenuCapturaVerde`) hospedado na
+  tela `/ciclo` ganhou a ação contextual "Registrar ciclo", que abre o
+  `SheetRegistroCiclo` (3 atalhos: Registrar hoje, Adicionar sintoma,
+  Anotação livre — todos para `/ciclo/registrar`). Padronização com
+  Saúde Física e demais telas; alinhamento vertical via
+  `useSafeBottomMargin`.
 
 ### 10.2 Alarme Pessoal — F-15 / M16 + M30 v2
 

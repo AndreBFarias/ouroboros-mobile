@@ -5,6 +5,17 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3B.2 — R-NAV-1 Ciclo botão registrar → FAB+ canônico (2026-05-17)
+
+Sprint Fase 3 (refactor UX) entregue honrando worktree isolation. Commit `c77b891` cherry-pick.
+
+- **`app/ciclo/index.tsx`** (+37/-15): botão primário inline `"Registrar hoje"` removido do rodapé. Tela ganha `MenuCapturaVerde` canônico (FAB+ verde, direita) com `acoesExtras` injetando ação "Registrar ciclo". Alinhamento vertical via `useSafeBottomMargin`.
+- **`src/components/ciclo/SheetRegistroCiclo.tsx`** novo (~190L): sheet com 3 atalhos descobertos via FAB+ — "Registrar hoje", "Adicionar sintoma", "Anotação livre" (todos navegam para `/ciclo/registrar`; foco diferenciado fica para sprint futura). Helper `montarAcaoExtraCiclo(abrirSheet)` devolve `AcaoExtraCaptura` canônico.
+- **+10 testes** novos (6 `SheetRegistroCiclo.test.tsx` + 4 `ciclo-index.test.tsx`). E2E em `tests/e2e/playwright/r-nav-1.e2e.ts`. Métricas (worktree): 260 suítes / 2425 testes verde.
+- `docs/FEATURES-CANONICAS.md` §10.1 atualizada.
+
+**Validação visual** caiu na armadilha "Welcome to Expo" do worktree (já mapeada em R-DX-GAUNTLET-MULTI-PORTA P2). Cobertura compensada por testes Jest + E2E playwright pronto.
+
 ### Fase 3 Onda 3B.1 — R-SF-2 GIF/MP4/JPG validation + EmptyStateMidia (2026-05-16 noite)
 
 Sprint Fase 3 entregue honrando worktree isolation. Commit `2581d9e` cherry-pick.
