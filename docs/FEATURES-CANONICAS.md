@@ -306,6 +306,39 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `lib/health/resumo.ts` (`resumirPassos`, `resumirPeso`,
   `resumirTreinos`).
 
+### 3.8 Hub de Integrações — R-INT-1 (2026-05-16)
+
+- Rota canônica `/integracoes` agrega todos os serviços externos
+  suportados em uma só tela. Acessível pelo menu lateral seção
+  "Utilitários", ícone `Plug` laranja.
+- Cinco cards renderizados:
+  - **Saúde Física** (Health Connect Android, Q17) — estado
+    Conectado / Desconectado / Indisponível baseado em
+    `getSdkStatus` + contagem de permissions. Texto status traz
+    sufixo `(sync ligado)` ou `(sync desligado)` espelhando o
+    toggle `featureToggles.healthConnectSync`. Tap navega para
+    `/settings/integracoes` (detalhe completo de HC mantido para
+    retrocompat).
+  - **Agenda** (Google Calendar, Q22.B/M37.1) — estado Conectado
+    se qualquer pessoa (`pessoa_a` ou `pessoa_b`) tem
+    `accessToken` válido. Última sincronização vem de
+    `max(ultimaConexao_a, ultimaConexao_b)`. Tap navega para
+    `/settings/contas-google` (gerencia OAuth detalhado).
+  - **Spotify** (R-INT-4 futura) — placeholder, badge "Em breve",
+    desabilitado.
+  - **YouTube** (R-INT-4 futura) — placeholder, badge "Em breve",
+    desabilitado.
+  - **Google Drive** (futura) — placeholder, badge "Em breve",
+    desabilitado.
+- Decisão técnica R-INT-1: o hub é **read-only sobre stores
+  existentes** (`useGoogleAuth`, `useSettings`, helpers de HC
+  `availability`/`permissions`). Não recria fluxo OAuth nem
+  lógica HC; apenas agrega estado e oferece navegação.
+  Retrocompat com `/settings/integracoes` é total (rota antiga
+  continua entregando o detalhe rico de HC entregue em Q17).
+- Componente: `src/components/screens/IntegracoesScreen.tsx`
+  + wrapper em `app/integracoes.tsx`.
+
 ## 4. Exercícios — M13 (Telas 02, 07, 08)
 
 - Galeria de exercícios cadastrados (CRUD).

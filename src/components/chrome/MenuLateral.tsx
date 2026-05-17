@@ -60,6 +60,7 @@ import {
   Layers,
   ListChecks,
   Moon,
+  Plug,
   Settings as SettingsIcon,
   Sparkles,
   Trophy,
@@ -291,6 +292,17 @@ export function MenuLateral() {
       a11yLabel: 'item rotinas',
       icone: Dumbbell,
       route: '/rotinas',
+    });
+    // R-INT-1 (2026-05-16): hub canonico de integracoes externas
+    // (Health Connect, Google Calendar, Spotify/YouTube/Drive em
+    // breve). Permanente como Rotinas; sem toggle. Ícone Plug
+    // (laranja) reforca o sentido de "conectar a algo externo".
+    opcionais.push({
+      label: 'Integrações',
+      a11yLabel: 'item integracoes',
+      icone: Plug,
+      route: '/integracoes',
+      cor: colors.orange,
     });
 
     const lista: SecaoMenu[] = [
