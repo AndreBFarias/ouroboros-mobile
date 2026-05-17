@@ -5,6 +5,17 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3D.2 — R-RECAP-FIX-LOOP useMemo range (2026-05-17)
+
+Sprint bug fix cirúrgica entregue honrando worktree isolation. Commit `cb2c02d` cherry-pick.
+
+- **`app/recap-memorias.tsx`** (-6/+22): `range` envolvido em `useMemo` por `[params.de, params.ate]`. Antes: `hoje = new Date()` recriado a cada render → `Date.now()` avança em ms → `range.de.getTime()` instável → `useRecap.useEffect` re-dispara → loop.
+- **Refinamento de hipótese**: spec apontava `useRecap.ts` deps. Investigação revelou que `useRecap` JÁ tinha `deMs/ateMs` primitivos (`getTime()` linha 509-510). Real culpa era `hoje = new Date()` no caller. `useRecap.ts` NÃO precisou ser tocado.
+- **+2 testes** em `tests/app/recap-memorias-loop-regression.test.tsx`. Métricas: **267 suítes / 2497 testes** verde.
+- **Evidência cruzada**: 75 erros "Maximum update depth" pré-fix (`console-log-PRE-FIX-evidencia-bug.txt`) → 0 erros pós-fix. SHA256 dos screenshots A=B confirma estabilidade entre 0s e 3s.
+
+**Achado**: mesmo padrão de bug em `app/recap-lista.tsx:100-105`. Sprint nova **R-RECAP-LISTA-FIX-LOOP** registrada (P2, 15-30min) com mesma solução useMemo.
+
 ### Fase 3 Onda 3D.1 — R-MEDIA-LINKEXTERNO-CLEANUP dead code (2026-05-17)
 
 Sprint anti-débito P3 entregue honrando worktree isolation. Commit `9cb8f6a` cherry-pick. 30min de cleanup conforme regra durável "mencionar dead code, não deletar inline".
