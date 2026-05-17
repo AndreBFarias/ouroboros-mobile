@@ -5,6 +5,30 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sub-onda DX.4 — R-INFRA-GAUNTLET-WORKTREE-SYMLINK Gauntlet honra worktree path (2026-05-16 noite) — **Sub-onda DX 4/4 fechada**
+
+Sprint anti-débito entregue honrando worktree isolation. Commit cherry-pick. **Fim da Sub-onda DX**.
+
+- **`gauntlet.sh` estendido** (+73 / -3): detecta `WORKTREE_MODE` quando `$PWD` contém `.claude/worktrees/`. Exporta `EXPO_ROUTER_APP_ROOT` + `EXPO_PROJECT_ROOT` + `EXPO_NO_METRO_WORKSPACE_ROOT=1` antes de subir Metro. Auto-copia `env.json` symlink → arquivo regular (Metro TreeFS exige). Auto-limpa caches `/tmp/metro-cache` + `/tmp/metro-file-map-*` entre worktrees.
+- **Solução estendida vs spec original** (Opção C só env vars): análise empírica revelou que `env.json` symlink fora do `rootDir` do TreeFS do `metro-file-map` ALSO quebra. Fix triplo: env vars + auto-copy env.json + cache cleanup.
+- **3 screenshots playwright headless** em `/tmp/r-infra-gauntlet-worktree-*.png` (412×892 mobile viewport):
+  1. Loader Ouroboros (logo serpente Dracula `#14151a` + "OUROBOROS / PROTOCOLO")
+  2. Onboarding "Como você se chama?" renderizada com acentuação PT-BR completa + JetBrains Mono carregada
+  3. Mesma tela após `--virtual-time-budget=20000` (verificação determinística)
+- **Critério essencial validado**: ZERO "Welcome to Expo" em qualquer captura. Bundle 17.5MB contém rotas worktree atual, zero referências a worktrees antigos.
+- Métricas inalteradas: **249/2329 testes** verde (sprint só toca `gauntlet.sh`, não testes).
+
+**Achados colaterais** (registrados, sem dispatch):
+1. Bootstrap de worktree ainda cria `env.json` como symlink — auto-copy do `gauntlet.sh` resolve em runtime, mas optimization seria criar arquivo regular no bootstrap.
+2. Caches globais `/tmp/metro-*` deveriam ser limpos por `cleanup-worktree.sh` ao remover worktree (recomendação infra).
+3. `HOW_TO_RESUME.md` gitignored — atualizações locais não persistem em PR. Sprint futura: criar `docs/WORKTREE_GAUNTLET.md` versionado.
+
+**Sub-onda DX fechada (4/4):**
+- DX.1 R-INT-3-HC-PROXY-REFLECT-HARDENING (`5d41ca6`)
+- DX.2 R-DX-EXECUTOR-WORKTREE-ENFORCE (`e53fb54`)
+- DX.3 R-DX-SECURESTORE-WEB-DEV-FALLBACK (`ffd86fc`)
+- DX.4 R-INFRA-GAUNTLET-WORKTREE-SYMLINK (atual)
+
 ### Sub-onda DX.3 — R-DX-SECURESTORE-WEB-DEV-FALLBACK fallback web pro getDeviceId (2026-05-16 noite)
 
 Sprint anti-débito entregue honrando worktree isolation. Commit `ffd86fc` cherry-pick. Elimina o overlay vermelho `ExpoSecureStore.default.getValueWithKeyAsync is not a function` que afetava 3 sprints anteriores em web dev.

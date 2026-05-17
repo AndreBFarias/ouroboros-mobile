@@ -117,7 +117,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | 30min | `R-MEDIA-LINKEXTERNO-CLEANUP-spec.md` |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK `[ok]` (DX.3, `ffd86fc`) | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | 1-2h | `R-DX-SECURESTORE-WEB-DEV-FALLBACK-spec.md` |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
-| R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
+| R-INFRA-GAUNTLET-WORKTREE-SYMLINK `[ok]` (DX.4) | Gauntlet web em worktree nao carrega rotas locais | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API __gauntlet.setEventosAgendaMock para E2E mescla | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
 | R-INT-3-HC-PROXY-REFLECT-HARDENING `[ok]` (DX.1, `5d41ca6`) | Detectar Proxy lancante de react-native-health-connect 3.5.0 via Reflect.get | hardening+DX | P2 | 1h | `R-INT-3-HC-PROXY-REFLECT-HARDENING-spec.md` |
 | **R-CROSS-FLOW-FIX-2** `[ok]` (Onda 2D.4, sibling `96f2167`, mobile zero touch) | **CRÍTICO cross-repo**: sibling ETL não lê `markdown/` (layout H2). Todo vault pós-refundação invisível pro desktop. | bug+cross-repo | **P1-high** | sibling | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |

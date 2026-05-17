@@ -82,7 +82,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | 30min | `R-MEDIA-LINKEXTERNO-CLEANUP-spec.md` |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
-| R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
+| R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | mergeado | `[ok]` (DX.4) |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API `__gauntlet.setEventosAgendaMock` para E2E mescla agenda+alarmes (achado R-HOME-2) | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
 | R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lançante de react-native-health-connect 3.5.0 via Reflect.get (achado R-INT-3) | hardening+DX | P2 | `5d41ca6` | `[ok]` (DX.1) |
 | R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
