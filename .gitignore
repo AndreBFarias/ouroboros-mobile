@@ -110,3 +110,4 @@ HANDOFF.md
 # Q22.B (2026-05-13): OAuth iOS client plist baixado do Cloud Console.
 # Contem mesmo client_id que ja esta em env.json; nao usado em Android.
 client_*.plist
+Checkpoint.md
