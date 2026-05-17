@@ -65,7 +65,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
 | R-SF-1 | Grupos de Treino em Saúde Física | feature | P1 | `78cbca0` | `[ok]` (3A.2) |
-| R-SF-2 | Exercício GIF cadastro (validation) | validation | P2 | 1–2h | `R-SF-2-EXERCICIO-GIF-CADASTRO-spec.md` |
+| R-SF-2 | Exercício GIF cadastro (validation) | validation | P2 | `2581d9e` | `[ok]` (3B.1) |
 | R-SF-3 | Marcação rápida (Venvanse, hábitos) | feature | P2 | 2–3h | `R-SF-3-MARCACAO-RAPIDA-MED-spec.md` |
 | R-ROT-1 | Rotinas inteligência temporal | feature | P1 | `[rejeitado-replan]` | `R-ROT-1-REPLAN-spec.md` |
 | R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |

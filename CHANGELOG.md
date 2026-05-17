@@ -5,6 +5,17 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3B.1 — R-SF-2 GIF/MP4/JPG validation + EmptyStateMidia (2026-05-16 noite)
+
+Sprint Fase 3 entregue honrando worktree isolation. Commit `2581d9e` cherry-pick.
+
+- **`src/components/exercicios/EmptyStateMidia.tsx`** novo (67L): placeholder reutilizável "Mídia indisponível" com 2 tamanhos (lg + sm), tokens canônicos (`colors.bgAlt`, `radius.card`).
+- **`src/components/exercicios/MidiaExecucaoPlayer.tsx`** (+20/-2): error boundary via `onError` no `<Image>`/`<Video>`. Falha de render → `EmptyStateMidia` em vez de crash.
+- **+17 testes** novos (10 `MidiaExecucaoPlayer` + 7 `EmptyStateMidia`). Meta era 4-6, agent entregou 17 por cobertura defensiva extra (preservação de `size` no fallback, composição URI vaultRoot null/setado, label custom).
+- Métricas: **260 suítes / 2432 testes** verde · TS strict 0 · smoke ok.
+
+**Achado documental**: spec citava path errado (`src/components/midia/MidiaExecucaoPlayer.tsx` — real é `src/components/exercicios/`). Agent alinhou ao intent e seguiu. Sem dispatch de sprint nova (erro de path em spec, não bug funcional).
+
 ### Fase 3 Onda 3A.3 — R-RECAP-5 Eventos do Contador (re-dispatch) (2026-05-16 noite) — **Onda 3A 3/4 fechada**
 
 Sprint Fase 3 entregue honrando worktree isolation. Commit `a15eb3a` cherry-pick. Re-dispatch após perda operacional da 1ª tentativa (`a671213c`) por bug do orquestrador com zsh glob expansion em paths bracketed (`[slug]`).
