@@ -21,6 +21,9 @@ import { OuroborosLoader } from '@/components/brand';
 import { ToastProvider, useToast } from '@/components/ui';
 import { MenuLateral } from '@/components/chrome/MenuLateral';
 import { FABMenu } from '@/components/chrome/FABMenu';
+// R-INT-3: bridge que escuta falhas do Health Connect sync e exibe
+// toast explicito (warn). Montado dentro do ToastProvider abaixo.
+import { HCToastBridge } from '@/lib/health/useHCToast';
 import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { useShareIntentListener } from '@/lib/boot/useShareIntentListener';
@@ -243,6 +246,10 @@ export default function RootLayout() {
             <SessaoBootGate />
             <PermissaoNotificacaoGate />
             <PathnameSyncDev />
+            {/* R-INT-3: bridge HC -> Toast. Renderiza null; subscreve
+              ao emitHCSyncFail e mostra toast warn em
+              permission_denied / api_error. */}
+            <HCToastBridge />
             <Stack
               screenOptions={{
                 headerShown: false,

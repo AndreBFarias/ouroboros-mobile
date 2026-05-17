@@ -13,8 +13,21 @@
 // (carga, reps por exercicio) ficam no .md local; ExerciseSession HC
 // e' apenas marca temporal pra outros consumidores verem.
 //
+// R-INT-3 (2026-05-16): callers `escreverXXXEmHC` continuam retornando
+// boolean (backward-compat), mas agora emitem `HCSyncFailEvent` via
+// `emitHCSyncFail` em qualquer falha (no_module, permission_denied,
+// api_error). UI subscreve via useHCToast e exibe toast EXPLICITO.
+// Padrao T1B3 (AUDIT-T1B3): catch silencioso vira observavel.
+// `console.log` em cada save documenta sucesso/falha pra debug live.
+//
 // Comentarios sem acento (convencao shell/CI).
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
+import {
+  emitHCSyncFail,
+  mensagemCanonica,
+  type HCSyncMotivo,
+  type HCSyncTipo,
+} from '@/lib/health/eventBus';
 
 interface HealthConnectModule {
   readRecords: (
@@ -186,10 +199,50 @@ export async function sincronizarPesoDeHC(
   }
 }
 
+// R-INT-3: classifica erro lancado pelo modulo nativo HC em uma das
+// 3 categorias canonicas. Mensagens com regex pra cobrir variacao
+// entre versoes do `react-native-health-connect` (3.5.x atual).
+// Quando nao bate em pattern conhecido, cai em 'api_error'.
+function classificarErroHC(erro: unknown): HCSyncMotivo {
+  const msg =
+    erro instanceof Error
+      ? erro.message
+      : typeof erro === 'string'
+        ? erro
+        : '';
+  if (/permission|denied|unauthorized|SecurityException/i.test(msg)) {
+    return 'permission_denied';
+  }
+  return 'api_error';
+}
+
+// R-INT-3: helper interno reusado pelas 4 funcoes de write. Centraliza
+// log de debug e emit de falha, mantendo o callsite de cada funcao
+// limpo.
+function reportarFalhaHC(
+  tipo: HCSyncTipo,
+  motivo: HCSyncMotivo,
+  erro?: unknown
+): false {
+  const mensagem = mensagemCanonica(tipo, motivo);
+  // Log de debug visivel em logcat / DevTools. Mantemos prefixo
+  // canonico [hc-sync] pra facilitar grep durante validacao Nivel C.
+  console.log(
+    `[hc-sync] tipo=${tipo} status=fail motivo=${motivo} erro=${String(erro ?? '')}`
+  );
+  emitHCSyncFail({ tipo, motivo, mensagem, erro });
+  return false;
+}
+
+function logSucessoHC(tipo: HCSyncTipo): void {
+  console.log(`[hc-sync] tipo=${tipo} status=ok`);
+}
+
 // Escreve TreinoSessao do Vault em HC como ExerciseSessionRecord.
 // Best-effort: se HC indisponivel ou save falhar, nao propaga erro
 // para o caller (o save no Vault ja aconteceu). Retorna true em
-// sucesso, false em qualquer falha.
+// sucesso, false em qualquer falha — e emite HCSyncFailEvent no
+// caso de falha pra que a UI mostre toast (R-INT-3, padrao T1B3).
 //
 // exerciseType=2 (BODY_WEIGHT_WORKOUT) e' o fallback generico do HC
 // quando nao sabemos o tipo especifico (running, cycling, etc.).
@@ -197,7 +250,7 @@ const HC_EXERCISE_TYPE_GENERIC = 2;
 
 export async function escreverTreinoEmHC(meta: TreinoSessao): Promise<boolean> {
   const mod = carregarModulo();
-  if (!mod) return false;
+  if (!mod) return reportarFalhaHC('treino', 'no_module');
   try {
     const fim = new Date(meta.data);
     const duracaoMin = Math.max(1, meta.duracao_min);
@@ -212,9 +265,10 @@ export async function escreverTreinoEmHC(meta: TreinoSessao): Promise<boolean> {
         notes: meta.observacoes ?? undefined,
       },
     ]);
+    logSucessoHC('treino');
     return true;
-  } catch {
-    return false;
+  } catch (erro) {
+    return reportarFalhaHC('treino', classificarErroHC(erro), erro);
   }
 }
 
@@ -225,9 +279,11 @@ export async function escreverPesoEmHC(
   kg: number,
   data: Date = new Date()
 ): Promise<boolean> {
+  // Validacao de input: nao emite evento HC (input invalido nao e' falha
+  // de sync, e' bug no caller — saveTreino ja filtra typeof === 'number').
   if (!Number.isFinite(kg) || kg <= 0) return false;
   const mod = carregarModulo();
-  if (!mod) return false;
+  if (!mod) return reportarFalhaHC('peso', 'no_module');
   try {
     await mod.insertRecords([
       {
@@ -236,9 +292,10 @@ export async function escreverPesoEmHC(
         weight: { value: kg, unit: 'kilograms' },
       },
     ]);
+    logSucessoHC('peso');
     return true;
-  } catch {
-    return false;
+  } catch (erro) {
+    return reportarFalhaHC('peso', classificarErroHC(erro), erro);
   }
 }
 
@@ -248,11 +305,12 @@ export async function escreverBodyFatEmHC(
   percentage: number,
   data: Date = new Date()
 ): Promise<boolean> {
+  // Validacao de input (bug do caller, nao falha de sync): sai silente.
   if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
     return false;
   }
   const mod = carregarModulo();
-  if (!mod) return false;
+  if (!mod) return reportarFalhaHC('gordura', 'no_module');
   try {
     await mod.insertRecords([
       {
@@ -261,9 +319,10 @@ export async function escreverBodyFatEmHC(
         percentage,
       },
     ]);
+    logSucessoHC('gordura');
     return true;
-  } catch {
-    return false;
+  } catch (erro) {
+    return reportarFalhaHC('gordura', classificarErroHC(erro), erro);
   }
 }
 
@@ -277,7 +336,7 @@ export async function escreverMenstruacaoEmHC(
   intensidade: 1 | 2 | 3 = HC_FLOW_DEFAULT
 ): Promise<boolean> {
   const mod = carregarModulo();
-  if (!mod) return false;
+  if (!mod) return reportarFalhaHC('menstruacao', 'no_module');
   try {
     await mod.insertRecords([
       {
@@ -286,8 +345,9 @@ export async function escreverMenstruacaoEmHC(
         flow: intensidade,
       },
     ]);
+    logSucessoHC('menstruacao');
     return true;
-  } catch {
-    return false;
+  } catch (erro) {
+    return reportarFalhaHC('menstruacao', classificarErroHC(erro), erro);
   }
 }
