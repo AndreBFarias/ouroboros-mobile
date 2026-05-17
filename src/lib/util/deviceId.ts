@@ -16,6 +16,15 @@
 //     por uninstall+reinstall sem backup.
 //
 // Comentarios sem acento (convencao shell/CI).
+//
+// R-DX-SECURESTORE-WEB-DEV-FALLBACK: em ambiente web dev,
+// expo-secure-store nao tem implementacao direta e lanca
+// "ExpoSecureStore.default.getValueWithKeyAsync is not a function".
+// Detectamos Platform.OS === 'web' e usamos localStorage (ou
+// in-memory se nao disponivel). Mobile real (Android/iOS) e web
+// release continuam usando SecureStore nativo via try/catch
+// defensivo (defesa em camadas).
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 export const DEVICE_ID_KEY = 'ouroboros.device.id';
@@ -25,17 +34,57 @@ export const DEVICE_ID_KEY = 'ouroboros.device.id';
 // gera um novo na primeira chamada. Idempotente.
 let cacheMemoria: string | null = null;
 
+// Fallback web: usa localStorage quando disponivel; senao gera um
+// id efemero em memoria (so vale para a sessao atual). Mesma chave
+// canonica do SecureStore nativo.
+function getOrCreateInWebStorage(): string {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const existing = window.localStorage.getItem(DEVICE_ID_KEY);
+    if (existing) return existing;
+    const novo = `ouro-${randomShort()}`;
+    window.localStorage.setItem(DEVICE_ID_KEY, novo);
+    return novo;
+  }
+  // localStorage indisponivel (SSR, headless, sandbox): so memoria.
+  return `ouro-${randomShort()}`;
+}
+
+// Le Platform.OS de forma defensiva. Em alguns timers tardios
+// dentro do Jest (testes que ja sofreram teardown do mock de
+// react-native), `Platform` chega undefined. Tratamos como nao-web
+// e o try/catch externo cobre quaisquer falhas downstream.
+function platformOSSafe(): string {
+  try {
+    return Platform?.OS ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export async function getDeviceId(): Promise<string> {
   if (cacheMemoria) return cacheMemoria;
-  const cached = await SecureStore.getItemAsync(DEVICE_ID_KEY);
-  if (cached) {
-    cacheMemoria = cached;
-    return cached;
+  if (platformOSSafe() === 'web') {
+    const id = getOrCreateInWebStorage();
+    cacheMemoria = id;
+    return id;
   }
-  const novo = `ouro-${randomShort()}`;
-  await SecureStore.setItemAsync(DEVICE_ID_KEY, novo);
-  cacheMemoria = novo;
-  return novo;
+  try {
+    const cached = await SecureStore.getItemAsync(DEVICE_ID_KEY);
+    if (cached) {
+      cacheMemoria = cached;
+      return cached;
+    }
+    const novo = `ouro-${randomShort()}`;
+    await SecureStore.setItemAsync(DEVICE_ID_KEY, novo);
+    cacheMemoria = novo;
+    return novo;
+  } catch {
+    // Defesa em camadas: se SecureStore quebrar fora de web
+    // (ambiente exotico), cai no fallback web/in-memory.
+    const id = getOrCreateInWebStorage();
+    cacheMemoria = id;
+    return id;
+  }
 }
 
 // So usado em testes para forcar regeneracao. Nao expor em UI.
