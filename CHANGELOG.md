@@ -5,6 +5,14 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3D.1 — R-MEDIA-LINKEXTERNO-CLEANUP dead code (2026-05-17)
+
+Sprint anti-débito P3 entregue honrando worktree isolation. Commit `9cb8f6a` cherry-pick. 30min de cleanup conforme regra durável "mencionar dead code, não deletar inline".
+
+- **`src/components/screens/DetalheConquista.tsx`** (-39L): removidos `import Linking` de react-native, `ExternalLink` de `@/lib/icons`, `interface LinkExternoProps` (4L), `function LinkExterno` (32L).
+- **`ExternalLink` icon preservado** em `src/lib/icons.ts` (export central) — único uso remanescente em `MidiaPreviewSpotifyYoutube.tsx` (R-MEDIA-1).
+- Métricas: **266 suítes / 2495 testes** inalterado (sprint só remove dead code).
+
 ### Fase 3 Onda 3C.2 — R-WIDG-1 Widget homescreen to-do (2026-05-17)
 
 Sprint Fase 3 entregue honrando worktree isolation. Commit `97106e1` cherry-pick. Validação Nível C (celular real) fica como FOLLOW-UP.
