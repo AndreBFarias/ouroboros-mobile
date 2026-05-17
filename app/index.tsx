@@ -10,6 +10,12 @@
 //   - SecaoDiariosEventosAgrupado (timeline "Esta jornada") -- prioriza
 //     acao em vez de leitura cronologica.
 //
+// R-HOME-3 (2026-05-16): checkbox inline extraido para
+// <CheckboxTarefaInline> (32dp + hitSlop 16 = 64dp WCAG AAA) com
+// animacao Moti spring e toast "Desfazer" 5s padrao Material via
+// useToastUndo. Mantem persistencia otimista do R-HOME-1; agora com
+// reversao explicita via tap em Desfazer.
+//
 // Se o onboarding nao foi concluido, redireciona para /onboarding
 // (substituiu o PermissaoVaultModal da M02 a partir da M03).
 //
@@ -20,10 +26,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter, useFocusEffect } from 'expo-router';
-import { Check, Sparkles } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 import { Card, EmptyState, Header, Screen, Button } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
 import { useOnboarding } from '@/lib/stores/onboarding';
@@ -35,6 +41,8 @@ import {
   type TarefaListada,
 } from '@/lib/vault/tarefas';
 import { SecaoProximos } from '@/components/screens/SecaoProximos';
+import { CheckboxTarefaInline } from '@/components/tarefas/CheckboxTarefaInline';
+import { useToastUndo } from '@/lib/hooks/useToastUndo';
 
 // Q2.2 (Onda Q): Recap inline. Pressable direto resolve o problema do
 // Button generico colapsar layout flex no celular real (W1 do M-AUDIT
@@ -376,9 +384,14 @@ function saudacaoPorHora(date: Date): string {
   return 'Boa noite';
 }
 
-// Secao To-do hoje (R-HOME-1). Mostra ate 5 tarefas pendentes. Tap no
-// checkbox alterna feito (otimista). Long-press na lista navega para
-// /todo. Empty state breve quando nao ha tarefas.
+// Secao To-do hoje (R-HOME-1 + R-HOME-3). Mostra ate 5 tarefas pendentes.
+// Tap no checkbox alterna feito (otimista). Long-press na lista navega
+// para /todo. Empty state breve quando nao ha tarefas.
+//
+// R-HOME-3: checkbox extraido para <CheckboxTarefaInline> (32dp + hitSlop
+// 16 = 64dp WCAG AAA, animacao Moti spring com check escalando, strike-
+// through no titulo). Apos check, mostra toast "Desfazer" por 5s padrao
+// Material via useToastUndo; tap em Desfazer reverte (otimista + save).
 //
 // Filtro: tarefas com data === hoje OU pendentes mais recentes ate
 // completar 5. Conservador: usuario que registrou tarefa ontem ainda
@@ -393,6 +406,7 @@ function SecaoTodoHoje({ onLongPress }: SecaoTodoProps) {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const [tarefas, setTarefas] = useState<TarefaListada[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { mostrarUndo, UndoOverlay } = useToastUndo();
 
   const carregar = useCallback(async () => {
     if (!vaultRoot) {
@@ -421,12 +435,10 @@ function SecaoTodoHoje({ onLongPress }: SecaoTodoProps) {
       .slice(0, LIMITE_TODO_HOJE);
   }, [tarefas]);
 
-  const handleToggle = useCallback(
-    async (rel: string) => {
-      if (!vaultRoot) return;
-      const alvo = tarefas.find((t) => t.rel === rel);
-      if (!alvo) return;
-      // Otimista: atualiza local imediato, persist em paralelo.
+  // Atualiza estado otimista da lista local. Helper compartilhado entre
+  // toggle inicial e reversao via Desfazer.
+  const aplicarOtimista = useCallback(
+    (rel: string, novoFeito: boolean) => {
       setTarefas((cur) =>
         cur.map((t) =>
           t.rel === rel
@@ -434,36 +446,57 @@ function SecaoTodoHoje({ onLongPress }: SecaoTodoProps) {
                 ...t,
                 meta: {
                   ...t.meta,
-                  feito: !t.meta.feito,
-                  feito_em: !t.meta.feito ? new Date().toISOString() : null,
+                  feito: novoFeito,
+                  feito_em: novoFeito ? new Date().toISOString() : null,
                 },
               }
             : t
         )
       );
-      haptics.selection();
-      try {
-        await marcarFeito(vaultRoot, rel, !alvo.meta.feito);
-      } catch {
-        // Reverte estado local em caso de falha.
-        setTarefas((cur) =>
-          cur.map((t) =>
-            t.rel === rel
-              ? {
-                  ...t,
-                  meta: {
-                    ...t.meta,
-                    feito: alvo.meta.feito,
-                    feito_em: alvo.meta.feito_em,
-                  },
-                }
-              : t
-          )
-        );
-        haptics.error();
-      }
     },
-    [vaultRoot, tarefas]
+    []
+  );
+
+  // Persistencia + toast undo + rollback em erro. Usuario marca um item
+  // pendente como feito; a UI ja atualizou (CheckboxTarefaInline otimista).
+  // Aqui:
+  //   1) propaga estado novo pra lista local,
+  //   2) chama marcarFeito,
+  //   3) em sucesso, dispara toast "Desfazer" por 5s,
+  //   4) em erro, reverte + haptic erro.
+  const handleCheck = useCallback(
+    (rel: string, novoEstado: boolean) => {
+      if (!vaultRoot) return;
+      const alvo = tarefas.find((t) => t.rel === rel);
+      if (!alvo) return;
+      const estadoOriginal = alvo.meta.feito;
+      aplicarOtimista(rel, novoEstado);
+      // Persiste em paralelo; nao bloqueia o tap.
+      void (async () => {
+        try {
+          await marcarFeito(vaultRoot, rel, novoEstado);
+          // So oferece "Desfazer" quando o usuario marcou como feito.
+          // Reabrir manual (feito -> pendente) nao precisa de undo.
+          if (novoEstado) {
+            mostrarUndo('Tarefa concluida', () => {
+              // Reversao explicita: roda novo save com estado original
+              // e atualiza UI. Falha do save de reversao deixa estado
+              // local "intencional usuario" mesmo se vault discrepar
+              // (caller pode reabrir /todo pra forcar sync).
+              aplicarOtimista(rel, estadoOriginal);
+              void marcarFeito(vaultRoot, rel, estadoOriginal).catch(() => {
+                haptics.error();
+                aplicarOtimista(rel, novoEstado);
+              });
+            });
+          }
+        } catch {
+          aplicarOtimista(rel, estadoOriginal);
+          haptics.error();
+        }
+      })();
+    },
+    [vaultRoot, tarefas, aplicarOtimista, mostrarUndo]
   );
 
   return (
@@ -495,89 +528,17 @@ function SecaoTodoHoje({ onLongPress }: SecaoTodoProps) {
       ) : (
         <View style={{ gap: spacing.sm }}>
           {pendentes.map((t) => (
-            <ItemTodoInline
+            <CheckboxTarefaInline
               key={t.rel}
-              item={t}
-              onToggle={() => void handleToggle(t.rel)}
+              id={t.rel}
+              tarefa={{ titulo: t.meta.titulo, feito: t.meta.feito }}
+              onCheck={handleCheck}
               onLongPress={onLongPress}
             />
           ))}
         </View>
       )}
+      <UndoOverlay />
     </View>
-  );
-}
-
-// Item de tarefa inline na home: checkbox 22dp a esquerda + titulo
-// (line-through se feito). Tap em qualquer lugar do item alterna o
-// estado (mesmo padrao da Tela /todo). Long-press navega para /todo
-// para edicao detalhada.
-interface ItemTodoProps {
-  item: TarefaListada;
-  onToggle: () => void;
-  onLongPress: () => void;
-}
-function ItemTodoInline({ item, onToggle, onLongPress }: ItemTodoProps) {
-  const [pressed, setPressed] = useState(false);
-  const titulo = item.meta.titulo;
-  const feito = item.meta.feito;
-  const a11y = `tarefa ${titulo}${feito ? ' feita' : ' pendente'}`;
-
-  return (
-    <Pressable
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      onPress={onToggle}
-      onLongPress={() => {
-        haptics.medium();
-        onLongPress();
-      }}
-      delayLongPress={400}
-      accessibilityRole="checkbox"
-      accessibilityLabel={a11y}
-      accessibilityState={{ checked: feito }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.base,
-        backgroundColor: colors.bg,
-        borderRadius: radius.card,
-        opacity: pressed ? 0.85 : 1,
-      }}
-    >
-      <View
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: radius.input,
-          borderWidth: feito ? 0 : 2,
-          borderColor: colors.mutedDecor,
-          backgroundColor: feito ? colors.green : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        {feito ? (
-          <Check size={14} color={colors.bg} strokeWidth={3} />
-        ) : null}
-      </View>
-      <Text
-        numberOfLines={2}
-        style={{
-          flex: 1,
-          color: feito ? colors.muted : colors.fg,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: 14,
-          lineHeight: 22,
-          textDecorationLine: feito ? 'line-through' : 'none',
-        }}
-      >
-        {titulo}
-      </Text>
-    </Pressable>
   );
 }

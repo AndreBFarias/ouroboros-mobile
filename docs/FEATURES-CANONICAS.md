@@ -571,6 +571,43 @@ malformados são silenciosamente ignorados (mesmo padrão de
 - Botão "Ver storybook de componentes" gateado em `__DEV__` (some
   no release APK).
 
+### 9.3 v3 — R-HOME-1 + R-HOME-3 (2026-05-15 / 2026-05-16, ADR-0026)
+
+**Decisão D1=C**: a Tela Hoje vira foco em ação. Status do Casal,
+Humor do dia (sliders disabled) e Esta jornada (timeline) foram
+removidos por redundância com Recap. O usuário entra na Home pra
+agir, não pra ler retrospectiva.
+
+Layout R-HOME-1:
+- **Cabeçalho** com data por extenso ("Quarta, 16 de maio") +
+  pílula "Reflexão" (cyan) que abre `/diario-emocional?modo=reflexao`.
+- **Saudação personalizada** ("Boa noite, <nome>") em fg.
+- **Próximos** (mantido, sem mudança).
+- **To-do hoje** — até 5 tarefas pendentes em lista compacta com
+  checkbox inline. Empty state breve "Sem tarefas pendentes. Toque
+  + para criar." Long-press na lista navega para `/todo` (CRUD
+  completo).
+- **Botão Recap** centralizado em pill roxa.
+- Header simples ("Hoje"); sem avatar (filtro de pessoa vive no
+  MenuLateral).
+
+R-HOME-3 (refinamento do checkbox de R-HOME-1):
+- **CheckboxTarefaInline 32dp** (`src/components/tarefas/`) com
+  hitSlop 16dp → área efetiva 64dp (WCAG AAA).
+- **Animação Moti spring** (`springs.snappy`) no toggle e no ícone
+  Check, sem timing linear (ADR-010).
+- **Strike-through** + cor `muted` no título quando feita.
+- **Persistência otimista**: UI atualiza antes do `marcarFeito`
+  resolver no vault. Em erro, rollback automático + haptic erro.
+- **Toast "Desfazer" 5s** (`useToastUndo` em `src/lib/hooks/`)
+  padrão Material Design. Tap reverte o estado e refaz o save.
+  Só aparece quando o usuário marca como **feita** (reabrir
+  manual feito→pendente não precisa de undo).
+
+`accessibilityRole="checkbox"` + `accessibilityLabel="marcar tarefa
+<titulo>"` (sem acento — convenção screen reader) +
+`accessibilityState={ checked }`.
+
 ## 10. Opt-ins (toggle on em Settings, default ON)
 
 ### 10.1 Acompanhador de Ciclo Menstrual — M14.5
