@@ -75,7 +75,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INFRA-ENV-JSON-TSCONFIG | Fallback tipo env.json (achado R-CRIT-4) | infra | P3 | 30min | `R-INFRA-ENV-JSON-TSCONFIG-spec.md` |
 | R-INFRA-WORKTREE-BOOTSTRAP | Script bootstrap automático worktrees (achado recorrente) | infra | P3 | 30–45min | `R-INFRA-WORKTREE-BOOTSTRAP-spec.md` |
 | R-NAV-1 | Ciclo botão registrar → FAB | refactor | P2 | `a3a624f` | `[ok]` (3B.2) |
-| R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | 1–2h | `R-NAV-3-FAB-CONSISTENCIA-EDIT-DELETE-spec.md` |
+| R-NAV-3 | FAB consistência edit/delete (header) | refactor | P2 | `[rejeitado-replan]` | `R-NAV-3-REPLAN-spec.md` |
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | 4–6h | `R-WIDG-1-TODO-LIST-RAPIDA-spec.md` |
 | R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | `e53fb54` | `[ok]` (DX.2) |
