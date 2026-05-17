@@ -2,9 +2,9 @@
 //
 // Cenarios cobertos:
 //   1. Fixture 2 eventos + 1 alarme -- ordem temporal correta.
-//      Eventos sao injetados direto no vaultMock (in-memory) para
-//      simular o cache do OAuth Calendar sync sem precisar de rede.
-//      Alarmes vem do seed default + adicionados via vaultMock.
+//      Eventos sao injetados via __gauntlet.setEventosAgendaMock
+//      (R-INFRA-GAUNTLET-AGENDA-MOCK, 2026-05-17). Alarmes sao
+//      injetados via __gauntlet.setArquivoMock (mesma sprint).
 //   2. Graceful fallback sem OAuth -- somente alarmes/tarefas (sem
 //      eventos no vaultMock).
 //
@@ -31,41 +31,45 @@ export default async function caseRHome2(
     await page.waitForTimeout(2000);
 
     // CENARIO 1: 2 eventos agenda + 1 alarme -> 3 itens em ordem.
+    // Eventos: 30min (Cafe da manha), 3h (Reuniao). Alarme: 1.5h
+    // (Medicacao) entre os dois eventos. Janela hard 4h.
+    // Resultado esperado em ordem: Cafe, Medicacao, Reuniao.
+    //
+    // IMPORTANTE: usar __gauntlet.abrir() para SPA-navigate sem
+    // recarregar a pagina. page.goto() destroi o useVaultMock
+    // in-memory e perde os eventos injetados.
     await page.evaluate(() => {
+      type AgendaEvento = {
+        id: string;
+        pessoa: 'pessoa_a' | 'pessoa_b';
+        titulo: string;
+        inicio: string;
+        fim: string;
+        local?: string;
+        fonte: 'google_calendar';
+        sincronizado_em: string;
+      };
       const w = globalThis as unknown as {
         __gauntlet: {
           reset: () => void;
           seed: () => void;
           setOnboardingDone: (b: boolean) => void;
+          setEventosAgendaMock: (
+            pessoa: 'pessoa_a' | 'pessoa_b',
+            eventos: AgendaEvento[]
+          ) => number;
+          setArquivoMock: (uri: string, conteudo: string) => void;
+          abrir: (rota: string) => Promise<void>;
         };
       };
       w.__gauntlet.reset();
       w.__gauntlet.seed();
       w.__gauntlet.setOnboardingDone(true);
 
-      // Injeta eventos diretamente no vaultMock simulando cache OAuth.
-      // Eventos: 08:30 (Cafe da manha), 11:00 (Reuniao).
-      // Alarme: 09:30 (Medicacao).
-      // Resultado esperado em ordem: Cafe, Medicacao, Reuniao.
-      const wMock = globalThis as unknown as {
-        useVaultMock?: {
-          getState: () => {
-            setArquivo: (uri: string, conteudo: string) => void;
-          };
-        };
-      };
-      if (!wMock.useVaultMock) return;
-      const setArquivo = wMock.useVaultMock.getState().setArquivo;
-      const VAULT = 'web://mock-vault/Ouroboros';
       const agora = new Date();
-      const ano = agora.getFullYear();
-      const mes = String(agora.getMonth() + 1).padStart(2, '0');
-      const dia = String(agora.getDate()).padStart(2, '0');
-      const ymd = `${ano}-${mes}-${dia}`;
 
-      // Calcula hora atual em BRT (offset -03:00). Para o teste
-      // funcionar deterministico mesmo em diferentes TZs do host
-      // do CI, usamos hora local + 1h, +1.5h, +3h.
+      // Calcula ISO BRT (offset -03:00) deterministico independente
+      // do TZ do host do CI.
       const isoBRT = (offsetHoras: number, offsetMin: number = 0): string => {
         const total = new Date(
           agora.getTime() + offsetHoras * 3600_000 + offsetMin * 60_000
@@ -79,45 +83,30 @@ export default async function caseRHome2(
         return `${y}-${m}-${d}T${hh}:${mm}:00-03:00`;
       };
 
-      // Evento 1: 30 min no futuro.
-      const ev1Inicio = isoBRT(0, 30);
-      const ev1Frontmatter = [
-        '---',
-        'id: ev-cafe',
-        'pessoa: pessoa_a',
-        'titulo: Cafe da manha',
-        `inicio: ${ev1Inicio}`,
-        `fim: ${isoBRT(1, 30)}`,
-        'fonte: google_calendar',
-        `sincronizado_em: ${isoBRT(-1)}`,
-        '---',
-        '',
-      ].join('\n');
-      setArquivo(
-        `${VAULT}/markdown/agenda-pessoa_a-${ymd}-ev-cafe.md`,
-        ev1Frontmatter
-      );
+      // 2 eventos: 30min e 3h no futuro.
+      const eventos: AgendaEvento[] = [
+        {
+          id: 'ev-cafe',
+          pessoa: 'pessoa_a',
+          titulo: 'Cafe da manha',
+          inicio: isoBRT(0, 30),
+          fim: isoBRT(1, 30),
+          fonte: 'google_calendar',
+          sincronizado_em: isoBRT(-1),
+        },
+        {
+          id: 'ev-reuniao',
+          pessoa: 'pessoa_a',
+          titulo: 'Reuniao tarde',
+          inicio: isoBRT(3),
+          fim: isoBRT(4),
+          fonte: 'google_calendar',
+          sincronizado_em: isoBRT(-1),
+        },
+      ];
+      w.__gauntlet.setEventosAgendaMock('pessoa_a', eventos);
 
-      // Evento 2: 3h no futuro (ainda dentro janela 4h).
-      const ev2Inicio = isoBRT(3);
-      const ev2Frontmatter = [
-        '---',
-        'id: ev-reuniao',
-        'pessoa: pessoa_a',
-        'titulo: Reuniao tarde',
-        `inicio: ${ev2Inicio}`,
-        `fim: ${isoBRT(4)}`,
-        'fonte: google_calendar',
-        `sincronizado_em: ${isoBRT(-1)}`,
-        '---',
-        '',
-      ].join('\n');
-      setArquivo(
-        `${VAULT}/markdown/agenda-pessoa_a-${ymd}-ev-reuniao.md`,
-        ev2Frontmatter
-      );
-
-      // Alarme: 1.5h no futuro (entre os dois eventos).
+      // Alarme 1.5h no futuro. Layout: markdown/alarmes-<slug>.md.
       const alarmeHora = (() => {
         const t = new Date(agora.getTime() + 90 * 60_000);
         const local = new Date(t.getTime() + -180 * 60_000);
@@ -144,10 +133,21 @@ export default async function caseRHome2(
         '---',
         '',
       ].join('\n');
-      setArquivo(`${VAULT}/markdown/alarmes-medicacao.md`, alarmeFm);
+      const VAULT = 'web://mock-vault/Ouroboros';
+      // Path canonico singular: markdown/alarme-<slug>.md (R-INFRA-
+      // GAUNTLET-AGENDA-MOCK 2026-05-17 -- bug pre-existente do
+      // E2E original usava plural 'alarmes-' que matchesFeaturePrefix
+      // ainda casava por startsWith, mas o schema/path canonico
+      // documentado em src/lib/vault/paths.ts:163 e' singular).
+      w.__gauntlet.setArquivoMock(
+        `${VAULT}/markdown/alarme-medicacao.md`,
+        alarmeFm
+      );
+
+      // SPA navigate -- preserva useVaultMock in-memory.
+      void w.__gauntlet.abrir('/');
     });
 
-    await page.goto('http://localhost:8081/');
     await page.waitForTimeout(7000);
 
     const txtCenario1 = await page.evaluate(() => document.body.innerText);
@@ -165,7 +165,7 @@ export default async function caseRHome2(
       posMedicacao > posCafe &&
       posReuniao > posMedicacao;
 
-    const path1 = 'docs/sprints/R-HOME-2-screenshots-gauntlet/A-mescla-3-itens.png';
+    const path1 = 'docs/sprints/R-HOME-2-screenshots-gauntlet/A-mescla-agenda-alarme.png';
     await page.screenshot({ path: path1, fullPage: true });
     screenshots.push(path1);
 
@@ -189,28 +189,28 @@ export default async function caseRHome2(
     }
 
     // CENARIO 2: graceful fallback sem OAuth (sem eventos no vaultMock).
+    // Apenas 1 alarme; secao mostra so esse item, sem mensagem de
+    // erro de autenticacao (auth e da rota /agenda).
+    //
+    // Volta para /_dev/gauntlet primeiro (page.goto -- reset total
+    // do vaultMock implicito ao reload), depois injeta e SPA-navigate
+    // para /.
+    await page.goto('http://localhost:8081/_dev/gauntlet');
+    await page.waitForTimeout(2000);
     await page.evaluate(() => {
       const w = globalThis as unknown as {
         __gauntlet: {
           reset: () => void;
           seed: () => void;
           setOnboardingDone: (b: boolean) => void;
+          setArquivoMock: (uri: string, conteudo: string) => void;
+          abrir: (rota: string) => Promise<void>;
         };
       };
       w.__gauntlet.reset();
       w.__gauntlet.seed();
       w.__gauntlet.setOnboardingDone(true);
 
-      // Sem eventos no vaultMock. Apenas alarme.
-      const wMock = globalThis as unknown as {
-        useVaultMock?: {
-          getState: () => {
-            setArquivo: (uri: string, conteudo: string) => void;
-          };
-        };
-      };
-      if (!wMock.useVaultMock) return;
-      const setArquivo = wMock.useVaultMock.getState().setArquivo;
       const VAULT = 'web://mock-vault/Ouroboros';
       const agora = new Date();
       const alarmeHora = (() => {
@@ -220,6 +220,10 @@ export default async function caseRHome2(
         const mm = String(local.getUTCMinutes()).padStart(2, '0');
         return `${hh}:${mm}`;
       })();
+      // AlarmeTagSchema e' enum fechado ('medicacao' | 'treino' |
+      // 'outro'). 'outro' cobre catch-all sem aceitar texto livre
+      // -- nao podemos usar 'hidratacao' (resultaria em safeParse
+      // falhando e o alarme nao seria listado).
       const fm = [
         '---',
         'tipo: alarme',
@@ -228,7 +232,7 @@ export default async function caseRHome2(
         `horario: ${alarmeHora}`,
         'recorrencia: diaria',
         'dias_semana: []',
-        'tag: hidratacao',
+        'tag: outro',
         'som: gentle',
         'ativo: true',
         'snooze_minutos: 5',
@@ -239,10 +243,11 @@ export default async function caseRHome2(
         '---',
         '',
       ].join('\n');
-      setArquivo(`${VAULT}/markdown/alarmes-agua.md`, fm);
+      // Path canonico singular alarme-<slug>.md (ver coment cenario 1).
+      w.__gauntlet.setArquivoMock(`${VAULT}/markdown/alarme-agua.md`, fm);
+      void w.__gauntlet.abrir('/');
     });
 
-    await page.goto('http://localhost:8081/');
     await page.waitForTimeout(7000);
 
     const txtCenario2 = await page.evaluate(() => document.body.innerText);

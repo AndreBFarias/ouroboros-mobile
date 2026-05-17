@@ -358,6 +358,55 @@ Use estes helpers em E2Es para validar **conteúdo** dos arquivos
 gravados (devicesIndex, frases, humores, eventos, etc), não só
 "não crashou".
 
+### Escrita arbitrária no Vault mock (R-INFRA-GAUNTLET-AGENDA-MOCK, 2026-05-17)
+
+Para popular o vault mock com arquivos crus (alarmes, tarefas,
+fixtures legadas) sem passar pelo schema de eventos agenda:
+
+```js
+window.__gauntlet.setArquivoMock(
+  'web://mock-vault/Ouroboros/markdown/alarmes-agua.md',
+  '---\ntipo: alarme\nslug: agua\n...\n---\n'
+);
+```
+
+Simétrico a `lerVaultMock`. No-op em mobile (guard filtra). Para
+eventos agenda, prefira `setEventosAgendaMock` (valida contra
+`AgendaEventoSchema` e usa path canônico).
+
+### Eventos da agenda Google (R-INFRA-GAUNTLET-AGENDA-MOCK, 2026-05-17)
+
+Em vez de simular o cache OAuth Calendar via `setArquivo` cru,
+use o helper dedicado:
+
+```js
+window.__gauntlet.setEventosAgendaMock('pessoa_a', [
+  {
+    id: 'ev-cafe',
+    pessoa: 'pessoa_a',
+    titulo: 'Café da manhã',
+    inicio: '2026-05-17T08:00:00-03:00',
+    fim: '2026-05-17T09:00:00-03:00',
+    fonte: 'google_calendar',
+    sincronizado_em: '2026-05-17T07:00:00-03:00',
+  },
+  // ... outros eventos
+]);
+```
+
+O helper:
+
+- Valida cada evento contra `AgendaEventoSchema` (`src/lib/vault/agenda.ts`).
+- Escreve cada um como `.md` em `markdown/agenda-<pessoa>-YYYY-MM-DD-<id>.md`
+  (path canônico idêntico ao `salvarEventoAgenda` mobile).
+- Idempotente: chamadas repetidas com mesmo id+inicio sobrescrevem.
+- Retorna a quantidade de eventos persistidos (filtra inválidos).
+- Requer `vaultRoot` definido em `useVault` — chame `seed()` antes.
+
+Usado pelo E2E `tests/e2e/playwright/r-home-2-proximos-eventos-merge.e2e.ts`
+para validar mescla agenda + alarmes sem precisar de OAuth real
+nem rede.
+
 ### Re-disparo dos BOOT_HOOKS (V4 v2, 2026-05-08)
 
 `BOOT_HOOKS` (em `src/lib/boot/reagendamento.ts`) rodam uma única

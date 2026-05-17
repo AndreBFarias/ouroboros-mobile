@@ -14,8 +14,22 @@
 // para isolar casos E2E. Reload da pagina perde o estado -- por design,
 // igual aos outros mocks (frasesMock, galeriaMock, etc).
 //
+// R-INFRA-GAUNTLET-AGENDA-MOCK (2026-05-17): setEventos popula
+// markdown/agenda-<pessoa>-YYYY-MM-DD-<id>.md em massa para que
+// listarEventosAgenda devolva eventos sem precisar de OAuth sync real.
+// Usado pelo E2E playwright R-HOME-2 para validar mescla agenda+alarmes.
+//
 // Comentarios sem acento (convencao shell/CI).
 import { create } from 'zustand';
+import type { AgendaEvento } from '@/lib/vault/agenda';
+import { agendaEventoPath, vaultUriJoin } from '@/lib/vault/paths';
+import { stringifyFrontmatter } from '@/lib/vault/frontmatter';
+
+// Sanitizacao identica ao salvarEventoAgenda em src/lib/vault/agenda.ts.
+// Mantida local para nao criar dependencia circular vault/dev.
+function sanitizarEventoId(id: string): string {
+  return id.replace(/[/\\:*?"<>|.]+/g, '_');
+}
 
 interface VaultMockState {
   // Mapa uri canonica -> conteudo serializado (.md completo).
@@ -34,6 +48,17 @@ interface VaultMockState {
   // Lista uris dentro de uma pasta (prefix match). Equivalente ao
   // readDirectoryAsync do SAF. Filtra por ext quando fornecida.
   listarPasta: (prefixo: string, ext?: string) => string[];
+  // R-INFRA-GAUNTLET-AGENDA-MOCK: popula eventos da agenda de uma
+  // pessoa escrevendo cada um como .md em markdown/. Path canonico
+  // identico ao salvarEventoAgenda mobile: agenda-<pessoa>-ymd-<id>.md.
+  // Sobrescreve qualquer evento existente com mesmo id+inicio. Os
+  // eventos passados sao validados contra AgendaEventoSchema pelo
+  // caller (gauntlet API). Reset zera todos via limpar().
+  setEventos: (
+    vaultRoot: string,
+    pessoa: 'pessoa_a' | 'pessoa_b',
+    eventos: AgendaEvento[]
+  ) => void;
   // Zera o mapa. Chamado por aplicarReset do gauntlet.
   limpar: () => void;
 }
@@ -64,5 +89,32 @@ export const useVaultMock = create<VaultMockState>((set, get) => ({
     filtrado.sort();
     return filtrado;
   },
+  setEventos: (vaultRoot, pessoa, eventos) =>
+    set((s) => {
+      // Defesa: pessoa deve casar com cada evento. Se nao casar,
+      // o filtro de listarEventosAgenda (matchesFeaturePrefix
+      // 'agenda-<pessoa>-') exclui silenciosamente, entao registrar
+      // como warn ajuda diagnostico em E2E. Em produo este store
+      // nem existe (dead-code em release).
+      const novo = new Map(s.arquivos);
+      for (const ev of eventos) {
+        if (ev.pessoa !== pessoa) {
+          // Pessoa do evento difere do parametro. Persistimos com a
+          // pessoa do evento (autoritaria) para que listarEventosAgenda
+          // o encontre. Warning apenas em modo dev.
+          if (typeof console !== 'undefined') {
+            console.warn(
+              `[useVaultMock.setEventos] evento ${ev.id} tem pessoa=${ev.pessoa} mas chamada pediu ${pessoa}; persistindo com pessoa do evento`
+            );
+          }
+        }
+        const idSeguro = sanitizarEventoId(ev.id);
+        const rel = agendaEventoPath(ev.pessoa, ev.inicio, idSeguro);
+        const uri = vaultUriJoin(vaultRoot, rel);
+        const raw = stringifyFrontmatter(ev, '');
+        novo.set(uri, raw);
+      }
+      return { arquivos: novo };
+    }),
   limpar: () => set({ arquivos: new Map() }),
 }));

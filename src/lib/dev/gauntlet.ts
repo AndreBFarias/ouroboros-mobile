@@ -33,6 +33,10 @@ import { useFrasesMock } from '@/lib/dev/frasesMock';
 import { useVaultMock } from '@/lib/dev/vaultMockStore';
 import { slugDeFrase, stringifyCompanionMidia } from '@/lib/midia/companion';
 import type { Para } from '@/lib/schemas/para';
+import {
+  AgendaEventoSchema,
+  type AgendaEvento,
+} from '@/lib/vault/agenda';
 // M-GAUNTLET-DEAD-CODE-V2: a flag canonica vive em gauntletAtivo (micro-
 // modulo zero-deps). Reexportamos como GAUNTLET_ATIVO aqui para back-compat
 // de testes existentes (jest mocks de '@/lib/dev/gauntlet') e do
@@ -139,6 +143,13 @@ export interface GauntletAPI {
   // V4.0: lista todas as URIs gravadas no Vault mock. Ordenado
   // alfabeticamente. Retorna [] em mobile.
   listarVaultMock(): string[];
+  // R-INFRA-GAUNTLET-AGENDA-MOCK (2026-05-17): escreve um arquivo
+  // arbitrario no Vault mock. Simetrico a lerVaultMock. Usado pelo
+  // E2E playwright para popular alarmes/tarefas/eventos crus sem
+  // depender de schema-validacao. Para eventos agenda, prefira
+  // setEventosAgendaMock (valida e usa path canonico). No-op em
+  // mobile (guard ja filtra).
+  setArquivoMock(uri: string, conteudo: string): void;
   // V4 v2 (escopo expandido pos-rejeicao formal V4 v1, 2026-05-08):
   // re-dispara todos os BOOT_HOOKS registrados em
   // @/lib/boot/reagendamento.ts. Necessario porque BOOT_HOOKS rodam
@@ -149,6 +160,23 @@ export interface GauntletAPI {
   // no boot inicial. E2Es que validam efeitos de boot precisam
   // re-disparar a fila apos seed. No-op em mobile (guard ja filtra).
   disparaBootHooks(): Promise<void>;
+  // R-INFRA-GAUNTLET-AGENDA-MOCK (2026-05-17): popula eventos da
+  // agenda Google da pessoa diretamente no useVaultMock, sem precisar
+  // de OAuth sync. Cada evento vira um .md em
+  // markdown/agenda-<pessoa>-YYYY-MM-DD-<id>.md, formato canonico
+  // identico ao salvarEventoAgenda mobile. Util para E2E playwright
+  // validar mescla agenda+alarmes (R-HOME-2) sem rede.
+  //
+  // Eventos sao validados contra AgendaEventoSchema; entradas
+  // invalidas sao ignoradas (warning em console). Requer vaultRoot
+  // ja definido em useVault (chame seed() antes). No-op em mobile
+  // (guard filtra).
+  //
+  // Retorna o numero de eventos persistidos (filtrando invalidos).
+  setEventosAgendaMock(
+    pessoa: 'pessoa_a' | 'pessoa_b',
+    eventos: AgendaEvento[]
+  ): number;
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -391,6 +419,41 @@ async function aplicarAdicionarFotoMock(): Promise<void> {
   });
 }
 
+// R-INFRA-GAUNTLET-AGENDA-MOCK: valida cada evento contra
+// AgendaEventoSchema e delega ao useVaultMock.setEventos a escrita
+// .md em massa. Eventos invalidos sao logados e ignorados (defensivo
+// para inputs malformados no E2E). Retorna quantidade persistida.
+function aplicarSetEventosAgendaMock(
+  pessoa: 'pessoa_a' | 'pessoa_b',
+  eventos: AgendaEvento[]
+): number {
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[gauntlet.setEventosAgendaMock] vaultRoot nao definido; chame seed() antes.'
+      );
+    }
+    return 0;
+  }
+  const validos: AgendaEvento[] = [];
+  for (const ev of eventos) {
+    const parsed = AgendaEventoSchema.safeParse(ev);
+    if (!parsed.success) {
+      if (typeof console !== 'undefined') {
+        console.warn(
+          `[gauntlet.setEventosAgendaMock] evento invalido ignorado: ${parsed.error.message}`
+        );
+      }
+      continue;
+    }
+    validos.push(parsed.data);
+  }
+  if (validos.length === 0) return 0;
+  useVaultMock.getState().setEventos(vaultRoot, pessoa, validos);
+  return validos.length;
+}
+
 // M-AUDIT-MIGUE-FRASE-WEB-MOCK: gera companion .md determiniscico
 // (mesmo path H2, mesmo frontmatter que o mobile real) e empilha em
 // useFrasesMock. Resolucao de colisao simples: se ja existe entrada
@@ -526,6 +589,15 @@ const api: GauntletAPI = {
       await import('@/lib/boot/reagendamento');
     await reagendarTodosBootHooks();
   },
+  setEventosAgendaMock: (pessoa, eventos) => {
+    if (!GAUNTLET_ATIVO) return 0;
+    return aplicarSetEventosAgendaMock(pessoa, eventos);
+  },
+  setArquivoMock: comGuard(
+    (uri: string, conteudo: string) =>
+      useVaultMock.getState().setArquivo(uri, conteudo),
+    undefined as void
+  ),
 };
 
 // Auditoria 2026-05-04 (item 27): captura console.error para o
