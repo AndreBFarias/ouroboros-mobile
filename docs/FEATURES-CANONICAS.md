@@ -397,6 +397,30 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - Rotinas removidas após a criação do grupo aparecem desabilitadas
   no sheet ("Rotina removida (slug)") sem quebrar a UI.
 
+### 4.6.1 Exposição em Saúde Física — R-SF-1 (Onda R 2026-05-16)
+
+Os mesmos Grupos da seção 4.6 são acessíveis **diretamente em
+`/saude-fisica`** sem passar por `/grupos`:
+
+- A `SaudeFisicaScreen` ganhou uma 4ª tab **"Grupos"** ao lado de
+  Treinos / Evolução / Exercícios. A tab lista os grupos do autor
+  (mesmo store `listarGrupos`) e usa empty state canônico "Crie um
+  grupo para reunir várias rotinas (Treino A, B, C).".
+- Tap em um card de grupo navega para `/grupos/<slug>` (rota
+  existente Q19.b com edição + pill "Iniciar").
+- O FAB+ verde (`MenuCapturaVerde`) recebe duas ações contextuais
+  novas:
+  - **"Iniciar treino"** (fixa, visível em qualquer tab de Saúde
+    Física): abre o `BottomSheet` `SeletorGrupoTreino` que lista os
+    grupos; ao escolher, navega para `/grupos/<slug>` reusando a
+    lógica de iniciar Q19.b (1 rotina = direto, N rotinas = sheet
+    `SeletorTreinoDoGrupo`).
+  - **"Novo grupo"** (contextual, quando a aba Grupos está ativa):
+    navega para `/grupos/novo`.
+- Idempotência: alterações feitas via `/grupos/*` ou via a aba em
+  `/saude-fisica` compartilham o mesmo `listarGrupos` /
+  `escreverGrupo`. `useFocusEffect` recarrega ao voltar.
+
 ## 5. Medidas Corporais — M12 (Telas 12, 13)
 
 - Form: peso, cintura, quadril, peito, braço, coxa, gordura

@@ -1,8 +1,11 @@
 // Smoke da rota app/saude-fisica.tsx (sprint L1 renomeou de
 // app/memoria.tsx). Verifica que SaudeFisicaScreen renderiza header,
-// as 3 tabs corretas (Treinos / Evolucao Corporal / Exercicios) e que
+// as 4 tabs corretas (Treinos / Evolucao / Exercicios / Grupos) e que
 // a aba inicial e Treinos. Aba Fotos foi removida; a verificacao
 // explicita garante regressao.
+//
+// R-SF-1 (Onda R, 2026-05-16): inclui a 4a tab "Grupos" e a acao fixa
+// "Iniciar treino" no FAB+ verde (MenuCapturaVerde).
 //
 // Mocka os hooks de dados para nao depender de SAF/file system real,
 // e mocka @gorhom/bottom-sheet usando require dentro do factory para
@@ -64,6 +67,16 @@ jest.mock('@/lib/vault/exercicios', () => ({
   excluirExercicio: () => Promise.resolve({ lixeiraPath: '' }),
 }));
 
+// R-SF-1: mock do helper de Grupos (mesmo padrao do exercicios). Lista
+// vazia por default; testes que precisam de grupos populam via let.
+jest.mock('@/lib/vault/grupo_treino', () => ({
+  __esModule: true,
+  listarGrupos: () => Promise.resolve([]),
+  lerGrupo: () => Promise.resolve(null),
+  escreverGrupo: () => Promise.resolve({ uri: '', rel: '' }),
+  removerGrupo: () => Promise.resolve(),
+}));
+
 // Mock minimal do @gorhom/bottom-sheet. Usa View nativo via 'View'
 // nome de componente para evitar referenciar React fora de escopo.
 jest.mock('@gorhom/bottom-sheet', () => {
@@ -91,7 +104,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
 import SaudeFisicaTab from '@/../app/saude-fisica';
 
 describe('app/saude-fisica.tsx', () => {
-  it('renderiza header "Saude Fisica" e as 3 tabs (Treinos / Evolucao / Exercicios)', () => {
+  it('renderiza header "Saude Fisica" e as 4 tabs (Treinos / Evolucao / Exercicios / Grupos)', () => {
     const { getByText, queryByText } = render(<SaudeFisicaTab />);
     expect(getByText('Saúde Física')).toBeTruthy();
     expect(getByText('Treinos')).toBeTruthy();
@@ -100,6 +113,8 @@ describe('app/saude-fisica.tsx', () => {
     expect(getByText('Evolução')).toBeTruthy();
     expect(queryByText('Evolução Corporal')).toBeNull();
     expect(getByText('Exercícios')).toBeTruthy();
+    // R-SF-1: 4a tab "Grupos" presente.
+    expect(getByText('Grupos')).toBeTruthy();
     // Regressao: aba Fotos e label antigo "Memorias" foram removidos.
     expect(queryByText('Fotos')).toBeNull();
     expect(queryByText('Memórias')).toBeNull();
@@ -109,5 +124,15 @@ describe('app/saude-fisica.tsx', () => {
   it('mostra empty state quando nao ha treinos (aba inicial)', () => {
     const { getByText } = render(<SaudeFisicaTab />);
     expect(getByText('Vai aparecer aqui assim que você treinar.')).toBeTruthy();
+  });
+
+  it('R-SF-1: tab "Grupos" tem accessibilityLabel "tab grupos"', () => {
+    // Comportamento (lista + empty state + navegacao para /grupos/novo)
+    // e' coberto isoladamente em tests/components/saude-fisica/
+    // GruposTab.test.tsx. Aqui apenas verificamos que a barra de tabs
+    // expoe o seletor da 4a tab com a label de acessibilidade canonica
+    // (consumida pelo E2E Playwright e leitores de tela).
+    const { getByLabelText } = render(<SaudeFisicaTab />);
+    expect(getByLabelText('tab grupos')).toBeTruthy();
   });
 });
