@@ -446,43 +446,50 @@ mudança no main.
 `hooks/` não é registrado e o bootstrap não dispara automaticamente
 — neste caso, rodar o script manualmente.
 
-### Gauntlet multi-porta em worktree paralelo (r-dx-gauntlet-multi-porta, 2026-05-17)
+### Config jest com diagnóstico defensivo (r-infra-jest-flaky-timeout, 2026-05-17 — fase 1 parcial)
 
-Quando 2+ agentes rodam em worktrees paralelos e ambos precisam
-validar visualmente via Gauntlet, a porta 8081 fixa serializava
-o trabalho artificialmente. A partir desta sprint:
+`package.json#jest` ganhou `"testTimeout": 15000` (de 5000ms
+default). Função: dar margem ao cleanup do
+`@testing-library/react-native` (`afterEach` em
+`node_modules/@testing-library/react-native/src/index.ts:15`) sob
+picos de CPU em runs paralelos. Mensagem de erro muda de
+"Exceeded 5000ms" para "Exceeded 15000ms" — diagnóstico mais
+preciso quando ocorrer.
 
-```bash
-./gauntlet.sh                # default 8081 (compat reversa)
-./gauntlet.sh --port 8082    # porta explícita
-./gauntlet.sh --auto-port    # detecta primeira livre em [8081-8099]
-```
+**Importante:** este ajuste NÃO cura a flakiness; a sprint
+original `R-INFRA-JEST-FLAKY-TIMEOUT` (fase 1) descobriu que o
+problema real é **handle leak no worker pool do Jest**, não
+timeout. Jest sinaliza `A worker process has failed to exit
+gracefully... Active timers can also cause this`. Suítes que
+passam isoladas em <2s travam em paralelo por causa de
+`setTimeout`/Promise pendente em código de produção (Toast,
+Sheets, Reanimated lifecycle) que vaza para o worker seguinte.
 
-**Helper:** `scripts/auto-port.sh` retorna primeira porta TCP livre
-na faixa (default 8081-8099) usando `ss -tln`. Usado pelo modo
-`--auto-port` do gauntlet.
+**Combinações testadas e descartadas na sprint:**
 
-**Lock cooperativo:** `/tmp/gauntlet-port-<PORT>.lock` registra o
-PID do filho Metro. Segundo gauntlet na mesma porta com Metro
-vivo é recusado; lock órfão (processo morreu) é limpo silencioso.
+- `maxWorkers: 50%` ou `2` — piora (mais suítes empilhadas por
+  worker = mais leak acumulado).
+- `testTimeout: 30000` — só atrasa o erro, smoke demora mais sem
+  estabilizar.
+- `forceExit: true` — atinge fim da run, não o `afterEach` que
+  falha durante.
+- `setupFilesAfterEnv` com `afterEach { clearAllTimers }` — handle
+  vazado não é setTimeout JS visível.
+- `jest.retryTimes(2)` global — multiplica latência sem aumentar
+  taxa de sucesso (leak persiste entre retries no mesmo worker).
+- `--runInBand` — 179 falhas em 950s (mocks globais saturam).
 
-**Cache cleanup per-porta:** em worktree, `.expo` local é limpo
-sempre. Caches globais `/tmp/metro-file-map-*` só são limpos
-quando **não há outras instâncias gauntlet ativas** (detectado
-via presença de `/tmp/gauntlet-port-*.lock`). Em paralelo: cada
-worktree preserva seu file-map para não invalidar o do vizinho.
+**Fix verdadeiro segue débito** em sprint nova (`R-INFRA-JEST-LEAK-HUNT`
+a planejar): rodar `--detectOpenHandles` em suítes específicas
+para identificar a origem do leak, e corrigir cleanup em
+componentes (Toast, Sheets, ciclo de vida React) — escopo que
+exige tocar código de produção, fora do escopo desta sprint.
 
-**Shim de `expo-router/_ctx.web`:** em worktree (detectado via
-`EXPO_ROUTER_APP_ROOT` exportado pelo gauntlet.sh) o
-`metro.config.js` re-roteia o require de `expo-router/_ctx.web`
-para `<projectRoot>/_ctx.web.local.js`, que chama
-`require.context('./app', ...)` com path literal. Isso bypassa o
-inline-env do babel-preset-expo, que em cache compartilhado entre
-worktrees paralelos pode pegar o `app/` errado e gerar "Welcome
-to Expo" no Chrome.
-
-Documentação detalhada: `docs/GAUNTLET.md` seção "Validação
-visual em paralelo".
+Para investigar flakiness no futuro: rodar isolado o teste
+suspeito (`npm test -- <arquivo>`) leva ~1-2s consistentemente; a
+falha só aparece sob carga em paralelo competindo por CPU.
+Histórico empírico no spec
+`docs/sprints/R-INFRA-JEST-FLAKY-TIMEOUT-spec.md` Anexo A.
 
 ---
 

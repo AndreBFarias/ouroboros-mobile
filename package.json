@@ -26,6 +26,7 @@
       "<rootDir>/tests/**/*.test.ts",
       "<rootDir>/tests/**/*.test.tsx"
     ],
+    "testTimeout": 15000,
     "transformIgnorePatterns": [
       "node_modules/(?!(jest-)?@?react-native|@react-native-community|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|moti|react-clone-referenced-element|@react-native-picker|@react-navigation|nativewind|react-native-css-interop|lucide-react-native)"
     ],

@@ -5,6 +5,46 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Infra — R-INFRA-JEST-FLAKY-TIMEOUT diagnóstico aprofundado (2026-05-17) — **FASE 1 PARCIAL, segue débito**
+
+Sprint puramente de infraestrutura de testes. Origem: achado colateral de R-RECAP-LISTA-FIX-LOOP. Smoke `./scripts/smoke.sh` alternava entre verde e 2-8 testes falhando aleatoriamente entre runs sem mudança no código, erodindo confiança no guard-rail de pre-push.
+
+**Resultado:** spec original previa fix por config jest (caminhos A/B/C), mas execução empírica de 6 iterações de config (testTimeout=15000, testTimeout=30000, maxWorkers=50%, maxWorkers=2, forceExit=true, setupFilesAfterEnv + afterEach defensivo + retryTimes(2)) revelou que **nenhuma combinação config-only resolve**. Smoke continuou falhando 3/3 runs em todas as variações testadas.
+
+**Causa raiz revisada (descoberta na sprint):** o problema NÃO é apenas timeout do `afterEach` do RNTL. Jest sinaliza claramente:
+
+```
+A worker process has failed to exit gracefully and has been force exited.
+This is likely caused by tests leaking due to improper teardown.
+Active timers can also cause this, ensure that .unref() was called on them.
+```
+
+Em **isolado**, qualquer suíte que falhou em paralelo passa em <2s. Em paralelo, demora 30-90s e estoura timeout — sintoma clássico de **handle leak no worker pool**. Algum código de produção (provavelmente Toast, Sheets, ou mocks com Promise pendente em ciclo de vida React) deixa timer/handle que o `cleanupAsync` do RNTL não consegue limpar, e o próximo teste no mesmo worker herda o estado vazado.
+
+**Aplicado pela sprint (parcial):**
+
+- **`package.json#jest`** ganha `"testTimeout": 15000` — eleva o limite default de 5000ms para 15000ms. NÃO cura a flakiness (continua falhando), mas é defensa razoável e idiomática: a mensagem de erro muda de "Exceeded 5000ms" para "Exceeded 15000ms", dando margem a picos de CPU genuínos.
+
+**Rejeitado pela sprint (testado, descartado):**
+
+- `maxWorkers: 50%` ou `2` — piora (menos workers, mais suítes empilhadas por worker, mais oportunidade de leak acumular).
+- `testTimeout: 30000` — só atrasa o erro, smoke demora mais sem ficar verde.
+- `forceExit: true` — atinge fim da run (não o `afterEach` que falha durante).
+- `setupFilesAfterEnv` + `afterEach { clearAllTimers }` global — não captura o handle vazado (não é setTimeout JS visível).
+- `jest.retryTimes(2)` global — multiplica o tempo de run sem aumentar taxa de sucesso, pois o leak persiste entre retries.
+
+**Débito empilhado (será sprint nova):**
+
+A flakiness real exige tocar **código de produção ou de teste** (fora do escopo desta sprint conforme spec original). Plano: nova sprint `R-INFRA-JEST-LEAK-HUNT` que:
+
+1. Roda jest com `--detectOpenHandles` em suítes específicas (FAB, Toast, RecapSecaoCrises) para identificar a fonte real do leak.
+2. Audita Toast.tsx, OuroborosLoader e ciclo de vida de Sheets em busca de `setTimeout` sem `.unref()` ou `clearTimeout` em unmount.
+3. Adiciona `afterEach(() => cleanup())` explícito em suítes mais críticas, mesmo redundante com o auto-cleanup do RNTL, para forçar serialização.
+
+**Não tocado nesta sprint:** `jest.setup.cjs` (decisão: testTimeout em package.json é equivalente canônico); `scripts/smoke.sh` (testes com maxWorkers só pioram); nenhuma suíte de teste individual.
+
+Spec: `docs/sprints/R-INFRA-JEST-FLAKY-TIMEOUT-spec.md`.
+
 ### Fase 3 Onda 3D.3 — R-NAV-3-V2 ConfirmarExclusao Modal Dracula (2026-05-17) — **Onda 3D 3/3 fechada**
 
 Sprint Fase 3 (refactor UX) entregue honrando worktree isolation. Commit `3c54009` cherry-pick. Replan de R-NAV-3 rejeitada, com decisões a2+b2 aplicadas autonomamente.
