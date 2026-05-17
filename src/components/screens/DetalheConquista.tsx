@@ -10,14 +10,13 @@
 // Comentários em PT-BR com acentuação correta.
 import { useEffect, useState } from 'react';
 import {
-  Linking,
   Modal,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native';
-import { ExternalLink, MapPin, X } from '@/lib/icons';
+import { MapPin, X } from '@/lib/icons';
 import { Image as ExpoImage } from 'react-native';
 import { Screen, Header } from '@/components/ui';
 import { CoverMidia } from '@/components/data/CoverMidia';
@@ -269,42 +268,4 @@ function MidiaInterativa({ midia }: { midia: Midia }) {
     return <WaveformPreview path={midia.path} duracaoSeg={midia.duracao_seg} />;
   }
   return null;
-}
-
-interface LinkExternoProps {
-  rotulo: string;
-  url: string;
-}
-
-function LinkExterno({ rotulo, url }: LinkExternoProps) {
-  return (
-    <Pressable
-      onPress={() => {
-        haptics.light();
-        void Linking.openURL(url);
-      }}
-      accessibilityRole="link"
-      accessibilityLabel={`abrir ${rotulo}`}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        padding: 12,
-        backgroundColor: colors.bgAlt,
-        borderRadius: 12,
-      }}
-    >
-      <ExternalLink size={18} color={colors.cyan} strokeWidth={1.5} />
-      <Text
-        style={{
-          color: colors.cyan,
-          fontSize: 13,
-          lineHeight: 18,
-          flex: 1,
-        }}
-      >
-        {rotulo}
-      </Text>
-    </Pressable>
-  );
 }
