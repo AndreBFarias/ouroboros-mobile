@@ -5,6 +5,20 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sub-onda DX.3 — R-DX-SECURESTORE-WEB-DEV-FALLBACK fallback web pro getDeviceId (2026-05-16 noite)
+
+Sprint anti-débito entregue honrando worktree isolation. Commit `ffd86fc` cherry-pick. Elimina o overlay vermelho `ExpoSecureStore.default.getValueWithKeyAsync is not a function` que afetava 3 sprints anteriores em web dev.
+
+- **`src/lib/util/deviceId.ts`** (+57 / -8): `import Platform from 'react-native'`, novo helper `getOrCreateInWebStorage()` (localStorage com fallback in-memory), `getDeviceId()` detecta `Platform.OS === 'web'` via wrapper defensivo `platformOSSafe()` antes do path SecureStore. try/catch externo no path nativo cai no fallback web se SecureStore lançar (defesa em camadas).
+- **+4 testes** em `tests/lib/util/deviceId.test.ts` cobrindo: web + localStorage, web sem window, android nativo, android + SecureStore lança.
+- Métricas: **249 suítes / 2324 testes** verde (worktree side; 2329 vs 2325 acumulado pós-cherrypick).
+- **Bug interno descoberto e fixado durante sprint**: `Platform.OS` undefined em timers tardios em jest (teardown timing race). Resolvido com helper `platformOSSafe()` que faz `Platform?.OS ?? 'unknown'` dentro de try/catch. Fix idempotente, dentro do escopo.
+
+**Achados colaterais** (já cobertos por outras sprints anti-débito ou aceitos como pré-existentes):
+1. Worktree sem `node_modules`/`env.json` — já R-INFRA-WORKTREE-BOOTSTRAP.
+2. `Platform.OS undefined` em timers (resolvido inline com `platformOSSafe`).
+3. TS2307 em `googleAuthFlow.ts:20` por `env.json` ausente — pré-existente.
+
 ### Sub-onda DX.2 — R-DX-EXECUTOR-WORKTREE-ENFORCE hook detective (2026-05-16 noite)
 
 Sprint anti-débito entregue honrando worktree isolation. Commit `e53fb54` cherry-pick.
