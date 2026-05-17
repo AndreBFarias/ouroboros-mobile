@@ -69,7 +69,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-SF-3 | Marcação rápida (Venvanse, hábitos) | feature | P2 | 2–3h | `R-SF-3-MARCACAO-RAPIDA-MED-spec.md` |
 | R-ROT-1 | Rotinas inteligência temporal | feature | P1 | `[rejeitado-replan]` | `R-ROT-1-REPLAN-spec.md` |
 | R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
-| R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
+| R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | `a15eb3a` | `[ok]` (3A.3, re-dispatch) |
 | R-MEDIA-2 | Recap autoplay áudio | feature | P2 | `9d8e5d7` | `[ok]` (3A.1) |
 | R-RECAP-6 | Botão compartilhar slide Memórias (PNG 1080x1920) | feature | P2 | 2–3h | `R-RECAP-6-SHARE-SLIDE-MEMORIAS-spec.md` |
 | R-INFRA-ENV-JSON-TSCONFIG | Fallback tipo env.json (achado R-CRIT-4) | infra | P3 | 30min | `R-INFRA-ENV-JSON-TSCONFIG-spec.md` |

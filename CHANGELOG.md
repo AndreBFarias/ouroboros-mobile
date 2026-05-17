@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3A.3 — R-RECAP-5 Eventos do Contador (re-dispatch) (2026-05-16 noite) — **Onda 3A 3/4 fechada**
+
+Sprint Fase 3 entregue honrando worktree isolation. Commit `a15eb3a` cherry-pick. Re-dispatch após perda operacional da 1ª tentativa (`a671213c`) por bug do orquestrador com zsh glob expansion em paths bracketed (`[slug]`).
+
+- **Schema novo `evento_contador`** em `src/lib/schemas/evento_contador.ts` (Zod versão 1). Path canônico H2: `markdown/evento-contador-<contadorId>-<YYYY-MM-DD>-<slug>.md`. Frontmatter: tipo, contadorId, data, humor (1-5), descricao, tags, midias.
+- **Writer `src/lib/contadores/escreverEvento.ts`**: atomic via `writeVaultFile` + `forceDeviceIdSuffix` + filtro `ehSyncConflict`.
+- **Hook `src/lib/hooks/useEventosContador.ts`**: lista por contador slug.
+- **Helper `src/lib/vault/eventosContador.ts`**: parse canônico.
+- **Componente `src/components/screens/RecapContador.tsx`**: timeline + slideshow mídias (reusa pattern KenBurns R-RECAP-4).
+- **Botão "+ Evento" + form modal** em `app/contadores/[slug].tsx`: humor slider + descrição + tags + mídia anexa.
+- **+67 testes** novos (33 schema + 9 writer + 5 hook + 7 vault + 13 componente). Métricas: **256 suítes / 2408 testes** verde · TS strict 0 · smoke ok.
+- **Drift contract**: 222 → 234 campos (+12 do `evento_contador`). Atualização em `docs/CONTRACT-MOBILE-BACKEND.md` §5.32 + regeneração `.csv` via `exportar_contrato.py`.
+- **FEATURES-CANONICAS.md §10.4** atualizada.
+
+**Validação visual impossível**: 3 tentativas com mesmo hash `6d6fe1eb...` (Welcome to Expo template). Sub-onda DX.4 corrigiu symlinks mas há edge case remanescente em worktree quando rodando paralelo. Cobertura compensada por 13 testes de render + 5 de hook com `@testing-library/react-native` validando DOM + interação tap pause/retomar.
+
+**Onda 3A: 3/4 fechada**:
+- 3A.1 R-MEDIA-2 (`9d8e5d7`)
+- 3A.2 R-SF-1 (`1bc2a21`)
+- 3A.3 R-RECAP-5 (atual)
+- ~~3A.4 R-ROT-1~~ rejeitado formalmente, replan-spec criada com 4 opções
+
 ### Fase 3 Onda 3A.2 — R-SF-1 Grupos de Treino em Saúde Física (2026-05-16 noite)
 
 Sprint Fase 3 entregue honrando worktree isolation. Commit `78cbca0` cherry-pick.
