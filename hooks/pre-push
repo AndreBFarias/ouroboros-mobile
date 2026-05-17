@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# Pre-push hook: smoke test completo antes de push.
+# Pre-push hook: anonimato (Regra -1) + smoke completo antes de push.
+# Sprint r-dx-6 (2026-05-17) adicionou check_anonimato.sh explicito
+# para fail-fast em strings proibidas (Claude, GPT, Anthropic, nomes
+# reais, etc) antes do smoke pesado.
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
+
+echo ">> anonimato pre-push"
+./scripts/check_anonimato.sh
+
 ./scripts/smoke.sh
