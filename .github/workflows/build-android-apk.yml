@@ -12,6 +12,14 @@
 # que bate o cadastrado em Google Cloud Console (OAuth funciona).
 # Fallback: sem os secrets cai em debug keystore (legado pre-Q17.e)
 # sem quebrar o workflow.
+#
+# R-OPS-3 (2026-05-17): caches gradle/node_modules separados.
+# Antes: chave gradle dependia de package-lock.json: toda mudanca
+# npm invalidava 3GB de deps Gradle (Hermes, RN core, Reanimated,
+# androidx). Agora: chave gradle baseia em package.json + app.json
+# (estaveis); node_modules em chave propria com package-lock.json.
+# android/.gradle removido (expo prebuild --clean apaga sempre).
+# Meta: 11min para menos de 6min em run com cache hit (Onda 3g.4).
 name: Build Android APK
 
 on:
@@ -48,7 +56,20 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 platforms;android-34 build-tools;35.0.0 build-tools;34.0.0'
 
+      # R-OPS-3: cache node_modules antes de npm ci. Hit poupa ~60s
+      # de install. setup-node@v4 cache:'npm' acima ja cacheia ~/.npm
+      # global; este cache cobre node_modules expandido.
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
       - name: Install npm deps
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --legacy-peer-deps
 
       - name: Provision env.json
@@ -63,16 +84,20 @@ jobs:
             cp env.json.example env.json
           fi
 
-      - name: Cache Gradle
+      # R-OPS-3: cache deps Gradle (peso maior, ~3GB). Chave nao
+      # depende de package-lock.json — apenas package.json (Expo SDK)
+      # + app.json (plugins que viram build.gradle). Reduz invalidacao
+      # falsa quando so muda dep JS pura. android/.gradle nao entra
+      # porque 'expo prebuild --clean' apaga a pasta a cada run.
+      - name: Cache Gradle deps
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            android/.gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'package-lock.json') }}
+          key: ${{ runner.os }}-gradle-deps-${{ hashFiles('package.json', 'app.json') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-gradle-deps-
 
       - name: Expo prebuild Android
         run: npx expo prebuild --platform android --no-install --clean
