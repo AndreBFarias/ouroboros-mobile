@@ -70,7 +70,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-ROT-1 | Rotinas inteligência temporal | feature | P1 | `[rejeitado-replan]` | `R-ROT-1-REPLAN-spec.md` |
 | R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
 | R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | 2–3h | `R-RECAP-5-CONTADORES-EVENTOS-spec.md` |
-| R-MEDIA-2 | Recap autoplay áudio | feature | P2 | 2–3h | `R-MEDIA-2-RECAP-AUTOPLAY-AUDIO-spec.md` |
+| R-MEDIA-2 | Recap autoplay áudio | feature | P2 | `9d8e5d7` | `[ok]` (3A.1) |
 | R-RECAP-6 | Botão compartilhar slide Memórias (PNG 1080x1920) | feature | P2 | 2–3h | `R-RECAP-6-SHARE-SLIDE-MEMORIAS-spec.md` |
 | R-INFRA-ENV-JSON-TSCONFIG | Fallback tipo env.json (achado R-CRIT-4) | infra | P3 | 30min | `R-INFRA-ENV-JSON-TSCONFIG-spec.md` |
 | R-INFRA-WORKTREE-BOOTSTRAP | Script bootstrap automático worktrees (achado recorrente) | infra | P3 | 30–45min | `R-INFRA-WORKTREE-BOOTSTRAP-spec.md` |
@@ -80,6 +80,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INT-4 | Spotify/YouTube conectar | feature | P3 | 4–6h | `R-INT-4-SPOTIFY-YOUTUBE-CONECTAR-spec.md` |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | `e53fb54` | `[ok]` (DX.2) |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | 30min | `R-MEDIA-LINKEXTERNO-CLEANUP-spec.md` |
+| R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | 30-60min | `R-RECAP-FIX-LOOP-spec.md` |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |

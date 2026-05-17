@@ -5,6 +5,22 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3A.1 — R-MEDIA-2 autoplay áudio anexado Recap Memórias (2026-05-16 noite)
+
+Sprint Fase 3 entregue honrando worktree isolation. Commit `9d8e5d7` cherry-pick.
+
+- **2ª instância `Audio.Sound`** em `app/recap-memorias.tsx` (anexado, paralela à ambient do R-RECAP-4). Fade-in/out simétrico 500ms. Cross-fade com ambient (prioridade: anexado > ambient se ativado).
+- **Toggle Settings** "Áudio do item no slideshow" em SecaoRecapMemorias (default ON).
+- **`audioPath?: string | null`** propagado de `ConquistaItem`/`CriseItem`/`ReflexaoItem` → slide líder via helper `extrairAudioPath(meta.midia)`.
+- **Schema `vault_estado.ts`** ganha `recapAudioAnexadoAutoplay: z.boolean().optional()` (retrocompat com `.md` pré-sprint).
+- **+12 testes Jest** (6 `useRecapMemorias-audio` + 6 `useRecap-audio-anexado`). Métricas: **251 suítes / 2341 testes** verde · TS strict 0 · smoke ok.
+- **6 screenshots Gauntlet** via playwright headless (settings toggle visível + slideshow).
+
+**Achados colaterais** (1 sprint nova, 2 informativos):
+1. **Bug pré-existente "Maximum update depth"** em `/recap-memorias` (R-RECAP-4 ou anterior). `range` recriado a cada render → loop. Sprint nova **R-RECAP-FIX-LOOP** registrada (P2, 30-60min). Verificado via `git stash` — não introduzido por R-MEDIA-2.
+2. **R-RECAP-5 (Onda 3A, ainda rodando) escreveu temporariamente no main local** — observado por R-MEDIA-2 antes de iniciar. R-MEDIA-2 fez `git checkout --` e trabalhou só no worktree dele. Working tree do main clean agora.
+3. `expo-share-intent v6.1.0 vs SDK 54` warning pré-existente.
+
 ### Sub-onda DX.4 — R-INFRA-GAUNTLET-WORKTREE-SYMLINK Gauntlet honra worktree path (2026-05-16 noite) — **Sub-onda DX 4/4 fechada**
 
 Sprint anti-débito entregue honrando worktree isolation. Commit cherry-pick. **Fim da Sub-onda DX**.
