@@ -31,6 +31,85 @@ O script:
 Em sessão fresca, `useFonts` SDK 54 web demora ~30-60s para resolver
 na primeira navegação. Aguarde antes de interagir.
 
+## Gravação de vídeo (`--record`)
+
+> **R-DX-2 (2026-05-17)** — `gauntlet.sh --record [DURATION]` grava
+> a sessão como MP4 H.264 a partir do display X11. Útil pra revisão
+> pós-sprint sem precisar acompanhar ao vivo.
+
+Uso:
+
+```bash
+# Grava 30s (default) após o navegador abrir
+./gauntlet.sh --record
+
+# Grava 60s
+./gauntlet.sh --record 60
+
+# Grava até Ctrl-C (sem limite de tempo)
+./gauntlet.sh --record 0
+```
+
+O que acontece:
+
+1. `gauntlet.sh` sobe Metro e abre o navegador como sempre.
+2. Aguarda 3s para a janela renderizar.
+3. Dispara `scripts/gauntlet-record.sh DURATION` em background.
+4. O script detecta a janela do Chrome via `xdotool` e grava
+   apenas a área da janela (fallback: tela inteira se xdotool não
+   casar nenhum título).
+5. Output em `docs/gauntlet-videos/video-<porta>-<timestamp>.mp4`.
+6. Log do recorder em `/tmp/gauntlet-record-<porta>.log`.
+
+Codec: H.264 (libx264 ultrafast) a 500kbps com pixfmt yuv420p
+(compatível com qualquer player). Arquivo típico de 30s fica
+em ~1-2MB.
+
+### Standalone (sem subir Gauntlet)
+
+`scripts/gauntlet-record.sh` também funciona sozinho — útil se o
+Gauntlet já está rodando ou se quer gravar outra coisa:
+
+```bash
+# Grava 5s na janela ativa do Chrome
+./scripts/gauntlet-record.sh 5
+
+# Grava 60s pra arquivo específico
+./scripts/gauntlet-record.sh 60 docs/sprints/r-dx-2-screenshots-gauntlet/demo.mp4
+
+# Sem limite (Ctrl-C pra parar)
+./scripts/gauntlet-record.sh 0
+
+# Geometry manual (skip xdotool)
+GAUNTLET_RECORD_GEOMETRY=1280x720+100+100 ./scripts/gauntlet-record.sh 10
+```
+
+Variáveis de ambiente para ajuste fino:
+
+- `GAUNTLET_RECORD_FPS` — framerate (default `15`, arquivos
+  pequenos).
+- `GAUNTLET_RECORD_BITRATE` — bitrate H.264 (default `500k`).
+- `GAUNTLET_RECORD_DISPLAY` — display X11 (default `$DISPLAY`).
+- `GAUNTLET_RECORD_GEOMETRY` — `WxH+X+Y` manual (skip xdotool).
+- `GAUNTLET_RECORD_WINDOW` — regex de match no título da janela
+  (default `"Gauntlet|localhost:80|Ouroboros"`).
+
+### Pré-requisitos
+
+- `ffmpeg` — obrigatório (`sudo apt install ffmpeg`).
+- `xdotool` — opcional, melhora detecção de janela.
+- `xdpyinfo` — opcional, valida `$DISPLAY` antes de gravar.
+- X11 ativo (`$DISPLAY` setado). Wayland puro não é suportado;
+  use XWayland fallback se necessário.
+
+### Encerramento limpo
+
+`gauntlet-record.sh` registra trap em `INT` e `TERM` que envia
+`SIGINT` ao `ffmpeg` para que o muxer escreva o atom `moov` antes
+de fechar. Sem isso, MP4 pode ficar corrompido se `kill -9` for
+usado direto. Use `Ctrl-C` (foreground) ou `kill <PID>` (sem
+`-9`) para parar gravações abertas.
+
 ## Validação visual em paralelo (multi-worktree, multi-porta)
 
 > **R-DX-GAUNTLET-MULTI-PORTA (2026-05-17)** — `gauntlet.sh` suporta

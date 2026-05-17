@@ -7,6 +7,9 @@
 #   ./gauntlet.sh --verbose        # mostra log em foreground (debug)
 #   ./gauntlet.sh --port 8082      # sobe na porta explicita (multi-worktree)
 #   ./gauntlet.sh --auto-port      # detecta primeira porta livre em [8081-8099]
+#   ./gauntlet.sh --record         # grava video 30s (default) apos navegador abrir
+#   ./gauntlet.sh --record 60      # grava video 60s
+#   ./gauntlet.sh --record 0       # grava ate Ctrl-C / kill (sem limite de tempo)
 #
 # O que faz:
 #   1. Resolve porta efetiva (default 8081, ou --port, ou --auto-port).
@@ -103,6 +106,8 @@ CLEAR=0
 VERBOSE=0
 PORT_EXPLICIT=""
 AUTO_PORT=0
+RECORD=0
+RECORD_DURATION=30
 i=1
 while [[ $i -le $# ]]; do
   arg="${!i}"
@@ -119,6 +124,18 @@ while [[ $i -le $# ]]; do
       fi
       ;;
     --auto-port) AUTO_PORT=1 ;;
+    --record)
+      RECORD=1
+      # Lookahead: proximo arg, se for numero, vira RECORD_DURATION.
+      next_idx=$((i + 1))
+      if [[ $next_idx -le $# ]]; then
+        next_val="${!next_idx:-}"
+        if [[ "$next_val" =~ ^[0-9]+$ ]]; then
+          RECORD_DURATION="$next_val"
+          i=$next_idx
+        fi
+      fi
+      ;;
     *) echo "AVISO: flag desconhecida: $arg (ignorada)" ;;
   esac
   i=$((i + 1))
@@ -253,6 +270,28 @@ if command -v xdg-open >/dev/null 2>&1; then
   xdg-open "$URL_GAUNTLET" > /dev/null 2>&1 &
 elif command -v open >/dev/null 2>&1; then
   open "$URL_GAUNTLET" > /dev/null 2>&1 &
+fi
+
+# 7. Dispara gravacao em background se --record (R-DX-2 gauntlet record video).
+#    Aguarda 3s para o navegador renderizar e xdotool casar a janela.
+#    Output vai pra docs/gauntlet-videos/video-<porta>-<timestamp>.mp4.
+RECORD_PID=""
+RECORD_OUTPUT=""
+if [[ $RECORD -eq 1 ]]; then
+  if [[ ! -x "$ROOT/scripts/gauntlet-record.sh" ]]; then
+    echo "AVISO: --record pedido mas scripts/gauntlet-record.sh ausente; pulando." >&2
+  else
+    RECORD_OUTPUT="$ROOT/docs/gauntlet-videos/video-${PORT}-$(date +%Y%m%d-%H%M%S).mp4"
+    mkdir -p "$(dirname "$RECORD_OUTPUT")"
+    (
+      sleep 3
+      "$ROOT/scripts/gauntlet-record.sh" "$RECORD_DURATION" "$RECORD_OUTPUT"
+    ) > "/tmp/gauntlet-record-${PORT}.log" 2>&1 &
+    RECORD_PID=$!
+    disown 2>/dev/null || true
+    echo "Gravando video por ${RECORD_DURATION}s -> $RECORD_OUTPUT"
+    echo "  log: /tmp/gauntlet-record-${PORT}.log  (PID $RECORD_PID)"
+  fi
 fi
 
 if [[ $VERBOSE -eq 0 ]]; then
