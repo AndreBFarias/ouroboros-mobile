@@ -82,7 +82,7 @@ Bloqueia `v1.0.0-rc2`.
 | 1‖ | R-RECAP-4 `[ok]` (Onda 2B.3, `afa22bc`) | Memórias slideshow v2 | feature | P2 | 3–4h | `R-RECAP-4-MEMORIAS-SLIDESHOW-V2-spec.md` |
 | 1‖ | R-MEDIA-1 `[ok]` (Onda 2A.3, `8088c80`) | Spotify/YouTube/áudio preview | feature | P1 | 3–4h | `R-MEDIA-1-SPOTIFY-YOUTUBE-AUDIO-PREVIEW-spec.md` |
 | 1‖ | R-HOME-1 `[ok]` (Onda 2B.4, `43d6266`) | Hoje prioridade + recorrência | refactor+redesign | P1 | 4–5h | `R-HOME-1-PRIORIDADE-RECORRENCIA-spec.md` (D1=C aplicada) |
-| 2 | R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
+| 2 | R-HOME-2 `[ok]` (Onda 2C.3, `249f91e`) | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
 | 2‖ | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
 | 3 | R-INT-1 `[ok]` (Onda 2C.2, `946855d`) | Hub Integrações Utilitários | feature | P1 | 2–3h | `R-INT-1-HUB-UTILITARIOS-spec.md` |
 | 3‖ | R-INT-2 `[ok]` (Onda 2C.1, `b4b33d9`) | Nome do app em permissões | fix | P1 | 1–2h | `R-INT-2-NOME-APP-PERMISSOES-spec.md` |
@@ -118,6 +118,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | 1-2h | `R-DX-SECURESTORE-WEB-DEV-FALLBACK-spec.md` |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
+| R-INFRA-GAUNTLET-AGENDA-MOCK | API __gauntlet.setEventosAgendaMock para E2E mescla | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
 | **R-CROSS-FLOW-FIX-2** | **CRÍTICO cross-repo**: sibling ETL não lê `markdown/` (layout H2). Todo vault pós-refundação invisível pro desktop. | bug+cross-repo | **P1-high** | sibling | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |
 | R-CROSS-FLOW-FIX-1 | `avaliarBackupAutomatico` declarado SEM CALLER no boot path (achado cenário 10) | fix | P1 | 1h | `R-CROSS-FLOW-FIX-1-BACKUP-AUTOMATICO-ORFAO-spec.md` |
 | R-CROSS-FLOW-FIX-3 | Scanner OCR duplicata na Galeria (achado cenário 4) | fix | P2 | 1-2h | `R-CROSS-FLOW-FIX-3-SCANNER-DUPLICATA-GALERIA-spec.md` |

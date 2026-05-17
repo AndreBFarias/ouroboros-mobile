@@ -50,7 +50,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-4 | Memórias slideshow v2 | feature | P2 | `afa22bc` | `[ok]` (Onda 2B.3) |
 | R-MEDIA-1 | Spotify/YouTube/áudio preview | feature | P1 | `8088c80` | `[ok]` (Onda 2A.3) |
 | R-HOME-1 | Hoje prioridade e recorrência (D1=C remover Status+Humor) | refactor+redesign | P1 | `43d6266` | `[ok]` (Onda 2B.4) |
-| R-HOME-2 | Hoje próximos eventos merge | feature | P2 | 2–3h | `R-HOME-2-PROXIMOS-EVENTOS-MERGE-spec.md` |
+| R-HOME-2 | Hoje próximos eventos merge | feature | P2 | `249f91e` | `[ok]` (Onda 2C.3) |
 | R-HOME-3 | Hoje to-do inline check | feature | P1 | 1–2h | `R-HOME-3-TODO-INLINE-CHECK-spec.md` |
 | R-INT-1 | Hub Integrações Utilitários (depende VAULT-B) | feature | P1 | `946855d` | `[ok]` (Onda 2C.2) |
 | R-INT-2 | Nome do app em permissões | fix | P1 | `b4b33d9` | `[ok]` (Onda 2C.1) |
@@ -80,6 +80,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | 1-2h | `R-DX-SECURESTORE-WEB-DEV-FALLBACK-spec.md` |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | 2-3h | `R-INFRA-GAUNTLET-WORKTREE-SYMLINK-spec.md` |
+| R-INFRA-GAUNTLET-AGENDA-MOCK | API `__gauntlet.setEventosAgendaMock` para E2E mescla agenda+alarmes (achado R-HOME-2) | infra+DX | P3 | 1h | `R-INFRA-GAUNTLET-AGENDA-MOCK-spec.md` |
 | R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
 | R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |

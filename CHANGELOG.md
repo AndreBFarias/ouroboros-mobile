@@ -5,6 +5,20 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2C.3 — R-HOME-2 Próximos mescla agenda Google + alarmes locais (2026-05-16 noite)
+
+Sprint da Fase 2 entregue honrando worktree isolation. Commit `249f91e` cherry-pick.
+
+- **Helper puro `src/lib/proximos/mesclarAgendaAlarmes.ts`**: janela 4h + sort cronológico ascendente + limite hard de 3 itens. 100% testável em isolamento.
+- **`src/lib/hooks/useProximos.ts`** estendido: `construirProximos` ganha 4º parâmetro `eventos: AgendaEvento[]`. Hook lê `listarEventosAgenda` para `pessoa_a` E `pessoa_b` com `.catch(() => [])` — graceful fallback sem OAuth conectado.
+- **`src/components/screens/SecaoProximos.tsx`**: micro-ícone por tipo (Calendar para eventos, Bell para alarmes, Check para concluídos) com cores semânticas.
+- **+22 testes** (11 unit `mesclarAgendaAlarmes` + 6 RTL `SecaoProximos-render` + 5 atualizações em test existente). Métricas: **243 suítes / 2281 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **2 screenshots Gauntlet** em `docs/sprints/R-HOME-2-screenshots-gauntlet/`: fallback sem OAuth (empty state correto) + tentativa cenário mescla.
+- FEATURES-CANONICAS §9.2 atualizada com fonte agenda + ícones + fallback.
+
+**Achado colateral**:
+1. **`__gauntlet.setEventosAgendaMock` não existe** — bloqueia E2E playwright cenário "mescla 3 itens" via Gauntlet Nível A+. Cobertura compensada por testes unit + RTL. Sprint nova **R-INFRA-GAUNTLET-AGENDA-MOCK** registrada (P3, 1h).
+
 ### Onda 2C.2 — R-INT-1 Hub Integrações Utilitários (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `946855d` cherry-pick.
