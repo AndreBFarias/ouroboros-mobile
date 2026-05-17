@@ -218,3 +218,17 @@ execução. Detalhes em cada spec individual.
 - **ROADMAP geral**: [`/ROADMAP.md`](../../ROADMAP.md) seção "Onda R"
 - **Auditoria 2026-05-15**: [`/CHANGELOG.md`](../../CHANGELOG.md) seção "[Unreleased]"
 - **Sprints específicas**: cada arquivo `docs/sprints/<id>-spec.md`
+
+## Sprints derivadas de issues (auto-geradas)
+
+> Seção semeada por `R-DX-3`. Entradas adicionadas automaticamente por
+> `scripts/issue-to-spec.sh <numero-da-issue>`. Cada entry referencia
+> o spec gerado em `docs/sprints/ISSUE-<N>-<SLUG>-spec.md`.
+>
+> Fluxo: ao chegar feature/bug nova via GitHub Issues, rodar o script
+> para gerar spec skeleton, então promover para fase/onda apropriada
+> após revisão do dono (mover a entry para a tabela da Fase 1/2/3/4
+> correspondente, com Ordem / P / Estimativa preenchidos).
+
+<!-- entries auto-geradas vao aqui -->
+

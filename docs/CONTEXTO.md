@@ -491,6 +491,61 @@ falha só aparece sob carga em paralelo competindo por CPU.
 Histórico empírico no spec
 `docs/sprints/R-INFRA-JEST-FLAKY-TIMEOUT-spec.md` Anexo A.
 
+### Geração automática de spec a partir de issue (r-dx-3, 2026-05-17)
+
+Quando feature/bug nova chega via GitHub Issues em vez de já entrar
+direto no `docs/sprints/_BACKLOG.md`, o script
+`./scripts/issue-to-spec.sh <numero-da-issue>` faz a ponte: lê título,
+body e labels da issue via `gh issue view --json` e gera spec skeleton
+em `docs/sprints/ISSUE-<N>-<SLUG>-spec.md` aplicando o template canônico
+de `docs/sprints/_template-spec.md`.
+
+**Uso:**
+
+```bash
+./scripts/issue-to-spec.sh 42
+```
+
+**Comportamento:**
+
+1. Lê `gh issue view N --json title,body,labels` (precisa `gh` CLI
+   autenticado no repo).
+2. Extrai bloco markdown canônico de `docs/sprints/_template-spec.md`
+   (entre as fences ` ```markdown ` e ` ``` ` no documento) e desescapa
+   as fences internas (`\``` ` ` → ` ``` `).
+3. Substitui no skeleton:
+   - cabeçalho `# Sprint MNN — <título...>` → `# Sprint ISSUE-<N> — <título da issue>`
+   - bloco de metadata logo após o cabeçalho com link da issue e `**Tags**`
+   - seção `## 1. Objetivo` recebe o body como prosa; placeholder
+     original fica em comentário HTML como guia
+4. Cria arquivo `docs/sprints/ISSUE-<N>-<SLUG>-spec.md` (SLUG: título
+   da issue normalizado — uppercase, sem acentos via `unicodedata.NFKD`,
+   pontuação/espaços viram hífens, máx 60 chars).
+5. Insere entry no `docs/sprints/_BACKLOG.md` logo após o marker
+   `<!-- entries auto-geradas vao aqui -->` na seção "Sprints derivadas
+   de issues (auto-geradas)" (criada pelo R-DX-3).
+
+**Exit codes:**
+
+| Code | Significado |
+|---|---|
+| 0 | sucesso |
+| 1 | uso inválido (sem argumento ou não-numérico) |
+| 2 | `gh` CLI falhou (issue inexistente, sem acesso, sem auth) |
+| 3 | template ausente ou bloco markdown não encontrado |
+| 4 | spec já existe (evita sobrescrever sem confirmação) |
+
+**Pré-requisitos:** `gh` CLI autenticado (`gh auth status`), `python3`
+para slugify e renderização do template (lida com unicode/acentos sem
+fragilidade de `sed`).
+
+**Próximo passo após gerar:** revisar o spec, preencher seções 2-10
+(entregáveis, APIs reutilizáveis, restrições, validação, procedimento,
+verificação runtime-real, commit, checkpoint visual, dúvidas), e
+promover a entry do `_BACKLOG.md` para a tabela da Fase/Onda apropriada
+(mover a linha para a seção Fase 1/2/3/4 com `Ordem`, `P` e
+`Estimativa` preenchidos).
+
 ---
 
 ## 6. Princípios Fundamentais Que Guiam Decisões
