@@ -94,7 +94,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
 | R-DX-4 | ADB workflow helpers | infra | — | 1–2h | `R-DX-4-ADB-WORKFLOW-HELPERS-spec.md` |
-| R-DX-5 | EAS local build docs | docs | — | 1h | `R-DX-5-EAS-LOCAL-BUILD-DOCS-spec.md` |
+| R-DX-5 | EAS local build docs | docs | — | `c5721ba` | `[ok]` (3G.2) |
 | R-DX-6 | Anonimato pre-push | infra | — | `6188c49` | `[ok]` (3G.1) |
 | R-OPS-1 | GitHub Actions release flow | infra | — | 3–4h | `R-OPS-1-GITHUB-ACTIONS-RELEASE-FLOW-spec.md` |
 | R-OPS-2 | Dependabot config | infra | — | 0.5h | `R-OPS-2-DEPENDABOT-CONFIG-spec.md` |
