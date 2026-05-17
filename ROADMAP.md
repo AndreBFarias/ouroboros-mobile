@@ -93,7 +93,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-DX-1 | Sprint template v2 | infra | — | 1h | `R-DX-1-SPRINT-TEMPLATE-V2-spec.md` |
 | R-DX-2 | Gauntlet record video | infra | — | 2–3h | `R-DX-2-GAUNTLET-RECORD-VIDEO-spec.md` |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | 2–3h | `R-DX-3-AUTO-GENERATE-SPEC-FROM-ISSUE-spec.md` |
-| R-DX-4 | ADB workflow helpers | infra | — | 1–2h | `R-DX-4-ADB-WORKFLOW-HELPERS-spec.md` |
+| R-DX-4 | ADB workflow helpers | infra | — | `6a86a05` | `[ok]` (3G.4) |
 | R-DX-5 | EAS local build docs | docs | — | `c5721ba` | `[ok]` (3G.2) |
 | R-DX-6 | Anonimato pre-push | infra | — | `6188c49` | `[ok]` (3G.1) |
 | R-OPS-1 | GitHub Actions release flow | infra | — | `c8673b6` | `[ok]` (3G.3) |
