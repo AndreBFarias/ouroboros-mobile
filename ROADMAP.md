@@ -82,7 +82,8 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | `e53fb54` | `[ok]` (DX.2) |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | `9cb8f6a` | `[ok]` (3D.1) |
 | R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | `cb2c02d` | `[ok]` (3D.2) |
-| R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | 15-30min | `R-RECAP-LISTA-FIX-LOOP-spec.md` |
+| R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | `5c65b26` | `[ok]` (3E.4) |
+| R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke por timeout 5000ms em afterEach RTL paralelo (achado R-RECAP-LISTA-FIX-LOOP) | infra | P2 | 2-3h | `R-INFRA-JEST-FLAKY-TIMEOUT-spec.md` |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
