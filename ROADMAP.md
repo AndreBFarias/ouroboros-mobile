@@ -42,6 +42,9 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-3 | Empty states não-tóxicos | feature+copy | P1 | `9514061` | `[ok]` |
 | R-FAB-1 | FAB remover Voz | refactor | P2 | `47c17f9` | `[ok]` |
 | R-CROSS-FLOW-AUDIT | Interconexão 12 fluxos cruzados + sibling | audit+fix | P1 | `bebdf12` | `[ok]` |
+| R-CROSS-FLOW-FIX-1 | Backup automático órfão no boot (cenário 10) | fix | P1 | `ef8fab0` | `[ok]` (Onda 2D.1) |
+| R-CROSS-FLOW-FIX-2 | Sibling Python ETL ainda lê layout pre-H2 | bug+cross-repo | P1-high | 2-3h | `R-CROSS-FLOW-FIX-2-SIBLING-ETL-LAYOUT-H2-spec.md` |
+| R-CROSS-FLOW-FIX-3 | Scanner gera 2 entradas na galeria (cenário 4) | fix | P2 | 1h | `R-CROSS-FLOW-FIX-3-SCANNER-DUPLICATA-GALERIA-spec.md` |
 | R-VAULT-CANONICAL-COMPLETE | Tudo em `.md` (settings + sessão + stats) | refactor+feature | P1 | `[split]` | A+B |
 | **R-VAULT-CANONICAL-COMPLETE-A** | Schemas + writers + migration boot (split A) | refactor+feature | P1 | `81d4bad` | `[ok]` (Onda 2A.1) |
 | **R-VAULT-CANONICAL-COMPLETE-B** | Stats agregadas + UI Settings + cross-repo (depende de A) | refactor+feature | P1 | `62ebcdf` | `[ok]` (Onda 2B.1) |

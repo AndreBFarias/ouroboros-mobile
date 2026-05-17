@@ -172,6 +172,82 @@ describe('listarItensGaleria - arquivo malformado', () => {
   });
 });
 
+describe('listarItensGaleria - dedup nota<->scanner', () => {
+  // R-CROSS-FLOW-FIX-3: saveNota grava 3 arquivos por captura. Sem
+  // filtro a galeria mostra 2 entradas (nota + scanner) para a mesma
+  // captura. Esperado: apenas a entrada semantica 'nota' aparece.
+  it('oculta companion scanner quando existe nota par com mesmo stem', async () => {
+    const STEM = '2026-05-16-153012-padaria-feliz';
+    mockListVaultFolder.mockResolvedValue([
+      `${VAULT_ROOT}/markdown/scanner-${STEM}.md`,
+      `${VAULT_ROOT}/markdown/nota-${STEM}.md`,
+    ]);
+    mockReadVaultFile
+      .mockResolvedValueOnce({
+        meta: {
+          tipo: 'nota',
+          data: '2026-05-16T15:30:12-03:00',
+          autor: 'pessoa_a',
+          descricao: 'padaria feliz',
+          valor: 12.5,
+          revisar: false,
+          ocr_confianca: 0.92,
+          imagem: 'jpg/scanner-2026-05-16-153012-padaria-feliz.jpg',
+        },
+        body: '',
+      });
+
+    const out = await listarItensGaleria(VAULT_ROOT);
+
+    expect(out).toHaveLength(1);
+    expect(out[0].tipo).toBe('nota');
+  });
+
+  it('mantem scanner solto quando nao existe nota par', async () => {
+    // Scanner sem md semantico (cenario hipotetico: save falhou no
+    // passo 3 ou import legado). Garantia: nao escondemos scanners
+    // orfaos.
+    mockListVaultFolder.mockResolvedValue([
+      `${VAULT_ROOT}/markdown/scanner-2026-05-16-153012-orfao.md`,
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({
+      meta: {
+        tipo: 'midia_foto',
+        arquivo: 'scanner-2026-05-16-153012-orfao.jpg',
+        data: '2026-05-16T15:30:12-03:00',
+        autor: 'pessoa_a',
+        para: { tipo: 'mim' },
+        legenda: 'Nota fiscal — orfao',
+      },
+      body: '',
+    });
+
+    const out = await listarItensGaleria(VAULT_ROOT);
+
+    expect(out).toHaveLength(1);
+    expect(out[0].tipo).toBe('scanner');
+  });
+
+  it('filtro tipo=foto nao expoe a nota deduplicada como foto', async () => {
+    // Saveguard: a nota nunca deve aparecer ao filtrar por 'foto',
+    // mesmo que o companion scanner exista (e seja filtrado). Cenario
+    // do bug report: aba "Foto" mostrava a nota como item solto.
+    const STEM = '2026-05-16-153012-padaria-feliz';
+    mockListVaultFolder.mockResolvedValue([
+      `${VAULT_ROOT}/markdown/scanner-${STEM}.md`,
+      `${VAULT_ROOT}/markdown/nota-${STEM}.md`,
+    ]);
+    // Nenhum mockReadVaultFile e' invocado quando tipoFiltro='foto'
+    // filtra tudo antes do read. Mas garantimos resiliencia mockando
+    // null caso a ordem mude.
+    mockReadVaultFile.mockResolvedValue(null);
+
+    const out = await listarItensGaleria(VAULT_ROOT, { tipo: 'foto' });
+
+    expect(out).toHaveLength(0);
+  });
+});
+
 describe('listarItensGaleria - filenames sem padrao', () => {
   it('ignora arquivos fora do conjunto canonico de prefixos', async () => {
     mockListVaultFolder.mockResolvedValue([

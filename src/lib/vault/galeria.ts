@@ -150,6 +150,25 @@ function schemaPorTipo(tipo: TipoGaleria): z.ZodTypeAny {
   }
 }
 
+// Extrai o "stem" canonico apos um prefixo conhecido. Ex:
+//   markdown/scanner-2026-05-16-153012-padaria-feliz.md
+//   + prefixo 'scanner-' => '2026-05-16-153012-padaria-feliz'
+// Retorna null quando filename nao bate o prefixo. Usado para
+// deduplicar nota<->scanner: ambos compartilham o mesmo stem
+// (saveNota grava scanner-<ts>-<slug> e nota-<ts>-<slug> em paralelo).
+function extrairStemAposPrefixo(uri: string, prefix: string): string | null {
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(uri);
+    } catch {
+      return uri;
+    }
+  })();
+  const base = (decoded.split('/').pop() ?? decoded).replace(/\.md$/i, '');
+  if (!base.startsWith(prefix)) return null;
+  return base.slice(prefix.length);
+}
+
 // Extrai YYYY-MM-DD do filename via regex. Tolera prefixo + hora +
 // slug. Retorna null quando nao bate.
 function extrairDataDoFilename(uri: string): string | null {
@@ -291,11 +310,32 @@ export async function listarItensGaleria(
   const tipoFiltro = filtros.tipo ?? 'tudo';
   const mesFiltro = filtros.mes ?? null;
 
+  // Dedup nota<->scanner: saveNota grava 3 arquivos com mesmo stem
+  // (timestamp + slug): binario em <ext>/, companion 'scanner-<stem>.md'
+  // em markdown/, e md semantico 'nota-<stem>.md' em markdown/. Sem
+  // este filtro a mesma captura aparece 2x na galeria (uma como 'nota'
+  // categoria, outra como 'scanner' legenda "Nota fiscal —"). Solucao:
+  // quando existe par nota-<stem>.md, ocultamos o companion
+  // scanner-<stem>.md correspondente, deixando a entrada semantica
+  // ('nota') prevalecer.
+  const stemsDeNota = new Set<string>();
+  for (const u of todos) {
+    const stem = extrairStemAposPrefixo(u, PREFIX_POR_TIPO.nota);
+    if (stem !== null) stemsDeNota.add(stem);
+  }
+
   const itens: ItemGaleria[] = [];
   for (const arquivoUri of todos) {
     const tipo = inferirTipoDoFilename(arquivoUri);
     if (!tipo) continue;
     if (tipoFiltro !== 'tudo' && tipo !== tipoFiltro) continue;
+
+    // Pula companion 'scanner-<stem>.md' quando existe 'nota-<stem>.md'
+    // par. Mantem scanner solto (sem nota par) visivel.
+    if (tipo === 'scanner') {
+      const stem = extrairStemAposPrefixo(arquivoUri, PREFIX_POR_TIPO.scanner);
+      if (stem !== null && stemsDeNota.has(stem)) continue;
+    }
 
     const dataFilename = extrairDataDoFilename(arquivoUri);
     const slug = extrairSlugDoFilename(arquivoUri, tipo);
