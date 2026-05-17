@@ -377,6 +377,41 @@ Cinco princípios da Seção 2 do `BRIEFING.md` são **inegociáveis**:
 
 PR que viole essas regras volta para refação, não merge.
 
+### Execução de Agentes — Worktree Boundary
+
+**Sprint `r-dx-executor-worktree-enforce` (2026-05-16):** Agentes
+executores (Claude Code, subagents) trabalham em **worktrees
+dedicados** em `.claude/worktrees/agent-<id>/`. Toda sessão de
+execução clona um worktree isolado da branch `worktree-agent-<id>`
+para não poluir a árvore principal.
+
+**Padrão observado em 4 ocasiões:** o agente bypassou o worktree
+e commitou direto na raiz do repo. Instrução textual no prompt é
+insuficiente. A partir desta sprint, `hooks/agent-worktree-check.sh`
+é o detective runtime que bloqueia o commit:
+
+- **Cenário 1.** Branch `worktree-agent-<id>` em path diferente de
+  `.claude/worktrees/agent-<id>/` → `exit 1` com mensagem clara.
+- **Cenário 2.** Branch `main` com variável `CLAUDE_AGENT_ID`
+  setada no ambiente → `exit 1`. Indica que o agente esqueceu de
+  trocar para o worktree dedicado.
+
+**Instalação:** `./scripts/install-hooks.sh` seta
+`core.hooksPath = hooks/` localmente. Idempotente. Rodar uma vez
+por clone fresh do repo.
+
+**Bypass legítimo:** `git commit --no-verify` pelo orquestrador
+humano em casos manuais documentados. Agente nunca usa
+`--no-verify`. Veja Regra Zero acima sobre workflow GitHub.
+
+**Coexistência:** o detective roda antes de `check_anonimato.sh`,
+`check_test_data.sh` e `check_strings_ui_ptbr.py`. Não substitui
+nenhum dos checks existentes. Hook Universal global em
+`.git/hooks/` (identity check do shell pessoal) é desativado ao
+ativar `core.hooksPath = hooks/`; esse trade-off é aceito porque
+os checks do projeto são autossuficientes para identidade
+(via `check_anonimato.sh`).
+
 ---
 
 ## 6. Princípios Fundamentais Que Guiam Decisões
