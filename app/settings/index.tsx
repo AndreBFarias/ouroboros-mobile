@@ -399,6 +399,17 @@ function SecaoRecapMemorias() {
         onChange={(v) => setFeatureToggle('recapAmbientAudio', v)}
         a11y="toggle audio ambient recap"
       />
+      {/* R-MEDIA-2 (2026-05-16): autoplay do audio anexado ao item.
+          Default ON: voltar a ouvir o que voce gravou e' parte do
+          que faz o slideshow ser memoria. Toggle off silencia esse
+          canal (ambient segue independente). */}
+      <ToggleRow
+        label="Áudio do item no slideshow"
+        subtitulo="Toca a gravação anexada à conquista, crise ou reflexão."
+        valor={featureToggles.recapAudioAnexadoAutoplay}
+        onChange={(v) => setFeatureToggle('recapAudioAnexadoAutoplay', v)}
+        a11y="toggle audio anexado recap"
+      />
       <View
         accessibilityLabel="linha intervalo slideshow"
         style={{

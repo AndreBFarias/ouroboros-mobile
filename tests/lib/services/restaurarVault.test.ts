@@ -157,6 +157,7 @@ function snapshotValido(): SnapshotSettings {
         backupAutomaticoSemanal: true,
         healthConnectSync: false,
         recapAmbientAudio: false,
+        recapAudioAnexadoAutoplay: true,
       },
       privacidade: {
         biometriaAbrir: true,

@@ -56,6 +56,15 @@ const AMBIENT_TRACK = require('../assets/sounds/ambient/recap-memorias.mp3');
 // Fade-in/out em ms para entrada/saida do audio.
 const AUDIO_FADE_MS = 500;
 
+// R-MEDIA-2 (2026-05-16): volume final do ambient apos fade-in.
+// Espelha o `5 * 0.05` do loop interno (passo 5 de 5). Centralizado
+// como constante para a logica de pausa por audio anexado restaurar
+// o volume correto sem reload da instancia.
+const AMBIENT_VOLUME_ALVO = 0.25;
+// Volume final do audio anexado. Mais alto que o ambient: e' o foco
+// da atencao no slide. Ainda nao satura (~70%).
+const AUDIO_ANEXADO_VOLUME_ALVO = 0.7;
+
 function parseDate(raw: string | string[] | undefined, fallback: Date): Date {
   const v = Array.isArray(raw) ? raw[0] : raw;
   if (typeof v !== 'string' || v.length === 0) return fallback;
@@ -69,6 +78,13 @@ export default function RecapMemoriasTela() {
   const intervaloS = useSettings((s) => s.recap.slideshowIntervaloS);
   const ambientLigado = useSettings(
     (s) => s.featureToggles.recapAmbientAudio
+  );
+  // R-MEDIA-2 (2026-05-16): toggle de autoplay do audio anexado ao
+  // item (Conquista/Crise/Reflexao). Default ON. Off silencia
+  // somente o audio anexado; ambient e' controlado pelo toggle
+  // proprio acima.
+  const audioAnexadoLigado = useSettings(
+    (s) => s.featureToggles.recapAudioAnexadoAutoplay
   );
 
   const hoje = new Date();
@@ -84,9 +100,25 @@ export default function RecapMemoriasTela() {
   const [pausado, setPausado] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // R-MEDIA-2: audio anexado do slide corrente (se houver). Slides
+  // 'vitorias' e 'crises' carregam audioPath?: string | null derivado
+  // de useRecap. Slides sem audio (abertura, numeros, midias,
+  // encerramento) ficam null. Recalculado a cada troca de slide.
+  // Memoizado com getter raw (slides[index]?.audioPath) — sem
+  // useMemo: a propria mudanca de index e' dep estavel.
+  const slideAtualRef = slides[index] ?? null;
+  const audioAnexadoUri =
+    slideAtualRef && 'audioPath' in slideAtualRef
+      ? slideAtualRef.audioPath ?? null
+      : null;
+
   // Audio ambient: instancia uma vez quando toggle ligado. Loop +
   // fade-in/out. Cleanup ao desmontar ou ao toggle desligar.
   const ambientSoundRef = useRef<Audio.Sound | null>(null);
+  // R-MEDIA-2: segunda instancia paralela para audio anexado ao item.
+  // Carrega/descarrega a cada troca de slide quando o slide tem
+  // audioPath e autoplay esta ligado. Fade-in/out simetrico (500ms).
+  const audioAnexadoRef = useRef<Audio.Sound | null>(null);
   const audioDisponivel = Platform.OS !== 'web';
 
   // Helper: descarrega audio com fade-out suave antes de unloadAsync.
@@ -105,6 +137,28 @@ export default function RecapMemoriasTela() {
       // Best-effort cleanup.
     }
     ambientSoundRef.current = null;
+  }, []);
+
+  // R-MEDIA-2: descarrega audio anexado com fade-out simetrico.
+  const descarregarAudioAnexado = useCallback(async () => {
+    const s = audioAnexadoRef.current;
+    if (!s) return;
+    try {
+      const passos = 5;
+      const volIni = AUDIO_ANEXADO_VOLUME_ALVO;
+      // Fade-out linear em 5 passos (500ms total) espelhando ambient.
+      for (let i = passos - 1; i >= 0; i -= 1) {
+        await s
+          .setVolumeAsync((volIni * i) / passos)
+          .catch(() => undefined);
+        await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / passos));
+      }
+      await s.stopAsync().catch(() => undefined);
+      await s.unloadAsync().catch(() => undefined);
+    } catch {
+      // Best-effort cleanup.
+    }
+    audioAnexadoRef.current = null;
   }, []);
 
   // Carrega ambient quando toggle liga + slideshow nao pausado +
@@ -152,12 +206,99 @@ export default function RecapMemoriasTela() {
     };
   }, [ambientLigado, pausado, loading, audioDisponivel, descarregarAmbient]);
 
+  // R-MEDIA-2: carrega audio anexado quando slide muda para um que
+  // tem audioPath + toggle ligado + nao pausado + nao em loading.
+  // Cross-fade com ambient: enquanto anexado toca, ambient e' levado
+  // a volume 0 (sem unload — mantemos a instancia para retomada
+  // imediata quando proximo slide nao tiver audio). Quando anexado
+  // descarrega, ambient volta ao volume alvo.
+  useEffect(() => {
+    if (!audioDisponivel) return;
+    if (!audioAnexadoLigado || pausado || loading || !audioAnexadoUri) {
+      // Sem audio anexado neste slide: descarrega instancia se houver
+      // e devolve volume do ambient (se ambient ja tem instancia).
+      void (async () => {
+        await descarregarAudioAnexado();
+        const amb = ambientSoundRef.current;
+        if (amb && ambientLigado && !pausado) {
+          // Restaura volume alvo do ambient suavemente (sem reload).
+          for (let i = 1; i <= 5; i += 1) {
+            await amb
+              .setVolumeAsync((AMBIENT_VOLUME_ALVO * i) / 5)
+              .catch(() => undefined);
+            await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / 5));
+          }
+        }
+      })();
+      return;
+    }
+
+    let cancelado = false;
+    (async () => {
+      try {
+        // Antes de carregar o novo, baixa o ambient para 0 (cross-fade).
+        const amb = ambientSoundRef.current;
+        if (amb) {
+          for (let i = 4; i >= 0; i -= 1) {
+            if (cancelado) break;
+            await amb
+              .setVolumeAsync((AMBIENT_VOLUME_ALVO * i) / 5)
+              .catch(() => undefined);
+            await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / 5));
+          }
+        }
+        if (cancelado) return;
+
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: audioAnexadoUri },
+          {
+            shouldPlay: false,
+            isLooping: false,
+            volume: 0,
+          }
+        );
+        if (cancelado) {
+          await sound.unloadAsync().catch(() => undefined);
+          return;
+        }
+        audioAnexadoRef.current = sound;
+        await sound.playAsync().catch(() => undefined);
+        // Fade-in em 5 passos espelhando ambient.
+        for (let i = 1; i <= 5; i += 1) {
+          if (cancelado) break;
+          await sound
+            .setVolumeAsync((AUDIO_ANEXADO_VOLUME_ALVO * i) / 5)
+            .catch(() => undefined);
+          await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / 5));
+        }
+      } catch {
+        // Falha de load (uri invalida, arquivo inacessivel): ignora.
+        // Slide continua sem som; ambient retoma via branch acima na
+        // proxima troca de slide.
+      }
+    })();
+
+    return () => {
+      cancelado = true;
+      void descarregarAudioAnexado();
+    };
+  }, [
+    audioAnexadoUri,
+    audioAnexadoLigado,
+    audioDisponivel,
+    pausado,
+    loading,
+    ambientLigado,
+    descarregarAudioAnexado,
+  ]);
+
   // Cleanup absoluto ao desmontar a tela.
   useEffect(() => {
     return () => {
       void descarregarAmbient();
+      void descarregarAudioAnexado();
     };
-  }, [descarregarAmbient]);
+  }, [descarregarAmbient, descarregarAudioAnexado]);
 
   // Auto-advance configuravel.
   useEffect(() => {

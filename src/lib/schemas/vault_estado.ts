@@ -69,6 +69,12 @@ export const EstadoSettingsSchema = z.object({
     backupAutomaticoSemanal: z.boolean(),
     healthConnectSync: z.boolean(),
     recapAmbientAudio: z.boolean(),
+    // R-MEDIA-2 (2026-05-16): toggle de autoplay do audio anexado
+    // a Conquistas/Crises/Reflexoes no slideshow Memorias. Optional
+    // para tolerar arquivos espelhados antes de R-MEDIA-2 ter sido
+    // entregue (settings v2 ja persistido em devices reais). Quando
+    // ausente, a tela trata como default true ao reler do Vault.
+    recapAudioAnexadoAutoplay: z.boolean().optional(),
   }),
   privacidade: z.object({
     biometriaAbrir: z.boolean(),

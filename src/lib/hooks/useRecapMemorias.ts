@@ -33,6 +33,10 @@ export interface SlideVitorias /* anonimato-allow: categoria do diario emocional
   id: 'vitorias';
   contagem: number;
   frasePrincipal: string | null; // frase da vitoria mais recente
+  // R-MEDIA-2 (2026-05-16): path do audio anexado da conquista mais
+  // recente (mesmo item que cedeu a frasePrincipal). Null quando o
+  // item lider nao tem audio. recap-memorias usa para autoplay.
+  audioPath?: string | null;
 }
 
 // R-CRIT-3 (2026-05-16): slide novo das midias capturadas no periodo.
@@ -50,6 +54,10 @@ export interface SlideMidias {
 export interface SlideCrises {
   id: 'crises';
   contagem: number;
+  // R-MEDIA-2 (2026-05-16): path do audio anexado da crise lider
+  // (mais intensa; empate -> mais recente, ordem ja garantida em
+  // useRecap.crises). Null quando o item lider nao tem audio.
+  audioPath?: string | null;
 }
 
 export interface SlideEncerramento {
@@ -99,10 +107,13 @@ export function useRecapMemorias(input: UseRecapMemoriasInput): Slide[] {
       const ordenadas = [...vitorias].sort((a, b) =>
         a.data > b.data ? -1 : 1
       );
+      const lider = ordenadas[0];
       slides.push({
         id: 'vitorias',
         contagem: vitorias.length,
-        frasePrincipal: ordenadas[0]?.frase ?? null,
+        frasePrincipal: lider?.frase ?? null,
+        // R-MEDIA-2: audio anexado do mesmo item que cedeu a frase.
+        audioPath: lider?.audioPath ?? null,
       });
     }
 
@@ -123,9 +134,15 @@ export function useRecapMemorias(input: UseRecapMemoriasInput): Slide[] {
       });
     }
 
-    // Crises: agregado sem detalhe (evita re-trauma).
+    // Crises: agregado sem detalhe (evita re-trauma). R-MEDIA-2:
+    // audio do item lider (ja ordenado por intensidade desc em useRecap).
     if (d.crises.length > 0) {
-      slides.push({ id: 'crises', contagem: d.crises.length });
+      const liderCrise = d.crises[0];
+      slides.push({
+        id: 'crises',
+        contagem: d.crises.length,
+        audioPath: liderCrise?.audioPath ?? null,
+      });
     }
 
     slides.push({ id: 'encerramento' });

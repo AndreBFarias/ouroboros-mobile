@@ -73,6 +73,12 @@ export interface SettingsState {
     // sonora artificial). Quando on, slideshow toca trilha cc0
     // baixinha em loop durante toda a sessao.
     recapAmbientAudio: boolean;
+    // R-MEDIA-2 (2026-05-16): autoplay de audio anexado a Conquistas/
+    // Crises/Reflexoes durante o slideshow Memorias. Default true:
+    // quando o slide tem um audio anexado, o autoplay e' parte da
+    // experiencia natural ("o que voce gravou volta ao seu ouvido").
+    // Toggle off silencia tanto o anexado quanto o ambient.
+    recapAudioAnexadoAutoplay: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -163,6 +169,11 @@ const DEFAULT_STATE_V2: Omit<
     // Q24.b: default OFF (zero trilha sonora artificial, ADR-0005).
     // Toggle em Configuracoes habilita ambient audio nos slides.
     recapAmbientAudio: false,
+    // R-MEDIA-2: default ON. Audio anexado a um registro e' parte do
+    // registro -- silencia-lo no Recap por default escaparia a
+    // intencao. Usuario que prefere silencio total desliga este
+    // toggle (e tambem o ambient acima).
+    recapAudioAnexadoAutoplay: true,
   },
   privacidade: {
     biometriaAbrir: false,

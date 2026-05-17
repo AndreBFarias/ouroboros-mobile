@@ -83,6 +83,12 @@ export function resolverPeriodo(
 // Item generico de conquista no Recap. Origem identifica o tipo de
 // dado para a UI escolher icone (vitoria=heart, marco=trophy,
 // contador=hash, tarefa=check).
+//
+// R-MEDIA-2 (2026-05-16): campo opcional `audioPath` carrega o path
+// do primeiro audio anexado (tipo 'audio' em meta.midia) quando
+// disponivel. Usado em recap-memorias para autoplay no slide. Null
+// quando o registro nao tem audio. Aditivo: consumidores legados
+// (RecapScreen, RecapLista) ignoram o campo.
 export interface ConquistaItem {
   id: string;
   origem:
@@ -93,6 +99,7 @@ export interface ConquistaItem {
     | 'tarefa_concluida';
   data: string;
   frase: string;
+  audioPath?: string | null;
 }
 
 // Item de crise (origem trigger ou evento negativo).
@@ -102,6 +109,7 @@ export interface CriseItem {
   data: string;
   intensidade: number;
   frase: string;
+  audioPath?: string | null;
 }
 
 // Item de reflexao (modo contemplativo do diario emocional, G2/G2.1).
@@ -111,6 +119,7 @@ export interface ReflexaoItem {
   data: string;
   intensidade: number;
   frase: string;
+  audioPath?: string | null;
 }
 
 // Item de evolucao positiva mensuravel.
@@ -195,6 +204,20 @@ function fraseTarefa(t: Tarefa): string {
   return `${t.titulo} — ${cat.toLowerCase()}`;
 }
 
+// R-MEDIA-2 (2026-05-16): extrai path do primeiro audio anexado em
+// meta.midia[]. Retorna null quando nao ha audio anexado. Tipo
+// generico para aceitar DiarioEmocionalMeta, EventoMeta (ambos
+// expoem campo `midia: Midia[]`). Mantido fora do agregador para
+// reuso e teste isolado eventual.
+function extrairAudioPath(midias: ReadonlyArray<{ tipo: string; path?: string }>): string | null {
+  for (const m of midias) {
+    if (m.tipo === 'audio' && typeof m.path === 'string' && m.path.length > 0) {
+      return m.path;
+    }
+  }
+  return null;
+}
+
 // Trunca uma frase preservando palavras inteiras quando possivel.
 function truncar(texto: string, max: number): string {
   const limpo = texto.trim().replace(/\s+/g, ' ');
@@ -270,6 +293,7 @@ export function agregarRecap(input: {
         origem: 'diario_vitoria',
         data: d.data,
         frase: truncar(d.texto || 'Conquista sem descrição.', 120),
+        audioPath: extrairAudioPath(d.midia),
       });
     }
   }
@@ -283,6 +307,7 @@ export function agregarRecap(input: {
         origem: 'evento_positivo',
         data: e.data,
         frase: truncar(rotulo || 'Momento registrado.', 120),
+        audioPath: extrairAudioPath(e.midia),
       });
     }
   }
@@ -332,6 +357,7 @@ export function agregarRecap(input: {
         data: d.data,
         intensidade: d.intensidade,
         frase: truncar(d.texto || 'Momento difícil registrado.', 120),
+        audioPath: extrairAudioPath(d.midia),
       });
     }
   }
@@ -346,6 +372,7 @@ export function agregarRecap(input: {
         data: e.data,
         intensidade: e.intensidade,
         frase: truncar(rotulo || 'Evento difícil registrado.', 120),
+        audioPath: extrairAudioPath(e.midia),
       });
     }
   }
@@ -365,6 +392,7 @@ export function agregarRecap(input: {
         data: d.data,
         intensidade: d.intensidade,
         frase: truncar(d.texto || 'Reflexão sem descrição.', 120),
+        audioPath: extrairAudioPath(d.midia),
       });
     }
   }
