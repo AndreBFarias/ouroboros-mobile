@@ -251,3 +251,81 @@ O workflow continua funcionando sem os 4 secrets — cai em debug
 keystore (caminho legado pré-Q17.e). APK gera, instala, mas OAuth
 Google rejeita com `400 invalid_request`. Útil só pra smoke de build,
 não pra distribuição.
+
+## R-OPS-1 — Release automática via push de tag (2026-05-17)
+
+Antes desta sprint, ao empurrar uma tag `v*-alpha-*` o workflow
+falhava no último passo (`Attach APK to release on tag`) com
+`release not found`. Workaround manual: criar a release via
+`gh release create $TAG` **antes** de empurrar a tag. Frágil e
+fácil de esquecer (regressão recorrente entre alphas 10-12).
+
+Agora o workflow é idempotente:
+
+1. **Ensure release exists (draft if new)** — se a release já
+   existe, reusa. Senão, cria como **draft** com notas extraídas
+   do `CHANGELOG.md` via `scripts/extract-changelog-section.sh`,
+   apontando para o SHA da tag.
+2. **Attach APK to release on tag** — anexa o `.apk` à release
+   (existente ou draft criado no passo 1).
+3. **Publish release (remove draft)** — se a release estava em
+   draft, marca como `--draft=false`. Idempotente: no-op se já
+   estava publicada.
+
+### Notas auto-extraídas do CHANGELOG
+
+`scripts/extract-changelog-section.sh` extrai a **primeira seção
+`### `** do CHANGELOG (sem incluir o cabeçalho `## [Unreleased]`),
+parando no segundo `### ` ou EOF. Exemplo:
+
+```bash
+./scripts/extract-changelog-section.sh CHANGELOG.md
+# imprime em stdout:
+#   ### Fase 3 Onda 3D.3 — R-NAV-3-V2 ... (2026-05-17)
+#   <conteúdo da seção>
+```
+
+Exit codes:
+- `0` sucesso (conteúdo em stdout, log em stderr).
+- `1` arquivo não encontrado.
+- `2` nenhum cabeçalho `### ` encontrado.
+
+### Fluxo de release recomendado
+
+```bash
+# 1. Garanta que o CHANGELOG.md tenha como primeira ### a seção
+#    da versão que está prestes a ser lançada. As entradas anteriores
+#    continuam abaixo, intocadas.
+
+# 2. Crie e empurre a tag — o workflow faz o resto:
+VERSION=v1.0.0-alpha-13
+git tag "$VERSION" -m "release $VERSION"
+git push origin "$VERSION"
+
+# 3. Acompanhe:
+gh run watch
+# Ao final, a release fica publicada em
+# https://github.com/<owner>/<repo>/releases/tag/$VERSION
+# com o APK anexado e notas extraídas do CHANGELOG.
+```
+
+### Retry / re-execução
+
+O fluxo é seguro pra re-rodar:
+- Se a release já existe (draft ou publicada), o passo 1 reusa.
+- O upload usa `--clobber`, sobrescrevendo o APK anterior.
+- Se já estava publicada, o passo 3 vira no-op.
+
+### Como editar notas manualmente
+
+Se você precisa de notas customizadas (não o extrato do CHANGELOG):
+
+1. Crie a release manualmente **antes** de empurrar a tag:
+   ```bash
+   gh release create v1.0.0-alpha-13 \
+     --title "v1.0.0-alpha-13" \
+     --notes-file MINHAS_NOTAS.md \
+     --draft
+   ```
+2. Empurre a tag — o workflow detecta que a release existe,
+   reusa, anexa o APK, e publica.
