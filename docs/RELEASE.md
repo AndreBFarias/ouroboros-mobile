@@ -330,84 +330,81 @@ Se você precisa de notas customizadas (não o extrato do CHANGELOG):
 2. Empurre a tag — o workflow detecta que a release existe,
    reusa, anexa o APK, e publica.
 
-## R-OPS-5 — Notas auto-geradas a partir dos commits (2026-05-17)
+## R-OPS-4 — Setup do repo: branch protection (2026-05-17)
 
-R-OPS-1 entregou o pipeline idempotente lendo CHANGELOG curado. Como
-complemento, R-OPS-5 anexa um **histórico bruto de commits**
-agrupado por tipo, gerado por
-[`scripts/release-notes-from-commits.sh`](../scripts/release-notes-from-commits.sh).
+Configuração única aplicada uma vez no repositório GitHub. Garante
+que `main` nunca aceite push direto sem passar pelos checks
+automatizados (anonimato + build Android), evitando regressões
+silenciosas como as que apareceram entre alpha-10 e alpha-12.
 
-### Por que ambos
+### Política aplicada
 
-- **CHANGELOG curado** (R-OPS-1) — texto humano da release, prosa, fica
-  no topo das notas. Fonte de verdade narrativa.
-- **Histórico de commits** (R-OPS-5) — listagem completa de cada
-  commit desde a tag anterior, agrupado por tipo
-  (`feat:`, `fix:`, `refactor:`, `docs:`, `perf:`, `test:`, `style:`,
-  `chore:`). Útil pra auditoria pós-release e como rede de segurança
-  caso o CHANGELOG esteja desatualizado.
+| Campo | Valor | Motivo |
+|---|---|---|
+| `required_status_checks.strict` | `true` | exige branch atualizado antes do merge |
+| `required_status_checks.contexts` | `["scan-commits", "Build APK Android"]` | bloqueia se anonimato falhar ou bundle quebrar |
+| `required_pull_request_reviews` | `null` | dev solo; sem revisor obrigatório |
+| `enforce_admins` | `false` | dono pode hotfix em emergência |
+| `required_linear_history` | `true` | rebase/squash; rejeita merge commit sujo |
+| `allow_force_pushes` | `false` | impede reescrita de história |
+| `allow_deletions` | `false` | impede deletar `main` por acidente |
+| `restrictions` | `null` | sem allowlist de pushers |
 
-### Saída final do workflow
+Os contextos correspondem ao `check_run.name` reportado pelo GitHub
+Actions, **não** ao nome do workflow:
 
-```markdown
-### Fase 3 Onda 3G.5 — R-OPS-5 ... (2026-05-17)
-<conteúdo curado do CHANGELOG>
+- `scan-commits` — job id de `.github/workflows/anonymity-check.yml`.
+- `Build APK Android` — campo `jobs.build.name` em
+  `.github/workflows/build-android-apk.yml`. (O workflow se chama
+  `Build Android APK`, mas o que é registrado como status check é o
+  nome do job, confirmado empiricamente via `gh api .../jobs`.)
 
----
-
-## Histórico bruto de commits
-
-## Mudanças desde v1.0.0-alpha-12
-
-### Features
-- feat: ...
-- feat: ...
-
-### Fixes
-- fix: ...
-
-### Refactor
-- refactor: ...
-
-### Docs
-- docs: ...
-
-### Performance
-- Nenhuma
-
-### Testes
-- Nenhuma
-
-### Estilo
-- Nenhuma
-
-### Chore
-- chore: ...
-```
-
-### Uso isolado do script
-
-Fora do workflow, o script pode rodar local pra preview do que vai
-sair na próxima release:
+### Aplicar via script idempotente
 
 ```bash
-# Default: HEAD desde a última tag alcançável.
-./scripts/release-notes-from-commits.sh
+# inspecionar payload antes (não muda nada):
+./scripts/setup-branch-protection.sh --dry-run
 
-# Com ref específica: notas entre a tag anterior a alpha-13 e alpha-13.
-./scripts/release-notes-from-commits.sh v1.0.0-alpha-13
+# aplicar (precisa de gh autenticado com escopo repo e admin no repo):
+./scripts/setup-branch-protection.sh
 
-# Redirecionando pra arquivo.
-./scripts/release-notes-from-commits.sh > /tmp/preview.md
+# verificar config atual:
+./scripts/setup-branch-protection.sh --show
 ```
 
-Exit codes:
-- `0` sucesso (sempre quando a ref é válida; imprime "- Nenhuma" para
-  seções vazias).
-- `1` ref inválida.
+Overrides via env:
 
-Limitações conscientes:
-- Não filtra por escopo (`feat(modulo):` vai junto com `feat:`).
-- Não agrupa por área funcional (todo `feat:` cai em "Features").
-- Não detecta breaking changes (`feat!:`); são listados como features
-  normais. Curadoria fica no CHANGELOG.
+```bash
+REPO=owner/fork-do-repo BRANCH=main ./scripts/setup-branch-protection.sh
+```
+
+### Aplicação manual via `gh api`
+
+Se preferir aplicar sem o script (ou auditar o comando que o script
+gera):
+
+```bash
+gh api repos/AndreBFarias/ouroboros-mobile/branches/main/protection \
+  --method PUT \
+  --field 'required_status_checks={"strict":true,"contexts":["scan-commits","Build APK Android"]}' \
+  --field enforce_admins=false \
+  --field required_pull_request_reviews=null \
+  --field restrictions=null \
+  --field required_linear_history=true \
+  --field allow_force_pushes=false \
+  --field allow_deletions=false
+```
+
+### Quando aplicar
+
+Uma vez, na configuração inicial do repo, ou ao mudar de fork. O
+script é seguro pra re-rodar — PUT sobrescreve com o estado
+declarativo do script. Se precisar mudar a política, edite o script
+e rode de novo; não há diff incremental.
+
+### Bypass em emergência
+
+`enforce_admins=false` permite que o dono empurre direto em
+emergências (ex: corrigir CI quebrado que está bloqueando todos os
+PRs). Documentar o motivo em commit posterior. Para sprint normal,
+sempre via PR + checks verdes.
