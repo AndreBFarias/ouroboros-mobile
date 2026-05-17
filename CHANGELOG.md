@@ -5,6 +5,21 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3A.2 — R-SF-1 Grupos de Treino em Saúde Física (2026-05-16 noite)
+
+Sprint Fase 3 entregue honrando worktree isolation. Commit `78cbca0` cherry-pick.
+
+- **4ª tab "Grupos" em `/saude-fisica`** (`src/components/screens/SaudeFisicaScreen.tsx`): reusa `listarGrupos` do Q19, padrão consistente com tabs Memórias Treinos/Exercicios + Evolução Corporal.
+- **`src/components/saude-fisica/GruposTab.tsx`** novo: CRUD lista com empty state PT-BR ("Crie um grupo para reunir várias rotinas (Treino A, B, C)."), ação contextual "Novo grupo" via `onRegistrarAcaoExtra`.
+- **`src/components/saude-fisica/SeletorGrupoTreino.tsx`** novo: sheet "Iniciar treino" listando grupos, empty + CTA "Criar grupo" → `/grupos/novo`, onSelect navega `/grupos/<slug>`.
+- **FAB+ atualizado**: `acoesExtras` ganha fixa "Iniciar treino" + contextual da tab atual.
+- **+8 testes** novos (4 `GruposTab.test.tsx` + 3 `SeletorGrupoTreino.test.tsx` + 1 `saude-fisica.test.tsx` atualizado pra 4 tabs). E2E em `tests/e2e/playwright/r-sf-1-grupos-em-saude-fisica.e2e.ts`. Métricas: **251 suítes / 2337 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok.
+- **`docs/FEATURES-CANONICAS.md` §4.6.1**: nova subseção "Exposição em Saúde Física — R-SF-1".
+
+**Validação visual impossível por conflito de worktrees paralelos**: agent gerou `IMPOSSIBILIDADE.md` documentando 3 tentativas. Causa raiz: Metro de outro worktree paralelo ocupava porta 8081, e bundle do Metro próprio em 8085 ainda resolve `expo-router/_ctx.web.js` via realpath do symlink `node_modules` → puxa `app/` do main, não do worktree. R-INFRA-GAUNTLET-WORKTREE-SYMLINK (DX.4) corrigiu cenário single-worktree mas não cobre paralelo. Evidência alternativa: 8 testes Jest cobrem DOM e contratos completos.
+
+**Achado durá­vel**: R-DX-GAUNTLET-MULTI-PORTA (já no backlog P3) deve escalar pra **P2 com escopo expandido** — não só `--port` mas também shim do `_ctx.web.js` em `metro.config.js` `resolver.resolveRequest` pra escapar do realpath.
+
 ### Fase 3 Onda 3A.1 — R-MEDIA-2 autoplay áudio anexado Recap Memórias (2026-05-16 noite)
 
 Sprint Fase 3 entregue honrando worktree isolation. Commit `9d8e5d7` cherry-pick.
