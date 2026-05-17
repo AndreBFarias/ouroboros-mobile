@@ -5,6 +5,35 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Sub-onda DX.2 — R-DX-EXECUTOR-WORKTREE-ENFORCE hook detective (2026-05-16 noite)
+
+Sprint anti-débito entregue honrando worktree isolation. Commit `e53fb54` cherry-pick.
+
+- **`hooks/agent-worktree-check.sh`** novo (48L, +x): hook detective que falha pre-commit quando branch é `worktree-agent-*` mas toplevel NÃO está em `.claude/worktrees/agent-<id>`. Também falha se `CLAUDE_AGENT_ID` está setado mas branch é `main`.
+- **`hooks/pre-commit`** estendido (+4L): chama detective antes dos checks PT-BR / anonimato / lint existentes.
+- **`scripts/install-hooks.sh`** novo (47L, +x): instalador idempotente que configura `core.hooksPath = hooks` local.
+- **`docs/CONTEXTO.md`**: nova subseção "Execução de Agentes — Worktree Boundary" (35L).
+- **4 cenários testados manualmente** (proof-of-work):
+  1. main sem `CLAUDE_AGENT_ID` → passa
+  2. main com `CLAUDE_AGENT_ID=test` → ERRO + exit 1
+  3. worktree-agent-X em path correto → passa
+  4. worktree-agent-X em path errado → ERRO + exit 1
+- **Smoke 249/2325** verde (sem regressão).
+
+**Achados colaterais** (registrados, sem dispatch):
+1. typecheck quebra sem `env.json` em fresh clone (já R-INFRA-WORKTREE-BOOTSTRAP).
+2. 122 suites Jest falham em worktree fresh por moduleNameMapper de `lucide-react-native`/`yaml`/`expo-modules-core` ESM — issue pré-existente.
+
+### Build alpha-12 — PUBLICADO em GitHub Releases (2026-05-16 noite)
+
+- **Run GH Actions** `25977218049`: build OK em ~11min, falhou só no step "Attach APK to release" (release não existia ainda).
+- **Release criada manualmente** via `gh release create v1.0.0-alpha-12`.
+- **APK upload** via `gh release upload`: `ouroboros-v1.0.0-alpha-12.apk` (70MB, arm64-v8a).
+- **URL**: https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-12
+- **PushNotification ao dono** enviada com instrução `adb install -r`.
+
+**Fix workflow opcional**: o step "Attach APK to release" assume release pré-existente. Sprint nova **R-OPS-RELEASE-AUTO** seria criar release automaticamente antes do upload (ou usar `gh release create --notes-file CHANGELOG_SECAO.md` no workflow). NÃO criada nesta sessão — workaround manual funciona, prioridade baixa.
+
 ### Build alpha-12 disparado + Sub-onda DX em execução (2026-05-16 noite)
 
 - **`versionCode` bumpado 4 → 5** em `app.json` (commit `4b449cc`).

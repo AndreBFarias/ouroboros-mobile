@@ -113,7 +113,7 @@ Paralelo a Fase 4. Não bloqueia release.
 | R-INFRA-WORKTREE-BOOTSTRAP | Script bootstrap automático de node_modules+env.json (achado recorrente) | infra | P3 | 30–45min | `R-INFRA-WORKTREE-BOOTSTRAP-spec.md` |
 | R-RECAP-NUMEROS-AUDIOVIDEO-CARDS | Cards de áudios/vídeos no grid Números (débito R-CRIT-3) | feature | P2 | 1h | `R-RECAP-NUMEROS-AUDIOVIDEO-CARDS-spec.md` |
 | R-DX-GAUNTLET-MULTI-PORTA | Multi-porta no gauntlet.sh (paralelismo de validação visual) | infra | P3 | 1–2h | `R-DX-GAUNTLET-MULTI-PORTA-spec.md` |
-| R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente: AUTOMATIZAR-FANTASMAS, R-FAB-2 v1, R-FAB-2 v2) | infra+DX | P2 | 1-2h | `R-DX-EXECUTOR-WORKTREE-ENFORCE-spec.md` |
+| R-DX-EXECUTOR-WORKTREE-ENFORCE `[ok]` (DX.2, `e53fb54`) | Constraint técnico (hook) pra honrar worktree isolation (3º incidente: AUTOMATIZAR-FANTASMAS, R-FAB-2 v1, R-FAB-2 v2) | infra+DX | P2 | 1-2h | `R-DX-EXECUTOR-WORKTREE-ENFORCE-spec.md` |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | 30min | `R-MEDIA-LINKEXTERNO-CLEANUP-spec.md` |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | 1-2h | `R-DX-SECURESTORE-WEB-DEV-FALLBACK-spec.md` |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
