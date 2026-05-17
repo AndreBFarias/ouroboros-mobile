@@ -5,6 +5,25 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3D.3 — R-NAV-3-V2 ConfirmarExclusao Modal Dracula (2026-05-17) — **Onda 3D 3/3 fechada**
+
+Sprint Fase 3 (refactor UX) entregue honrando worktree isolation. Commit `3c54009` cherry-pick. Replan de R-NAV-3 rejeitada, com decisões a2+b2 aplicadas autonomamente.
+
+- **`src/components/ui/ConfirmarExclusao.tsx`** novo (97L): Modal Dracula reutilizável com `backgroundColor: 'rgba(20, 21, 26, 0.85)'`, 2 botões (Cancelar ghost + Excluir red `#ff5555`), aria-label canônico `"modal confirmar exclusao"`, accessibilityLabel sem acento.
+- **Migração 5 telas** (-196L duplicadas consolidadas):
+  - `app/alarmes/novo.tsx` — **bonus**: tela excluía SEM confirmação; sprint adicionou Modal coerente
+  - `app/contadores/[slug].tsx` (Modal inline 691-755 → componente)
+  - `app/exercicios/[slug].tsx` (Modal lá, não em `editar.tsx` como spec sugeria — auditoria revelou)
+  - `src/components/treino/FormRotina.tsx` (linhas 461-528)
+  - `src/components/treino/FormGrupo.tsx` (linhas 203-265)
+- **+7 testes** novos (`ConfirmarExclusao.test.tsx`). E2E `r-nav-3-v2.e2e.ts` valida 3 telas com asserts `canonico=1, labelAntigo=0`. Métricas: **267 suítes / 2502 testes** verde (worktree side; pós cherry-pick deve dar 268/2509).
+- **3 screenshots Gauntlet via playwright** após workaround manual (patch root + reverter): contador modal, alarme modal, contador detalhe pré-modal.
+
+**Achados durá­veis**:
+- Spec dizia `editar.tsx` em exercícios — Modal está em `[slug].tsx` (auditoria empírica corrigiu inline)
+- Modal de "remover-exercício-da-rotina" tem semântica diferente (gerencia índice numérico, sem callback de delete real) — mantido inline, candidato a sprint futura `<ConfirmarRemocao>` se padronização desejada
+- Metro web no worktree não descobre `app/` corretamente (interação symlink + expo-router context) — já mapeado em R-DX-GAUNTLET-MULTI-PORTA P2
+
 ### Fase 3 Onda 3D.2 — R-RECAP-FIX-LOOP useMemo range (2026-05-17)
 
 Sprint bug fix cirúrgica entregue honrando worktree isolation. Commit `cb2c02d` cherry-pick.
