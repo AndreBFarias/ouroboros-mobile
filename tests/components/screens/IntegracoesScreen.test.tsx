@@ -1,8 +1,9 @@
-// R-INT-1 (2026-05-16): smoke do hub /integracoes.
+// R-INT-1 (2026-05-16) + R-INT-4 (2026-05-17): smoke do hub /integracoes.
 //
 // Cobertura:
 //  - Renderiza 5 cards (HC, Calendar, Spotify, YouTube, Drive).
-//  - Cards "em_breve" sao desabilitados (disabled state).
+//  - Spotify/YouTube refletem estado real (conectado/desconectado)
+//    pos R-INT-4; somente Drive permanece "em_breve".
 //  - Estado HC desconectado quando availability='available' e zero
 //    permissoes -> rotulo 'Desconectado'.
 //  - Estado HC conectado quando availability='available' e ha
@@ -10,8 +11,12 @@
 //  - Estado HC indisponivel quando availability='unavailable' ->
 //    rotulo 'Indisponível' + sem rota navegavel.
 //  - Estado Google Calendar conectado quando uma conta tem accessToken.
+//  - Estado Spotify conectado quando store tem accessToken nao-vazio
+//    e flag invalido=false.
+//  - Estado YouTube idem.
 //  - Tap em card HC habilitado dispara router.push('/settings/integracoes').
-//  - Tap em card Spotify (em_breve) NAO dispara push.
+//  - Tap em card Spotify desconectado dispara push (R-INT-4 muda
+//    Spotify de 'em_breve' para 'desconectado').
 //
 // Os mocks ficam acima dos imports da SUT para garantir ordem
 // (jest.mock e' hoisted, mas variaveis acessadas dentro precisam ser
@@ -84,6 +89,36 @@ jest.mock('@/lib/stores/settings', () => ({
     selector(mockStateSettings.current),
 }));
 
+// R-INT-4: stores Spotify e YouTube. Shape minimo lido pela tela:
+// `conta` com accessToken (string|null), ultimaConexao (number) e
+// invalido (boolean).
+type ContaIntegracaoMock = {
+  accessToken: string | null;
+  ultimaConexao: number;
+  invalido: boolean;
+};
+type StateSpotifyMock = { conta: ContaIntegracaoMock };
+type StateYouTubeMock = { conta: ContaIntegracaoMock };
+
+const mockStateSpotify: { current: StateSpotifyMock } = {
+  current: { conta: { accessToken: null, ultimaConexao: 0, invalido: false } },
+};
+const mockStateYouTube: { current: StateYouTubeMock } = {
+  current: { conta: { accessToken: null, ultimaConexao: 0, invalido: false } },
+};
+
+jest.mock('@/lib/integracoes/spotify/store', () => ({
+  __esModule: true,
+  useSpotifyAuth: (selector: (s: StateSpotifyMock) => unknown) =>
+    selector(mockStateSpotify.current),
+}));
+
+jest.mock('@/lib/integracoes/youtube/store', () => ({
+  __esModule: true,
+  useYouTubeAuth: (selector: (s: StateYouTubeMock) => unknown) =>
+    selector(mockStateYouTube.current),
+}));
+
 import { IntegracoesScreen } from '@/components/screens/IntegracoesScreen';
 
 beforeEach(() => {
@@ -99,6 +134,12 @@ beforeEach(() => {
   };
   mockStateSettings.current = {
     featureToggles: { healthConnectSync: false },
+  };
+  mockStateSpotify.current = {
+    conta: { accessToken: null, ultimaConexao: 0, invalido: false },
+  };
+  mockStateYouTube.current = {
+    conta: { accessToken: null, ultimaConexao: 0, invalido: false },
   };
 });
 
@@ -118,21 +159,81 @@ describe('IntegracoesScreen — render dos 5 cards', () => {
     });
   });
 
-  it('rotula Spotify/YouTube/Drive como "Em breve" e desabilita', async () => {
+  it('rotula somente Drive como "Em breve" pos R-INT-4', async () => {
     mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
 
     const { getByLabelText } = render(<IntegracoesScreen />);
 
     await waitFor(() => {
-      expect(getByLabelText('estado spotify em_breve')).toBeTruthy();
-      expect(getByLabelText('estado youtube em_breve')).toBeTruthy();
+      // Drive permanece placeholder ate sprint futura.
       expect(getByLabelText('estado google_drive em_breve')).toBeTruthy();
+      // Spotify/YouTube agora refletem estado real (desconectado default).
+      expect(getByLabelText('estado spotify desconectado')).toBeTruthy();
+      expect(getByLabelText('estado youtube desconectado')).toBeTruthy();
     });
 
-    // Spotify card desabilitado: tap nao dispara push.
-    const cardSpotify = getByLabelText('card integracao spotify');
-    fireEvent.press(cardSpotify);
+    // Drive card desabilitado: tap nao dispara push.
+    const cardDrive = getByLabelText('card integracao google_drive');
+    fireEvent.press(cardDrive);
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('rotula Spotify como Conectado quando store tem accessToken', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    mockStateSpotify.current = {
+      conta: {
+        accessToken: 'spotify-token-x',
+        ultimaConexao: Date.now(),
+        invalido: false,
+      },
+    };
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado spotify conectado')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('card integracao spotify'));
+    expect(mockPush).toHaveBeenCalledWith('/settings/integracoes');
+  });
+
+  it('rotula Spotify como Desconectado quando invalido=true', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    mockStateSpotify.current = {
+      conta: {
+        accessToken: 'spotify-token-revogado',
+        ultimaConexao: Date.now() - 1_000_000,
+        invalido: true,
+      },
+    };
+
+    const { getByLabelText, getByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado spotify desconectado')).toBeTruthy();
+    });
+    expect(getByText(/Conexão expirada/)).toBeTruthy();
+  });
+
+  it('rotula YouTube como Conectado quando store tem accessToken', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    mockStateYouTube.current = {
+      conta: {
+        accessToken: 'yt-token-y',
+        ultimaConexao: Date.now(),
+        invalido: false,
+      },
+    };
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado youtube conectado')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('card integracao youtube'));
+    expect(mockPush).toHaveBeenCalledWith('/settings/integracoes');
   });
 });
 

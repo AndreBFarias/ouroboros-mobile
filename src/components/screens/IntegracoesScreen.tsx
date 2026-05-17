@@ -10,8 +10,11 @@
 //   2. Agenda (Google Calendar) -- detalhe em /settings/contas-google
 //      (gerencia OAuth pessoa_a/pessoa_b). Last sync = max(ultimaConexao)
 //      entre as duas contas.
-//   3. Spotify (placeholder) -- R-INT-4 futura, "Em breve".
-//   4. YouTube (placeholder) -- R-INT-4 futura, "Em breve".
+//   3. Spotify -- R-INT-4 (2026-05-17): OAuth PKCE + Web API read-only.
+//      Estados: conectado/desconectado/conexao expirada. Tap leva ao
+//      detalhe /settings/integracoes.
+//   4. YouTube -- R-INT-4 (2026-05-17): Google OAuth scope
+//      youtube.readonly + YouTube Data API v3. Estados como Spotify.
 //   5. Google Drive (placeholder) -- futura, "Em breve".
 //
 // Cada card mostra:
@@ -23,7 +26,10 @@
 //
 // Decisao R-INT-1: NAO recriamos a logica OAuth nem o flow HC aqui.
 // Hub e read-only sobre os stores existentes; navegacao para detalhe
-// preserva todo o codigo entregue em Q17 e Q22.B.
+// preserva todo o codigo entregue em Q17 (HC) e Q22.B (Google Calendar).
+// R-INT-4 estendeu Spotify/YouTube com a mesma filosofia: stores
+// proprios (useSpotifyAuth, useYouTubeAuth), Hub apenas le state e
+// reflete estado.
 //
 // Comentarios sem acento (convencao shell/CI). Strings PT-BR sentence
 // case com acentuacao. accessibilityLabel sem acento.
@@ -43,6 +49,8 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
 import { useSettings } from '@/lib/stores/settings';
+import { useSpotifyAuth } from '@/lib/integracoes/spotify/store';
+import { useYouTubeAuth } from '@/lib/integracoes/youtube/store';
 import { verificarDisponibilidade } from '@/lib/health/availability';
 import { listarPermissoesConcedidas } from '@/lib/health/permissions';
 import type { ComponentType } from 'react';
@@ -220,6 +228,20 @@ export function IntegracoesScreen() {
     pessoaB.ultimaConexao ?? 0
   );
 
+  // R-INT-4 (2026-05-17): estado das contas Spotify e YouTube.
+  // Cada store expoe `conta` unica (sem split pessoa); v1 nao tenta
+  // gerenciar 2 contas Spotify por device.
+  const contaSpotify = useSpotifyAuth((s) => s.conta);
+  const contaYoutube = useYouTubeAuth((s) => s.conta);
+  const spotifyConectado =
+    typeof contaSpotify.accessToken === 'string' &&
+    contaSpotify.accessToken.length > 0 &&
+    !contaSpotify.invalido;
+  const youtubeConectado =
+    typeof contaYoutube.accessToken === 'string' &&
+    contaYoutube.accessToken.length > 0 &&
+    !contaYoutube.invalido;
+
   useEffect(() => {
     let cancelado = false;
     void (async () => {
@@ -330,25 +352,60 @@ export function IntegracoesScreen() {
         rota: '/settings/contas-google',
       };
 
-  // Placeholders R-INT-4 futura.
-  const descritorSpotify: IntegracaoDescritor = {
-    slug: 'spotify',
-    nome: 'Spotify',
-    icone: Music,
-    corIcone: colors.green,
-    estado: 'em_breve',
-    statusTexto: 'Histórico de músicas no Recap.',
-    rota: null,
-  };
-  const descritorYoutube: IntegracaoDescritor = {
-    slug: 'youtube',
-    nome: 'YouTube',
-    icone: Video,
-    corIcone: colors.red,
-    estado: 'em_breve',
-    statusTexto: 'Histórico de vídeos no Recap.',
-    rota: null,
-  };
+  // Spotify e YouTube: R-INT-4 (2026-05-17) entregou OAuth read-only.
+  // Estado real ja consumido dos stores; texto reflete "Conectado /
+  // Toque para conectar". Rota: /settings/integracoes (mesma tela
+  // detalhe usada para HC; futura sprint pode separar). Por enquanto,
+  // o tap dispara navegacao para a tela de detalhe via /settings;
+  // como ainda nao existe rota dedicada Spotify/YouTube, a v1 abre
+  // /settings/integracoes onde o usuario ve o status. Subspec
+  // R-INT-4.B podera criar /settings/spotify e /settings/youtube.
+  const descritorSpotify: IntegracaoDescritor = spotifyConectado
+    ? {
+        slug: 'spotify',
+        nome: 'Spotify',
+        icone: Music,
+        corIcone: colors.green,
+        estado: 'conectado',
+        statusTexto: textoUltimaSync(
+          contaSpotify.ultimaConexao > 0 ? contaSpotify.ultimaConexao : null
+        ),
+        rota: '/settings/integracoes',
+      }
+    : {
+        slug: 'spotify',
+        nome: 'Spotify',
+        icone: Music,
+        corIcone: colors.green,
+        estado: 'desconectado',
+        statusTexto: contaSpotify.invalido
+          ? 'Conexão expirada. Toque para reconectar.'
+          : 'Toque para conectar sua conta Spotify.',
+        rota: '/settings/integracoes',
+      };
+  const descritorYoutube: IntegracaoDescritor = youtubeConectado
+    ? {
+        slug: 'youtube',
+        nome: 'YouTube',
+        icone: Video,
+        corIcone: colors.red,
+        estado: 'conectado',
+        statusTexto: textoUltimaSync(
+          contaYoutube.ultimaConexao > 0 ? contaYoutube.ultimaConexao : null
+        ),
+        rota: '/settings/integracoes',
+      }
+    : {
+        slug: 'youtube',
+        nome: 'YouTube',
+        icone: Video,
+        corIcone: colors.red,
+        estado: 'desconectado',
+        statusTexto: contaYoutube.invalido
+          ? 'Conexão expirada. Toque para reconectar.'
+          : 'Toque para conectar sua conta YouTube.',
+        rota: '/settings/integracoes',
+      };
   const descritorDrive: IntegracaoDescritor = {
     slug: 'google_drive',
     nome: 'Google Drive',

@@ -1,0 +1,196 @@
+// Testes unit do flow OAuth Spotify (R-INT-4, 2026-05-17).
+// Cobre:
+//   - trocarCodePorToken: corpo POST x-www-form-urlencoded com PKCE.
+//   - refreshAccessToken: erro generico vs InvalidGrantError.
+//   - pickClientIdSafe: env.json ausente -> { erro }, env.json ok ->
+//     { clientId, redirectUri, ambiente }.
+//
+// Comentarios sem acento.
+//
+// Approach: usamos require() dentro de cada test para isolar o module
+// cache e remockear o env.json conforme necessario via jest.resetModules
+// + jest.doMock. Isso evita problemas com jest.mock hoisting + var de
+// modulo nao-inicializada no factory.
+
+jest.mock('expo-auth-session', () => ({
+  __esModule: true,
+  makeRedirectUri: () => 'https://auth.expo.io/@owner/slug',
+}));
+
+// expo-constants e env.json sao mockados via doMock dentro de cada
+// teste pra permitir mudar appOwnership e spotify.client_id sem
+// problema de hoisting.
+
+function carregar(
+  envObj: { spotify?: { client_id?: string } } | null,
+  ownership: 'expo' | 'standalone' | undefined = 'standalone'
+) {
+  jest.resetModules();
+  jest.doMock('expo-constants', () => ({
+    __esModule: true,
+    default: { appOwnership: ownership },
+  }));
+  jest.doMock(
+    '../../../../env.json',
+    () => (envObj === null ? {} : envObj),
+    { virtual: true }
+  );
+  return require('@/lib/integracoes/spotify/oauth');
+}
+
+describe('getClientIdFromEnv', () => {
+  test('retorna client_id quando env.json esta preenchido', () => {
+    const mod = carregar({ spotify: { client_id: 'cid-x' } });
+    expect(mod.getClientIdFromEnv()).toBe('cid-x');
+  });
+
+  test('lanca erro claro quando spotify.client_id ausente', () => {
+    const mod = carregar({});
+    expect(() => mod.getClientIdFromEnv()).toThrow(/spotify.client_id/);
+  });
+
+  test('lanca erro quando client_id e string vazia', () => {
+    const mod = carregar({ spotify: { client_id: '' } });
+    expect(() => mod.getClientIdFromEnv()).toThrow();
+  });
+});
+
+describe('pickClientId', () => {
+  test('standalone usa scheme custom ouroboros://oauth-spotify-callback', () => {
+    const mod = carregar(
+      { spotify: { client_id: 'cid-x' } },
+      'standalone'
+    );
+    const r = mod.pickClientId();
+    expect(r.clientId).toBe('cid-x');
+    expect(r.redirectUri).toBe('ouroboros://oauth-spotify-callback');
+    expect(r.ambiente).toBe('standalone');
+  });
+
+  test('expo-go usa proxy via makeRedirectUri', () => {
+    const mod = carregar(
+      { spotify: { client_id: 'cid-x' } },
+      'expo'
+    );
+    const r = mod.pickClientId();
+    expect(r.redirectUri).toBe('https://auth.expo.io/@owner/slug');
+    expect(r.ambiente).toBe('expo-go');
+  });
+});
+
+describe('pickClientIdSafe', () => {
+  test('retorna ClientIdInfo quando env.json valido', () => {
+    const mod = carregar({ spotify: { client_id: 'cid-x' } });
+    const r = mod.pickClientIdSafe();
+    expect('erro' in r).toBe(false);
+    expect(r.clientId).toBe('cid-x');
+  });
+
+  test('retorna { erro } quando env.json sem spotify.client_id', () => {
+    const mod = carregar({});
+    const r = mod.pickClientIdSafe();
+    expect('erro' in r).toBe(true);
+    expect(r.erro).toMatch(/spotify.client_id/);
+  });
+});
+
+describe('trocarCodePorToken', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('POST x-www-form-urlencoded com PKCE devolve token', async () => {
+    const mod = carregar({ spotify: { client_id: 'cid' } });
+    const mockResp = {
+      access_token: 'at-1',
+      refresh_token: 'rt-1',
+      expires_in: 3600,
+      token_type: 'Bearer',
+      scope: 'user-read-currently-playing',
+    };
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResp,
+    } as unknown as Response);
+
+    const r = await mod.trocarCodePorToken({
+      code: 'C0DE',
+      codeVerifier: 'VERIF1ER',
+      clientId: 'cid',
+      redirectUri: 'ouroboros://oauth-spotify-callback',
+    });
+
+    expect(r.access_token).toBe('at-1');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchSpy.mock.calls[0]!;
+    expect(url).toBe('https://accounts.spotify.com/api/token');
+    expect((init as RequestInit).method).toBe('POST');
+    const body = (init as RequestInit).body as string;
+    expect(body).toContain('client_id=cid');
+    expect(body).toContain('code=C0DE');
+    expect(body).toContain('code_verifier=VERIF1ER');
+    expect(body).toContain('grant_type=authorization_code');
+  });
+
+  test('lanca erro com texto do servidor em status nao-200', async () => {
+    const mod = carregar({ spotify: { client_id: 'cid' } });
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () => 'invalid_request',
+    } as unknown as Response);
+    await expect(
+      mod.trocarCodePorToken({
+        code: 'x',
+        codeVerifier: 'x',
+        clientId: 'x',
+        redirectUri: 'x',
+      })
+    ).rejects.toThrow(/400.*invalid_request/);
+  });
+});
+
+describe('refreshAccessToken', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('sucesso devolve novo access_token', async () => {
+    const mod = carregar({ spotify: { client_id: 'cid' } });
+    const mockResp = {
+      access_token: 'new-at',
+      expires_in: 3600,
+      token_type: 'Bearer',
+      scope: 'user-read-currently-playing',
+    };
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResp,
+    } as unknown as Response);
+
+    const r = await mod.refreshAccessToken('rt-1', 'cid');
+    expect(r.access_token).toBe('new-at');
+  });
+
+  test('400 com invalid_grant lanca SpotifyInvalidGrantError', async () => {
+    const mod = carregar({ spotify: { client_id: 'cid' } });
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () => 'error=invalid_grant',
+    } as unknown as Response);
+    await expect(mod.refreshAccessToken('rt-bad', 'cid')).rejects.toBeInstanceOf(
+      mod.SpotifyInvalidGrantError
+    );
+  });
+
+  test('500 generico lanca Error nao-tipado', async () => {
+    const mod = carregar({ spotify: { client_id: 'cid' } });
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () => 'server',
+    } as unknown as Response);
+    await expect(mod.refreshAccessToken('rt', 'cid')).rejects.toThrow(/500/);
+  });
+});

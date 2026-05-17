@@ -190,6 +190,53 @@ export const EstadoNavegacaoSchema = z.object({
 });
 export type EstadoNavegacao = z.infer<typeof EstadoNavegacaoSchema>;
 
+// ===== Integracoes (R-INT-4) =====
+//
+// Snapshot do estado de conexao dos stores OAuth (googleAuth, spotify,
+// youtube) para o Vault canonico. NAO espelha tokens (esses ficam em
+// SecureStore; bug de seguranca colocar token cripto em .md). Persiste
+// apenas flags de "conectado", timestamps de ultima conexao e flag
+// "invalido" para o sibling Python diagnosticar problemas.
+//
+// Sibling Python pode usar esses dados para alertas tipo:
+//   - "Voce conectou Spotify em janeiro mas nao usa ha 6 meses,
+//     considere desconectar"
+//   - "Token YouTube esta invalido ha 3 dias"
+//
+// Spotify: conta unica (sem pessoa_a/pessoa_b -- v1).
+// YouTube: conta unica (idem).
+// Google Calendar: split pessoa_a/pessoa_b (compatibilidade com
+// useGoogleAuth, ja existente).
+export const EstadoIntegracoesSchema = z.object({
+  version: z.literal(ESTADO_SCHEMA_VERSION),
+  spotify: z.object({
+    // True quando ha accessToken e nao esta invalido.
+    conectado: z.boolean(),
+    // Epoch ms; 0 quando nunca conectado.
+    ultimaConexao: z.number().int().min(0),
+    invalido: z.boolean(),
+  }),
+  youtube: z.object({
+    conectado: z.boolean(),
+    ultimaConexao: z.number().int().min(0),
+    invalido: z.boolean(),
+  }),
+  googleCalendar: z.object({
+    pessoa_a: z.object({
+      conectado: z.boolean(),
+      ultimaConexao: z.number().int().min(0),
+      invalido: z.boolean(),
+    }),
+    pessoa_b: z.object({
+      conectado: z.boolean(),
+      ultimaConexao: z.number().int().min(0),
+      invalido: z.boolean(),
+    }),
+  }),
+  atualizadoEm: IsoDatetime,
+});
+export type EstadoIntegracoes = z.infer<typeof EstadoIntegracoesSchema>;
+
 // ===== Stats agregadas (R-VAULT-CANONICAL-COMPLETE-B) =====
 //
 // Stats derivadas (read-model) do humor, diario, conquistas, marcos,
@@ -264,6 +311,7 @@ export const ESTADO_SCHEMAS = {
   onboarding: EstadoOnboardingSchema,
   pessoa: EstadoPessoaSchema,
   navegacao: EstadoNavegacaoSchema,
+  integracoes: EstadoIntegracoesSchema,
   'stats-7d': EstadoStatsAgregadasSchema,
   'stats-30d': EstadoStatsAgregadasSchema,
   'stats-90d': EstadoStatsAgregadasSchema,
