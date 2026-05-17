@@ -1,5 +1,5 @@
-// Secao Numeros do Recap (M36). Grid 2x3 com numero grande + label
-// neutro. ADR-0005: sem emoji, sem comparativo (X% melhor), so o
+// Secao Numeros do Recap (M36). Grid responsivo com numero grande +
+// label neutro. ADR-0005: sem emoji, sem comparativo (X% melhor), so o
 // numero e o que ele representa.
 //
 // Q24.a (2026-05-13): cada card vira Pressable que navega para
@@ -14,6 +14,13 @@
 // (convencao). Padrao novo: `<count> <tipo> no periodo` onde tipo
 // e' a chave canonica sem acento (registros / treinos / fotos /
 // eventos pos / eventos neg / tarefas).
+//
+// R-RECAP-NUMEROS-AUDIOVIDEO-CARDS (2026-05-17): grid passa de 6
+// para 8 cards. R-CRIT-3 fez useRecap.numeros expor `audios` e
+// `videos` (midia standalone via FAB Câmera direto) mas o grid so
+// renderizava 6 — os contadores ficavam invisiveis. Agora cada
+// tipo tem seu card; tap em audios/videos navega para a galeria
+// filtrada (o recap-lista redireciona analogo ao tipo=fotos).
 //
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
@@ -33,6 +40,8 @@ type TipoChave =
   | 'registros'
   | 'treinos'
   | 'fotos'
+  | 'audios'
+  | 'videos'
   | 'eventos_pos'
   | 'eventos_neg'
   | 'tarefas';
@@ -45,6 +54,8 @@ const A11Y_LABEL_POR_TIPO: Record<TipoChave, string> = {
   registros: 'registros',
   treinos: 'treinos',
   fotos: 'fotos',
+  audios: 'audios',
+  videos: 'videos',
   eventos_pos: 'eventos positivos',
   eventos_neg: 'eventos dificeis',
   tarefas: 'tarefas concluidas',
@@ -63,6 +74,8 @@ export function RecapSecaoNumeros({ numeros, range }: Props) {
     { rotulo: 'Registros', valor: numeros.registros, tipo: 'registros' },
     { rotulo: 'Treinos', valor: numeros.treinos, tipo: 'treinos' },
     { rotulo: 'Fotos', valor: numeros.fotos, tipo: 'fotos' },
+    { rotulo: 'Áudios', valor: numeros.audios, tipo: 'audios' },
+    { rotulo: 'Vídeos', valor: numeros.videos, tipo: 'videos' },
     {
       rotulo: 'Eventos positivos',
       valor: numeros.eventos_positivos,

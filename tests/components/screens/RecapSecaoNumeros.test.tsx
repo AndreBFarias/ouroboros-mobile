@@ -1,7 +1,11 @@
 // R-RECAP-2 (2026-05-16): testes do RecapSecaoNumeros clicavel.
-// Valida que cada um dos 6 cards de big number navega para
+// Valida que cada card de big number navega para
 // /recap-lista?tipo=<chave>&de=...&ate=... e que accessibilityLabel
 // usa chave canonica sem acento (convencao screen reader).
+//
+// R-RECAP-NUMEROS-AUDIOVIDEO-CARDS (2026-05-17): grid passa de 6
+// para 8 cards. Adicionados cards Audios e Videos com mesmos
+// asserts de label, contagem e navegacao.
 //
 // Padrao herdado de Q24.a e RecapSecaoConquistas (R-RECAP-1).
 //
@@ -26,8 +30,8 @@ const numeros: NumerosRecap = {
   registros: 12,
   treinos: 3,
   fotos: 7,
-  audios: 0,
-  videos: 0,
+  audios: 4,
+  videos: 2,
   eventos_positivos: 2,
   eventos_negativos: 1,
   tarefas_concluidas: 5,
@@ -38,16 +42,21 @@ beforeEach(() => {
 });
 
 describe('RecapSecaoNumeros clicavel', () => {
-  it('renderiza 6 cards de big number com valores corretos', () => {
+  it('renderiza 8 cards de big number com valores corretos', () => {
     const { getByText } = render(
       <RecapSecaoNumeros numeros={numeros} range={range} />
     );
     expect(getByText('12')).toBeTruthy(); // registros
     expect(getByText('3')).toBeTruthy(); // treinos
     expect(getByText('7')).toBeTruthy(); // fotos
+    expect(getByText('4')).toBeTruthy(); // audios
+    // videos = 2 colide com eventos_positivos = 2; basta validar
+    // contagem via accessibilityLabel.
     expect(getByText('Registros')).toBeTruthy();
     expect(getByText('Treinos')).toBeTruthy();
     expect(getByText('Fotos')).toBeTruthy();
+    expect(getByText('Áudios')).toBeTruthy();
+    expect(getByText('Vídeos')).toBeTruthy();
     expect(getByText('Eventos positivos')).toBeTruthy();
     expect(getByText('Eventos difíceis')).toBeTruthy();
     expect(getByText('Tarefas concluídas')).toBeTruthy();
@@ -61,6 +70,8 @@ describe('RecapSecaoNumeros clicavel', () => {
     expect(getByLabelText('12 registros no periodo')).toBeTruthy();
     expect(getByLabelText('3 treinos no periodo')).toBeTruthy();
     expect(getByLabelText('7 fotos no periodo')).toBeTruthy();
+    expect(getByLabelText('4 audios no periodo')).toBeTruthy();
+    expect(getByLabelText('2 videos no periodo')).toBeTruthy();
     expect(getByLabelText('2 eventos positivos no periodo')).toBeTruthy();
     expect(getByLabelText('1 eventos dificeis no periodo')).toBeTruthy();
     expect(getByLabelText('5 tarefas concluidas no periodo')).toBeTruthy();
@@ -105,6 +116,36 @@ describe('RecapSecaoNumeros clicavel', () => {
       pathname: '/recap-lista',
       params: {
         tipo: 'fotos',
+        de: range.de.toISOString(),
+        ate: range.ate.toISOString(),
+      },
+    });
+  });
+
+  it('tap em card audios navega para /recap-lista com tipo=audios', () => {
+    const { getByLabelText } = render(
+      <RecapSecaoNumeros numeros={numeros} range={range} />
+    );
+    fireEvent.press(getByLabelText('4 audios no periodo'));
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/recap-lista',
+      params: {
+        tipo: 'audios',
+        de: range.de.toISOString(),
+        ate: range.ate.toISOString(),
+      },
+    });
+  });
+
+  it('tap em card videos navega para /recap-lista com tipo=videos', () => {
+    const { getByLabelText } = render(
+      <RecapSecaoNumeros numeros={numeros} range={range} />
+    );
+    fireEvent.press(getByLabelText('2 videos no periodo'));
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/recap-lista',
+      params: {
+        tipo: 'videos',
         de: range.de.toISOString(),
         ate: range.ate.toISOString(),
       },
@@ -156,7 +197,7 @@ describe('RecapSecaoNumeros clicavel', () => {
     });
   });
 
-  it('range preservado nos query params em todas as 6 navegacoes', () => {
+  it('range preservado nos query params em todas as 8 navegacoes', () => {
     const { getByLabelText } = render(
       <RecapSecaoNumeros numeros={numeros} range={range} />
     );
@@ -164,6 +205,8 @@ describe('RecapSecaoNumeros clicavel', () => {
       '12 registros no periodo',
       '3 treinos no periodo',
       '7 fotos no periodo',
+      '4 audios no periodo',
+      '2 videos no periodo',
       '2 eventos positivos no periodo',
       '1 eventos dificeis no periodo',
       '5 tarefas concluidas no periodo',
@@ -171,7 +214,7 @@ describe('RecapSecaoNumeros clicavel', () => {
     for (const label of labels) {
       fireEvent.press(getByLabelText(label));
     }
-    expect(mockPush).toHaveBeenCalledTimes(6);
+    expect(mockPush).toHaveBeenCalledTimes(8);
     for (const call of mockPush.mock.calls) {
       const [arg] = call;
       expect(arg.params.de).toBe(range.de.toISOString());
@@ -194,6 +237,8 @@ describe('RecapSecaoNumeros clicavel', () => {
       <RecapSecaoNumeros numeros={zeros} range={range} />
     );
     expect(getByLabelText('0 registros no periodo')).toBeTruthy();
+    expect(getByLabelText('0 audios no periodo')).toBeTruthy();
+    expect(getByLabelText('0 videos no periodo')).toBeTruthy();
     expect(getByLabelText('0 tarefas concluidas no periodo')).toBeTruthy();
   });
 });

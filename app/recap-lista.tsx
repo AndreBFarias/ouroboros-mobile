@@ -24,6 +24,8 @@ type RecapListaTipo =
   | 'registros'
   | 'treinos'
   | 'fotos'
+  | 'audios'
+  | 'videos'
   | 'eventos_pos'
   | 'eventos_neg'
   | 'tarefas';
@@ -32,6 +34,8 @@ const ROTULO_POR_TIPO: Record<RecapListaTipo, string> = {
   registros: 'Registros',
   treinos: 'Treinos',
   fotos: 'Fotos',
+  audios: 'Áudios',
+  videos: 'Vídeos',
   eventos_pos: 'Eventos positivos',
   eventos_neg: 'Eventos difíceis',
   tarefas: 'Tarefas concluídas',
@@ -71,6 +75,8 @@ function parseTipo(raw: string | string[] | undefined): RecapListaTipo {
   switch (t) {
     case 'treinos':
     case 'fotos':
+    case 'audios':
+    case 'videos':
     case 'eventos_pos':
     case 'eventos_neg':
     case 'tarefas':
@@ -111,10 +117,24 @@ export default function RecapListaTela() {
   // filtro inicial 'foto' em vez de empty state. Q24.a.d original ficava
   // sem destino navegavel — redirect rosa cirurgicamente em vez de mostrar
   // "nenhum item neste periodo".
+  //
+  // R-RECAP-NUMEROS-AUDIOVIDEO-CARDS (2026-05-17): mesma logica aplicada a
+  // tipo='audios' (-> /galeria?filtro=audio) e tipo='videos'
+  // (-> /galeria?filtro=video). Cards extras do grid Numeros (R-CRIT-3
+  // expos contadores no NumerosRecap; este sprint adicionou cards visuais
+  // + handler de navegacao). Mantemos o redirect estilo R-CROSS-FLOW.
   useEffect(() => {
     if (tipo === 'fotos') {
       router.replace(
         '/galeria?filtro=foto' as Parameters<typeof router.replace>[0]
+      );
+    } else if (tipo === 'audios') {
+      router.replace(
+        '/galeria?filtro=audio' as Parameters<typeof router.replace>[0]
+      );
+    } else if (tipo === 'videos') {
+      router.replace(
+        '/galeria?filtro=video' as Parameters<typeof router.replace>[0]
       );
     }
   }, [tipo, router]);
@@ -137,9 +157,11 @@ export default function RecapListaTela() {
       return [];
     }
 
-    if (tipo === 'fotos') {
-      // Sem dado direto de "fotos" no useRecap (numeros.fotos e'
-      // contagem agregada). Q24.a.d puxa via listarGaleria('fotos').
+    if (tipo === 'fotos' || tipo === 'audios' || tipo === 'videos') {
+      // Sem dado direto de fotos/audios/videos no useRecap (sao
+      // contagens agregadas). Para esses tipos o useEffect acima
+      // faz router.replace para /galeria?filtro=<tipo>; este return
+      // [] e' defensivo enquanto o replace nao toma efeito.
       return [];
     }
 
