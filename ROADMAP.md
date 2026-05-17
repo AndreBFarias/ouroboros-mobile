@@ -83,7 +83,8 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | `9cb8f6a` | `[ok]` (3D.1) |
 | R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | `cb2c02d` | `[ok]` (3D.2) |
 | R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | `5c65b26` | `[ok]` (3E.4) |
-| R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke por timeout 5000ms em afterEach RTL paralelo (achado R-RECAP-LISTA-FIX-LOOP) | infra | P2 | 2-3h | `R-INFRA-JEST-FLAKY-TIMEOUT-spec.md` |
+| R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke (causa raiz: handle leak worker pool, não timeout) | infra | P2 | `c15cf52` | `[fase 1 parcial]` (3F.4) testTimeout defensivo |
+| R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | 2-4h | `R-INFRA-JEST-LEAK-HUNT-spec.md` |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
