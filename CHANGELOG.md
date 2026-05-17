@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda 2D.4 — R-CROSS-FLOW-FIX-2 sibling Python ETL lê layout H2 (2026-05-16 noite) — **Onda 2D 4/4 fechada**
+
+Sprint **cross-repo** entregue no sibling Python ETL. Mobile **zero toques** (read-only por design). Commit no sibling: [`AndreBFarias/protocolo-ouroboros@96f2167`](https://github.com/AndreBFarias/protocolo-ouroboros/commit/96f2167). Issue rastreadora: [#33](https://github.com/AndreBFarias/protocolo-ouroboros/issues/33).
+
+**Causa raiz**: mobile migrou para layout-por-tipo (H2, ADR-0023) — todo write canônico vai para `markdown/<feature>-*.md`. Sibling Python ainda usava SUBPATHS legados (`marcos/`, `eventos/`, `tarefas/`, `inbox/mente/diario/`, etc), tornando dados pós-refundação **invisíveis para o ETL desktop**.
+
+**Solução no sibling** (12 arquivos modificados, 655 inserções, 36 deleções):
+
+- **9 parsers** (`alarmes`, `ciclo`, `contadores`, `diario_emocional`, `eventos`, `marcos`, `medidas`, `tarefas`, `treinos`): `SUBPATHS = (("markdown",), ("<legado>",))` em união. Constante `FILENAME_PREFIXES_H2` filtra por prefixo conforme ADR-0023.
+- **`humor_heatmap.py`** (caso especial, não usa `_base`): varre `markdown/humor-*.md` + `markdown/daily-*.md`. Helper `_data_no_nome_h2(stem, prefixo)`. Dedup `(data, autor)` preservado.
+- **`scripts/smoke_bem_estar.py`**: `rglob("*.md")` substituído por `parser.varrer(vault_root)` — equivalência cache↔filesystem por construção.
+- **15 testes novos** em `tests/mobile_cache/test_layout_h2.py`: vault legado, vault H2 puro, vault híbrido (somando sem duplicar), cross-talk filtrado por prefixo.
+
+**Validação cross-check real no vault `~/Protocolo-Ouroboros`**:
+1. Estado inicial: `humor-heatmap.json` → 1 célula (`daily/2026-04-29.md` legado)
+2. Criou `markdown/humor-2026-05-16.md` → reroda ETL → 2 células (legado + H2 somando)
+3. `estatisticas.pessoa_a.registros_total: 2` confirmado
+4. Idem para eventos: 1 legado + 1 H2 = 2 items
+5. Artefatos de smoke removidos do vault real
+
+**Métricas sibling**: `pytest tests/mobile_cache/` 61 passed · suite completa 3110 passed / 14 skipped / 1 xfailed (3 falhas pré-existentes em Streamlit pages, confirmadas via `git stash`, fora do escopo). Ruff check + format limpos. `check_acentuacao.py` oficial silent (3 violações reportadas pelo validador genérico são falsos positivos em chaves YAML que NÃO levam acento por convenção).
+
+**Métricas mobile**: inalteradas (sprint read-only) — **249 suítes / 2320 testes verde** (ainda em `af3b1c4`).
+
+**Achados colaterais** (todos sibling internal, sem dispatch):
+1. `marcos_auto/escrita.py` + `escrever_humor/evento/diario` no servidor Python ainda escrevem em paths legados — escopo separado (writers internos do dashboard Streamlit, não do mobile).
+2. 3 testes pré-quebrados em `tests/test_page_header_canonico.py` / `test_sistema_redesign.py` / `test_topbar_canonica.py` — pré-existentes, Streamlit-only.
+
+**Cross-repo confirmado**: pipeline Mobile→Desktop agora fecha. Quando o boot hook do mobile rodar no vault deste user e migrar pastas → `markdown/`, o ETL continua lendo sem mudança adicional. **Onda 2D fechada (4/4).**
+
 ### Onda 2D.3 — R-INT-3 Health Connect toast explícito + eventBus (2026-05-16 noite)
 
 Sprint da Fase 2 entregue honrando worktree isolation. Commit `726dec4` cherry-pick. Validação Nível C (celular live) fica como FOLLOW-UP — orquestrador valida quando dono conectar.
