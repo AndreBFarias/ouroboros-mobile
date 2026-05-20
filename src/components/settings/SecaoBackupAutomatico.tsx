@@ -16,7 +16,7 @@
 // manter a tela limpa.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Button, Toggle, useToast } from '@/components/ui';
 import { SecaoLista } from '@/components/settings/SecaoLista';
@@ -66,6 +66,19 @@ export function SecaoBackupAutomatico() {
   const [executando, setExecutando] = useState(false);
   const toast = useToast();
 
+  // R-INFRA-JEST-LEAK-HUNT-3 (2026-05-20): mountedRef em vez da flag
+  // `cancelado` antiga (que era checada apos o setState e nao guardava
+  // nada). Agora `recarregar` checa mountedRef antes de cada setState,
+  // eliminando warning "update inside test not wrapped in act" que
+  // causava flake nas suites jest com mount/unmount rapido.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Carrega lista + ultimo timestamp. Roda ao montar e a cada vez que
   // o toggle muda (ligar o toggle pode disparar execucao via boot).
   const recarregar = useCallback(async () => {
@@ -73,18 +86,13 @@ export function SecaoBackupAutomatico() {
       lerUltimoBackupMs(),
       listarBackupsArquivados(),
     ]);
+    if (!mountedRef.current) return;
     setUltimoMs(ms);
     setBackups(lista);
   }, []);
 
   useEffect(() => {
-    let cancelado = false;
-    void recarregar().then(() => {
-      if (cancelado) return;
-    });
-    return () => {
-      cancelado = true;
-    };
+    void recarregar();
   }, [ativo, recarregar]);
 
   const fazerBackupAgora = async () => {
