@@ -17,6 +17,26 @@ cd "$(git rev-parse --show-toplevel)"
 # // ptbr-allow: <razao> ou exclusao em batch via .ptbr-violations.txt
 python3 scripts/check_strings_ui_ptbr.py
 
+# R-SEC-5 (2026-05-19): bloqueia commit que introduz secret detectavel
+# por gitleaks (tokens AWS, GCP, GitHub, OAuth, chaves privadas etc).
+# Degrada graciosamente se gitleaks ausente: warning, sem bloqueio.
+# Bypass intencional via git commit --no-verify (uso raro, registrado).
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --no-banner --redact || {
+    echo "ERRO: gitleaks detectou possivel secret no diff staged."
+    echo "      Aborte o commit ou rode com --no-verify se for falso positivo."
+    exit 1
+  }
+elif [[ -x /tmp/gitleaks ]]; then
+  /tmp/gitleaks protect --staged --no-banner --redact || {
+    echo "ERRO: gitleaks detectou possivel secret no diff staged."
+    echo "      Aborte o commit ou rode com --no-verify se for falso positivo."
+    exit 1
+  }
+else
+  echo "AVISO: gitleaks nao instalado. Instale via docs/SECURITY.md secao 1.2 para protecao anti-leak."
+fi
+
 if [[ -f package.json ]]; then
   STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
   if [[ -n "$STAGED" ]]; then
