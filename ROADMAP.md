@@ -86,6 +86,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | `5c65b26` | `[ok]` (3E.4) |
 | R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke (causa raiz: handle leak worker pool, não timeout) | infra | P2 | `c15cf52` | `[fase 1 parcial]` (3F.4) testTimeout defensivo |
 | R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | 2-4h | `R-INFRA-JEST-LEAK-HUNT-spec.md` |
+| R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `fd079f2` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
@@ -111,7 +112,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 |---|---|---|---|---|---|
 | R-SEC-1 | Google OAuth verification (testers) | docs+cloud-config | P1 | 2–3h | `R-SEC-1-GOOGLE-OAUTH-VERIFICATION-spec.md` |
 | R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` |
-| R-SEC-3 | Privacy policy + terms | docs | P1 | 2–3h | `R-SEC-3-PRIVACY-POLICY-TERMS-spec.md` |
+| R-SEC-3 | Privacy policy + terms | docs | P1 | `3e032e8` | `[ok]` (3J.3) privacy+terms+css em public/, RELEASE.md pre-release checklist; URLs aguardam dono habilitar Pages |
 | R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
 | R-SEC-5 | Secret leak audit | infra+audit | P1 | `4155077` | `[ok]` (3J.1) gitleaks 0 findings em 420 commits, hook pre-commit ativo, docs/SECURITY.md |
 | R-PLAYCONSOLE-SETUP | TODO Play Console (dono executa, sibling R-SEC-2) | docs+cloud | P1 | 40min dono + propagação | `R-PLAYCONSOLE-SETUP-spec.md` |
@@ -205,7 +206,7 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q11.a | Schema Rotina + CRUD vault + rotas `/rotinas` | `6d96ae4` | `[ok]` |
 | Q11.b | SeletorRotina integrado no SheetNovoTreino + modal "Substituir treino atual?" | `6d96ae4` | `[ok]` |
 | Q11.c | Executor de treino com timer descanso ajustável | `2edbc98` | `[ok]` |
-| Q12 | Bridge ETL Mobile↔Backend (`_schema_version: 1` em todos writers) | `245954f` | `[ok]` |
+| Q12 | Bridge ETL MobileBackend (`_schema_version: 1` em todos writers) | `245954f` | `[ok]` |
 | Q14 | Entry "Rotinas" no MenuLateral (Utilitários, Dumbbell ícone) | `2edbc98` | `[ok]` |
 | Q15 | SeletorRotina fecha SheetNovoTreino antes de abrir (anti-empilhamento) | `2edbc98` | `[ok]` |
 | Q17.a | Setup Health Connect — pacote + AndroidManifest + tela `/settings/integracoes` + rationale activity | `1fcbaf5` | `[ok]` |
@@ -219,7 +220,7 @@ Detalhes completos em [`docs/ONDA-Q-2026-05-12.md`](docs/ONDA-Q-2026-05-12.md) (
 | Q19 | Grupos de Treino — schema + vault CRUD + rotas `/grupos/` + form Q19.b completo | `1fcbaf5`+`93a8e23` | `[ok]` |
 | Q19.b | Form completo + multi-select de rotinas + sheet "Qual treino hoje?" + Iniciar pill | `93a8e23` | `[ok]` |
 | Q20 | Share Pix/boleto/extrato — spec runtime validation | `ff20d2c` (spec) | `[spec]` |
-| Q21 | ETL unificação Mobile↔Backend Python — CSV canônico + drift check no smoke + 7 issues sibling | `840513f`+`1c9ed04` | `[ok]` |
+| Q21 | ETL unificação MobileBackend Python — CSV canônico + drift check no smoke + 7 issues sibling | `840513f`+`1c9ed04` | `[ok]` |
 | Q17.c.d | Campo `gordura` em MedidasSchema + hook `escreverBodyFatEmHC` | (HEAD) | `[ok]` |
 | Q17.e | Keystore EAS encriptado em 4 GitHub Secrets + workflow signing | (HEAD) | `[ok]` |
 | Q22.A | Fix transcrição duplicando texto no diário (split partial/final no TranscreverButton) | (HEAD) | `[ok]` |
