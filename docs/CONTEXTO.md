@@ -446,6 +446,52 @@ mudança no main.
 `hooks/` não é registrado e o bootstrap não dispara automaticamente
 — neste caso, rodar o script manualmente.
 
+### Worktree isolation — PreToolUse hook (r-dx-executor-worktree-enforce-v2, 2026-05-17)
+
+Complemento de `hooks/agent-worktree-check.sh` (pre-commit). O
+detective pre-commit só dispara depois que o commit é tentado;
+quando o agente escreve direto na working tree do main por
+aplicação cega de paths absolutos copiados do `Read` inicial, o
+estrago já está feito (worktree fica vazio, cherry-pick clean
+impossível). Padrão observado em 3 de 4 agentes na Onda 3I
+(R-DX-1, R-DX-3, R-INT-4).
+
+**Hook adicional:** `hooks/pretooluse-worktree-write-check.sh`,
+disparado pelo Claude Code como `PreToolUse` para os tools
+`Edit | Write | MultiEdit | NotebookEdit`. Registrado em
+`.claude/settings.local.json` (gitignored; por isso replicado em
+cada clone do repo).
+
+**Modo atual:** logging-only. O hook detecta tentativa de escrita
+fora do worktree e registra em `/tmp/worktree-bypass-<YYYYMMDD>.log`.
+Exit 0 sempre — não interrompe o agente. Decisão conservadora do
+spec; escalar para modo blocking (`exit 2`) se incidentes
+continuarem após observação.
+
+**Algoritmo:**
+1. Lê payload JSON do stdin via `jq -r '.tool_input.file_path'`.
+2. Detecta worktree comparando `git rev-parse --git-dir` com
+   `git rev-parse --git-common-dir`. Distintos → worktree.
+3. Resolve `file_path` para absoluto (normaliza via `python3
+   os.path.normpath`).
+4. Compara com prefixo de `git rev-parse --show-toplevel`
+   (worktree root).
+5. Se NÃO prefixa: append em log com timestamp ISO 8601, tool,
+   worktree_root, file_path e pwd.
+
+**Degradação silenciosa:** se `jq` indisponível, stdin vazio,
+fora de git repo, ou no main repo (não worktree), o hook é no-op
+e exit 0.
+
+**Pré-requisito:** `./scripts/install-hooks.sh` não é necessário
+aqui — o `PreToolUse` é disparado pelo runtime do Claude Code,
+não pelo git. Basta o arquivo em `.claude/settings.local.json` e
+o script em `hooks/`.
+
+**Auditoria:** `tail -50 /tmp/worktree-bypass-$(date +%Y%m%d).log`
+após sessão multi-agente para ver se houve bypass. Cada entrada
+ocupa 6 linhas (header BYPASS + 4 campos + linha em branco).
+
 ### Config jest com diagnóstico defensivo (r-infra-jest-flaky-timeout, 2026-05-17 — fase 1 parcial)
 
 `package.json#jest` ganhou `"testTimeout": 15000` (de 5000ms
