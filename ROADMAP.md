@@ -80,6 +80,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | `97106e1` | `[ok]` (3C.2) Nível C follow-up |
 | R-INT-4 | Spotify/YouTube conectar | feature | P3 | `dd37f26` | `[ok]` (3I.4) follow-up nivel C |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | `e53fb54` | `[ok]` (DX.2) |
+| R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 | Hook PreToolUse Edit/Write/MultiEdit (complementa pre-commit V1, modo logging-only) | infra+DX | P2 | `91b4cd6` | `[ok]` (3J.2) wiring em settings.local.json por-clone |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | `9cb8f6a` | `[ok]` (3D.1) |
 | R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | `cb2c02d` | `[ok]` (3D.2) |
 | R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | `5c65b26` | `[ok]` (3E.4) |
@@ -112,7 +113,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` |
 | R-SEC-3 | Privacy policy + terms | docs | P1 | 2–3h | `R-SEC-3-PRIVACY-POLICY-TERMS-spec.md` |
 | R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
-| R-SEC-5 | Secret leak audit | infra+audit | P1 | 1–2h | `R-SEC-5-SECRET-LEAK-AUDIT-spec.md` |
+| R-SEC-5 | Secret leak audit | infra+audit | P1 | `4155077` | `[ok]` (3J.1) gitleaks 0 findings em 420 commits, hook pre-commit ativo, docs/SECURITY.md |
 | R-PLAYCONSOLE-SETUP | TODO Play Console (dono executa, sibling R-SEC-2) | docs+cloud | P1 | 40min dono + propagação | `R-PLAYCONSOLE-SETUP-spec.md` |
 
 ### Sprint anti-débito derivada (independente das 4 fases)
