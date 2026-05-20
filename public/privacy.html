@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index, follow" />
+  <meta name="description" content="Política de privacidade do Ouroboros Mobile — aplicativo comunitário de uso pessoal sem coleta de dados em servidores próprios." />
+  <title>Política de Privacidade — Ouroboros Mobile</title>
+  <link rel="stylesheet" href="styles/docs.css" />
+</head>
+<body>
+  <main>
+    <nav class="doc-nav">
+      <a href="terms.html">Termos de uso</a>
+    </nav>
+
+    <header class="doc-header">
+      <h1>Política de Privacidade</h1>
+      <p class="meta">Aplicativo Ouroboros Mobile · Última atualização: 19 de maio de 2026</p>
+    </header>
+
+    <section>
+      <p class="lead">O Ouroboros Mobile é um aplicativo comunitário, gratuito, de uso pessoal e não comercial. Esta política descreve, em linguagem direta e sem juridiquês, o que o aplicativo faz com seus dados.</p>
+    </section>
+
+    <section class="callout">
+      <p><strong>Resumo em uma frase:</strong> o Ouroboros não envia seus dados para nenhum servidor próprio. Tudo o que você registra fica em arquivos no seu dispositivo, sob seu controle direto.</p>
+    </section>
+
+    <section>
+      <h2>1. Quem opera o aplicativo</h2>
+      <p>O Ouroboros Mobile é mantido por um grupo informal de uso pessoal, sem CNPJ, sem empresa associada e sem ânimo comercial. O ponto de contato responsável por esta política é o mantenedor do repositório do projeto, alcançável por e-mail no fim deste documento.</p>
+    </section>
+
+    <section>
+      <h2>2. Quais dados o aplicativo coleta</h2>
+
+      <h3>2.1 Dados que ficam apenas no seu dispositivo</h3>
+      <p>O aplicativo grava todos os registros que você cria — humor, diário, eventos, tarefas, contadores, marcos, treinos, medidas corporais, mídias anexadas, configurações de aparência — em arquivos de texto e mídia dentro de uma pasta escolhida por você no onboarding (o <em>Vault</em>, tipicamente em <code>~/Protocolo-Ouroboros/</code>).</p>
+      <p>Esses arquivos pertencem a você. Eles não são enviados a nenhum servidor operado pelo Ouroboros. Não existe banco de dados central, não existe conta de usuário, não existe login no aplicativo em si.</p>
+
+      <h3>2.2 Dados que o aplicativo <strong>não</strong> coleta</h3>
+      <ul>
+        <li>Nenhum identificador anônimo de uso (analytics) é enviado para terceiros.</li>
+        <li>Nenhum relatório de erro automatizado (crash reporter externo como Firebase Crashlytics, Sentry, Bugsnag) é enviado.</li>
+        <li>Nenhum identificador de publicidade (IDFA, AAID) é lido ou transmitido.</li>
+        <li>Nenhuma informação de localização precisa é capturada em segundo plano.</li>
+        <li>Nenhum contato, mensagem ou histórico de navegação do dispositivo é acessado.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Integrações opcionais com serviços de terceiros</h2>
+      <p>Algumas funcionalidades opcionais usam serviços externos. Cada uma só é ativada se você explicitamente entrar com sua conta. Você pode usar o aplicativo inteiro sem ativar nenhuma delas.</p>
+
+      <h3>3.1 Google (autenticação OAuth)</h3>
+      <p>Usado apenas quando você opta por sincronização opcional ou recursos que pedem identificação do dispositivo. O Ouroboros recebe apenas um identificador de sessão e, quando explicitamente autorizado, o seu nome e e-mail principal da conta Google. Esses dados não são armazenados em servidor remoto: ficam apenas em armazenamento seguro local do dispositivo (<code>SecureStore</code>).</p>
+
+      <h3>3.2 Spotify (leitura de playlists)</h3>
+      <p>Se você ativar a integração com Spotify nas configurações, o aplicativo solicita um token <em>read-only</em> de escopo mínimo para listar suas playlists e faixas. Esse token fica armazenado apenas no seu dispositivo. O Ouroboros não envia metadados de música a nenhum terceiro.</p>
+
+      <h3>3.3 YouTube (leitura de playlists)</h3>
+      <p>Mesma natureza da integração com Spotify: token <em>read-only</em>, armazenado localmente, usado apenas para listar suas próprias playlists e vídeos. Sem perfil, sem histórico, sem comentários.</p>
+
+      <h3>3.4 Health Connect (Android)</h3>
+      <p>No Android, o aplicativo pode ler dados de saúde via Health Connect (passos, frequência cardíaca, sono) <strong>somente</strong> se você conceder permissão explícita no diálogo do sistema. Esses dados permanecem inteiramente no seu dispositivo, sob o controle do Health Connect, e o Ouroboros não os transmite a nenhum servidor externo.</p>
+
+      <h3>3.5 Storage Access Framework (Android)</h3>
+      <p>O aplicativo usa o Storage Access Framework do Android para ler e escrever os arquivos do Vault na pasta que você escolher. Nenhum outro arquivo do dispositivo é acessado.</p>
+
+      <h3>3.6 Syncthing (sincronização P2P opcional)</h3>
+      <p>Se você instalar separadamente o Syncthing e configurar a sincronização entre seu celular e outro dispositivo seu (computador, outro celular), os arquivos do Vault podem ser replicados via rede ponto-a-ponto entre seus dispositivos. O Ouroboros não opera essa rede e não tem visibilidade do tráfego: ele apenas escreve arquivos que o Syncthing replica.</p>
+    </section>
+
+    <section>
+      <h2>4. Permissões solicitadas pelo aplicativo</h2>
+      <table>
+        <thead>
+          <tr><th>Permissão</th><th>Para quê</th><th>Opcional?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Acesso a pasta (SAF)</td><td>Ler e escrever o Vault</td><td>Obrigatório no onboarding</td></tr>
+          <tr><td>Câmera</td><td>Fotos anexadas a registros (memórias, marcos)</td><td>Sim</td></tr>
+          <tr><td>Microfone</td><td>Áudios anexados a registros e dictado em diário</td><td>Sim</td></tr>
+          <tr><td>Notificações</td><td>Lembretes de tarefas, alarmes e diário</td><td>Sim</td></tr>
+          <tr><td>Biometria</td><td>Trava opcional de abertura do aplicativo</td><td>Sim</td></tr>
+          <tr><td>Health Connect</td><td>Leitura de métricas de saúde</td><td>Sim</td></tr>
+          <tr><td>Internet</td><td>Apenas para integrações opcionais (Google, Spotify, YouTube)</td><td>Sim em prática</td></tr>
+        </tbody>
+      </table>
+      <p>Nenhuma dessas permissões alimenta um servidor remoto operado pelo Ouroboros. Elas existem para que o aplicativo funcione localmente no seu dispositivo.</p>
+    </section>
+
+    <section>
+      <h2>5. Como exportar ou apagar seus dados</h2>
+      <p>Como tudo está em arquivos seus, na pasta do Vault, você tem controle direto:</p>
+      <ul>
+        <li><strong>Exportar:</strong> copie a pasta do Vault para onde quiser (computador, drive externo, backup pessoal). O aplicativo também oferece a opção de gerar um arquivo ZIP do Vault inteiro em <em>Configurações &rsaquo; Vault &rsaquo; Exportar</em>.</li>
+        <li><strong>Apagar:</strong> em <em>Configurações &rsaquo; Vault &rsaquo; Apagar tudo</em>, o aplicativo remove todos os arquivos da pasta do Vault e revoga os tokens das integrações opcionais. Você também pode apagar a pasta manualmente pelo gerenciador de arquivos do dispositivo a qualquer momento.</li>
+        <li><strong>Revogar integrações de terceiros:</strong> além de remover os tokens dentro do aplicativo, recomenda-se revogar o acesso na própria conta do Google, Spotify ou YouTube, pelas configurações de segurança de cada serviço.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Crianças</h2>
+      <p>O aplicativo não é direcionado a crianças menores de 13 anos. Como não há coleta de dados em servidor remoto, também não há cadastro etário, mas o uso é pensado para adultos que mantêm registros pessoais.</p>
+    </section>
+
+    <section>
+      <h2>7. Segurança</h2>
+      <p>Os arquivos do Vault ficam em pasta do próprio sistema de arquivos do seu dispositivo, sob as permissões do sistema operacional. Tokens de integrações ficam em armazenamento seguro nativo (Android Keystore via <code>SecureStore</code>). O aplicativo oferece trava biométrica opcional para abertura.</p>
+      <p>Como o aplicativo não envia dados para servidor próprio, não existe vetor de vazamento centralizado. Eventuais riscos vêm do próprio dispositivo (roubo físico, malware) ou dos serviços de terceiros que você opcionalmente conectar.</p>
+    </section>
+
+    <section>
+      <h2>8. Mudanças nesta política</h2>
+      <p>Mudanças relevantes nesta política são comunicadas em notas de versão do aplicativo (changelog) e nesta mesma página, com atualização da data no topo. Continuar a usar o aplicativo após uma mudança significa concordar com a versão atual.</p>
+    </section>
+
+    <section>
+      <h2>9. Contato</h2>
+      <p>Dúvidas, sugestões ou pedidos relativos a esta política podem ser enviados ao mantenedor do projeto pelo e-mail <a href="mailto:andre.dsbf@gmail.com">andre.dsbf@gmail.com</a>.</p>
+    </section>
+
+    <footer class="doc-footer">
+      <p>Ouroboros Mobile · projeto comunitário · <a href="terms.html">Termos de uso</a></p>
+    </footer>
+  </main>
+</body>
+</html>

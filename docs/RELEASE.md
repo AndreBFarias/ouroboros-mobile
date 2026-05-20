@@ -17,6 +17,55 @@ APK assinado e instalado manualmente nos celulares dos usuários
   (`pip install bundletool` ou
   [download direto](https://github.com/google/bundletool/releases)).
 
+## Pre-release checklist (uma vez, antes do primeiro release público)
+
+Itens de configuração de repositório que precisam estar prontos antes
+do primeiro release distribuído publicamente. Cada item é idempotente
+e só precisa ser feito uma vez por repositório.
+
+- [ ] **GitHub Pages habilitado apontando para `public/` em `main`.**
+  Necessário para servir as páginas de política e termos linkadas no
+  Google Cloud Console (consent screen) e em `app.json`. Configuração
+  no painel do GitHub:
+
+  1. Abrir `Settings > Pages` no repositório.
+  2. Em **Source**, selecionar `Deploy from a branch`.
+  3. Em **Branch**, escolher `main` e em **Folder** escolher `/public`.
+  4. Clicar em `Save`. Aguardar ~1 minuto até o primeiro deploy.
+
+  Verificação:
+
+  ```bash
+  curl -sf https://andrebfarias.github.io/ouroboros-mobile/privacy.html | head -5
+  curl -sf https://andrebfarias.github.io/ouroboros-mobile/terms.html | head -5
+  ```
+
+  Ambos devem retornar HTML válido (linha `<!DOCTYPE html>`). Enquanto
+  Pages não estiver habilitado, `gh api repos/<owner>/<repo>/pages`
+  retorna 404 e os endpoints respondem 404. Esta tarefa é do dono do
+  repositório (humano), não pode ser feita por automação sem token de
+  admin.
+
+  Arquivos servidos (já versionados em `public/` desde R-SEC-3):
+  `public/privacy.html`, `public/terms.html`, `public/styles/docs.css`,
+  `public/fonts/JetBrainsMono_400Regular.ttf`,
+  `public/fonts/JetBrainsMono_500Medium.ttf`.
+
+- [ ] **URLs de política e termos cadastradas no Google Cloud Console.**
+  No consent screen do OAuth (interno ou externo), preencher:
+
+  - Política de privacidade: `https://andrebfarias.github.io/ouroboros-mobile/privacy.html`
+  - Termos de uso: `https://andrebfarias.github.io/ouroboros-mobile/terms.html`
+
+  Sem essas URLs preenchidas, Google rejeita a publicação do consent
+  screen de produção.
+
+- [ ] **Links de política e termos referenciados no aplicativo.**
+  Settings &rsaquo; Sobre passa a apresentar dois links externos para
+  `privacy.html` e `terms.html`. Essa entrega é feita em sprint
+  dedicada de UI (não pertence ao escopo de R-SEC-3, que cobre apenas
+  os arquivos HTML estáticos).
+
 ## Pipeline canônico
 
 ### 1. Verificação local
@@ -384,7 +433,7 @@ Se preferir aplicar sem o script (ou auditar o comando que o script
 gera):
 
 ```bash
-gh api repos/AndreBFarias/ouroboros-mobile/branches/main/protection \
+gh api repos/[REDACTED]/ouroboros-mobile/branches/main/protection \
   --method PUT \
   --field 'required_status_checks={"strict":true,"contexts":["scan-commits","Build APK Android"]}' \
   --field enforce_admins=false \
