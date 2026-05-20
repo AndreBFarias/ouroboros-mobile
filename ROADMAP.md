@@ -85,7 +85,9 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | `cb2c02d` | `[ok]` (3D.2) |
 | R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | `5c65b26` | `[ok]` (3E.4) |
 | R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke (causa raiz: handle leak worker pool, não timeout) | infra | P2 | `c15cf52` | `[fase 1 parcial]` (3F.4) testTimeout defensivo |
-| R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | 2-4h | `R-INFRA-JEST-LEAK-HUNT-spec.md` |
+| R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | `25ca020` | `[parcial]` (3J.5) fase 2 fix Toast+escreverEstado, 10/10 nao atingido |
+| R-INFRA-JEST-LEAK-HUNT-3 | Use-after-unmount em SecaoBackupAutomatico (achado colateral fase 2) | fix | P2 | `85979b3` | `[ok-parcial]` (3J.6) fix tecnico real, flake aleatorio persiste |
+| R-INFRA-JEST-LEAK-HUNT-4 | Causa raiz flake aleatorio cross-suite (moti/RAF/zustand reset) | infra | P1 | 4-6h | `R-INFRA-JEST-LEAK-HUNT-4-spec.md` |
 | R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `fd079f2` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
