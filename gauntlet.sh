@@ -10,6 +10,7 @@
 #   ./gauntlet.sh --record         # grava video 30s (default) apos navegador abrir
 #   ./gauntlet.sh --record 60      # grava video 60s
 #   ./gauntlet.sh --record 0       # grava ate Ctrl-C / kill (sem limite de tempo)
+#   ./gauntlet.sh --gc             # roda scripts/gc-metro-cache.sh antes de subir
 #
 # O que faz:
 #   1. Resolve porta efetiva (default 8081, ou --port, ou --auto-port).
@@ -108,6 +109,7 @@ PORT_EXPLICIT=""
 AUTO_PORT=0
 RECORD=0
 RECORD_DURATION=30
+RUN_GC=0
 i=1
 while [[ $i -le $# ]]; do
   arg="${!i}"
@@ -124,6 +126,7 @@ while [[ $i -le $# ]]; do
       fi
       ;;
     --auto-port) AUTO_PORT=1 ;;
+    --gc) RUN_GC=1 ;;
     --record)
       RECORD=1
       # Lookahead: proximo arg, se for numero, vira RECORD_DURATION.
@@ -216,6 +219,17 @@ fi
 
 # 2. Rotaciona log especifico desta porta
 [[ -f "$LOG_FILE" ]] && mv "$LOG_FILE" "${LOG_FILE}.prev" 2>/dev/null || true
+
+# 2.5. GC opcional do cache Metro orfao (R-INFRA-METRO-CACHE-GC).
+#      Nao-bloqueante: se o script faltar, log e segue.
+if [[ $RUN_GC -eq 1 ]]; then
+  if [[ -x "$ROOT/scripts/gc-metro-cache.sh" ]]; then
+    echo "GC de cache Metro orfao..."
+    "$ROOT/scripts/gc-metro-cache.sh" || echo "AVISO: gc-metro-cache.sh retornou erro (ignorado)" >&2
+  else
+    echo "AVISO: --gc pedido mas scripts/gc-metro-cache.sh ausente; pulando." >&2
+  fi
+fi
 
 # 3. Limpa cache se pedido.
 #    Em worktree o cache global /tmp/metro-cache e /tmp/metro-file-map-*

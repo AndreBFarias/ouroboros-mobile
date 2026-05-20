@@ -180,6 +180,53 @@ outras instâncias gauntlet ativas** (detectado via presença de
 `/tmp/gauntlet-port-*.lock`). Em paralelo: cada worktree preserva
 seu file-map para não invalidar o do vizinho.
 
+### Limpeza de cache órfão (`--gc`)
+
+O cache transformado em `/tmp/metro-cache/` pode manter entradas
+que referenciam worktrees já removidos (ex: stack traces e source
+maps citam paths fantasmas tipo `.claude/worktrees/agent-DEAD123`).
+Não afeta runtime visível, mas polui debug e cresce sem teto em
+uso multi-worktree intensivo.
+
+`scripts/gc-metro-cache.sh` faz coleta de lixo defensiva:
+
+- Lê `git worktree list --porcelain` para set de worktrees vivos.
+- Varre cada entrada top-level de `/tmp/metro-cache/`.
+- Procura referências textuais `.claude/worktrees/<id>` dentro da
+  entrada. Se todas as referências apontam a worktrees inexistentes,
+  a entrada é removida. Caso contenha pelo menos uma referência viva
+  ou nenhuma referência a worktree (cache neutro), é preservada.
+- Idempotente. Degrada gracioso quando `/tmp/metro-cache/` ausente
+  (no-op silencioso).
+
+Modos de uso:
+
+```bash
+# Rodada manual após git worktree remove
+./scripts/gc-metro-cache.sh
+
+# Dry-run (só reporta o que removeria)
+./scripts/gc-metro-cache.sh --dry-run
+
+# Debug detalhado por entrada
+./scripts/gc-metro-cache.sh --verbose
+
+# Embutido no boot do Gauntlet
+./gauntlet.sh --gc
+```
+
+Quando usar:
+
+- Após `git worktree remove .claude/worktrees/<id>` em sessão longa.
+- Periodicamente em multi-worktree intensivo (semanal).
+- Antes de subir um Gauntlet em ambiente que viu muitos worktrees
+  efêmeros (use `--gc`).
+
+Não usar em runtime ativo: se houver outro `gauntlet.sh` rodando,
+o GC ainda é seguro (preserva entradas com refs vivas), mas pode
+introduzir miss de cache desnecessário no vizinho. Prefira rodar
+quando todas as instâncias estiverem paradas.
+
 ## Alternativa manual
 
 ```bash
