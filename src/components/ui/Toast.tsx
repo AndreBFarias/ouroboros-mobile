@@ -6,6 +6,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -83,6 +84,18 @@ export function ToastProvider({ children }: ToastProviderProps) {
     },
     [clearTimer]
   );
+
+  // Cleanup obrigatorio: cancela timer pendente quando o Provider
+  // desmontar. Sem isso, o setTimeout de auto-dismiss fica orfao no
+  // event loop apos a arvore React ser destruida (acontece entre
+  // testes Jest com fakeTimers reais), causando "Cannot log after
+  // tests are done" e leak de handle no worker pool. Fix de
+  // R-INFRA-JEST-LEAK-HUNT (handle leak em paralelo).
+  useEffect(() => {
+    return () => {
+      clearTimer();
+    };
+  }, [clearTimer]);
 
   return (
     <ToastContext.Provider value={{ show, dismiss }}>
