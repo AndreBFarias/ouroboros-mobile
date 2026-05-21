@@ -1,8 +1,8 @@
 // Container principal do Recap (M36). Header com botao fechar (X),
 // toggle de modo (Lista/Calendario, L2 M-RECAP-CALENDARIO-UNIFICAR),
-// ChipGroup de periodo (Semana / Mes / Ano / Personalizado), loader
-// durante agregacao e 5 secoes empilhadas em ScrollView no modo Lista
-// ou calendario mensal com conquistas no modo Calendario.
+// ChipGroup de periodo (Dia / Semana / Mes / Ano / Personalizado),
+// loader durante agregacao e 5 secoes empilhadas em ScrollView no modo
+// Lista ou calendario mensal com conquistas no modo Calendario.
 //
 // "Personalizado" abre dois inputs simples de data ISO (YYYY-MM-DD)
 // para evitar dependencia de DateTimePicker nativo nesta primeira
@@ -14,11 +14,15 @@
 // Animacao do toggle usa Reanimated puro (nao moti) para mitigar A28
 // — fade do conteudo via withTiming + useAnimatedStyle.
 //
+// R-RECAP-PERIODO-DIA (2026-05-21): chip "Dia" adicionado como
+// primeira opcao. Inicializacao do periodo respeita query param
+// `?periodo=dia|semana|mes|ano` quando vindo da Tela Hoje.
+//
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -49,11 +53,30 @@ import { RecapModoCalendario } from './RecapModoCalendario';
 type RecapModo = 'lista' | 'calendario' | 'memorias';
 
 const PERIODOS = [
+  { value: 'dia', label: 'Dia' },
   { value: 'semana', label: 'Semana' },
   { value: 'mes', label: 'Mês' },
   { value: 'ano', label: 'Ano' },
   { value: 'personalizado', label: 'Personalizado' },
 ] as const;
+
+// R-RECAP-PERIODO-DIA (2026-05-21): parse defensivo do query param
+// `periodo` vindo da Tela Hoje (router.push('/recap?periodo=dia&...')).
+// Aceita apenas chaves canonicas; fallback para 'semana' (default
+// historico) quando ausente ou invalido.
+function parsePeriodoParam(raw: string | string[] | undefined): PeriodoChave {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  switch (v) {
+    case 'dia':
+    case 'semana':
+    case 'mes':
+    case 'ano':
+    case 'personalizado':
+      return v;
+    default:
+      return 'semana';
+  }
+}
 
 const MODOS: ReadonlyArray<{ value: RecapModo; label: string; a11y: string }> =
   [
@@ -78,7 +101,17 @@ function parseYmd(s: string): Date | null {
 
 export function RecapScreen() {
   const router = useRouter();
-  const [periodo, setPeriodo] = useState<PeriodoChave>('semana');
+  // R-RECAP-PERIODO-DIA (2026-05-21): le query param `?periodo=` apenas
+  // na inicializacao para que mudancas locais via ChipGroup nao sejam
+  // sobrescritas a cada render. Caller (Tela Hoje) passa `?periodo=dia`
+  // para abrir direto no dia atual.
+  const params = useLocalSearchParams<{ periodo?: string }>();
+  const periodoInicial = useMemo(
+    () => parsePeriodoParam(params.periodo),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+  const [periodo, setPeriodo] = useState<PeriodoChave>(periodoInicial);
   const [modo, setModo] = useState<RecapModo>('lista');
 
   // L2: opacity compartilhado para fade do conteudo ao trocar modo.

@@ -34,6 +34,10 @@ jest.mock('expo-router', () => ({
     canGoBack: mockCanGoBack,
   }),
   useFocusEffect: jest.fn(),
+  // R-RECAP-PERIODO-DIA: RecapScreen le `?periodo` para escolher modo
+  // inicial. Mock retorna objeto vazio aqui (suite empty-states nao
+  // exercita query param; default 'semana' aplica).
+  useLocalSearchParams: () => ({}),
 }));
 
 jest.mock('@/lib/stores/vault', () => ({

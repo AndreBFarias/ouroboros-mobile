@@ -130,6 +130,7 @@ function tarefa(
       categoria,
       pessoa_destino: { tipo: 'mim' },
       alarme: null,
+      silenciar_sugestao_ate: null,
     },
     rel: `tarefas/2026-05-01-${titulo.toLowerCase().replace(/ /g, '-')}.md`,
   };
@@ -137,6 +138,32 @@ function tarefa(
 
 describe('resolverPeriodo', () => {
   const agora = new Date('2026-05-04T12:00:00-03:00');
+
+  // R-RECAP-PERIODO-DIA (2026-05-21): 'dia' cobre 00:00 -> 23:59:59
+  // do dia local de `agora`. Range < 24h, sempre dentro do mesmo dia
+  // civil. Util para fechar Recap do dia direto da Tela Hoje.
+  it('dia cobre as bordas civis (00:00 ate 23:59:59.999)', () => {
+    const r = resolverPeriodo('dia', agora);
+    expect(r.de.getHours()).toBe(0);
+    expect(r.de.getMinutes()).toBe(0);
+    expect(r.de.getSeconds()).toBe(0);
+    expect(r.de.getMilliseconds()).toBe(0);
+    expect(r.ate.getHours()).toBe(23);
+    expect(r.ate.getMinutes()).toBe(59);
+    expect(r.ate.getSeconds()).toBe(59);
+    expect(r.ate.getMilliseconds()).toBe(999);
+    // Mesmo dia civil em ambos os extremos.
+    expect(r.de.getDate()).toBe(r.ate.getDate());
+    expect(r.de.getMonth()).toBe(r.ate.getMonth());
+    expect(r.de.getFullYear()).toBe(r.ate.getFullYear());
+  });
+
+  it('dia nao polui a referencia `agora` recebida', () => {
+    const original = new Date('2026-05-04T12:00:00-03:00');
+    const ms = original.getTime();
+    resolverPeriodo('dia', original);
+    expect(original.getTime()).toBe(ms);
+  });
 
   it('semana cobre os ultimos 7 dias', () => {
     const r = resolverPeriodo('semana', agora);
@@ -342,6 +369,40 @@ describe('agregarRecap', () => {
     expect(
       dois.evolucoes.find((e) => e.id === 'evolucao:humor_medio')
     ).toBeDefined();
+  });
+
+  // R-RECAP-PERIODO-DIA (2026-05-21): range curto de 1 dia exclui
+  // registros do dia anterior mesmo que separados por segundos. Cobre
+  // o caso "Recap do dia" aberto direto da Tela Hoje.
+  it('range "dia" inclui apenas registros do dia civil de agora', () => {
+    const agoraDia = new Date('2026-05-04T20:00:00-03:00');
+    const rangeDia = resolverPeriodo('dia', agoraDia);
+    const data = agregarRecap({
+      humor: [
+        humor('2026-05-04', 4), // hoje (data simples = meio-dia local)
+        humor('2026-05-03', 5), // ontem
+      ],
+      diarios: [
+        diario('2026-05-04T08:00:00-03:00', 'conquista', 5, 'manha de hoje'),
+        diario('2026-05-03T23:59:00-03:00', 'conquista', 5, 'fim de ontem'),
+      ],
+      eventos: [],
+      marcos: [],
+      contadores: [],
+      treinos: [],
+      tarefas: [
+        tarefa('hoje cedo', true, '2026-05-04T07:00:00-03:00'),
+        tarefa('ontem tarde', true, '2026-05-03T18:00:00-03:00'),
+      ],
+      de: rangeDia.de,
+      ate: rangeDia.ate,
+      agora: agoraDia,
+    });
+    expect(data.numeros.registros).toBe(3); // 1 humor + 1 diario + 1 tarefa
+    expect(data.tarefasConcluidas.length).toBe(1);
+    expect(data.tarefasConcluidas[0]?.titulo).toBe('hoje cedo');
+    expect(data.conquistas.some((c) => c.frase.includes('manha'))).toBe(true);
+    expect(data.conquistas.some((c) => c.frase.includes('fim'))).toBe(false);
   });
 
   it('estado vazio devolve listas vazias e numeros zerados', () => {

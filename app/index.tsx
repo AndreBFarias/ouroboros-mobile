@@ -210,7 +210,11 @@ export default function TelaHoje() {
       onComponentsPress={() => router.push('/_components')}
       // /recap criado em paralelo (M36/B5). Cast para evitar dependencia
       // dura no tipo gerado pelo expo-router antes do paralelo fechar.
-      onRecapPress={() => router.push('/recap' as never)}
+      // R-RECAP-PERIODO-DIA (2026-05-21): abre o Recap ja no periodo
+      // 'dia' (00:00-23:59 do dia atual) para fechar o ciclo
+      // "Tela Hoje -> Recap do dia". Outros periodos sao acessiveis
+      // via ChipGroup dentro do Recap.
+      onRecapPress={() => router.push('/recap?periodo=dia' as never)}
       onReflexaoPress={() =>
         router.push('/diario-emocional?modo=reflexao' as never)
       }

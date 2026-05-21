@@ -43,6 +43,14 @@ O dono precisa confirmar:
 - **Faz sentido um recap diário?** Recap originalmente é "olhar para trás", `dia` pode parecer redundante com a própria Tela Hoje.
 - **Ou Recap continua começando em `semana`?** Tela Hoje cobre o "hoje", Recap cobre "passado".
 
+### Decisão tomada (2026-05-21)
+
+Dono confirmou em prompt do executor: implementar período `dia`. Tela
+Hoje passa a abrir `/recap?periodo=dia` para fechar o ciclo "ação do
+dia → retrospectiva do dia"; demais períodos (semana/mês/ano/
+personalizado) continuam acessíveis via ChipGroup dentro do Recap
+(default histórico `semana` quando query param ausente).
+
 ## Verificação
 
 ```bash

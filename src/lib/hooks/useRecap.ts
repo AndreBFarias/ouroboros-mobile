@@ -41,7 +41,9 @@ import {
 
 // Periodos canonicos do recap. 'personalizado' exige caller fornecer
 // {de, ate} explicitos (resolverPeriodo entao identidade).
-export type PeriodoChave = 'semana' | 'mes' | 'ano' | 'personalizado';
+// R-RECAP-PERIODO-DIA (2026-05-21): adicionado 'dia' como chave para
+// cobrir retrospectiva do dia atual (00:00 -> 23:59:59 local).
+export type PeriodoChave = 'dia' | 'semana' | 'mes' | 'ano' | 'personalizado';
 
 export interface PeriodoRange {
   de: Date;
@@ -53,6 +55,7 @@ export interface PeriodoRange {
 // nesse caso seria identidade (nao usado aqui).
 //
 // Convencoes:
+//  - dia: inicio (00:00) e fim (23:59:59.999) do dia local de `agora`.
 //  - semana: ultimos 7 dias completos (hoje inclusive).
 //  - mes: ultimos 30 dias completos (hoje inclusive).
 //  - ano: ultimos 365 dias completos (hoje inclusive).
@@ -61,6 +64,11 @@ export interface PeriodoRange {
 // (semana ISO, mes calendario). Mais previsivel para retrospectiva
 // curta ("ultimos 7 dias") do que "esta semana corrente que comecou
 // na segunda".
+//
+// R-RECAP-PERIODO-DIA (2026-05-21): 'dia' usa borda civil (00:00 e
+// 23:59:59) porque "hoje" em linguagem natural significa o dia do
+// calendario, nao "ultimas 24h". Decisao do dono: faz sentido para
+// fechar registro do dia (espelha a Tela Hoje).
 export function resolverPeriodo(
   chave: PeriodoChave,
   agora: Date = new Date(),
@@ -71,6 +79,13 @@ export function resolverPeriodo(
       throw new Error("periodo 'personalizado' exige range custom");
     }
     return custom;
+  }
+  if (chave === 'dia') {
+    const de = new Date(agora);
+    de.setHours(0, 0, 0, 0);
+    const ate = new Date(agora);
+    ate.setHours(23, 59, 59, 999);
+    return { de, ate };
   }
   const ate = agora;
   const de = new Date(agora);

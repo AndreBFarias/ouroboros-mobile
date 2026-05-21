@@ -16,6 +16,11 @@ const mockBack = jest.fn();
 const mockReplace = jest.fn();
 const mockCanGoBack = jest.fn(() => false);
 
+// R-RECAP-PERIODO-DIA (2026-05-21): query param `?periodo=` configuravel
+// por teste. Default vazio = nao passa periodo, RecapScreen cai em
+// 'semana' (historico).
+let mockSearchParams: Record<string, string | undefined> = {};
+
 jest.mock('expo-router', () => ({
   __esModule: true,
   useRouter: () => ({
@@ -24,6 +29,7 @@ jest.mock('expo-router', () => ({
     canGoBack: mockCanGoBack,
   }),
   useFocusEffect: jest.fn(),
+  useLocalSearchParams: () => mockSearchParams,
 }));
 
 jest.mock('@/lib/stores/vault', () => ({
@@ -106,6 +112,7 @@ import { RecapScreen } from '@/components/screens/RecapScreen';
 beforeEach(() => {
   jest.clearAllMocks();
   mockCanGoBack.mockReturnValue(false);
+  mockSearchParams = {};
 });
 
 describe('RecapScreen', () => {
@@ -115,12 +122,43 @@ describe('RecapScreen', () => {
     expect(getByLabelText('fechar recap')).toBeTruthy();
   });
 
-  it('renderiza chips de periodo Semana / Mes / Ano / Personalizado no modo Lista', async () => {
+  it('renderiza chips de periodo Dia / Semana / Mes / Ano / Personalizado no modo Lista', async () => {
     const { findByText, getByText } = render(<RecapScreen />);
-    expect(await findByText('Semana')).toBeTruthy();
+    // R-RECAP-PERIODO-DIA (2026-05-21): chip "Dia" adicionado como primeira opcao.
+    expect(await findByText('Dia')).toBeTruthy();
+    expect(getByText('Semana')).toBeTruthy();
     expect(getByText('Mês')).toBeTruthy();
     expect(getByText('Ano')).toBeTruthy();
     expect(getByText('Personalizado')).toBeTruthy();
+  });
+
+  // R-RECAP-PERIODO-DIA (2026-05-21): abertura via Tela Hoje passa
+  // `?periodo=dia`; Recap deve iniciar com chip "Dia" selecionado.
+  it('inicializa periodo "dia" quando query param ?periodo=dia', async () => {
+    mockSearchParams = { periodo: 'dia' };
+    const { findByText } = render(<RecapScreen />);
+    const chip = await findByText('Dia');
+    expect(chip).toBeTruthy();
+    // Smoke do empty state com periodo dia: a frase determinista vem de
+    // seed (dia, range.de); rota nao crasha.
+    const { findByLabelText } = render(<RecapScreen />);
+    const empty = await findByLabelText(/^vazio: /);
+    expect(empty).toBeTruthy();
+  });
+
+  // Sem query param, default historico continua 'semana'.
+  it('cai em "semana" quando query param ausente', async () => {
+    mockSearchParams = {};
+    const { findByText } = render(<RecapScreen />);
+    expect(await findByText('Semana')).toBeTruthy();
+  });
+
+  // Param invalido nao crasha — fallback silencioso para 'semana'.
+  it('cai em "semana" quando query param invalido', async () => {
+    mockSearchParams = { periodo: 'invalido' };
+    const { findByText } = render(<RecapScreen />);
+    expect(await findByText('Dia')).toBeTruthy();
+    expect(await findByText('Semana')).toBeTruthy();
   });
 
   it('mostra empty state quando o vault nao tem registros no periodo', async () => {

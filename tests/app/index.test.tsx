@@ -161,7 +161,7 @@ test('R-HOME-1 duo: mesmo layout enxuto (sem Status do casal)', async () => {
   expect(queryByText('Humor do dia')).toBeNull();
 });
 
-test('R-HOME-1 tap em Recap navega para /recap', async () => {
+test('R-HOME-1 tap em Recap navega para /recap?periodo=dia (R-RECAP-PERIODO-DIA)', async () => {
   useOnboarding.setState({ done: true, tipoCompanhia: 'sozinho' });
   const { findByText } = renderTela();
 
@@ -169,7 +169,7 @@ test('R-HOME-1 tap em Recap navega para /recap', async () => {
   fireEvent.press(recapBtn);
 
   await waitFor(() => {
-    expect(mockPush).toHaveBeenCalledWith('/recap');
+    expect(mockPush).toHaveBeenCalledWith('/recap?periodo=dia');
   });
 });
 

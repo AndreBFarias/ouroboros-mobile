@@ -518,9 +518,13 @@ malformados são silenciosamente ignorados (mesmo padrão de
   filtros — os 5 filtros M11.5 ficam no estado, exposição visual
   embutida volta em sprint subsequente).
 - Períodos selecionáveis (modo Lista) via `<ChipGroup mode="single">`:
-  **Semana** (últimos 7 dias), **Mês** (últimos 30 dias), **Ano**
-  (últimos 365 dias) e **Personalizado** (dois inputs
-  `AAAA-MM-DD`).
+  **Dia** (00:00–23:59:59 do dia local atual), **Semana** (últimos 7
+  dias), **Mês** (últimos 30 dias), **Ano** (últimos 365 dias) e
+  **Personalizado** (dois inputs `AAAA-MM-DD`). O período inicial
+  respeita o query param `?periodo=dia|semana|mes|ano` quando o Recap
+  é aberto pela Tela Hoje (`router.push('/recap?periodo=dia')` —
+  R-RECAP-PERIODO-DIA, 2026-05-21). Sem param o default histórico é
+  `semana`.
 - 5 seções no modo Lista:
   - **Conquistas** — vitórias do diário (`modo='vitoria'`), eventos
     positivos, marcos, contadores em sequência (≥ 7 dias) e tarefas
@@ -662,7 +666,10 @@ Layout R-HOME-1:
   checkbox inline. Empty state breve "Sem tarefas pendentes. Toque
   + para criar." Long-press na lista navega para `/todo` (CRUD
   completo).
-- **Botão Recap** centralizado em pill roxa.
+- **Botão Recap** centralizado em pill roxa. Abre
+  `/recap?periodo=dia` (R-RECAP-PERIODO-DIA, 2026-05-21) para fechar
+  o ciclo Tela Hoje → Recap do dia atual; demais períodos seguem
+  acessíveis via ChipGroup dentro do Recap.
 - Header simples ("Hoje"); sem avatar (filtro de pessoa vive no
   MenuLateral).
 
