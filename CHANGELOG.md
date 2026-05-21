@@ -5,6 +5,48 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3L — M-GAUNTLET-DEAD-CODE-V2 re-validação + R-BUNDLE-SIZE-AUDIT spec (2026-05-21)
+
+Despachei `M-GAUNTLET-DEAD-CODE-V2` como sprint pendente — o agente
+(`a86c4c9e`) descobriu via grep que **a sprint já estava entregue há 17
+dias** (commit `b6419b4`, 2026-05-04, parte da fundação bloco A junto com
+M-PT-BR-AUDIT). `src/lib/dev/gauntletBootstrap.ts` (56L) +
+`gauntletAtivo.ts` (26L) + `gauntletDashboard.tsx` (310L) + teste +
+`MODO_DEV_WEB` em 33 matches/8 arquivos — tudo no main desde 2026-05-04.
+
+**Falha de auditoria pré-dispatch documentada** (memória
+`feedback_audit_pre_dispatch`): deveria ter rodado `git log --grep` antes.
+Custo: 10min de agente + 1 commit (`7d0702f` no worktree só atualiza
+`STATUS: [todo]` → `[ok]` no header do spec + 5 fixes de acento). Não foi
+perda total — re-validou empiricamente:
+
+- **Leak check 0/6 markers** no bundle Android Hermes (esperado e
+  confirmado): `__gauntlet`, `instalarGauntlet`, `aplicarSeed`,
+  `useGaleriaMock`, `GAUNTLET_ATIVO`, `adicionarFotoMock` → todos 0
+  matches em `_expo/static/js/android/*.hbc`.
+- Smoke completo 47s OK. 277 suítes / 2584 passed / 1 skipped.
+- TS strict 0, anonimato OK, PT-BR OK.
+- Sanity 3 runs idênticos sem flake.
+
+ROADMAP tinha **linha duplicada** de M-GAUNTLET-DEAD-CODE-V2 (uma riscada
+`~~A2~~` fechada + outra `[todo]` residual que motivou o dispatch errado).
+Limpeza aplicada — só uma linha `[ok]` com detalhes finais permanece.
+
+**Achado colateral preocupante registrado como sprint nova:**
+
+`R-BUNDLE-SIZE-AUDIT` (P2, 2-4h, audit) — bundle Hermes inflou de
+**8,5 MB (2026-05-04)** para **9,8 MB (2026-05-21)** em 17 dias. Não é
+vazamento de gauntlet (leak check confirma 0), é crescimento natural das
+features Onda Q/R/3J/3K (R-INT-3 Health Connect ~500 KB, R-INT-4
+Spotify/YouTube clients, R-VAULT-A/B schemas, Q22 transcrição, R-RECAP-4/5/6
+slideshow + Ken Burns, R-BACKUP-AUTO jszip, etc). Limite hipotético
+documentado era **8,85 MB** — ultrapassamos ~1 MB.
+
+**Deve fechar antes de M41** (release final). Spec em
+`docs/sprints/R-BUNDLE-SIZE-AUDIT-spec.md` lista hipóteses de
+contribuintes e protocolo de audit (`source-map-explorer` + comparação
+com `M-BUNDLE-DIET` original em `docs/auditoria-bundle-2026-05-04/`).
+
 ### Fase 3 Onda 3K — Achados colaterais hunt-5 (2026-05-21) — **4/4 fechada em paralelo**
 
 4 sprints derivadas dos achados colaterais documentados pelo agente do hunt-5,

@@ -2,11 +2,18 @@
 
 ```
 DEPENDE:    M-GAUNTLET-LEAK-CHECK fechada (script detector ativo)
-BLOQUEIA:   M41 (release final v1.0.0 — bundle nao pode vazar gauntlet)
+BLOQUEIA:   M41 (release final v1.0.0 — bundle não pode vazar gauntlet)
 ESTIMATIVA: 4-6h
 PRIORIDADE: alta (antes de M41)
-STATUS:     [todo]
+STATUS:     [ok] (fechada 2026-05-04 commit b6419b4; revalidada 2026-05-21)
 ```
+
+> **Re-validação 2026-05-21 (worktree agent-a86c4c9e918b89331):**
+> `./scripts/check_gauntlet_leak.sh` continua devolvendo
+> `0 matches` nos 6 markers em HEAD `c969106`. Bundle Hermes
+> Android atual: 9,8 MB (cresceu 1,3 MB desde o fechamento por
+> sprints subsequentes; gauntlet permanece dead-code).
+> Suite: 277 suites, 2584 passed, 1 skipped — 3 runs idênticas.
 
 ## 1. Achado (M-GAUNTLET-LEAK-CHECK 2026-05-04)
 
@@ -34,8 +41,8 @@ import {
 ```
 
 Mesmo com `if (!GAUNTLET_ATIVO) return` em cada metodo, os
-identificadores ficam reachable estaticamente — Metro/Hermes nao
-fazem tree-shake de export ja referenciado.
+identificadores ficam reachable estaticamente — Metro/Hermes não
+fazem tree-shake de export já referenciado.
 
 ## 2. Solucao proposta
 
@@ -80,7 +87,7 @@ Configurar babel-plugin-transform-define ou similar para que
 DCE do Metro/Hermes, todo branch `if (__DEV__)` (e por extensao
 `GAUNTLET_ATIVO` que depende dele) seria eliminado.
 
-Vantagem: nao requer refactor de imports.
+Vantagem: não requer refactor de imports.
 Desvantagem: requer ajuste de toolchain (babel.config.js + verify
 em CI).
 
@@ -110,7 +117,7 @@ checkar `GAUNTLET_ATIVO` em runtime.
   ou se o `GAUNTLET_ATIVO` importado ja foi DCE'd post-A. Se ainda
   vazar, mover guard para uma constante interna ao proprio modulo.
 - `tests/lib/dev/gauntletBootstrap.test.ts`: stub `__DEV__` false e
-  confirma que `require` nao foi chamado.
+  confirma que `require` não foi chamado.
 
 ## 5. Verificacao
 
@@ -129,4 +136,4 @@ checkar `GAUNTLET_ATIVO` em runtime.
 - Bundle Hermes: deve reduzir 0.1-0.3 MB com DCE de gauntlet (
   ~30-50 KB de modulo).
 
-Sprint pronta para execucao apos M40 / antes de M41.
+Sprint pronta para execução após M40 / antes de M41.
