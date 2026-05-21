@@ -708,7 +708,13 @@ R-HOME-3 (refinamento do checkbox de R-HOME-1):
 - **Som** CC0: suave / normal / forte.
 - **Soneca** configurável.
 - **Channel Android v2** com `vibrationPattern: [0,250,500,250]`.
-- Notification actions: "Soneca" / "Desligar".
+- Notification actions: "Soneca" / "Desligar" — listener canônico
+  registra histórico de soneca + agenda re-disparo (R-ROT-1-A,
+  2026-05-21).
+- **Sugestão temporal de horário** (R-ROT-1-A): após 3 sonecas
+  recentes consistentes (≥80% mesma duração), banner em
+  `/alarmes/[slug]` propõe mover o alarme; aceitar atualiza
+  horário, rejeitar silencia por 30 dias.
 - Migração one-shot lembretes v1 → alarmes pré-cadastrados off
   (M30).
 
@@ -1035,6 +1041,6 @@ natural:
 - `docs/BRIEFING.md` — design system + 24 telas + schemas YAML
   detalhados.
 - `docs/CONTEXTO.md` — ecossistema de duas pessoas + contrato
-  Mobile↔Backend.
+  MobileBackend.
 - `docs/ADRs/INDEX.md` — decisões arquiteturais formalizadas.
 - `docs/GAUNTLET.md` — validação visual via Gauntlet.

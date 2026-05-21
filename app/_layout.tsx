@@ -32,6 +32,7 @@ import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 import { useAppPronto } from '@/lib/boot/useAppPronto';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { pedirPermissao as pedirPermissaoNotificacao } from '@/lib/services/alarmesNotificacoes';
+import { instalarResponseListener } from '@/lib/services/notificationResponseListener';
 import {
   avaliarBackupAutomatico,
   cancelarTimer as cancelarTimerBackup,
@@ -164,6 +165,16 @@ export default function RootLayout() {
   // Roda uma vez no mount; em Web vira no-op.
   useEffect(() => {
     void registrarCategoriasAlarme();
+  }, []);
+
+  // R-ROT-1-A: listener das acoes Soneca/Desligar das notificacoes de
+  // alarme. Soneca registra historico no vault (alimenta sugestao
+  // temporal) + agenda re-disparo. Desligar cancela snooze pendente.
+  // Le vaultRoot lazy (getState) pra capturar valor corrente quando
+  // usuario tocar o botao - listener so e instalado uma vez no mount.
+  useEffect(() => {
+    const sub = instalarResponseListener(() => useVault.getState().vaultRoot);
+    return () => sub.remove();
   }, []);
 
   // M30: pedir permissao de notificacao proativamente apos onboarding.

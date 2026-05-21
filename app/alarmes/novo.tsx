@@ -34,6 +34,13 @@ import {
 } from '@/components/ui';
 import { SeletorDias } from '@/components/alarmes/SeletorDias';
 import { PreviewSomButton } from '@/components/alarmes/PreviewSomButton';
+import { SugestaoSnoozeBanner } from '@/components/alarmes/SugestaoSnoozeBanner';
+import {
+  calcularSilenciarAte,
+  calcularSugestaoSnooze,
+  estaSilenciado,
+} from '@/lib/alarmes/inteligenciaSnooze';
+import { silenciarSugestao } from '@/lib/vault/alarmes';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
@@ -195,6 +202,10 @@ export default function AlarmesNovoOuEditar() {
   // R-NAV-3-V2: modal de confirmacao de exclusao (estava ausente).
   const [modalExcluir, setModalExcluir] = useState<boolean>(false);
 
+  // R-ROT-1-A: rejeicao otimista. Banner some imediato apos Rejeitar
+  // mesmo antes do silenciamento persistir no Vault.
+  const [sugestaoRejeitada, setSugestaoRejeitada] = useState<boolean>(false);
+
   // Original carregado em edicao (usado para preservar criado_em e
   // notification_ids pre-existentes até re-agendar).
   const [original, setOriginal] = useState<Alarme | null>(null);
@@ -261,6 +272,39 @@ export default function AlarmesNovoOuEditar() {
       ativo = false;
     };
   }, [editando, vaultRoot, slugParam]);
+
+  // R-ROT-1-A: sugestao de novo horario com base no historico_snoozes
+  // do alarme original. Calculo so faz sentido em edicao (precisa do
+  // arquivo persistido). Silenciado se silenciar_sugestao_ate futuro
+  // ou se usuario rejeitou nesta sessao.
+  const sugestao = useMemo(() => {
+    if (!editando || !original) return { sugerir: false as const };
+    if (sugestaoRejeitada) return { sugerir: false as const };
+    if (estaSilenciado(original.silenciar_sugestao_ate)) {
+      return { sugerir: false as const };
+    }
+    return calcularSugestaoSnooze(
+      original.historico_snoozes ?? [],
+      original.horario
+    );
+  }, [editando, original, sugestaoRejeitada]);
+
+  const handleAceitarSugestao = useCallback(() => {
+    if (!sugestao.sugerir || !sugestao.novaHora) return;
+    setHorario(sugestao.novaHora);
+    setSugestaoRejeitada(true);
+    void haptics.light();
+  }, [sugestao]);
+
+  const handleRejeitarSugestao = useCallback(() => {
+    setSugestaoRejeitada(true);
+    if (!vaultRoot || !original) return;
+    const ate = calcularSilenciarAte();
+    void silenciarSugestao(vaultRoot, original.slug, ate).catch(() => {
+      // Silencio nao persistiu - banner ja foi escondido nesta sessao;
+      // pior caso ele reaparece na proxima abertura.
+    });
+  }, [vaultRoot, original]);
 
   const tituloValido = titulo.trim().length > 0;
   const formValido = useMemo(() => {
@@ -362,6 +406,9 @@ export default function AlarmesNovoOuEditar() {
         ultimo_disparo: original?.ultimo_disparo ?? null,
         notification_ids: [],
         snooze_id: null,
+        // R-ROT-1-A: preserva historico/silenciamento entre edicoes.
+        historico_snoozes: original?.historico_snoozes ?? [],
+        silenciar_sugestao_ate: original?.silenciar_sugestao_ate ?? null,
       };
 
       const parsed = AlarmeSchema.safeParse(proposto);
@@ -484,6 +531,19 @@ export default function AlarmesNovoOuEditar() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {sugestao.sugerir &&
+          sugestao.novaHora &&
+          sugestao.motivo &&
+          original ? (
+            <SugestaoSnoozeBanner
+              motivo={sugestao.motivo}
+              horarioAtual={original.horario}
+              novaHora={sugestao.novaHora}
+              onAceitar={handleAceitarSugestao}
+              onRejeitar={handleRejeitarSugestao}
+            />
+          ) : null}
+
           <Input
             label="Título"
             value={titulo}

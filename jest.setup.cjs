@@ -237,6 +237,10 @@ jest.mock('expo-notifications', () => {
   const memory = new Map();
   const categorias = new Map();
   const canais = new Map();
+  // R-ROT-1-A: set local de handlers registrados via
+  // addNotificationResponseReceivedListener. Local pra sobreviver ao
+  // reset de modulos entre arquivos de teste sem perder o registro.
+  const responseHandlers = new Set();
   return {
     __esModule: true,
     SchedulableTriggerInputTypes: {
@@ -288,9 +292,23 @@ jest.mock('expo-notifications', () => {
       canais.delete(id);
       return Promise.resolve();
     }),
+    // R-ROT-1-A: listener mockavel. Testes disparam via __simulateResponse
+    // (helper escapando do mock para simular tap em botao de notificacao).
+    addNotificationResponseReceivedListener: jest.fn((handler) => {
+      responseHandlers.add(handler);
+      return {
+        remove: () => {
+          responseHandlers.delete(handler);
+        },
+      };
+    }),
     __memory: memory,
     __categorias: categorias,
     __canais: canais,
+    __responseHandlers: responseHandlers,
+    __simulateResponse: (response) => {
+      for (const h of responseHandlers) h(response);
+    },
   };
 });
 

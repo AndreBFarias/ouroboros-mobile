@@ -417,6 +417,8 @@ describe('feature alarme (M16)', () => {
       ultimo_disparo: null,
       notification_ids: [],
       snooze_id: null,
+      historico_snoozes: [],
+      silenciar_sugestao_ate: null,
     };
     const rel = alarmesPath(meta.slug);
     expect(rel).toBe('alarmes/remedio-manha.md');

@@ -107,6 +107,16 @@ const IsoDatetime = z
     'datetime deve estar em ISO 8601 com offset'
   );
 
+// R-ROT-1-A: entrada do historico de snoozes. ts e o instante em que o
+// usuario acionou Soneca; deltaMin e a duracao escolhida naquele
+// disparo (1-60 alinhado com snooze_minutos). Backward-compat default
+// [] permite que alarmes v1/v2 carreguem sem migracao.
+export const SnoozeHistoricoEntrySchema = z.object({
+  ts: IsoDatetime,
+  deltaMin: z.number().int().min(1).max(60),
+});
+export type SnoozeHistoricoEntry = z.infer<typeof SnoozeHistoricoEntrySchema>;
+
 // M30 v2: dias_semana flexivel para 0-7 itens. Quando recorrencia !==
 // 'semanal' o array tipicamente vem [] (irrelevante). Validacao cross
 // field via .refine() abaixo garante que semanal exige >= 1 dia. Limite
@@ -138,6 +148,15 @@ export const AlarmeSchema = z
     notification_ids: z.array(z.string()).default([]),
     // Identifier de snooze pendente; null quando não ha snooze ativo.
     snooze_id: z.string().nullable(),
+    // R-ROT-1-A: log opcional de snoozes para inteligencia temporal.
+    // Default [] preserva compat com alarmes pre-feature. Cap de 100
+    // entradas: writer trunca a janela quando excede para evitar
+    // crescimento ilimitado do .md no Vault.
+    historico_snoozes: z.array(SnoozeHistoricoEntrySchema).default([]),
+    // R-ROT-1-A: ate quando suprimir banner de sugestao (default null
+    // == nunca silenciado). Setado quando usuario rejeita uma sugestao
+    // (silencio de 30 dias). ISO datetime com offset igual aos demais.
+    silenciar_sugestao_ate: IsoDatetime.nullable().default(null),
   })
   // M30: cross-field. semanal precisa de pelo menos 1 dia; unica precisa
   // de data_unica preenchida. diaria/mensal nao tem requisitos extras

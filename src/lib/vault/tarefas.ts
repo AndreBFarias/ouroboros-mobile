@@ -350,6 +350,8 @@ function construirAlarmeDeTarefa(meta: Tarefa, slug: string): Alarme | null {
     ultimo_disparo: null,
     notification_ids: [],
     snooze_id: null,
+    historico_snoozes: [],
+    silenciar_sugestao_ate: null,
   };
   const parsed = AlarmeSchema.safeParse(proposto);
   return parsed.success ? parsed.data : null;

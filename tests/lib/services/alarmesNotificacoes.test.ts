@@ -46,6 +46,8 @@ function fixture(over: Partial<Alarme> = {}): Alarme {
     ultimo_disparo: null,
     notification_ids: [],
     snooze_id: null,
+    historico_snoozes: [],
+    silenciar_sugestao_ate: null,
     ...over,
   };
 }

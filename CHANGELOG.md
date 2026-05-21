@@ -5,6 +5,38 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3N.1 — R-ROT-1-A inteligência de soneca + listener canônico (2026-05-21)
+
+Inteligência temporal sobre snooze de alarmes (replan R-ROT-1 opção A,
+todas as quatro vertentes aprovadas pelo dono em 2026-05-21):
+
+- **Schema** (`src/lib/schemas/alarme.ts`): `historico_snoozes[]` e
+  `silenciar_sugestao_ate` adicionados ao `AlarmeSchema` com defaults
+  `[]` e `null` (backward-compat para alarmes pré-feature carregam
+  sem migração).
+- **Helper puro** (`src/lib/alarmes/inteligenciaSnooze.ts`): janela
+  de 30 dias, mínimo 3 entradas, concordância ≥80%; mensagem
+  singular/plural; sinal adiar/antecipar; wraparound 24h em
+  `somarMinutos`. Determinístico via parâmetro `agora` injetável.
+- **Persistência** (`src/lib/vault/alarmes.ts`): `registrarSnooze`
+  (cap 100, mantém mais recentes) + `silenciarSugestao` (no-op
+  silencioso quando alarme não existe).
+- **UI** (`src/components/alarmes/SugestaoSnoozeBanner.tsx`):
+  banner Dracula purple no editor `/alarmes/novo`; rejeição
+  otimista, silenciamento persiste no Vault.
+- **Listener canônico** (`src/lib/services/notificationResponseListener.ts`,
+  novo): `addNotificationResponseReceivedListener` plugado em
+  `app/_layout.tsx`. Soneca registra histórico + agenda re-disparo;
+  Desligar cancela snooze pendente. Falha em `registrarSnooze` não
+  bloqueia `agendarSnooze` (snooze real é mais crítico que
+  histórico).
+- **Testes** (+28): `inteligenciaSnooze.test.ts` (17 casos),
+  `SugestaoSnoozeBanner.test.tsx` (5), `notificationResponseListener.test.ts`
+  (7). Mock `addNotificationResponseReceivedListener` adicionado em
+  `jest.setup.cjs` com helper `__simulateResponse`.
+
+**Smoke 280/280 verde × 3 runs sanity** (2616 passed, 1 skipped baseline).
+
 ### Fase 3 Onda 3M.2 + 3M.3 — Bundle reshim cirúrgico + ADR-0027 (2026-05-21)
 
 Onda 3M fechada **3/3** com dois agentes paralelos (worktree isolation,

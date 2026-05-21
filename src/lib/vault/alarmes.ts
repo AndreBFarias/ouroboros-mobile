@@ -99,6 +99,54 @@ export async function escreverAlarme(
   return { uri, rel };
 }
 
+// R-ROT-1-A: cap maximo de entradas em historico_snoozes. Quando
+// excedido, mantemos apenas as MAIS RECENTES. Cap conservador
+// suficiente para janela de 30 dias com snooze diario sobrando margem.
+const HISTORICO_SNOOZES_CAP = 100;
+
+// R-ROT-1-A: registra um snooze no historico do alarme. Le -> append
+// truncado -> grava. Idempotente em relacao a falha: se o alarme nao
+// existe ou ja foi removido, no-op silencioso (snooze sem alarme
+// persistido nao deve quebrar o fluxo de notificacao). Caller passa
+// deltaMin tipicamente igual a alarme.snooze_minutos.
+export async function registrarSnooze(
+  vaultRoot: string,
+  slug: string,
+  deltaMin: number
+): Promise<void> {
+  if (deltaMin < 1 || deltaMin > 60) return;
+  const alarme = await lerAlarme(vaultRoot, slug);
+  if (!alarme) return;
+  const entry = {
+    ts: new Date().toISOString().replace('Z', '+00:00'),
+    deltaMin: Math.round(deltaMin),
+  };
+  const proximo = [...(alarme.historico_snoozes ?? []), entry];
+  // Trunca para janela cap mantendo as mais recentes (descarta a
+  // cabeca quando excede).
+  const truncado =
+    proximo.length > HISTORICO_SNOOZES_CAP
+      ? proximo.slice(proximo.length - HISTORICO_SNOOZES_CAP)
+      : proximo;
+  const atualizado = { ...alarme, historico_snoozes: truncado };
+  await escreverAlarme(vaultRoot, atualizado, '');
+}
+
+// R-ROT-1-A: silencia sugestao por N dias a partir de agora. Usado
+// quando usuario rejeita banner de sugestao (Tela /alarmes/[slug]).
+// Idempotente: silenciar duas vezes apenas estende. Caller passa
+// ISO datetime resolvido por `calcularSilenciarAte`.
+export async function silenciarSugestao(
+  vaultRoot: string,
+  slug: string,
+  ate: string
+): Promise<void> {
+  const alarme = await lerAlarme(vaultRoot, slug);
+  if (!alarme) return;
+  const atualizado = { ...alarme, silenciar_sugestao_ate: ate };
+  await escreverAlarme(vaultRoot, atualizado, '');
+}
+
 // Apaga arquivo de alarme. Idempotente: não falha se não existe.
 // T2-LOCK-VAULT (2026-05-15): tenta apagar tanto o arquivo canonico
 // (legado pre-migration) quanto o com suffix do device atual. Em Web,
