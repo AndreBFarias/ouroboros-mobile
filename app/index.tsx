@@ -26,7 +26,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter, useFocusEffect } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
+import { Sparkles } from '@/lib/icons';
 import { Card, EmptyState, Header, Screen, Button } from '@/components/ui';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';

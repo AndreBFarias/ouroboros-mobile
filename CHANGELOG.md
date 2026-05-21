@@ -5,6 +5,83 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3M.2 + 3M.3 — Bundle reshim cirúrgico + ADR-0027 (2026-05-21)
+
+Onda 3M fechada **3/3** com dois agentes paralelos (worktree isolation,
+zero overlap):
+
+**R-BUNDLE-LUCIDE-RESHIM** (`acd5714c`):
+
+| Métrica | Pré-reshim | Pós-reshim | Delta |
+|---|---|---|---|
+| Bundle Hermes `.hbc` | 10.233.199 B (10,23 MB) | **8.479.055 B (8,48 MB)** | **-1.754.144 B (-1,67 MB, -17,14 %)** |
+| `du -sh` no main | 9,8M | **8,1M** | -1,7M |
+
+**Ganho 2,7× acima da estimativa do spec** (-650 KB esperado). Causa
+provável: o bypass único em `app/index.tsx:29` (`import { Sparkles }
+from 'lucide-react-native'`) mantinha a barrel inteira do lucide
+reachable; ao migrar para `@/lib/icons` (shim de tree-shake), o Hermes
+eliminou agressivamente muito mais código morto do que apenas os ícones
+diretos.
+
+**ESLint guard durável** em `eslint.config.js` com regra
+`no-restricted-imports` bloqueando `lucide-react-native` no escopo
+`src/` + `app/`, com override apenas em `src/lib/icons.ts` (shim
+canônico). Validação empírica: 3 testes (bypass bloqueado / fix passa
+silencioso / override do shim passa).
+
+**Audit transversal:** apenas 1 bypass único encontrado (esperado pelo
+spec). Zero bypasses restantes pós-fix.
+
+**Bundle final 8,48 MB** está **abaixo do limite histórico M-BUNDLE-DIET
+de 8,55-8,85 MB**. M41 (release v1.0.0) está **destravado pela dimensão
+bundle** — pré-requisito mais crítico resolvido.
+
+**R-ADR-LIMITE-BUNDLE-V2** (`a1364f37`):
+
+ADR-0027 criada (`docs/ADRs/0027-limite-bundle-hermes-revisado.md`, 279
+linhas + pós-script consolidado) com decisão durável:
+
+- Teto de bundle Hermes: **10.500.000 bytes (10,5 MB)** — válido como
+  buffer para Onda 4 (R-SEC, R-PLAYCONSOLE, M37.2) + pós-v1.0
+- Faixa de monitoria: ≥ 95 % (9.975.000 B) dispara sprint de diet
+- `R-BUNDLE-SIZE-AUDIT` vira pré-requisito de qualquer release
+- Trade-off aceito: APK +3 MB, download +1s LTE, parse Hermes +200ms
+- Pós-script registra ganho real de 1,67 MB do reshim (folga atual ~2 MB)
+- Alternativas consideradas: A (cortar features), B (sem ADR), **C (este
+  ADR — escolhida)**
+
+**INDEX dos ADRs:** linha 0027 adicionada. **Achado colateral capturado:**
+ADR-0026 (Tela Hoje foco em ação) também estava ausente do INDEX — fix
+mecânico aplicado inline (1 linha, escopo trivial). Agora INDEX cobre
+0001-0019, 0021-0027 (gap apenas em 0020 que nunca existiu).
+
+**Validação consolidada no main pós-copy:**
+- Smoke: 277 suítes / 2584 passed / 1 skipped em 20s
+- Bundle real medido: 8,1 MB (`du -sh`) / 8.479.055 B (stat)
+- Leak gauntlet: 0/6 mantido
+- TS strict 0, anonimato OK, PT-BR OK
+- ESLint completo: 0 errors, 4 warnings pré-existentes não-relacionados
+
+**Achados colaterais novos** (sub-sprints candidatas registradas mas
+não dispatchadas — anti-débito futuro):
+
+- `R-INFRA-WORKTREE-BRIEF-SYMLINK` (P2, ~10min): bootstrap-worktree.sh
+  poderia symlinkar VALIDATOR_BRIEF.md (gitignored). Sem ele, agente
+  precisa copiar manual.
+- `R-INFRA-WORKTREE-EXPO-EXPORT` (P3, ~30min): `expo export` no
+  worktree quebra com symlink de env.json (Metro não resolve fora do
+  rootDir). Workaround manual (`cp` ao invés de `ln`) funciona; doc ou
+  fix em bootstrap-worktree.
+
+**Onda 3M fechada (3/3):**
+
+| # | Sprint | Hash | Highlight |
+|---|---|---|---|
+| 3M.1 | R-BUNDLE-SIZE-AUDIT | `621ae0b` | Audit completa + relatório + breakdown |
+| 3M.2 | R-BUNDLE-LUCIDE-RESHIM | consolidado (próximo commit) | -1,67 MB Hermes; ESLint guard durável |
+| 3M.3 | R-ADR-LIMITE-BUNDLE-V2 | consolidado (próximo commit) | ADR-0027 + INDEX (com fix 0026) + pós-script |
+
 ### Fase 3 Onda 3M — R-BUNDLE-SIZE-AUDIT fechada + 3 sprints derivadas (2026-05-21)
 
 Sprint audit (`a11c0952`) entregue. Relatório completo em
