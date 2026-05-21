@@ -193,6 +193,15 @@ describe('MenuLateral', () => {
   // K1 (M-MENU-LATERAL-LAYOUT): scroll persistente, safe area no rodape
   // e padding simetrico. Cobre os tres pontos exigidos pela spec.
   describe('K1 layout do drawer', () => {
+    // R-INFRA-JEST-LEAK-HUNT-5: afterEach simetrico garante que
+    // it() que chamam jest.useFakeTimers() nao vazem cross-suite.
+    // O beforeEach outer ja chama useRealTimers(), mas o afterEach do
+    // RTL roda DEPOIS do it atual — sem este restore, flushMicroTasks
+    // pode esperar setImmediate mockado e timeout em 15s.
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('salva scroll offset em useNavegacao apos onScroll com debounce', () => {
       jest.useFakeTimers();
       useNavegacao.setState({ menuAberto: true });

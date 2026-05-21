@@ -1,11 +1,20 @@
 // Setup global pos-framework. Roda em setupFilesAfterEnv, tem acesso
-// a beforeAll/afterEach. Objetivo unico: drenar timers module-scoped
-// que sobrevivem ao unmount da arvore React entre testes, causando
-// handle leak no worker pool do Jest (sintoma: "Cannot log after
-// tests are done" + worker forcado a exit, suites estourando timeout
-// em paralelo enquanto passam isoladas).
+// a beforeAll/afterEach. Objetivos:
 //
-// Fix de R-INFRA-JEST-LEAK-HUNT (fase 2).
+// 1. (fase 2 / R-INFRA-JEST-LEAK-HUNT) drenar timers module-scoped
+//    de escreverEstado.ts que sobrevivem ao unmount React entre testes.
+//
+// 2. (hunt-5 / R-INFRA-JEST-LEAK-HUNT-5) restaurar useRealTimers como
+//    DEFESA EM PROFUNDIDADE no beforeEach (forward order: roda antes
+//    do user beforeEach; user ainda pode ativar useFakeTimers depois).
+//    Combina com `fakeTimers.doNotFake` em jest.config.js que ja
+//    garante setImmediate/queueMicrotask/nextTick reais sempre.
+//
+// Sintoma original do leak cross-suite: "Exceeded timeout of 15000 ms
+// for a hook" no afterEach do RTL quando fakeTimers vaza cross-suite.
+// cleanupAsync faz `await unmountAsync()` que precisa que microtasks
+// drenem; com fakeTimers ativo SEM doNotFake, microtasks ficam em
+// escala de tempo simulado e nunca resolvem.
 
 // Cancela debounce de escreverEstado.ts (cada chamada de salvar gera
 // setTimeout DEBOUNCE_MS armazenado em Map module-scoped). Em
@@ -32,6 +41,19 @@ const ESCREVER_ESTADO_PATH = path.resolve(
   'vault',
   'escreverEstado.ts'
 );
+
+// HUNT-5: garante que cada teste comeca com timers reais. Custo zero
+// quando ja em real timers (no-op). Defesa para it() que ativam
+// useFakeTimers sem restore simetrico (ex: it com early throw).
+beforeEach(() => {
+  if (
+    typeof globalThis.setTimeout?._isMockFunction === 'undefined' &&
+    typeof globalThis.setTimeout?.clock === 'undefined'
+  ) {
+    return;
+  }
+  jest.useRealTimers();
+});
 
 afterEach(() => {
   try {
