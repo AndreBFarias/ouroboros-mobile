@@ -98,6 +98,21 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
   // (decisao de UX da spec, secao 10).
   const negacoesRef = useRef<number>(0);
 
+  // R-MICROFONE-USE-AFTER-UNMOUNT (2026-05-21): mountedRef para
+  // bloquear setState/callbacks que disparam apos o componente
+  // desmontar. Padrao canonico adotado em R-INFRA-JEST-LEAK-HUNT-3
+  // (SecaoBackupAutomatico). Sem isso, quando o usuario fecha o
+  // sheet ou navega durante o ciclo iniciar/finalizar, o callback
+  // pos-await tenta setState num componente morto, gerando warning
+  // React + handle leak no worker Jest.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Limpa timers e listener de status. Idempotente.
   const limparTimers = () => {
     if (tickerRef.current) {
@@ -134,11 +149,19 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
   // Pipeline de stop: para a gravacao, salva no Vault e dispara
   // transcricao. Se gracioso=false, limpa sem chamar callbacks
   // (usado em erro/cancel).
+  //
+  // R-MICROFONE-USE-AFTER-UNMOUNT (2026-05-21): guard mountedRef em
+  // todo retorno pos-await. Se o componente desmontou enquanto a
+  // promise estava pendente (sheet fechado, navegacao), aborta sem
+  // tocar setState/toast/callback. discardRecording continua ativo
+  // pois eh fire-and-forget no FS e a limpeza do .m4a temporario
+  // precisa rodar mesmo apos unmount (lição M06.5 ACHADO 3).
   const finalizar = async (gracioso: boolean) => {
     limparTimers();
     const rec = recordingRef.current;
     recordingRef.current = null;
     if (!rec) {
+      if (!mountedRef.current) return;
       setEstado('idle');
       return;
     }
@@ -147,6 +170,7 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
     try {
       stopResult = await stopRecording(rec);
     } catch {
+      if (!mountedRef.current) return;
       setEstado('idle');
       return;
     }
@@ -156,6 +180,7 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
       // antes de devolver controle a UI (lição M06.5 validador
       // ACHADO 3 -- evita acumulo em sessoes longas).
       void discardRecording(stopResult.uri);
+      if (!mountedRef.current) return;
       setEstado('idle');
       return;
     }
@@ -166,10 +191,17 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
     // bloco anterior).
     if (stopResult.durationMs < 500) {
       void discardRecording(stopResult.uri);
+      if (!mountedRef.current) return;
       setEstado('idle');
       return;
     }
 
+    if (!mountedRef.current) {
+      // Componente desmontou entre stopRecording e o setEstado abaixo:
+      // descarta o .m4a temporario e sai sem mexer na UI.
+      void discardRecording(stopResult.uri);
+      return;
+    }
     setEstado('salvando');
 
     // I-AUDIO (M-SAVE-AUDIO-VALIDA, 2026-05-07): save com timeout 30s
@@ -183,14 +215,17 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
         saveRecordingToVault(stopResult.uri, vaultRoot, dataCaptura),
         30_000
       );
+      if (!mountedRef.current) return;
       onAudioGravado(relPath);
       toast.show('Áudio salvo.', 'success');
     } catch (err) {
       void discardRecording(stopResult.uri);
+      if (!mountedRef.current) return;
       const msg = err instanceof Error ? err.message : String(err);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
       console.error('save audio fail', err);
     }
+    if (!mountedRef.current) return;
     setEstado('idle');
     setTempoMs(0);
     setAmplitudes([]);
@@ -201,6 +236,7 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
     setEstado('requesting');
 
     const ok = await requestMicPermission();
+    if (!mountedRef.current) return;
     if (!ok) {
       negacoesRef.current += 1;
       if (negacoesRef.current >= 2) {
@@ -217,8 +253,21 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
     try {
       rec = await startRecording();
     } catch {
+      if (!mountedRef.current) return;
       toast.show('Microfone indisponível agora.', 'error');
       setEstado('idle');
+      return;
+    }
+    if (!mountedRef.current) {
+      // Componente desmontou enquanto startRecording resolvia:
+      // descarta a gravacao recem-criada sem armar timers nem UI.
+      rec
+        .stopAndUnloadAsync()
+        .then(() => {
+          const uri = rec.getURI();
+          if (uri) void discardRecording(uri);
+        })
+        .catch(() => undefined);
       return;
     }
     recordingRef.current = rec;
@@ -228,8 +277,10 @@ export function MicrofoneButton({ onAudioGravado }: MicrofoneButtonProps) {
     haptics.medium().catch(() => undefined);
 
     // Listener de status: atualiza amplitudes em background. Nao
-    // dispara re-render se o componente ja desmontou (ref vazio).
+    // dispara re-render se o componente ja desmontou (ref vazio ou
+    // mountedRef false — R-MICROFONE-USE-AFTER-UNMOUNT).
     rec.setOnRecordingStatusUpdate((status) => {
+      if (!mountedRef.current) return;
       if (recordingRef.current !== rec) return;
       const amp = meteringParaAmplitude(
         'metering' in status && typeof status.metering === 'number'

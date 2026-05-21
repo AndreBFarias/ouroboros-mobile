@@ -2,6 +2,7 @@
 
 **Tipo:** fix (test infra)
 **Prioridade:** P3-low (não bloqueou hunt-5 — passou no 10/10)
+**Status:** `[ok-resolvido-em-hunt-5]` — flakiness resolvida implicitamente pelo `fakeTimers.doNotFake` global do hunt-5 (`b5a57bb`). Suite passa 10/10 isolada pré e pós-mudança. Único touch foi comentário durável de +12 linhas no test file explicando o achado (sem código novo).
 **Estimativa:** 30min-1h
 **Fase:** 3 (Onda 3K, achado colateral de R-INFRA-JEST-LEAK-HUNT-5)
 **ADR sugerida:** nenhuma
@@ -109,7 +110,7 @@ done
 
 1. Reproducao da flakiness (ou confirmacao 10/10 verde apos hunt-5).
 2. Se fix aplicado: diff do test file + 10/10 verde pós-fix.
-3. Se nao houver flakiness: spec marcada `[ok-resolvido-em-hunt-5]`
+3. Se não houver flakiness: spec marcada `[ok-resolvido-em-hunt-5]`
    sem código novo (registro durável).
 4. Hash commit no worktree (se aplicável).
 

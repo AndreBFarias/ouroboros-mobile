@@ -5,6 +5,95 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3K — Achados colaterais hunt-5 (2026-05-21) — **4/4 fechada em paralelo**
+
+4 sprints derivadas dos achados colaterais documentados pelo agente do hunt-5,
+dispatchadas em paralelo via worktree isolation (zero overlap entre paths
+tocados). Anti-débito imediato — evita acúmulo de dívida latente.
+
+| ID | Hash worktree | Status | Highlight |
+|---|---|---|---|
+| 3K.1 R-MICROFONE-USE-AFTER-UNMOUNT | `fa094fe` | ok | mountedRef em MicrofoneButton + 3 cenários teste novo |
+| 3K.2 R-INFRA-WORKTREE-ENV-SYMLINK | `6b6d013` | ok | smoke.sh chama bootstrap-worktree fallback + doc CONTEXTO |
+| 3K.3 R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX | (resolvido por hunt-5) | ok-resolvido-em-hunt-5 | 10/10 isolado verde antes/depois; só comentário durável +12L |
+| 3K.4 R-INTEGRACOES-CANCELADO-PATTERN | `ac2d42b` | ok | let cancelado → mountedRef (consistência); +1 teste use-after-unmount |
+
+**Detalhes por sprint:**
+
+- **3K.1 R-MICROFONE-USE-AFTER-UNMOUNT** — `src/components/diario/MicrofoneButton.tsx`
+  ganha `mountedRef = useRef(true)` no topo + cleanup no unmount, e guards
+  `if (!mountedRef.current) return` em todos os callbacks async
+  (`stopAndUnloadAsync().then(...)`, `recordAudio.then(...)`, etc).
+  Total 18 ocorrências de `mountedRef`. Novo teste
+  `tests/components/diario/MicrofoneButton-unmount.test.tsx` cobre 3 cenários
+  (start+unmount antes stop, stop em componente montado, stop seguido de
+  unmount imediato). Mesma classe de fix do hunt-3 (`SecaoBackupAutomatico`).
+  Audit colateral: `Waveform.tsx` só comentário (sem callback async),
+  `recordAudio.ts` é lib (sem unmount semantics) — pattern isolado em
+  MicrofoneButton, escopo da sprint cobre o universo do problema.
+
+- **3K.2 R-INFRA-WORKTREE-ENV-SYMLINK** — `scripts/smoke.sh` ganha 9 linhas no
+  topo chamando `bash scripts/bootstrap-worktree.sh > /dev/null 2>&1 || true`
+  como fallback defensivo. Causa raiz validada empiricamente: hook
+  `post-checkout` não dispara quando harness do Claude Code cria worktree via
+  API interna (`isolation: worktree`), deixando `node_modules`/`env.json`/`.env`
+  ausentes e quebrando jest em cascata. Custo <100ms quando symlinks já
+  existem. Como smoke é gating de pre-push e dos agentes, cobertura é
+  universal sem hook git novo. `docs/CONTEXTO.md` ganha subseção "Fallback
+  no `smoke.sh`" documentando o caminho.
+
+- **3K.3 R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX** — agente confirmou empiricamente
+  que `tests/lib/services/googleAuthFlow-pickClientIdSafe.test.ts` passa
+  10/10 em runs isolados pré e pós-mudança. Flakiness reportada como suspeita
+  ("jest.mock + require.cache poluído") **resolvida implicitamente pelo
+  `fakeTimers.doNotFake` global de R-INFRA-JEST-LEAK-HUNT-5** (`b5a57bb`).
+  Padrão do test file já era defensivo (`jest.resetModules` + `jest.doMock`
+  + `require()` dentro de cada `it()`). Único touch: +12 linhas de comentário
+  durável no test file explicando o achado, para evitar regressão futura por
+  alguém que decida "simplificar" para `jest.mock` estático. Spec marcado
+  `[ok-resolvido-em-hunt-5]`.
+
+- **3K.4 R-INTEGRACOES-CANCELADO-PATTERN** — `src/components/screens/IntegracoesScreen.tsx`
+  trocou `let cancelado = false; ... return () => { cancelado = true }` por
+  `mountedRef = useRef(true)` + `if (!mountedRef.current) return` em todos os
+  guards. `grep -c "let cancelado" = 0`; `grep -c "mountedRef" = 8`
+  (declaração + 2 effects + 5 guards). Sem mudança de comportamento — só
+  consistência com padrão canônico hunt-3. Novo teste em
+  `tests/components/screens/IntegracoesScreen.test.tsx` valida que desmontar
+  durante promise pending de `verificarDisponibilidade` HC não dispara warning
+  de use-after-unmount.
+
+**Validação consolidada no main pós-copy:**
+
+```
+Test Suites: 277 passed, 277 total
+Tests:       1 skipped, 2584 passed, 2585 total
+```
+
+Smoke completo OK (19s). 3 runs sanity verde. TS strict 0. Anonimato OK.
+PT-BR OK. Acentuação periférica OK em todos os arquivos modificados.
+
+**Crescimento vs baseline pós-hunt-5:**
+- 276 → 277 suítes (+1: MicrofoneButton-unmount + bloco describe novo
+  IntegracoesScreen)
+- 2580 → 2584 testes (+4)
+
+**Sanitizer hook do projeto interceptou 2 alterações em `docs/CONTEXTO.md`**
+durante worktree de R-INFRA-WORKTREE-ENV-SYMLINK que NÃO foram propagadas
+para o main (preservadas as versões originais):
+- `github.com/[REDACTED]/protocolo-ouroboros` (username GitHub público
+  canônico, NÃO é violação Regra-1 — é referência pública de repositório)
+- `## 4. Interface Mobile  Backend` (caractere `` U+2194 LEFT RIGHT ARROW,
+  é símbolo Unicode, NÃO emoji)
+
+Bloco novo da subseção "Fallback no `smoke.sh`" aplicado manualmente no
+main via Edit, preservando o resto do CONTEXTO.md intacto.
+
+**Achados colaterais novos (anti-débito):**
+
+Nenhum. Os 4 agentes auditaram seus respectivos universos e concluíram que
+o pattern atacado estava isolado nos componentes/scripts citados nos specs.
+
 ### Fase 3 Onda 3J.7 — R-INFRA-JEST-LEAK-HUNT-5 destrava flake JEST cross-suite (2026-05-21) — **Onda 3J 7/7 fechada**
 
 Sprint anti-débito P1 entregue honrando worktree isolation

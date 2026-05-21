@@ -33,7 +33,7 @@
 //
 // Comentarios sem acento (convencao shell/CI). Strings PT-BR sentence
 // case com acentuacao. accessibilityLabel sem acento.
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { ScrollView, Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -242,25 +242,33 @@ export function IntegracoesScreen() {
     contaYoutube.accessToken.length > 0 &&
     !contaYoutube.invalido;
 
+  // R-INTEGRACOES-CANCELADO-PATTERN (2026-05-21): mountedRef em vez da
+  // flag local antiga. Consistente com SecaoBackupAutomatico (hunt-3).
+  // mountedRef cobre todos os efeitos async do componente; reduz risco
+  // de auditor futuro confundir uso correto vs bugado do antigo pattern.
+  const mountedRef = useRef(true);
   useEffect(() => {
-    let cancelado = false;
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     void (async () => {
       try {
         const s = await verificarDisponibilidade();
-        if (cancelado) return;
+        if (!mountedRef.current) return;
         setStatusHC(s);
         if (s === 'available') {
           const lista = await listarPermissoesConcedidas();
-          if (cancelado) return;
+          if (!mountedRef.current) return;
           setPermissoesHC(lista.length);
         }
       } catch {
-        if (!cancelado) setStatusHC('unavailable');
+        if (mountedRef.current) setStatusHC('unavailable');
       }
     })();
-    return () => {
-      cancelado = true;
-    };
   }, []);
 
   // Descritor Health Connect.

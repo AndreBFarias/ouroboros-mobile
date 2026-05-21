@@ -344,3 +344,55 @@ describe('IntegracoesScreen — header back', () => {
     expect(mockBack).not.toHaveBeenCalled();
   });
 });
+
+describe('IntegracoesScreen — mountedRef anti use-after-unmount', () => {
+  it('desmontar antes do async resolver nao dispara setState (sem warning)', async () => {
+    // R-INTEGRACOES-CANCELADO-PATTERN (2026-05-21): valida que o
+    // refator para mountedRef realmente protege quando o componente
+    // desmonta antes da promise de verificarDisponibilidade resolver.
+    // Sem o guard, o setState pos-unmount dispararia o warning
+    // "Can't perform a React state update on an unmounted component".
+    let resolveVerificar: (v: 'available' | 'unavailable') => void = () => {};
+    const promiseDeferida = new Promise<'available' | 'unavailable'>(
+      (resolve) => {
+        resolveVerificar = resolve;
+      }
+    );
+    mockVerificarDisponibilidade.mockReturnValueOnce(promiseDeferida);
+
+    // Espia console.error para garantir que nenhum warning de
+    // use-after-unmount aparece pos resolve apos unmount.
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { unmount, getByLabelText } = render(<IntegracoesScreen />);
+
+    // Componente montou; verificarDisponibilidade ainda nao resolveu.
+    expect(getByLabelText('card integracao health_connect')).toBeTruthy();
+
+    // Desmonta antes do async terminar.
+    unmount();
+
+    // Agora resolve a promise — se mountedRef nao protegesse, o
+    // setStatusHC seria chamado pos-unmount e geraria warning.
+    resolveVerificar('unavailable');
+
+    // Aguarda microtask flush.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Nenhum warning de "state update on unmounted" deve ter sido
+    // disparado. Filtra apenas mensagens relevantes; ignora ruido
+    // de mocks que pode chegar via outras vias.
+    const chamadasComWarning = errSpy.mock.calls.filter((args) => {
+      const texto = args.map((a) => String(a)).join(' ');
+      return (
+        texto.includes('unmounted') ||
+        texto.includes('state update on an unmounted') ||
+        texto.includes("Can't perform a React state update")
+      );
+    });
+    expect(chamadasComWarning).toEqual([]);
+
+    errSpy.mockRestore();
+  });
+});

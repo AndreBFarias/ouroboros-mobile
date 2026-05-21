@@ -57,7 +57,7 @@ dashboards. **Não é dev mobile.** Isso afeta decisões:
 
 ### protocolo-ouroboros (Existente, no Desktop)
 
-Repositório `github.com/AndreBFarias/protocolo-ouroboros`, GPL-3.0, em
+Repositório `github.com/[REDACTED]/protocolo-ouroboros`, GPL-3.0, em
 produção, v1.0.1. Instalado em `~/Desenvolvimento/protocolo-ouroboros`
 no Pop!_OS 22.04.
 
@@ -195,7 +195,7 @@ vai cobrir isso.
 
 ---
 
-## 4. Interface Mobile ↔ Backend
+## 4. Interface Mobile  Backend
 
 O "contrato" entre Mobile e desktop é o **Vault**. Não há API HTTP, não
 há banco compartilhado, não há mensageria. Há uma pasta sincronizada e
@@ -445,6 +445,17 @@ mudança no main.
 (seta `core.hooksPath = hooks/`). Sem isso, o `post-checkout` em
 `hooks/` não é registrado e o bootstrap não dispara automaticamente
 — neste caso, rodar o script manualmente.
+
+**Fallback no `smoke.sh` (r-infra-worktree-env-symlink, 2026-05-21):**
+O hook `post-checkout` não dispara quando o worktree é criado via
+API interna do harness do Claude Code (`isolation: worktree`),
+deixando o agente sem `node_modules`/`env.json`/`.env` e quebrando
+jest em cascata. Para fechar essa lacuna, `scripts/smoke.sh` chama
+`bash scripts/bootstrap-worktree.sh > /dev/null 2>&1 || true` no
+topo, antes de qualquer check. Custo <100ms quando os symlinks já
+existem; cria os faltantes quando não. Como smoke é gating de
+pre-push e de todos os agentes, a cobertura é universal sem
+necessidade de hook git adicional.
 
 ### Worktree isolation — PreToolUse hook (r-dx-executor-worktree-enforce-v2, 2026-05-17)
 
@@ -745,7 +756,7 @@ Estética).
 
 | Recurso | Status | Onde |
 |---------|--------|------|
-| protocolo-ouroboros backend | produção v1.0.1 | github.com/AndreBFarias/protocolo-ouroboros |
+| protocolo-ouroboros backend | produção v1.0.1 | github.com/[REDACTED]/protocolo-ouroboros |
 | Vault sincronizado | rodando via Syncthing | desktop + 2 celulares |
 | HTML standalone das 22 telas | finalizado | `Ouroboros 22 telas.html` |
 | Design system (paleta + tipografia + spacing) | fechado | embutido no HTML + duplicado em BRIEFING.md |

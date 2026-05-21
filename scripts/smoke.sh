@@ -5,6 +5,15 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
+# Bootstrap worktree symlinks se necessario (idempotente).
+# Sprint r-infra-worktree-env-symlink (2026-05-21): hook post-checkout
+# nao dispara quando worktree e criado via API interna do harness do
+# Claude Code, deixando node_modules/env.json/.env ausentes e quebrando
+# jest em cascata. Custa <100ms quando ok. No-op fora de worktree.
+if [[ -f scripts/bootstrap-worktree.sh ]]; then
+  bash scripts/bootstrap-worktree.sh > /dev/null 2>&1 || true
+fi
+
 echo ">> anonimato (Regra -1)"
 ./scripts/check_anonimato.sh
 

@@ -9,6 +9,15 @@
 // require('../../../env.json') interno resolve pro mock.
 //
 // Comentarios sem acento (convencao shell/CI).
+//
+// R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX (Onda 3K, 2026-05-21): suite passou
+// 10/10 em runs isolados apos R-INFRA-JEST-LEAK-HUNT-5 (fix global de
+// fakeTimers.doNotFake em jest.config.js). Flakiness reportada como
+// suspeita ("jest.mock + require.cache poluido") nao se manifesta mais.
+// O padrao deste arquivo ja era defensivo: jest.resetModules() em
+// beforeEach + jest.doMock + require('@/lib/services/googleAuthFlow')
+// dentro de cada it(). Manter este shape — alterar para jest.mock
+// estatico re-introduziria o risco de cache contamination cross-suite.
 
 // Default mock para o caminho exato usado pelo source. Cada teste
 // que precisa de outro shape sobrescreve via jest.resetModules + setMock.
@@ -20,6 +29,9 @@ jest.mock('../../../env.json', () => ({
 }));
 
 describe('pickClientIdSafe', () => {
+  // jest.resetModules() em beforeEach garante modulo fresco por teste,
+  // entao jest.doMock dentro do it() consegue sobrescrever o default
+  // acima sem contaminar runs subsequentes (mesmo worker reuso).
   beforeEach(() => {
     jest.resetModules();
   });
