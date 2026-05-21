@@ -8,7 +8,7 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ### Fase 3 Onda 3J.7 — R-INFRA-JEST-LEAK-HUNT-5 destrava flake JEST cross-suite (2026-05-21) — **Onda 3J 7/7 fechada**
 
 Sprint anti-débito P1 entregue honrando worktree isolation
-(`agent-a49390704fe24f1d3`). Commit `b06d7e9`. Destrava push de
+(`agent-a49390704fe24f1d3`). Commit `b5a57bb`. Destrava push de
 11 commits queued + este, total 12.
 
 **Causa raiz cirúrgica** (complementa diagnóstico do hunt-4 que rodou
@@ -101,12 +101,12 @@ custom como defesa adicional.
 | # | Sprint | Hash | Status |
 |---|---|---|---|
 | 3J.1 | R-SEC-5 (gitleaks audit + hook pre-commit) | `4155077` | ok |
-| 3J.2 | R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 (PreToolUse hook) | `91b4cd6` | ok |
-| 3J.3 | R-SEC-3 (privacy policy + terms HTML) | `3e032e8` | ok |
-| 3J.4 | R-INFRA-METRO-CACHE-GC (script gc + flag --gc) | `fd079f2` | ok |
-| 3J.5 | R-INFRA-JEST-LEAK-HUNT fase 2 (Toast + escreverEstado) | `25ca020` | ok-parcial |
-| 3J.6 | R-INFRA-JEST-LEAK-HUNT-3 (SecaoBackupAutomatico) | `85979b3` | ok-parcial |
-| 3J.7 | R-INFRA-JEST-LEAK-HUNT-5 (fakeTimers.doNotFake) | `b06d7e9` | ok (este commit) |
+| 3J.2 | R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 (PreToolUse hook) | `ce0d08a` | ok |
+| 3J.3 | R-SEC-3 (privacy policy + terms HTML) | `8b8b4f0` | ok |
+| 3J.4 | R-INFRA-METRO-CACHE-GC (script gc + flag --gc) | `ad9fcbc` | ok |
+| 3J.5 | R-INFRA-JEST-LEAK-HUNT fase 2 (Toast + escreverEstado) | `5b286b7` | ok-parcial |
+| 3J.6 | R-INFRA-JEST-LEAK-HUNT-3 (SecaoBackupAutomatico) | `caf0c25` | ok-parcial |
+| 3J.7 | R-INFRA-JEST-LEAK-HUNT-5 (fakeTimers.doNotFake) | `b5a57bb` | ok (este commit) |
 
 ### Fase 3 Onda 3I — DX template/record/issue-to-spec + Spotify/YouTube OAuth (2026-05-17)
 

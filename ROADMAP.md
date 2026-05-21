@@ -80,16 +80,16 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-WIDG-1 | Widget homescreen to-do rápida | feature | P2 | `97106e1` | `[ok]` (3C.2) Nível C follow-up |
 | R-INT-4 | Spotify/YouTube conectar | feature | P3 | `dd37f26` | `[ok]` (3I.4) follow-up nivel C |
 | R-DX-EXECUTOR-WORKTREE-ENFORCE | Constraint técnico (hook) pra honrar worktree isolation (3º incidente recorrente) | infra+DX | P2 | `e53fb54` | `[ok]` (DX.2) |
-| R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 | Hook PreToolUse Edit/Write/MultiEdit (complementa pre-commit V1, modo logging-only) | infra+DX | P2 | `91b4cd6` | `[ok]` (3J.2) wiring em settings.local.json por-clone |
+| R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 | Hook PreToolUse Edit/Write/MultiEdit (complementa pre-commit V1, modo logging-only) | infra+DX | P2 | `ce0d08a` | `[ok]` (3J.2) wiring em settings.local.json por-clone |
 | R-MEDIA-LINKEXTERNO-CLEANUP | Remover dead code LinkExterno em DetalheConquista (achado R-MEDIA-1) | cleanup | P3 | `9cb8f6a` | `[ok]` (3D.1) |
 | R-RECAP-FIX-LOOP | Maximum update depth em /recap-memorias (range recriado a cada render, achado R-MEDIA-2) | fix | P2 | `cb2c02d` | `[ok]` (3D.2) |
 | R-RECAP-LISTA-FIX-LOOP | Mesmo padrão de bug em recap-lista.tsx (achado R-RECAP-FIX-LOOP) | fix | P2 | `5c65b26` | `[ok]` (3E.4) |
 | R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke (causa raiz: handle leak worker pool, não timeout) | infra | P2 | `c15cf52` | `[fase 1 parcial]` (3F.4) testTimeout defensivo |
-| R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | `25ca020` | `[parcial]` (3J.5) fase 2 fix Toast+escreverEstado, 10/10 nao atingido |
-| R-INFRA-JEST-LEAK-HUNT-3 | Use-after-unmount em SecaoBackupAutomatico (achado colateral fase 2) | fix | P2 | `85979b3` | `[ok-parcial]` (3J.6) fix tecnico real, flake aleatorio persiste |
+| R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | `5b286b7` | `[parcial]` (3J.5) fase 2 fix Toast+escreverEstado, 10/10 nao atingido |
+| R-INFRA-JEST-LEAK-HUNT-3 | Use-after-unmount em SecaoBackupAutomatico (achado colateral fase 2) | fix | P2 | `caf0c25` | `[ok-parcial]` (3J.6) fix tecnico real, flake aleatorio persiste |
 | R-INFRA-JEST-LEAK-HUNT-4 | Causa raiz flake aleatorio cross-suite (moti/RAF/zustand reset) | infra | P1 | `[descopado-em-hunt-5]` | `R-INFRA-JEST-LEAK-HUNT-4-spec.md` (rodou, terminou em 1/10; abordagem do escopo OFF-LIMITS revelou-se insuficiente; spec hunt-5 com escopo expandido entregou) |
-| R-INFRA-JEST-LEAK-HUNT-5 | Refator estrutural jest config + fakeTimers.doNotFake (causa raiz: setImmediate herda fakeTimers cross-suite + flushMicroTasks do RTL) | infra | P1 | `b06d7e9` | `[ok]` (3J.7) destrava push 11 commits queued; 10/10 runs verde + 3 runs verde pos-copy no main |
-| R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `fd079f2` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
+| R-INFRA-JEST-LEAK-HUNT-5 | Refator estrutural jest config + fakeTimers.doNotFake (causa raiz: setImmediate herda fakeTimers cross-suite + flushMicroTasks do RTL) | infra | P1 | `b5a57bb` | `[ok]` (3J.7) destrava push 11 commits queued; 10/10 runs verde + 3 runs verde pos-copy no main |
+| R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `ad9fcbc` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
@@ -115,7 +115,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 |---|---|---|---|---|---|
 | R-SEC-1 | Google OAuth verification (testers) | docs+cloud-config | P1 | 2–3h | `R-SEC-1-GOOGLE-OAUTH-VERIFICATION-spec.md` |
 | R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` |
-| R-SEC-3 | Privacy policy + terms | docs | P1 | `3e032e8` | `[ok]` (3J.3) privacy+terms+css em public/, RELEASE.md pre-release checklist; URLs aguardam dono habilitar Pages |
+| R-SEC-3 | Privacy policy + terms | docs | P1 | `8b8b4f0` | `[ok]` (3J.3) privacy+terms+css em public/, RELEASE.md pre-release checklist; URLs aguardam dono habilitar Pages |
 | R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
 | R-SEC-5 | Secret leak audit | infra+audit | P1 | `4155077` | `[ok]` (3J.1) gitleaks 0 findings em 420 commits, hook pre-commit ativo, docs/SECURITY.md |
 | R-PLAYCONSOLE-SETUP | TODO Play Console (dono executa, sibling R-SEC-2) | docs+cloud | P1 | 40min dono + propagação | `R-PLAYCONSOLE-SETUP-spec.md` |
