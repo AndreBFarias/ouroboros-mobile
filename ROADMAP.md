@@ -89,6 +89,10 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INFRA-JEST-LEAK-HUNT-3 | Use-after-unmount em SecaoBackupAutomatico (achado colateral fase 2) | fix | P2 | `caf0c25` | `[ok-parcial]` (3J.6) fix tecnico real, flake aleatorio persiste |
 | R-INFRA-JEST-LEAK-HUNT-4 | Causa raiz flake aleatorio cross-suite (moti/RAF/zustand reset) | infra | P1 | `[descopado-em-hunt-5]` | `R-INFRA-JEST-LEAK-HUNT-4-spec.md` (rodou, terminou em 1/10; abordagem do escopo OFF-LIMITS revelou-se insuficiente; spec hunt-5 com escopo expandido entregou) |
 | R-INFRA-JEST-LEAK-HUNT-5 | Refator estrutural jest config + fakeTimers.doNotFake (causa raiz: setImmediate herda fakeTimers cross-suite + flushMicroTasks do RTL) | infra | P1 | `b5a57bb` | `[ok]` (3J.7) destrava push 11 commits queued; 10/10 runs verde + 3 runs verde pos-copy no main |
+| R-MICROFONE-USE-AFTER-UNMOUNT | mountedRef em MicrofoneButton stopAndUnloadAsync().then (mesma classe do hunt-3) | fix | P2 | 1-2h | `R-MICROFONE-USE-AFTER-UNMOUNT-spec.md` |
+| R-INFRA-WORKTREE-ENV-SYMLINK | Bootstrap defensivo de symlinks em smoke.sh (worktree fresh sem hook trigger) | infra+DX | P2 | 1-2h | `R-INFRA-WORKTREE-ENV-SYMLINK-spec.md` |
+| R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX | jest.doMock no beforeEach (require.cache poluído de env.json) | fix | P3 | 30min-1h | `R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX-spec.md` |
+| R-INTEGRACOES-CANCELADO-PATTERN | Refator let cancelado -> mountedRef em IntegracoesScreen (consistência hunt-3) | refactor | P3 | 30min-1h | `R-INTEGRACOES-CANCELADO-PATTERN-spec.md` |
 | R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `ad9fcbc` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
