@@ -125,6 +125,12 @@ export const TarefaSchema = z.object({
   categoria: z.enum(TAREFA_CATEGORIAS).default('outro'),
   pessoa_destino: TarefaPessoaDestinoSchema.default({ tipo: 'mim' }),
   alarme: TarefaAlarmeSchema.nullable().default(null),
+  // R-ROT-1-B: ate quando suprimir banner de sugestao de alarme com
+  // base no padrao de horario em que o usuario marca esta tarefa.
+  // Default null == nunca silenciado. Setado quando usuario rejeita
+  // uma sugestao (silencio de 30 dias). Aplica-se a todas as tarefas
+  // com mesmo titulo normalizado (familia recorrente).
+  silenciar_sugestao_ate: IsoDatetime.nullable().default(null),
 });
 
 export type Tarefa = z.infer<typeof TarefaSchema>;

@@ -72,6 +72,7 @@ function tarefaComAlarme(over: Partial<Tarefa['alarme']> = {}): Tarefa {
       slug_vinculado: SLUG_VINCULADO,
       ...over,
     },
+    silenciar_sugestao_ate: null,
   };
 }
 

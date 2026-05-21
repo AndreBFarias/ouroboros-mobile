@@ -54,6 +54,7 @@ import {
   marcarFeito,
   reabrirTarefa,
   excluirTarefa,
+  silenciarSugestaoTarefa,
 } from '@/lib/vault/tarefas';
 
 const VAULT_ROOT = 'content://test/vault';
@@ -61,6 +62,8 @@ const VAULT_ROOT = 'content://test/vault';
 function fixture(over: Partial<Tarefa> = {}): Tarefa {
   // M31: Tarefa v2 inclui categoria/pessoa_destino/alarme com defaults
   // explicitos. Defaults espelham os do schema.
+  // R-ROT-1-B: silenciar_sugestao_ate default null (familia recorrente
+  // nao silenciada).
   return {
     tipo: 'tarefa',
     data: '2026-04-29',
@@ -71,6 +74,7 @@ function fixture(over: Partial<Tarefa> = {}): Tarefa {
     categoria: 'outro',
     pessoa_destino: { tipo: 'mim' },
     alarme: null,
+    silenciar_sugestao_ate: null,
     ...over,
   };
 }
@@ -553,6 +557,76 @@ describe('marcarFeito preserva campos M31 (I-TAREFA)', () => {
         categoria: 'trabalho',
         pessoa_destino: { tipo: 'casal' },
       }),
+      ''
+    );
+  });
+});
+
+// R-ROT-1-B: writer canonico que persiste silenciar_sugestao_ate na
+// tarefa. Espelha semantica do silenciarSugestao do alarme: idempotente,
+// silencioso em arquivo ausente, regrava o frontmatter completo via
+// escreverTarefa.
+describe('silenciarSugestaoTarefa (R-ROT-1-B)', () => {
+  it('grava silenciar_sugestao_ate preservando demais campos', async () => {
+    const atual = fixture({
+      titulo: 'Tomar remedio',
+      categoria: 'saude',
+      pessoa_destino: { tipo: 'mim' },
+    });
+    // duas leituras: silenciarSugestaoTarefa -> lerTarefa, depois
+    // escreverTarefa faz outra leitura defensiva para checar metaAntigo.
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const ate = '2026-06-20T15:00:00+00:00';
+    await silenciarSugestaoTarefa(
+      VAULT_ROOT,
+      'markdown/tarefa-tomar-remedio-1234.md',
+      ate
+    );
+
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      `${VAULT_ROOT}/markdown/tarefa-tomar-remedio-1234.md`,
+      expect.objectContaining({
+        silenciar_sugestao_ate: ate,
+        titulo: 'Tomar remedio',
+        categoria: 'saude',
+      }),
+      ''
+    );
+  });
+
+  it('idempotente em tarefa inexistente (no-op silencioso)', async () => {
+    mockReadVaultFile.mockResolvedValueOnce(null);
+    await expect(
+      silenciarSugestaoTarefa(
+        VAULT_ROOT,
+        'markdown/tarefa-fantasma.md',
+        '2026-06-20T15:00:00+00:00'
+      )
+    ).resolves.toBeUndefined();
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  it('aceita atualizar uma data ja silenciada (estende periodo)', async () => {
+    const atual = fixture({
+      silenciar_sugestao_ate: '2026-06-01T00:00:00+00:00',
+    });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const novaAte = '2026-07-15T00:00:00+00:00';
+    await silenciarSugestaoTarefa(
+      VAULT_ROOT,
+      'markdown/tarefa-foo.md',
+      novaAte
+    );
+
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ silenciar_sugestao_ate: novaAte }),
       ''
     );
   });

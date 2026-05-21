@@ -408,6 +408,27 @@ export async function reabrirTarefa(
   return atualizado;
 }
 
+// R-ROT-1-B: silencia sugestao de alarme por N dias a partir de agora.
+// Usado quando usuario rejeita banner SugestaoAlarmeTarefa na tela
+// /todo. Idempotente: silenciar duas vezes apenas estende. Caller passa
+// ISO datetime resolvido por `calcularSilenciarAte`. Silencio e por
+// arquivo (a tarefa-alvo); o consumidor cruza com a tarefa mais
+// recente da familia para decidir se exibe o banner.
+//
+// No-op silencioso se a tarefa nao existe (alinha com semantica de
+// silenciarSugestao do alarme: feature opcional, nao deve quebrar
+// fluxo se o arquivo sumiu por sync race).
+export async function silenciarSugestaoTarefa(
+  vaultRoot: string,
+  rel: string,
+  ate: string
+): Promise<void> {
+  const atual = await lerTarefa(vaultRoot, rel);
+  if (!atual) return;
+  const atualizado: Tarefa = { ...atual, silenciar_sugestao_ate: ate };
+  await escreverTarefa(vaultRoot, rel, atualizado);
+}
+
 // Move uma tarefa para a lixeira soft. Retorna o path final na
 // lixeira. cacheDirectory/lixeira/tarefas/<timestamp>-<basename>.md.
 // Em ambiente web FileSystem.cacheDirectory pode ser null; usamos

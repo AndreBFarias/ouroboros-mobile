@@ -168,6 +168,7 @@ function tarefaConcluida(
       categoria: 'outro',
       pessoa_destino: { tipo: 'mim' },
       alarme: null,
+      silenciar_sugestao_ate: null,
     },
     rel: `markdown/tarefa-${titulo.replace(/\s+/g, '-')}.md`,
   };

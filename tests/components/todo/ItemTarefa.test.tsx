@@ -20,6 +20,7 @@ const baseTarefa: Tarefa = {
   categoria: 'outro',
   pessoa_destino: { tipo: 'mim' },
   alarme: null,
+  silenciar_sugestao_ate: null,
 };
 
 describe('ItemTarefa', () => {

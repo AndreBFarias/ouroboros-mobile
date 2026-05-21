@@ -80,6 +80,7 @@ export function montarTarefaDeEntry(
     categoria: 'outro',
     pessoa_destino: { tipo: 'mim' },
     alarme: null,
+    silenciar_sugestao_ate: null,
   };
   // Defensivo: revalida via schema antes de devolver ao caller.
   const parsed = TarefaSchema.safeParse(meta);

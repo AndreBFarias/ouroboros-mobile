@@ -52,6 +52,7 @@ import {
   marcarFeito,
   escreverTarefa,
   reabrirTarefa,
+  silenciarSugestaoTarefa,
   type TarefaListada,
 } from '@/lib/vault/tarefas';
 import { ItemTarefa } from '@/components/todo/ItemTarefa';
@@ -64,6 +65,13 @@ import { MenuLongPress } from '@/components/todo/MenuLongPress';
 import { BarraBusca, normalizarBusca } from '@/components/todo/BarraBusca';
 import { ListaArrastavel } from '@/components/todo/ListaArrastavel';
 import { SecaoConcluidas } from '@/components/todo/SecaoConcluidas';
+import { SugestaoAlarmeTarefa } from '@/components/tarefas/SugestaoAlarmeTarefa';
+import {
+  calcularSilenciarAte,
+  calcularSugestaoAlarme,
+  estaSilenciado,
+  normalizarTituloFamilia,
+} from '@/lib/tarefas/inteligenciaTemporal';
 
 // Chave SecureStore para ordem custom dos pendentes (array de paths
 // relativos). Tarefas novas ou não listadas caem para o topo
@@ -162,6 +170,7 @@ function novaTarefa(
     categoria: payload.categoria,
     pessoa_destino: payload.pessoa_destino,
     alarme: payload.alarme,
+    silenciar_sugestao_ate: null,
   };
   return { meta, slug };
 }

@@ -305,6 +305,7 @@ describe('feature tarefa (M17 + M31)', () => {
       categoria: 'casa',
       pessoa_destino: { tipo: 'mim' },
       alarme: null,
+      silenciar_sugestao_ate: null,
     };
     const rel = tarefasPath(DATA_FIXA, 'comprar-pao-7k2x');
     expect(rel).toBe('tarefas/2026-05-04-comprar-pao-7k2x.md');
