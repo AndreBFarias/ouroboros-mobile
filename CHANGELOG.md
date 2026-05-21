@@ -5,6 +5,54 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3M — R-BUNDLE-SIZE-AUDIT fechada + 3 sprints derivadas (2026-05-21)
+
+Sprint audit (`a11c0952`) entregue. Relatório completo em
+`docs/auditoria-bundle-2026-05-21/RELATORIO.md` + breakdown literal das
+ferramentas em `breakdown.txt`.
+
+**Medidas-chave:**
+
+| Métrica | M-BUNDLE-DIET (2026-05-04) | Agora (2026-05-21) | Delta |
+|---|---|---|---|
+| Bundle Hermes Android | 7.084.361 B (7,08 MB raw) | 10.233.199 B (10,23 MB raw) | +3.148.838 B (+44,5%) |
+| Bundle MiB (`du -sh`) | 6,8M | 9,8M | +3,0M |
+| Sources mapeadas | ~2.400 | 4.582 | +91% |
+| Leak check gauntlet | 0/6 | 0/6 | mantido |
+| Smoke (Jest) | 1349/149 suítes | 2584/277 suítes | crescimento natural |
+
+**Top 2 contribuintes do crescimento:**
+
+1. **`lucide-react-native` regressão tree-shake**: +1305 KB raw
+   (~+650 KB Hermes). Bypass cirúrgico em `app/index.tsx:29` importa
+   `Sparkles` direto do pacote root em vez do shim `@/lib/icons` — toda
+   a barrel do lucide vira reachable.
+2. **`react-native-calendars` + transitivas** (lodash 704 KB + moment
+   172 KB + recyclerlistview 137 KB + calendars 219 KB): +1252 KB raw
+   total. Pacote pesado por feature M37 (agenda Google).
+
+**3 sub-sprints derivadas** (anti-débito imediato — todas no ROADMAP):
+
+| ID | P | Estim | Status |
+|---|---|---|---|
+| **R-BUNDLE-LUCIDE-RESHIM** | P1 | ~1h | Spec criada. Fix <10 LOC + ESLint guard. Ganho -650 KB Hermes esperado. Pré-requisito M41. |
+| **R-ADR-LIMITE-BUNDLE-V2** | P1 | ~30min | Spec criada. ADR-0027 nova com limite revisado 10,5 MB (vs 8,85 MB antigo) + justificativa Onda Q/R/3J/3K. Pré-requisito M41. |
+| **R-BUNDLE-DIET-CALENDARS-REPLACE** | P3 | 3-5d | Descopada para v1.1. Substituir react-native-calendars por custom — elimina ~1 MB de transitivas. |
+
+**+ 2 achados P3 menores** (no relatório, sem spec dedicada por ora):
+- `R-DX-METRO-CACHE-PER-WORKTREE` — documentar cleanup de `/tmp/metro-*` em multi-worktree
+- `R-DX-LUCIDE-WARNINGS-SILENCE` — silenciar 57 warnings via `patch-package`
+
+**Validação runtime:**
+- smoke completo 48s OK, 277 suítes / 2584 passed / 1 skipped
+- `check_gauntlet_leak.sh` 0/6 mantido
+- TS strict 0, anonimato OK, PT-BR OK
+- expo export bundle real medido em 10.233.199 B exatos
+
+**Limitação documentada:** `source-map-explorer` não bate direto com
+`.hbc` (bytecode Hermes); workaround via parsing manual de sourcemap em
+Node script (documentado em `breakdown.txt`).
+
 ### Fase 3 Onda 3L — M-GAUNTLET-DEAD-CODE-V2 re-validação + R-BUNDLE-SIZE-AUDIT spec (2026-05-21)
 
 Despachei `M-GAUNTLET-DEAD-CODE-V2` como sprint pendente — o agente

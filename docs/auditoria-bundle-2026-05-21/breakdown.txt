@@ -1,0 +1,279 @@
+Sprint R-BUNDLE-SIZE-AUDIT — output literal das ferramentas
+Data: 2026-05-21
+Worktree: agent-a11c0952c5c0470b7
+HEAD: 0f8b604
+
+================================================================
+1. EXPO EXPORT ANDROID (produção, sem source-maps, bytecode ativo)
+================================================================
+
+$ rm -rf /tmp/bundle-audit-2126 /tmp/metro-*
+$ time npx expo export --platform android --clear --output-dir /tmp/bundle-audit-2126
+
+  android bundles (1):
+  _expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc (10.2 MB)
+
+  Files (1):
+  metadata.json (4.31 kB)
+
+  Exported: /tmp/bundle-audit-2126
+
+  real: 29.7s (155.6s user, 5.3s system, 540% cpu)
+
+$ stat /tmp/bundle-audit-2126/_expo/static/js/android/*.hbc | head -3
+
+  Arquivo: /tmp/bundle-audit-2126/_expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc
+    Tamanho: 10233199    Blocos: 19992    bloco de E/S: 4096    arquivo comum
+
+$ file /tmp/bundle-audit-2126/_expo/static/js/android/*.hbc
+
+  /tmp/bundle-audit-2126/_expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc:
+    Hermes JavaScript bytecode, version 96
+
+$ du -sh /tmp/bundle-audit-2126/_expo/static/js/android/*.hbc
+
+  9,8M    /tmp/bundle-audit-2126/_expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc
+
+================================================================
+2. EXPO EXPORT ANDROID (com source-maps para análise)
+================================================================
+
+$ rm -rf /tmp/bundle-audit-2126-sm /tmp/metro-*
+$ time npx expo export --platform android --source-maps --clear --output-dir /tmp/bundle-audit-2126-sm
+
+  android bundles (2):
+  _expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc (6.46 MB)
+  _expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc.map (19.9 MB)
+
+  real: 32.6s (158.6s user, 5.6s system, 503% cpu)
+
+NOTA: o bundle com --source-maps é MENOR (6,46 MB) porque o Metro/Hermes
+gera bundle com optimização diferente quando precisa preservar mapping.
+A medida real de produção é o bundle SEM source-maps: 10,23 MB
+(10.233.199 bytes).
+
+================================================================
+3. CHECK GAUNTLET LEAK (confirmação 0/6 markers)
+================================================================
+
+$ ./scripts/check_gauntlet_leak.sh
+
+>> rodando expo export --platform android (pode demorar 60-90s)...
+>> verificando /tmp/tmp.XXX/_expo/static/js/android/*.hbc
+   OK:   __gauntlet  (0 matches)
+   OK:   instalarGauntlet  (0 matches)
+   OK:   aplicarSeed  (0 matches)
+   OK:   useGaleriaMock  (0 matches)
+   OK:   GAUNTLET_ATIVO  (0 matches)
+   OK:   adicionarFotoMock  (0 matches)
+
+OK: bundle Android sem gauntlet
+    bundle: 9,8M    /tmp/tmp.XXX/_expo/static/js/android/entry-233cc55c1b8e1546161f8231afee8639.hbc
+
+================================================================
+4. ANALYZE.JS — TOP CONTRIBUINTES (parseado do source-map)
+================================================================
+
+$ node /tmp/bundle-audit-2126-sm/analyze.js
+
+total source bytes (raw, pre-hermes minify): 12684.8 KB
+total sources: 4582
+
+  Bytes      KB     %      Pacote/Area
+  ---------- ------ ------ ----------------------------------
+     2475266 2417.3  19.1% react-native
+     1604623 1567.0  12.4% __app:src__
+     1366907 1334.9  10.5% lucide-react-native        <-- REGRESSÃO
+      804889  786.0   6.2% react-native-reanimated
+      720560  703.7   5.5% lodash                     <-- NOVO (transitiva)
+      540002  527.3   4.2% __app:app__
+      536560  524.0   4.1% zod
+      414529  404.8   3.2% expo-router
+      341268  333.3   2.6% framer-motion
+      279080  272.5   2.1% yaml
+      267315  261.0   2.1% react-native-gesture-handler
+      251255  245.4   1.9% react-native-svg
+      224447  219.2   1.7% react-native-calendars     <-- NOVO
+      214607  209.6   1.7% @gorhom/bottom-sheet
+      178163  174.0   1.4% expo
+      176435  172.3   1.4% moment                     <-- NOVO (transitiva)
+      169651  165.7   1.3% @react-navigation/core
+      140141  136.9   1.1% recyclerlistview           <-- NOVO (transitiva)
+      122237  119.4   0.9% react-native-screens
+      118752  116.0   0.9% react-native-css-interop
+      105496  103.0   0.8% react-native-worklets
+       97630   95.3   0.8% jszip
+       88629   86.6   0.7% expo-notifications
+       76059   74.3   0.6% assert
+       74425   72.7   0.6% @motionone/dom
+       72219   70.5   0.6% whatwg-url-without-unicode
+       66165   64.6   0.5% expo-av
+       60115   58.7   0.5% react-native-draggable-flatlist
+       58618   57.2   0.5% @react-navigation/elements
+       57189   55.8   0.4% expo-auth-session
+       50097   48.9   0.4% buffer
+
+=== SUBTOTAIS APP vs node_modules ===
+  app code (src + app + routing + other): 2108.8 KB (16.6%)
+  node_modules:                           10575.6 KB (83.4%)
+  polyfills:                              0.5 KB
+  TOTAL raw source:                       12684.8 KB
+
+================================================================
+5. APP CODE TOP 30 ARQUIVOS
+================================================================
+
+     30048   29.3 /app/onboarding.tsx
+     28369   27.7 /app/recap-memorias.tsx
+     25248   24.7 /app/_layout.tsx
+     24053   23.5 /app/alarmes/novo.tsx
+     24047   23.5 /app/diario-emocional.tsx
+     23408   22.9 /app/settings/index.tsx
+     23092   22.6 /app/contadores/[slug].tsx
+     21106   20.6 /app/todo.tsx
+     20075   19.6 /src/components/chrome/MenuLateral.tsx
+     19919   19.5 /app/treinos/executar/[slug].tsx
+     19348   18.9 /src/lib/hooks/useRecap.ts
+     18990   18.5 /src/components/todo/SheetNovaTarefa.tsx
+     18652   18.2 /src/components/screens/SheetNovoTreino.tsx
+     18361   17.9 /src/lib/vault/midiaCompanion.ts
+     18227   17.8 /src/lib/vault/paths.ts
+     17969   17.5 /src/lib/vault/permissions.ts
+     17940   17.5 /src/components/chrome/MenuCapturaVerde.tsx
+     17808   17.4 /src/lib/vault/tarefas.ts
+     16955   16.6 /app/index.tsx
+     16935   16.5 /app/eventos.tsx
+     16719   16.3 /src/components/screens/IntegracoesScreen.tsx
+     16714   16.3 /src/components/brand/OuroborosLoader.tsx
+     16087   15.7 /src/components/treino/FormRotina.tsx
+     15991   15.6 /app/medidas/novo.tsx
+     15712   15.3 /src/lib/boot/migrarVaultLayoutPorTipo.ts
+     15694   15.3 /src/lib/backup/executarBackup.ts
+     14782   14.4 /app?ctx=...                                  (require.context virtual)
+     13978   13.7 /src/lib/stores/settings.ts
+     13603   13.3 /src/lib/services/alarmesNotificacoes.ts
+     13262   13.0 /src/components/diario/MicrofoneButton.tsx
+
+================================================================
+6. WARNINGS DO METRO (lucide-react-native fallback)
+================================================================
+
+Durante o export apareceram 57 warnings TODOS do mesmo tipo, sobre
+arquivos individuais do shim @/lib/icons que importa
+'lucide-react-native/dist/esm/icons/*.mjs' (subpath não exposto pelo
+package.json exports do lucide-react-native@1.12.0):
+
+ WARN  Attempted to import the module
+   ".../node_modules/lucide-react-native/dist/esm/icons/activity.mjs"
+   which is not listed in the "exports" of
+   ".../node_modules/lucide-react-native" under the requested subpath
+   "./dist/esm/icons/activity.mjs". Falling back to file-based
+   resolution. Consider updating the call site or asking the package
+   maintainer(s) to expose this API.
+
+(idêntico para todos os 57 ícones do shim)
+
+NOTA: o "Falling back to file-based resolution" significa que o Metro
+ESTÁ resolvendo o arquivo individual. O tree-shake DEVERIA estar
+funcionando para esses ícones. Mas o BARREL `lucide-react-native.mjs`
+(222 KB) também está sendo bundlado simultaneamente — porque
+`app/index.tsx:29` importa Sparkles direto do root do pacote
+('lucide-react-native'), bypassando o shim.
+
+================================================================
+7. INVESTIGAÇÃO: por que o barrel de lucide voltou
+================================================================
+
+$ grep -rn "from 'lucide-react-native'" src/ app/ | grep -v "@/lib/icons"
+
+  src/lib/icons.ts:73: export type { LucideIcon, LucideProps } from 'lucide-react-native';
+  app/index.tsx:29:    import { Sparkles } from 'lucide-react-native';
+
+Linha 73 do shim: `export type` é elided pelo TypeScript compile,
+não entra no runtime bundle.
+
+Linha 29 de app/index.tsx: `import { Sparkles } from 'lucide-react-native'`
+é IMPORT REAL — Metro resolve o root do pacote, carrega o barrel
+`dist/esm/lucide-react-native.mjs` (222 KB), e como o barrel
+re-exporta TODOS os 1700 ícones, todos entram no bundle.
+
+Suficiente UM consumer bypassando o shim para arrastar a regressão
+inteira de +1.3 MB.
+
+================================================================
+8. ANÁLISE TRANSITIVA: react-native-calendars
+================================================================
+
+$ grep "\"lodash\":\|\"moment\":\|\"recyclerlistview\":" \
+    node_modules/react-native-calendars/package.json
+
+    "lodash": "^4.17.15",
+    "moment": "^2.29.4",
+    "recyclerlistview": "^4.0.0",
+    "xdate": "^0.8.2"
+
+react-native-calendars (M37/2026-05-05, adicionado APÓS o
+M-BUNDLE-DIET de 2026-05-04) traz consigo 4 dependências pesadas:
+
+  - lodash:        703,7 KB raw source
+  - moment:        172,3 KB raw source
+  - recyclerlistview: 136,9 KB raw source
+  - xdate:           19,5 KB raw source
+  - calendars own: 219,2 KB raw source
+  TOTAL:          1.251,6 KB raw source
+
+Esse é o segundo maior contribuinte do crescimento +44%.
+
+$ grep -rn "react-native-calendars" src/ app/
+
+  src/components/agenda/CalendarGrid.tsx:1
+  src/components/agenda/CalendarGrid.tsx:10
+  src/components/agenda/calendarLocalePtBr.ts:1
+  src/components/agenda/calendarLocalePtBr.ts:17
+  src/components/screens/RecapModoCalendario.tsx:7
+  src/components/screens/RecapModoCalendario.tsx:16
+
+3 arquivos consumidores, todos legítimos (uso em UI de agenda e recap).
+
+================================================================
+9. ANÁLISE: pacotes nativos esperados pelo spec
+================================================================
+
+Spec hipotetizou que pacotes nativos pesados seriam contribuintes:
+
+$ node analyze por pacote:
+
+  react-native-health-connect:   19,9 KB    (esperado ~500 KB)
+  expo-share-intent:             38,1 KB    (esperado ~200 KB)
+  react-native-view-shot:         8,9 KB    (não estimado)
+  expo-speech-recognition:       34,5 KB    (não estimado)
+
+CONCLUSÃO: pacotes nativos contribuem MUITO pouco ao bundle JS — o
+código nativo (.so/AAR) é o que pesa no APK final, não no bundle
+Hermes. Os ~67 KB combinados dessas 3 deps NÃO explicam +1,3 MB
+de crescimento.
+
+================================================================
+10. SMOKE FINAL
+================================================================
+
+$ time ./scripts/smoke.sh
+
+>> anonimato (Regra -1)
+OK: anonimato preservado (Regra -1)
+>> dados de teste
+OK: dados de teste seguros
+>> typecheck
+(zero erros)
+>> lint
+(passou)
+>> tests
+Test Suites: 277 passed, 277 total
+Tests:       1 skipped, 2584 passed, 2585 total
+Time:        35.66 s
+OK: smoke test passou
+
+real: 48.6s
+
+$ ./scripts/check_anonimato.sh
+OK: anonimato preservado (Regra -1)
