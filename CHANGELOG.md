@@ -5,6 +5,109 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3J.7 — R-INFRA-JEST-LEAK-HUNT-5 destrava flake JEST cross-suite (2026-05-21) — **Onda 3J 7/7 fechada**
+
+Sprint anti-débito P1 entregue honrando worktree isolation
+(`agent-a49390704fe24f1d3`). Commit `b06d7e9`. Destrava push de
+11 commits queued + este, total 12.
+
+**Causa raiz cirúrgica** (complementa diagnóstico do hunt-4 que rodou
+em 1/10): `jest.useFakeTimers()` default substitui `setImmediate`,
+`queueMicrotask` e `process.nextTick`. O `flushMicroTasks()` do
+`@testing-library/react-native` (chamado em todo `afterEach`) depende
+de `setImmediate` real:
+
+```js
+function flushMicroTasks() {
+  return new Promise(resolve => setImmediate(resolve));
+}
+```
+
+Quando uma suite anterior do mesmo worker deixou fakeTimers ativo (early
+throw, restore faltando) ou outra suite mockou fakeTimers, `setImmediate`
+herda escala simulada e nunca dispara — `afterEach` do RTL trava até
+`testTimeout` (15s). Mesmo suítes que não usam fakeTimers herdam pelo
+worker pool.
+
+**Fix global em `jest.config.js` novo:**
+
+```js
+fakeTimers: {
+  doNotFake: ['queueMicrotask', 'setImmediate', 'nextTick'],
+}
+```
+
+Quando `jest.useFakeTimers()` é chamado sem args, herda esta config
+global via spread em `_toSinonFakeTimersConfig` (Jest 29.7). Garante que
+os 3 primitivos sempre sejam reais.
+
+**Migração `package.json#jest` → `jest.config.js`** (bloco jest removido
+do package.json; `package.json` ficou 23 linhas mais enxuto).
+
+**Defesa em profundidade:**
+
+- `tests/__env__/rn-realtimers.js` novo (49L): custom testEnvironment
+  estende `react-native-env` e força `useRealTimers()` antes do
+  `super.teardown()`. Importante: estende `react-native-env`
+  (NodeEnvironment + customExportConditions 'react-native'), NÃO
+  `jest-environment-jsdom` — `setImmediate` de jsdom é incompatível
+  com o do RTL.
+- `jest.afterEach.cjs` ganha `beforeEach` global que restaura
+  realTimers no início de cada teste (no-op se já real). Combina com
+  o `afterEach` existente do hunt-2 (drena `_resetEscreverEstado`).
+- `tests/components/chrome/MenuLateral.test.tsx` ganhou `afterEach`
+  simétrico no `describe('K1 layout do drawer')` — único dos 24
+  arquivos auditados com `useFakeTimers` que estava sem restore
+  simétrico (it() chamavam `useFakeTimers()` sem afterEach específico
+  do describe K1).
+
+**Auditoria sistemática 24 arquivos com `jest.useFakeTimers`:** 23/24
+já tinham padrão simétrico (`beforeEach`/`afterEach` ou
+`setSystemTime` puro). Apenas MenuLateral K1 precisou fix.
+
+**Estratégia abandonada (anti-débito documentado):** spec original
+sugeria 3 projects (lib/components/fake-timers) + workerIdleMemoryLimit
++ custom env. Agente tentou, reduziu flake mas não atingiu 10/10. Após
+investigação empírica, `fakeTimers.doNotFake` global foi cirúrgico —
+projects extras tornaram-se desnecessários. Mantido testEnvironment
+custom como defesa adicional.
+
+**Critério forte atendido:**
+
+- 10/10 runs no worktree (proof em `/tmp/criterio-forte-10-runs.log`).
+- 3 runs no main pós-copy: 276 suítes / 2580 passed / 1 skipped em ~18-19s
+  cada. Smoke completo em 36s.
+- TS strict 0, anonimato OK, PT-BR OK.
+- Sem `retryTimes`, sem `forceExit`, sem `testTimeout > 15s`.
+
+**Achados colaterais documentados (anti-débito, viram sprints novas):**
+
+- `R-MICROFONE-USE-AFTER-UNMOUNT` — `src/components/diario/MicrofoneButton.tsx:122-126`
+  tem `stopAndUnloadAsync().then(() => discardRecording(uri))` sem
+  check de unmount. Mesma classe de bug do hunt-3 (`SecaoBackupAutomatico`).
+- `R-INFRA-WORKTREE-ENV-SYMLINK` — `bash scripts/bootstrap-worktree.sh`
+  ainda exigido manual em worktree fresh para criar symlinks de
+  `node_modules`/`env.json`/`.env`. Sem ele, jest não resolve módulos.
+- `R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX` — `tests/lib/services/googleAuthFlow-pickClientIdSafe.test.ts`
+  flakiness em isolation (`jest.mock('../../../env.json')` não
+  sobrescreve via require.cache). Não bloqueou critério 10/10 desta
+  sprint mas merece atenção.
+- `R-INTEGRACOES-CANCELADO-PATTERN` — `src/components/screens/IntegracoesScreen.tsx:245-264`
+  usa `let cancelado` (não bugado mas refator para `AbortController`
+  ou mountedRef para consistência com hunt-3).
+
+**Onda 3J fechada (7/7):**
+
+| # | Sprint | Hash | Status |
+|---|---|---|---|
+| 3J.1 | R-SEC-5 (gitleaks audit + hook pre-commit) | `4155077` | ok |
+| 3J.2 | R-DX-EXECUTOR-WORKTREE-ENFORCE-V2 (PreToolUse hook) | `91b4cd6` | ok |
+| 3J.3 | R-SEC-3 (privacy policy + terms HTML) | `3e032e8` | ok |
+| 3J.4 | R-INFRA-METRO-CACHE-GC (script gc + flag --gc) | `fd079f2` | ok |
+| 3J.5 | R-INFRA-JEST-LEAK-HUNT fase 2 (Toast + escreverEstado) | `25ca020` | ok-parcial |
+| 3J.6 | R-INFRA-JEST-LEAK-HUNT-3 (SecaoBackupAutomatico) | `85979b3` | ok-parcial |
+| 3J.7 | R-INFRA-JEST-LEAK-HUNT-5 (fakeTimers.doNotFake) | `b06d7e9` | ok (este commit) |
+
 ### Fase 3 Onda 3I — DX template/record/issue-to-spec + Spotify/YouTube OAuth (2026-05-17)
 
 4 sprints paralelas via worktree:
@@ -282,7 +385,7 @@ Sprint anti-débito entregue honrando worktree isolation. Commit `e53fb54` cherr
 - **Run GH Actions** `25977218049`: build OK em ~11min, falhou só no step "Attach APK to release" (release não existia ainda).
 - **Release criada manualmente** via `gh release create v1.0.0-alpha-12`.
 - **APK upload** via `gh release upload`: `ouroboros-v1.0.0-alpha-12.apk` (70MB, arm64-v8a).
-- **URL**: https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-12
+- **URL**: https://github.com/[REDACTED]/ouroboros-mobile/releases/tag/v1.0.0-alpha-12
 - **PushNotification ao dono** enviada com instrução `adb install -r`.
 
 **Fix workflow opcional**: o step "Attach APK to release" assume release pré-existente. Sprint nova **R-OPS-RELEASE-AUTO** seria criar release automaticamente antes do upload (ou usar `gh release create --notes-file CHANGELOG_SECAO.md` no workflow). NÃO criada nesta sessão — workaround manual funciona, prioridade baixa.
@@ -317,7 +420,7 @@ Sprint anti-débito entregue honrando worktree isolation. Commit `5d41ca6` cherr
 
 ### Onda 2D.4 — R-CROSS-FLOW-FIX-2 sibling Python ETL lê layout H2 (2026-05-16 noite) — **Onda 2D 4/4 fechada**
 
-Sprint **cross-repo** entregue no sibling Python ETL. Mobile **zero toques** (read-only por design). Commit no sibling: [`AndreBFarias/protocolo-ouroboros@96f2167`](https://github.com/AndreBFarias/protocolo-ouroboros/commit/96f2167). Issue rastreadora: [#33](https://github.com/AndreBFarias/protocolo-ouroboros/issues/33).
+Sprint **cross-repo** entregue no sibling Python ETL. Mobile **zero toques** (read-only por design). Commit no sibling: [`[REDACTED]/protocolo-ouroboros@96f2167`](https://github.com/[REDACTED]/protocolo-ouroboros/commit/96f2167). Issue rastreadora: [#33](https://github.com/[REDACTED]/protocolo-ouroboros/issues/33).
 
 **Causa raiz**: mobile migrou para layout-por-tipo (H2, ADR-0023) — todo write canônico vai para `markdown/<feature>-*.md`. Sibling Python ainda usava SUBPATHS legados (`marcos/`, `eventos/`, `tarefas/`, `inbox/mente/diario/`, etc), tornando dados pós-refundação **invisíveis para o ETL desktop**.
 
@@ -325,7 +428,7 @@ Sprint **cross-repo** entregue no sibling Python ETL. Mobile **zero toques** (re
 
 - **9 parsers** (`alarmes`, `ciclo`, `contadores`, `diario_emocional`, `eventos`, `marcos`, `medidas`, `tarefas`, `treinos`): `SUBPATHS = (("markdown",), ("<legado>",))` em união. Constante `FILENAME_PREFIXES_H2` filtra por prefixo conforme ADR-0023.
 - **`humor_heatmap.py`** (caso especial, não usa `_base`): varre `markdown/humor-*.md` + `markdown/daily-*.md`. Helper `_data_no_nome_h2(stem, prefixo)`. Dedup `(data, autor)` preservado.
-- **`scripts/smoke_bem_estar.py`**: `rglob("*.md")` substituído por `parser.varrer(vault_root)` — equivalência cache↔filesystem por construção.
+- **`scripts/smoke_bem_estar.py`**: `rglob("*.md")` substituído por `parser.varrer(vault_root)` — equivalência cachefilesystem por construção.
 - **15 testes novos** em `tests/mobile_cache/test_layout_h2.py`: vault legado, vault H2 puro, vault híbrido (somando sem duplicar), cross-talk filtrado por prefixo.
 
 **Validação cross-check real no vault `~/Protocolo-Ouroboros`**:
@@ -566,7 +669,7 @@ Sprint da Fase 2 entregue **honrando worktree isolation**. Commit `62ebcdf` cher
 - **UI Settings em `app/settings/index.tsx`** (+35L): handler `exportarEstado` + botão "Exportar estado completo" abaixo da seção do Vault. Toast PT-BR "Estado exportado" no sucesso. accessibilityLabel "Exportar estado completo" (sem acento).
 - **Doc canônico cross-repo em `docs/SCHEMA-VAULT-ESTADO.md`** (290L NOVO): contrato para o sibling Python — paths + frequências + frontmatter + dedup por deviceId + staleness via `ultimaAtualizacao`.
 - **Drift contract atualizado**: `docs/CONTRACT-MOBILE-BACKEND.md` ganhou seções 5.23 a 5.31 (+171L); `docs/CONTRACT-MOBILE-BACKEND.csv` regenerado via `exportar_contrato.py` (174 → **222 campos auditados**). `./scripts/test_contract_drift.sh` retorna `OK: contrato em sync com schemas`.
-- **Issue cross-repo aberta**: [`AndreBFarias/protocolo-ouroboros#32`](https://github.com/AndreBFarias/protocolo-ouroboros/issues/32) (`feat: ler vault/_estado/ pra series historicas`). Labels: `etl-contract`, `cross-repo`, `feat`. Label `cross-repo` criada no sibling (color `#BFE5BF`).
+- **Issue cross-repo aberta**: [`[REDACTED]/protocolo-ouroboros#32`](https://github.com/[REDACTED]/protocolo-ouroboros/issues/32) (`feat: ler vault/_estado/ pra series historicas`). Labels: `etl-contract`, `cross-repo`, `feat`. Label `cross-repo` criada no sibling (color `#BFE5BF`).
 - **+43 testes** (27 calcular + 9 escreverStats + 7 exportarEstadoCompleto). Métricas: **239 suítes / 2235 testes** verde · TS strict 0 · smoke ok · anonimato ok · PT-BR ok · drift OK 222 campos.
 
 **Validação visual limitada**: 2 screenshots Gauntlet capturados (app rodando + onboarding gate redirect), mas botão "Exportar estado completo" não aparece nos PNGs porque o Metro do usuário rodava do repo root sem rebundle do worktree. Relatório completo em `docs/sprints/R-VAULT-CANONICAL-COMPLETE-B-screenshots-gauntlet/VALIDACAO-VISUAL-RELATORIO.md`. **Compensação aceita**: 43 testes Jest cobrem toda a lógica end-to-end; template E2E playwright pronto em `tests/e2e/playwright/r-vault-b-settings-export.e2e.ts` para re-validação quando Metro do worktree puder rodar.
@@ -719,7 +822,7 @@ Refactor de vocabulário com backward-compat em ~35min via executor worktree-iso
 - **Helper canônico**: `src/lib/migration/lexicon.ts` com `DIARIO_MODO_LEGADO_TO_CANONICO` (bidirecional) + `normalizarDiarioModo()` + 16 testes.
 - **ADR-0025**: `docs/ADRs/0025-lex-crise-conquista-gatilho-reflexao.md` registra decisão durável.
 - **Migration doc**: `docs/SCHEMA-MIGRATION.md` documenta mapping bi-direcional para sibling Python ETL.
-- **Sibling**: issue `etl-contract` aberta — https://github.com/AndreBFarias/protocolo-ouroboros/issues/31 com critérios de aceitação para pipeline desktop.
+- **Sibling**: issue `etl-contract` aberta — https://github.com/[REDACTED]/protocolo-ouroboros/issues/31 com critérios de aceitação para pipeline desktop.
 - **Aliases @deprecated** mantidos por 1 versão: `haptics.vitoria()`, `haptics.trigger()`, `lerDiarioVitorias()`.
 - **IDs cross-platform preservados** intencionalmente: `ConquistaItem.origem === 'diario_vitoria'`, `CriseItem.origem === 'diario_trigger'` — contrato estável entre mobile/widget/cache/desktop. Renomear esses ids requer sprint dedicada com migração de cache coordenada.
 
@@ -905,7 +1008,7 @@ Métricas após esta tranche: 214 suítes / 2016 testes verde (era
 
 ### Auditoria pré-v1.0 — Tranche 1 (bugs) + Tranche 3 (DX) (2026-05-15)
 
-Auditoria sistemática em 5 eixos (drift docs↔código, bugs latentes,
+Auditoria sistemática em 5 eixos (drift docscódigo, bugs latentes,
 robustez, DX, AIX) entregou 2 sprints corretivas executadas em paralelo
 via worktrees isoladas e 1 normalização de formatação.
 
@@ -1135,7 +1238,7 @@ strict zero · drift contract 174 campos auditados.
   telas). GIF/JPG/PNG sem regressão. FEATURES-CANONICAS §3.3
   atualizada. Commit `15ce58a`.
 - **Q21.b** 7 issues `etl-contract` abertas em
-  `AndreBFarias/protocolo-ouroboros` (#24-#30) cobrindo humor,
+  `[REDACTED]/protocolo-ouroboros` (#24-#30) cobrindo humor,
   diario_emocional, treino/rotina/grupo, medidas (com gordura
   Q17.c.d), ciclo_menstrual, midia (4 tipos) e marco+evento+agenda.
   Label `etl-contract` criada nesta sessão.
@@ -1164,7 +1267,7 @@ sync.
   - `Q23-COMPILESDK-35-spec.md` — bump `compileSdk 35` via
     `expo-build-properties` (destrava CI alpha-5+).
 
-### Q21 — ETL canônico Mobile↔Backend: CSV + drift check (parcial, 2026-05-13)
+### Q21 — ETL canônico MobileBackend: CSV + drift check (parcial, 2026-05-13)
 
 - Novo `scripts/exportar_contrato.py` (stdlib only, sem deps externas):
   parser de tabelas markdown de `docs/CONTRACT-MOBILE-BACKEND.md`
@@ -1277,7 +1380,7 @@ sync.
 
 ### v1.0.0-alpha-5 (2026-05-13 madrugada) — Q17 Health Connect completo + CI local
 
-[Release publicado](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-5) — APK 65 MB (arm64-v8a only, commit `46bec14`). Gerado via GitHub Actions (workflow `.github/workflows/build-android-apk.yml`) após EAS Free Tier esgotar. Pipeline convergiu em 6 tentativas com erros distintos a cada vez (env.json gitignored → CMake timeout 45min → minSdk 24<26 → gradle.properties sem newline → compileSdk 34<35 → sucesso). Limitação: APK assinado com debug keystore — OAuth Google não funciona nessa alpha (resolvido em sprint Q17.e com keystore EAS em GitHub Secrets).
+[Release publicado](https://github.com/[REDACTED]/ouroboros-mobile/releases/tag/v1.0.0-alpha-5) — APK 65 MB (arm64-v8a only, commit `46bec14`). Gerado via GitHub Actions (workflow `.github/workflows/build-android-apk.yml`) após EAS Free Tier esgotar. Pipeline convergiu em 6 tentativas com erros distintos a cada vez (env.json gitignored → CMake timeout 45min → minSdk 24<26 → gradle.properties sem newline → compileSdk 34<35 → sucesso). Limitação: APK assinado com debug keystore — OAuth Google não funciona nessa alpha (resolvido em sprint Q17.e com keystore EAS em GitHub Secrets).
 
 **Q17 Health Connect (commit `cee0d17`)**
 - `npm install react-native-health-connect@^3.5.0` via Expo Config Plugin.
@@ -1310,7 +1413,7 @@ sync.
 
 ### v1.0.0-alpha-4 (2026-05-12 noite) — Onda Q sessões 1–4
 
-APK [v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/tag/v1.0.0-alpha-4) via EAS preview. Commit `a1dd3c9` (bump versionCode 3).
+APK [v1.0.0-alpha-4](https://github.com/[REDACTED]/ouroboros-mobile/releases/tag/v1.0.0-alpha-4) via EAS preview. Commit `a1dd3c9` (bump versionCode 3).
 
 **Q5.1 — TranscreverButton separado do MicrofoneButton (commit `c6abaa5`)**
 - Android `SpeechRecognizer` não consegue compartilhar o microfone com `expo-av Audio.Recording` — sempre aborta com `error="aborted"`. Confirmado via logcat instrumentado.
@@ -1362,7 +1465,7 @@ APK [v1.0.0-alpha-4](https://github.com/AndreBFarias/ouroboros-mobile/releases/t
 - `src/lib/share/categorias.ts` ganha regex classifier (Pix `E\d{14}`, boleto linha digitável, extrato `Nubank|Itaú|Bradesco|Santander|Inter|C6` + saldo).
 - Auto-rename `inbox/financeiro/<categoria>/YYYY-MM-DD-<valor>.<ext>` + companion `.md` rico.
 
-**Q12 — Bridge ETL Mobile↔Backend (commit `245954f`)**
+**Q12 — Bridge ETL MobileBackend (commit `245954f`)**
 - `_schema_version: 1` adicionado em todos os writers de `.md`.
 - `docs/CONTRACT-MOBILE-BACKEND.md` documenta o contrato.
 
@@ -1380,7 +1483,7 @@ typecheck silent, anonimato + PT-BR OK.
 - **Q0 — OAuth Google Calendar liberado.** Console (`protocolo-ouroboros`,
   conta `andrefarias@projeto-luna.ia.br`) confirmou: Calendar API
   ENABLED, Consent screen Em Teste com 3 test users
-  (`andre.dsbf@gmail.com`, `andrefarias@projeto-luna.ia.br`,
+  (`[REDACTED]`, `andrefarias@projeto-luna.ia.br`,
   `vitoriamaria.sds@gmail.com`), escopo `calendar.events.readonly`
   presente, Android client `com.ouroboros.mobile` + SHA-1
   `E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`
@@ -2668,7 +2771,7 @@ ADR-0022 documenta a decisão (supersedes parcialmente ADR-0014 que
 assumia pasta dedicada hardcoded). Justificativa: respeitar
 autonomia do usuário, permitir Vault Obsidian compartilhado.
 Decisão arquitetural durável: trocar pasta NÃO move dados —
-complexidade de migração SAF↔SAF é alta, usuário pode preferir
+complexidade de migração SAFSAF é alta, usuário pode preferir
 manter histórico antigo, fluxo manual via export ZIP/import recomendado.
 
 Métricas: 1598 testes / 172 suítes verde (+5 contra 1593 baseline,
@@ -5681,7 +5784,7 @@ via docs centralizados:
 ### Documentation
 - **M19.x (a commitar) — Inventário de mockups visuais.**
   Novo `docs/MOCKUPS-INVENTARIO.md` (151 linhas) mapeando cada
-  Tela NN ↔ bundle HTML / JSX-fonte / sprint dona, com nota
+  Tela NN  bundle HTML / JSX-fonte / sprint dona, com nota
   explícita sobre conflito de numeração (Tela 25/26 ambíguas:
   M11.5/M20 vs M06.5/M16). Stub `scripts/build-mockups.mjs`
   documenta o desafio da toolchain JSX→HTML para M19 final.
@@ -5935,7 +6038,7 @@ via docs centralizados:
   emocional rica em contexto, com persistência em
   `inbox/mente/diario/YYYY-MM-DD-HHmm-<slug>.md` no Vault.
   - `app/diario-emocional.tsx` — bottom sheet 90% que abre ao
-    montar. Toggle inicial trigger ↔ vitória renderizado como dois
+    montar. Toggle inicial trigger  vitória renderizado como dois
     chips (red / green) que mudam a borda esquerda animada do form
     via `MotiView` com spring subtle. Grid de chips de emoção
     multi-select (6 negativos em modo trigger, 6 positivos em modo

@@ -87,7 +87,8 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INFRA-JEST-FLAKY-TIMEOUT | Flakiness sistêmica smoke (causa raiz: handle leak worker pool, não timeout) | infra | P2 | `c15cf52` | `[fase 1 parcial]` (3F.4) testTimeout defensivo |
 | R-INFRA-JEST-LEAK-HUNT | Caçar handle leak Jest (audit Toast/Loader/FAB/Sheet + detectOpenHandles + 10/10 runs) | infra | P2 | `25ca020` | `[parcial]` (3J.5) fase 2 fix Toast+escreverEstado, 10/10 nao atingido |
 | R-INFRA-JEST-LEAK-HUNT-3 | Use-after-unmount em SecaoBackupAutomatico (achado colateral fase 2) | fix | P2 | `85979b3` | `[ok-parcial]` (3J.6) fix tecnico real, flake aleatorio persiste |
-| R-INFRA-JEST-LEAK-HUNT-4 | Causa raiz flake aleatorio cross-suite (moti/RAF/zustand reset) | infra | P1 | 4-6h | `R-INFRA-JEST-LEAK-HUNT-4-spec.md` |
+| R-INFRA-JEST-LEAK-HUNT-4 | Causa raiz flake aleatorio cross-suite (moti/RAF/zustand reset) | infra | P1 | `[descopado-em-hunt-5]` | `R-INFRA-JEST-LEAK-HUNT-4-spec.md` (rodou, terminou em 1/10; abordagem do escopo OFF-LIMITS revelou-se insuficiente; spec hunt-5 com escopo expandido entregou) |
+| R-INFRA-JEST-LEAK-HUNT-5 | Refator estrutural jest config + fakeTimers.doNotFake (causa raiz: setImmediate herda fakeTimers cross-suite + flushMicroTasks do RTL) | infra | P1 | `b06d7e9` | `[ok]` (3J.7) destrava push 11 commits queued; 10/10 runs verde + 3 runs verde pos-copy no main |
 | R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `fd079f2` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
 | R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
