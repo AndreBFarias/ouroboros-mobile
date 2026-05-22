@@ -1,0 +1,63 @@
+// Bridge Health Connect nativa propria do Ouroboros.
+// R-INT-3-HC-BRIDGE-NATIVA sub-sprint A (skeleton + availability + permissions).
+//
+// Dependencia: androidx.health.connect:connect-client:1.2.0-alpha04 (latest
+// no Google Maven em 2026-05-22). A versao 5.5.0 NAO existe no Google Maven
+// autoritativo (apenas mirror Maven Central). A versao 1.1.0-alpha11 (usada
+// pela lib react-native-health-connect@3.5.3) e rejeitada como obsoleta pelo
+// HC moderno (com.google.android.apps.healthdata >= 2026.04.16.00.release)
+// retornando SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED.
+//
+// API nova (1.2.0-alpha04): construtor Metadata(...) virou internal desde
+// alpha12; usar factory methods (Metadata.activelyRecorded, manualEntry etc).
+// Sub-sprint A nao instancia Metadata diretamente (so availability +
+// permissions); B/C/D vao tocar.
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'com.ouroboros.healthconnect'
+version = '0.1.0'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace "com.ouroboros.healthconnect"
+  compileSdkVersion safeExtGet("compileSdkVersion", 35)
+
+  defaultConfig {
+    minSdkVersion safeExtGet("minSdkVersion", 26)
+    targetSdkVersion safeExtGet("targetSdkVersion", 35)
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs += ["src/main/java"]
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_17.toString()
+  }
+}
+
+dependencies {
+  implementation project(":expo-modules-core")
+  // R-INT-3 sub-sprint A: connect-client latest do Google Maven.
+  // Auto-fallback documentado no spec: se compile falhar, tentar
+  // 1.1.0-rc03 ou 1.1.0 estavel (precisa adaptar para factory methods).
+  implementation "androidx.health.connect:connect-client:1.2.0-alpha04"
+}
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}

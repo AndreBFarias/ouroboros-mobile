@@ -1,5 +1,16 @@
 // Mapeamento de permissions canonicas do Ouroboros para Permission
-// do `react-native-health-connect`. Q17.a (Onda Q, 2026-05-13).
+// do modulo `ouroboros-health-connect` (modulo local Expo). Q17.a
+// (Onda Q, 2026-05-13).
+//
+// R-INT-3-HC-BRIDGE-NATIVA sub-sprint A (2026-05-22): trocado o
+// require de `react-native-health-connect@3.5.3` (pendurado em
+// connect-client 1.1.0-alpha11 obsoleto) por modulo local proprio
+// `ouroboros-health-connect` que usa connect-client 1.2.0-alpha04.
+// O modulo local ja faz no-op silencioso em ambiente sem suporte
+// (requireOptionalNativeModule devolve null), entao o Reflect.get
+// defensivo da hardening anterior (Proxy do upstream que lancava ao
+// acessar getter) nao e mais necessario aqui. Mantemos o lazy require
+// para preservar a forma de mock em testes (jest.doMock por escopo).
 //
 // Tipos cobertos nesta sprint (vide spec docs/sprints/Q17-...):
 //   Steps (read)
@@ -9,9 +20,6 @@
 //   HeartRate (read)
 //   SleepSession (read)
 //   MenstruationFlow (read + write)
-//
-// Lazy require do modulo nativo: em ambiente sem suporte (Expo Go,
-// web, jest), as funcoes retornam listas vazias / no-op sem crashar.
 //
 // Comentarios sem acento (convencao shell/CI).
 
@@ -28,15 +36,13 @@ interface HealthConnectModule {
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod = require('react-native-health-connect');
-    // R-INT-3-HC-PROXY-REFLECT-HARDENING: Reflect.get forca evaluation
-    // do getter dentro do try/catch. react-native-health-connect@3.5.0
-    // retorna Proxy nao-bloqueante em ambientes nao-Android (Expo Go,
-    // Jest, web) que lanca ao acessar qualquer propriedade. `typeof`
-    // direto em getter que lanca comporta-se de forma inconsistente
-    // entre engines JS; Reflect.get garante captura.
-    const requestPermission = Reflect.get(mod, 'requestPermission');
-    const getGrantedPermissions = Reflect.get(mod, 'getGrantedPermissions');
+    // Path relativo segue padrao do projeto (vide
+    // src/lib/widget/atualizarWidgetHomescreen.ts importando
+    // ../../../modules/widget-homescreen/src). Sem criar pacote
+    // npm publishavel desnecessario.
+    const mod = require('../../../modules/health-connect/src');
+    const requestPermission = mod?.requestPermission;
+    const getGrantedPermissions = mod?.getGrantedPermissions;
     if (
       typeof requestPermission !== 'function' ||
       typeof getGrantedPermissions !== 'function'
