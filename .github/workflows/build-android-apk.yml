@@ -193,7 +193,7 @@ jobs:
           echo "[ok] SHA-1 bate keystore EAS (OAuth Google funciona)"
 
       - name: Upload APK as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ouroboros-android-apk
           path: ${{ steps.locate.outputs.apk_path }}
