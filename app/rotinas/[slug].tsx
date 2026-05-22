@@ -5,7 +5,7 @@
 // imutavel, decisao spec §4.5).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Play } from '@/lib/icons';
@@ -14,11 +14,27 @@ import {
   FormRotina,
   type FormRotinaSubmit,
 } from '@/components/treino/FormRotina';
+import { SugestaoAlarmeRotina } from '@/components/treino/SugestaoAlarmeRotina';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
-import { escreverRotina, lerRotina, removerRotina } from '@/lib/vault/rotina';
+import {
+  escreverRotina,
+  lerRotina,
+  removerRotina,
+  silenciarSugestaoRotina,
+} from '@/lib/vault/rotina';
+import { listarTreinos } from '@/lib/vault/treinos';
+import { escreverAlarme } from '@/lib/vault/alarmes';
+import { agendarAlarme } from '@/lib/services/alarmesNotificacoes';
 import { RotinaSchema, type RotinaMeta } from '@/lib/schemas/rotina';
+import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
+import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
+import {
+  calcularSilenciarAte,
+  calcularSugestaoAlarmeRotina,
+  estaSilenciado,
+} from '@/lib/treino/inteligenciaTemporal';
 import { comTimeout } from '@/lib/util/comTimeout';
 
 export default function RotinaDetalhe() {
@@ -31,10 +47,19 @@ export default function RotinaDetalhe() {
   const [rotina, setRotina] = useState<RotinaMeta | null>(null);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [salvando, setSalvando] = useState<boolean>(false);
+  // R-ROT-1-D: sessoes da rotina alimentam o helper temporal. Lista
+  // filtrada por rotina_slug; vazio quando rotina nao tem historico
+  // suficiente (helper devolve sugerir=false).
+  const [sessoes, setSessoes] = useState<TreinoSessao[]>([]);
+  // R-ROT-1-D: latch para esconder banner localmente apos acao do
+  // usuario (aceitar ou rejeitar) sem precisar reler do disco.
+  const [sugestaoDispensada, setSugestaoDispensada] =
+    useState<boolean>(false);
 
   const carregar = useCallback(async () => {
     if (!vaultRoot || !slugParam) {
       setRotina(null);
+      setSessoes([]);
       setCarregando(false);
       return;
     }
@@ -42,6 +67,11 @@ export default function RotinaDetalhe() {
     try {
       const lida = await lerRotina(vaultRoot, slugParam);
       setRotina(lida);
+      // R-ROT-1-D: lista todas as sessoes vinculadas a esta rotina.
+      // Pasta inexistente => [] silenciosamente.
+      const hist = await listarTreinos(vaultRoot, { rotina_slug: slugParam });
+      setSessoes(hist);
+      setSugestaoDispensada(false);
     } finally {
       setCarregando(false);
     }
@@ -108,6 +138,78 @@ export default function RotinaDetalhe() {
       params: { slug: rotina.slug },
     });
   }, [rotina, router]);
+
+  // R-ROT-1-D: avalia padrao horario apenas quando rotina carregada e
+  // nao esta silenciada. useMemo evita recomputar a cada render.
+  const sugestao = useMemo(() => {
+    if (!rotina) return { sugerir: false as const };
+    if (estaSilenciado(rotina.silenciar_sugestao_ate)) {
+      return { sugerir: false as const };
+    }
+    return calcularSugestaoAlarmeRotina(sessoes, rotina.slug);
+  }, [rotina, sessoes]);
+
+  // R-ROT-1-D: aceitar -> cria alarme companion via writer canonico.
+  // Slug deriva da rotina + sufixo '-alarme' para nao colidir com
+  // alarmes pre-existentes. Recorrencia 'diaria' (mais provavel para
+  // rotina recorrente); usuario pode editar depois em /alarmes/[slug].
+  const handleAceitarSugestao = useCallback(async () => {
+    if (!vaultRoot || !rotina || !sugestao.sugerir || !sugestao.hora) return;
+    const slugAlarme = `rotina-${rotina.slug}-alarme`;
+    const agoraIso = new Date().toISOString().replace('Z', '+00:00');
+    const proposto: Alarme = {
+      tipo: 'alarme',
+      slug: slugAlarme,
+      titulo: rotina.nome,
+      horario: sugestao.hora,
+      dias_semana: [],
+      recorrencia: 'diaria',
+      tag: 'treino',
+      som: 'gentle',
+      ativo: true,
+      snooze_minutos: 5,
+      criado_em: agoraIso,
+      ultimo_disparo: null,
+      notification_ids: [],
+      snooze_id: null,
+      historico_snoozes: [],
+      silenciar_sugestao_ate: null,
+    };
+    const parsed = AlarmeSchema.safeParse(proposto);
+    if (!parsed.success) {
+      toast.show('Não foi possível montar o alarme.', 'error');
+      return;
+    }
+    try {
+      await comTimeout(escreverAlarme(vaultRoot, parsed.data, ''));
+      // agendarAlarme idempotente em re-tentativa; falha de schedule
+      // (sem permissao, cap atingido) nao quebra a criacao.
+      await agendarAlarme(parsed.data).catch(() => undefined);
+      void haptics.light();
+      toast.show('Alarme criado.', 'success');
+      setSugestaoDispensada(true);
+    } catch (e) {
+      void haptics.error();
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível criar o alarme: ${msg}`, 'error');
+    }
+  }, [vaultRoot, rotina, sugestao, toast]);
+
+  // R-ROT-1-D: rejeitar -> silencia sugestao por 30 dias gravando
+  // silenciar_sugestao_ate na propria rotina. Latch local esconde
+  // banner imediatamente sem esperar reload.
+  const handleRejeitarSugestao = useCallback(async () => {
+    if (!vaultRoot || !rotina) return;
+    const ate = calcularSilenciarAte();
+    try {
+      await comTimeout(silenciarSugestaoRotina(vaultRoot, rotina.slug, ate));
+      setSugestaoDispensada(true);
+      setRotina({ ...rotina, silenciar_sugestao_ate: ate });
+    } catch {
+      // No-op: feature opcional, nao deve quebrar fluxo.
+      setSugestaoDispensada(true);
+    }
+  }, [vaultRoot, rotina]);
 
   if (carregando) {
     return (
@@ -176,6 +278,17 @@ export default function RotinaDetalhe() {
           </Pressable>
         }
       />
+      {sugestao.sugerir && !sugestaoDispensada && sugestao.hora && (
+        <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.sm }}>
+          <SugestaoAlarmeRotina
+            nomeRotina={rotina.nome}
+            motivo={sugestao.motivo ?? ''}
+            hora={sugestao.hora}
+            onAceitar={handleAceitarSugestao}
+            onRejeitar={handleRejeitarSugestao}
+          />
+        </View>
+      )}
       <FormRotina
         inicial={{
           nome: rotina.nome,

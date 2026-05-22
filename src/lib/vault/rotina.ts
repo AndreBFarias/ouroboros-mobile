@@ -82,6 +82,26 @@ export async function escreverRotina(
   return { uri, rel };
 }
 
+// R-ROT-1-D: silencia sugestao de alarme temporal por N dias a partir
+// de agora. Usado quando usuario rejeita banner SugestaoAlarmeRotina na
+// tela /rotinas/[slug]. Idempotente: silenciar duas vezes apenas
+// estende o periodo. Caller passa ISO datetime resolvido por
+// `calcularSilenciarAte` do helper inteligenciaTemporal.
+//
+// No-op silencioso se a rotina nao existe (alinha com semantica de
+// silenciarSugestao do alarme e silenciarSugestaoTarefa: feature
+// opcional, nao deve quebrar fluxo se o arquivo sumiu por sync race).
+export async function silenciarSugestaoRotina(
+  vaultRoot: string,
+  slug: string,
+  ate: string
+): Promise<void> {
+  const atual = await lerRotina(vaultRoot, slug);
+  if (!atual) return;
+  const atualizada: RotinaMeta = { ...atual, silenciar_sugestao_ate: ate };
+  await escreverRotina(vaultRoot, atualizada, '');
+}
+
 // Apaga arquivo de rotina. Idempotente: nao falha se nao existe.
 // SAF.deleteAsync no nativo; em web cai em no-op silencioso (writer
 // usa mock store que nao tem delete explicito; o efeito e equivalente

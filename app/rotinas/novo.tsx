@@ -276,6 +276,9 @@ export default function RotinasNovo() {
           data_criacao: formatDateYmd(new Date()),
           autor: pessoaAtiva,
           categoria,
+          // R-ROT-1-D: rotina nasce sem silencio de sugestao temporal
+          // (banner pode aparecer livremente apos N execucoes).
+          silenciar_sugestao_ate: null,
         };
 
         const parsed = RotinaSchema.safeParse(proposto);

@@ -25,9 +25,24 @@
 // silenciosa com rotinas existentes sem o campo. Enum fechado evita
 // drift textual entre dispositivos sincronizados via Syncthing.
 //
+// R-ROT-1-D: silenciar_sugestao_ate opcional permite que o usuario
+// rejeite o banner de sugestao de alarme temporal (derivado do helper
+// inteligenciaTemporal de treino) por 30 dias. Default null garante
+// retro-compat silenciosa com rotinas anteriores a esta sprint. ISO
+// datetime com offset alinhado aos demais campos do projeto.
+//
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 import { PessoaAutorSchema } from './pessoa';
+
+// ISO datetime com offset (ex: 2026-06-20T15:00:00-03:00). Mesmo padrao
+// usado em alarme.ts e silenciar_sugestao_ate de tarefa.ts.
+const IsoDatetime = z
+  .string()
+  .regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:\d{2}|Z)$/,
+    'datetime deve estar em ISO 8601 com offset'
+  );
 
 // YYYY-MM-DD. Aceita 1900..2099, MM 01-12, DD 01-31.
 const DataYmd = z
@@ -97,5 +112,11 @@ export const RotinaSchema = z.object({
   // tinham o campo (parse de .md antigo vira meta com categoria 'outro'
   // automaticamente).
   categoria: z.enum(ROTINA_CATEGORIAS).default('outro'),
+  // R-ROT-1-D: ate quando suprimir banner de sugestao temporal de
+  // alarme derivado do helper inteligenciaTemporal de treino. Default
+  // null (nunca silenciado). Setado quando usuario rejeita banner
+  // (silencio de 30 dias). Mesma semantica de silenciar_sugestao_ate
+  // em alarme.ts e tarefa.ts.
+  silenciar_sugestao_ate: IsoDatetime.nullable().default(null),
 });
 export type RotinaMeta = z.infer<typeof RotinaSchema>;

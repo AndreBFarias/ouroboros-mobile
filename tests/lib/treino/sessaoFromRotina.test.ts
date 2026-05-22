@@ -27,6 +27,9 @@ function fixtureRotina(over: Partial<RotinaMeta> = {}): RotinaMeta {
     // R-ROT-2: categoria adicionada ao schema. Fixture usa 'outro'
     // (default) para manter semantica de teste legacy.
     categoria: 'outro',
+    // R-ROT-1-D: silenciar_sugestao_ate default null (rotina nao
+    // silenciada para sugestao de alarme temporal).
+    silenciar_sugestao_ate: null,
     ...over,
   };
 }

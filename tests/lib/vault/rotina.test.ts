@@ -34,6 +34,7 @@ import {
   lerRotina,
   escreverRotina,
   removerRotina,
+  silenciarSugestaoRotina,
 } from '@/lib/vault/rotina';
 
 const VAULT_ROOT = 'content://test/vault';
@@ -59,6 +60,9 @@ function fixture(over: Partial<RotinaMeta> = {}): RotinaMeta {
     // R-ROT-2: categoria adicionada ao schema. Fixture usa 'outro'
     // (default) para manter semantica de teste legacy.
     categoria: 'outro',
+    // R-ROT-1-D: silenciar_sugestao_ate default null (rotina nao
+    // silenciada para sugestao de alarme temporal).
+    silenciar_sugestao_ate: null,
     ...over,
   };
 }
@@ -229,5 +233,59 @@ describe('removerRotina', () => {
     await expect(
       removerRotina(VAULT_ROOT, 'treino-a')
     ).resolves.toBeUndefined();
+  });
+});
+
+// R-ROT-1-D: writer canonico que persiste silenciar_sugestao_ate na
+// rotina. Espelha semantica de silenciarSugestao do alarme e
+// silenciarSugestaoTarefa: idempotente, silencioso em arquivo ausente,
+// regrava o frontmatter completo via escreverRotina.
+describe('silenciarSugestaoRotina (R-ROT-1-D)', () => {
+  it('grava silenciar_sugestao_ate preservando demais campos', async () => {
+    const atual = fixture({ nome: 'Rotina A' });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const ate = '2026-06-20T15:00:00+00:00';
+    await silenciarSugestaoRotina(VAULT_ROOT, 'treino-a', ate);
+
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      `${VAULT_ROOT}/markdown/rotina-treino-a.md`,
+      expect.objectContaining({
+        silenciar_sugestao_ate: ate,
+        nome: 'Rotina A',
+        slug: 'treino-a',
+      }),
+      ''
+    );
+  });
+
+  it('idempotente em rotina inexistente (no-op silencioso)', async () => {
+    mockReadVaultFile.mockResolvedValueOnce(null);
+    await expect(
+      silenciarSugestaoRotina(
+        VAULT_ROOT,
+        'fantasma',
+        '2026-06-20T15:00:00+00:00'
+      )
+    ).resolves.toBeUndefined();
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  it('aceita estender data ja silenciada', async () => {
+    const atual = fixture({
+      silenciar_sugestao_ate: '2026-06-01T00:00:00+00:00',
+    });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    const novaAte = '2026-07-15T00:00:00+00:00';
+    await silenciarSugestaoRotina(VAULT_ROOT, 'treino-a', novaAte);
+
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ silenciar_sugestao_ate: novaAte }),
+      ''
+    );
   });
 });
