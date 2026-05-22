@@ -1,0 +1,8 @@
+{
+  "name": "ouroboros-health-connect",
+  "version": "0.1.0",
+  "description": "Bridge Health Connect nativa propria do Ouroboros (R-INT-3-HC-BRIDGE-NATIVA). Substitui react-native-health-connect@3.5.3 que esta com connect-client 1.1.0-alpha11 obsoleto.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true
+}

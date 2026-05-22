@@ -1,6 +1,16 @@
-// Wrappers tipados sobre `react-native-health-connect` para checar
-// disponibilidade do SDK e inicializa-lo em runtime. Q17.a
-// (Onda Q, 2026-05-13).
+// Wrappers tipados sobre `ouroboros-health-connect` (modulo local
+// Expo, vide modules/health-connect/) para checar disponibilidade do
+// SDK e inicializa-lo em runtime. Q17.a (Onda Q, 2026-05-13).
+//
+// R-INT-3-HC-BRIDGE-NATIVA sub-sprint A (2026-05-22): trocado o
+// require de `react-native-health-connect@3.5.3` (pendurado em
+// connect-client 1.1.0-alpha11 obsoleto) por modulo local proprio
+// `ouroboros-health-connect` que usa connect-client 1.2.0-alpha04.
+// O modulo local ja faz no-op silencioso em ambiente sem suporte
+// (requireOptionalNativeModule devolve null), entao o Reflect.get
+// defensivo da hardening anterior (Proxy do upstream que lancava ao
+// acessar getter) nao e mais necessario aqui. Mantemos o lazy require
+// para preservar a forma de mock em testes (jest.doMock por escopo).
 //
 // SdkAvailabilityStatus do modulo nativo retorna codigo numerico:
 //   1 = SDK_AVAILABLE
@@ -10,17 +20,13 @@
 // Mapeamos para union de strings legivel para a UI usar diretamente
 // (`'available' | 'needs_update' | 'unavailable'`).
 //
-// Lazy require: o modulo nativo nao carrega em Expo Go (web/jest).
-// Caller que tentar usar em ambiente sem suporte recebe 'unavailable'
-// sem crashar o bundle.
-//
 // Comentarios sem acento (convencao shell/CI).
 
 export type HealthSdkStatus = 'available' | 'needs_update' | 'unavailable';
 
 interface HealthConnectModule {
-  getSdkStatus: (providerPackageName?: string) => Promise<number>;
-  initialize: (providerPackageName?: string) => Promise<boolean>;
+  getSdkStatus: () => Promise<number>;
+  initialize: () => Promise<boolean>;
   openHealthConnectSettings: () => void;
 }
 
@@ -30,19 +36,14 @@ const STATUS_PROVIDER_UPDATE_REQUIRED = 3;
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod = require('react-native-health-connect');
-    // R-INT-3-HC-PROXY-REFLECT-HARDENING: Reflect.get forca evaluation
-    // do getter dentro do try/catch. react-native-health-connect@3.5.0
-    // retorna Proxy nao-bloqueante em ambientes nao-Android (Expo Go,
-    // Jest, web) que lanca ao acessar qualquer propriedade. `typeof`
-    // direto em getter que lanca comporta-se de forma inconsistente
-    // entre engines JS; Reflect.get garante captura.
-    const getSdkStatus = Reflect.get(mod, 'getSdkStatus');
-    const initialize = Reflect.get(mod, 'initialize');
-    const openHealthConnectSettings = Reflect.get(
-      mod,
-      'openHealthConnectSettings'
-    );
+    // Path relativo segue padrao do projeto (vide
+    // src/lib/widget/atualizarWidgetHomescreen.ts importando
+    // ../../../modules/widget-homescreen/src). Sem criar pacote
+    // npm publishavel desnecessario.
+    const mod = require('../../../modules/health-connect/src');
+    const getSdkStatus = mod?.getSdkStatus;
+    const initialize = mod?.initialize;
+    const openHealthConnectSettings = mod?.openHealthConnectSettings;
     if (
       typeof getSdkStatus !== 'function' ||
       typeof initialize !== 'function' ||
