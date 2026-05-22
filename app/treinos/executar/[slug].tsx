@@ -130,11 +130,22 @@ export default function ExecutarTreino() {
           Math.round((Date.now() - inicioMs) / 60_000)
         );
 
+        // R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG: vincula a sessao ao slug
+        // canonico da rotina executada. Garante que sessoes nascidas do
+        // executor sejam consultaveis por rotina (R-ROT-1-D consome).
+        // slugParam vem de useLocalSearchParams; defensivamente filtra
+        // string vazia para nao quebrar o regex do schema.
+        const slugCanonico =
+          typeof slugParam === 'string' && slugParam.length > 0
+            ? slugParam
+            : undefined;
+
         const meta: TreinoSessao = {
           tipo: 'treino_sessao',
           data: dataIso,
           autor: pessoaAtiva,
           rotina: rot.nome,
+          rotina_slug: slugCanonico,
           duracao_min: duracaoMin,
           exercicios: snap.exercicios ?? [],
         };
@@ -150,7 +161,7 @@ export default function ExecutarTreino() {
         setSalvando(false);
       }
     },
-    [vaultRoot, pessoaAtiva, toast, inicioMs]
+    [vaultRoot, pessoaAtiva, toast, inicioMs, slugParam]
   );
 
   // Concluir serie atual: avanca para descanso ou proximo exercicio.

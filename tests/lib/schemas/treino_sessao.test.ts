@@ -83,6 +83,33 @@ describe('TreinoSessaoSchema', () => {
     expect(out.exercicios[0].carga_kg).toBeUndefined();
   });
 
+  // R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG: vinculo canonico rotinaexecucao.
+  it('aceita rotina_slug em formato kebab-case canonico', () => {
+    const sessao = { ...baseSessao, rotina_slug: 'rotina-a' };
+    const out = TreinoSessaoSchema.parse(sessao);
+    expect(out.rotina_slug).toBe('rotina-a');
+  });
+
+  it('backward-compat: aceita sessao SEM rotina_slug (legado)', () => {
+    const out = TreinoSessaoSchema.parse(baseSessao);
+    expect(out.rotina_slug).toBeUndefined();
+  });
+
+  it('rejeita rotina_slug com letras maiusculas', () => {
+    expect(() =>
+      TreinoSessaoSchema.parse({ ...baseSessao, rotina_slug: 'Rotina-A' })
+    ).toThrow(/kebab-case/);
+  });
+
+  it('rejeita rotina_slug com acentos ou underscore', () => {
+    expect(() =>
+      TreinoSessaoSchema.parse({ ...baseSessao, rotina_slug: 'rotina_á' })
+    ).toThrow(/kebab-case/);
+    expect(() =>
+      TreinoSessaoSchema.parse({ ...baseSessao, rotina_slug: 'rotina_a' })
+    ).toThrow(/kebab-case/);
+  });
+
   it('aceita observacao por exercicio', () => {
     const sessao = {
       ...baseSessao,

@@ -108,6 +108,70 @@ describe('listarTreinos', () => {
     const lista = await listarTreinos(VAULT_ROOT);
     expect(lista).toEqual([]);
   });
+
+  // R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG: filtro canonico por rotina.
+  it('filtra por rotina_slug e descarta legado sem o campo', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/treinos/2026-04-23-a.md',
+      'content://test/vault/treinos/2026-04-22-b.md',
+      'content://test/vault/treinos/2026-04-21-c.md',
+    ]);
+    let count = 0;
+    mockReadVaultFile.mockImplementation(async () => {
+      count++;
+      if (count === 1)
+        return {
+          meta: { ...sessaoBase, rotina_slug: 'rotina-a' as const },
+          body: '',
+        };
+      if (count === 2)
+        return {
+          meta: { ...sessaoBase, rotina_slug: 'rotina-b' as const },
+          body: '',
+        };
+      // Terceira: sessao legada sem o campo (backward-compat). Filtro
+      // por slug deve excluir.
+      return { meta: sessaoBase, body: '' };
+    });
+    const lista = await listarTreinos(VAULT_ROOT, { rotina_slug: 'rotina-a' });
+    expect(lista).toHaveLength(1);
+    expect(lista[0].rotina_slug).toBe('rotina-a');
+  });
+
+  it('combina filtro autor e rotina_slug', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/treinos/2026-04-23-a.md',
+      'content://test/vault/treinos/2026-04-22-b.md',
+    ]);
+    let count = 0;
+    mockReadVaultFile.mockImplementation(async () => {
+      count++;
+      if (count === 1)
+        return {
+          meta: {
+            ...sessaoBase,
+            autor: 'pessoa_a' as const,
+            rotina_slug: 'rotina-a' as const,
+          },
+          body: '',
+        };
+      return {
+        meta: {
+          ...sessaoBase,
+          autor: 'pessoa_b' as const,
+          rotina_slug: 'rotina-a' as const,
+        },
+        body: '',
+      };
+    });
+    const lista = await listarTreinos(VAULT_ROOT, {
+      autor: 'pessoa_a',
+      rotina_slug: 'rotina-a',
+    });
+    expect(lista).toHaveLength(1);
+    expect(lista[0].autor).toBe('pessoa_a');
+    expect(lista[0].rotina_slug).toBe('rotina-a');
+  });
 });
 
 describe('escreverTreino', () => {

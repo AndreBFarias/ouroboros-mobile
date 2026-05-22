@@ -26,6 +26,10 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 export interface ListarTreinosFiltros {
   // Filtra por autor da sessao. null = qualquer autor.
   autor?: PessoaAutor | null;
+  // R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG: filtra por slug canonico de
+  // rotina. Sessoes legadas sem o campo sao ignoradas (backward-compat).
+  // Consumido por R-ROT-1-D para isolar historico de uma rotina.
+  rotina_slug?: string | null;
 }
 
 // Concatena root SAF e path relativo, normalizando barras.
@@ -67,6 +71,11 @@ export async function listarTreinos(
   if (filtros.autor) {
     const a = filtros.autor;
     filtradas = filtradas.filter((s) => s.autor === a);
+  }
+  if (filtros.rotina_slug) {
+    const alvo = filtros.rotina_slug;
+    // Sessao legada sem o campo => descartada (nao casa filtro).
+    filtradas = filtradas.filter((s) => s.rotina_slug === alvo);
   }
 
   // Ordenacao desc por data ISO (lexicografica já respeita ordem).

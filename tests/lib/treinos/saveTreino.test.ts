@@ -89,4 +89,20 @@ describe('saveTreino', () => {
     const out = await saveTreino({ meta: sessao, vaultRoot: VAULT_ROOT });
     expect(out.slug).toBe('treino');
   });
+
+  // R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG: o writer canonico precisa
+  // propagar rotina_slug do meta para escreverTreino sem perda.
+  it('propaga rotina_slug presente no meta para escreverTreino', async () => {
+    const sessao: TreinoSessao = {
+      ...sessaoBase,
+      rotina_slug: 'rotina-a',
+    };
+    await saveTreino({ meta: sessao, vaultRoot: VAULT_ROOT });
+    expect(mockEscreverTreino).toHaveBeenCalledWith(
+      VAULT_ROOT,
+      'rotina-a',
+      expect.objectContaining({ rotina_slug: 'rotina-a' }),
+      ''
+    );
+  });
 });
