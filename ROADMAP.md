@@ -98,13 +98,13 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-ADR-LIMITE-BUNDLE-V2 | ADR-0027 com novo limite 10.5MB (vs 8.85MB anterior) justificativa Onda Q/R/3J/3K + pos-script reshim | docs+ADR | P1 | worktree-only (consolidado) | `[ok]` (3M.3) ADR criada 279L + INDEX atualizado + pos-script com ganho real reshim; ADR-0026 tambem inserida no INDEX (achado colateral) |
 | R-BUNDLE-DIET-CALENDARS-REPLACE | Substituir react-native-calendars por custom (elimina lodash+moment+recyclerlistview ~1MB transitivas) | refactor | P3 | 3-5d | (descopado v1.1; achado #3 R-BUNDLE-SIZE-AUDIT) |
 | R-ROT-1-A-INTELIGENCIA-SNOOZE-ALARMES | Aprender padroes de snooze + sugerir mover alarme + listener canonico Soneca/Desligar | feature | P2 | 2-3h | `[ok]` (3N.1) schema+helper+banner+listener; 28 testes novos; smoke 280/280 verde 3 runs |
-| R-ROT-1-B-INTELIGENCIA-TAREFAS | Aprender horario de marcacao + sugerir alarme | feature | P2 | 2-3h | `R-ROT-1-B-INTELIGENCIA-TAREFAS-spec.md` (replan R-ROT-1 opcao B) |
+| R-ROT-1-B-INTELIGENCIA-TAREFAS | Aprender horario de marcacao + sugerir alarme | feature | P2 | `0b3f5ea` | `[ok]` (3N.2) helper inteligenciaTemporal + banner SugestaoAlarmeTarefa + writer silenciarSugestaoTarefa + schema silenciar_sugestao_ate; 88 testes verde nas 5 suites + 6 fixtures atualizadas; smoke 282/2654 verde |
 | R-ROT-1-C-PADROES-DIARIO-EMOCIONAL | Detectar padrao temporal em gatilhos + sugerir pratica preventiva (UX sensivel) | feature | P2 | 3-4h | `R-ROT-1-C-PADROES-DIARIO-EMOCIONAL-spec.md` (replan R-ROT-1 opcao C, REQUER review copy do dono) |
 | R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG | Campo `rotina_slug` opcional em TreinoSessaoSchema (parte 1 de D) | schema migration | P2 | 2-3h | `R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG-spec.md` (pre-req R-ROT-1-D) |
 | R-ROT-1-D-INTELIGENCIA-TREINO | Inteligencia temporal sobre treinos (parte 2 de D, consome rotina_slug) | feature | P2 | 2-3h | `R-ROT-1-D-INTELIGENCIA-TREINO-spec.md` (bloqueado por R-SCHEMA-TREINO-SESSAO-ROTINA-SLUG) |
 | R-INFRA-METRO-CACHE-GC | GC de cache Metro órfão (cross git worktree list × refs textuais) | infra | P3 | `ad9fcbc` | `[ok]` (3J.4) gauntlet.sh --gc + scripts/gc-metro-cache.sh + docs/GAUNTLET.md |
 | R-DX-SECURESTORE-WEB-DEV-FALLBACK | Fallback web pro getDeviceId em ambiente dev (3 sprints reportaram overlay error) | infra+DX | P2 | `ffd86fc` | `[ok]` (DX.3) |
-| R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao pendente do dono) | feature | P3 | 1-2h | `R-RECAP-PERIODO-DIA-spec.md` |
+| R-RECAP-PERIODO-DIA | Adicionar periodo "dia" ao Recap (achado R-HOME-1, decisao dono confirmada 2026-05-21) | feature | P3 | `be02695` | `[ok]` (3N.3) 5 modos (dia/semana/mes/ano/personalizado), useLocalSearchParams query param, nav Tela Hoje -> /recap?periodo=dia; tests/lib/hooks/useRecap + RecapScreen + index atualizados; smoke 282/2654 verde |
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API `__gauntlet.setEventosAgendaMock` para E2E mescla agenda+alarmes (achado R-HOME-2) | infra+DX | P3 | `8ce899d` | `[ok]` (3F.3) |
 | R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lançante de react-native-health-connect 3.5.0 via Reflect.get (achado R-INT-3) | hardening+DX | P2 | `5d41ca6` | `[ok]` (DX.1) |
@@ -129,7 +129,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-SEC-1 | Google OAuth verification (testers) | docs+cloud-config | P1 | 2–3h | `R-SEC-1-GOOGLE-OAUTH-VERIFICATION-spec.md` |
 | R-SEC-2 | Play Protect signature | infra | P1 | 2–3h | `R-SEC-2-PLAY-PROTECT-SIGNATURE-spec.md` |
 | R-SEC-3 | Privacy policy + terms | docs | P1 | `8b8b4f0` | `[ok]` (3J.3) privacy+terms+css em public/, RELEASE.md pre-release checklist; URLs aguardam dono habilitar Pages |
-| R-SEC-4 | ProGuard minify | infra | P2 | 2–4h | `R-SEC-4-PROGUARD-MINIFY-spec.md` |
+| R-SEC-4 | ProGuard minify | infra | P2 | `fa18f17` | `[ok-config]` (3N.4) enableMinifyInReleaseBuilds + enableShrinkResourcesInReleaseBuilds + extraProguardRules defensivas (Hermes/OkHttp/Reanimated/Health Connect/SecureStore); validacao live Nivel C apos proximo build APK release |
 | R-SEC-5 | Secret leak audit | infra+audit | P1 | `4155077` | `[ok]` (3J.1) gitleaks 0 findings em 420 commits, hook pre-commit ativo, docs/SECURITY.md |
 | R-PLAYCONSOLE-SETUP | TODO Play Console (dono executa, sibling R-SEC-2) | docs+cloud | P1 | 40min dono + propagação | `R-PLAYCONSOLE-SETUP-spec.md` |
 
