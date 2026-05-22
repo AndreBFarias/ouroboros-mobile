@@ -1,7 +1,7 @@
 // Bridge Health Connect nativa propria do Ouroboros.
 // R-INT-3-HC-BRIDGE-NATIVA sub-sprint A (skeleton + availability + permissions).
 //
-// Dependencia: androidx.health.connect:connect-client:1.2.0-alpha04 (latest
+// Dependencia: androidx.health.connect:connect-client:1.1.0 (latest
 // no Google Maven em 2026-05-22). A versao 5.5.0 NAO existe no Google Maven
 // autoritativo (apenas mirror Maven Central). A versao 1.1.0-alpha11 (usada
 // pela lib react-native-health-connect@3.5.3) e rejeitada como obsoleta pelo
@@ -55,7 +55,7 @@ dependencies {
   // R-INT-3 sub-sprint A: connect-client latest do Google Maven.
   // Auto-fallback documentado no spec: se compile falhar, tentar
   // 1.1.0-rc03 ou 1.1.0 estavel (precisa adaptar para factory methods).
-  implementation "androidx.health.connect:connect-client:1.2.0-alpha04"
+  implementation "androidx.health.connect:connect-client:1.1.0"
 }
 
 def safeExtGet(prop, fallback) {
