@@ -55,7 +55,7 @@ dependencies {
   // R-INT-3 sub-sprint A: connect-client latest do Google Maven.
   // Auto-fallback documentado no spec: se compile falhar, tentar
   // 1.1.0-rc03 ou 1.1.0 estavel (precisa adaptar para factory methods).
-  implementation "androidx.health.connect:connect-client:1.1.0"
+  implementation "androidx.health.connect:connect-client:1.2.0-alpha04"
 }
 
 def safeExtGet(prop, fallback) {
