@@ -108,6 +108,41 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INFRA-GAUNTLET-WORKTREE-SYMLINK | Gauntlet web em worktree nao carrega rotas locais (require.context segue symlink node_modules) | infra+DX | P2 | `e9c69f3` | `[ok]` (DX.4) |
 | R-INFRA-GAUNTLET-AGENDA-MOCK | API `__gauntlet.setEventosAgendaMock` para E2E mescla agenda+alarmes (achado R-HOME-2) | infra+DX | P3 | `8ce899d` | `[ok]` (3F.3) |
 | R-INT-3-HC-PROXY-REFLECT-HARDENING | Detectar Proxy lançante de react-native-health-connect 3.5.0 via Reflect.get (achado R-INT-3) | hardening+DX | P2 | `5d41ca6` | `[ok]` (DX.1) |
+
+### Onda 3P — Continuação HC + integrações automáticas (2026-05-22, materializadas pos R-INT-3-HC-EMPIRICAL)
+
+13 specs novas. Pre-requisito comum: bridge nativa HC funcional (entregue em alpha-31, commit `601ab30`).
+
+#### 3P.A — Sub-sprints bridge HC (3)
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-INT-3-HC-BRIDGE-NATIVA-B | readRecords nos 7 tipos canonicos | feature | P1 | 1d | `R-INT-3-HC-BRIDGE-NATIVA-B-READ-RECORDS-spec.md` |
+| R-INT-3-HC-BRIDGE-NATIVA-C | insertRecords nos 4 tipos com factory methods | feature | P1 | 1d | `R-INT-3-HC-BRIDGE-NATIVA-C-WRITE-RECORDS-spec.md` |
+| R-INT-3-HC-BRIDGE-NATIVA-D | Cleanup migration sync.ts + remover lib upstream | refactor | P1 | 0.5d | `R-INT-3-HC-BRIDGE-NATIVA-D-CLEANUP-MIGRATION-spec.md` |
+
+#### 3P.B — Autopull HC -> Vault (6)
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-INT-3-HC-AUTOPULL-SCHEDULER | Orquestrador unico foreground + tracking ultima sync | infra | P1 | 0.5-1d | `R-INT-3-HC-AUTOPULL-SCHEDULER-spec.md` |
+| R-INT-3-HC-AUTOPULL-PASSOS | Puxar Steps + agregar por dia + writer passos.md | feature | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-PASSOS-spec.md` |
+| R-INT-3-HC-AUTOPULL-EXERCICIO | Puxar ExerciseSession + escrever treino_sessao modo='sessao_hc' | feature | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-EXERCICIO-spec.md` |
+| R-INT-3-HC-AUTOPULL-MEDIDAS | Puxar Weight + BodyFat pareados + escrever Medida | feature | P2 | 0.5d | `R-INT-3-HC-AUTOPULL-MEDIDAS-spec.md` |
+| R-INT-3-HC-AUTOPULL-MENSTRUACAO | Puxar MenstruationFlow + escrever RegistroCiclo | feature | P2 | 0.5d | `R-INT-3-HC-AUTOPULL-MENSTRUACAO-spec.md` |
+| R-INT-3-HC-AUTOPULL-SLEEP | Puxar SleepSession + schema novo sono.md | feature | P3 | 0.5d | `R-INT-3-HC-AUTOPULL-SLEEP-spec.md` |
+
+#### 3P.C — Integracoes complementares (4)
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-INT-2-CALENDAR-SYNC-EVENTOS | Puxar eventos Google Calendar pra secao Proximos | feature | P1 | 1d | `R-INT-2-CALENDAR-SYNC-EVENTOS-spec.md` |
+| R-INT-4-SPOTIFY-RECENTLY-PLAYED | Puxar timeline Spotify pra Recap > Musicas | feature | P2 | 0.5d | `R-INT-4-SPOTIFY-RECENTLY-PLAYED-spec.md` |
+| R-INT-4-YOUTUBE-WATCH-HISTORY | Puxar Liked Videos YouTube pra Recap > Conteudo | feature | P3 | 0.5d | `R-INT-4-YOUTUBE-WATCH-HISTORY-spec.md` |
+| R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO | Upload ZIP backup local pro Drive semanal | feature | P2 | 1-1.5d | `R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO-spec.md` |
+
+**Sequenciamento sugerido:** 3P.A (B -> C -> D, sequencial — modulo nativo compartilhado) -> 3P.B (SCHEDULER primeiro, depois 5 puxadores em paralelo via worktree) -> 3P.C (paralelo).
+
 | R-DX-1 | Sprint template v2 | infra | — | `45d2b33` | `[ok]` (3I.3) |
 | R-DX-2 | Gauntlet record video | infra | — | `e770004` | `[ok]` (3I.1) |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | `ea815bf` | `[ok]` (3I.2) |
