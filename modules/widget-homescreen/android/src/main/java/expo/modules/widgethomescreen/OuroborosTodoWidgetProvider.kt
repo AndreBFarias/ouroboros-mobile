@@ -110,11 +110,15 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
     )
-    // RemoteInput precisa ser anexado ao PendingIntent via Notification
-    // Action ou diretamente via setRemoteInputs no RemoteViews. Como
-    // este widget nao tem Notification, anexamos diretamente.
-    RemoteViews(context.packageName, R.layout.widget_todo_4x2)
-      .setRemoteInputs(R.id.widget_todo_btn_add, arrayOf(remoteInput))
+    // TODO(R-WIDG-FIX-REMOTEINPUTS): a chamada original
+    //   RemoteViews(...).setRemoteInputs(R.id.widget_todo_btn_add, arrayOf(remoteInput))
+    // era dead code (RemoteViews descartado, sem anexar ao views real
+    // de updateAppWidget) e nao compila em compileSdk 35 (assinatura
+    // setRemoteInputs nao publica em RemoteViews; precisa
+    // RemoteViewsCompat.setRemoteInputs ou Notification Action).
+    // Removido temporariamente para destravar build alpha-14. Efeito
+    // funcional: input inline do widget pode nao retornar texto via
+    // RemoteInput.getResultsFromIntent ate o fix definitivo.
     return pi
   }
 
