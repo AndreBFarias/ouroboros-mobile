@@ -6,6 +6,8 @@
 import {
   RotinaSchema,
   ExercicioRotinaSchema,
+  ROTINA_CATEGORIAS,
+  ROTINA_CATEGORIA_LABELS,
   type ExercicioRotina,
 } from '@/lib/schemas/rotina';
 
@@ -205,5 +207,62 @@ describe('RotinaSchema', () => {
     expect(() =>
       RotinaSchema.parse({ ...baseRotina, tipo: 'treino_sessao' })
     ).toThrow();
+  });
+});
+
+describe('RotinaSchema R-ROT-2 categoria', () => {
+  it('aplica default outro quando campo ausente (retro-compat)', () => {
+    const out = RotinaSchema.parse(baseRotina);
+    expect(out.categoria).toBe('outro');
+  });
+
+  it('aceita medicacao', () => {
+    const out = RotinaSchema.parse({ ...baseRotina, categoria: 'medicacao' });
+    expect(out.categoria).toBe('medicacao');
+  });
+
+  it('aceita saude_fisica', () => {
+    const out = RotinaSchema.parse({
+      ...baseRotina,
+      categoria: 'saude_fisica',
+    });
+    expect(out.categoria).toBe('saude_fisica');
+  });
+
+  it('aceita habito', () => {
+    const out = RotinaSchema.parse({ ...baseRotina, categoria: 'habito' });
+    expect(out.categoria).toBe('habito');
+  });
+
+  it('aceita outro explicito', () => {
+    const out = RotinaSchema.parse({ ...baseRotina, categoria: 'outro' });
+    expect(out.categoria).toBe('outro');
+  });
+
+  it('rejeita categoria fora do enum', () => {
+    expect(() =>
+      RotinaSchema.parse({ ...baseRotina, categoria: 'trabalho' })
+    ).toThrow();
+  });
+
+  it('ROTINA_CATEGORIAS tem 4 valores fixos na ordem canonica', () => {
+    expect(ROTINA_CATEGORIAS).toEqual([
+      'medicacao',
+      'saude_fisica',
+      'habito',
+      'outro',
+    ]);
+  });
+
+  it('ROTINA_CATEGORIA_LABELS cobre todas as categorias com acentuacao PT-BR', () => {
+    expect(ROTINA_CATEGORIA_LABELS.medicacao).toBe('Medicação');
+    expect(ROTINA_CATEGORIA_LABELS.saude_fisica).toBe('Saúde física');
+    expect(ROTINA_CATEGORIA_LABELS.habito).toBe('Hábito');
+    expect(ROTINA_CATEGORIA_LABELS.outro).toBe('Outro');
+    // garante que toda categoria do enum tem label correspondente
+    for (const cat of ROTINA_CATEGORIAS) {
+      expect(ROTINA_CATEGORIA_LABELS[cat]).toBeDefined();
+      expect(ROTINA_CATEGORIA_LABELS[cat].length).toBeGreaterThan(0);
+    }
   });
 });

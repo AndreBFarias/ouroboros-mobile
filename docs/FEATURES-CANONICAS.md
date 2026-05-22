@@ -350,21 +350,47 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   descrição.
 - Detalhe: histórico de uso + estatísticas.
 
-## 4.5 Rotinas de Treino — Q11.a+b+c (Onda Q 2026-05-12, entregue)
+## 4.5 Rotinas — Q11.a+b+c (Onda Q) + R-ROT-2 (Onda R, escopo expandido)
+
+**R-ROT-2 (2026-05-21):** Rotinas deixaram de ser apenas treino. O
+mesmo schema/CRUD serve para **qualquer recorrência**: medicação,
+hábito, leitura, saúde física. O campo `categoria` no schema
+discrimina o tipo; a UI de criação mostra **chips de categoria**
+visíveis no topo e **templates pré-preenchidos** ("Tomar remédio",
+"Tomar água", "Caminhar 30min") para baixar a barreira de quem não
+quer cadastrar um treino completo. Empty state ampliado lista
+exemplos não-exercício.
 
 - Template reutilizável com nome + descrição opcional + lista
   ordenada de exercícios (séries × reps × carga_kg + descanso_seg
-  + observação). Cap 20 exercícios.
+  + observação). Cap 20 exercícios. Para rotinas não-treino
+  (medicação, hábito) os "exercícios" funcionam como passos/doses
+  genéricos (ex: "1 comprimido", "Copo de água").
 - `ExercicioRotinaSchema.reps` é string livre (`"12"`, `"8-10"`,
-  `"amrap"`, `"ate falha"`); `sessaoFromRotina` converte para number
-  via piso de faixa + fallback 10.
+  `"amrap"`, `"ate falha"`, `"30min"`); `sessaoFromRotina` converte
+  para number via piso de faixa + fallback 10.
+- **Categoria canônica** (R-ROT-2, enum fechado em
+  `src/lib/schemas/rotina.ts`):
+  - `medicacao` → "Medicação"
+  - `saude_fisica` → "Saúde física"
+  - `habito` → "Hábito"
+  - `outro` → "Outro" (default; aplicado a rotinas legacy sem o
+    campo via `z.enum(...).default('outro')`, retro-compat
+    silenciosa)
+- **Templates pré-preenchidos** (R-ROT-2, em `app/rotinas/novo.tsx`):
+  - "Tomar remédio" → categoria `medicacao` + dose genérica
+  - "Tomar água" → categoria `habito` + copo
+  - "Caminhar 30min" → categoria `saude_fisica` + 30min livre
+  - Tap em template preenche nome, descrição, categoria e um
+    passo inicial; usuário pode editar antes de salvar.
 - CRUD em `/rotinas` (`index`, `novo`, `[slug]`) com filtro por
   autor (`pessoa_a` vê só rotinas próprias). Slug único garantido
   via `slugifyTitulo` + `sufixoRandom` (50 tentativas).
 - Selecionável no `SheetNovoTreino` via `<SeletorRotina>` em 2º
   BottomSheet (Q15: sheet de baixo fecha antes de abrir o de cima,
   anti-empilhamento). Modal "Substituir treino atual?" quando há
-  edição em curso.
+  edição em curso. (Continua mostrando todas as rotinas — o
+  seletor não filtra por categoria; cabe à pessoa escolher.)
 - **Snapshot imutável**: editar rotina NÃO afeta sessões já
   registradas. `sessaoFromRotina` retorna cópia mapeada via
   `.map`.

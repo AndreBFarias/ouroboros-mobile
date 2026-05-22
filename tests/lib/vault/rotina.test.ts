@@ -56,6 +56,9 @@ function fixture(over: Partial<RotinaMeta> = {}): RotinaMeta {
     ],
     data_criacao: '2026-05-12',
     autor: 'pessoa_a',
+    // R-ROT-2: categoria adicionada ao schema. Fixture usa 'outro'
+    // (default) para manter semantica de teste legacy.
+    categoria: 'outro',
     ...over,
   };
 }

@@ -78,8 +78,10 @@ export default function RotinasIndex() {
         showsVerticalScrollIndicator={false}
       >
         {semDados ? (
+          // R-ROT-2: amplia o exemplo alem de exercicio. Rotina agora
+          // serve para medicacao, habito e leitura tambem.
           <EmptyState
-            frase="Nenhuma rotina ainda. Crie uma para reutilizar como template de treino."
+            frase="Crie sua primeira rotina — Tomar remédio, Tomar água, Caminhar 30min, Ler 10min, Meditar..."
             Icon={Dumbbell}
           />
         ) : (

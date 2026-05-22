@@ -19,6 +19,12 @@
 // Snapshot imutavel: sessoes ja salvas guardam copia dos exercicios
 // (sessaoFromRotina retorna copia), entao editar rotina nao retroage.
 //
+// R-ROT-2: categoria amplia a semantica de Rotina alem de treino. O
+// app trata Rotina como template recorrente generico (medicacao,
+// habito, leitura, saude_fisica). Default 'outro' garante retro-compat
+// silenciosa com rotinas existentes sem o campo. Enum fechado evita
+// drift textual entre dispositivos sincronizados via Syncthing.
+//
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 import { PessoaAutorSchema } from './pessoa';
@@ -50,6 +56,32 @@ export const ExercicioRotinaSchema = z.object({
 });
 export type ExercicioRotina = z.infer<typeof ExercicioRotinaSchema>;
 
+// R-ROT-2: categorias canonicas de Rotina. Enum fechado evita drift
+// textual entre dispositivos sincronizados (Syncthing) e simplifica
+// filtros futuros. Default 'outro' para retro-compat com rotinas
+// gravadas antes desta sprint.
+//
+// Semantica:
+//  - medicacao    : remedio recorrente (diario, com horario fixo).
+//  - saude_fisica : treino, caminhada, alongamento (uso historico Q11).
+//  - habito       : leitura, beber agua, meditar, escrever.
+//  - outro        : default catch-all e legacy migration.
+export const ROTINA_CATEGORIAS = [
+  'medicacao',
+  'saude_fisica',
+  'habito',
+  'outro',
+] as const;
+
+export type RotinaCategoria = (typeof ROTINA_CATEGORIAS)[number];
+
+export const ROTINA_CATEGORIA_LABELS: Record<RotinaCategoria, string> = {
+  medicacao: 'Medicação',
+  saude_fisica: 'Saúde física',
+  habito: 'Hábito',
+  outro: 'Outro',
+};
+
 export const RotinaSchema = z.object({
   tipo: z.literal('rotina_treino'),
   slug: z.string().regex(/^[a-z0-9-]+$/),
@@ -60,5 +92,10 @@ export const RotinaSchema = z.object({
   exercicios: z.array(ExercicioRotinaSchema).min(1).max(20),
   data_criacao: DataYmd,
   autor: PessoaAutorSchema,
+  // R-ROT-2: categoria amplia semantica de Rotina alem de treino.
+  // Default 'outro' para retro-compat silenciosa com rotinas que nao
+  // tinham o campo (parse de .md antigo vira meta com categoria 'outro'
+  // automaticamente).
+  categoria: z.enum(ROTINA_CATEGORIAS).default('outro'),
 });
 export type RotinaMeta = z.infer<typeof RotinaSchema>;
