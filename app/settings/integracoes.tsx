@@ -72,8 +72,15 @@ export default function SettingsIntegracoesScreen() {
     void carregar();
   }, [carregar]);
 
+  // R-INT-3-HC-EMPIRICAL (2026-05-22): gate antigo `status === 'available'`
+  // era falso bloqueio. Validacao live com alpha-30 confirmou que HC moderno
+  // (com.google.android.apps.healthdata 2026.04.16.00.release) aceita
+  // requestPermission e concede acesso mesmo retornando getSdkStatus=3
+  // (PROVIDER_UPDATE_REQUIRED). Portanto: nao gate por status, apenas por
+  // `unavailable` (caso HC nao esteja instalado). Status 'needs_update' e
+  // tratado igual 'available'.
   const handleConectar = useCallback(async () => {
-    if (status !== 'available' || salvando) return;
+    if (status === 'unavailable' || salvando) return;
     setSalvando(true);
     try {
       const concedidas = await solicitarPermissoesCanonicas();
@@ -95,32 +102,6 @@ export default function SettingsIntegracoesScreen() {
     }
   }, [status, salvando, toast]);
 
-  // R-INT-3-HC-EMPIRICAL: handler debug que IGNORA gate de status.
-  // Dispara solicitarPermissoesCanonicas mesmo com status=needs_update,
-  // para verificar empiricamente se HC moderno aceita request mesmo
-  // reportando SDK como obsoleto via getSdkStatus.
-  const handleForcarConectar = useCallback(async () => {
-    if (salvando) return;
-    setSalvando(true);
-    try {
-      toast.show('Forçando request permissão...', 'info');
-      const concedidas = await solicitarPermissoesCanonicas();
-      setPermissoes(concedidas);
-      if (concedidas.length > 0) {
-        useSettings.getState().setFeatureToggle('healthConnectSync', true);
-        void haptics.success();
-        toast.show(`Forçar OK: ${concedidas.length} tipos.`, 'success');
-      } else {
-        toast.show('Request retornou vazio (provavel falha SDK).', 'warn');
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.show(`Forçar falhou: ${msg}`, 'error');
-    } finally {
-      setSalvando(false);
-    }
-  }, [salvando, toast]);
-
   const handleRevogar = useCallback(async () => {
     setSalvando(true);
     try {
@@ -140,9 +121,12 @@ export default function SettingsIntegracoesScreen() {
     abrirSettingsHealthConnect();
   }, []);
 
+  // R-INT-3-HC-EMPIRICAL: 'needs_update' nao bloqueia funcionalidade
+  // (HC moderno aceita request mesmo reportando SDK obsoleto). Label
+  // reflete realidade do device.
   const statusLabel: Record<HealthSdkStatus, string> = {
     available: 'Disponível',
-    needs_update: 'Atualização necessária',
+    needs_update: 'Disponível',
     unavailable: 'Indisponível neste dispositivo',
   };
 
@@ -198,7 +182,7 @@ export default function SettingsIntegracoesScreen() {
           >
             {carregando ? 'Verificando…' : `Status: ${statusLabel[status]}.`}
           </Text>
-          {status === 'available' && permissoes.length > 0 ? (
+          {permissoes.length > 0 ? (
             <View style={{ marginTop: spacing.sm, gap: spacing.xs }}>
               <Text
                 style={{
@@ -230,7 +214,7 @@ export default function SettingsIntegracoesScreen() {
             </View>
           ) : null}
           <View style={{ marginTop: spacing.base, gap: spacing.sm }}>
-            {status === 'available' && permissoes.length === 0 ? (
+            {status !== 'unavailable' && permissoes.length === 0 ? (
               <Button
                 label="Conectar"
                 onPress={handleConectar}
@@ -238,7 +222,7 @@ export default function SettingsIntegracoesScreen() {
                 disabled={salvando}
               />
             ) : null}
-            {status === 'available' && permissoes.length > 0 ? (
+            {permissoes.length > 0 ? (
               <>
                 <Button
                   label="Abrir Conexão Saúde"
@@ -249,21 +233,6 @@ export default function SettingsIntegracoesScreen() {
                   label="Desconectar"
                   onPress={handleRevogar}
                   variant="destructive"
-                  disabled={salvando}
-                />
-              </>
-            ) : null}
-            {status === 'needs_update' ? (
-              <>
-                <Button
-                  label="Atualizar Conexão Saúde"
-                  onPress={handleAbrirSettings}
-                  variant="primary"
-                />
-                <Button
-                  label="Forçar Conectar (debug)"
-                  onPress={handleForcarConectar}
-                  variant="ghost"
                   disabled={salvando}
                 />
               </>

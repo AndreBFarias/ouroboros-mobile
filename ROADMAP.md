@@ -57,7 +57,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-HOME-3 | Hoje to-do inline check | feature | P1 | `dd833a8` | `[ok]` (Onda 2C.4) |
 | R-INT-1 | Hub Integrações Utilitários (depende VAULT-B) | feature | P1 | `946855d` | `[ok]` (Onda 2C.2) |
 | R-INT-2 | Nome do app em permissões | fix | P1 | `b4b33d9` | `[ok]` (Onda 2C.1) |
-| R-INT-3 | Health Connect não funciona | bug | P1 | `726dec4` | `[ok-jest]` Nível C follow-up |
+| R-INT-3 | Health Connect não funciona | bug | P1 | `726dec4` + bridge nativa 2026-05-22 | `[ok-live]` Ouroboros aparece na lista do HC Xiaomi HyperOS + 11/11 permissoes granted=true; achado canonico via decompile de Tuya/Claude documentado em `R-INT-3-HC-EMPIRICAL-FINDINGS-spec.md` (activity-alias ViewPermissionUsage + activity dedicada + getSdkStatus=3 falso positivo) |
 | R-FAB-2 | FAB Câmera repensar (Reflexão com foto) | refactor | P2 | `pending` | `[ok]` (Onda 2A.4) |
 
 ### Fase 3 — Features secundárias (paralelo a Fase 4) — ~40–55h
