@@ -95,6 +95,32 @@ export default function SettingsIntegracoesScreen() {
     }
   }, [status, salvando, toast]);
 
+  // R-INT-3-HC-EMPIRICAL: handler debug que IGNORA gate de status.
+  // Dispara solicitarPermissoesCanonicas mesmo com status=needs_update,
+  // para verificar empiricamente se HC moderno aceita request mesmo
+  // reportando SDK como obsoleto via getSdkStatus.
+  const handleForcarConectar = useCallback(async () => {
+    if (salvando) return;
+    setSalvando(true);
+    try {
+      toast.show('Forçando request permissão...', 'info');
+      const concedidas = await solicitarPermissoesCanonicas();
+      setPermissoes(concedidas);
+      if (concedidas.length > 0) {
+        useSettings.getState().setFeatureToggle('healthConnectSync', true);
+        void haptics.success();
+        toast.show(`Forçar OK: ${concedidas.length} tipos.`, 'success');
+      } else {
+        toast.show('Request retornou vazio (provavel falha SDK).', 'warn');
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Forçar falhou: ${msg}`, 'error');
+    } finally {
+      setSalvando(false);
+    }
+  }, [salvando, toast]);
+
   const handleRevogar = useCallback(async () => {
     setSalvando(true);
     try {
@@ -236,7 +262,7 @@ export default function SettingsIntegracoesScreen() {
                 />
                 <Button
                   label="Forçar Conectar (debug)"
-                  onPress={handleConectar}
+                  onPress={handleForcarConectar}
                   variant="ghost"
                   disabled={salvando}
                 />
