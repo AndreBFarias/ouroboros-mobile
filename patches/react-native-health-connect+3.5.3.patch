@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-health-connect/android/build.gradle b/node_modules/react-native-health-connect/android/build.gradle
-index 5b5b4dc..f63c59e 100644
+index 5b5b4dc..e6eabb8 100644
 --- a/node_modules/react-native-health-connect/android/build.gradle
 +++ b/node_modules/react-native-health-connect/android/build.gradle
 @@ -92,7 +92,7 @@ dependencies {
@@ -7,7 +7,7 @@ index 5b5b4dc..f63c59e 100644
    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 -  implementation "androidx.health.connect:connect-client:1.1.0-alpha11"
-+  implementation "androidx.health.connect:connect-client:5.5.0"
++  implementation "androidx.health.connect:connect-client:1.1.0"
  }
 
  if (isNewArchitectureEnabled()) {
