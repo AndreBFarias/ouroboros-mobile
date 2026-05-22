@@ -117,7 +117,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-OPS-1 | GitHub Actions release flow | infra | — | `c8673b6` | `[ok]` (3G.3) |
 | R-OPS-2 | Dependabot config | infra | — | `4dcd4b2` | `[ok]` (3H.1) |
 | R-OPS-3 | Cache CI | infra | — | `ecdd197` | `[ok]` (3H.2) |
-| R-OPS-4 | Branch protection | infra | — | 0.5h | `R-OPS-4-BRANCH-PROTECTION-spec.md` |
+| R-OPS-4 | Branch protection | infra | — | doc+script prontos | `[ok-doc]` doc canonica em docs/RELEASE.md:382-459 + scripts/setup-branch-protection.sh idempotente (escrita em 2026-05-17). Aplicacao via API depende dono rodar `./scripts/setup-branch-protection.sh` (diff atual: contexts falta "Build APK Android", required_linear_history=false, allow_force_pushes=true) |
 | R-OPS-5 | Release notes auto | infra | — | `ca20d35` | `[ok]` (3H.4) |
 | R-BACKUP-AUTO | Backup semanal silencioso pro Vault | feature | P2 | `88fe9be` | `[ok]` (3C.1) |
 | R-A11Y-TALKBACK | Auditoria + correção navegação screen reader | audit+feature | P2 | `3344139` | `[ok]` (3E.2) Nível C follow-up |
