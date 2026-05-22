@@ -228,11 +228,19 @@ export default function SettingsIntegracoesScreen() {
               </>
             ) : null}
             {status === 'needs_update' ? (
-              <Button
-                label="Atualizar Conexão Saúde"
-                onPress={handleAbrirSettings}
-                variant="primary"
-              />
+              <>
+                <Button
+                  label="Atualizar Conexão Saúde"
+                  onPress={handleAbrirSettings}
+                  variant="primary"
+                />
+                <Button
+                  label="Forçar Conectar (debug)"
+                  onPress={handleConectar}
+                  variant="ghost"
+                  disabled={salvando}
+                />
+              </>
             ) : null}
           </View>
         </View>

@@ -63,7 +63,14 @@ class HealthConnectModule : Module() {
     AsyncFunction("getSdkStatus") {
       val context = appContext.reactContext
         ?: throw CodedException("ERR_NO_CONTEXT", "react context indisponivel", null)
-      return@AsyncFunction HealthConnectClient.getSdkStatus(context, providerPackageName)
+      val code = HealthConnectClient.getSdkStatus(context, providerPackageName)
+      // R-INT-3-HC-EMPIRICAL: log explicito para debug live (1=available,
+      // 2=unavailable, 3=needs_update). Aparece em adb logcat -s "HCBridge:*".
+      android.util.Log.i(
+        "HCBridge",
+        "getSdkStatus(provider=$providerPackageName) = $code"
+      )
+      return@AsyncFunction code
     }
 
     // Inicializa o cliente do HC. Aqui validamos que getOrCreate funciona;
