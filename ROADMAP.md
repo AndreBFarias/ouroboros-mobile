@@ -143,6 +143,44 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 
 **Sequenciamento sugerido:** 3P.A (B -> C -> D, sequencial — modulo nativo compartilhado) -> 3P.B (SCHEDULER primeiro, depois 5 puxadores em paralelo via worktree) -> 3P.C (paralelo).
 
+### Onda 3Q — Cadeia de valor das 5 integrações (2026-05-22, materializadas pos Onda 3P)
+
+11 specs novas: garantem que cada integração vira **benefício visível** no app (consumer UI no Recap + loops reativos) — espelha o que HC ja tem em Evolução para Calendar/Spotify/YouTube/Drive.
+
+**1 spec individual + 1 arquivo mestre consolidado:**
+- `docs/sprints/R-INT-3-HC-RECAP-CARD-spec.md` (detalhado individual, P1)
+- `docs/sprints/_HANDOFF-ONDA-3Q.md` (mestre com 10 outras sprints resumidas + estado + sprint order canônica + decisões pendentes)
+
+#### 3Q.B — Consumer UI por integração (5)
+
+| ID | Sprint | Tipo | P |
+|---|---|---|---|
+| R-INT-3-HC-RECAP-CARD | Card "Saúde essa semana" no Recap | feature | P1 |
+| R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap | feature | P2 |
+| R-INT-4-SPOTIFY-RECAP-CARD | Card "Trilha sonora" no Recap | feature | P2 |
+| R-INT-4-YOUTUBE-RECAP-CARD | Card "Conteúdo curtido" no Recap | feature | P3 |
+| R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 |
+
+#### 3Q.C — Loops de valor reativos (5)
+
+| ID | Sprint | Tipo | P |
+|---|---|---|---|
+| R-INT-2-CALENDAR-NOTIF-PROXIMO | Notif "Evento em 15min" pré-event | feature | P1 |
+| R-INT-3-HC-NOTIF-META-PASSOS | Meta diária + notif silenciosa + badge Tela Hoje | feature | P2 |
+| R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou 20% mais que semana passada" | feature | P2 |
+| R-INT-4-SPOTIFY-AGORA-TOCANDO | Badge "Tocando: <título>" na Tela Hoje | feature | P3 |
+| R-INT-5-DRIVE-NOTIF-BACKUP | Notif silenciosa "Backup salvo no Drive: X MB" | feature | P3 |
+
+#### 3Q.D — Achado não-materializado (1)
+
+| ID | Sprint | Tipo | P |
+|---|---|---|---|
+| R-INT-3-HC-AUTOPULL-BACKGROUND | Background sync via expo-task-manager + expo-background-fetch | infra | P2 |
+
+**Sequenciamento sugerido:** Onda 3Q depende de Onda 3P (autopull abastece Vault antes do consumer UI ler). Sprint order canônica detalhada em `_HANDOFF-ONDA-3Q.md` seção 4.
+
+---
+
 | R-DX-1 | Sprint template v2 | infra | — | `45d2b33` | `[ok]` (3I.3) |
 | R-DX-2 | Gauntlet record video | infra | — | `e770004` | `[ok]` (3I.1) |
 | R-DX-3 | Auto-generate spec from issue | infra+automation | — | `ea815bf` | `[ok]` (3I.2) |
