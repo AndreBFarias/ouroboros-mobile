@@ -97,10 +97,49 @@ Ocultar entry "Saúde Física" do Hub Integrações no v1.0.0. Manter
 código JS+native preparado. Reintroduzir no v1.1 quando lib upstream
 atualizar OU quando fork (B) ficar pronto.
 
-## Recomendação
+## Atualizacao 2026-05-22: opcao C tentada e bloqueada
+
+Sub-sprint A de **R-INT-3-HC-BRIDGE-NATIVA** (commit `8237a9b`) foi
+implementada e validada em 6 builds APK (alphas 20-25). Bridge nativa
+propria `modules/health-connect/` empacotada com sucesso no APK
+alpha-24 (validado via `strings classes*.dex` mostrou
+`com.ouroboros.healthconnect.HealthConnectModule`). ProGuard rule
+adicionada para preservar a classe.
+
+Mas ainda assim, no Xiaomi 2312DRAABG HyperOS com HC
+`v2026.04.16.00.release`, `getSdkStatus()` continua retornando
+`SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED` (3) com:
+- `connect-client:1.1.0` (estavel mais recente, compileSdk 36) — alpha-24 testado.
+- `connect-client:1.2.0-alpha04` requer AGP 9.1.0+ (Expo usa 8.11.0) — nao compila.
+
+**Conclusao critica:** o HC moderno deste device especifico rejeita
+TODAS as versoes publicas do `androidx.health.connect:connect-client`
+disponiveis no Google Maven. O caminho C (bridge nativa propria) tem
+o mesmo bloqueio que A/B (lib upstream) — todos dependem do SDK
+androidx publico, que aparentemente esta defasado em relacao ao
+provider HC mais recente.
+
+**Apps que aparecem na lista do HC nativo do Xiaomi:** "Claude" (assumido
+oficial Anthropic), "Google Fit", "Tuya". Investigar como esses apps
+fazem (Google Fit usa SDK proprio do Google Play Services; Tuya e
+Claude possivelmente low-level via Intent direto + ContentResolver
+sem o SDK androidx).
+
+## Recomendação ATUALIZADA
 
 **Curto prazo (v1.0.0): descopar via D** — esconder card "Saúde Física"
 do Hub via feature flag. Manter código pronto, não bloqueia release.
+
+**Medio prazo (v1.1): opcao C+ (low-level)** — investigar contrato Intent
+direto + ContentResolver sem androidx.health.connect.client. Documentacao
+oficial em https://developer.android.com/health-and-fitness/guides/health-connect/develop/permissions
+e https://developer.android.com/reference/androidx/health/connect/client/PermissionController
+podem indicar caminho alternativo via `ACTION_REQUEST_PERMISSIONS` direto
+para `com.google.android.apps.healthdata`.
+
+**Longo prazo (v1.2): aguardar AGP 9.1.0 estavel** — Expo SDK 53/54 deve
+incluir AGP 9. Quando disponivel, retomar bridge nativa com
+`connect-client:1.2.0-alpha04` (ou versao final 1.2.0 que sair ate la).
 
 **Médio prazo (v1.1): fork via B** — upgrade controlado para
 `1.2.0-alpha04`, manutenção via rebase quando upstream sair.
