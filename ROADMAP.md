@@ -66,7 +66,7 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 |---|---|---|---|---|---|
 | R-SF-1 | Grupos de Treino em Saúde Física | feature | P1 | `78cbca0` | `[ok]` (3A.2) |
 | R-SF-2 | Exercício GIF cadastro (validation) | validation | P2 | `2581d9e` | `[ok]` (3B.1) |
-| R-SF-3 | Marcação rápida (Venvanse, hábitos) | feature | P2 | 2–3h | `R-SF-3-MARCACAO-RAPIDA-MED-spec.md` |
+| R-SF-3 | Marcação rápida (Venvanse, hábitos) | feature | P2 | `8d67a61` | `[ok]` (3N.6) schema rotina_marcacao + helper marcacao.ts + writer rotina_marcacao + BotaoMarcar 32dp; +43 testes verde (285 suites/2704 tests); plug-and-play (integracao em telas reais = sprint futura) |
 | R-ROT-1 | Rotinas inteligência temporal | feature | P1 | `[rejeitado-replan]` | `R-ROT-1-REPLAN-spec.md` |
 | R-ROT-2 | Rotinas escopo expandido (categorias) | docs+feature | P3 | 1–2h | `R-ROT-2-ESCOPO-EXPANDIDO-spec.md` |
 | R-RECAP-5 | Recap Contadores (eventos no contador) | feature | P2 | `a15eb3a` | `[ok]` (3A.3, re-dispatch) |
