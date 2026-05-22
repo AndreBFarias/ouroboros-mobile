@@ -23,7 +23,7 @@
     "android": {
       "package": "com.ouroboros.mobile",
       "label": "Ouroboros",
-      "versionCode": 14,
+      "versionCode": 15,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon-foreground.png",
         "backgroundColor": "#14151a"
@@ -99,6 +99,7 @@
         }
       ],
       "./modules/widget-homescreen/app.plugin.js",
+      "./modules/health-connect/app.plugin.js",
       [
         "expo-av",
         {
