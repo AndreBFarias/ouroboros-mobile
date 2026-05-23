@@ -128,6 +128,12 @@ export function medidasPath(date: Date): string {
   return `markdown/medidas-${formatDateYmd(date)}.md`;
 }
 
+// markdown/passos-YYYY-MM-DD.md (R-INT-3-HC-AUTOPULL-PASSOS).
+// Total agregado de passos do dia, escrito pelo puxador HC.
+export function passosPath(date: Date): string {
+  return `markdown/passos-${formatDateYmd(date)}.md`;
+}
+
 // jpg/medidas-YYYY-MM-DD-<lado>.jpg (foto de medida corporal)
 export function medidasFotoPath(
   date: Date,
