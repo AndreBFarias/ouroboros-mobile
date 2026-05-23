@@ -20,7 +20,7 @@ Adicionar 1 AsyncFunction `readRecords` no `modules/health-connect/android/.../H
 - `BodyFatRecord`
 - `HeartRateRecord`
 - `SleepSessionRecord`
-- `MenstruationFlowRecord` (renomeacao SDK: `MenstruationPeriodRecord` em 1.1.0+)
+- `MenstruationFlowRecord` (manter o usado na sub-sprint A em `recordTypeToKClass`; o SDK 1.1.0 expoe AMBAS `MenstruationFlowRecord` e `MenstruationPeriodRecord` como classes distintas — Flow = evento de fluxo unico; Period = janela do periodo. Sub-sprint A escolheu Flow; B mantem esta escolha)
 
 ## API
 

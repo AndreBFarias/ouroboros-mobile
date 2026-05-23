@@ -18,6 +18,7 @@ package com.ouroboros.healthconnect
 //   - requestPermission(perms): Promise<perms[]>
 //   - getGrantedPermissions(): Promise<perms[]>
 //   - revokeAllPermissions(): Promise<void>
+//   - readRecords(recordType, options): Promise<{records, pageToken}>  (sub-sprint B)
 //
 // Convencao: comentarios sem acento (shell/CI).
 
@@ -28,6 +29,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.time.TimeRangeFilter
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
@@ -35,6 +38,7 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.util.UUID
 
 class HealthConnectModule : Module() {
@@ -223,6 +227,106 @@ class HealthConnectModule : Module() {
           )
         }
       }
+    }
+
+    // ---------- READ RECORDS ----------
+
+    // Le registros do HC dentro do janela de tempo. Suporta paginacao via
+    // pageSize/pageToken. Retorna shape consumido em src/index.ts:
+    //   { records: Array<Map>, pageToken: String? }
+    //
+    // Input:
+    //   recordType: String  (Steps, ExerciseSession, Weight, BodyFat,
+    //                       HeartRate, SleepSession, MenstruationFlow)
+    //   options: Map<String, Any?> com chaves:
+    //     - timeRangeFilter: { operator: 'between', startTime: ISO, endTime: ISO }
+    //     - ascendingOrder?: Boolean (default true)
+    //     - pageSize?: Int (default 1000)
+    //     - pageToken?: String
+    //
+    // Reusa recordTypeToKClass() e Utils.recordToMap() para conversao.
+    // Roda em Dispatchers.IO (suspend call do HC + paginacao podem
+    // bloquear thread principal).
+    AsyncFunction("readRecords") { recordType: String, options: Map<String, Any?>, promise: Promise ->
+      val context = appContext.reactContext
+        ?: return@AsyncFunction promise.reject(
+          CodedException("ERR_NO_CONTEXT", "react context indisponivel", null)
+        )
+
+      val recordClass = recordTypeToKClass(recordType)
+        ?: return@AsyncFunction promise.reject(
+          CodedException(
+            "ERR_UNKNOWN_RECORD_TYPE",
+            "recordType desconhecido: $recordType",
+            null
+          )
+        )
+
+      val timeRangeFilter = try {
+        buildTimeRangeFilter(options["timeRangeFilter"])
+      } catch (e: Throwable) {
+        return@AsyncFunction promise.reject(
+          CodedException(
+            "ERR_INVALID_TIME_RANGE",
+            "timeRangeFilter invalido: ${e.message}",
+            e
+          )
+        )
+      }
+
+      val ascendingOrder = (options["ascendingOrder"] as? Boolean) ?: true
+      val pageSize = (options["pageSize"] as? Number)?.toInt() ?: 1000
+      val pageToken = options["pageToken"] as? String
+
+      CoroutineScope(Dispatchers.IO).launch {
+        try {
+          val client = HealthConnectClient.getOrCreate(context, providerPackageName)
+          val request = ReadRecordsRequest(
+            recordType = recordClass,
+            timeRangeFilter = timeRangeFilter,
+            dataOriginFilter = emptySet(),
+            ascendingOrder = ascendingOrder,
+            pageSize = pageSize,
+            pageToken = pageToken
+          )
+          val response = client.readRecords(request)
+          val records = response.records.mapNotNull { recordToMap(it) }
+          promise.resolve(
+            mapOf(
+              "records" to records,
+              "pageToken" to response.pageToken
+            )
+          )
+        } catch (e: Throwable) {
+          promise.reject(
+            CodedException(
+              "ERR_READ_RECORDS",
+              "Falha ao ler records: ${e.message}",
+              e
+            )
+          )
+        }
+      }
+    }
+  }
+
+  // Constroi TimeRangeFilter a partir do shape JS. Apenas operator='between'
+  // suportado na sub-sprint B; before/after/none ficam para sub-sprints
+  // futuras se a UI precisar (today autopull usa between).
+  private fun buildTimeRangeFilter(raw: Any?): TimeRangeFilter {
+    val map = raw as? Map<*, *>
+      ?: throw IllegalArgumentException("timeRangeFilter ausente ou nao e Map")
+    val operator = map["operator"] as? String
+      ?: throw IllegalArgumentException("timeRangeFilter.operator ausente")
+    return when (operator) {
+      "between" -> {
+        val startTime = map["startTime"] as? String
+          ?: throw IllegalArgumentException("timeRangeFilter.startTime ausente")
+        val endTime = map["endTime"] as? String
+          ?: throw IllegalArgumentException("timeRangeFilter.endTime ausente")
+        TimeRangeFilter.between(Instant.parse(startTime), Instant.parse(endTime))
+      }
+      else -> throw IllegalArgumentException("operator nao suportado: $operator")
     }
   }
 

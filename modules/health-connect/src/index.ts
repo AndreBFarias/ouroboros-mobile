@@ -11,10 +11,10 @@
 // react-native-health-connect, para que callers tenham mudanca minima
 // (somente o require/import).
 //
-// Sub-sprint A entrega: availability + permissions. Sub-sprints
-// B (readRecords) e C (insertRecords) ficam para depois -- entre
-// tanto, exportamos shims que rejeitam ate ficarem implementados,
-// para que typings nao quebrem callers em sync.ts cedo demais.
+// Sub-sprint A entrega: availability + permissions. Sub-sprint B
+// adicionou readRecords (Steps/ExerciseSession/Weight/BodyFat/
+// HeartRate/SleepSession/MenstruationFlow). Sub-sprint C
+// (insertRecords) fica para depois.
 //
 // Em ambiente sem suporte (Expo Go web, Jest, iOS), o modulo nativo
 // e ausente: requireOptionalNativeModule devolve null e cada funcao
@@ -35,6 +35,28 @@ export interface Permission {
   recordType: string;
 }
 
+// Sub-sprint B: readRecords.
+export interface TimeRangeFilterBetween {
+  operator: 'between';
+  startTime: string; // ISO 8601 com offset (ex: "2026-05-22T00:00:00-03:00")
+  endTime: string;
+}
+
+export interface ReadRecordsOptions {
+  timeRangeFilter: TimeRangeFilterBetween;
+  ascendingOrder?: boolean;
+  pageSize?: number;
+  pageToken?: string;
+}
+
+// Shape do record retornado depende do recordType. O Kotlin emite chaves
+// canonicas (startTime, endTime, count, weight.inKilograms etc); caller
+// JS faz o cast pro shape esperado conforme tipo solicitado.
+export interface ReadRecordsResult {
+  records: Array<Record<string, unknown>>;
+  pageToken?: string;
+}
+
 // ---------- Native module loader ----------
 
 interface NativeModuleShape {
@@ -44,6 +66,10 @@ interface NativeModuleShape {
   requestPermission(perms: Permission[]): Promise<Permission[]>;
   getGrantedPermissions(): Promise<Permission[]>;
   revokeAllPermissions(): Promise<void>;
+  readRecords(
+    recordType: string,
+    options: ReadRecordsOptions
+  ): Promise<ReadRecordsResult>;
 }
 
 function getNative(): NativeModuleShape | null {
@@ -140,6 +166,43 @@ export async function revokeAllPermissions(): Promise<void> {
   }
 }
 
+// ---------- Records ----------
+
+// Le records do HC dentro do timeRangeFilter. Em ambiente sem modulo
+// nativo (Expo Go web, iOS, Jest), retorna { records: [] } no-op para
+// nao quebrar callers em sync.ts / autopull.
+//
+// Shape dos records depende do recordType solicitado:
+//   - Steps:            { startTime, endTime, count, metadata }
+//   - ExerciseSession:  { startTime, endTime, title?, exerciseType,
+//                         notes?, metadata }
+//   - Weight:           { time, weight: { inKilograms }, metadata }
+//   - BodyFat:          { time, percentage, metadata }
+//   - HeartRate:        { startTime, endTime, samples: [{time,
+//                         beatsPerMinute}], metadata }
+//   - SleepSession:     { startTime, endTime, title?, notes?,
+//                         stages: [{startTime, endTime, stage}], metadata }
+//   - MenstruationFlow: { time, flow: number (1=light, 2=medium,
+//                         3=heavy), metadata }
+//
+// metadata sempre tem { id, dataOrigin: {packageName}, lastModifiedTime }.
+export async function readRecords(
+  recordType: string,
+  options: ReadRecordsOptions
+): Promise<ReadRecordsResult> {
+  const native = getNative();
+  if (!native) return { records: [] };
+  try {
+    const result = await native.readRecords(recordType, options);
+    return {
+      records: Array.isArray(result?.records) ? result.records : [],
+      pageToken: result?.pageToken,
+    };
+  } catch {
+    return { records: [] };
+  }
+}
+
 const _default = {
   getSdkStatus,
   initialize,
@@ -147,6 +210,7 @@ const _default = {
   requestPermission,
   getGrantedPermissions,
   revokeAllPermissions,
+  readRecords,
 };
 
 export default _default;
