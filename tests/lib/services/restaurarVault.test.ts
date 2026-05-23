@@ -170,6 +170,15 @@ function snapshotValido(): SnapshotSettings {
       recap: {
         slideshowIntervaloS: 4,
       },
+      hcAutopullUltimaSync: {
+        Steps: null,
+        ExerciseSession: null,
+        Weight: null,
+        BodyFat: null,
+        HeartRate: null,
+        SleepSession: null,
+        MenstruationFlow: null,
+      },
     },
     onboarding: {
       done: true,

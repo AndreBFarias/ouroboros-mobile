@@ -20,6 +20,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
+import type { TipoHC } from '@/lib/health/tipos';
 import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 
 export type TipoCompanhia = 'sozinho' | 'duo';
@@ -95,6 +96,14 @@ export interface SettingsState {
   recap: {
     slideshowIntervaloS: number;
   };
+  // R-INT-3-HC-AUTOPULL-SCHEDULER (2026-05-22): timestamp ISO 8601 da
+  // ultima sync bem-sucedida por tipo HC. Lido pelo orquestrador para
+  // montar `since` e passar a cada puxador. null = primeira sync
+  // (scheduler usa janela default 7d atras).
+  //
+  // Persistido via secureStorage adapter (zustand persist). Migrate v2
+  // -> v3 preenche todos os tipos com null para instalacoes existentes.
+  hcAutopullUltimaSync: Record<TipoHC, string | null>;
   // Mutators canonicos. Sprints opt-in chamam apenas os toggles
   // relevantes; setSync/setLembrete foram removidos no shape v2.
   setSomVibracao: <K extends keyof SettingsState['somVibracao']>(
@@ -121,6 +130,9 @@ export interface SettingsState {
     chave: K,
     valor: SettingsState['recap'][K]
   ) => void;
+  // R-INT-3-HC-AUTOPULL-SCHEDULER: setter imutavel do tracking de
+  // ultima sync por tipo HC. Chamado pelo orquestrador em sucesso.
+  setHCAutopullUltimaSync: (tipo: TipoHC, iso: string) => void;
   resetar: () => void;
 }
 
@@ -136,6 +148,7 @@ const DEFAULT_STATE_V2: Omit<
   | 'setPrivacidade'
   | 'setMidia'
   | 'setRecap'
+  | 'setHCAutopullUltimaSync'
   | 'resetar'
 > = {
   somVibracao: {
@@ -192,6 +205,19 @@ const DEFAULT_STATE_V2: Omit<
   recap: {
     slideshowIntervaloS: 4,
   },
+  // R-INT-3-HC-AUTOPULL-SCHEDULER: default null em cada tipo HC.
+  // Scheduler converte null em ISO de 7d atras na primeira sync.
+  // Instalacoes existentes (persistedState v2) caem em mesclarDefaults
+  // e recebem este objeto como fallback.
+  hcAutopullUltimaSync: {
+    Steps: null,
+    ExerciseSession: null,
+    Weight: null,
+    BodyFat: null,
+    HeartRate: null,
+    SleepSession: null,
+    MenstruationFlow: null,
+  },
 };
 
 export const useSettings = create<SettingsState>()(
@@ -221,6 +247,13 @@ export const useSettings = create<SettingsState>()(
       setRecap: (chave, valor) =>
         set((s) => ({
           recap: { ...s.recap, [chave]: valor },
+        })),
+      // R-INT-3-HC-AUTOPULL-SCHEDULER: atualiza ultimaSync[tipo] de
+      // forma imutavel. Chamado pelo orquestrador apos puxador retornar
+      // {erro: null}. Em erro, nao chama (preserva ponto de retomada).
+      setHCAutopullUltimaSync: (tipo, iso) =>
+        set((s) => ({
+          hcAutopullUltimaSync: { ...s.hcAutopullUltimaSync, [tipo]: iso },
         })),
       resetar: () => set({ ...DEFAULT_STATE_V2 }),
     }),
@@ -334,6 +367,14 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ...DEFAULT_STATE_V2.recap,
       ...((ps.recap as Record<string, unknown>) ?? {}),
     } as SettingsState['recap'],
+    // R-INT-3-HC-AUTOPULL-SCHEDULER: merge profundo para shape parcial.
+    // Instalacoes pre-sprint nao tem a chave => spread default cobre.
+    // Instalacoes que persistiram parcialmente (so alguns tipos) tem
+    // os faltantes preenchidos com null pelo default.
+    hcAutopullUltimaSync: {
+      ...DEFAULT_STATE_V2.hcAutopullUltimaSync,
+      ...((ps.hcAutopullUltimaSync as Record<string, unknown>) ?? {}),
+    } as SettingsState['hcAutopullUltimaSync'],
   } as SettingsState;
 }
 
@@ -359,6 +400,13 @@ function filtrarBooleansConhecidos<T extends Record<string, boolean>>(
 // useVaultMock (writer trata branch); em mobile real escreve via
 // SAF/file:// atomic.
 useSettings.subscribe((state) => {
+  // hcAutopullUltimaSync (R-INT-3-HC-AUTOPULL-SCHEDULER) NAO entra no
+  // payload do mirror Vault: EstadoSettingsSchema e estrito sobre o
+  // shape e adicionar a chave forca migracao cross-stack do sibling
+  // Python. SecureStore (persist do zustand) ja garante persistencia
+  // confiavel — Vault mirror permanece como "snapshot exportavel para
+  // recap". Anti-debito: sprint futura R-INT-3-HC-AUTOPULL-VAULT-MIRROR
+  // estende o schema e o subscriber se houver demanda.
   escreverEstadoCanonico('settings', {
     somVibracao: { ...state.somVibracao },
     pessoa: { ...state.pessoa },

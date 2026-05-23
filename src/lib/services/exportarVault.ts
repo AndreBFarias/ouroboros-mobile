@@ -75,6 +75,7 @@ export interface SnapshotSettings {
     | 'setPrivacidade'
     | 'setMidia'
     | 'setRecap'
+    | 'setHCAutopullUltimaSync'
     | 'resetar'
   >;
   onboarding: {
@@ -205,6 +206,9 @@ export function gerarSnapshotSettings(): SnapshotSettings {
       privacidade: s.privacidade,
       midia: s.midia,
       recap: s.recap,
+      // R-INT-3-HC-AUTOPULL-SCHEDULER: campo entra no export para
+      // restaurar tracking de ultima sync em re-instalacao.
+      hcAutopullUltimaSync: s.hcAutopullUltimaSync,
     },
     onboarding: {
       done: o.done,

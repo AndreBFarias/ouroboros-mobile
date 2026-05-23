@@ -1,127 +1,191 @@
-# R-INT-3-HC-AUTOPULL-SCHEDULER — Orquestrador unico que dispara puxadores HC diarios
+## R-INT-3-HC-AUTOPULL-SCHEDULER — Orquestrador puro (sem puxadores concretos)
 
-**Tipo:** infra + feature (scheduler + observabilidade)
-**Prioridade:** P1 (gate para as outras sprints autopull)
-**Estimativa:** 0.5-1d
+**Tipo:** infra (lib pura TypeScript + tracking persistente)
+**Prioridade:** P1 (gate para sprints B.2-B.6)
+**Estimativa:** 0.5d
 **Fase:** 3
-**Depende de:** R-INT-3-HC-BRIDGE-NATIVA-B (readRecords disponivel) + R-INT-3-HC-BRIDGE-NATIVA-D (sync.ts migrado)
+**Depende de:** R-INT-3-HC-BRIDGE-NATIVA-B (readRecords disponível) + R-INT-3-HC-BRIDGE-NATIVA-D (sync.ts migrado)
+**Bloqueia:** R-INT-3-HC-AUTOPULL-{PASSOS,EXERCICIO,MEDIDAS,MENSTRUACAO,SLEEP} (cada uma implementa 1 Puxador concreto)
+
+## Decisões registradas (do dono, 2026-05-22)
+
+1. **Contrato puxadorscheduler bloqueado até puxadores existirem.** Esta sprint exporta apenas o orquestrador puro + tipo `Puxador<T>` canônico + helper de tracking. ZERO puxadores concretos. ZERO wiring em `_layout.tsx`. Wiring fica para sprint dedicada de integração (ou para a última puxador a entregar de B.2-B.6).
+2. **Tracking ultimaSync vai em settings store (zustand persist).** Campo `hcAutopullUltimaSync` no `src/lib/stores/settings.ts`, persistido via middleware existente.
+3. **Semântica de delta:** scheduler passa `since: ultimaSync[tipo]` ao puxador. Default 7 dias atrás se `null` (primeira sync). Cada puxador é responsável por chamar `readRecords` com `timeRangeFilter.startTime = since` e escrever no Vault.
+
+Implicação: Fase B passa a ser **sequencial**, não paralela como o HANDOFF inicial sugeria.
 
 ## Contexto
 
-Apos R-INT-3-HC-EMPIRICAL-FINDINGS, o Ouroboros tem acesso completo aos dados do Health Connect. Falta o flow inverso: puxar dados do HC e abastecer o Vault automaticamente, sem usuario precisar abrir o app.
+Apos R-INT-3-HC-EMPIRICAL-FINDINGS, o Ouroboros tem acesso completo aos dados do Health Connect. Falta o flow inverso: puxar dados do HC e abastecer o Vault automaticamente.
 
-Esta sprint cria o **orquestrador** que dispara 5 puxadores especializados (passos, exercicios, medidas, ciclo, sono) em cascata, com idempotencia (nao re-importa o mesmo dado), tracking do timestamp ultima sync e tolerancia a falha individual de cada tipo.
+Esta sprint cria o **orquestrador puro** que itera sobre uma lista de puxadores injetada externamente, chama cada um com `{since, pageSize}`, agrega resultados e atualiza tracking. NÃO chama nenhum puxador concreto — esses chegam em sprints irmãs.
 
 ## Objetivo
 
-Criar `src/lib/health/scheduler.ts` com 1 funcao publica:
+Entregar 3 peças canônicas:
 
-```ts
-export interface AutopullResultado {
-  rodadoEm: string;            // ISO 8601 do disparo
-  tipos: Array<{
-    tipo: 'passos' | 'exercicio' | 'medidas' | 'menstruacao' | 'sono';
-    novos: number;             // quantos itens novos persistidos no Vault
-    erro: string | null;
-  }>;
-}
+1. **Orquestrador puro** em `src/lib/health/autopullScheduler.ts`:
+   - Função `orquestrarHCAutopull(puxadores: Puxador[])` aceita array injetado.
+   - Itera, chama `puxar({since, pageSize})` em cada puxador.
+   - Agrega resultados, atualiza `hcAutopullUltimaSync[tipo]` no settings store em caso de sucesso.
+   - Tolera falha individual (Promise.allSettled ou loop com try/catch).
 
-export async function executarAutopullHC(
-  vaultRoot: string,
-  agora: Date
-): Promise<AutopullResultado>;
-```
+2. **Tipos canônicos** exportados pelo mesmo arquivo:
+   ```ts
+   export type TipoHC =
+     | 'Steps'
+     | 'ExerciseSession'
+     | 'Weight'
+     | 'BodyFat'
+     | 'HeartRate'
+     | 'SleepSession'
+     | 'MenstruationFlow';
 
-E disparo automatico via 1 dos 2 caminhos abaixo:
+   export interface Puxador<T = unknown> {
+     tipo: TipoHC;
+     puxar(opts: { since: string | null; pageSize: number }): Promise<{
+       novos: number;
+       erro: string | null;
+     }>;
+   }
 
-- **Foreground:** `app/_layout.tsx` ou `app/index.tsx` chama no useEffect uma vez por sessao (com cap de 1x por hora via SecureStore).
-- **Background (futuro):** expo-task-manager + expo-background-fetch (fica como R-INT-3-HC-AUTOPULL-BACKGROUND nova sprint).
+   export interface OrquestrarHCAutopullResult {
+     rodadoEm: string;            // ISO 8601 do disparo
+     tipos: Array<{
+       tipo: TipoHC;
+       novos: number;
+       erro: string | null;
+     }>;
+   }
 
-Esta sprint cobre **foreground** apenas.
+   export async function orquestrarHCAutopull(
+     puxadores: Puxador[]
+   ): Promise<OrquestrarHCAutopullResult>;
+   ```
 
-## API auxiliar
+3. **Tracking persistente** em `src/lib/stores/settings.ts`:
+   ```ts
+   hcAutopullUltimaSync: Record<TipoHC, string | null>;
+   setHCAutopullUltimaSync(tipo: TipoHC, iso: string): void;
+   ```
+   Persistido automaticamente via middleware zustand persist existente. Default inicial: todos os tipos com `null`.
 
-`src/lib/health/scheduler.ts` exporta:
+## Escopo / Entregáveis
 
-```ts
-export const TIPOS_AUTOPULL = ['passos', 'exercicio', 'medidas', 'menstruacao', 'sono'] as const;
-export type TipoAutopull = (typeof TIPOS_AUTOPULL)[number];
+### Arquivos a CRIAR
 
-// Chave SecureStore: timestamp ultima execucao por tipo.
-// Usado para janela "since last sync" (evita re-puxar tudo todo dia).
-const KEY_ULTIMA_SYNC = 'ouroboros.hc.autopull.ultima-sync';
+- `src/lib/health/autopullScheduler.ts` (~100L)
+  - Exporta `TipoHC`, `Puxador<T>`, `OrquestrarHCAutopullResult`, `orquestrarHCAutopull`.
+  - Lê `useSettings.getState().hcAutopullUltimaSync` para montar `since`.
+  - Default `since`: ISO de `Date.now() - 7 * 24 * 60 * 60 * 1000` se `null`.
+  - `pageSize` fixo em 1000 (cap por execução por tipo — proteção contra primeira sync gigantesca).
+  - Em sucesso (`erro === null`): chama `setHCAutopullUltimaSync(tipo, new Date().toISOString())`.
+  - Em erro: NÃO atualiza ultimaSync (preserva ponto de retomada).
+  - Iteração tolerante: 1 puxador falhar não impede outros (Promise.allSettled ou for-of com try/catch).
+  - Logging via `console.log('[hc-autopull]', ...)` para debug live (logcat).
 
-export interface UltimaSyncMap {
-  [tipo in TipoAutopull]?: string;  // ISO 8601
-}
+- `tests/lib/health/autopullScheduler.test.ts` (~50L)
+  - Mocka `Puxador[]` com fakes determinísticos.
+  - 5+ cenários cobertos:
+    1. 3 puxadores OK → todos novos > 0, todos erro null, 3 chamadas a `setHCAutopullUltimaSync`.
+    2. 1 puxador erro + 2 OK → resultado parcial agregado, ultimaSync atualizada só para os 2 OK.
+    3. Primeira sync (ultimaSync[tipo] === null) → `since` passado é ~7d atrás.
+    4. Sync subsequente (ultimaSync[tipo] === ISO recente) → `since` passado é o ISO armazenado.
+    5. Cap pageSize: cada puxador recebe `pageSize: 1000`.
 
-export async function lerUltimaSync(): Promise<UltimaSyncMap>;
-export async function gravarUltimaSync(map: UltimaSyncMap): Promise<void>;
-```
+### Arquivos a MODIFICAR
 
-## Escopo
+- `src/lib/stores/settings.ts` (~+30L)
+  - Adicionar campo `hcAutopullUltimaSync: Record<TipoHC, string | null>` ao state.
+  - Default inicial: objeto com os 7 tipos preenchidos com `null`.
+  - Adicionar setter `setHCAutopullUltimaSync(tipo: TipoHC, iso: string)`.
+  - Importar `TipoHC` de `src/lib/health/autopullScheduler.ts` (ou redeclarar — verificar ciclo de import; preferir extrair tipo para `src/lib/health/tipos.ts` se houver ciclo).
+  - Garantir que o campo entra no `partialize` do persist middleware.
 
-### A. Investigacao obrigatoria
+### Investigação obrigatória (antes de codar)
 
 ```bash
-# Confirma sub-sprints HC ja entregues:
-grep -c "AsyncFunction(\"readRecords\")" modules/health-connect/android/.../HealthConnectModule.kt  # >= 1
-grep -rn "ouroboros-health-connect" src/lib/health/  # >= 1 (migrado em D)
+# Confirma settings store existe e tem persist middleware:
+grep -n "persist\|partialize" src/lib/stores/settings.ts  # >= 1
 
-# Verifica padrao SecureStore existente:
-grep -n "SecureStore.getItemAsync\|SecureStore.setItemAsync" src/lib/health/  # ok existir
+# Confirma padrao zustand existente:
+grep -n "create<.*>()\|create(" src/lib/stores/settings.ts  # >= 1
+
+# Verifica se há ciclo de import potencial entre health/ e stores/:
+grep -rn "from.*stores/settings" src/lib/health/  # idealmente vazio
+
+# Confirma sub-sprints HC ja entregues (pré-requisito):
+grep -c "AsyncFunction(\"readRecords\")" modules/health-connect/android/src/main/java/expo/modules/healthconnect/HealthConnectModule.kt  # >= 1
 ```
 
-### B. Implementacao
+## OFF-LIMITS (inegociável)
 
-1. `src/lib/health/scheduler.ts` (novo, ~150 linhas):
-   - `executarAutopullHC` orquestra: chama cada puxador, agrega resultado, atualiza UltimaSyncMap.
-   - Each puxador eh chamado independentemente (Promise.allSettled, nao Promise.all) — falha de um nao impede outros.
-   - Cap por tipo: nao puxa mais que 1000 records por execucao (proteçao contra primeira sync gigantesca).
+- **NÃO** implemente puxadores concretos. Sprints irmãs B.2-B.6 fazem isso.
+- **NÃO** toque `modules/health-connect/` (bridge nativa já entregue).
+- **NÃO** toque schemas de passos/treino_sessao/medidas/registro_ciclo/sono.
+- **NÃO** toque `app/_layout.tsx` (wiring fica para sprint futura — provavelmente a última de B.2-B.6 ou nova sprint de integração).
+- **NÃO** toque `CLAUDE.md` / `ROADMAP.md` / `STATE.md` / `VALIDATOR_BRIEF.md` / `Checkpoint.md`.
+- **NÃO** crie helpers de SecureStore — tracking vai em settings store (decisão 2).
 
-2. `app/_layout.tsx` (modificar):
-   - `useEffect` chama `executarAutopullHC` once on mount, gated por:
-     - `useSettings.getState().featureToggles.healthConnectSync === true`
-     - ultima execucao geral > 1h atras (anti-spam ao reabrir app)
-   - Resultado emitido via toast: "Sincronizado: 12 passos, 3 medidas" (silencioso se 0).
+## Aritmética prometida
 
-3. Logging via `console.log('[hc-autopull]')` para debug live (logcat).
+- 1 arquivo novo (`autopullScheduler.ts`): ~100L
+- 1 arquivo modificado (`settings.ts`): ~+30L
+- 1 teste novo (`autopullScheduler.test.ts`): ~50L
+- (opcional) 1 arquivo `tipos.ts` se houver ciclo de import: ~15L
+- **Total: ~180L em 3-4 arquivos**
 
-### C. Testes
+## Proof-of-work esperado
 
-- `tests/lib/health/scheduler.test.ts`: mocka puxadores individuais (TipoAutopull[]), valida orchestracao, agregacao, idempotencia (segunda chamada nao re-puxa se ultima < 1h).
-- `tests/app/_layout-hc-autopull.test.tsx`: integracao com useEffect + featureToggle off (nao chama) + on (chama).
+1. Tipos TS bem definidos e exportados:
+   - `TipoHC` union de 7 valores literais.
+   - `Puxador<T>` interface com `tipo` + `puxar({since, pageSize})`.
+   - `OrquestrarHCAutopullResult` com `rodadoEm` ISO + array `tipos`.
 
-## OFF-LIMITS
+2. Função `orquestrarHCAutopull(puxadores)`:
+   - Aceita `Puxador[]` (não cria os puxadores).
+   - Para cada puxador: lê `hcAutopullUltimaSync[puxador.tipo]` do settings store, monta `since` (ou default 7d), chama `puxar({since, pageSize: 1000})`.
+   - Agrega `{tipo, novos, erro}` em array.
+   - Em sucesso: `setHCAutopullUltimaSync(tipo, new Date().toISOString())`.
+   - Em erro: preserva ultimaSync anterior (ponto de retomada).
+   - Erro de 1 puxador NÃO interrompe os outros.
 
-**Pode tocar:** `src/lib/health/scheduler.ts` (novo), `app/_layout.tsx`, tests novos.
+3. Settings store:
+   - Campo `hcAutopullUltimaSync: Record<TipoHC, string | null>` no state.
+   - Setter `setHCAutopullUltimaSync` atualiza imutavelmente.
+   - Campo entra no persist (`partialize` se aplicável).
 
-**Nao pode tocar:** puxadores individuais (sprints irmas R-INT-3-HC-AUTOPULL-{PASSOS,EXERCICIO,MEDIDAS,MENSTRUACAO,SLEEP}), bridge nativa (entregue B/C/D), schemas, CLAUDE/ROADMAP/STATE/BRIEF/Checkpoint.
+4. Testes Jest (5+ cenários listados acima) passando.
 
-## Verificacao canonica
+5. `npx tsc --noEmit` exit 0.
+
+## Cuidado runtime
+
+Esta sprint NÃO toca runtime nativo. É lib TypeScript pura + state store.
+
+- **A22 (worklets shared):** não aplicável — sem reanimated aqui.
+- **A25 (metro require resolution):** não aplicável — sem mudanças em `metro.config.js`.
+- **A30/A31 (HC bridge):** não aplicável — bridge entregue em sub-sprints anteriores.
+
+## Verificação canônica
 
 ```bash
 ./scripts/check_anonimato.sh
 python3 scripts/check_strings_ui_ptbr.py
 npx tsc --noEmit
 ./scripts/smoke.sh
-for i in 1 2 3; do npx jest --silent 2>&1 | grep "Test Suites:" | tail -1; done
-# Validacao live: abrir Ouroboros logo apos novo registro HC (passos do dia),
-# confirmar toast "Sincronizado" + arquivo MD novo no Vault.
+for i in 1 2 3; do npx jest tests/lib/health/autopullScheduler.test.ts --silent 2>&1 | grep "Tests:" | tail -1; done
 ```
 
-## Proof-of-work
+## Anti-débito
 
-1. Lista de arquivos modificados.
-2. `npx jest --silent | tail -5`.
-3. Hash commit.
-4. Live: criar passo manual no HC (Settings -> Health Connect -> Adicionar dados -> Steps), abrir Ouroboros, ver toast + arquivo `passos-YYYY-MM-DD.md` no Vault.
+- **Wiring `_layout.tsx`:** ficou fora de escopo desta sprint. Registrar como `R-INT-3-HC-AUTOPULL-WIRING-spec.md` (sprint nova, dispatcha após B.2-B.6 fecharem).
+- **Background sync (app fechado):** continua como `R-INT-3-HC-AUTOPULL-BACKGROUND-spec.md` (sprint nova, futura — expo-task-manager + expo-background-fetch, custo de bateria, decisão dono).
+- **Idempotência fina por record ID:** responsabilidade dos puxadores concretos (B.2-B.6), não do scheduler. Scheduler só passa `since` e confia no puxador.
 
-## Anti-debito
-
-Background sync (mesmo com app fechado) fica como R-INT-3-HC-AUTOPULL-BACKGROUND-spec.md (sprint nova, futura — expo-task-manager + expo-background-fetch tem custo de bateria, decisao dono).
-
-## Referencias
+## Referências
 
 - Pattern scheduler simples: `src/lib/services/notifyRescheduler.ts` (M30 alarmes).
-- AndroidX docs: https://developer.android.com/health-and-fitness/guides/health-connect/develop/read-data
+- Settings store atual: `src/lib/stores/settings.ts` (zustand + persist + partialize).
+- AndroidX HC docs: https://developer.android.com/health-and-fitness/guides/health-connect/develop/read-data
