@@ -5,14 +5,36 @@
 
 ---
 
-## 1. Estado atual do projeto
+## 1. Estado atual do projeto (atualizado 2026-05-22 tarde)
 
-- **HEAD origin/main:** `494214d` (docs: onda 3p materializada 13 specs)
-- **APK estavel:** `v1.0.0-alpha-31` (commit `601ab30`, instalado no Xiaomi 2312DRAABG HyperOS)
-- **Smoke baseline:** 287 suites / 2744 testes verde
-- **Onda 3N:** 8/8 fechada (R-ROT-1-A/B/D + R-RECAP-PERIODO-DIA + R-SEC-4 + R-SCHEMA-TREINO + R-SF-3 + R-ROT-2)
-- **Onda 3O (R-INT-3-HC-EMPIRICAL):** Health Connect funcionando live — Ouroboros aparece na lista de apps do HC nativo + 11/11 permissoes granted=true. Bridge nativa propria em `modules/health-connect/` substitui `react-native-health-connect` velho.
-- **Onda 3P:** 13 specs materializadas (sub-sprints bridge HC + autopull HC + integracoes complementares Calendar/Spotify/YouTube/Drive). Nao executadas ainda.
+- **HEAD origin/main:** `533dff1` (docs: sprints anti-debito pos passos)
+- **APK estavel:** `v1.0.0-alpha-31` (commit `601ab30`, instalado no Xiaomi 2312DRAABG HyperOS — sub-sprints B/C/D ainda nao em APK)
+- **Smoke baseline:** 290 suites / 2802 testes verde (+27 testes pos sessao Fase A+B parcial)
+- **Onda 3N:** 8/8 fechada.
+- **Onda 3O (R-INT-3-HC-EMPIRICAL):** Health Connect funcionando live.
+- **Onda 3P Fase A:** 3/3 FECHADA — sprints B (`db3604e`) + C (`7be4cc6`) + D (`0d1dc47`). Bridge HC COMPLETA: availability + permissions + readRecords (7 tipos) + insertRecords (4 tipos) + sync.ts migrado + react-native-health-connect upstream removido.
+- **Onda 3P Fase B:** 2/6 FECHADA — SCHEDULER (`5aab04b`) + PASSOS (`99edc02`). Faltam EXERCICIO/MEDIDAS/MENSTRUACAO/SLEEP + sprint dedicada de wiring no `_layout.tsx`.
+- **Onda 3P Fase C, Onda 3Q:** nao iniciadas.
+
+### 7 sprints novas anti-debito materializadas na sessao 2026-05-22 tarde
+
+| ID | P | Origem |
+|---|---|---|
+| R-INT-3-HC-LIVE-CHECKPOINT | P2 | validar 3 writes E2E pos build alpha-32 (substitui lib upstream) |
+| R-INFRA-WORKTREE-BOOTSTRAP-ENV-JSON | P2 | bootstrap simbolico de env.json/.env falhou na sprint PASSOS |
+| R-INT-3-HC-DOC-VERSION-FIX | P3 | comentarios SDK 1.2.0 vs real 1.1.0 |
+| R-SEC-4-PROGUARD-CLEANUP | P3 | extraProguardRules pos remocao lib upstream |
+| R-INFRA-SETTINGS-EXPORT-SHAPE | P3 | interface canonica em settings.ts |
+| R-INT-3-HC-AUTOPULL-VAULT-MIRROR | P3 | espelhar hcAutopullUltimaSync no Vault |
+| R-INT-3-HC-PASSOS-TIMEZONE-INTL | P3 | substituir UTC-3 hardcoded por Intl em passos puxador |
+
+### Decisoes durables novas 2026-05-22
+
+- **SCHEDULER contrato:** scheduler bloqueia ate puxadores existirem (B.2-B.6 implementam tipo `Puxador`; orquestrador puro entregue em SCHEDULER).
+- **Tracking ultimaSync:** settings store via zustand persist (campo `hcAutopullUltimaSync: Record<TipoHC, string | null>`).
+- **Semantica de delta:** scheduler passa `since: ultimaSync[tipo]` aos puxadores (default 7d atras se null + pageSize cap 1000).
+- **Passos pessoa:** via `useSettings.getState().pessoa.ativa` (campo canonico, default pessoa_a).
+- **Passos idempotencia:** sobrescrever-D-1 — dia em curso NAO escrito; filtro `rec.endTime < startOfTodayLocal`.
 
 ### Pendencias humanas remanescentes para v1.0.0
 

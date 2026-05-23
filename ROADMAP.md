@@ -113,24 +113,36 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 
 13 specs novas. Pre-requisito comum: bridge nativa HC funcional (entregue em alpha-31, commit `601ab30`).
 
-#### 3P.A — Sub-sprints bridge HC (3)
+#### 3P.A — Sub-sprints bridge HC (3) — FECHADA 3/3
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
-| R-INT-3-HC-BRIDGE-NATIVA-B | readRecords nos 7 tipos canonicos | feature | P1 | 1d | `R-INT-3-HC-BRIDGE-NATIVA-B-READ-RECORDS-spec.md` |
-| R-INT-3-HC-BRIDGE-NATIVA-C | insertRecords nos 4 tipos com factory methods | feature | P1 | 1d | `R-INT-3-HC-BRIDGE-NATIVA-C-WRITE-RECORDS-spec.md` |
-| R-INT-3-HC-BRIDGE-NATIVA-D | Cleanup migration sync.ts + remover lib upstream | refactor | P1 | 0.5d | `R-INT-3-HC-BRIDGE-NATIVA-D-CLEANUP-MIGRATION-spec.md` |
+| R-INT-3-HC-BRIDGE-NATIVA-B | readRecords nos 7 tipos canonicos | feature | P1 | `db3604e` | `[ok]` (2026-05-22 tarde) |
+| R-INT-3-HC-BRIDGE-NATIVA-C | insertRecords nos 4 tipos com builders | feature | P1 | `7be4cc6` | `[ok]` (2026-05-22 tarde) |
+| R-INT-3-HC-BRIDGE-NATIVA-D | Cleanup migration sync.ts + remover lib upstream | refactor | P1 | `0d1dc47` | `[ok]` (2026-05-22 tarde) |
 
-#### 3P.B — Autopull HC -> Vault (6)
+#### 3P.B — Autopull HC -> Vault (6) — PARCIAL 2/6
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
-| R-INT-3-HC-AUTOPULL-SCHEDULER | Orquestrador unico foreground + tracking ultima sync | infra | P1 | 0.5-1d | `R-INT-3-HC-AUTOPULL-SCHEDULER-spec.md` |
-| R-INT-3-HC-AUTOPULL-PASSOS | Puxar Steps + agregar por dia + writer passos.md | feature | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-PASSOS-spec.md` |
+| R-INT-3-HC-AUTOPULL-SCHEDULER | Orquestrador puro + tracking settings store | infra | P1 | `5aab04b` | `[ok]` (2026-05-22 tarde) |
+| R-INT-3-HC-AUTOPULL-PASSOS | Puxar Steps + agregar por dia + writer markdown/passos-YYYY-MM-DD.md | feature | P1 | `99edc02` | `[ok]` (2026-05-22 tarde) |
 | R-INT-3-HC-AUTOPULL-EXERCICIO | Puxar ExerciseSession + escrever treino_sessao modo='sessao_hc' | feature | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-EXERCICIO-spec.md` |
 | R-INT-3-HC-AUTOPULL-MEDIDAS | Puxar Weight + BodyFat pareados + escrever Medida | feature | P2 | 0.5d | `R-INT-3-HC-AUTOPULL-MEDIDAS-spec.md` |
 | R-INT-3-HC-AUTOPULL-MENSTRUACAO | Puxar MenstruationFlow + escrever RegistroCiclo | feature | P2 | 0.5d | `R-INT-3-HC-AUTOPULL-MENSTRUACAO-spec.md` |
 | R-INT-3-HC-AUTOPULL-SLEEP | Puxar SleepSession + schema novo sono.md | feature | P3 | 0.5d | `R-INT-3-HC-AUTOPULL-SLEEP-spec.md` |
+
+#### 3P.X — Sprints anti-debito materializadas pos Fase A+B parcial (7, sessao 2026-05-22 tarde)
+
+| ID | Tipo | P | Estim. | Origem |
+|---|---|---|---|---|
+| R-INT-3-HC-LIVE-CHECKPOINT | checkpoint | P2 | 30min pos alpha-32 | validacao live 3 writes E2E pos remocao lib upstream |
+| R-INFRA-WORKTREE-BOOTSTRAP-ENV-JSON | infra | P2 | 30min | bootstrap symlinks falhou em PASSOS (~3min diagnostico) |
+| R-INT-3-HC-DOC-VERSION-FIX | docs | P3 | 15min | comentarios SDK 1.2.0 vs real 1.1.0 |
+| R-SEC-4-PROGUARD-CLEANUP | cleanup | P3 | 20min | extraProguardRules pos remocao lib upstream |
+| R-INFRA-SETTINGS-EXPORT-SHAPE | refactor | P3 | 30min | Omit<ReturnType<...>> forca cascata |
+| R-INT-3-HC-AUTOPULL-VAULT-MIRROR | feature | P3 | 1-1.5h | espelhar ultimaSync no Vault cross-stack |
+| R-INT-3-HC-PASSOS-TIMEZONE-INTL | refactor | P3 | 45min | executor manteve UTC-3 hardcoded contra spec exigindo Intl |
 
 #### 3P.C — Integracoes complementares (4)
 
