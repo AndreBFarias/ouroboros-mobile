@@ -39,15 +39,19 @@ interface HealthConnectModule {
 
 function carregarModulo(): HealthConnectModule | null {
   try {
-    const mod = require('react-native-health-connect');
-    // R-INT-3-HC-PROXY-REFLECT-HARDENING: Reflect.get forca evaluation
-    // do getter dentro do try/catch. react-native-health-connect@3.5.0
-    // retorna Proxy nao-bloqueante em ambientes nao-Android (Expo Go,
-    // Jest, web) que lanca ao acessar qualquer propriedade. `typeof`
-    // direto em getter que lanca comporta-se de forma inconsistente
-    // entre engines JS; Reflect.get garante captura.
-    const readRecords = Reflect.get(mod, 'readRecords');
-    const insertRecords = Reflect.get(mod, 'insertRecords');
+    // Path relativo segue padrao do projeto (vide
+    // src/lib/widget/atualizarWidgetHomescreen.ts importando
+    // ../../../modules/widget-homescreen/src). Bridge nativa local
+    // entregue em R-INT-3-HC-BRIDGE-NATIVA sub-sprints A+B+C; sub-sprint
+    // D (esta) migra o require de react-native-health-connect@3.5.3
+    // (pendurado em connect-client 1.1.0-alpha11 obsoleto). A bridge
+    // local usa requireOptionalNativeModule, que devolve null em
+    // ambiente sem suporte (Expo Go web, Jest, iOS) — sem Proxy
+    // lancante. Mantemos o lazy require para preservar a forma de
+    // mock em testes (jest.doMock por escopo).
+    const mod = require('../../../modules/health-connect/src');
+    const readRecords = mod?.readRecords;
+    const insertRecords = mod?.insertRecords;
     if (
       typeof readRecords !== 'function' ||
       typeof insertRecords !== 'function'
@@ -208,8 +212,8 @@ export async function sincronizarPesoDeHC(
 
 // R-INT-3: classifica erro lancado pelo modulo nativo HC em uma das
 // 3 categorias canonicas. Mensagens com regex pra cobrir variacao
-// entre versoes do `react-native-health-connect` (3.5.x atual).
-// Quando nao bate em pattern conhecido, cai em 'api_error'.
+// entre versoes do connect-client subjacente (1.2.x atual via bridge
+// local). Quando nao bate em pattern conhecido, cai em 'api_error'.
 function classificarErroHC(erro: unknown): HCSyncMotivo {
   const msg =
     erro instanceof Error ? erro.message : typeof erro === 'string' ? erro : '';

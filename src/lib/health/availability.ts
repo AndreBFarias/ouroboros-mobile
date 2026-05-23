@@ -2,15 +2,11 @@
 // Expo, vide modules/health-connect/) para checar disponibilidade do
 // SDK e inicializa-lo em runtime. Q17.a (Onda Q, 2026-05-13).
 //
-// R-INT-3-HC-BRIDGE-NATIVA sub-sprint A (2026-05-22): trocado o
-// require de `react-native-health-connect@3.5.3` (pendurado em
-// connect-client 1.1.0-alpha11 obsoleto) por modulo local proprio
-// `ouroboros-health-connect` que usa connect-client 1.2.0-alpha04.
-// O modulo local ja faz no-op silencioso em ambiente sem suporte
-// (requireOptionalNativeModule devolve null), entao o Reflect.get
-// defensivo da hardening anterior (Proxy do upstream que lancava ao
-// acessar getter) nao e mais necessario aqui. Mantemos o lazy require
-// para preservar a forma de mock em testes (jest.doMock por escopo).
+// R-INT-3-HC-BRIDGE-NATIVA (2026-05-22): bridge nativa local usa
+// requireOptionalNativeModule, que devolve null em ambiente sem
+// suporte (Expo Go web, Jest, iOS) sem precisar de Reflect.get
+// defensivo. Mantemos o lazy require para preservar a forma de mock
+// em testes (jest.doMock por escopo).
 //
 // SdkAvailabilityStatus do modulo nativo retorna codigo numerico:
 //   1 = SDK_AVAILABLE

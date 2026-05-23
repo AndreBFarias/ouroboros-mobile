@@ -5,10 +5,11 @@
 //  2. CardHCResumo CONTINUA oculto quando toggle ON mas nenhuma
 //     permission HC concedida (no web mock retorna lista vazia).
 //
-// Limitacao web: react-native-health-connect retorna mock sem dados,
-// entao a validacao do card POPULADO so e possivel em runtime no
-// celular real com HC conectado. Este E2E cobre a guarda dupla
-// (toggle + permissions) que evita poluir a UI.
+// Limitacao web: bridge nativa ouroboros-health-connect retorna mock
+// sem dados (requireOptionalNativeModule -> null em web), entao a
+// validacao do card POPULADO so e possivel em runtime no celular real
+// com HC conectado. Este E2E cobre a guarda dupla (toggle +
+// permissions) que evita poluir a UI.
 //
 // Comentarios sem acento (convencao shell/CI).
 import type {

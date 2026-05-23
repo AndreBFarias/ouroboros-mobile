@@ -12,6 +12,13 @@
 // nao habilita VM modules ESM; o codigo testado e' CommonJS pos-Babel,
 // entao trabalhamos no mesmo modelo (jest.resetModules entre cada
 // teste + require por cenario).
+//
+// R-INT-3-HC-BRIDGE-NATIVA sub-sprint D (2026-05-22): mocks migrados
+// de 'react-native-health-connect' para o path relativo da bridge
+// nativa local em ../../../modules/health-connect/src. Bridge usa
+// requireOptionalNativeModule (devolve null em ambiente sem suporte),
+// entao nao precisa mais de mock de Proxy lancante — bloco
+// "hardening Reflect.get" foi removido com a migracao.
 import type { HCSyncFailEvent } from '@/lib/health/eventBus';
 
 const TREINO_BASE = {
@@ -37,7 +44,7 @@ describe('escreverTreinoEmHC — emit de falha', () => {
     // pela classificacao, nao no_module. Estado real do alpha-11:
     // permission_denied ou api_error sao as falhas dominantes.
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: null,
         insertRecords: null,
@@ -61,7 +68,7 @@ describe('escreverTreinoEmHC — emit de falha', () => {
 
   it('cenario permission_denied: retorna false e emite motivo=permission_denied', async () => {
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: jest.fn(),
         insertRecords: jest
@@ -89,7 +96,7 @@ describe('escreverTreinoEmHC — emit de falha', () => {
 
   it('cenario api_error: retorna false e emite motivo=api_error', async () => {
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: jest.fn(),
         insertRecords: jest
@@ -127,7 +134,7 @@ describe('escreverPesoEmHC — emit de falha', () => {
 
   it('no_module emite evento com tipo=peso', async () => {
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: null,
         insertRecords: null,
@@ -149,7 +156,7 @@ describe('escreverPesoEmHC — emit de falha', () => {
 
   it('sucesso quando modulo presente nao emite evento', async () => {
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: jest.fn(),
         insertRecords: jest.fn().mockResolvedValue(['uuid-1']),
@@ -168,16 +175,16 @@ describe('escreverPesoEmHC — emit de falha', () => {
   });
 });
 
-describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HARDENING)', () => {
-  it('Proxy lancante em getter: nao propaga excecao e cai em no_module', async () => {
-    // Simula react-native-health-connect@3.5.0 em ambiente nao-Android:
-    // o pacote retorna Proxy nao-bloqueante que lanca ao acessar
-    // qualquer propriedade. Antes do Reflect.get, `typeof mod.readRecords`
-    // podia comportar-se de forma inconsistente entre engines JS. Apos
-    // hardening, Reflect.get forca evaluation dentro do try/catch e
-    // captura corretamente.
+describe('carregarModulo — defesa em profundidade do require', () => {
+  it('require lancante (Proxy ou throw direto): nao propaga excecao e cai em no_module', async () => {
+    // Defesa em profundidade do try/catch em carregarModulo(). A bridge
+    // nativa local usa requireOptionalNativeModule (devolve null em
+    // ambiente sem suporte) — Proxy lancante nao acontece em producao,
+    // mas o try/catch permanece como rede de seguranca. Este teste
+    // simula o cenario historico de Proxy ao acessar propriedade
+    // (que era o shape do upstream react-native-health-connect@3.5.0).
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () =>
         new Proxy(
           {},
@@ -208,7 +215,7 @@ describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HAR
     // Modulo presente mas sem o metodo obrigatorio. Cobertura explicita
     // do branch typeof !== 'function'.
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         insertRecords: jest.fn(),
         // readRecords ausente
@@ -229,10 +236,10 @@ describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HAR
 
   it('plain object completo: carrega modulo e executa save', async () => {
     // Caminho feliz: modulo presente com todos os metodos. Garante
-    // que o hardening Reflect.get nao quebra carregamento normal.
+    // que o check typeof === 'function' nao quebra carregamento normal.
     const insertRecords = jest.fn().mockResolvedValue(['uuid-treino-1']);
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: jest.fn(),
         insertRecords,
@@ -252,11 +259,11 @@ describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HAR
   });
 
   it('Proxy lancante via availability.verificarDisponibilidade retorna unavailable', async () => {
-    // Cobertura cruzada: o hardening Reflect.get tambem se aplica a
-    // availability.ts. Proxy lancante em qualquer getter cai em
+    // Cobertura cruzada: o try/catch defensivo tambem se aplica a
+    // availability.ts. Modulo que lanca em qualquer acesso cai em
     // 'unavailable' sem propagar excecao.
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () =>
         new Proxy(
           {},
@@ -276,10 +283,11 @@ describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HAR
   });
 
   it('Proxy lancante via permissions.listarPermissoesConcedidas retorna []', async () => {
-    // Cobertura cruzada: hardening em permissions.ts. Proxy lancante
-    // em getter retorna lista vazia sem propagar excecao.
+    // Cobertura cruzada: try/catch defensivo em permissions.ts. Modulo
+    // que lanca em qualquer acesso retorna lista vazia sem propagar
+    // excecao.
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () =>
         new Proxy(
           {},
@@ -302,7 +310,7 @@ describe('carregarModulo — hardening Reflect.get (R-INT-3-HC-PROXY-REFLECT-HAR
 describe('escreverBodyFatEmHC e escreverMenstruacaoEmHC — cobertura mínima', () => {
   it('body fat permission_denied emite tipo=gordura', async () => {
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: jest.fn(),
         insertRecords: jest
@@ -326,7 +334,7 @@ describe('escreverBodyFatEmHC e escreverMenstruacaoEmHC — cobertura mínima', 
 
   it('menstruacao api_error emite tipo=menstruacao', async () => {
     jest.doMock(
-      'react-native-health-connect',
+      '../../../modules/health-connect/src',
       () => ({
         readRecords: jest.fn(),
         insertRecords: jest

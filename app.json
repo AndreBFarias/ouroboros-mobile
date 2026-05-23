@@ -114,7 +114,6 @@
         }
       ],
       "expo-web-browser",
-      "react-native-health-connect",
       [
         "expo-build-properties",
         {
