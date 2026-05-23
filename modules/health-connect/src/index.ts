@@ -11,10 +11,12 @@
 // react-native-health-connect, para que callers tenham mudanca minima
 // (somente o require/import).
 //
-// Sub-sprint A entrega: availability + permissions. Sub-sprint B
-// adicionou readRecords (Steps/ExerciseSession/Weight/BodyFat/
-// HeartRate/SleepSession/MenstruationFlow). Sub-sprint C
-// (insertRecords) fica para depois.
+// Sub-sprint A entregou availability + permissions. Sub-sprint B
+// entregou readRecords (Steps/ExerciseSession/Weight/BodyFat/
+// HeartRate/SleepSession/MenstruationFlow). Sub-sprint C entregou
+// insertRecords (ExerciseSession/Weight/BodyFat/MenstruationFlow —
+// 4 tipos canonicos espelhando os writers de src/lib/health/sync.ts).
+// Sub-sprint D (migracao do require em sync.ts) fica para depois.
 //
 // Em ambiente sem suporte (Expo Go web, Jest, iOS), o modulo nativo
 // e ausente: requireOptionalNativeModule devolve null e cada funcao
@@ -57,6 +59,53 @@ export interface ReadRecordsResult {
   pageToken?: string;
 }
 
+// Sub-sprint C: insertRecords.
+//
+// Discriminated union por recordType. Caller monta o shape em
+// src/lib/health/sync.ts (escreverTreinoEmHC, escreverPesoEmHC,
+// escreverBodyFatEmHC, escreverMenstruacaoEmHC) — sub-sprint D fara
+// o port do require atual (react-native-health-connect) para esta
+// bridge nativa.
+//
+// IMPORTANTE: HC nao dedupa records por padrao. Chamar insertRecords()
+// 2x com o mesmo payload cria 2 records duplicados. Sub-sprint D pode
+// introduzir clientRecordId para habilitar dedup pelo lado do HC; esta
+// sub-sprint nao implementa.
+export interface InsertExerciseSessionInput {
+  recordType: 'ExerciseSession';
+  startTime: string; // ISO 8601 com offset
+  endTime: string;
+  exerciseType: number; // codigo HC (ex: 2 = BODY_WEIGHT_WORKOUT generic)
+  title?: string;
+  notes?: string;
+}
+
+export interface InsertWeightInput {
+  recordType: 'Weight';
+  time: string;
+  // Sub-mapa para alinhar com shape ja usado em sync.ts. Bridge nativa
+  // aceita apenas unit='kilograms'.
+  weight: { value: number; unit: 'kilograms' };
+}
+
+export interface InsertBodyFatInput {
+  recordType: 'BodyFat';
+  time: string;
+  percentage: number; // 0..100
+}
+
+export interface InsertMenstruationFlowInput {
+  recordType: 'MenstruationFlow';
+  time: string;
+  flow: 1 | 2 | 3; // FLOW_LIGHT | FLOW_MEDIUM | FLOW_HEAVY
+}
+
+export type InsertRecordInput =
+  | InsertExerciseSessionInput
+  | InsertWeightInput
+  | InsertBodyFatInput
+  | InsertMenstruationFlowInput;
+
 // ---------- Native module loader ----------
 
 interface NativeModuleShape {
@@ -70,6 +119,7 @@ interface NativeModuleShape {
     recordType: string,
     options: ReadRecordsOptions
   ): Promise<ReadRecordsResult>;
+  insertRecords(records: Array<Record<string, unknown>>): Promise<string[]>;
 }
 
 function getNative(): NativeModuleShape | null {
@@ -203,6 +253,32 @@ export async function readRecords(
   }
 }
 
+// Persiste records no HC. Caller envia array de InsertRecordInput
+// (discriminated union por recordType). Retorna array de ids gerados pelo
+// HC (response.recordIdsList) na mesma ordem do input.
+//
+// Em ambiente sem modulo nativo (Expo Go web, iOS, Jest) retorna [] como
+// no-op seguro — caller (sub-sprint D em sync.ts) trata fallback via
+// reportarFalhaHC('no_module').
+//
+// IMPORTANTE: HC nao dedupa records por padrao. Chamar 2x com o mesmo
+// payload cria 2 records duplicados. Dedup e responsabilidade do caller
+// (sub-sprint D pode usar clientRecordId derivado do uuid do Vault).
+export async function insertRecords(
+  records: InsertRecordInput[]
+): Promise<string[]> {
+  const native = getNative();
+  if (!native) return [];
+  try {
+    const result = await native.insertRecords(
+      records as unknown as Array<Record<string, unknown>>
+    );
+    return Array.isArray(result) ? result : [];
+  } catch {
+    return [];
+  }
+}
+
 const _default = {
   getSdkStatus,
   initialize,
@@ -211,6 +287,7 @@ const _default = {
   getGrantedPermissions,
   revokeAllPermissions,
   readRecords,
+  insertRecords,
 };
 
 export default _default;

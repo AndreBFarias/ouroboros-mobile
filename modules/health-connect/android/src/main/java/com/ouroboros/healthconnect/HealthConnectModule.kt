@@ -7,11 +7,11 @@ package com.ouroboros.healthconnect
 // 1.1.0-alpha11 obsoleto e e rejeitado pelo HC moderno como
 // SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED).
 //
-// Sub-sprint A entrega skeleton + availability + permissions. Sub-sprints
-// B (readRecords), C (insertRecords), D (sync.ts migration) ficam para
-// depois.
+// Sub-sprint A entregou skeleton + availability + permissions. Sub-sprint
+// B entregou readRecords. Sub-sprint C entrega insertRecords. Sub-sprint
+// D (sync.ts migration) fica para depois.
 //
-// API JS exposta (compat com src/lib/health/{availability,permissions}.ts):
+// API JS exposta (compat com src/lib/health/{availability,permissions,sync}.ts):
 //   - getSdkStatus(): Promise<Int>           (1 = available, 2 = unavailable, 3 = needs_update)
 //   - initialize(): Promise<Boolean>
 //   - openHealthConnectSettings(): void
@@ -19,6 +19,7 @@ package com.ouroboros.healthconnect
 //   - getGrantedPermissions(): Promise<perms[]>
 //   - revokeAllPermissions(): Promise<void>
 //   - readRecords(recordType, options): Promise<{records, pageToken}>  (sub-sprint B)
+//   - insertRecords(records): Promise<Array<String>>                   (sub-sprint C)
 //
 // Convencao: comentarios sem acento (shell/CI).
 
@@ -302,6 +303,58 @@ class HealthConnectModule : Module() {
             CodedException(
               "ERR_READ_RECORDS",
               "Falha ao ler records: ${e.message}",
+              e
+            )
+          )
+        }
+      }
+    }
+
+    // ---------- INSERT RECORDS ----------
+
+    // Persiste records no HC. Caller envia Array<Map> com chave 'recordType'
+    // discriminada (ExerciseSession | Weight | BodyFat | MenstruationFlow).
+    // Conversao Map -> Record feita em Utils.mapToRecord() (suspend nao,
+    // apenas alocacao). insertRecords do client e suspend, roda em
+    // Dispatchers.IO. Retorna Array<String> com os ids gerados pelo HC
+    // (resp.recordIdsList) na mesma ordem do input.
+    //
+    // Idempotencia: HC nao dedupa por padrao. Sub-sprint D pode prover
+    // clientRecordId no shape JS para habilitar dedup pelo lado do HC;
+    // sub-sprint C nao implementa.
+    //
+    // Validacao de input em parse-time: shape invalido (recordType
+    // desconhecido, campo obrigatorio ausente, unidade nao suportada)
+    // resolve a promise em rejeicao com ERR_INVALID_INPUT antes de
+    // qualquer chamada de rede.
+    AsyncFunction("insertRecords") { inputs: List<Map<String, Any?>>, promise: Promise ->
+      val context = appContext.reactContext
+        ?: return@AsyncFunction promise.reject(
+          CodedException("ERR_NO_CONTEXT", "react context indisponivel", null)
+        )
+
+      val records = try {
+        inputs.map { mapToRecord(it) }
+      } catch (e: Throwable) {
+        return@AsyncFunction promise.reject(
+          CodedException(
+            "ERR_INVALID_INPUT",
+            "Falha ao converter input: ${e.message}",
+            e
+          )
+        )
+      }
+
+      CoroutineScope(Dispatchers.IO).launch {
+        try {
+          val client = HealthConnectClient.getOrCreate(context, providerPackageName)
+          val response = client.insertRecords(records)
+          promise.resolve(response.recordIdsList)
+        } catch (e: Throwable) {
+          promise.reject(
+            CodedException(
+              "ERR_INSERT_RECORDS",
+              "Falha ao inserir records: ${e.message}",
               e
             )
           )
