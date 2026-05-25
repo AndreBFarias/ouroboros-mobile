@@ -134,6 +134,19 @@ export function passosPath(date: Date): string {
   return `markdown/passos-${formatDateYmd(date)}.md`;
 }
 
+// markdown/sono-YYYY-MM-DD-hc-<id>.md (R-INT-3-HC-AUTOPULL-SLEEP).
+// Uma sessao de sono por arquivo. `date` e o dia do despertar (endTime
+// local). `hcId` e o metadata.id da SleepSession no Health Connect,
+// chave estavel usada para idempotencia (pular sessao ja persistida).
+// O id e sanitizado (kebab-case seguro) pra nao quebrar o filesystem.
+export function sonoPath(date: Date, hcId: string): string {
+  const slugId = hcId
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `markdown/sono-${formatDateYmd(date)}-hc-${slugId}.md`;
+}
+
 // jpg/medidas-YYYY-MM-DD-<lado>.jpg (foto de medida corporal)
 export function medidasFotoPath(
   date: Date,
