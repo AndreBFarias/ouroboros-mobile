@@ -15,7 +15,7 @@ import { useEffect, useRef } from 'react';
 // browser + entregar o code pro app. Chamada top-level garantida
 // fora de qualquer hook ou guard.
 WebBrowser.maybeCompleteAuthSession();
-import { Appearance, LogBox, StyleSheet, View } from 'react-native';
+import { Appearance, AppState, LogBox, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { OuroborosLoader } from '@/components/brand';
 import { ToastProvider, useToast } from '@/components/ui';
@@ -24,6 +24,17 @@ import { FABMenu } from '@/components/chrome/FABMenu';
 // R-INT-3: bridge que escuta falhas do Health Connect sync e exibe
 // toast explicito (warn). Montado dentro do ToastProvider abaixo.
 import { HCToastBridge } from '@/lib/health/useHCToast';
+// R-INT-3-HC-AUTOPULL-WIRING (2026-05-22): orquestrador + 5 puxadores
+// concretos injetados no boot path. Nota: o puxador de sono exporta
+// `puxadorSono` (nome canonico do codebase, alinhado com schemas/sono.ts
+// e tests/lib/health/puxadores/sleep.test.ts), nao `puxadorSleep`.
+import { orquestrarHCAutopull } from '@/lib/health/autopullScheduler';
+import { puxadorPassos } from '@/lib/health/puxadores/passos';
+import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
+import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
+import { puxadorMenstruacao } from '@/lib/health/puxadores/menstruacao';
+import { puxadorSono } from '@/lib/health/puxadores/sleep';
+import { useSettings } from '@/lib/stores/settings';
 import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { useShareIntentListener } from '@/lib/boot/useShareIntentListener';
@@ -219,6 +230,70 @@ export default function RootLayout() {
     void avaliarBackupAutomatico();
     return () => {
       cancelarTimerBackup();
+    };
+  }, [appPronto]);
+
+  // R-INT-3-HC-AUTOPULL-WIRING (2026-05-22): dispara autopull do Health
+  // Connect no boot apos appPronto e a cada foreground. Respeita o
+  // toggle featureToggles.healthConnectSync (default false; ligado em
+  // Settings) e throttle de 60min via min(hcAutopullUltimaSync). Fire-
+  // and-forget: nao bloqueia render. Sem este wiring o scheduler + 5
+  // puxadores ficam codigo morto (nenhum caller no boot path). O guard
+  // de write-back (writeback-guard) ja esta na main, entao ligar isto
+  // nao causa loop HC -> Vault -> HC. Cleanup remove o listener de
+  // AppState (A26: sem leak).
+  useEffect(() => {
+    if (!appPronto) return;
+
+    const THROTTLE_MS = 60 * 60 * 1000;
+    const puxadores = [
+      puxadorPassos,
+      puxadorExercicio,
+      puxadorMedidas,
+      puxadorMenstruacao,
+      puxadorSono,
+    ];
+
+    function podeDisparar(): boolean {
+      const s = useSettings.getState();
+      if (!s.featureToggles.healthConnectSync) return false;
+      const ultimas = Object.values(s.hcAutopullUltimaSync).filter(
+        (v): v is string => typeof v === 'string'
+      );
+      if (ultimas.length === 0) return true; // primeira sync
+      const maisAntigo = Math.min(
+        ...ultimas.map((iso) => new Date(iso).getTime())
+      );
+      return Date.now() - maisAntigo >= THROTTLE_MS;
+    }
+
+    async function disparar(): Promise<void> {
+      if (!podeDisparar()) return;
+      try {
+        const r = await orquestrarHCAutopull(puxadores);
+        const totalNovos = r.tipos.reduce((acc, t) => acc + t.novos, 0);
+        const totalErros = r.tipos.filter((t) => t.erro !== null).length;
+        console.log('[hc-autopull]', 'wiring boot/foreground', {
+          rodadoEm: r.rodadoEm,
+          totalNovos,
+          totalErros,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.log('[hc-autopull]', 'wiring erro', msg);
+      }
+    }
+
+    // Disparo 1: boot apos appPronto.
+    void disparar();
+
+    // Disparo 2: cada vez que o app volta para 'active' (foreground).
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void disparar();
+    });
+
+    return () => {
+      sub.remove();
     };
   }, [appPronto]);
 
