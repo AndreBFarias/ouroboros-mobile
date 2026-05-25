@@ -16,7 +16,7 @@ Decisão registrada no spec do SCHEDULER (linha 183 do `R-INT-3-HC-AUTOPULL-SCHE
 
 ## Contexto
 
-Após Fase B.1 (SCHEDULER) + B.2-B.6 (5 puxadores concretos), faltava o glue que dispara `orquestrarHCAutopull([puxadorPassos, puxadorExercicio, puxadorMedidas, puxadorMenstruacao, puxadorSleep])` no boot path do app. Este wiring deve:
+Após Fase B.1 (SCHEDULER) + B.2-B.6 (5 puxadores concretos), faltava o glue que dispara `orquestrarHCAutopull([puxadorPassos, puxadorExercicio, puxadorMedidas, puxadorMenstruacao, puxadorSono])` no boot path do app. Este wiring deve:
 
 1. Disparar **após mount** (idealmente após `appPronto`, mesma janela usada pelo `migrarEstadoParaVault` e `avaliarBackupAutomatico`).
 2. Disparar **após app voltar do background** (transição `AppState` para `'active'`), porque o usuário pode ter coletado dados no HC enquanto o Ouroboros estava em background.
@@ -33,7 +33,7 @@ Entregar 1 useEffect novo em `app/_layout.tsx` (modelo igual aos useEffects de `
 - Roda após `AppState` voltar para `'active'` (assinatura `AppState.addEventListener('change', ...)` — padrão já usado em `src/lib/vault/permissions.ts:176`).
 - Lê toggle `useSettings.getState().featureToggles.healthConnectSync`. Se `false`, early return (no-op).
 - Calcula throttle: lê `useSettings.getState().hcAutopullUltimaSync` (`Record<TipoHC, string | null>`), pega `min` dos valores não-nulos e compara com `Date.now() - 60min`. Se algum tipo nunca sincronizou (todos `null`), permite disparar (primeira sync).
-- Chama `orquestrarHCAutopull([puxadorPassos, puxadorExercicio, puxadorMedidas, puxadorMenstruacao, puxadorSleep])` fire-and-forget (`void`).
+- Chama `orquestrarHCAutopull([puxadorPassos, puxadorExercicio, puxadorMedidas, puxadorMenstruacao, puxadorSono])` fire-and-forget (`void`).
 - Loga `{rodadoEm, totalNovos, totalErros}` ao concluir.
 
 ## Escopo / Entregáveis
@@ -48,7 +48,7 @@ Entregar 1 useEffect novo em `app/_layout.tsx` (modelo igual aos useEffects de `
     import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
     import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
     import { puxadorMenstruacao } from '@/lib/health/puxadores/menstruacao';
-    import { puxadorSleep } from '@/lib/health/puxadores/sleep';
+    import { puxadorSono } from '@/lib/health/puxadores/sleep';
     import { AppState } from 'react-native'; // já importado? grep antes
     import { useSettings } from '@/lib/stores/settings';
     ```
@@ -68,7 +68,7 @@ Entregar 1 useEffect novo em `app/_layout.tsx` (modelo igual aos useEffects de `
         puxadorExercicio,
         puxadorMedidas,
         puxadorMenstruacao,
-        puxadorSleep,
+        puxadorSono,
       ];
 
       function podeDisparar(): boolean {
@@ -130,7 +130,7 @@ test -f src/lib/health/puxadores/passos.ts && grep -n "export const puxadorPasso
 test -f src/lib/health/puxadores/exercicio.ts && grep -n "export const puxadorExercicio" src/lib/health/puxadores/exercicio.ts
 test -f src/lib/health/puxadores/medidas.ts && grep -n "export const puxadorMedidas" src/lib/health/puxadores/medidas.ts
 test -f src/lib/health/puxadores/menstruacao.ts && grep -n "export const puxadorMenstruacao" src/lib/health/puxadores/menstruacao.ts
-test -f src/lib/health/puxadores/sleep.ts && grep -n "export const puxadorSleep" src/lib/health/puxadores/sleep.ts
+test -f src/lib/health/puxadores/sleep.ts && grep -n "export const puxadorSono" src/lib/health/puxadores/sleep.ts
 
 # Se algum puxador faltar, sprint NÃO PODE EXECUTAR. Erro imediato.
 
@@ -161,7 +161,7 @@ grep -n "appPronto\|useAppPronto\|useBootStatus" app/_layout.tsx  # >= 1
 
 ## Acceptance criteria
 
-1. `app/_layout.tsx` contém useEffect que chama `orquestrarHCAutopull([puxadorPassos, puxadorExercicio, puxadorMedidas, puxadorMenstruacao, puxadorSleep])`.
+1. `app/_layout.tsx` contém useEffect que chama `orquestrarHCAutopull([puxadorPassos, puxadorExercicio, puxadorMedidas, puxadorMenstruacao, puxadorSono])`.
 2. Disparo ocorre apenas quando `appPronto === true` (gate de boot).
 3. Disparo ocorre também a cada transição `AppState` para `'active'` (foreground).
 4. Toggle `featureToggles.healthConnectSync === false` faz early return (no-op total).
@@ -187,7 +187,7 @@ grep -n "appPronto\|useAppPronto\|useBootStatus" app/_layout.tsx  # >= 1
 2. **Verificações grep:**
    ```bash
    rg "orquestrarHCAutopull" app/_layout.tsx  # >= 1
-   rg "puxadorPassos|puxadorExercicio|puxadorMedidas|puxadorMenstruacao|puxadorSleep" app/_layout.tsx  # >= 5 (1 por puxador)
+   rg "puxadorPassos|puxadorExercicio|puxadorMedidas|puxadorMenstruacao|puxadorSono" app/_layout.tsx  # >= 5 (1 por puxador)
    rg "featureToggles.healthConnectSync" app/_layout.tsx  # >= 1
    rg "AppState.addEventListener" app/_layout.tsx  # >= 1
    rg "\[hc-autopull\]" app/_layout.tsx  # >= 1

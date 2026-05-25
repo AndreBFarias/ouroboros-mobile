@@ -136,17 +136,26 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 worktree (mesmo padrao do PASSOS), cherry-pick limpo na main, smoke
 **300 suites / 2878 testes verde**. Nenhum registra no scheduler (injecao pura).
 
-#### 3P.B-WIRE — Conectar + proteger (2, prereq do go-live autopull)
+#### 3P.B-WIRE — Conectar + proteger (2) — FECHADA 2/2 (2026-05-25)
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
 | R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD | Guard contra loop HC->Vault->HC em medidas+menstruacao (param `pularSyncHC`) | fix | P1 | `63544d9` | `[ok]` (2026-05-25) |
-| R-INT-3-HC-AUTOPULL-WIRING | useEffect em `_layout.tsx` liga os 5 puxadores no boot + foreground (toggle + throttle 60min) | integr | P1 | 0.5h | `R-INT-3-HC-AUTOPULL-WIRING-spec.md` |
+| R-INT-3-HC-AUTOPULL-WIRING | useEffect em `_layout.tsx` liga os 5 puxadores no boot + foreground (toggle + throttle 60min) | integr | P1 | `802927d` | `[ok]` (2026-05-25) |
 
-**Ordem obrigatoria:** GUARD antes de WIRING. Sem o guard, ligar o wiring com
-`healthConnectSync` on duplica registros no HC ao vivo (achado do executor
-MEDIDAS 2026-05-25; `insertRecords` da bridge nao dedupa). PASSOS/EXERCICIO/SLEEP
-nao tem write-back HC — guard so cobre medidas+menstruacao.
+**Ordem obrigatoria respeitada:** GUARD antes de WIRING. Sem o guard, ligar o
+wiring com `healthConnectSync` on duplicaria registros no HC ao vivo (achado do
+executor MEDIDAS 2026-05-25; `insertRecords` da bridge nao dedupa).
+PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstruacao.
+
+> **Autopull HC FUNCIONALMENTE COMPLETO (foreground).** Os 6 puxadores
+> (passos/exercicio/medidas/menstruacao/sono) rodam no boot + cada foreground,
+> com toggle `healthConnectSync` + throttle 60min, sem loop de write-back.
+> Pendente: validacao live no celular (precisa APK novo via GitHub Actions — cota
+> EAS esgotada ate 01/Jun) — sprint `R-INT-3-HC-LIVE-CHECKPOINT`. Background fetch
+> (app fechado) e sprint futura `R-INT-3-HC-AUTOPULL-BACKGROUND` (opt-in).
+> Nota: spec do WIRING citava `puxadorSleep`; nome canonico real e `puxadorSono`
+> (corrigido na spec 2026-05-25).
 
 #### 3P.X — Sprints anti-debito materializadas pos Fase A+B parcial (7, sessao 2026-05-22 tarde)
 

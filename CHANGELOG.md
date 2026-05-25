@@ -51,6 +51,17 @@ param) continuam reescrevendo no HC. +6 testes (spy confirma corte do
 write-back). Smoke **300 suítes / 2884 testes verde**. Pré-requisito do WIRING
 agora satisfeito.
 
+`R-INT-3-HC-AUTOPULL-WIRING` (`802927d`): 1 useEffect novo em `app/_layout.tsx`
+(627→702L) dispara `orquestrarHCAutopull([puxadorPassos, puxadorExercicio,
+puxadorMedidas, puxadorMenstruacao, puxadorSono])` no boot (gate `appPronto`) e a
+cada `AppState` → `'active'`. Early-return se `featureToggles.healthConnectSync`
+off; throttle 60min via `min(hcAutopullUltimaSync)`; fire-and-forget com log
+`[hc-autopull]`; cleanup do listener (sem leak). Correção: a spec citava
+`puxadorSleep`, nome canônico é `puxadorSono`. **Autopull HC funcionalmente
+completo (foreground)** — Fase 3P.B + 3P.B-WIRE fechadas. Validação live no
+device fica para `R-INT-3-HC-LIVE-CHECKPOINT` (precisa APK novo). Smoke
+**300 suítes / 2884 testes verde** (zero teste novo — wiring de useEffect).
+
 ### Fase 3 Onda 3N.1 — R-ROT-1-A inteligência de soneca + listener canônico (2026-05-21)
 
 Inteligência temporal sobre snooze de alarmes (replan R-ROT-1 opção A,
