@@ -169,14 +169,33 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 | R-INT-3-HC-AUTOPULL-VAULT-MIRROR | feature | P3 | 1-1.5h | espelhar ultimaSync no Vault cross-stack |
 | R-INT-3-HC-PASSOS-TIMEZONE-INTL | refactor | P3 | 45min | executor manteve UTC-3 hardcoded contra spec exigindo Intl |
 
-#### 3P.C — Integracoes complementares (4)
+#### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
-| R-INT-2-CALENDAR-SYNC-EVENTOS | Puxar eventos Google Calendar pra secao Proximos | feature | P1 | 1d | `R-INT-2-CALENDAR-SYNC-EVENTOS-spec.md` |
-| R-INT-4-SPOTIFY-RECENTLY-PLAYED | Puxar timeline Spotify pra Recap > Musicas | feature | P2 | 0.5d | `R-INT-4-SPOTIFY-RECENTLY-PLAYED-spec.md` |
-| R-INT-4-YOUTUBE-WATCH-HISTORY | Puxar Liked Videos YouTube pra Recap > Conteudo | feature | P3 | 0.5d | `R-INT-4-YOUTUBE-WATCH-HISTORY-spec.md` |
+| R-INT-2-CALENDAR-SYNC-EVENTOS | Auto-sync periodico Calendar (scheduler integracoes + boot + toggle) | feature | P1 | `6221adf` | `[ok]` (2026-05-25, re-escopada) |
+| R-INT-4-SPOTIFY-RECENTLY-PLAYED | ~~Puxar timeline Spotify~~ | feature | P2 | — | `[descopado]` (intento ja servido por R-MEDIA-1) |
+| R-INT-4-YOUTUBE-WATCH-HISTORY | ~~Puxar Liked Videos YouTube~~ | feature | P3 | — | `[descopado]` (intento ja servido por R-MEDIA-1) |
 | R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO | Upload ZIP backup local pro Drive semanal | feature | P2 | 1-1.5d | `R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO-spec.md` |
+
+**Auditoria 2026-05-25 (dono + orquestrador):**
+- **CALENDAR re-escopada:** a spec era majoritariamente fantasma — schema
+  (`AgendaEventoSchema`), writer (`salvarEventoAgenda`/`sincronizarSnapshotAgenda`),
+  cliente (`calendarApi.listarEventos`) e consumer (`useProximos`/`SecaoProximos`)
+  ja existiam (M37.1.2). Trabalho real entregue: `integracoes/scheduler.ts` (novo
+  orquestrador, espelha autopullScheduler), `integracoes/calendarSync.ts`, toggle
+  `featureToggles.googleCalendarSync` (default off) + tracking + wiring no
+  `_layout.tsx` (boot+foreground, throttle 60min). Antes a agenda so atualizava ao
+  abrir `/agenda`; agora sincroniza periodicamente.
+- **SPOTIFY/YOUTUBE descopadas (decisao do dono 2026-05-25):** o intento e
+  *anexar uma musica/video a um recap* (modelo Google Fotos), NAO puxar historico
+  passivo (timeline tipo Wrapped). Isso JA esta implementado por R-MEDIA-1 (oEmbed
+  Spotify/YouTube via URL + cache + `MidiaSpotifyTab`/`MidiaYoutubeTab`/
+  `MidiaPreviewSpotifyYoutube` + schemas `MidiaSpotify`/`MidiaYoutube`). Puxar
+  historico seria over-build de rede de saida que tensiona ADR-0007 sem servir o
+  intento. Specs `-RECENTLY-PLAYED`/`-WATCH-HISTORY` parkadas (nao executar).
+- **DRIVE pendente:** real, mas entrelacada com expansao de escopo OAuth (Drive)
+  + verificacao Google (pendencia humana R-SEC-1). Aguarda decisao.
 
 **Sequenciamento sugerido:** 3P.A (B -> C -> D, sequencial — modulo nativo compartilhado) -> 3P.B (SCHEDULER primeiro, depois 5 puxadores em paralelo via worktree) -> 3P.C (paralelo).
 

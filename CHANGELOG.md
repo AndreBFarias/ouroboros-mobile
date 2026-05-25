@@ -5,6 +5,33 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3P.C — Calendar auto-sync + auditoria (descopa Spotify/YouTube) (2026-05-25)
+
+Auditoria da Fase C revelou 2 sprints fantasma e 1 mal-escopada. Decisões do
+dono + orquestrador:
+
+- **`R-INT-2-CALENDAR-SYNC-EVENTOS` (`6221adf`, re-escopada):** a spec pedia criar
+  schema/writer/cliente/consumer que já existiam (M37.1.2). Trabalho real entregue:
+  `src/lib/integracoes/scheduler.ts` (orquestrador de integrações não-HC, espelha
+  `autopullScheduler`, `Promise.allSettled`), `src/lib/integracoes/calendarSync.ts`
+  (integração com deps injetadas; mapeia `EventoCalendar`→`AgendaEvento`; sincroniza
+  ambas as pessoas; token null/vault vazio → no-op), toggle
+  `featureToggles.googleCalendarSync` (default off) + tracking `calendarSyncUltimaSync`
+  + setter em `settings.ts`, cascata em `exportarVault.ts` (snapshot shape), e
+  useEffect novo em `app/_layout.tsx` (boot + foreground, throttle 60min, log
+  `[integracoes]`, sem tocar o useEffect de HC). Antes a agenda só atualizava ao
+  abrir `/agenda`; agora sincroniza periodicamente. +2 suítes de teste.
+- **`R-INT-4-SPOTIFY-RECENTLY-PLAYED` / `-YOUTUBE-WATCH-HISTORY` descopadas:** o
+  intento do dono é *anexar uma música/vídeo a um recap* (modelo Google Fotos), não
+  puxar histórico passivo (timeline tipo Wrapped). Isso já está implementado por
+  R-MEDIA-1 (oEmbed Spotify/YouTube + cache + `MidiaSpotifyTab`/`MidiaYoutubeTab`/
+  `MidiaPreviewSpotifyYoutube`). Puxar histórico seria rede de saída desnecessária
+  (tensiona ADR-0007). Specs parkadas.
+- **`R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO` pendente:** real, mas entrelaçada com OAuth
+  scope expansion + verificação Google (R-SEC-1, pendência humana).
+
+Smoke **302 suítes / 2895 testes verde**.
+
 ### Fase 3 Onda 3P.B — Autopull HC puxadores EXERCICIO/MEDIDAS/MENSTRUACAO/SLEEP (2026-05-25)
 
 Fechamento da Fase B do autopull Health Connect (6/6). Quatro puxadores
