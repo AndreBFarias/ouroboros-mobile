@@ -130,9 +130,11 @@ export interface GauntletAPI {
   // 'humores-30d' alimenta useHumorMock (heatmap colorido).
   // 'diarios-3' alimenta useDiarioMock (3 entradas: trigger + vitoria
   // + reflexao). 'eventos-7' alimenta useEventosMock (7 eventos em
-  // -7d a hoje). No-op em mobile (guard ja filtra).
+  // -7d a hoje). 'saude-7d' (R-INT-3-HC-RECAP-CARD-FOLLOWUP) popula o
+  // useVaultMock com passos/sono/treinos/medidas canonicos para a secao
+  // Saude do Recap aparecer preenchida. No-op em mobile (guard ja filtra).
   seedComDados(
-    fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'
+    fixture: 'humores-30d' | 'diarios-3' | 'eventos-7' | 'saude-7d'
   ): Promise<void>;
   // V4.0 (INFRA-VAULT-WEB-MOCK, 2026-05-08): le conteudo serializado
   // de um arquivo .md do Vault mock (web/dev). Util para E2E auditar
@@ -389,7 +391,7 @@ function consoleErros(): Array<{ ts: number; msg: string }> {
 // para evitar ciclo (seedDeterministico importa gauntlet). require()
 // resolve sob demanda, mas TS strict precisa de tipo explicito.
 async function aplicarSeedComDados(
-  fixture: 'humores-30d' | 'diarios-3' | 'eventos-7'
+  fixture: 'humores-30d' | 'diarios-3' | 'eventos-7' | 'saude-7d'
 ): Promise<void> {
   // Import dinamico do seedDeterministico para quebrar ciclo. Em
   // tempo de execucao web/dev, o bundle ja inclui ambos os modulos.
@@ -400,6 +402,8 @@ async function aplicarSeedComDados(
     seed.seedDiarios(3);
   } else if (fixture === 'eventos-7') {
     seed.seedEventos(7);
+  } else if (fixture === 'saude-7d') {
+    seed.seedSaude(7);
   }
 }
 

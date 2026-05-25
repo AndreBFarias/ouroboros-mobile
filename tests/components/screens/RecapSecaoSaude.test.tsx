@@ -2,12 +2,15 @@
 // condicional (sem dado HC -> secao oculta; com dado -> mostra os
 // valores formatados em PT-BR) e navegacao por linha clicavel.
 //
-// Mocka o agregador calcularSaudeRecap (testado a parte em
-// tests/lib/recap/saude.test.ts) e a store de vault. O componente
-// busca via useEffect; usamos waitFor para aguardar o estado.
+// R-INT-3-HC-RECAP-CARD-FOLLOWUP: o agregado de saude agora e calculado
+// no RecapScreen (container) e injetado via prop `saude`. A secao virou
+// componente puro de apresentacao; os testes passam o SaudeRecap direto
+// (sem mock de calcularSaudeRecap nem useEffect). O calculo continua
+// coberto em tests/lib/recap/saude.test.ts e a integracao container +
+// predicado de vazio em tests/components/screens/RecapScreen.test.tsx.
 //
 // Comentarios sem acento.
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import type { SaudeRecap } from '@/lib/recap/saude';
 
 const mockPush = jest.fn();
@@ -16,21 +19,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-const mockCalcular = jest.fn();
-jest.mock('@/lib/recap/saude', () => ({
-  __esModule: true,
-  calcularSaudeRecap: (...args: unknown[]) => mockCalcular(...args),
-}));
-
-jest.mock('@/lib/stores/vault', () => ({
-  __esModule: true,
-  useVault: (selector: (s: { vaultRoot: string | null }) => unknown) =>
-    selector({ vaultRoot: 'content://test/vault' }),
-}));
-
 import { RecapSecaoSaude } from '@/components/screens/RecapSecaoSaude';
-
-const ATE = new Date('2026-05-22T12:00:00-03:00');
 
 const saudeCheia: SaudeRecap = {
   passos: { total: 57300, mediaDia: 8186 },
@@ -51,25 +40,23 @@ beforeEach(() => {
 });
 
 describe('RecapSecaoSaude - render condicional', () => {
-  it('sem dado de saude no periodo, secao fica oculta', async () => {
-    mockCalcular.mockResolvedValueOnce(saudeVazia);
-    const { queryByLabelText } = render(
-      <RecapSecaoSaude periodo="semana" ate={ATE} />
-    );
-    await waitFor(() => {
-      expect(mockCalcular).toHaveBeenCalledTimes(1);
-    });
+  it('saude null (carregando ou sem vault), secao fica oculta', () => {
+    const { queryByLabelText } = render(<RecapSecaoSaude saude={null} />);
     expect(queryByLabelText('secao saude')).toBeNull();
   });
 
-  it('com dados, mostra o titulo e os valores formatados', async () => {
-    mockCalcular.mockResolvedValueOnce(saudeCheia);
-    const { getByText, getByLabelText } = render(
-      <RecapSecaoSaude periodo="semana" ate={ATE} />
+  it('sem nenhuma metrica no periodo, secao fica oculta', () => {
+    const { queryByLabelText } = render(
+      <RecapSecaoSaude saude={saudeVazia} />
     );
-    await waitFor(() => {
-      expect(getByLabelText('secao saude')).toBeTruthy();
-    });
+    expect(queryByLabelText('secao saude')).toBeNull();
+  });
+
+  it('com dados, mostra o titulo e os valores formatados', () => {
+    const { getByText, getByLabelText } = render(
+      <RecapSecaoSaude saude={saudeCheia} />
+    );
+    expect(getByLabelText('secao saude')).toBeTruthy();
     expect(getByText('Saúde essa semana')).toBeTruthy();
     expect(getByText('57.300 passos (8.186/dia)')).toBeTruthy();
     expect(getByText('3 treinos (2,5h total)')).toBeTruthy();
@@ -79,61 +66,45 @@ describe('RecapSecaoSaude - render condicional', () => {
 });
 
 describe('RecapSecaoSaude - parcial e singular', () => {
-  it('renderiza so as linhas com dado (passos apenas)', async () => {
-    mockCalcular.mockResolvedValueOnce({
-      passos: { total: 5000, mediaDia: 5000 },
-      treinos: null,
-      sono: null,
-      medidaUltima: null,
-    });
+  it('renderiza so as linhas com dado (passos apenas)', () => {
     const { getByText, queryByText } = render(
-      <RecapSecaoSaude periodo="semana" ate={ATE} />
+      <RecapSecaoSaude
+        saude={{
+          passos: { total: 5000, mediaDia: 5000 },
+          treinos: null,
+          sono: null,
+          medidaUltima: null,
+        }}
+      />
     );
-    await waitFor(() => {
-      expect(getByText('5.000 passos (5.000/dia)')).toBeTruthy();
-    });
+    expect(getByText('5.000 passos (5.000/dia)')).toBeTruthy();
     expect(queryByText(/de sono/)).toBeNull();
   });
 
-  it('usa singular para 1 treino', async () => {
-    mockCalcular.mockResolvedValueOnce({
-      passos: null,
-      treinos: { total: 1, duracaoMin: 45 },
-      sono: null,
-      medidaUltima: null,
-    });
+  it('usa singular para 1 treino', () => {
     const { getByText } = render(
-      <RecapSecaoSaude periodo="semana" ate={ATE} />
+      <RecapSecaoSaude
+        saude={{
+          passos: null,
+          treinos: { total: 1, duracaoMin: 45 },
+          sono: null,
+          medidaUltima: null,
+        }}
+      />
     );
-    await waitFor(() => {
-      expect(getByText('1 treino (0,8h total)')).toBeTruthy();
-    });
+    expect(getByText('1 treino (0,8h total)')).toBeTruthy();
   });
 });
 
 describe('RecapSecaoSaude - navegacao', () => {
-  it('tap na linha de passos navega para /saude-fisica', async () => {
-    mockCalcular.mockResolvedValueOnce(saudeCheia);
-    const { getByLabelText } = render(
-      <RecapSecaoSaude periodo="semana" ate={ATE} />
-    );
-    await waitFor(() => {
-      expect(getByLabelText('57300 passos no periodo')).toBeTruthy();
-    });
+  it('tap na linha de passos navega para /saude-fisica', () => {
+    const { getByLabelText } = render(<RecapSecaoSaude saude={saudeCheia} />);
     fireEvent.press(getByLabelText('57300 passos no periodo'));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/saude-fisica' });
   });
 
-  it('tap na linha de medidas navega para /medidas', async () => {
-    mockCalcular.mockResolvedValueOnce(saudeCheia);
-    const { getByLabelText } = render(
-      <RecapSecaoSaude periodo="semana" ate={ATE} />
-    );
-    await waitFor(() => {
-      expect(
-        getByLabelText('ultima medida corporal no periodo')
-      ).toBeTruthy();
-    });
+  it('tap na linha de medidas navega para /medidas', () => {
+    const { getByLabelText } = render(<RecapSecaoSaude saude={saudeCheia} />);
     fireEvent.press(getByLabelText('ultima medida corporal no periodo'));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/medidas' });
   });

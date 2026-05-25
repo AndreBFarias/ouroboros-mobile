@@ -33,6 +33,8 @@ import { ChipGroup, EmptyState, Screen } from '@/components/ui';
 import { OuroborosLoader } from '@/components/brand';
 import { colors } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
+import { useVault } from '@/lib/stores/vault';
+import { calcularSaudeRecap, type SaudeRecap } from '@/lib/recap/saude';
 import {
   useRecap,
   resolverPeriodo,
@@ -149,6 +151,40 @@ export function RecapScreen() {
 
   const { data, loading } = useRecap(range);
 
+  // R-INT-3-HC-RECAP-CARD-FOLLOWUP: o agregado de saude (passos/treinos/
+  // sono/medidas vindos do autopull HC) e calculado aqui no container,
+  // nao mais dentro da RecapSecaoSaude. Dois motivos: (1) evita duplo
+  // fetch — o resultado e reusado tanto pela secao quanto pelo predicado
+  // de "recap vazio"; (2) sem isto, um usuario com SOMENTE dado de saude
+  // no periodo cairia no EmptyState e a secao Saude nunca apareceria.
+  const vaultRoot = useVault((s) => s.vaultRoot);
+  const [saude, setSaude] = useState<SaudeRecap | null>(null);
+  // Aguarda o agregado de saude antes de decidir entre EmptyState e
+  // conteudo. Sem isto, um recap que so tem dado de saude piscaria o
+  // EmptyState por um frame ate `saude` resolver (a query e async).
+  const [saudeLoading, setSaudeLoading] = useState<boolean>(true);
+  // getTime() para chave estavel do effect (evita refetch quando o memo
+  // do range produz um Date novo com mesmo instante).
+  const ateMs = range.ate.getTime();
+  useEffect(() => {
+    let vivo = true;
+    if (!vaultRoot) {
+      setSaude(null);
+      setSaudeLoading(false);
+      return;
+    }
+    setSaudeLoading(true);
+    void calcularSaudeRecap(vaultRoot, periodo, new Date(ateMs)).then((r) => {
+      if (vivo) {
+        setSaude(r);
+        setSaudeLoading(false);
+      }
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [vaultRoot, periodo, ateMs]);
+
   // L2: micro-fade out + fade in ao trocar modo. Curva linear curta
   // (180ms) — nao e movimento posicional, so opacidade.
   useEffect(() => {
@@ -214,7 +250,19 @@ export function RecapScreen() {
         data.numeros.eventos_negativos +
         data.numeros.tarefas_concluidas;
 
-  const totalRecap = totalListas + totalNumeros;
+  // R-INT-3-HC-RECAP-CARD-FOLLOWUP: presenca de qualquer metrica de
+  // saude (passos OU treinos OU sono OU medida) torna o recap nao-vazio,
+  // mesmo sem conquistas/numeros/etc. Caso contrario a secao Saude seria
+  // engolida pelo EmptyState quando o usuario so tem dado vindo do HC.
+  const temDadoSaude =
+    saude !== null &&
+    (saude.passos !== null ||
+      saude.treinos !== null ||
+      saude.sono !== null ||
+      saude.medidaUltima !== null);
+
+  const totalRecap =
+    totalListas + totalNumeros + (temDadoSaude ? 1 : 0);
 
   // R-RECAP-3: frase de empty state vem de pool determinista por
   // periodo+ano+semana. Mesma seed -> mesma frase em todo render,
@@ -379,7 +427,7 @@ export function RecapScreen() {
         <Animated.View style={estiloConteudo}>
           {modo === 'calendario' ? (
             <RecapModoCalendario />
-          ) : loading ? (
+          ) : loading || saudeLoading ? (
             <View
               style={{
                 flex: 1,
@@ -410,9 +458,10 @@ export function RecapScreen() {
                 <RecapSecaoNumeros numeros={data.numeros} range={range} />
               ) : null}
               {/* R-INT-3-HC-RECAP-CARD: consolida passos/treinos/sono/
-                  medidas vindos do autopull HC. A propria secao se
-                  oculta quando nao ha dado de saude no periodo. */}
-              <RecapSecaoSaude periodo={periodo} ate={range.ate} />
+                  medidas vindos do autopull HC. O agregado e calculado
+                  no container (acima) e injetado; a secao se oculta
+                  sozinha quando `saude` e null ou sem metrica. */}
+              <RecapSecaoSaude saude={saude} />
             </ScrollView>
           )}
         </Animated.View>

@@ -67,6 +67,16 @@ jest.mock('@/lib/vault/tarefas', () => ({
   listarTarefas: jest.fn().mockResolvedValue([]),
 }));
 
+// R-INT-3-HC-RECAP-CARD-FOLLOWUP: o RecapScreen agora eleva o calculo
+// de saude (antes feito dentro da RecapSecaoSaude). Mockamos o agregador
+// para controlar o cenario "so dado de saude". Default: tudo null (sem
+// dado HC) para manter o empty state previsivel dos testes legados.
+const mockCalcularSaude = jest.fn();
+jest.mock('@/lib/recap/saude', () => ({
+  __esModule: true,
+  calcularSaudeRecap: (...args: unknown[]) => mockCalcularSaude(...args),
+}));
+
 // L2: mock do useConquistas para o modo Calendario nao tentar I/O.
 jest.mock('@/lib/hooks/useConquistas', () => ({
   __esModule: true,
@@ -109,10 +119,19 @@ jest.mock('react-native-calendars', () => {
 
 import { RecapScreen } from '@/components/screens/RecapScreen';
 
+const SAUDE_VAZIA = {
+  passos: null,
+  treinos: null,
+  sono: null,
+  medidaUltima: null,
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockCanGoBack.mockReturnValue(false);
   mockSearchParams = {};
+  // Default: sem dado de saude no periodo (mantem empty state previsivel).
+  mockCalcularSaude.mockResolvedValue(SAUDE_VAZIA);
 });
 
 describe('RecapScreen', () => {
@@ -159,6 +178,20 @@ describe('RecapScreen', () => {
     const { findByText } = render(<RecapScreen />);
     expect(await findByText('Dia')).toBeTruthy();
     expect(await findByText('Semana')).toBeTruthy();
+  });
+
+  // R-INT-3-HC-RECAP-CARD-FOLLOWUP: o cenario "SO dado de saude renderiza
+  // a secao (nao EmptyState)" vive em RecapScreen-empty.test.tsx, que ja
+  // tem ToastProvider na arvore (a secao Saude no branch de conteudo
+  // monta junto das demais RecapSecao*, que usam useToast).
+
+  // Acceptance #2: o agregador de saude e chamado uma unica vez por
+  // render do Recap (sem duplo fetch — calculo elevado ao container).
+  it('chama calcularSaudeRecap uma unica vez por render', async () => {
+    const { findByLabelText } = render(<RecapScreen />);
+    // Aguarda o empty state (garante que o effect ja rodou).
+    await findByLabelText(/^vazio: /);
+    expect(mockCalcularSaude).toHaveBeenCalledTimes(1);
   });
 
   it('mostra empty state quando o vault nao tem registros no periodo', async () => {

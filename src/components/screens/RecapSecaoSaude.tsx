@@ -14,22 +14,22 @@
 //
 // Strings PT-BR sentence case com acentuacao completa.
 // Comentarios sem acento (convencao shell/CI).
-import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card } from '@/components/ui';
 import { colors } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
-import { useVault } from '@/lib/stores/vault';
-import { calcularSaudeRecap, type SaudeRecap } from '@/lib/recap/saude';
+import { type SaudeRecap } from '@/lib/recap/saude';
 import { destinoSaude, type SaudeChave } from '@/lib/recap/destinos';
-import type { PeriodoChave } from '@/lib/hooks/useRecap';
 
 interface Props {
-  periodo: PeriodoChave;
-  // Data de referencia (default new Date()). Util para testes
-  // deterministicos e para alinhar com o range do RecapScreen.
-  ate?: Date;
+  // R-INT-3-HC-RECAP-CARD-FOLLOWUP: o agregado de saude e calculado
+  // uma unica vez no RecapScreen (que ja precisa do resultado para o
+  // predicado de recap vazio) e injetado como prop. Antes a secao
+  // fazia o proprio fetch via useEffect, causando duplo calculo.
+  // null = sem dado de saude no periodo (ou ainda carregando); a secao
+  // se oculta.
+  saude: SaudeRecap | null;
 }
 
 // Formata inteiro com ponto de milhar PT-BR (57300 -> "57.300"). Sem
@@ -121,28 +121,8 @@ function montarLinhas(saude: SaudeRecap): Linha[] {
   return linhas;
 }
 
-export function RecapSecaoSaude({ periodo, ate }: Props) {
+export function RecapSecaoSaude({ saude }: Props) {
   const router = useRouter();
-  const vaultRoot = useVault((s) => s.vaultRoot);
-  const [saude, setSaude] = useState<SaudeRecap | null>(null);
-
-  // getTime() do `ate` para chave estavel do effect (evita refetch
-  // quando o caller passa um Date novo com mesmo timestamp).
-  const ateMs = (ate ?? new Date()).getTime();
-
-  useEffect(() => {
-    let vivo = true;
-    if (!vaultRoot) {
-      setSaude(null);
-      return;
-    }
-    void calcularSaudeRecap(vaultRoot, periodo, new Date(ateMs)).then((r) => {
-      if (vivo) setSaude(r);
-    });
-    return () => {
-      vivo = false;
-    };
-  }, [vaultRoot, periodo, ateMs]);
 
   if (!saude) return null;
   const linhas = montarLinhas(saude);

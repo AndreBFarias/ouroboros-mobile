@@ -26,6 +26,7 @@ import {
   seedHumores,
   seedDiarios,
   seedEventos,
+  seedSaude,
   lerHumoresMock,
   lerDiariosMock,
   lerEventosMock,
@@ -33,6 +34,13 @@ import {
 import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock } from '@/lib/dev/diarioMock';
 import { useEventosMock } from '@/lib/dev/eventosMock';
+import { useVault } from '@/lib/stores/vault';
+import { useVaultMock } from '@/lib/dev/vaultMockStore';
+import { parseFrontmatter } from '@/lib/vault/frontmatter';
+import { PassosSchema } from '@/lib/schemas/passos';
+import { SonoSchema } from '@/lib/schemas/sono';
+import { TreinoSessaoSchema } from '@/lib/schemas/treino_sessao';
+import { MedidasSchema } from '@/lib/schemas/medidas';
 
 describe('seedDeterministico (M-GAUNTLET-SEED-V2)', () => {
   beforeEach(() => {
@@ -162,6 +170,123 @@ describe('seedDeterministico (M-GAUNTLET-SEED-V2)', () => {
       for (const e of positivos) {
         expect(e.midia.length).toBeGreaterThanOrEqual(1);
       }
+    });
+  });
+
+  // R-INT-3-HC-RECAP-CARD-FOLLOWUP: seedSaude escreve direto no
+  // useVaultMock (saude nao tem store de dominio). Verificamos pelos
+  // paths canonicos e parseando cada .md contra o schema real.
+  describe('seedSaude', () => {
+    const VAULT = 'web://mock-vault/Ouroboros';
+    const HOJE = new Date('2026-05-25T12:00:00Z');
+
+    beforeEach(() => {
+      useVaultMock.getState().limpar();
+      useVault.setState({ vaultRoot: VAULT });
+    });
+
+    function urisComSegmento(seg: string): string[] {
+      return useVaultMock
+        .getState()
+        .listar()
+        .filter((u) => u.includes(seg));
+    }
+
+    it('escreve N arquivos de passos validos (PassosSchema)', () => {
+      seedSaude(7, HOJE);
+      const passos = urisComSegmento('/passos-');
+      expect(passos.length).toBe(7);
+      for (const uri of passos) {
+        const raw = useVaultMock.getState().getArquivo(uri) as string;
+        const parsed = parseFrontmatter(raw, PassosSchema);
+        expect(parsed).not.toBeNull();
+        expect(parsed?.meta.tipo).toBe('passos');
+        expect(parsed?.meta.fonte_hc).toBe(true);
+        expect(parsed?.meta.total).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('escreve N sessoes de sono validas (SonoSchema) com fonte_hc_id', () => {
+      seedSaude(7, HOJE);
+      const sono = urisComSegmento('/sono-');
+      expect(sono.length).toBe(7);
+      for (const uri of sono) {
+        const raw = useVaultMock.getState().getArquivo(uri) as string;
+        const parsed = parseFrontmatter(raw, SonoSchema);
+        expect(parsed).not.toBeNull();
+        expect(parsed?.meta.tipo).toBe('sono');
+        expect(typeof parsed?.meta.fonte_hc_id).toBe('string');
+        expect(parsed?.meta.duracao_min).toBeGreaterThan(0);
+      }
+    });
+
+    it('escreve treinos validos (TreinoSessaoSchema) com fonte_hc_id', () => {
+      seedSaude(7, HOJE);
+      const treinos = urisComSegmento('/treinos/');
+      expect(treinos.length).toBeGreaterThanOrEqual(1);
+      for (const uri of treinos) {
+        const raw = useVaultMock.getState().getArquivo(uri) as string;
+        const parsed = parseFrontmatter(raw, TreinoSessaoSchema);
+        expect(parsed).not.toBeNull();
+        expect(parsed?.meta.tipo).toBe('treino_sessao');
+        expect(typeof parsed?.meta.fonte_hc_id).toBe('string');
+        expect(parsed?.meta.exercicios.length).toBeGreaterThanOrEqual(1);
+      }
+    });
+
+    it('escreve 1 medida valida (MedidasSchema) com peso', () => {
+      seedSaude(7, HOJE);
+      const medidas = urisComSegmento('/medidas-');
+      expect(medidas.length).toBe(1);
+      const raw = useVaultMock.getState().getArquivo(medidas[0]) as string;
+      const parsed = parseFrontmatter(raw, MedidasSchema);
+      expect(parsed).not.toBeNull();
+      expect(parsed?.meta.tipo).toBe('medidas');
+      expect(typeof parsed?.meta.peso).toBe('number');
+    });
+
+    it('e deterministico: duas chamadas produzem o mesmo conteudo', () => {
+      seedSaude(7, HOJE);
+      const a = JSON.stringify(useVaultMock.getState().listar());
+      const conteudoA = useVaultMock
+        .getState()
+        .listar()
+        .map((u) => useVaultMock.getState().getArquivo(u));
+      useVaultMock.getState().limpar();
+      seedSaude(7, HOJE);
+      const b = JSON.stringify(useVaultMock.getState().listar());
+      const conteudoB = useVaultMock
+        .getState()
+        .listar()
+        .map((u) => useVaultMock.getState().getArquivo(u));
+      expect(a).toEqual(b);
+      expect(JSON.stringify(conteudoA)).toEqual(JSON.stringify(conteudoB));
+    });
+
+    it('respeita dias=1 (subset menor)', () => {
+      seedSaude(1, HOJE);
+      expect(urisComSegmento('/passos-').length).toBe(1);
+      expect(urisComSegmento('/sono-').length).toBe(1);
+    });
+
+    it('e no-op quando GAUNTLET_ATIVO=false', () => {
+      jest.isolateModules(() => {
+        jest.unmock('@/lib/dev/gauntlet');
+        jest.resetModules();
+        const seedReal = jest.requireActual<
+          typeof import('@/lib/dev/seedDeterministico')
+        >('@/lib/dev/seedDeterministico');
+        const vaultMockReal = jest.requireActual<
+          typeof import('@/lib/dev/vaultMockStore')
+        >('@/lib/dev/vaultMockStore');
+        const vaultReal = jest.requireActual<
+          typeof import('@/lib/stores/vault')
+        >('@/lib/stores/vault');
+        vaultMockReal.useVaultMock.getState().limpar();
+        vaultReal.useVault.setState({ vaultRoot: VAULT });
+        seedReal.seedSaude(7, HOJE);
+        expect(vaultMockReal.useVaultMock.getState().listar()).toEqual([]);
+      });
     });
   });
 

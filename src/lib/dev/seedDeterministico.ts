@@ -24,6 +24,10 @@ import {
   diarioPath,
   eventoPath,
   humorPath,
+  passosPath,
+  sonoPath,
+  treinosPath,
+  medidasPath,
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { stringifyFrontmatter } from '@/lib/vault/frontmatter';
@@ -339,6 +343,146 @@ export function seedEventos(qtd: number = 7, hoje?: Date): void {
   }
 }
 
+// R-INT-3-HC-RECAP-CARD-FOLLOWUP: seed de saude para o Gauntlet.
+// Diferente de humor/diario/evento (que tem store de dominio dedicada),
+// saude e lida direto do Vault pelos readers canonicos (listarPassos,
+// listarSono, listarTreinos, listarMedidas). Por isso seedSaude escreve
+// SO no useVaultMock (espelho do SAF em web/dev), nos paths canonicos:
+//   - markdown/passos-YYYY-MM-DD.md          (PassosSchema)
+//   - markdown/sono-YYYY-MM-DD-hc-<id>.md    (SonoSchema)
+//   - treinos/YYYY-MM-DD-<slug>.md           (TreinoSessaoSchema)
+//   - markdown/medidas-YYYY-MM-DD.md         (MedidasSchema)
+// Sem store de dominio: o caminho de leitura do Recap em web/dev passa
+// por reader.ts -> useVaultMock, entao popular o vault mock basta para a
+// secao Saude aparecer no Gauntlet preenchida.
+
+// ISO 8601 com offset fixo de São Paulo (-03:00) a partir de um Date.
+// Usado para inicio/fim de sono e data de treino (schemas exigem offset).
+function isoBrt(d: Date): string {
+  // Date interno em UTC; subtraimos 3h e formatamos com sufixo -03:00
+  // para representar o mesmo instante no fuso de São Paulo.
+  const local = new Date(d.getTime() - 3 * 3600_000);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(local.getUTCDate()).padStart(2, '0');
+  const hh = String(local.getUTCHours()).padStart(2, '0');
+  const mm = String(local.getUTCMinutes()).padStart(2, '0');
+  const ss = String(local.getUTCSeconds()).padStart(2, '0');
+  return `${y}-${m}-${dd}T${hh}:${mm}:${ss}-03:00`;
+}
+
+// seedSaude: popula o vault mock com N dias de dados de saude canonicos
+// (passos diarios + sono por noite + 1-2 treinos + 1 medida). dias=7
+// default; clamp 1..30. Deterministico: passos e medidas derivam de
+// offset, sem Math.random. No-op fora do Gauntlet. Hoje = parametro
+// opcional para teste deterministico.
+export function seedSaude(dias: number = 7, hoje?: Date): void {
+  if (!GAUNTLET_ATIVO) return;
+  const total = Math.max(1, Math.min(30, dias));
+  const autor: PessoaAutor = 'pessoa_a';
+
+  // Passos: um arquivo por dia, dos ultimos `total` dias completos
+  // (offset -total .. -1, sem o dia em curso, espelhando o puxador que
+  // so escreve dias encerrados). Total varia deterministicamente por dia.
+  for (let i = total; i >= 1; i -= 1) {
+    const date = dataDeOffset(-i, hoje);
+    const dataYmd = formatDateYmd(date);
+    // Passos do dia: base 6000 + variacao deterministica por dia (0..3500).
+    const variacao = ((i * 1373) % 3500);
+    const passos = 6000 + variacao;
+    const meta = {
+      tipo: 'passos' as const,
+      data: dataYmd,
+      autor,
+      total: passos,
+      fonte_hc: true as const,
+      sincronizado_em: isoBrt(date),
+    };
+    const conteudo = stringifyFrontmatter(meta, '');
+    espelharNoVaultMock(passosPath(date), conteudo);
+  }
+
+  // Sono: uma sessao por noite, dos ultimos `total` dias. data = dia do
+  // despertar. Duracao 6.5h..8h deterministica. fonte_hc_id estavel por
+  // dia para idempotencia (e para o path nao colidir).
+  for (let i = total; i >= 1; i -= 1) {
+    const date = dataDeOffset(-i, hoje);
+    const dataYmd = formatDateYmd(date);
+    // Despertar ~07:30 BRT; inicio ~23:30 da noite anterior + variacao.
+    const duracaoMin = 390 + ((i * 53) % 90); // 6h30 .. ~8h
+    const fim = new Date(date.getTime());
+    fim.setUTCHours(10, 30, 0, 0); // 07:30 BRT
+    const inicio = new Date(fim.getTime() - duracaoMin * 60_000);
+    const hcId = `seed-sono-${dataYmd}`;
+    const meta = {
+      tipo: 'sono' as const,
+      data: dataYmd,
+      autor,
+      inicio: isoBrt(inicio),
+      fim: isoBrt(fim),
+      duracao_min: duracaoMin,
+      fonte_hc_id: hcId,
+      fonte_hc_origin: 'com.seed.health',
+    };
+    const conteudo = stringifyFrontmatter(meta, '');
+    espelharNoVaultMock(sonoPath(date, hcId), conteudo);
+  }
+
+  // Treinos: 2 sessoes no periodo (dias -2 e -5, ou clamp se total < 5).
+  // Cada uma com fonte_hc_id (sessao importada do HC) e 1 exercicio
+  // (schema exige min 1). Path em treinos/YYYY-MM-DD-<slug>.md.
+  const offsetsTreino = [2, 5].filter((o) => o <= total);
+  const offsetsFinal =
+    offsetsTreino.length > 0 ? offsetsTreino : [Math.min(1, total)];
+  for (const off of offsetsFinal) {
+    const date = dataDeOffset(-off, hoje);
+    const dataYmd = formatDateYmd(date);
+    // Hora fixa 18:00 BRT para a data ISO do treino.
+    const dt = new Date(date.getTime());
+    dt.setUTCHours(21, 0, 0, 0); // 18:00 BRT
+    const duracaoMin = 45 + ((off * 17) % 30); // 45 .. ~74 min
+    const slug = 'seed-treino';
+    const meta = {
+      tipo: 'treino_sessao' as const,
+      data: isoBrt(dt),
+      autor,
+      rotina: 'Rotina seed',
+      duracao_min: duracaoMin,
+      exercicios: [
+        {
+          nome: 'Agachamento',
+          series: 3,
+          reps: 12,
+          carga_kg: 40,
+        },
+      ],
+      fonte_hc_id: `seed-hc-${dataYmd}`,
+      fonte_hc_origin: 'Conexão Saúde',
+    };
+    const conteudo = stringifyFrontmatter(meta, '');
+    espelharNoVaultMock(treinosPath(date, slug), conteudo);
+  }
+
+  // Medida: 1 registro recente com peso (offset -1, ou o dia mais antigo
+  // se total=1 nao tiver -1). Inclui gordura para exercitar a linha
+  // completa. Sem foto.
+  {
+    const offMedida = total >= 1 ? 1 : 0;
+    const date = dataDeOffset(-offMedida, hoje);
+    const dataYmd = formatDateYmd(date);
+    const meta = {
+      tipo: 'medidas' as const,
+      data: dataYmd,
+      autor,
+      peso: 72.5,
+      gordura: 18.2,
+      fotos: [] as string[],
+    };
+    const conteudo = stringifyFrontmatter(meta, '');
+    espelharNoVaultMock(medidasPath(date), conteudo);
+  }
+}
+
 // Utility para testes: leitores diretos das stores mock.
 export function lerHumoresMock(): HumorHeatmapCell[] {
   return useHumorMock.getState().celulas.slice();
@@ -359,4 +503,5 @@ export function seedTudo(): void {
   seedHumores();
   seedDiarios();
   seedEventos();
+  seedSaude();
 }

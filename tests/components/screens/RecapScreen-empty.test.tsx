@@ -95,6 +95,16 @@ jest.mock('@/lib/hooks/useRecap', () => {
   };
 });
 
+// R-INT-3-HC-RECAP-CARD-FOLLOWUP: o RecapScreen eleva o calculo de saude.
+// Mockamos o agregador para controlar o cenario "so dado de saude".
+// Default: tudo null (sem dado HC) para nao interferir nos cenarios
+// legados de empty state.
+const mockCalcularSaude = jest.fn();
+jest.mock('@/lib/recap/saude', () => ({
+  __esModule: true,
+  calcularSaudeRecap: (...args: unknown[]) => mockCalcularSaude(...args),
+}));
+
 import { RecapScreen } from '@/components/screens/RecapScreen';
 
 const numerosZerados = {
@@ -108,9 +118,18 @@ const numerosZerados = {
   tarefas_concluidas: 0,
 };
 
+const SAUDE_VAZIA = {
+  passos: null,
+  treinos: null,
+  sono: null,
+  medidaUltima: null,
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockCanGoBack.mockReturnValue(false);
+  // Default: sem dado de saude (mantem empty states legados previsiveis).
+  mockCalcularSaude.mockResolvedValue(SAUDE_VAZIA);
 });
 
 describe('RecapScreen R-RECAP-3 empty states', () => {
@@ -189,5 +208,56 @@ describe('RecapScreen R-RECAP-3 empty states', () => {
     });
     // Nao deve haver EmptyState global.
     expect(queryByLabelText(/^vazio: /)).toBeNull();
+  });
+
+  // R-INT-3-HC-RECAP-CARD-FOLLOWUP (acceptance #1): usuario com SOMENTE
+  // dado de saude (passos/treinos/sono/medidas vindos do autopull HC) e
+  // nenhum outro registro deve ver a secao Saude, nao o EmptyState. Antes
+  // o predicado de vazio so somava conquistas/numeros/etc e a secao Saude
+  // era engolida pelo EmptyState.
+  it('so dado de saude (listas e numeros zerados) -> renderiza secao Saude, sem EmptyState', async () => {
+    mockUseRecap.mockReturnValue({
+      data: {
+        conquistas: [],
+        crises: [],
+        reflexoes: [],
+        evolucoes: [],
+        tarefasConcluidas: [],
+        numeros: numerosZerados,
+      },
+      loading: false,
+    });
+    mockCalcularSaude.mockResolvedValue({
+      passos: { total: 57300, mediaDia: 8186 },
+      treinos: null,
+      sono: null,
+      medidaUltima: null,
+    });
+    const { findByLabelText, queryByLabelText } = renderComToast(
+      <RecapScreen />
+    );
+    // Secao Saude visivel.
+    expect(await findByLabelText('secao saude')).toBeTruthy();
+    // EmptyState global NAO aparece.
+    expect(queryByLabelText(/^vazio: /)).toBeNull();
+  });
+
+  // Sem dado de saude E sem outros registros -> EmptyState (gate antigo
+  // preservado: saude null nao torna o recap nao-vazio).
+  it('sem saude e sem registros -> mantem EmptyState global', async () => {
+    mockUseRecap.mockReturnValue({
+      data: {
+        conquistas: [],
+        crises: [],
+        reflexoes: [],
+        evolucoes: [],
+        tarefasConcluidas: [],
+        numeros: numerosZerados,
+      },
+      loading: false,
+    });
+    // mockCalcularSaude ja devolve SAUDE_VAZIA por default.
+    const { findByLabelText } = render(<RecapScreen />);
+    expect(await findByLabelText(/^vazio: /)).toBeTruthy();
   });
 });
