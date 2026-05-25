@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q.B1 — Recap secao Saude (consumer UI do autopull HC) (2026-05-25)
+
+`R-INT-3-HC-RECAP-CARD` (`4ef2449`): seção "Saúde essa semana" no Recap
+consolidando passos/treinos/sono/medidas que o autopull HC abastece.
+
+- `src/lib/recap/saude.ts` (novo): `calcularSaudeRecap(vaultRoot, periodo, ate)`
+  → `{ passos, treinos, sono, medidaUltima }` (null por campo sem dado).
+- `src/components/screens/RecapSecaoSaude.tsx` (novo): card Dracula, render
+  condicional (oculto sem dado), valores em PT-BR.
+- Readers novos: `listarPassos` (`vault/passos.ts`), `listarSono`
+  (`vault/sono.ts`) — antes só havia writers. `listarTreinos`/`listarMedidas`
+  reusados.
+- `RecapScreen.tsx`: seção adicionada após as existentes (intocadas).
+  `destinos.ts`: `destinoSaude` (passos/sono → saúde física, treinos → treinos,
+  medidas → medidas). Arquivo E2E `tests/e2e/playwright/r-int-3-hc-recap-card.e2e.ts`.
+- **Validação visual no device pendente** (o APK instalado não tem este código;
+  requer build novo). **Follow-up materializado** `R-INT-3-HC-RECAP-CARD-FOLLOWUP`:
+  (a) o gate `totalRecap > 0` do `RecapScreen` esconde a seção Saúde quando só há
+  dado de saúde no período; (b) Gauntlet não semeia dado de saúde (`seedSaude`),
+  bloqueando screenshot da seção preenchida.
+
+Smoke **304 suítes / 2924 testes verde** (+2 suítes, +29 testes).
+
 ### Fase 3 Onda 3P.C — Calendar auto-sync + auditoria (descopa Spotify/YouTube) (2026-05-25)
 
 Auditoria da Fase C revelou 2 sprints fantasma e 1 mal-escopada. Decisões do

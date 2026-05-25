@@ -209,13 +209,18 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 
 #### 3Q.B — Consumer UI por integração (5)
 
-| ID | Sprint | Tipo | P |
-|---|---|---|---|
-| R-INT-3-HC-RECAP-CARD | Card "Saúde essa semana" no Recap | feature | P1 |
-| R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap | feature | P2 |
-| R-INT-4-SPOTIFY-RECAP-CARD | Card "Trilha sonora" no Recap | feature | P2 |
-| R-INT-4-YOUTUBE-RECAP-CARD | Card "Conteúdo curtido" no Recap | feature | P3 |
-| R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 |
+| ID | Sprint | Tipo | P | Status |
+|---|---|---|---|---|
+| R-INT-3-HC-RECAP-CARD | Card "Saúde essa semana" no Recap (passos/treinos/sono/medidas) | feature | P1 | `[merged 4ef2449]` validação visual device pendente |
+| R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap | feature | P2 | `[todo]` |
+| R-INT-4-SPOTIFY-RECAP-CARD | ~~Card "Trilha sonora"~~ | feature | P2 | `[descopado]` (ver 3P.C) |
+| R-INT-4-YOUTUBE-RECAP-CARD | ~~Card "Conteúdo curtido"~~ | feature | P3 | `[descopado]` (ver 3P.C) |
+| R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 | `[todo]` (depende Drive backup) |
+
+**Follow-up materializado (2026-05-25):** `R-INT-3-HC-RECAP-CARD-FOLLOWUP` (P2) —
+(a) gate de recap vazio esconde a secao Saude quando so ha dado de saude no periodo;
+(b) Gauntlet nao semeia dados de saude (`seedSaude`), bloqueando screenshot real da
+secao preenchida. Spec em `docs/sprints/R-INT-3-HC-RECAP-CARD-FOLLOWUP-spec.md`.
 
 #### 3Q.C — Loops de valor reativos (5)
 
