@@ -152,11 +152,11 @@ adb pull /sdcard/sprint-MNN.mp4 docs/sprints/MNN-screenshots/
 
 ### Diff visual notado
 
-- ✅ Paleta correta (verificado em pixel picker: #bd93f9 confere)
-- ✅ Padding lateral 20dp
-- ✅ Slider thumb 24dp, físico spring_default
-- ⚠️  Chip "boa_conversa" estourou a linha — precisa wrap
-- ❌  Bottom sheet height 70%, mas no emulador veio 60% — investigar
+-  Paleta correta (verificado em pixel picker: #bd93f9 confere)
+-  Padding lateral 20dp
+-  Slider thumb 24dp, físico spring_default
+-   Chip "boa_conversa" estourou a linha — precisa wrap
+-   Bottom sheet height 70%, mas no emulador veio 60% — investigar
 
 ### Vídeo da interação chave
 [abrir-fechar-bottom-sheet.mp4](./MNN-screenshots/sprint-MNN.mp4)
@@ -736,6 +736,45 @@ Só depois desses checks, abrir issue do M02.
 ---
 
 ## 3. Fluxo de Validação ao Vivo
+
+### 3.0 Protocolo canônico de teste no device (decisão durável 2026-05-25)
+
+**Método padrão e SEMPRE preferido para validar no celular: dev-client +
+Metro via USB.** O APK release do git NÃO é ferramenta de iteração — é só
+distribuição, gerado no FINAL, depois de concluir todo o trabalho em aberto.
+
+Regra de ouro:
+
+- **Feature só de JS** (telas, stores, hooks, puxadores, lógica): o Metro
+  entrega o código novo ao vivo no dev-client. **Sem build.**
+- **Feature com código nativo NOVO** (ex: bridge `modules/health-connect/`,
+  `modules/widget-homescreen/`): **rebuildar o dev-client primeiro** — um
+  dev-client antigo não tem o módulo nativo novo, então a feature nativa
+  no-opa ou falha. Dev-clients em `builds/dev-client-*.apk` anteriores à
+  bridge HC (28aac2b, ~2026-05-22) NÃO testam o autopull HC.
+
+Fluxo (helpers: `scripts/adb-install-bypass.sh`, `scripts/adb-vault-pull.sh`):
+
+```bash
+./scripts/adb-vault-pull.sh                          # BACKUP do Vault do device ANTES de trocar app
+adb push builds/dev-client-<hash>.apk /data/local/tmp/app.apk
+adb shell pm install -r -t /data/local/tmp/app.apk   # bypass HyperOS (A32)
+adb reverse tcp:8081 tcp:8081
+nohup npx expo start --dev-client > /tmp/metro.log 2>&1 &
+# abrir app; navegação cega via `adb shell uiautomator dump`; `adb exec-out screencap`
+```
+
+**Cuidado com assinatura (wipe de dados):** instalar um dev-client (debug
+keystore) por cima de um APK release (alpha-XX, EAS keystore) exige
+**desinstalar** primeiro → **apaga dados do app no device** (SecureStore +
+Vault interno se estiver em `documentDirectory`, A31). Por isso o
+`adb-vault-pull.sh` ANTES é obrigatório. Idealmente dev-client e release
+compartilham a mesma keystore (Q17.e) para permitir update in-place sem wipe.
+
+**APK do git (release/preview) — SÓ no final.** Via
+`.github/workflows/build-android-apk.yml` (push tag `v*-alpha-*`); EAS Free
+Tier esgota cota mensal, por isso GitHub Actions. Nunca queimar build do git
+para testar trabalho ainda em aberto.
 
 ### 3.1 Fast Refresh via Expo Go
 
