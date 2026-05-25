@@ -60,6 +60,12 @@ export interface CalendarSyncDeps {
   vaultRoot: string | null;
   // Fonte do "agora" (testes injetam Date fixa). Default: new Date().
   agora?: () => Date;
+  // Opcional: agenda notificacoes pre-evento (15min antes) para os
+  // eventos sincronizados. Injetada pelo wiring real
+  // (notifications/calendarPreEvent.agendarNotifsPreEvento). Ausente em
+  // testes que so validam o sync. Gate natural pelo toggle
+  // googleCalendarSync (se o sync nao roda, isto nao e' chamado).
+  agendarNotifs?: (eventos: AgendaEvento[], agora: Date) => Promise<void>;
 }
 
 // Converte EventoCalendar (shape do calendarApi) para AgendaEvento
@@ -93,18 +99,18 @@ function paraAgendaEvento(
 async function sincronizarCalendarPessoa(
   pessoa: PessoaAutor,
   deps: CalendarSyncDeps
-): Promise<{ novos: number; erro: string | null }> {
+): Promise<{ novos: number; erro: string | null; eventos: AgendaEvento[] }> {
   const vaultRoot = deps.vaultRoot;
   if (typeof vaultRoot !== 'string' || vaultRoot.length === 0) {
     // Sem Vault configurado: nao ha onde escrever. No-op gracioso.
-    return { novos: 0, erro: null };
+    return { novos: 0, erro: null, eventos: [] };
   }
 
   const token = await deps.refreshToken(pessoa);
   if (token === null) {
     // Conta nao conectada/invalida/refresh falhou. Mesmo padrao de
     // app/agenda.tsx: no-op gracioso, sem crash, sem erro propagado.
-    return { novos: 0, erro: null };
+    return { novos: 0, erro: null, eventos: [] };
   }
 
   const agoraFn = deps.agora ?? (() => new Date());
@@ -122,7 +128,7 @@ async function sincronizarCalendarPessoa(
     eventos,
     sincronizadoEm
   );
-  return { novos: res.adicionados, erro: null };
+  return { novos: res.adicionados, erro: null, eventos };
 }
 
 // Fabrica a Integracao do Calendar para o scheduler. Sincroniza ambas
@@ -142,9 +148,15 @@ export function criarIntegracaoCalendar(deps: CalendarSyncDeps): Integracao {
 
       let novos = 0;
       const erros: string[] = [];
+      // Acumula os eventos mapeados de ambas as pessoas para agendar as
+      // notificacoes pre-evento UMA vez (a funcao de agendamento cancela
+      // tudo do prefixo antes de re-agendar; chamar por pessoa faria a
+      // segunda apagar as notificacoes da primeira).
+      const todosEventos: AgendaEvento[] = [];
       for (const r of resultados) {
         if (r.status === 'fulfilled') {
           novos += r.value.novos;
+          todosEventos.push(...r.value.eventos);
           if (r.value.erro !== null) erros.push(r.value.erro);
         } else {
           const msg =
@@ -152,6 +164,18 @@ export function criarIntegracaoCalendar(deps: CalendarSyncDeps): Integracao {
               ? r.reason.message
               : String(r.reason ?? 'rejected');
           erros.push(msg);
+        }
+      }
+
+      // Agenda notificacoes pre-evento se o wiring injetou a dep. Erro
+      // aqui nao deve derrubar o resultado do sync (notificacao e'
+      // best-effort); por isso o try/catch silencioso.
+      if (deps.agendarNotifs) {
+        const agoraFn = deps.agora ?? (() => new Date());
+        try {
+          await deps.agendarNotifs(todosEventos, agoraFn());
+        } catch {
+          // Falha de agendamento nao invalida o sync ja persistido.
         }
       }
 

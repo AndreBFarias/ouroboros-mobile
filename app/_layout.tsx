@@ -40,6 +40,7 @@ import { puxadorSono } from '@/lib/health/puxadores/sleep';
 // (refreshIfNeeded, listarEventos, sincronizarSnapshotAgenda) injetadas.
 import { orquestrarIntegracoes } from '@/lib/integracoes/scheduler';
 import { criarIntegracaoCalendar } from '@/lib/integracoes/calendarSync';
+import { agendarNotifsPreEvento } from '@/lib/notifications/calendarPreEvent';
 import { listarEventos } from '@/lib/services/calendarApi';
 import { sincronizarSnapshotAgenda } from '@/lib/vault/agenda';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
@@ -344,6 +345,10 @@ export default function RootLayout() {
         listar: listarEventos,
         sincronizarSnapshot: sincronizarSnapshotAgenda,
         vaultRoot: useVault.getState().vaultRoot,
+        // R-INT-2-CALENDAR-NOTIF-PROXIMO: agenda notificacao 15min antes
+        // de cada evento futuro sincronizado. Gate natural pelo
+        // googleCalendarSync (se o sync nao roda, isto nao e' chamado).
+        agendarNotifs: agendarNotifsPreEvento,
       });
       try {
         const r = await orquestrarIntegracoes([integracao]);
