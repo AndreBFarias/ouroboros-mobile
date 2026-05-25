@@ -121,16 +121,32 @@ Fase 2; `v1.0.0` após Fase 4 + F1 verde.
 | R-INT-3-HC-BRIDGE-NATIVA-C | insertRecords nos 4 tipos com builders | feature | P1 | `7be4cc6` | `[ok]` (2026-05-22 tarde) |
 | R-INT-3-HC-BRIDGE-NATIVA-D | Cleanup migration sync.ts + remover lib upstream | refactor | P1 | `0d1dc47` | `[ok]` (2026-05-22 tarde) |
 
-#### 3P.B — Autopull HC -> Vault (6) — PARCIAL 2/6
+#### 3P.B — Autopull HC -> Vault (6) — FECHADA 6/6 (2026-05-25)
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
 | R-INT-3-HC-AUTOPULL-SCHEDULER | Orquestrador puro + tracking settings store | infra | P1 | `5aab04b` | `[ok]` (2026-05-22 tarde) |
 | R-INT-3-HC-AUTOPULL-PASSOS | Puxar Steps + agregar por dia + writer markdown/passos-YYYY-MM-DD.md | feature | P1 | `99edc02` | `[ok]` (2026-05-22 tarde) |
-| R-INT-3-HC-AUTOPULL-EXERCICIO | Puxar ExerciseSession + escrever treino_sessao modo='sessao_hc' | feature | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-EXERCICIO-spec.md` |
-| R-INT-3-HC-AUTOPULL-MEDIDAS | Puxar Weight + BodyFat pareados + escrever Medida | feature | P2 | 0.5d | `R-INT-3-HC-AUTOPULL-MEDIDAS-spec.md` |
-| R-INT-3-HC-AUTOPULL-MENSTRUACAO | Puxar MenstruationFlow + escrever RegistroCiclo | feature | P2 | 0.5d | `R-INT-3-HC-AUTOPULL-MENSTRUACAO-spec.md` |
-| R-INT-3-HC-AUTOPULL-SLEEP | Puxar SleepSession + schema novo sono.md | feature | P3 | 0.5d | `R-INT-3-HC-AUTOPULL-SLEEP-spec.md` |
+| R-INT-3-HC-AUTOPULL-EXERCICIO | Puxar ExerciseSession + escrever treino_sessao + exerciseTypeMap | feature | P1 | `2b68227` | `[ok]` (2026-05-25) |
+| R-INT-3-HC-AUTOPULL-MEDIDAS | Puxar Weight + BodyFat pareados + escrever Medida | feature | P2 | `31ea560` | `[ok]` (2026-05-25) |
+| R-INT-3-HC-AUTOPULL-MENSTRUACAO | Puxar MenstruationFlow + escrever RegistroCiclo (prioridade ao registro manual) | feature | P2 | `1cc038f` | `[ok]` (2026-05-25) |
+| R-INT-3-HC-AUTOPULL-SLEEP | Puxar SleepSession + schema/writer sono novos + sonoPath | feature | P3 | `5dfa53d` | `[ok]` (2026-05-25) |
+
+**Pos-integracao (2026-05-25):** os 4 puxadores entregues em paralelo via
+worktree (mesmo padrao do PASSOS), cherry-pick limpo na main, smoke
+**300 suites / 2878 testes verde**. Nenhum registra no scheduler (injecao pura).
+
+#### 3P.B-WIRE — Conectar + proteger (2, prereq do go-live autopull)
+
+| ID | Sprint | Tipo | P | Estim. | Spec |
+|---|---|---|---|---|---|
+| R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD | Guard contra loop HC->Vault->HC em medidas+menstruacao (param `pularSyncHC`) | fix | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD-spec.md` |
+| R-INT-3-HC-AUTOPULL-WIRING | useEffect em `_layout.tsx` liga os 5 puxadores no boot + foreground (toggle + throttle 60min) | integr | P1 | 0.5h | `R-INT-3-HC-AUTOPULL-WIRING-spec.md` |
+
+**Ordem obrigatoria:** GUARD antes de WIRING. Sem o guard, ligar o wiring com
+`healthConnectSync` on duplica registros no HC ao vivo (achado do executor
+MEDIDAS 2026-05-25; `insertRecords` da bridge nao dedupa). PASSOS/EXERCICIO/SLEEP
+nao tem write-back HC — guard so cobre medidas+menstruacao.
 
 #### 3P.X — Sprints anti-debito materializadas pos Fase A+B parcial (7, sessao 2026-05-22 tarde)
 

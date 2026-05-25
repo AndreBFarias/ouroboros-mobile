@@ -5,6 +5,41 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3P.B — Autopull HC puxadores EXERCICIO/MEDIDAS/MENSTRUACAO/SLEEP (2026-05-25)
+
+Fechamento da Fase B do autopull Health Connect (6/6). Quatro puxadores
+concretos implementados em paralelo (worktree isolado cada), espelhando o
+padrão de `puxadores/passos.ts` e o contrato `Puxador` do
+`autopullScheduler.ts` (injeção pura — nenhum registra no scheduler; isso é
+da sprint WIRING).
+
+- **EXERCICIO** (`2b68227`): `puxadores/exercicio.ts` lê `ExerciseSession`,
+  idempotência por `fonte_hc_id`, reusa `escreverTreino`. Schema
+  `treino_sessao` ganhou 3 campos opcionais (`fonte_hc_id`,
+  `fonte_hc_origin`, `exercicio_hc_type`) backward-compat. Novo
+  `health/exerciseTypeMap.ts` mapeia 52 tipos HC para PT-BR com fallback
+  "Atividade física".
+- **MEDIDAS** (`31ea560`): `puxadores/medidas.ts` lê `Weight` + `BodyFat` em
+  paralelo, pareia por dia local BRT, reusa `escreverMedida`. Idempotência
+  por dia (só escreve dias encerrados, igual passos).
+- **MENSTRUACAO** (`1cc038f`): `puxadores/menstruacao.ts` lê
+  `MenstruationFlow`, mapeia flow HC (1/2/3) para `intensidade` 1-5 com
+  round-trip estável, reusa `escreverRegistroCiclo`. Idempotência por data
+  com prioridade ao registro manual (autopull não sobrescreve entrada do
+  usuário). Schema não estendido (mapeou para campos existentes).
+- **SLEEP** (`5dfa53d`): novos `schemas/sono.ts` + `vault/sono.ts` +
+  helper `sonoPath` (`markdown/sono-<data>-hc-<id>.md`) +
+  `puxadores/sleep.ts` lendo `SleepSession`. Idempotência por hc id.
+
+**Smoke 300 suítes / 2878 testes verde** (baseline 293/2802, +7 suítes,
++76 testes). tsc strict 0, anonimato OK, PT-BR OK.
+
+**Achado materializado (zero follow-up):** `escreverMedida` e
+`escreverRegistroCiclo` reescrevem no HC quando `healthConnectSync` está on;
+como `insertRecords` da bridge não dedupa, o autopull criaria loop
+`HC -> Vault -> HC`. Capturado em `R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD` (P1,
+prereq do WIRING). PASSOS/EXERCICIO/SLEEP não têm write-back.
+
 ### Fase 3 Onda 3N.1 — R-ROT-1-A inteligência de soneca + listener canônico (2026-05-21)
 
 Inteligência temporal sobre snooze de alarmes (replan R-ROT-1 opção A,
