@@ -9,6 +9,7 @@ import type { CicloMenstrualMeta } from '@/lib/schemas/ciclo_menstrual';
 const mockListVaultFolder = jest.fn();
 const mockReadVaultFile = jest.fn();
 const mockWriteVaultFile = jest.fn();
+const mockEscreverMenstruacaoEmHC = jest.fn();
 
 jest.mock('@/lib/vault/reader', () => ({
   __esModule: true,
@@ -18,6 +19,18 @@ jest.mock('@/lib/vault/reader', () => ({
 jest.mock('@/lib/vault/writer', () => ({
   __esModule: true,
   writeVaultFile: (...args: unknown[]) => mockWriteVaultFile(...args),
+}));
+jest.mock('@/lib/health/sync', () => ({
+  __esModule: true,
+  escreverMenstruacaoEmHC: (...args: unknown[]) =>
+    mockEscreverMenstruacaoEmHC(...args),
+}));
+// Toggle healthConnectSync ligado para exercitar o write-back e o guard.
+jest.mock('@/lib/stores/settings', () => ({
+  __esModule: true,
+  useSettings: {
+    getState: () => ({ featureToggles: { healthConnectSync: true } }),
+  },
 }));
 
 import {
@@ -250,6 +263,21 @@ describe('escreverRegistroCiclo', () => {
       expect(uriArg).not.toContain('%20/markdown');
     }
   );
+
+  // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: guard anti-loop HC -> Vault -> HC.
+  it('sem opts faz write-back no HC quando fase=menstrual', async () => {
+    mockWriteVaultFile.mockResolvedValue(undefined);
+    const meta = fixture({ data: '2026-04-29', fase: 'menstrual', intensidade: 3 });
+    await escreverRegistroCiclo(VAULT_ROOT, meta, '');
+    expect(mockEscreverMenstruacaoEmHC).toHaveBeenCalledTimes(1);
+  });
+
+  it('com pularSyncHC=true nao chama escreverMenstruacaoEmHC', async () => {
+    mockWriteVaultFile.mockResolvedValue(undefined);
+    const meta = fixture({ data: '2026-04-29', fase: 'menstrual', intensidade: 3 });
+    await escreverRegistroCiclo(VAULT_ROOT, meta, '', { pularSyncHC: true });
+    expect(mockEscreverMenstruacaoEmHC).not.toHaveBeenCalled();
+  });
 });
 
 describe('duracaoCicloDetectada', () => {

@@ -191,7 +191,10 @@ export const puxadorMenstruacao: Puxador = {
           humor_associado: null,
           texto: null,
         };
-        await escreverRegistroCiclo(vaultRoot, meta);
+        // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: pularSyncHC evita o loop
+        // HC -> Vault -> HC. O dado veio do HC; reinjetar via write-back
+        // duplicaria (insertRecords da bridge nao dedupa).
+        await escreverRegistroCiclo(vaultRoot, meta, '', { pularSyncHC: true });
         escritos += 1;
       }
 

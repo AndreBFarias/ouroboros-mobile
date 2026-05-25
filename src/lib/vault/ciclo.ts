@@ -170,7 +170,8 @@ function intensidadeParaFluxoHC(i: number | null): 1 | 2 | 3 {
 export async function escreverRegistroCiclo(
   vaultRoot: string,
   meta: CicloMenstrualMeta,
-  body: string = ''
+  body: string = '',
+  opts?: { pularSyncHC?: boolean }
 ): Promise<{ uri: string; rel: string }> {
   const parsed = CicloMenstrualSchema.safeParse(meta);
   if (!parsed.success) {
@@ -186,14 +187,20 @@ export async function escreverRegistroCiclo(
   // Q17.c.c: sync opt-in para Health Connect. Best-effort. So escreve
   // quando fase=menstrual (HC nao tem mapping para folicular/lutea/
   // ovulatoria; sao inferencias locais nossas).
-  try {
-    const habilitado = useSettings.getState().featureToggles.healthConnectSync;
-    if (habilitado && parsed.data.fase === 'menstrual') {
-      const fluxo = intensidadeParaFluxoHC(parsed.data.intensidade);
-      void escreverMenstruacaoEmHC(dataDate, fluxo);
+  // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: pularSyncHC evita o loop
+  // HC -> Vault -> HC. O autopull puxa do HC e chama este writer;
+  // como insertRecords da bridge nao dedupa, reinjetar duplicaria.
+  // Save manual da UI nao passa o opt e mantem o espelhamento.
+  if (!opts?.pularSyncHC) {
+    try {
+      const habilitado = useSettings.getState().featureToggles.healthConnectSync;
+      if (habilitado && parsed.data.fase === 'menstrual') {
+        const fluxo = intensidadeParaFluxoHC(parsed.data.intensidade);
+        void escreverMenstruacaoEmHC(dataDate, fluxo);
+      }
+    } catch {
+      // Erros silenciosos por design (path nao-critico).
     }
-  } catch {
-    // Erros silenciosos por design (path nao-critico).
   }
 
   return { uri, rel };

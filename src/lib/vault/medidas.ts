@@ -113,7 +113,8 @@ export async function lerUltimaMedida(
 export async function escreverMedida(
   vaultRoot: string,
   meta: Medida,
-  body: string = ''
+  body: string = '',
+  opts?: { pularSyncHC?: boolean }
 ): Promise<{ uri: string; rel: string }> {
   const parsed = MedidasSchema.safeParse(meta);
   if (!parsed.success) {
@@ -133,16 +134,23 @@ export async function escreverMedida(
   // falha aqui nao impacta o caller (medida ja persistiu no Vault).
   // Peso e gordura corporal tem mapping canonico em HC (WeightRecord
   // + BodyFatRecord); demais medidas geometricas ficam locais.
-  try {
-    const habilitado = useSettings.getState().featureToggles.healthConnectSync;
-    if (habilitado && typeof parsed.data.peso === 'number') {
-      void escreverPesoEmHC(parsed.data.peso, dataDate);
+  // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: pularSyncHC evita o loop
+  // HC -> Vault -> HC. O autopull puxa do HC e chama escreverMedida;
+  // como insertRecords da bridge nao dedupa, reinjetar o mesmo dado
+  // duplicaria registros. Save manual da UI nao passa o opt e mantem
+  // o espelhamento bidirecional intencional.
+  if (!opts?.pularSyncHC) {
+    try {
+      const habilitado = useSettings.getState().featureToggles.healthConnectSync;
+      if (habilitado && typeof parsed.data.peso === 'number') {
+        void escreverPesoEmHC(parsed.data.peso, dataDate);
+      }
+      if (habilitado && typeof parsed.data.gordura === 'number') {
+        void escreverBodyFatEmHC(parsed.data.gordura, dataDate);
+      }
+    } catch {
+      // Erros silenciosos por design (path nao-critico).
     }
-    if (habilitado && typeof parsed.data.gordura === 'number') {
-      void escreverBodyFatEmHC(parsed.data.gordura, dataDate);
-    }
-  } catch {
-    // Erros silenciosos por design (path nao-critico).
   }
 
   return { uri, rel };

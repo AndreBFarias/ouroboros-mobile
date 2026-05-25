@@ -257,6 +257,30 @@ describe('puxadorMenstruacao', () => {
     jest.useRealTimers();
   });
 
+  // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: autopull pula write-back HC.
+  it('cenario 10: chama escreverRegistroCiclo com pularSyncHC=true (guard anti-loop)', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-22T15:00:00.000Z'));
+
+    mockReadRecords.mockResolvedValueOnce({
+      records: [
+        { time: '2026-05-21T13:00:00.000Z', flow: 2, metadata: { id: 'a' } },
+      ],
+    });
+
+    await puxadorMenstruacao.puxar({
+      since: '2026-05-19T00:00:00.000Z',
+      pageSize: 1000,
+    });
+
+    expect(mockEscreverRegistroCiclo).toHaveBeenCalledTimes(1);
+    const [, , body, opts] = mockEscreverRegistroCiclo.mock.calls[0];
+    expect(body).toBe('');
+    expect(opts).toEqual({ pularSyncHC: true });
+
+    jest.useRealTimers();
+  });
+
   it('cenario 9: multiplos records na mesma data -> mantem maior flow', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-05-22T15:00:00.000Z'));

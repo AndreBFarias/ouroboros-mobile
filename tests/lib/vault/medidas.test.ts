@@ -5,6 +5,8 @@ import type { Medida } from '@/lib/schemas/medidas';
 const mockListVaultFolder = jest.fn();
 const mockReadVaultFile = jest.fn();
 const mockWriteVaultFile = jest.fn();
+const mockEscreverPesoEmHC = jest.fn();
+const mockEscreverBodyFatEmHC = jest.fn();
 
 jest.mock('@/lib/vault/reader', () => ({
   __esModule: true,
@@ -14,6 +16,18 @@ jest.mock('@/lib/vault/reader', () => ({
 jest.mock('@/lib/vault/writer', () => ({
   __esModule: true,
   writeVaultFile: (...args: unknown[]) => mockWriteVaultFile(...args),
+}));
+jest.mock('@/lib/health/sync', () => ({
+  __esModule: true,
+  escreverPesoEmHC: (...args: unknown[]) => mockEscreverPesoEmHC(...args),
+  escreverBodyFatEmHC: (...args: unknown[]) => mockEscreverBodyFatEmHC(...args),
+}));
+// Toggle healthConnectSync ligado para exercitar o write-back e o guard.
+jest.mock('@/lib/stores/settings', () => ({
+  __esModule: true,
+  useSettings: {
+    getState: () => ({ featureToggles: { healthConnectSync: true } }),
+  },
 }));
 
 import {
@@ -194,5 +208,22 @@ describe('escreverMedida', () => {
     expect(uri).toContain('markdown/medidas-2026-04-28.md');
     expect(meta.peso).toBe(78.4);
     expect(body).toBe('corpo livre');
+  });
+
+  // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: guard anti-loop HC -> Vault -> HC.
+  it('sem opts faz write-back no HC (espelhamento manual preservado)', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    await escreverMedida(VAULT_ROOT, { ...medidaBase, gordura: 18.2 });
+    expect(mockEscreverPesoEmHC).toHaveBeenCalledTimes(1);
+    expect(mockEscreverBodyFatEmHC).toHaveBeenCalledTimes(1);
+  });
+
+  it('com pularSyncHC=true nao chama escreverPesoEmHC/escreverBodyFatEmHC', async () => {
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+    await escreverMedida(VAULT_ROOT, { ...medidaBase, gordura: 18.2 }, '', {
+      pularSyncHC: true,
+    });
+    expect(mockEscreverPesoEmHC).not.toHaveBeenCalled();
+    expect(mockEscreverBodyFatEmHC).not.toHaveBeenCalled();
   });
 });

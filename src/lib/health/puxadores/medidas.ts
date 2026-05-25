@@ -235,7 +235,10 @@ export const puxadorMedidas: Puxador = {
           ...(acc.peso !== undefined ? { peso: acc.peso } : {}),
           ...(acc.gordura !== undefined ? { gordura: acc.gordura } : {}),
         };
-        await escreverMedida(vaultRoot, meta);
+        // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: pularSyncHC evita o loop
+        // HC -> Vault -> HC. O dado veio do HC; reinjetar via write-back
+        // duplicaria (insertRecords da bridge nao dedupa).
+        await escreverMedida(vaultRoot, meta, '', { pularSyncHC: true });
         escritos += 1;
       }
 

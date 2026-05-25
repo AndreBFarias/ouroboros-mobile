@@ -337,6 +337,31 @@ describe('puxadorMedidas', () => {
     jest.useRealTimers();
   });
 
+  // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: autopull pula write-back HC.
+  it('cenario 13: chama escreverMedida com pularSyncHC=true (guard anti-loop)', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-22T15:00:00.000Z'));
+    mockPorTipo(
+      [
+        {
+          time: '2026-05-21T13:00:00.000Z',
+          weight: { inKilograms: 72.5 },
+          metadata: { id: 'w1' },
+        },
+      ],
+      []
+    );
+    await puxadorMedidas.puxar({
+      since: '2026-05-19T00:00:00.000Z',
+      pageSize: 1000,
+    });
+    expect(mockEscreverMedida).toHaveBeenCalledTimes(1);
+    const [, , body, opts] = mockEscreverMedida.mock.calls[0];
+    expect(body).toBe('');
+    expect(opts).toEqual({ pularSyncHC: true });
+    jest.useRealTimers();
+  });
+
   it('cenario 12: peso <=0 e gordura fora de 0..100 sao filtrados', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-05-22T15:00:00.000Z'));
