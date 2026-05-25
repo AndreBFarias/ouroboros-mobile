@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q (leva 1) — Calendar notif pré-evento + follow-up Recap Saúde (2026-05-25)
+
+- **`R-INT-2-CALENDAR-NOTIF-PROXIMO` (`4d3bca4`):** notificação "Evento em
+  15min: <título>" agendada para cada evento de agenda Google sincronizado
+  cujo início está no futuro. `src/lib/notifications/calendarPreEvent.ts`
+  (novo, idempotente por `calendar-preevent-<id>`, cancela/re-agenda no
+  re-sync), hookado no fim do `calendarSync` e injetado no wiring de
+  integrações em `_layout.tsx`. Gate natural pelo `googleCalendarSync`.
+  Janela fixa 15min. +9 testes.
+- **`R-INT-3-HC-RECAP-CARD-FOLLOWUP` (`2390cd6`):** (a) o gate `totalRecap`
+  do `RecapScreen` agora inclui dado de saúde — recap com só passos/treinos/
+  sono/medidas no período renderiza a seção em vez de EmptyState;
+  `calcularSaudeRecap` elevado para o container (1 fetch, sem duplo).
+  (b) `seedSaude(dias)` em `seedDeterministico` + `seedComDados('saude-7d')`
+  no Gauntlet. Isso **desbloqueou a validação visual** do
+  `R-INT-3-HC-RECAP-CARD`: Gauntlet com `saude-7d` mostra a seção "Saúde essa
+  semana" preenchida (47.333 passos / 7.889 por dia, 2 treinos 2,0h, 7,3h
+  sono médio, 72,5 kg). Screenshot em
+  `docs/sprints/R-INT-3-HC-RECAP-CARD-screenshots-gauntlet/`.
+
+Smoke **305 suítes / 2933 testes verde** (CALENDAR-NOTIF) → **304/2935** após
+follow-up (consolidação de suítes). tsc strict 0, anonimato OK, PT-BR OK.
+
 ### Fase 3 Onda 3Q.B1 — Recap secao Saude (consumer UI do autopull HC) (2026-05-25)
 
 `R-INT-3-HC-RECAP-CARD` (`4ef2449`): seção "Saúde essa semana" no Recap

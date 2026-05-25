@@ -211,22 +211,24 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 
 | ID | Sprint | Tipo | P | Status |
 |---|---|---|---|---|
-| R-INT-3-HC-RECAP-CARD | Card "Saúde essa semana" no Recap (passos/treinos/sono/medidas) | feature | P1 | `[merged 4ef2449]` validação visual device pendente |
+| R-INT-3-HC-RECAP-CARD | Card "Saúde essa semana" no Recap (passos/treinos/sono/medidas) | feature | P1 | `[ok 4ef2449]` Gauntlet validado (screenshot) |
 | R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap | feature | P2 | `[todo]` |
 | R-INT-4-SPOTIFY-RECAP-CARD | ~~Card "Trilha sonora"~~ | feature | P2 | `[descopado]` (ver 3P.C) |
 | R-INT-4-YOUTUBE-RECAP-CARD | ~~Card "Conteúdo curtido"~~ | feature | P3 | `[descopado]` (ver 3P.C) |
 | R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 | `[todo]` (depende Drive backup) |
 
-**Follow-up materializado (2026-05-25):** `R-INT-3-HC-RECAP-CARD-FOLLOWUP` (P2) —
-(a) gate de recap vazio esconde a secao Saude quando so ha dado de saude no periodo;
-(b) Gauntlet nao semeia dados de saude (`seedSaude`), bloqueando screenshot real da
-secao preenchida. Spec em `docs/sprints/R-INT-3-HC-RECAP-CARD-FOLLOWUP-spec.md`.
+**Follow-up FECHADO (`2390cd6`, 2026-05-25):** `R-INT-3-HC-RECAP-CARD-FOLLOWUP` —
+(a) gate de recap vazio agora inclui saude (recap so com dado de saude renderiza
+a secao, nao EmptyState); (b) `seedSaude`/`seedComDados('saude-7d')` no Gauntlet.
+Isso desbloqueou a validacao visual do HC-RECAP-CARD (screenshot em
+`docs/sprints/R-INT-3-HC-RECAP-CARD-screenshots-gauntlet/saude-essa-semana.png`:
+47.333 passos, 2 treinos 2,0h, 7,3h sono medio, 72,5kg).
 
 #### 3Q.C — Loops de valor reativos (5)
 
 | ID | Sprint | Tipo | P |
 |---|---|---|---|
-| R-INT-2-CALENDAR-NOTIF-PROXIMO | Notif "Evento em 15min" pré-event | feature | P1 |
+| R-INT-2-CALENDAR-NOTIF-PROXIMO | Notif "Evento em 15min" pré-event | feature | P1 | `[ok 4d3bca4]` |
 | R-INT-3-HC-NOTIF-META-PASSOS | Meta diária + notif silenciosa + badge Tela Hoje | feature | P2 |
 | R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou 20% mais que semana passada" | feature | P2 |
 | R-INT-4-SPOTIFY-AGORA-TOCANDO | Badge "Tocando: <título>" na Tela Hoje | feature | P3 |
