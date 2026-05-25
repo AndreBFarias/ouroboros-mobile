@@ -14,7 +14,13 @@
 // app so le.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { sonoPath } from '@/lib/vault/paths';
+import {
+  sonoPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
+import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { SonoSchema, type Sono } from '@/lib/schemas/sono';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
@@ -22,6 +28,38 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 function joinUri(root: string, rel: string): string {
   const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
   return `${trimmedRoot}/${rel}`;
+}
+
+// Lista todas as sessoes de sono do Vault, ordenadas desc por data
+// (dia do despertar). Espelha listarPassos: filtra arquivos da pasta
+// markdown/ pelo prefixo sono- e parseia cada um pelo SonoSchema.
+// Diferente de passos (um arquivo por dia), sono tem multiplos
+// arquivos por dia (sono-YYYY-MM-DD-hc-<id>.md), todos casam o
+// prefixo e entram na lista. Arquivos malformados ou de sync conflict
+// sao ignorados. Pasta inexistente => []. Consumido por
+// calcularSaudeRecap (R-INT-3-HC-RECAP-CARD).
+export async function listarSono(vaultRoot: string): Promise<Sono[]> {
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'sono-')
+  );
+
+  const lidos: Sono[] = [];
+  for (const arquivoUri of arquivos) {
+    try {
+      const result = await readVaultFile(arquivoUri, SonoSchema);
+      if (result) lidos.push(result.meta);
+    } catch {
+      // Arquivo invalido; ignora silenciosamente.
+    }
+  }
+
+  // Ordenacao desc por data ISO (lexicografica YYYY-MM-DD respeita
+  // ordem cronologica). Empate (mesmo dia, varias sessoes) mantem
+  // ordem de listagem do filesystem; irrelevante para o agregado.
+  lidos.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+  return lidos;
 }
 
 // Dados de uma sessao de sono que o caller (puxador) monta a partir do

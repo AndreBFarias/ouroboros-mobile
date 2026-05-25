@@ -2,13 +2,21 @@
 // que o path canonico (markdown/passos-YYYY-MM-DD.md) e o meta
 // chegam corretos a camada de IO.
 const mockWriteVaultFile = jest.fn();
+const mockListVaultFolder = jest.fn();
+const mockReadVaultFile = jest.fn();
 
 jest.mock('@/lib/vault/writer', () => ({
   __esModule: true,
   writeVaultFile: (...args: unknown[]) => mockWriteVaultFile(...args),
 }));
+jest.mock('@/lib/vault/reader', () => ({
+  __esModule: true,
+  listVaultFolder: (...args: unknown[]) => mockListVaultFolder(...args),
+  readVaultFile: (...args: unknown[]) => mockReadVaultFile(...args),
+}));
 
-import { escreverPassos } from '@/lib/vault/passos';
+import { escreverPassos, listarPassos } from '@/lib/vault/passos';
+import type { Passos } from '@/lib/schemas/passos';
 
 const VAULT_ROOT = 'content://test/vault';
 
@@ -110,5 +118,79 @@ describe('escreverPassos', () => {
     );
     const [, meta] = mockWriteVaultFile.mock.calls[0];
     expect(meta.total).toBe(0);
+  });
+});
+
+const passosBase: Passos = {
+  tipo: 'passos',
+  data: '2026-05-20',
+  autor: 'pessoa_a',
+  total: 8186,
+  fonte_hc: true,
+  sincronizado_em: '2026-05-21T20:30:00-03:00',
+};
+
+describe('listarPassos', () => {
+  it('lista passos do vault', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/markdown/passos-2026-05-20.md',
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: passosBase, body: '' });
+    const lista = await listarPassos(VAULT_ROOT);
+    expect(lista).toHaveLength(1);
+    expect(lista[0].total).toBe(8186);
+  });
+
+  it('devolve [] quando pasta inexistente (listVaultFolder retorna [])', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([]);
+    const lista = await listarPassos(VAULT_ROOT);
+    expect(lista).toEqual([]);
+  });
+
+  it('ignora arquivos que nao sao passos- pelo prefixo', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/markdown/passos-2026-05-20.md',
+      'content://test/vault/markdown/medidas-2026-05-20.md',
+      'content://test/vault/markdown/sono-2026-05-20-hc-abc.md',
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: passosBase, body: '' });
+    const lista = await listarPassos(VAULT_ROOT);
+    expect(lista).toHaveLength(1);
+    // So o arquivo passos- foi lido.
+    expect(mockReadVaultFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('ordena desc por data', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/markdown/passos-2026-05-18.md',
+      'content://test/vault/markdown/passos-2026-05-20.md',
+    ]);
+    mockReadVaultFile
+      .mockResolvedValueOnce({
+        meta: { ...passosBase, data: '2026-05-18', total: 100 },
+        body: '',
+      })
+      .mockResolvedValueOnce({
+        meta: { ...passosBase, data: '2026-05-20', total: 200 },
+        body: '',
+      });
+    const lista = await listarPassos(VAULT_ROOT);
+    expect(lista.map((p) => p.data)).toEqual(['2026-05-20', '2026-05-18']);
+  });
+
+  it('ignora arquivo malformado (readVaultFile lanca)', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/markdown/passos-2026-05-20.md',
+      'content://test/vault/markdown/passos-2026-05-19.md',
+    ]);
+    mockReadVaultFile
+      .mockRejectedValueOnce(new Error('frontmatter invalido'))
+      .mockResolvedValueOnce({
+        meta: { ...passosBase, data: '2026-05-19' },
+        body: '',
+      });
+    const lista = await listarPassos(VAULT_ROOT);
+    expect(lista).toHaveLength(1);
+    expect(lista[0].data).toBe('2026-05-19');
   });
 });

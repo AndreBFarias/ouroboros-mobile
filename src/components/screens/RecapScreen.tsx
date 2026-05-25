@@ -46,6 +46,7 @@ import { RecapSecaoReflexoes } from './RecapSecaoReflexoes';
 import { RecapSecaoEvolucoes } from './RecapSecaoEvolucoes';
 import { RecapSecaoTarefas } from './RecapSecaoTarefas';
 import { RecapSecaoNumeros } from './RecapSecaoNumeros';
+import { RecapSecaoSaude } from './RecapSecaoSaude';
 import { RecapModoCalendario } from './RecapModoCalendario';
 
 // Q24.b (2026-05-13): 'memorias' nao e' um state interno -- tap nessa
@@ -408,6 +409,10 @@ export function RecapScreen() {
               {totalNumeros > 0 ? (
                 <RecapSecaoNumeros numeros={data.numeros} range={range} />
               ) : null}
+              {/* R-INT-3-HC-RECAP-CARD: consolida passos/treinos/sono/
+                  medidas vindos do autopull HC. A propria secao se
+                  oculta quando nao ha dado de saude no periodo. */}
+              <RecapSecaoSaude periodo={periodo} ate={range.ate} />
             </ScrollView>
           )}
         </Animated.View>

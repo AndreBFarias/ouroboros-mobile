@@ -20,7 +20,13 @@
 // fazem write opt-in via escreverPesoEmHC / escreverBodyFatEmHC.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { passosPath } from '@/lib/vault/paths';
+import {
+  passosPath,
+  MARKDOWN_FOLDER,
+  matchesFeaturePrefix,
+} from '@/lib/vault/paths';
+import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { PassosSchema, type Passos } from '@/lib/schemas/passos';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
@@ -28,6 +34,35 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 function joinUri(root: string, rel: string): string {
   const trimmedRoot = root.endsWith('/') ? root.slice(0, -1) : root;
   return `${trimmedRoot}/${rel}`;
+}
+
+// Lista todos os registros de passos diarios do Vault, ordenados desc
+// por data. Espelha listarMedidas: filtra arquivos da pasta markdown/
+// pelo prefixo passos- e parseia cada um pelo PassosSchema. Arquivos
+// malformados ou de sync conflict sao ignorados silenciosamente.
+// Pasta inexistente => []. Consumido por calcularSaudeRecap
+// (R-INT-3-HC-RECAP-CARD).
+export async function listarPassos(vaultRoot: string): Promise<Passos[]> {
+  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
+  const todos = await listVaultFolder(folderUri, '.md');
+  const arquivos = todos.filter(
+    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'passos-')
+  );
+
+  const lidos: Passos[] = [];
+  for (const arquivoUri of arquivos) {
+    try {
+      const result = await readVaultFile(arquivoUri, PassosSchema);
+      if (result) lidos.push(result.meta);
+    } catch {
+      // Arquivo invalido; ignora silenciosamente.
+    }
+  }
+
+  // Ordenacao desc por data ISO (lexicografica YYYY-MM-DD respeita
+  // ordem cronologica).
+  lidos.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+  return lidos;
 }
 
 // Persiste um registro de passos diarios no Vault.

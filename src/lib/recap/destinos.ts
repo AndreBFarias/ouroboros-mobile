@@ -88,6 +88,32 @@ export function destinoTarefa(item: TarefaConcluidaItem): DestinoRecap | null {
   return { pathname: '/todo', params: { focus: item.id } };
 }
 
+// R-INT-3-HC-RECAP-CARD: destinos das linhas da secao Saude do Recap.
+// Cada metrica clicavel navega para a rota canonica onde o usuario ve
+// o detalhe daquele dado de saude:
+//   passos  -> /saude-fisica (aba Evolucao Corporal expoe o resumo HC)
+//   treinos -> /treinos (historico de sessoes)
+//   sono    -> /saude-fisica (resumo HC junto de passos)
+//   medidas -> /medidas (registro corporal)
+// passos/sono ainda nao tem rota dedicada (surgem no CardHCResumo da
+// aba Evolucao); ate la, /saude-fisica e o destino mais proximo.
+export type SaudeChave = 'passos' | 'treinos' | 'sono' | 'medidas';
+
+export function destinoSaude(chave: SaudeChave): DestinoRecap | null {
+  switch (chave) {
+    case 'passos':
+      return { pathname: '/saude-fisica' };
+    case 'treinos':
+      return { pathname: '/treinos' };
+    case 'sono':
+      return { pathname: '/saude-fisica' };
+    case 'medidas':
+      return { pathname: '/medidas' };
+    default:
+      return null;
+  }
+}
+
 // Evolucoes: id segue formato fixo (humor_medio / treinos /
 // contador:<slug>). Map por prefixo.
 export function destinoEvolucao(item: EvolucaoItem): DestinoRecap | null {

@@ -6,6 +6,7 @@ import {
   destinoCrise,
   destinoEvolucao,
   destinoReflexao,
+  destinoSaude,
   destinoTarefa,
 } from '@/lib/recap/destinos';
 import type {
@@ -175,5 +176,23 @@ describe('destinoEvolucao', () => {
       detalhe: 'Sem destino',
     };
     expect(destinoEvolucao(item)).toBeNull();
+  });
+});
+
+describe('destinoSaude', () => {
+  it('passos -> /saude-fisica', () => {
+    expect(destinoSaude('passos')).toEqual({ pathname: '/saude-fisica' });
+  });
+
+  it('treinos -> /treinos', () => {
+    expect(destinoSaude('treinos')).toEqual({ pathname: '/treinos' });
+  });
+
+  it('sono -> /saude-fisica', () => {
+    expect(destinoSaude('sono')).toEqual({ pathname: '/saude-fisica' });
+  });
+
+  it('medidas -> /medidas', () => {
+    expect(destinoSaude('medidas')).toEqual({ pathname: '/medidas' });
   });
 });
