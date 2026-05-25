@@ -37,8 +37,19 @@ da sprint WIRING).
 **Achado materializado (zero follow-up):** `escreverMedida` e
 `escreverRegistroCiclo` reescrevem no HC quando `healthConnectSync` está on;
 como `insertRecords` da bridge não dedupa, o autopull criaria loop
-`HC -> Vault -> HC`. Capturado em `R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD` (P1,
-prereq do WIRING). PASSOS/EXERCICIO/SLEEP não têm write-back.
+`HC -> Vault -> HC`. PASSOS/EXERCICIO/SLEEP não têm write-back.
+
+### Fase 3 Onda 3P.B-WIRE — Guard de write-back do autopull HC (2026-05-25)
+
+`R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD` (`63544d9`): param opcional
+`opts?: { pularSyncHC?: boolean }` em `escreverMedida` e `escreverRegistroCiclo`.
+Quando `true`, pula o write-back no HC (`escreverPesoEmHC`/`escreverBodyFatEmHC`/
+`escreverMenstruacaoEmHC`). Os puxadores `puxadores/medidas.ts` e
+`puxadores/menstruacao.ts` passam `pularSyncHC: true` — corta o loop
+`HC -> Vault -> HC`. Backward-compat total: saves manuais da UI (callers sem o
+param) continuam reescrevendo no HC. +6 testes (spy confirma corte do
+write-back). Smoke **300 suítes / 2884 testes verde**. Pré-requisito do WIRING
+agora satisfeito.
 
 ### Fase 3 Onda 3N.1 — R-ROT-1-A inteligência de soneca + listener canônico (2026-05-21)
 

@@ -140,7 +140,7 @@ worktree (mesmo padrao do PASSOS), cherry-pick limpo na main, smoke
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
 |---|---|---|---|---|---|
-| R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD | Guard contra loop HC->Vault->HC em medidas+menstruacao (param `pularSyncHC`) | fix | P1 | 0.5d | `R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD-spec.md` |
+| R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD | Guard contra loop HC->Vault->HC em medidas+menstruacao (param `pularSyncHC`) | fix | P1 | `63544d9` | `[ok]` (2026-05-25) |
 | R-INT-3-HC-AUTOPULL-WIRING | useEffect em `_layout.tsx` liga os 5 puxadores no boot + foreground (toggle + throttle 60min) | integr | P1 | 0.5h | `R-INT-3-HC-AUTOPULL-WIRING-spec.md` |
 
 **Ordem obrigatoria:** GUARD antes de WIRING. Sem o guard, ligar o wiring com
