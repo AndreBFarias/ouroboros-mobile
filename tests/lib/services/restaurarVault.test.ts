@@ -158,6 +158,7 @@ function snapshotValido(): SnapshotSettings {
         healthConnectSync: false,
         recapAmbientAudio: false,
         recapAudioAnexadoAutoplay: true,
+        googleCalendarSync: false,
       },
       privacidade: {
         biometriaAbrir: true,
@@ -178,6 +179,10 @@ function snapshotValido(): SnapshotSettings {
         HeartRate: null,
         SleepSession: null,
         MenstruationFlow: null,
+      },
+      calendarSyncUltimaSync: {
+        pessoa_a: null,
+        pessoa_b: null,
       },
     },
     onboarding: {

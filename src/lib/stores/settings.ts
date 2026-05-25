@@ -80,6 +80,12 @@ export interface SettingsState {
     // experiencia natural ("o que voce gravou volta ao seu ouvido").
     // Toggle off silencia tanto o anexado quanto o ambient.
     recapAudioAnexadoAutoplay: boolean;
+    // R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): opt-in para auto-sync
+    // periodico do Google Calendar no boot/foreground (abastece a secao
+    // "Proximos" da Tela Hoje sem o usuario abrir /agenda). Default false
+    // (privacy-first; o usuario ja conectou OAuth mas o pull periodico e'
+    // escolha consciente). Quando off, o wiring em _layout faz early-return.
+    googleCalendarSync: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -104,6 +110,12 @@ export interface SettingsState {
   // Persistido via secureStorage adapter (zustand persist). Migrate v2
   // -> v3 preenche todos os tipos com null para instalacoes existentes.
   hcAutopullUltimaSync: Record<TipoHC, string | null>;
+  // R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): timestamp ISO 8601 da
+  // ultima sync bem-sucedida do Google Calendar por pessoa. Lido pelo
+  // wiring em _layout para o throttle (60min). null = nunca sincronizou.
+  // Espelha o padrao de hcAutopullUltimaSync (mas por pessoa, ja que
+  // cada conta Google e' independente). Persistido via secureStorage.
+  calendarSyncUltimaSync: Record<PessoaAutor, string | null>;
   // Mutators canonicos. Sprints opt-in chamam apenas os toggles
   // relevantes; setSync/setLembrete foram removidos no shape v2.
   setSomVibracao: <K extends keyof SettingsState['somVibracao']>(
@@ -133,6 +145,9 @@ export interface SettingsState {
   // R-INT-3-HC-AUTOPULL-SCHEDULER: setter imutavel do tracking de
   // ultima sync por tipo HC. Chamado pelo orquestrador em sucesso.
   setHCAutopullUltimaSync: (tipo: TipoHC, iso: string) => void;
+  // R-INT-2-CALENDAR-SYNC-EVENTOS: setter imutavel do tracking de ultima
+  // sync do Calendar por pessoa. Chamado pelo wiring em sucesso.
+  setCalendarSyncUltimaSync: (pessoa: PessoaAutor, iso: string) => void;
   resetar: () => void;
 }
 
@@ -149,6 +164,7 @@ const DEFAULT_STATE_V2: Omit<
   | 'setMidia'
   | 'setRecap'
   | 'setHCAutopullUltimaSync'
+  | 'setCalendarSyncUltimaSync'
   | 'resetar'
 > = {
   somVibracao: {
@@ -191,6 +207,10 @@ const DEFAULT_STATE_V2: Omit<
     // intencao. Usuario que prefere silencio total desliga este
     // toggle (e tambem o ambient acima).
     recapAudioAnexadoAutoplay: true,
+    // R-INT-2-CALENDAR-SYNC-EVENTOS: default OFF (opt-in). O auto-sync
+    // periodico do Calendar so dispara quando o usuario liga em
+    // Configuracoes; ate la, a agenda atualiza apenas ao abrir /agenda.
+    googleCalendarSync: false,
   },
   privacidade: {
     biometriaAbrir: false,
@@ -217,6 +237,12 @@ const DEFAULT_STATE_V2: Omit<
     HeartRate: null,
     SleepSession: null,
     MenstruationFlow: null,
+  },
+  // R-INT-2-CALENDAR-SYNC-EVENTOS: default null por pessoa. Wiring
+  // converte null em "pode disparar" (primeira sync) no throttle.
+  calendarSyncUltimaSync: {
+    pessoa_a: null,
+    pessoa_b: null,
   },
 };
 
@@ -254,6 +280,15 @@ export const useSettings = create<SettingsState>()(
       setHCAutopullUltimaSync: (tipo, iso) =>
         set((s) => ({
           hcAutopullUltimaSync: { ...s.hcAutopullUltimaSync, [tipo]: iso },
+        })),
+      // R-INT-2-CALENDAR-SYNC-EVENTOS: atualiza calendarSyncUltimaSync
+      // [pessoa] de forma imutavel. Chamado pelo wiring apos sync OK.
+      setCalendarSyncUltimaSync: (pessoa, iso) =>
+        set((s) => ({
+          calendarSyncUltimaSync: {
+            ...s.calendarSyncUltimaSync,
+            [pessoa]: iso,
+          },
         })),
       resetar: () => set({ ...DEFAULT_STATE_V2 }),
     }),
@@ -375,6 +410,12 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ...DEFAULT_STATE_V2.hcAutopullUltimaSync,
       ...((ps.hcAutopullUltimaSync as Record<string, unknown>) ?? {}),
     } as SettingsState['hcAutopullUltimaSync'],
+    // R-INT-2-CALENDAR-SYNC-EVENTOS: merge profundo. Instalacoes
+    // pre-sprint nao tem a chave => spread default cobre pessoa_a/b.
+    calendarSyncUltimaSync: {
+      ...DEFAULT_STATE_V2.calendarSyncUltimaSync,
+      ...((ps.calendarSyncUltimaSync as Record<string, unknown>) ?? {}),
+    } as SettingsState['calendarSyncUltimaSync'],
   } as SettingsState;
 }
 

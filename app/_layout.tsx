@@ -34,6 +34,15 @@ import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
 import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
 import { puxadorMenstruacao } from '@/lib/health/puxadores/menstruacao';
 import { puxadorSono } from '@/lib/health/puxadores/sleep';
+// R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): auto-sync periodico do
+// Google Calendar no boot/foreground. Espelha o wiring do HC autopull
+// acima. Orquestrador puro + integracao concreta com dependencias
+// (refreshIfNeeded, listarEventos, sincronizarSnapshotAgenda) injetadas.
+import { orquestrarIntegracoes } from '@/lib/integracoes/scheduler';
+import { criarIntegracaoCalendar } from '@/lib/integracoes/calendarSync';
+import { listarEventos } from '@/lib/services/calendarApi';
+import { sincronizarSnapshotAgenda } from '@/lib/vault/agenda';
+import { useGoogleAuth } from '@/lib/stores/googleAuth';
 import { useSettings } from '@/lib/stores/settings';
 import { colors } from '@/theme/tokens';
 import { useDeepLinkListener } from '@/lib/boot/deepLink';
@@ -281,6 +290,84 @@ export default function RootLayout() {
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.log('[hc-autopull]', 'wiring erro', msg);
+      }
+    }
+
+    // Disparo 1: boot apos appPronto.
+    void disparar();
+
+    // Disparo 2: cada vez que o app volta para 'active' (foreground).
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void disparar();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [appPronto]);
+
+  // R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): dispara auto-sync do
+  // Google Calendar no boot apos appPronto e a cada foreground, para
+  // que a secao "Proximos" da Tela Hoje fique fresca SEM o usuario abrir
+  // /agenda. Espelha o wiring do HC autopull acima (mesmo estilo, log
+  // [integracoes]). Respeita featureToggles.googleCalendarSync (default
+  // false, opt-in) com early-return, e throttle de 60min via
+  // calendarSyncUltimaSync. Fire-and-forget: nao bloqueia render. Token
+  // null (conta nao conectada/invalida) vira no-op gracioso dentro da
+  // integracao — nunca crasha. Cleanup remove o listener de AppState.
+  useEffect(() => {
+    if (!appPronto) return;
+
+    const THROTTLE_MS = 60 * 60 * 1000;
+
+    function podeDisparar(): boolean {
+      const s = useSettings.getState();
+      if (!s.featureToggles.googleCalendarSync) return false;
+      const ultimas = Object.values(s.calendarSyncUltimaSync).filter(
+        (v): v is string => typeof v === 'string'
+      );
+      if (ultimas.length === 0) return true; // primeira sync
+      const maisAntigo = Math.min(
+        ...ultimas.map((iso) => new Date(iso).getTime())
+      );
+      return Date.now() - maisAntigo >= THROTTLE_MS;
+    }
+
+    async function disparar(): Promise<void> {
+      if (!podeDisparar()) return;
+      // Injeta as dependencias reais. A integracao sincroniza ambas as
+      // pessoas (cada conta Google e' independente). refreshIfNeeded
+      // devolve null se a conta nao conectou/invalidou => no-op.
+      const integracao = criarIntegracaoCalendar({
+        refreshToken: (pessoa) =>
+          useGoogleAuth.getState().refreshIfNeeded(pessoa),
+        listar: listarEventos,
+        sincronizarSnapshot: sincronizarSnapshotAgenda,
+        vaultRoot: useVault.getState().vaultRoot,
+      });
+      try {
+        const r = await orquestrarIntegracoes([integracao]);
+        const totalNovos = r.integracoes.reduce((acc, i) => acc + i.novos, 0);
+        const totalErros = r.integracoes.filter((i) => i.erro !== null).length;
+        console.log('[integracoes]', 'wiring boot/foreground', {
+          rodadoEm: r.rodadoEm,
+          totalNovos,
+          totalErros,
+        });
+        // Marca ultima sync de ambas as pessoas no sucesso da rodada
+        // (mesma semantica do snapshot completo: o throttle vale para a
+        // proxima rodada inteira, nao por evento).
+        const calendarOk = r.integracoes.some(
+          (i) => i.nome === 'google_calendar' && i.erro === null
+        );
+        if (calendarOk) {
+          const agora = r.rodadoEm;
+          useSettings.getState().setCalendarSyncUltimaSync('pessoa_a', agora);
+          useSettings.getState().setCalendarSyncUltimaSync('pessoa_b', agora);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.log('[integracoes]', 'wiring erro', msg);
       }
     }
 

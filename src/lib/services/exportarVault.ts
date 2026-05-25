@@ -76,6 +76,7 @@ export interface SnapshotSettings {
     | 'setMidia'
     | 'setRecap'
     | 'setHCAutopullUltimaSync'
+    | 'setCalendarSyncUltimaSync'
     | 'resetar'
   >;
   onboarding: {
@@ -209,6 +210,9 @@ export function gerarSnapshotSettings(): SnapshotSettings {
       // R-INT-3-HC-AUTOPULL-SCHEDULER: campo entra no export para
       // restaurar tracking de ultima sync em re-instalacao.
       hcAutopullUltimaSync: s.hcAutopullUltimaSync,
+      // R-INT-2-CALENDAR-SYNC-EVENTOS: idem para o tracking do Calendar
+      // por pessoa (restaura throttle em re-instalacao).
+      calendarSyncUltimaSync: s.calendarSyncUltimaSync,
     },
     onboarding: {
       done: o.done,
