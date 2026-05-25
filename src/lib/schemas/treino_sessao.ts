@@ -57,6 +57,20 @@ export const TreinoSessaoSchema = z.object({
   duracao_min: z.number().int().min(1).max(240),
   exercicios: z.array(ExercicioSessaoSchema).min(1),
   observacoes: z.string().optional(),
+  // R-INT-3-HC-AUTOPULL-EXERCICIO: campos de proveniencia para sessoes
+  // importadas do Health Connect (ExerciseSession registrada por wearable
+  // ou app de terceiros). Todos opcionais para backward-compat: sessoes
+  // criadas via CRUD da Tela 11 ou migradas de drafts da M13 nao os tem
+  // e continuam validas.
+  //
+  //   fonte_hc_id      -> metadata.id do record HC (chave de idempotencia).
+  //   fonte_hc_origin  -> origem humanizada (metadata.dataOrigin.packageName
+  //                       traduzido, ex: "Strava", "Conexao Saude").
+  //   exercicio_hc_type-> exerciseType raw do HC (enum int), preservado para
+  //                       reprocessamento futuro do mapa PT-BR.
+  fonte_hc_id: z.string().optional(),
+  fonte_hc_origin: z.string().optional(),
+  exercicio_hc_type: z.number().int().min(0).optional(),
 });
 
 export type TreinoSessao = z.infer<typeof TreinoSessaoSchema>;
