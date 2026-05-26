@@ -5,6 +5,38 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 follow-ups (leva 8) — Robustez Gauntlet + flake jest + timezone paths + doc (2026-05-26)
+
+Recuperação dos 4 follow-ups materializados em `e5ceb26`; os executores
+despachados na sessão anterior morreram antes de commitar — 3 diffs completos
+foram recuperados dos worktrees e validados, o 4º (jest) reexecutado.
+
+- **`R-DX-GAUNTLET-ROBUSTEZ` (`cf4a95a`):** `gauntlet.sh` ganhou pre-flight de
+  higiene (`git worktree prune` + limpeza idempotente de `/tmp/metro-cache`,
+  `/tmp/metro-file-map-*`, `node_modules/.cache/metro`, `.expo`, com guard de
+  gauntlet paralelo via lock) e health-check pós-launch com detecção de morte do
+  PID — imprime `OK: Gauntlet pronto` ao bindar, ou `ERRO:` + tail de 20 linhas
+  do log + exit não-zero ao morrer/timeout (90s). Fim do "Metro morre pós-bundle
+  silencioso" e do `ENOENT watch` por file-map órfão de worktree deletado.
+  Proof-of-work: cold start sobe, binda, Metro vivo pós-bundle.
+- **`R-INFRA-JEST-ENV-MOCK-FLAKE` (`f1759e9`):** `spotify/oauth.test.ts` usava
+  `jest.doMock(env.json, { virtual: true })` — quebrava no run completo dentro de
+  worktree porque `env.json` é symlink (`ln -sfn`) e o resolver segue o realpath,
+  divergindo da chave virtual quando outra suíte carrega o módulo antes. Fix:
+  `jest.mock` hoisted sem `virtual` (padrão canônico já em
+  `googleAuthFlow-pickClientIdSafe.test.ts`), determinístico independente de
+  symlink/ordem de carga. Produção (`oauth.ts`) intocada.
+- **`R-INFRA-TIMEZONE-PATHS-MIGRACAO` (`953e059`):** `paths.ts`
+  (`formatDateYmd`/`-Hm`/`-Hms`) deixa de ter offset UTC-3 hardcoded e delega ao
+  helper canônico `datetime/local.ts` (estendido com `dataHoraLocalYmdHm`/`-Hms`
+  via Intl, edge `24→00` tratado). Paridade BRT bit-a-bit (575 testes
+  vault/health verdes sem mudar expectativa; tsc 0).
+- **`R-INT-3-HC-DOC-VERSION-FIX-RESIDUO` (`402660f`):** comentário em
+  `build.gradle:11` reescrito pra não implicar `1.2.0-alpha04` instalado (série
+  alpha, build usa `connect-client:1.1.0` estável).
+
+Smoke **321 suítes / 3061 testes verde**.
+
 ### Fase 3 Onda 3Q.D — Autopull HC em background (opt-in, guarded) (2026-05-25)
 
 - **`R-INT-3-HC-AUTOPULL-BACKGROUND` (`bb2f1c9`):** scheduler de autopull HC com

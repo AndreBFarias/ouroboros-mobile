@@ -176,6 +176,18 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 > + BACKGROUND) + Drive hub/notif + LIVE-CHECKPOINT (device). Novo follow-up:
 > `R-INFRA-TIMEZONE-HELPER-CANONICO`.
 
+#### 3P.Y — Follow-ups leva 8 (recuperacao pos-crash, 2026-05-26)
+
+Materializados em `e5ceb26`; executores da sessao anterior morreram pre-commit.
+3 diffs recuperados dos worktrees + validados, jest reexecutado. Smoke 321/3061.
+
+| ID | Tipo | P | Status | Origem |
+|---|---|---|---|---|
+| R-DX-GAUNTLET-ROBUSTEZ | dx | P2 | `[ok cf4a95a]` proof cold-start (binda, vivo pos-bundle) | Metro morre pos-bundle + file-map orfao de worktree |
+| R-INFRA-JEST-ENV-MOCK-FLAKE | fix | P2 | `[ok f1759e9]` smoke verde em worktree + isolado 12/12 | doMock virtual colide com env.json symlink |
+| R-INFRA-TIMEZONE-PATHS-MIGRACAO | refactor | P3 | `[ok 953e059]` paridade BRT bit-a-bit (575 testes) | paths.ts UTC-3 hardcoded -> helper canonico |
+| R-INT-3-HC-DOC-VERSION-FIX-RESIDUO | docs | P3 | `[ok 402660f]` | build.gradle:11 citava 1.2.0-alpha04 (usa 1.1.0) |
+
 #### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)
 
 | ID | Sprint | Tipo | P | Estim. | Spec |
