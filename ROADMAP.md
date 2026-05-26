@@ -252,7 +252,7 @@ Isso desbloqueou a validacao visual do HC-RECAP-CARD (screenshot em
 
 | ID | Sprint | Tipo | P |
 |---|---|---|---|
-| R-INT-3-HC-AUTOPULL-BACKGROUND | Background sync via expo-task-manager + expo-background-fetch | infra | P2 |
+| R-INT-3-HC-AUTOPULL-BACKGROUND | Background sync via expo-task-manager + expo-background-task (opt-in) | infra | P2 | `[ok bb2f1c9]` código guarded; ativacao requer `npx expo install` + rebuild nativo (humano) |
 
 **Sequenciamento sugerido:** Onda 3Q depende de Onda 3P (autopull abastece Vault antes do consumer UI ler). Sprint order canônica detalhada em `_HANDOFF-ONDA-3Q.md` seção 4.
 

@@ -5,6 +5,19 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q.D — Autopull HC em background (opt-in, guarded) (2026-05-25)
+
+- **`R-INT-3-HC-AUTOPULL-BACKGROUND` (`bb2f1c9`):** scheduler de autopull HC com
+  app fechado, opt-in via `featureToggles.hcAutopullBackground` (default false).
+  `src/lib/health/autopullBackgroundTask.ts` registra a task reusando
+  `orquestrarHCAutopull` (não toca scheduler/puxadores/foreground). Toggle UI
+  "Sincronizar em segundo plano" no card Conexão Saúde. Registro **guarded**
+  (require lazy + try/catch → no-op silencioso quando o módulo nativo está
+  ausente) — bundle/smoke verdes com a feature dormente. **Gate de build nativo:**
+  ativação exige `npx expo install expo-task-manager expo-background-task` +
+  plugin no app.json + rebuild (não pega via OTA) — pendência humana. Smoke
+  **321 suítes / 3061 testes verde**.
+
 ### Fase 3 anti-débito (leva 7) — Mirror hcAutopullUltimaSync no Vault (2026-05-25)
 
 - **`R-INT-3-HC-AUTOPULL-VAULT-MIRROR` (`5b191e0`):** o subscriber de
