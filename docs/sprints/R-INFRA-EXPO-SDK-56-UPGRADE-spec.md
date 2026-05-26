@@ -6,10 +6,46 @@
 **Tranche**: R-INFRA
 **Fase**: pós-v1.0.0
 
-> **STATUS: `[todo-futuro]` — NÃO EXECUTAR AGORA.** Materializada como débito mapeado
-> por decisão do dono (AskUserQuestion 2026-05-26). O upgrade é breaking (2 saltos de
-> major: 54→55→56) e arriscado às vésperas do v1.0.0. Executar só depois do release
-> estável, em onda dedicada com janela própria.
+> **STATUS: `[ok]` — EXECUTADA 2026-05-26 (decisão do dono de antecipar).** Upgrade
+> 54→56 concluído e mergeado no main (commit `021c00c`), validado por **build nativo
+> verde no CI** (run `26480485827`, tag `devclient-sdk56-test`). A cautela inicial
+> sobre `expo-share-intent` foi refutada: o config plugin dele roda no SDK 56 e o
+> `gradle assembleDebug` compilou HC bridge + widget + RN 0.85.
+
+## Resultado da execução — playbook das 6 camadas (2026-05-26)
+
+`npm install expo@^56` + `npx expo install --fix` levou a RN 0.85.3, React 19.2.3,
+Reanimated 4.3.1, worklets 0.8.3, TS 6.0.3, babel-preset-expo 56, jest-expo 56. O
+upgrade revelou 6 camadas de incompatibilidade, cada uma com causa-raiz isolada e fix:
+
+1. **jest config** — RN 0.85 separou o preset: instalar `@react-native/jest-preset`
+   (peer do jest-expo 56) + apontar `tests/__env__/rn-realtimers.js` para
+   `@react-native/jest-preset/jest/react-native-env.js` (saiu de `react-native/jest/`).
+2. **tsc (11546 erros)** — auto-include de `@types/*` parou no `moduleResolution:
+   bundler` + TS6: adicionar `"types": ["jest","node"]` + `"ignoreDeprecations": "6.0"`
+   (baseUrl) em `tsconfig.json`.
+3. **82 suítes** — worklets 0.8.3: reanimated 4.3 chama `scheduleOnUI` no init;
+   adicionar `scheduleOnUI`/`runOnUISync` ao mock de `react-native-worklets` em
+   `jest.setup.cjs`.
+4. **14 suítes** — `react-native-css-interop` (NativeWind) acessa Appearance/AppState/
+   AccessibilityInfo/Dimensions/I18nManager/PixelRatio no init (disparado pelo getter
+   `global.fetch` do winter runtime do Expo 56). Helper central
+   `tests/__support__/rnCssInteropMock.cjs` stuba os 6; os mocks parciais de
+   `react-native` passam a usá-lo.
+5. **2 testes** — `expo-task-manager`/`expo-background-task` agora instaladas carregam
+   em Jest (mockar ausência deterministicamente); e `jest.doMock` dentro de
+   `isolateModules` não vence o `jest.mock` hoisted no jest 56 (mover o cenário mobile
+   para arquivo próprio `gauntlet-autoseed-no-op-mobile.test.ts`).
+6. **prebuild** — `@expo/config-plugins` não é mais hoisted no top-level; o config
+   plugin do `datetimepicker` quebrava `expo config`: instalar `@expo/config-plugins`
+   como devDependency (hoist).
+
+**Métricas finais:** tsc 0 · smoke 323 suítes / 3073 testes · bundle Hermes 8.4 MB
+(dentro do ADR-0027 10,5 MB) · `npm audit` 0 · `expo config` exit 0 · CI build nativo
+verde. `@react-navigation` não é importado direto (breaking do Expo Router não afeta).
+
+**Pendência (não-bloqueante):** validação live no device (runtime no Xiaomi) — o build
+compila e assina; o runtime real é o próximo passo de qualquer release.
 
 ## Fonte canônica
 

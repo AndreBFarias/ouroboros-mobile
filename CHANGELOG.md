@@ -5,6 +5,35 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### R-INFRA-EXPO-SDK-56-UPGRADE — Upgrade Expo SDK 54 para 56 (RN 0.85, React 19.2, TS6) (2026-05-26)
+
+Upgrade de plataforma executado a pedido do dono (antecipado vs o plano de
+pós-v1.0.0), validado por **build nativo verde no CI** antes do merge (caminho
+rigoroso: branch `wip-sdk56` → CI `assembleDebug` → merge). `npm install expo@^56`
++ `npx expo install --fix` → RN 0.85.3, React 19.2.3, Reanimated 4.3.1, worklets
+0.8.3, TypeScript 6.0.3, babel-preset-expo/jest-expo 56.
+
+Seis camadas de incompatibilidade resolvidas (causa-raiz isolada em cada):
+
+- **jest** — RN 0.85 separou o preset: `@react-native/jest-preset` (peer) + path do
+  `react-native-env` em `tests/__env__/rn-realtimers.js`.
+- **tsc (11546 erros → 0)** — `types: ["jest","node"]` + `ignoreDeprecations: "6.0"`
+  (auto-include de `@types` quebrou no `moduleResolution: bundler` + TS6).
+- **mock worklets** — `scheduleOnUI`/`runOnUISync` (reanimated 4.3 init).
+- **css-interop (NativeWind)** — helper `tests/__support__/rnCssInteropMock.cjs`
+  stuba os 6 módulos RN que o css-interop toca no init (disparado pelo getter
+  `global.fetch` do winter runtime do Expo 56); 14 mocks parciais passam a usá-lo.
+- **2 testes** — mock determinístico de `expo-task-manager`/`expo-background-task`
+  ausentes + cenário mobile do gauntlet movido para arquivo próprio (jest 56 não
+  deixa `doMock` interno vencer `jest.mock` hoisted).
+- **prebuild** — `@expo/config-plugins` hoisted no top-level (datetimepicker).
+
+Validação: tsc 0 · smoke 323 suítes / 3073 testes · bundle Hermes 8.4 MB (ADR-0027)
+· `npm audit` 0 · `expo config` exit 0 · **CI `assembleDebug` verde** (run
+`26480485827`: prebuild + Kotlin HC bridge/widget + RN 0.85 + APK assinado keystore
+EAS). `expo-share-intent` roda no SDK 56 apesar do peer `^55`. Pendência
+não-bloqueante: validação live runtime no device.
+
 ### R-DX-GAUNTLET-ONBOARDING-BYPASS — Onboarding bypassado por default no Gauntlet web + flag opt-in (2026-05-26)
 
 DX de validação visual no Chrome. Antes, abrir o Gauntlet caía sempre no

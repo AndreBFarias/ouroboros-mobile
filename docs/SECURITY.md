@@ -136,12 +136,15 @@ Validado por `npx tsc --noEmit` (0), `npx expo export --platform android`
 (bundle Hermes 8,64 MB, dentro do ADR-0027) e smoke 321 suítes / 3061
 testes verde. Sem risco residual.
 
-### 5.2 Por que não subir Expo SDK 56
+### 5.2 Expo SDK 56 (executado 2026-05-26)
 
-`npm audit fix --force` instalaria `expo@56` + `expo-splash-screen@56`
-(breaking, 2 saltos de major) às vésperas do v1.0.0. Como os overrides
-zeraram as vulnerabilidades sem isso, o upgrade fica como débito mapeado
-em `docs/sprints/R-INFRA-EXPO-SDK-56-UPGRADE-spec.md` (executar pós-release).
+A R-SEC-6 zerou as vulnerabilidades já no SDK 54 (via overrides), então o
+upgrade não era necessário por segurança. Ainda assim, o dono optou por
+antecipar o upgrade para o SDK 56 (RN 0.85, React 19.2), executado e
+mergeado no main (commit `021c00c`) com **build nativo verde no CI**. As
+versões corrigidas de `postcss`/`uuid` vêm agora nativamente do SDK 56 (os
+overrides permanecem inertes — `npm audit` segue 0). Playbook das 6 camadas
+de incompatibilidade resolvidas em `docs/sprints/R-INFRA-EXPO-SDK-56-UPGRADE-spec.md`.
 
 ### 5.3 Auditar
 
