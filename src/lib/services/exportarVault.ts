@@ -30,7 +30,7 @@ import { VAULT_FOLDERS } from '@/lib/vault/paths';
 import { loadVaultRoot } from '@/lib/vault/permissions';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { sha256Base64, sha256Utf8 } from '@/lib/crypto/sha256';
-import { useSettings } from '@/lib/stores/settings';
+import { useSettings, type SettingsExportShape } from '@/lib/stores/settings';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { usePessoa } from '@/lib/stores/pessoa';
 
@@ -67,20 +67,9 @@ export interface Manifest {
 export interface SnapshotSettings {
   schema: number;
   exportadoEm: string;
-  settings: Omit<
-    ReturnType<typeof useSettings.getState>,
-    | 'setSomVibracao'
-    | 'setPessoa'
-    | 'setFeatureToggle'
-    | 'setPrivacidade'
-    | 'setMidia'
-    | 'setRecap'
-    | 'setHCAutopullUltimaSync'
-    | 'setCalendarSyncUltimaSync'
-    | 'setDriveBackupUltimaSync'
-    | 'setMetaPassosDia'
-    | 'resetar'
-  >;
+  // R-INFRA-SETTINGS-EXPORT-SHAPE: tipo canonico declarado em
+  // settings.ts. Setter novo na store nao exige mais editar este arquivo.
+  settings: SettingsExportShape;
   onboarding: {
     done: boolean;
     tipoCompanhia: ReturnType<typeof useOnboarding.getState>['tipoCompanhia'];
@@ -199,29 +188,33 @@ export function gerarSnapshotSettings(): SnapshotSettings {
   const s = useSettings.getState();
   const o = useOnboarding.getState();
   const p = usePessoa.getState();
+  // Tipo explicito: se SettingsExportShape ganhar um campo novo, o tsc
+  // reclama aqui imediatamente (campo faltando no literal). Montagem
+  // campo a campo mantem a clareza de quais valores saem no snapshot.
+  const settings: SettingsExportShape = {
+    somVibracao: s.somVibracao,
+    pessoa: s.pessoa,
+    featureToggles: s.featureToggles,
+    privacidade: s.privacidade,
+    midia: s.midia,
+    recap: s.recap,
+    // R-INT-3-HC-AUTOPULL-SCHEDULER: campo entra no export para
+    // restaurar tracking de ultima sync em re-instalacao.
+    hcAutopullUltimaSync: s.hcAutopullUltimaSync,
+    // R-INT-2-CALENDAR-SYNC-EVENTOS: idem para o tracking do Calendar
+    // por pessoa (restaura throttle em re-instalacao).
+    calendarSyncUltimaSync: s.calendarSyncUltimaSync,
+    // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: tracking do ultimo upload Drive
+    // entra no export para restaurar o throttle semanal em re-instalacao.
+    driveBackupUltimaSync: s.driveBackupUltimaSync,
+    // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria de passos entra no
+    // export para restaurar a preferencia em re-instalacao.
+    metaPassosDia: s.metaPassosDia,
+  };
   return {
     schema: EXPORT_SCHEMA_VERSION,
     exportadoEm: new Date().toISOString(),
-    settings: {
-      somVibracao: s.somVibracao,
-      pessoa: s.pessoa,
-      featureToggles: s.featureToggles,
-      privacidade: s.privacidade,
-      midia: s.midia,
-      recap: s.recap,
-      // R-INT-3-HC-AUTOPULL-SCHEDULER: campo entra no export para
-      // restaurar tracking de ultima sync em re-instalacao.
-      hcAutopullUltimaSync: s.hcAutopullUltimaSync,
-      // R-INT-2-CALENDAR-SYNC-EVENTOS: idem para o tracking do Calendar
-      // por pessoa (restaura throttle em re-instalacao).
-      calendarSyncUltimaSync: s.calendarSyncUltimaSync,
-      // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: tracking do ultimo upload Drive
-      // entra no export para restaurar o throttle semanal em re-instalacao.
-      driveBackupUltimaSync: s.driveBackupUltimaSync,
-      // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria de passos entra no
-      // export para restaurar a preferencia em re-instalacao.
-      metaPassosDia: s.metaPassosDia,
-    },
+    settings,
     onboarding: {
       done: o.done,
       tipoCompanhia: o.tipoCompanhia,

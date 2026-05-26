@@ -118,7 +118,10 @@ import {
   EXPORT_SCHEMA_VERSION,
   type SnapshotSettings,
 } from '@/lib/services/exportarVault';
-import { useSettings } from '@/lib/stores/settings';
+import {
+  useSettings,
+  type SettingsExportShape,
+} from '@/lib/stores/settings';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { usePessoa } from '@/lib/stores/pessoa';
 
@@ -130,64 +133,68 @@ const fsMock = FileSystem as unknown as {
 };
 
 function snapshotValido(): SnapshotSettings {
+  // R-INFRA-SETTINGS-EXPORT-SHAPE: amarra o literal ao tipo canonico.
+  // Se a interface ganhar um campo novo, o tsc reclama aqui (fixture
+  // desatualizada) em vez de o erro escapar para o runtime do restore.
+  const settings: SettingsExportShape = {
+    somVibracao: {
+      geral: false,
+      despertar: false,
+      conquista: true,
+      botoes: false,
+    },
+    pessoa: {
+      ativa: 'pessoa_b',
+      vaultCompartilhado: false,
+      tipoCompanhia: 'duo',
+    },
+    featureToggles: {
+      cicloMenstrual: false,
+      alarmePessoal: false,
+      todoLeve: true,
+      contadorDiasSem: true,
+      calendarioConquistas: true,
+      widgetHomescreen: true,
+      widgetMostraNome: true,
+      mostrarFinancasEmDesenvolvimento: true,
+      backupAutomaticoSemanal: true,
+      healthConnectSync: false,
+      recapAmbientAudio: false,
+      recapAudioAnexadoAutoplay: true,
+      googleCalendarSync: false,
+      backupDriveAutomatico: false,
+    },
+    privacidade: {
+      biometriaAbrir: true,
+      ocultarTranscricoes: true,
+    },
+    midia: {
+      capPorRegistro: 8,
+      permitirAudio: false,
+    },
+    recap: {
+      slideshowIntervaloS: 4,
+    },
+    hcAutopullUltimaSync: {
+      Steps: null,
+      ExerciseSession: null,
+      Weight: null,
+      BodyFat: null,
+      HeartRate: null,
+      SleepSession: null,
+      MenstruationFlow: null,
+    },
+    calendarSyncUltimaSync: {
+      pessoa_a: null,
+      pessoa_b: null,
+    },
+    driveBackupUltimaSync: null,
+    metaPassosDia: 8000,
+  };
   return {
     schema: EXPORT_SCHEMA_VERSION,
     exportadoEm: '2026-05-08T12:00:00.000Z',
-    settings: {
-      somVibracao: {
-        geral: false,
-        despertar: false,
-        conquista: true,
-        botoes: false,
-      },
-      pessoa: {
-        ativa: 'pessoa_b',
-        vaultCompartilhado: false,
-        tipoCompanhia: 'duo',
-      },
-      featureToggles: {
-        cicloMenstrual: false,
-        alarmePessoal: false,
-        todoLeve: true,
-        contadorDiasSem: true,
-        calendarioConquistas: true,
-        widgetHomescreen: true,
-        widgetMostraNome: true,
-        mostrarFinancasEmDesenvolvimento: true,
-        backupAutomaticoSemanal: true,
-        healthConnectSync: false,
-        recapAmbientAudio: false,
-        recapAudioAnexadoAutoplay: true,
-        googleCalendarSync: false,
-        backupDriveAutomatico: false,
-      },
-      privacidade: {
-        biometriaAbrir: true,
-        ocultarTranscricoes: true,
-      },
-      midia: {
-        capPorRegistro: 8,
-        permitirAudio: false,
-      },
-      recap: {
-        slideshowIntervaloS: 4,
-      },
-      hcAutopullUltimaSync: {
-        Steps: null,
-        ExerciseSession: null,
-        Weight: null,
-        BodyFat: null,
-        HeartRate: null,
-        SleepSession: null,
-        MenstruationFlow: null,
-      },
-      calendarSyncUltimaSync: {
-        pessoa_a: null,
-        pessoa_b: null,
-      },
-      driveBackupUltimaSync: null,
-      metaPassosDia: 8000,
-    },
+    settings,
     onboarding: {
       done: true,
       tipoCompanhia: 'casal',

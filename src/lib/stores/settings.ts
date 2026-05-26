@@ -176,6 +176,33 @@ export interface SettingsState {
   resetar: () => void;
 }
 
+// Subconjunto serializavel de SettingsState (campos exportados no
+// snapshot .ouroboros/snapshot-settings.json). Setters e resetar ficam
+// de fora porque funcoes nao serializam. R-INFRA-SETTINGS-EXPORT-SHAPE:
+// fonte unica de verdade para gerarSnapshotSettings() em exportarVault.ts
+// e para a fixture de restore em restaurarVault.test.ts. Antes da sprint,
+// cada setter novo em SettingsState forcava editar a uniao Omit<...> do
+// SnapshotSettings em cascata; agora a interface lista os campos uma vez.
+//
+// Lookup types (SettingsState['campo']) garantem que mudancas nos
+// sub-shapes (ex.: novo tipo em hcAutopullUltimaSync) propagam automatico.
+//
+// Atencao: este shape e' o snapshot do ZIP exportavel. NAO confundir com
+// o payload do mirror Vault (subscriber escreverEstadoCanonico mais
+// abaixo), que e' estrito e nao inclui os trackings de sync.
+export interface SettingsExportShape {
+  somVibracao: SettingsState['somVibracao'];
+  pessoa: SettingsState['pessoa'];
+  featureToggles: SettingsState['featureToggles'];
+  privacidade: SettingsState['privacidade'];
+  midia: SettingsState['midia'];
+  recap: SettingsState['recap'];
+  hcAutopullUltimaSync: SettingsState['hcAutopullUltimaSync'];
+  calendarSyncUltimaSync: SettingsState['calendarSyncUltimaSync'];
+  driveBackupUltimaSync: SettingsState['driveBackupUltimaSync'];
+  metaPassosDia: SettingsState['metaPassosDia'];
+}
+
 // Defaults v2 (sprint M29):
 // - somVibracao: tudo TRUE (geral mestre on, 3 contextuais on).
 // - featureToggles: tudo TRUE excepto widgetMostraNome (privacidade).
