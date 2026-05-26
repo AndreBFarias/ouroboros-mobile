@@ -209,7 +209,7 @@ no Gauntlet web para validacao visual com exatidao.
 | ID | Tipo | P | Status | Origem |
 |---|---|---|---|---|
 | R-SEC-6-NPM-AUDIT-FIX | fix | P1 | `[ok]` 24->0 vulns via `audit fix` + overrides postcss/uuid/brace-expansion; SDK 54 mantido; tsc 0, export 8.64MB, smoke 321/3061 | `npm audit` no setup |
-| R-DX-GAUNTLET-ONBOARDING-BYPASS | infra | P2 | `[todo]` bypass onboarding default + flag `?onboarding=1` no Gauntlet web | DX validacao visual no Chrome |
+| R-DX-GAUNTLET-ONBOARDING-BYPASS | infra | P2 | `[codigo-ok]` autoSeedOnboardingSeNecessario + autoSeedDev + querOnboardingFresh guardados por MODO_DEV_WEB/__DEV__; flag `?onboarding=1` + gauntlet.sh --onboarding; jest 20/20, tsc 0, dead-code OK; aguarda validacao visual Gauntlet do orquestrador | DX validacao visual no Chrome |
 | R-INFRA-EXPO-SDK-56-UPGRADE | infra | P2 | `[todo-futuro]` upgrade 54->56 zera postcss/uuid de raiz (pos-v1.0.0) | debito mapeado de R-SEC-6 |
 
 #### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)

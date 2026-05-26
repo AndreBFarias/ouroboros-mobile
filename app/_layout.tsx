@@ -91,6 +91,7 @@ import {
   sinalizarBootDev,
   registrarRouterDev,
   registrarPathnameDev,
+  autoSeedDev,
 } from '@/lib/dev/gauntletBootstrap';
 import '../global.css';
 
@@ -589,6 +590,19 @@ function FrameMobileDev({ children }: { children: React.ReactNode }) {
   );
 }
 
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: detecta a flag opt-in ?onboarding=1
+// na URL para FORCAR o fluxo de onboarding mesmo em dev web. Le
+// window.location.search com guards de typeof (window/location sao
+// undefined em nativo, onde a funcao sempre retorna false). Aceita
+// qualquer valor presente da chave `onboarding` (ex: ?onboarding=1)
+// como pedido de onboarding fresh.
+function querOnboardingFresh(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (typeof window.location === 'undefined') return false;
+  const search = window.location.search ?? '';
+  return new URLSearchParams(search).has('onboarding');
+}
+
 // A28 (2026-05-06): guard global para forcar /onboarding como rota
 // raiz sempre que onboarding nao foi concluido. Sem este guard, em
 // cenarios de Expo Go com expo-router state stale, share intent OEM
@@ -596,6 +610,13 @@ function FrameMobileDev({ children }: { children: React.ReactNode }) {
 // ou outra rota -- gerando "Vault nao autorizado" e POP_TO_TOP error
 // quando o usuario tenta voltar (Stack vazia). useEffect direto roda
 // apos mount; idempotente via verificacao de pathname atual.
+//
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: em dev web (MODO_DEV_WEB) e SEM a
+// flag ?onboarding=1, em vez de redirecionar para /onboarding, aplica
+// o seed de boot (autoSeedDev) que seta done=true sincrono. O proximo
+// render do guard ja ve onboardingDone=true e nao redireciona, caindo
+// na tela util. Com a flag, o comportamento original (redirect ao
+// onboarding) e preservado, permitindo validar o fluxo no Chrome.
 function OnboardingGuard() {
   const router = useRouter();
   const pathname = usePathname();
@@ -607,6 +628,12 @@ function OnboardingGuard() {
     if (onboardingDone) return;
     // ja esta em onboarding ou em algum subpath dele -> nao redireciona.
     if (pathname?.startsWith('/onboarding')) return;
+    // Bypass dev web: seed sincrono em vez de redirecionar ao onboarding,
+    // salvo quando a flag ?onboarding=1 pede o fluxo fresh.
+    if (MODO_DEV_WEB && !querOnboardingFresh()) {
+      autoSeedDev();
+      return;
+    }
     router.replace('/onboarding');
   }, [onboardingHidratado, onboardingDone, pathname, router]);
 

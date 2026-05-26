@@ -31,6 +31,42 @@ O script:
 Em sessão fresca, `useFonts` SDK 54 web demora ~30-60s para resolver
 na primeira navegação. Aguarde antes de interagir.
 
+## Onboarding bypassado por default + flag `?onboarding=1`
+
+> **R-DX-GAUNTLET-ONBOARDING-BYPASS (2026-05-26)** — Por default, em
+> dev web (`MODO_DEV_WEB`), o app abre com o onboarding já concluído.
+
+Antes desta sprint, abrir o Gauntlet no Chrome caía sempre no
+`/onboarding`, porque `useOnboarding.done` é `false` por default — era
+preciso chamar `window.__gauntlet.seed()` manualmente antes de validar
+qualquer tela. Agora:
+
+- **Default (sem flag):** o `OnboardingGuard` aplica um seed síncrono
+  de boot (`done = true` + vault mock `web://mock-vault/Ouroboros` +
+  nomes genéricos `Nome_A`/`Nome_B`) em vez de redirecionar. O app cai
+  direto numa tela útil. Reusa o mesmo motor do `seed()`
+  (`aplicarSeed`); idempotente (se já estiver concluído, é no-op).
+- **Flag `?onboarding=1`:** força o fluxo de onboarding. Basta abrir
+  `http://localhost:8081/?onboarding=1` no Chrome (ou trocar a URL sem
+  reiniciar o Metro). Com a flag, o comportamento original é
+  preservado (redireciona para `/onboarding`).
+
+Atalho pelo script:
+
+```bash
+# Default: abre /_dev/gauntlet; o app já tem onboarding bypassado
+./gauntlet.sh
+
+# Forca o fluxo de onboarding: abre /?onboarding=1
+./gauntlet.sh --onboarding
+```
+
+Tudo guardado por `MODO_DEV_WEB` (`Platform.OS === 'web' && __DEV__`):
+em release Android/iOS o caminho é dead-code (verificado por
+`npx expo export` + grep dos marcadores `autoSeedOnboardingSeNecessario`
+/ `querOnboardingFresh` = 0 no bundle). O bypass é exclusivo de dev web,
+não é feature visível ao usuário final.
+
 ## Gravação de vídeo (`--record`)
 
 > **R-DX-2 (2026-05-17)** — `gauntlet.sh --record [DURATION]` grava

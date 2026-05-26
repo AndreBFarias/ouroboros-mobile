@@ -636,6 +636,20 @@ export function desinstalarGauntlet(): void {
   delete (globalThis as unknown as { __gauntlet?: GauntletAPI }).__gauntlet;
 }
 
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: auto-seed de boot no Gauntlet web.
+// Por default, em dev web, o app abre com onboarding ja concluido para
+// que o orquestrador caia direto numa tela util sem chamar
+// window.__gauntlet.seed() manualmente. Reusa aplicarSeed (motor
+// canonico de seed onboarding+vault+nomes). Idempotente: se done ja e
+// true, e no-op (preserva nomes e estado de uma sessao anterior). No-op
+// total quando GAUNTLET_ATIVO=false (mobile/release) pelo mesmo guard
+// das demais APIs.
+export function autoSeedOnboardingSeNecessario(): void {
+  if (!GAUNTLET_ATIVO) return;
+  if (useOnboarding.getState().done) return;
+  aplicarSeed();
+}
+
 // Exporta direto para casos onde o orquestrador prefere
 // import vs window. Em testes Jest, esta API tambem fica disponivel
 // via mock direto da modulo.

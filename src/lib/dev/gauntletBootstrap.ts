@@ -54,3 +54,14 @@ export function registrarPathnameDev(pathname: string): void {
     require('@/lib/dev/gauntlet').setPathnameRef(pathname);
   }
 }
+
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: aplica seed de boot (onboarding done
+// + vault mock + nomes genericos) quando o app abre no Gauntlet web sem
+// a flag ?onboarding=1. Mesmo molde dos entry-points acima: o body fica
+// dentro de `if (__DEV__)`, entao o require lazy de
+// autoSeedOnboardingSeNecessario some por DCE em release (zero markers).
+export function autoSeedDev(): void {
+  if (__DEV__) {
+    require('@/lib/dev/gauntlet').autoSeedOnboardingSeNecessario();
+  }
+}

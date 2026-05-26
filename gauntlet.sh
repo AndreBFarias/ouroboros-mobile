@@ -11,6 +11,9 @@
 #   ./gauntlet.sh --record 60      # grava video 60s
 #   ./gauntlet.sh --record 0       # grava ate Ctrl-C / kill (sem limite de tempo)
 #   ./gauntlet.sh --gc             # roda scripts/gc-metro-cache.sh antes de subir
+#   ./gauntlet.sh --onboarding     # abre /?onboarding=1 para FORCAR o fluxo de
+#                                  # onboarding (default abre /, com bypass do
+#                                  # onboarding via seed automatico)
 #
 # O que faz:
 #   1. Resolve porta efetiva (default 8081, ou --port, ou --auto-port).
@@ -153,6 +156,7 @@ AUTO_PORT=0
 RECORD=0
 RECORD_DURATION=30
 RUN_GC=0
+ONBOARDING=0
 i=1
 while [[ $i -le $# ]]; do
   arg="${!i}"
@@ -170,6 +174,7 @@ while [[ $i -le $# ]]; do
       ;;
     --auto-port) AUTO_PORT=1 ;;
     --gc) RUN_GC=1 ;;
+    --onboarding) ONBOARDING=1 ;;
     --record)
       RECORD=1
       # Lookahead: proximo arg, se for numero, vira RECORD_DURATION.
@@ -211,7 +216,15 @@ fi
 LOG_FILE="/tmp/gauntlet-expo-${PORT}.log"
 LOCK_FILE="/tmp/gauntlet-port-${PORT}.lock"
 URL_METRO="http://localhost:${PORT}"
-URL_GAUNTLET="${URL_METRO}/_dev/gauntlet"
+# R-DX-GAUNTLET-ONBOARDING-BYPASS: por default abre /_dev/gauntlet (menu
+# dev). Com --onboarding abre /?onboarding=1 para forcar o fluxo de
+# onboarding (sem a flag o OnboardingGuard aplica seed e cai numa tela
+# util). A flag ?onboarding=1 e lida em app/_layout.tsx (querOnboardingFresh).
+if [[ $ONBOARDING -eq 1 ]]; then
+  URL_GAUNTLET="${URL_METRO}/?onboarding=1"
+else
+  URL_GAUNTLET="${URL_METRO}/_dev/gauntlet"
+fi
 
 # Exporta porta pra que run.sh / expo cli usem
 export EXPO_DEV_SERVER_PORT="$PORT"

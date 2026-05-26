@@ -5,6 +5,29 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### R-DX-GAUNTLET-ONBOARDING-BYPASS — Onboarding bypassado por default no Gauntlet web + flag opt-in (2026-05-26)
+
+DX de validação visual no Chrome. Antes, abrir o Gauntlet caía sempre no
+`/onboarding` (porque `useOnboarding.done` é `false` por default) — era preciso
+chamar `window.__gauntlet.seed()` manualmente antes de validar qualquer tela.
+
+- **Default (sem flag):** em dev web (`MODO_DEV_WEB`), o `OnboardingGuard` aplica
+  um seed síncrono de boot (`done = true` + vault mock + nomes genéricos
+  `Nome_A`/`Nome_B`) em vez de redirecionar, caindo direto numa tela útil. Reusa
+  `aplicarSeed` (motor canônico do `seed()`); idempotente.
+- **Flag `?onboarding=1`:** força o fluxo de onboarding (comportamento original
+  preservado). Lida por `querOnboardingFresh()` (lê `window.location.search` com
+  guards de `typeof`; `false` em nativo).
+- **`gauntlet.sh --onboarding`:** abre `/?onboarding=1` em vez de `/_dev/gauntlet`.
+- Funções novas: `autoSeedOnboardingSeNecessario()` (`src/lib/dev/gauntlet.ts`),
+  entry-point neutro `autoSeedDev()` (`src/lib/dev/gauntletBootstrap.ts`, mesmo
+  molde dead-code dos 4 existentes), `querOnboardingFresh()` (`app/_layout.tsx`).
+- **Dead-code em release garantido:** tudo guardado por `MODO_DEV_WEB`/`__DEV__`;
+  verificado por `npx expo export --platform android` + grep dos marcadores
+  (`autoSeedOnboardingSeNecessario`/`querOnboardingFresh`) = 0 no bundle.
+- Não é feature visível ao usuário final (dev-only) — `docs/FEATURES-CANONICAS.md`
+  não alterado. Jest 20/20 (suíte gauntlet), tsc 0.
+
 ### R-SEC-6 — Zera 24 vulnerabilidades npm sem subir SDK (2026-05-26)
 
 `npm audit` no setup (`santuario` → `install.sh`) acusou 24 vulnerabilidades
