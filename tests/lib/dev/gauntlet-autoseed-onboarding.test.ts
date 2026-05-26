@@ -33,7 +33,11 @@ jest.mock('react-native', () => ({
 // Reforca __DEV__ true (jest-expo ja define, mas explicitamos).
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = true;
 
-import { autoSeedOnboardingSeNecessario, GAUNTLET_ATIVO } from '@/lib/dev/gauntlet';
+import {
+  autoSeedOnboardingSeNecessario,
+  resetarOnboardingParaFluxoDev,
+  GAUNTLET_ATIVO,
+} from '@/lib/dev/gauntlet';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
@@ -102,6 +106,19 @@ describe('autoSeedOnboardingSeNecessario (R-DX-GAUNTLET-ONBOARDING-BYPASS)', () 
     expect(useVault.getState().vaultRoot).toBe(vaultAposPrimeira);
     expect(usePessoa.getState().nomes).toEqual(nomesAposPrimeira);
     expect(useOnboarding.getState().done).toBe(true);
+  });
+});
+
+describe('resetarOnboardingParaFluxoDev (R-DX-GAUNTLET-ONBOARDING-BYPASS flag)', () => {
+  it('reseta done=true para false (forca fluxo de onboarding fresh)', () => {
+    // Simula sessao ja seedada+persistida pelo bypass default.
+    useOnboarding.setState({ done: true });
+    expect(useOnboarding.getState().done).toBe(true);
+
+    resetarOnboardingParaFluxoDev();
+
+    // Com done=false, o OnboardingGuard cai no redirect para /onboarding.
+    expect(useOnboarding.getState().done).toBe(false);
   });
 });
 

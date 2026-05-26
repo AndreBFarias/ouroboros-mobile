@@ -92,6 +92,7 @@ import {
   registrarRouterDev,
   registrarPathnameDev,
   autoSeedDev,
+  resetarOnboardingDev,
 } from '@/lib/dev/gauntletBootstrap';
 import '../global.css';
 
@@ -625,11 +626,21 @@ function OnboardingGuard() {
 
   useEffect(() => {
     if (!onboardingHidratado) return;
-    if (onboardingDone) return;
+    // Bypass dev web (flag ?onboarding=1): forca o fluxo de onboarding
+    // mesmo quando done=true ja foi persistido pelo seed do bypass.
+    // Reseta uma vez (done->false) e deixa o proximo render cair no
+    // redirect abaixo. Sem a flag, done=true mantem a tela util.
+    if (MODO_DEV_WEB && querOnboardingFresh()) {
+      if (onboardingDone) {
+        resetarOnboardingDev();
+        return;
+      }
+    } else if (onboardingDone) {
+      return;
+    }
     // ja esta em onboarding ou em algum subpath dele -> nao redireciona.
     if (pathname?.startsWith('/onboarding')) return;
-    // Bypass dev web: seed sincrono em vez de redirecionar ao onboarding,
-    // salvo quando a flag ?onboarding=1 pede o fluxo fresh.
+    // Bypass dev web (sem a flag): seed sincrono em vez de redirecionar.
     if (MODO_DEV_WEB && !querOnboardingFresh()) {
       autoSeedDev();
       return;

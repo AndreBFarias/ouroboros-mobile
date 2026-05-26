@@ -65,3 +65,13 @@ export function autoSeedDev(): void {
     require('@/lib/dev/gauntlet').autoSeedOnboardingSeNecessario();
   }
 }
+
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: reseta o onboarding (done=false) para
+// que a flag ?onboarding=1 reabra o fluxo mesmo apos o bypass ter
+// seedado+persistido done=true. Mesmo molde DCE: body em `if (__DEV__)`,
+// o require lazy some em release.
+export function resetarOnboardingDev(): void {
+  if (__DEV__) {
+    require('@/lib/dev/gauntlet').resetarOnboardingParaFluxoDev();
+  }
+}

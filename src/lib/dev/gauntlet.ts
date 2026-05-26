@@ -650,6 +650,17 @@ export function autoSeedOnboardingSeNecessario(): void {
   aplicarSeed();
 }
 
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: reseta o onboarding (done=false) para
+// FORCAR o fluxo fresh quando a flag ?onboarding=1 esta presente.
+// Necessario porque o bypass default persiste done=true no storage
+// (zustand persist intercepta o setState do aplicarSeed); sem este reset,
+// a flag nao conseguiria reabrir o onboarding numa sessao ja seedada.
+// No-op em mobile/release pelo guard GAUNTLET_ATIVO.
+export function resetarOnboardingParaFluxoDev(): void {
+  if (!GAUNTLET_ATIVO) return;
+  useOnboarding.getState().resetar();
+}
+
 // Exporta direto para casos onde o orquestrador prefere
 // import vs window. Em testes Jest, esta API tambem fica disponivel
 // via mock direto da modulo.

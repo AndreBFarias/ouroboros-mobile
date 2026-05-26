@@ -15,18 +15,27 @@ chamar `window.__gauntlet.seed()` manualmente antes de validar qualquer tela.
   um seed síncrono de boot (`done = true` + vault mock + nomes genéricos
   `Nome_A`/`Nome_B`) em vez de redirecionar, caindo direto numa tela útil. Reusa
   `aplicarSeed` (motor canônico do `seed()`); idempotente.
-- **Flag `?onboarding=1`:** força o fluxo de onboarding (comportamento original
-  preservado). Lida por `querOnboardingFresh()` (lê `window.location.search` com
-  guards de `typeof`; `false` em nativo).
+- **Flag `?onboarding=1`:** força o fluxo de onboarding. Como o seed do bypass
+  persiste `done=true` no storage (zustand persist intercepta o `setState`), a flag
+  **reseta** o onboarding (`resetarOnboardingParaFluxoDev` → `useOnboarding.resetar()`)
+  antes do redirect — senão o `done` persistido manteria a tela útil e a flag seria
+  inerte (bug pego na validação visual do orquestrador). Lida por
+  `querOnboardingFresh()` (lê `window.location.search` com guards de `typeof`;
+  `false` em nativo).
 - **`gauntlet.sh --onboarding`:** abre `/?onboarding=1` em vez de `/_dev/gauntlet`.
-- Funções novas: `autoSeedOnboardingSeNecessario()` (`src/lib/dev/gauntlet.ts`),
-  entry-point neutro `autoSeedDev()` (`src/lib/dev/gauntletBootstrap.ts`, mesmo
-  molde dead-code dos 4 existentes), `querOnboardingFresh()` (`app/_layout.tsx`).
+- Funções novas: `autoSeedOnboardingSeNecessario()` + `resetarOnboardingParaFluxoDev()`
+  (`src/lib/dev/gauntlet.ts`), entry-points neutros `autoSeedDev()` +
+  `resetarOnboardingDev()` (`src/lib/dev/gauntletBootstrap.ts`, mesmo molde dead-code
+  dos 4 existentes), `querOnboardingFresh()` (`app/_layout.tsx`).
 - **Dead-code em release garantido:** tudo guardado por `MODO_DEV_WEB`/`__DEV__`;
   verificado por `npx expo export --platform android` + grep dos marcadores
   (`autoSeedOnboardingSeNecessario`/`querOnboardingFresh`) = 0 no bundle.
 - Não é feature visível ao usuário final (dev-only) — `docs/FEATURES-CANONICAS.md`
-  não alterado. Jest 20/20 (suíte gauntlet), tsc 0.
+  não alterado. Jest 21/21 (suíte gauntlet), tsc 0, smoke 322/3072.
+- **Validação visual (Gauntlet, playwright MCP):** `/` cai na Tela Hoje (sem
+  onboarding); `/?onboarding=1` cai no onboarding ("Como você se chama?"); `/` de
+  novo re-seeda e volta à tela útil. Screenshots em
+  `docs/sprints/R-DX-GAUNTLET-ONBOARDING-BYPASS-screenshots-gauntlet/`.
 
 ### R-SEC-6 — Zera 24 vulnerabilidades npm sem subir SDK (2026-05-26)
 
