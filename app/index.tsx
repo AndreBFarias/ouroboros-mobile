@@ -41,6 +41,7 @@ import {
   type TarefaListada,
 } from '@/lib/vault/tarefas';
 import { SecaoProximos } from '@/components/screens/SecaoProximos';
+import { BadgePassos } from '@/components/hoje/BadgePassos';
 import { CheckboxTarefaInline } from '@/components/tarefas/CheckboxTarefaInline';
 import { useToastUndo } from '@/lib/hooks/useToastUndo';
 
@@ -272,6 +273,8 @@ function TelaHojeConteudo({
         />
 
         <SecaoProximos />
+
+        <BadgePassos />
 
         <SecaoTodoHoje onLongPress={onTodoLongPress} />
 

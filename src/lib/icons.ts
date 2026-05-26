@@ -50,6 +50,7 @@ export { default as Mic } from 'lucide-react-native/dist/esm/icons/mic.mjs';
 export { default as Moon } from 'lucide-react-native/dist/esm/icons/moon.mjs';
 export { default as Music } from 'lucide-react-native/dist/esm/icons/music.mjs';
 export { default as Pause } from 'lucide-react-native/dist/esm/icons/pause.mjs';
+export { default as Minus } from 'lucide-react-native/dist/esm/icons/minus.mjs';
 export { default as Play } from 'lucide-react-native/dist/esm/icons/play.mjs';
 export { default as Plug } from 'lucide-react-native/dist/esm/icons/plug.mjs';
 export { default as Plus } from 'lucide-react-native/dist/esm/icons/plus.mjs';

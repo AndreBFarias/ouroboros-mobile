@@ -310,6 +310,27 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `lib/health/resumo.ts` (`resumirPassos`, `resumirPeso`,
   `resumirTreinos`).
 
+### 3.7.1 Meta de passos e badge ao vivo — R-INT-3-HC-NOTIF-META-PASSOS (2026-05-25)
+
+- **Meta diária de passos** configurável (default 8000), persistida
+  em `settings.metaPassosDia` (SecureStore). Ajustável por stepper
+  +/- 1000 no card "Meta diária de passos" em `/settings/integracoes`.
+  Setter `setMetaPassosDia` aplica clamp 1..100000.
+- **Badge "X / Y passos"** na Tela Hoje (`<BadgePassos>`, abaixo de
+  Próximos). Lê os passos de **HOJE ao vivo do Health Connect** via
+  `lerPassosHojeHC` (`lib/health/passosHoje.ts`) — janela 00:00 BRT
+  até agora. Não usa o Vault porque o autopull filtra o dia em curso.
+  Render condicional: oculta quando `featureToggles.healthConnectSync`
+  está off ou a leitura retorna `null` (sem módulo nativo / sem
+  permissão / erro). Borda verde quando a meta é atingida, ciano caso
+  contrário. Separador de milhar PT-BR.
+- **Notificação silenciosa de meta** (`checarEnotificarMeta` em
+  `lib/notifications/metaPassos.ts`): ao atingir a meta no dia,
+  dispara notificação sem som "Meta de passos atingida" / "X passos
+  hoje". Guard 1x/dia via SecureStore (`ouroboros.metaPassos.ultimoAviso`
+  com a data local BRT). Disparada pelo próprio `<BadgePassos>` ao
+  computar os passos. No-op em web/Expo Go.
+
 ### 3.8 Hub de Integrações — R-INT-1 (2026-05-16)
 
 - Rota canônica `/integracoes` agrega todos os serviços externos

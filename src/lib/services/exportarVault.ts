@@ -77,6 +77,7 @@ export interface SnapshotSettings {
     | 'setRecap'
     | 'setHCAutopullUltimaSync'
     | 'setCalendarSyncUltimaSync'
+    | 'setMetaPassosDia'
     | 'resetar'
   >;
   onboarding: {
@@ -213,6 +214,9 @@ export function gerarSnapshotSettings(): SnapshotSettings {
       // R-INT-2-CALENDAR-SYNC-EVENTOS: idem para o tracking do Calendar
       // por pessoa (restaura throttle em re-instalacao).
       calendarSyncUltimaSync: s.calendarSyncUltimaSync,
+      // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria de passos entra no
+      // export para restaurar a preferencia em re-instalacao.
+      metaPassosDia: s.metaPassosDia,
     },
     onboarding: {
       done: o.done,

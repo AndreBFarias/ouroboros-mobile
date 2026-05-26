@@ -116,6 +116,12 @@ export interface SettingsState {
   // Espelha o padrao de hcAutopullUltimaSync (mas por pessoa, ja que
   // cada conta Google e' independente). Persistido via secureStorage.
   calendarSyncUltimaSync: Record<PessoaAutor, string | null>;
+  // R-INT-3-HC-NOTIF-META-PASSOS (2026-05-25): meta diaria de passos
+  // (default 8000). Alimenta a badge "X / Y passos" na Tela Hoje e o
+  // gatilho da notificacao silenciosa de meta atingida. Persistido via
+  // secureStorage. NAO entra no mirror Vault (mesma decisao de
+  // hcAutopullUltimaSync: EstadoSettingsSchema e estrito).
+  metaPassosDia: number;
   // Mutators canonicos. Sprints opt-in chamam apenas os toggles
   // relevantes; setSync/setLembrete foram removidos no shape v2.
   setSomVibracao: <K extends keyof SettingsState['somVibracao']>(
@@ -148,6 +154,9 @@ export interface SettingsState {
   // R-INT-2-CALENDAR-SYNC-EVENTOS: setter imutavel do tracking de ultima
   // sync do Calendar por pessoa. Chamado pelo wiring em sucesso.
   setCalendarSyncUltimaSync: (pessoa: PessoaAutor, iso: string) => void;
+  // R-INT-3-HC-NOTIF-META-PASSOS: setter da meta diaria de passos.
+  // Chamado pelo stepper em /settings/integracoes.
+  setMetaPassosDia: (valor: number) => void;
   resetar: () => void;
 }
 
@@ -165,6 +174,7 @@ const DEFAULT_STATE_V2: Omit<
   | 'setRecap'
   | 'setHCAutopullUltimaSync'
   | 'setCalendarSyncUltimaSync'
+  | 'setMetaPassosDia'
   | 'resetar'
 > = {
   somVibracao: {
@@ -244,6 +254,8 @@ const DEFAULT_STATE_V2: Omit<
     pessoa_a: null,
     pessoa_b: null,
   },
+  // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria default 8000 passos.
+  metaPassosDia: 8000,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -290,6 +302,17 @@ export const useSettings = create<SettingsState>()(
             [pessoa]: iso,
           },
         })),
+      // R-INT-3-HC-NOTIF-META-PASSOS: clamp defensivo. Meta minima 1
+      // passo (zero desabilitaria a feature de forma confusa) e maxima
+      // 100000 (limite generoso, evita overflow visual). Valores
+      // invalidos (NaN, negativos) caem no default 8000.
+      setMetaPassosDia: (valor) =>
+        set(() => {
+          const n = Math.round(valor);
+          const seguro =
+            Number.isFinite(n) && n > 0 ? Math.min(n, 100000) : 8000;
+          return { metaPassosDia: seguro };
+        }),
       resetar: () => set({ ...DEFAULT_STATE_V2 }),
     }),
     {
@@ -416,6 +439,15 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ...DEFAULT_STATE_V2.calendarSyncUltimaSync,
       ...((ps.calendarSyncUltimaSync as Record<string, unknown>) ?? {}),
     } as SettingsState['calendarSyncUltimaSync'],
+    // R-INT-3-HC-NOTIF-META-PASSOS: aceita numero positivo persistido,
+    // senao cai no default 8000 (instalacoes pre-sprint ou shape
+    // corrompido).
+    metaPassosDia:
+      typeof ps.metaPassosDia === 'number' &&
+      Number.isFinite(ps.metaPassosDia) &&
+      ps.metaPassosDia > 0
+        ? ps.metaPassosDia
+        : DEFAULT_STATE_V2.metaPassosDia,
   } as SettingsState;
 }
 

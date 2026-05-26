@@ -312,6 +312,16 @@ export function aplicarSnapshot(
     privacidade: snap.settings.privacidade,
     midia: snap.settings.midia,
   });
+  // R-INT-3-HC-NOTIF-META-PASSOS: campo aditivo. Snaps antigos
+  // (exportados antes da sprint) nao tem metaPassosDia; quando ausente
+  // ou invalido, mantem o valor atual do store em vez de zerar.
+  if (
+    typeof snap.settings.metaPassosDia === 'number' &&
+    Number.isFinite(snap.settings.metaPassosDia) &&
+    snap.settings.metaPassosDia > 0
+  ) {
+    useSettings.getState().setMetaPassosDia(snap.settings.metaPassosDia);
+  }
   // sexoDeclarado e permissoes opcionais (campo aditivo: snaps antigos
   // exportados antes do patch nao tem). Quando ausente, mantem o que
   // ja esta no store em vez de zerar.

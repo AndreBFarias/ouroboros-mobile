@@ -184,6 +184,7 @@ function snapshotValido(): SnapshotSettings {
         pessoa_a: null,
         pessoa_b: null,
       },
+      metaPassosDia: 8000,
     },
     onboarding: {
       done: true,

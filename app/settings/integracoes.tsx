@@ -9,9 +9,9 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Heart } from '@/lib/icons';
+import { Heart, Footprints, Minus, Plus } from '@/lib/icons';
 import { Button, Header, Screen, useToast } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
@@ -120,6 +120,19 @@ export default function SettingsIntegracoesScreen() {
     void haptics.light();
     abrirSettingsHealthConnect();
   }, []);
+
+  // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria de passos. Stepper de
+  // +/- 1000 passos. O setter do store aplica clamp (1..100000).
+  const metaPassosDia = useSettings((s) => s.metaPassosDia);
+  const setMetaPassosDia = useSettings((s) => s.setMetaPassosDia);
+  const PASSO_META = 1000;
+  const ajustarMeta = useCallback(
+    (delta: number) => {
+      void haptics.light();
+      setMetaPassosDia(metaPassosDia + delta);
+    },
+    [metaPassosDia, setMetaPassosDia]
+  );
 
   // R-INT-3-HC-EMPIRICAL: 'needs_update' nao bloqueia funcionalidade
   // (HC moderno aceita request mesmo reportando SDK obsoleto). Label
@@ -237,6 +250,100 @@ export default function SettingsIntegracoesScreen() {
                 />
               </>
             ) : null}
+          </View>
+        </View>
+
+        <View
+          style={{
+            backgroundColor: colors.bgAlt,
+            borderRadius: radius.card,
+            padding: spacing.lg,
+            gap: spacing.sm,
+            borderWidth: 1,
+            borderColor: colors.bgElev,
+          }}
+          accessibilityLabel="card meta de passos"
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.sm,
+            }}
+          >
+            <Footprints size={20} color={colors.cyan} strokeWidth={1.75} />
+            <Text
+              style={{
+                color: colors.fg,
+                fontFamily: 'JetBrainsMono_500Medium',
+                fontSize: 16,
+                lineHeight: 24,
+              }}
+            >
+              Meta diária de passos
+            </Text>
+          </View>
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 13,
+              lineHeight: 20,
+            }}
+          >
+            Aparece na Tela Hoje como acompanhamento ao vivo.
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: spacing.sm,
+            }}
+          >
+            <Pressable
+              onPress={() => ajustarMeta(-PASSO_META)}
+              accessibilityRole="button"
+              accessibilityLabel="diminuir meta de passos"
+              hitSlop={8}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: radius.card,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.bgElev,
+              }}
+            >
+              <Minus size={20} color={colors.fg} strokeWidth={2} />
+            </Pressable>
+            <Text
+              accessibilityLabel={`meta atual ${metaPassosDia} passos`}
+              style={{
+                color: colors.fg,
+                fontFamily: 'JetBrainsMono_500Medium',
+                fontSize: 20,
+                lineHeight: 28,
+              }}
+            >
+              {`${metaPassosDia.toLocaleString('pt-BR')} passos`}
+            </Text>
+            <Pressable
+              onPress={() => ajustarMeta(PASSO_META)}
+              accessibilityRole="button"
+              accessibilityLabel="aumentar meta de passos"
+              hitSlop={8}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: radius.card,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: colors.bgElev,
+              }}
+            >
+              <Plus size={20} color={colors.fg} strokeWidth={2} />
+            </Pressable>
           </View>
         </View>
 
