@@ -18,6 +18,18 @@
 //   M-VAULT-LAYOUT-POR-TIPO).
 //
 // Comentarios sem acento (convencao shell/CI).
+//
+// As funcoes de formatacao de data (formatDateYmd/-Hm/-Hms) delegam ao
+// helper canonico src/lib/datetime/local.ts (Intl-based, default
+// America/Sao_Paulo). Antes usavam um offset fixo UTC-3 hardcoded local;
+// a migracao (R-INFRA-TIMEZONE-PATHS-MIGRACAO) consolida o calculo de
+// timezone num unico lugar, preservando paridade BRT bit-a-bit.
+
+import {
+  dataLocalYmd,
+  dataHoraLocalYmdHm,
+  dataHoraLocalYmdHms,
+} from '@/lib/datetime/local';
 
 // Helper canonico para concatenacao de URIs do Vault. Resolve o
 // problema de trailing whitespace + barras duplas + percent-encoding
@@ -43,46 +55,22 @@ export function vaultUriJoin(root: string, rel: string): string {
   return `${r}/${s}`;
 }
 
-const TZ_OFFSET_MIN = -180; // UTC-3 fixo (São Paulo, sem DST)
-const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
-
-// Converte um Date (UTC interno) para sua representacao em UTC-3,
-// retornando um Date cujos getUTC* refletem os componentes locais
-// de São Paulo.
-function toSaoPauloUtc(date: Date): Date {
-  return new Date(date.getTime() + TZ_SHIFT_MS);
-}
-
-// Formata um Date para YYYY-MM-DD no fuso de São Paulo.
+// Formata um Date para YYYY-MM-DD no fuso de São Paulo. Delega ao
+// helper canonico (Intl, default America/Sao_Paulo).
 export function formatDateYmd(date: Date): string {
-  const local = toSaoPauloUtc(date);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return dataLocalYmd(date);
 }
 
-// Formata um Date para YYYY-MM-DD-HHmm no fuso de São Paulo.
+// Formata um Date para YYYY-MM-DD-HHmm no fuso de São Paulo. Delega ao
+// helper canonico (Intl, hour12:false, default America/Sao_Paulo).
 export function formatDateYmdHm(date: Date): string {
-  const local = toSaoPauloUtc(date);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  const hh = String(local.getUTCHours()).padStart(2, '0');
-  const mm = String(local.getUTCMinutes()).padStart(2, '0');
-  return `${y}-${m}-${d}-${hh}${mm}`;
+  return dataHoraLocalYmdHm(date);
 }
 
-// Formata um Date para YYYY-MM-DD-HHmmss no fuso de São Paulo.
+// Formata um Date para YYYY-MM-DD-HHmmss no fuso de São Paulo. Delega ao
+// helper canonico (Intl, hour12:false, default America/Sao_Paulo).
 export function formatDateYmdHms(date: Date): string {
-  const local = toSaoPauloUtc(date);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  const hh = String(local.getUTCHours()).padStart(2, '0');
-  const mm = String(local.getUTCMinutes()).padStart(2, '0');
-  const ss = String(local.getUTCSeconds()).padStart(2, '0');
-  return `${y}-${m}-${d}-${hh}${mm}${ss}`;
+  return dataHoraLocalYmdHms(date);
 }
 
 // =====================================================================

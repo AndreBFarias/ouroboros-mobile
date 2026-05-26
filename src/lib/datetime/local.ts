@@ -63,6 +63,62 @@ export function isoToDataLocalYmd(iso: string, tz: string = TZ_DEFAULT): string 
   return dataLocalYmd(new Date(iso), tz);
 }
 
+// Extrai os componentes de data-hora locais (ano/mes/dia/hora/min/seg)
+// no timezone alvo via Intl.DateTimeFormat.formatToParts. hour12:false
+// garante 00-23. Usa en-CA por consistencia, mas le os parts por type
+// (independente do separador do locale). Centraliza o calculo usado
+// pelas variantes Ymd-Hm e Ymd-Hms.
+function partesDataHoraLocal(
+  d: Date,
+  tz: string,
+): { y: string; mo: string; da: string; h: string; mi: string; s: string } {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const get = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? '';
+  // hour12:false pode emitir "24" para meia-noite em alguns engines;
+  // normaliza para "00" preservando paridade com getUTCHours.
+  let h = get('hour');
+  if (h === '24') h = '00';
+  return {
+    y: get('year'),
+    mo: get('month'),
+    da: get('day'),
+    h,
+    mi: get('minute'),
+    s: get('second'),
+  };
+}
+
+// Formata um Date para YYYY-MM-DD-HHmm no timezone alvo. Default
+// America/Sao_Paulo preserva o comportamento BRT anterior (formatDateYmdHm
+// em paths.ts) bit-a-bit.
+export function dataHoraLocalYmdHm(d: Date, tz: string = TZ_DEFAULT): string {
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
+  const { y, mo, da, h, mi } = partesDataHoraLocal(d, tz);
+  return `${y}-${mo}-${da}-${h}${mi}`;
+}
+
+// Formata um Date para YYYY-MM-DD-HHmmss no timezone alvo. Default
+// America/Sao_Paulo preserva o comportamento BRT anterior
+// (formatDateYmdHms em paths.ts) bit-a-bit.
+export function dataHoraLocalYmdHms(d: Date, tz: string = TZ_DEFAULT): string {
+  if (Number.isNaN(d.getTime())) {
+    return '';
+  }
+  const { y, mo, da, h, mi, s } = partesDataHoraLocal(d, tz);
+  return `${y}-${mo}-${da}-${h}${mi}${s}`;
+}
+
 // Inicio do dia local (00:00 no tz alvo) para uma data. Util para
 // determinar onde a barreira "dia em curso" comeca. Estrategia: obtem
 // o YMD local via Intl, calcula o offset vigente do tz no instante e
