@@ -187,13 +187,18 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
   `featureToggles.googleCalendarSync` (default off) + tracking + wiring no
   `_layout.tsx` (boot+foreground, throttle 60min). Antes a agenda so atualizava ao
   abrir `/agenda`; agora sincroniza periodicamente.
-- **SPOTIFY/YOUTUBE descopadas (decisao do dono 2026-05-25):** o intento e
-  *anexar uma musica/video a um recap* (modelo Google Fotos), NAO puxar historico
-  passivo (timeline tipo Wrapped). Isso JA esta implementado por R-MEDIA-1 (oEmbed
-  Spotify/YouTube via URL + cache + `MidiaSpotifyTab`/`MidiaYoutubeTab`/
-  `MidiaPreviewSpotifyYoutube` + schemas `MidiaSpotify`/`MidiaYoutube`). Puxar
-  historico seria over-build de rede de saida que tensiona ADR-0007 sem servir o
-  intento. Specs `-RECENTLY-PLAYED`/`-WATCH-HISTORY` parkadas (nao executar).
+- **SPOTIFY/YOUTUBE RE-ESCOPADAS (correcao 2026-05-25 noite):** a descope inicial
+  conflundiu duas coisas. O que fica descopado: timeline passiva / cards de Recap /
+  now-playing (`-RECENTLY-PLAYED`, `-WATCH-HISTORY`, `-SPOTIFY-RECAP-CARD`,
+  `-YOUTUBE-RECAP-CARD`, `-SPOTIFY-AGORA-TOCANDO`). MAS: a integracao OAuth JA EXISTE
+  (R-INT-4: `spotify|youtube/{oauth,client,store}.ts`, com `getRecentlyPlayed`/
+  `getTopTracks` prontos) e aparece **conectavel** no hub — porem conectar nao faz
+  nada util (nenhum consumidor). O intento do dono ("anexar a recap como Google
+  Fotos") = **picker**: conectar → navegar sua biblioteca → escolher → anexar. Isso
+  NAO existe (so URL-paste via R-MEDIA-1). Materializadas:
+  `R-INT-4-SPOTIFY-PICKER-spec.md` (P2) + `R-INT-4-YOUTUBE-PICKER-spec.md` (P3) —
+  consumidores do OAuth ja pronto, modelo Google Fotos. **Executar** (substituem os
+  consumers passivos descopados).
 - **DRIVE pendente:** real, mas entrelacada com expansao de escopo OAuth (Drive)
   + verificacao Google (pendencia humana R-SEC-1). Aguarda decisao.
 
