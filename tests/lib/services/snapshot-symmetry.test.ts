@@ -7,10 +7,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 jest.mock('expo-secure-store', () => ({
   __esModule: true,

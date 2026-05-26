@@ -138,7 +138,9 @@
           ]
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      "expo-sharing",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true

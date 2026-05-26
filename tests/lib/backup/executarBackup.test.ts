@@ -98,10 +98,7 @@ jest.mock('expo-file-system/legacy', () => {
 
 // react-native: forca Platform.OS = 'android' para os testes que
 // dependem do guard inicial (web => no-op).
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 import * as FS from 'expo-file-system/legacy';
 import {

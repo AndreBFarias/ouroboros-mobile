@@ -22,9 +22,7 @@ jest.mock('@/lib/dev/gauntlet', () => {
 
 // Mock de Platform.OS='web' + __DEV__=true para reader.ts/listVaultFolder
 // pegarem o branch web/dev que delega ao useVaultMock.
-jest.mock('react-native', () => ({
-  Platform: { OS: 'web' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('web'));
 
 // Garante __DEV__ true (jest define como true por padrao mas reforcamos
 // em escopo global).

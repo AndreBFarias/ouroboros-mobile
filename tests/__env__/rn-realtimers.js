@@ -20,7 +20,10 @@
 // o arquivo de environment, mas environments rodam fora do pipeline de
 // transform.
 
-const RNEnv = require('react-native/jest/react-native-env.js');
+// SDK 56 / RN 0.85: o jest preset do RN foi extraido para o pacote
+// @react-native/jest-preset (peer dep nova do jest-expo 56), e o
+// react-native-env.js saiu de react-native/jest/ para la.
+const RNEnv = require('@react-native/jest-preset/jest/react-native-env.js');
 
 class RealTimersFirstEnvironment extends RNEnv {
   async teardown() {

@@ -8,10 +8,7 @@
 // Assim isolamos a logica de decisao do agendador sem depender de
 // FileSystem.
 
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 import {
   INTERVALO_BACKUP_MS,

@@ -28,9 +28,7 @@ jest.mock('expo-file-system/legacy', () => ({
   deleteAsync: (...args: unknown[]) => mockDeleteAsync(...args),
 }));
 
-jest.mock('react-native', () => ({
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 import { useSessao } from '@/lib/stores/sessao';
 import { migrarVaultLayoutPorTipo } from '@/lib/boot/migrarVaultLayoutPorTipo';

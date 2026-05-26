@@ -14,6 +14,20 @@
 //   3. HC_AUTOPULL_BACKGROUND_TASK e' a string canonica esperada.
 //
 // Comentarios sem acento (convencao shell/CI).
+//
+// ATUALIZACAO SDK 56: expo-task-manager + expo-background-task FORAM instalados
+// (commit 81d8b3e) e, sob o jest-expo 56, carregam em Jest sem lancar (no SDK 54
+// o require falhava e o contrato "ausente" valia por acidente). Para travar o
+// contrato "no-op quando lib nativa ausente" de forma DETERMINISTICA
+// (independente do estado de instalacao), mockamos o require das duas libs como
+// lancante -- assim carregarTaskManager/carregarBackgroundTask cai no catch e
+// retorna null, exatamente como em ambiente sem prebuild.
+jest.mock('expo-task-manager', () => {
+  throw new Error('modulo nativo ausente (simulado)');
+});
+jest.mock('expo-background-task', () => {
+  throw new Error('modulo nativo ausente (simulado)');
+});
 
 import {
   registrarHCAutopullBackground,

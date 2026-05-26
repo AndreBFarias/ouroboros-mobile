@@ -163,10 +163,7 @@ jest.mock('@/lib/vault/permissions', () => ({
 
 // Mock de Platform como Android (loadVaultRoot ja esta mockado mas
 // exportarVault checa Platform.OS antes).
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../__support__/rnCssInteropMock.cjs')('android'));
 
 import * as FileSystem from 'expo-file-system/legacy';
 import { exportarVaultZip } from '@/lib/services/exportarVault';

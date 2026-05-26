@@ -104,10 +104,7 @@ jest.mock('@/lib/vault/permissions', () => ({
   loadVaultRoot: jest.fn(() => Promise.resolve('file:///mock/vault')),
 }));
 
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 import * as FileSystem from 'expo-file-system/legacy';
 import {

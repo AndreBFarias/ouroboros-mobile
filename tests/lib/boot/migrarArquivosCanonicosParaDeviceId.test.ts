@@ -37,10 +37,7 @@ jest.mock('expo-file-system/legacy', () => ({
 }));
 
 // Forca Platform.OS=android para sair do branch web (que e no-op).
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 import { migrarArquivosCanonicosParaDeviceId } from '@/lib/boot/migrarArquivosCanonicosParaDeviceId';
 

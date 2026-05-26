@@ -28,10 +28,7 @@ import {
 // Mock dos modulos nativos para o adapter (que importa
 // fazerBackupDrive -> Platform/FileSystem/store). Platform web faz a
 // funcao publica retornar no-op gracioso sem tocar rede.
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'web' },
-}));
+jest.mock('react-native', () => require('../../../__support__/rnCssInteropMock.cjs')('web'));
 
 // Http fake configuravel: registra chamadas e devolve respostas pre-
 // programadas. Sem rede.

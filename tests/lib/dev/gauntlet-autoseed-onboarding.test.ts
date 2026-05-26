@@ -25,10 +25,7 @@
 // true no modulo gauntlet (e a closure interna de
 // autoSeedOnboardingSeNecessario use o caminho ativo). As stores usam
 // setState sincrono (em memoria); nao tocam AsyncStorage neste teste.
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'web' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('web'));
 
 // Reforca __DEV__ true (jest-expo ja define, mas explicitamos).
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = true;
@@ -122,34 +119,11 @@ describe('resetarOnboardingParaFluxoDev (R-DX-GAUNTLET-ONBOARDING-BYPASS flag)',
   });
 });
 
-describe('autoSeedOnboardingSeNecessario no-op quando GAUNTLET_ATIVO=false', () => {
-  it('com Platform.OS=ios (modulo reisolado) nao seta done nem vaultRoot', () => {
-    // Isola modulos e troca Platform.OS para ios ANTES de reimportar o
-    // gauntlet, garantindo que o const GAUNTLET_ATIVO real reavalie false.
-    jest.isolateModules(() => {
-      jest.resetModules();
-      jest.doMock('react-native', () => ({
-        __esModule: true,
-        Platform: { OS: 'ios' },
-      }));
-      const gauntletReal =
-        require('@/lib/dev/gauntlet') as typeof import('@/lib/dev/gauntlet');
-      const onboardingReal =
-        require('@/lib/stores/onboarding') as typeof import('@/lib/stores/onboarding');
-      const vaultReal =
-        require('@/lib/stores/vault') as typeof import('@/lib/stores/vault');
-
-      expect(gauntletReal.GAUNTLET_ATIVO).toBe(false);
-      onboardingReal.useOnboarding.setState({ done: false });
-      vaultReal.useVault.setState({ vaultRoot: null });
-
-      gauntletReal.autoSeedOnboardingSeNecessario();
-
-      expect(onboardingReal.useOnboarding.getState().done).toBe(false);
-      expect(vaultReal.useVault.getState().vaultRoot).toBeNull();
-    });
-  });
-});
+// O cenario "no-op quando GAUNTLET_ATIVO=false (Platform.OS=ios)" vive em
+// gauntlet-autoseed-no-op-mobile.test.ts. No jest do SDK 56, jest.doMock dentro
+// de isolateModules NAO sobrescreve o jest.mock hoisted do topo deste arquivo
+// (Platform.OS='web'), entao o cenario mobile precisa de um arquivo proprio que
+// mocke react-native com OS=ios desde o import.
 
 // Replica fiel de querOnboardingFresh (app/_layout.tsx). Mantida em
 // sincronia com a fonte: se a logica do helper mudar, este teste flagra.

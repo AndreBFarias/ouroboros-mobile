@@ -22,6 +22,12 @@ jest.mock('react-native-worklets', () => ({
   makeShareable: (value) => value,
   isWorkletFunction: () => false,
   executeOnUIRuntimeSync: (fn) => fn,
+  // A22 (SDK 56 / worklets 0.8.3): reanimated 4.3 chama scheduleOnUI no
+  // module-init. Sem este stub, qualquer suite que importa reanimated
+  // (via moti/componentes animados) quebra no load com
+  // "scheduleOnUI is not a function".
+  scheduleOnUI: (fn) => fn,
+  runOnUISync: (fn) => fn,
   callMicrotasks: () => undefined,
   serializableMappingCache: {
     set: () => undefined,

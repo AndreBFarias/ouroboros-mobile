@@ -101,10 +101,7 @@ jest.mock('expo-file-system/legacy', () => {
   };
 });
 
-jest.mock('react-native', () => ({
-  __esModule: true,
-  Platform: { OS: 'android' },
-}));
+jest.mock('react-native', () => require('../../__support__/rnCssInteropMock.cjs')('android'));
 
 const mockVaultState = {
   vaultRoot: 'file:///mock/vault' as string | null,
