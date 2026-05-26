@@ -10,8 +10,14 @@ cd "$(git rev-parse --show-toplevel)"
 # nao dispara quando worktree e criado via API interna do harness do
 # Claude Code, deixando node_modules/env.json/.env ausentes e quebrando
 # jest em cascata. Custa <100ms quando ok. No-op fora de worktree.
+# Sprint r-infra-worktree-bootstrap-env-json (2026-05-22): captura saida
+# em log e propaga falha visivel em vez de silenciar com 2>&1, pra que
+# symlink obrigatorio ausente nao vire 6 suites jest falsamente vermelhas.
 if [[ -f scripts/bootstrap-worktree.sh ]]; then
-  bash scripts/bootstrap-worktree.sh > /dev/null 2>&1 || true
+  if ! bash scripts/bootstrap-worktree.sh > /tmp/bootstrap-worktree.log 2>&1; then
+    echo "AVISO: bootstrap-worktree.sh sinalizou erro - veja /tmp/bootstrap-worktree.log"
+    cat /tmp/bootstrap-worktree.log >&2
+  fi
 fi
 
 echo ">> anonimato (Regra -1)"

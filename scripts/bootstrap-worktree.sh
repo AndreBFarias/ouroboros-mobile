@@ -5,10 +5,15 @@
 #
 # Sprint r-infra-worktree-bootstrap (2026-05-17).
 #
+# Sprint r-infra-worktree-bootstrap-env-json (2026-05-22): exit != 0
+# dentro de worktree quando symlink obrigatorio (node_modules, env.json)
+# nao pode ser criado por origem ausente no main repo. .env continua
+# opcional (gitignored). Fora de worktree segue exit 0 silencioso.
+#
 # Motivacao: achado recorrente em 10+ sprints (R-CRIT-4, T1B3, T1B6 etc).
 # Bootstrap manual custa ~5min por sprint quando esquecido. Idempotente:
-# rodar varias vezes nao quebra nada. Exit 0 sempre (no-op silencioso
-# fora de worktree, sem bloquear workflow).
+# rodar varias vezes nao quebra nada. No-op silencioso fora de worktree,
+# sem bloquear workflow.
 #
 # Uso:
 #   ./scripts/bootstrap-worktree.sh              # standalone
@@ -43,35 +48,55 @@ if [[ ! -d "$MAIN_REPO/.git" ]]; then
   exit 0
 fi
 
-# Symlink node_modules
+# Conta falhas de symlink obrigatorio (node_modules, env.json). Se >0 ao
+# final, exit 1 pra que o operador veja o worktree quebrado em vez de
+# descobrir via 6 suites jest falsamente vermelhas.
+ERROS=0
+
+# Symlink node_modules (obrigatorio)
 if [[ ! -e node_modules ]]; then
   if [[ -d "$MAIN_REPO/node_modules" ]]; then
     ln -sfn "$MAIN_REPO/node_modules" .
     echo "OK: node_modules symlink criado"
   else
-    echo "AVISO: $MAIN_REPO/node_modules nao existe; pule este worktree" >&2
+    echo "ERRO: node_modules ausente no main repo em $MAIN_REPO; jest e tsc vao falhar" >&2
+    ERROS=$((ERROS + 1))
   fi
 fi
 
-# Symlink env.json
+# Symlink env.json (obrigatorio)
 if [[ ! -e env.json ]]; then
   if [[ -f "$MAIN_REPO/env.json" ]]; then
     ln -sfn "$MAIN_REPO/env.json" .
     echo "OK: env.json symlink criado"
+  else
+    echo "ERRO: env.json ausente no main repo em $MAIN_REPO; jest e tsc vao falhar" >&2
+    ERROS=$((ERROS + 1))
   fi
 fi
 
-# Symlink .env (se existir no main; gitignored, pode nao estar presente)
+# Symlink .env (opcional: gitignored, pode legitimamente nao existir)
 if [[ ! -e .env ]] && [[ -f "$MAIN_REPO/.env" ]]; then
   ln -sfn "$MAIN_REPO/.env" .
   echo "OK: .env symlink criado"
 fi
 
-# Verifica integridade: alerta se symlink esta broken
-for f in node_modules env.json .env; do
+# Verifica integridade: symlink obrigatorio broken tambem conta como erro
+for f in node_modules env.json; do
   if [[ -L "$f" ]] && [[ ! -e "$f" ]]; then
-    echo "AVISO: symlink $f esta broken (target nao existe)" >&2
+    echo "ERRO: symlink $f esta broken (target nao existe)" >&2
+    ERROS=$((ERROS + 1))
   fi
 done
+
+# .env broken e so aviso (opcional)
+if [[ -L .env ]] && [[ ! -e .env ]]; then
+  echo "AVISO: symlink .env esta broken (target nao existe)" >&2
+fi
+
+if [[ "$ERROS" -gt 0 ]]; then
+  echo "ERRO: bootstrap incompleto ($ERROS symlink obrigatorio ausente); worktree quebrado" >&2
+  exit 1
+fi
 
 exit 0
