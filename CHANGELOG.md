@@ -5,6 +5,18 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Documentação
+
+- **`R-INT-3-HC-DOC-VERSION-FIX`:** corrige resíduo textual de versão do SDK
+  Health Connect em comentários da bridge nativa. `connect-client:1.2.0-alpha04`
+  trocado por `connect-client:1.1.0` (versão estável canônica resolvida pelo
+  Gradle em `modules/health-connect/android/build.gradle:58`) em
+  `modules/health-connect/src/index.ts:7` e em `HealthConnectModule.kt:491`.
+  Menções a `1.1.0-alpha11` mantidas onde referem ao pacote npm legado
+  `react-native-health-connect@3.5.3` (fato correto). Zero impacto em runtime.
+  Achado colateral: `build.gradle:11` ainda cita `1.2.0-alpha04` numa nota
+  técnica, mas o arquivo está OFF-LIMITS na spec; não corrigido inline.
+
 ### Fase 3 Onda 3Q (leva 3) — Recap insight semanal de passos (2026-05-25)
 
 - **`R-INT-3-HC-INSIGHT-SEMANAL` (`522f80e`):** card de insight no TOPO do Recap

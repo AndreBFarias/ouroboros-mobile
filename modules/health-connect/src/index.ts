@@ -4,7 +4,7 @@
 // Substitui o pacote npm `react-native-health-connect@3.5.3` que esta
 // pendurado em `connect-client:1.1.0-alpha11` (rejeitado como obsoleto
 // pelo HC moderno). Aqui o modulo nativo vive em
-// modules/health-connect/android/ usando connect-client:1.2.0-alpha04.
+// modules/health-connect/android/ usando connect-client:1.1.0.
 //
 // A API exposta replica deliberadamente as assinaturas que
 // src/lib/health/{availability,permissions,sync}.ts consumiam de

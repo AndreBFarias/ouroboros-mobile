@@ -488,7 +488,7 @@ class HealthConnectModule : Module() {
 
   // Reverte body do permission token canonico em recordType JS.
   // Tokens canonicos: STEPS, EXERCISE, WEIGHT, BODY_FAT, HEART_RATE,
-  // SLEEP, MENSTRUATION (Health Connect 1.2.0-alpha04).
+  // SLEEP, MENSTRUATION (Health Connect 1.1.0).
   private fun androidPermissionBodyToRecordType(body: String): String? {
     return when (body) {
       "STEPS" -> "Steps"
