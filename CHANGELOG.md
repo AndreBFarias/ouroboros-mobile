@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q (leva 2) — Recap Agenda + Meta de passos (2026-05-25)
+
+- **`R-INT-2-CALENDAR-RECAP-CARD` (`d9c8d81`):** seção "Agenda essa semana" no
+  Recap. `src/lib/recap/agenda.ts` (`calcularAgendaRecap`, reusa
+  `listarEventosAgenda` para ambas as pessoas), `RecapSecaoAgenda.tsx` (componente
+  puro), elevado no `RecapScreen` com `temDadoAgenda` no predicado de não-vazio,
+  `destinoAgenda` → `/agenda`. Como não há campo `organizador` no schema, o resumo
+  é contagem de eventos + dias com compromisso + próximo evento. **Gauntlet
+  validado** (screenshot: "2 eventos / 1 dia com compromisso", e recap com só
+  agenda renderiza a seção em vez de EmptyState). Saldou débito: `FEATURES-CANONICAS`
+  não registrava as seções Saúde/Agenda do Recap — regularizado.
+- **`R-INT-3-HC-NOTIF-META-PASSOS` (`ae7b04c`):** meta diária de passos
+  (`settings.metaPassosDia`, default 8000) + badge "X / Y passos" na Tela Hoje
+  lendo **hoje ao vivo do Health Connect** (`src/lib/health/passosHoje.ts`
+  `lerPassosHojeHC`, decisão do dono: hoje-live, não D-1 do Vault) + notificação
+  silenciosa ao atingir meta 1x/dia (`metaPassos.ts`, guard via SecureStore).
+  Stepper de meta em `/settings/integracoes`. Badge oculta se HC indisponível ou
+  toggle off (no-op em web). Validação visual fica para o device (depende de HC
+  nativo live; não cobrível no Gauntlet).
+
+Smoke **308 suítes / 2962 testes verde**. tsc strict 0, anonimato OK, PT-BR OK.
+
 ### Fase 3 Onda 3Q (leva 1) — Calendar notif pré-evento + follow-up Recap Saúde (2026-05-25)
 
 - **`R-INT-2-CALENDAR-NOTIF-PROXIMO` (`4d3bca4`):** notificação "Evento em

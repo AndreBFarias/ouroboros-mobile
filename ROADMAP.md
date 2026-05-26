@@ -212,7 +212,7 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 | ID | Sprint | Tipo | P | Status |
 |---|---|---|---|---|
 | R-INT-3-HC-RECAP-CARD | Card "Saúde essa semana" no Recap (passos/treinos/sono/medidas) | feature | P1 | `[ok 4ef2449]` Gauntlet validado (screenshot) |
-| R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap | feature | P2 | `[todo]` |
+| R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap (contagem eventos + dias) | feature | P2 | `[ok d9c8d81]` Gauntlet validado (screenshot) |
 | R-INT-4-SPOTIFY-RECAP-CARD | ~~Card "Trilha sonora"~~ | feature | P2 | `[descopado]` (ver 3P.C) |
 | R-INT-4-YOUTUBE-RECAP-CARD | ~~Card "Conteúdo curtido"~~ | feature | P3 | `[descopado]` (ver 3P.C) |
 | R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 | `[todo]` (depende Drive backup) |
@@ -226,13 +226,13 @@ Isso desbloqueou a validacao visual do HC-RECAP-CARD (screenshot em
 
 #### 3Q.C — Loops de valor reativos (5)
 
-| ID | Sprint | Tipo | P |
-|---|---|---|---|
+| ID | Sprint | Tipo | P | Status |
+|---|---|---|---|---|
 | R-INT-2-CALENDAR-NOTIF-PROXIMO | Notif "Evento em 15min" pré-event | feature | P1 | `[ok 4d3bca4]` |
-| R-INT-3-HC-NOTIF-META-PASSOS | Meta diária + notif silenciosa + badge Tela Hoje | feature | P2 |
-| R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou 20% mais que semana passada" | feature | P2 |
-| R-INT-4-SPOTIFY-AGORA-TOCANDO | Badge "Tocando: <título>" na Tela Hoje | feature | P3 |
-| R-INT-5-DRIVE-NOTIF-BACKUP | Notif silenciosa "Backup salvo no Drive: X MB" | feature | P3 |
+| R-INT-3-HC-NOTIF-META-PASSOS | Meta diária + notif silenciosa + badge Tela Hoje (passos HOJE live HC) | feature | P2 | `[ok ae7b04c]` valid. visual device-only (live HC) |
+| R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou X% mais que semana passada" no Recap | feature | P2 | `[todo]` (próxima — Onda 3) |
+| R-INT-4-SPOTIFY-AGORA-TOCANDO | ~~Badge "Tocando: <título>"~~ | feature | P3 | `[descopado]` (Spotify passivo — ver 3P.C) |
+| R-INT-5-DRIVE-NOTIF-BACKUP | Notif silenciosa "Backup salvo no Drive: X MB" | feature | P3 | `[todo]` (depende Drive backup) |
 
 #### 3Q.D — Achado não-materializado (1)
 
