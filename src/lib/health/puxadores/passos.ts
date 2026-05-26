@@ -3,9 +3,10 @@
 //
 // Implementa o contrato `Puxador` definido em autopullScheduler.ts.
 // Le StepsRecord do HC dentro de [since, now], agrega por dia local
-// (UTC-3 fixo, BRT — alinhado com formatDateYmd em paths.ts), filtra
-// dias com endTime < startOfTodayLocal (nao escreve dia em curso),
-// e chama escreverPassos para cada dia restante.
+// (via Intl.DateTimeFormat com timezone alvo; default America/Sao_Paulo
+// preserva o comportamento BRT alinhado a formatDateYmd em paths.ts),
+// filtra dias com endTime < startOfTodayLocal (nao escreve dia em
+// curso), e chama escreverPassos para cada dia restante.
 //
 // Decisoes do dono:
 //   1. Pessoa via useSettings.getState().pessoa.ativa (campo
@@ -29,11 +30,10 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 // Janela default se since vier null (mesma do scheduler — 7 dias).
 const JANELA_DEFAULT_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Fuso fixo São Paulo (UTC-3, sem DST desde 2019). Mesmo offset
-// usado por formatDateYmd em paths.ts. Variavel em modulo (top-level
-// const) e' segura porque o offset nunca muda em runtime.
-const TZ_OFFSET_MIN = -180;
-const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
+// Timezone default para o calculo de dia local. Mantem paridade com
+// o comportamento BRT anterior; Intl resolve DST automaticamente caso
+// o tz alvo o utilize (ao contrario de um offset fixo).
+const TZ_DEFAULT = 'America/Sao_Paulo';
 
 // Shape do StepsRecord que vem da bridge nativa (espelha
 // StepsRecordReadResult em src/lib/health/sync.ts).
@@ -44,35 +44,60 @@ interface StepsRecordRaw {
   count?: number;
 }
 
-// Calcula YYYY-MM-DD em BRT a partir de um ISO datetime (que pode
-// estar em UTC, com offset ou Z). Decompoe usando getUTC* apos shift
-// de TZ_OFFSET_MIN, mesma estrategia que formatDateYmd em paths.ts
-// (consistencia entre arquivo escrito e calculo posterior).
-function isoToDataLocalYmd(iso: string): string {
-  const utc = new Date(iso);
-  if (Number.isNaN(utc.getTime())) {
-    // ISO invalido (defesa); retorna string vazia que sera filtrada
+// Calcula YYYY-MM-DD no timezone alvo para uma data. Usa o locale
+// en-CA, que formata datas no padrao YYYY-MM-DD nativamente (sem
+// split manual). Default America/Sao_Paulo preserva o BRT anterior
+// e mantem paridade com formatDateYmd em paths.ts.
+function dataLocalYmd(d: Date, tz: string = TZ_DEFAULT): string {
+  if (Number.isNaN(d.getTime())) {
+    // Data invalida (defesa); retorna string vazia que sera filtrada
     // upstream pelo caller.
     return '';
   }
-  const local = new Date(utc.getTime() + TZ_SHIFT_MS);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
 }
 
-// Inicio do dia local (00:00 BRT) para uma data UTC. Util para
-// determinar onde a barreira "dia em curso" comeca.
-function startOfTodayLocal(now: Date): Date {
-  const local = new Date(now.getTime() + TZ_SHIFT_MS);
-  // Zera para 00:00 UTC sobre o "now em BRT" e desfaz o shift.
-  const yyyy = local.getUTCFullYear();
-  const mm = local.getUTCMonth();
-  const dd = local.getUTCDate();
-  // Date.UTC monta o midnight BRT (que e 03:00 UTC).
-  const midnightLocalUtcMs = Date.UTC(yyyy, mm, dd, 0, 0, 0, 0) - TZ_SHIFT_MS;
-  return new Date(midnightLocalUtcMs);
+// Extrai o offset do timezone alvo (em minutos relativos a UTC) no
+// instante informado. Resolve DST automaticamente, pois consulta o
+// offset vigente naquele instante especifico. Ex.: America/Sao_Paulo
+// retorna -180; America/Los_Angeles retorna -420 (PDT) ou -480 (PST).
+function offsetMinutos(d: Date, tz: string): number {
+  // longOffset produz nomes como "GMT-03:00". Extrai sinal/hora/min.
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    timeZoneName: 'longOffset',
+  }).formatToParts(d);
+  const nome = partes.find((p) => p.type === 'timeZoneName')?.value ?? '';
+  const m = nome.match(/GMT([+-])(\d{2}):?(\d{2})?/);
+  if (!m) return 0; // UTC (sem offset textual) ou formato inesperado.
+  const sinal = m[1] === '-' ? -1 : 1;
+  const horas = parseInt(m[2], 10);
+  const mins = m[3] ? parseInt(m[3], 10) : 0;
+  return sinal * (horas * 60 + mins);
+}
+
+// Calcula YYYY-MM-DD no timezone alvo a partir de um ISO datetime
+// (UTC, com offset ou Z). Delega ao formatter Intl.
+function isoToDataLocalYmd(iso: string, tz: string = TZ_DEFAULT): string {
+  return dataLocalYmd(new Date(iso), tz);
+}
+
+// Inicio do dia local (00:00 no tz alvo) para uma data. Util para
+// determinar onde a barreira "dia em curso" comeca. Estrategia: obtem
+// o YMD local via Intl, calcula o offset vigente do tz no instante e
+// constroi o instante UTC correspondente a meia-noite local.
+function startOfTodayLocal(now: Date, tz: string = TZ_DEFAULT): Date {
+  const ymd = dataLocalYmd(now, tz);
+  const [y, m, d] = ymd.split('-').map((x) => parseInt(x, 10));
+  const off = offsetMinutos(now, tz);
+  // Meia-noite local em UTC = Date.UTC(meia-noite local) menos offset.
+  const midnightUtcMs = Date.UTC(y, m - 1, d, 0, 0, 0, 0) - off * 60_000;
+  return new Date(midnightUtcMs);
 }
 
 // Le pessoa atual do store, com fallback defensivo para pessoa_a.
@@ -171,4 +196,13 @@ export const puxadorPassos: Puxador = {
       return { novos: 0, erro: msg };
     }
   },
+};
+
+// Helpers internos expostos apenas para teste. NAO faz parte do
+// contrato publico Puxador; nao deve ser consumido em runtime.
+export const __test__only__ = {
+  dataLocalYmd,
+  isoToDataLocalYmd,
+  startOfTodayLocal,
+  offsetMinutos,
 };

@@ -1,4 +1,4 @@
-// Testes do puxadorPassos (HC -> Vault). Cobre os 7 cenarios do
+// Testes do puxadorPassos (HC -> Vault). Cobre os cenarios do
 // briefing:
 //   1. readRecords vazio -> {novos: 0, erro: null}, zero writes.
 //   2. 3 dias completos -> 3 writes, ordem correta.
@@ -7,6 +7,10 @@
 //   5. Idempotencia: chamar 2x escreve 2x mesmo total.
 //   6. readRecords lanca -> {novos: 0, erro: 'X'}.
 //   7. Pessoa = 'pessoa_b' no settings -> escrito com pessoa_b.
+//   8. Vault root null -> erro vault_root_indisponivel.
+//   9. Record com count negativo e filtrado.
+//   10. Timezone UTC: barreira e YMD computados em UTC via Intl.
+//   11. Timezone America/Los_Angeles: DST (PDT) resolvido por Intl.
 //
 // Mocka a bridge nativa (`modules/health-connect/src`) e o writer
 // vault/passos. Usa store real para useSettings e useVault (mais
@@ -26,7 +30,7 @@ jest.mock('@/lib/vault/passos', () => ({
   escreverPassos: (...args: unknown[]) => mockEscreverPassos(...args),
 }));
 
-import { puxadorPassos } from '@/lib/health/puxadores/passos';
+import { puxadorPassos, __test__only__ } from '@/lib/health/puxadores/passos';
 import { useSettings } from '@/lib/stores/settings';
 import { useVault } from '@/lib/stores/vault';
 
@@ -265,5 +269,59 @@ describe('puxadorPassos', () => {
     expect(total).toBe(3000); // -50 ignorado
 
     jest.useRealTimers();
+  });
+
+  // Cenarios timezone: validam os helpers internos Intl-based via
+  // __test__only__. O contrato publico puxar({since, pageSize}) nao
+  // expoe tz, entao os helpers sao exercidos diretamente. Default
+  // (tz omitido) usa America/Sao_Paulo, preservando o BRT anterior.
+  it('cenario 10: timezone UTC computa barreira e YMD em UTC', () => {
+    const { dataLocalYmd, isoToDataLocalYmd, startOfTodayLocal } =
+      __test__only__;
+
+    // Instante 2026-05-22T02:30Z: 22/05 em UTC, mas ainda 21/05
+    // 23:30 em BRT. Os dois fusos divergem de dia aqui.
+    const clock = new Date('2026-05-22T02:30:00.000Z');
+
+    // Default BRT vê 21/05; UTC vê 22/05.
+    expect(dataLocalYmd(clock)).toBe('2026-05-21');
+    expect(dataLocalYmd(clock, 'UTC')).toBe('2026-05-22');
+
+    // Barreira do dia em curso difere por tz.
+    expect(startOfTodayLocal(clock, 'UTC').toISOString()).toBe(
+      '2026-05-22T00:00:00.000Z'
+    );
+    expect(startOfTodayLocal(clock).toISOString()).toBe(
+      '2026-05-21T03:00:00.000Z'
+    );
+
+    // Record com endTime 2026-05-22T00:30Z (22/05 em UTC, 21/05 em
+    // BRT). Sob tz=UTC esta APOS a barreira 00:00Z -> seria filtrado
+    // como dia em curso. Sob BRT cai em 21/05 -> seria escrito.
+    const endRec = new Date('2026-05-22T00:30:00.000Z');
+    const barreiraUtc = startOfTodayLocal(clock, 'UTC');
+    expect(endRec.getTime() >= barreiraUtc.getTime()).toBe(true);
+    expect(isoToDataLocalYmd('2026-05-22T00:30:00.000Z')).toBe('2026-05-21');
+  });
+
+  it('cenario 11: timezone America/Los_Angeles resolve DST via Intl', () => {
+    const { dataLocalYmd, startOfTodayLocal } = __test__only__;
+
+    // 2026-05-22T15:00Z = 08:00 PDT (LA) / 12:00 BRT.
+    const clock = new Date('2026-05-22T15:00:00.000Z');
+
+    // YMD em LA = 22/05 (correto; PDT resolvido automaticamente).
+    expect(dataLocalYmd(clock, 'America/Los_Angeles')).toBe('2026-05-22');
+
+    // Meia-noite local LA = 00:00 PDT = 07:00 UTC.
+    expect(
+      startOfTodayLocal(clock, 'America/Los_Angeles').toISOString()
+    ).toBe('2026-05-22T07:00:00.000Z');
+
+    // Record com endTime 2026-05-22T06:00Z (antes da barreira PDT
+    // 07:00Z) cai no dia anterior em LA: 21/05.
+    expect(
+      dataLocalYmd(new Date('2026-05-22T06:00:00.000Z'), 'America/Los_Angeles')
+    ).toBe('2026-05-21');
   });
 });
