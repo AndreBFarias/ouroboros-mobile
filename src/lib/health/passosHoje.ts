@@ -21,29 +21,18 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { readRecords } from '../../../modules/health-connect/src';
+import { startOfTodayLocal } from '@/lib/datetime/local';
 
-// Fuso fixo Sao Paulo (UTC-3, sem DST desde 2019). Mesmo offset usado
-// por puxadores/passos.ts e formatDateYmd em paths.ts.
-const TZ_OFFSET_MIN = -180;
-const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
+// Inicio do dia local agora vem do helper canonico
+// src/lib/datetime/local.ts (Intl-based, default America/Sao_Paulo).
+// Preserva o comportamento BRT anterior bit-a-bit (UTC-3 sem DST),
+// resolvendo DST automaticamente caso o fuso mude.
 
 // Shape do StepsRecord vindo da bridge nativa (espelha o puxador).
 interface StepsRecordRaw {
   startTime?: string;
   endTime?: string;
   count?: number;
-}
-
-// Inicio do dia local (00:00 BRT) para uma data UTC. Replica de
-// startOfTodayLocal em puxadores/passos.ts (mantido la como privado).
-function startOfTodayLocal(now: Date): Date {
-  const local = new Date(now.getTime() + TZ_SHIFT_MS);
-  const yyyy = local.getUTCFullYear();
-  const mm = local.getUTCMonth();
-  const dd = local.getUTCDate();
-  // Date.UTC monta o midnight BRT (que e 03:00 UTC).
-  const midnightLocalUtcMs = Date.UTC(yyyy, mm, dd, 0, 0, 0, 0) - TZ_SHIFT_MS;
-  return new Date(midnightLocalUtcMs);
 }
 
 // Le os passos de HOJE (00:00 BRT do dia local atual ate agora) e

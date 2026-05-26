@@ -52,6 +52,7 @@ import { readRecords } from '../../../../modules/health-connect/src';
 import { escreverRegistroCiclo, lerRegistroCiclo } from '@/lib/vault/ciclo';
 import { useSettings } from '@/lib/stores/settings';
 import { useVault } from '@/lib/stores/vault';
+import { isoToDataLocalYmd } from '@/lib/datetime/local';
 import type { Puxador } from '@/lib/health/autopullScheduler';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { CicloMenstrualMeta } from '@/lib/schemas/ciclo_menstrual';
@@ -59,10 +60,9 @@ import type { CicloMenstrualMeta } from '@/lib/schemas/ciclo_menstrual';
 // Janela default se since vier null (mesma do scheduler — 7 dias).
 const JANELA_DEFAULT_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Fuso fixo São Paulo (UTC-3, sem DST desde 2019). Mesmo offset usado
-// por formatDateYmd em paths.ts e pelo puxadorPassos.
-const TZ_OFFSET_MIN = -180;
-const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
+// Calculo de dia-local (isoToDataLocalYmd) agora vem do helper canonico
+// src/lib/datetime/local.ts (Intl-based, default America/Sao_Paulo).
+// Preserva o BRT anterior bit-a-bit.
 
 // Mapa flow HC -> intensidade do schema (1..5). Ver comentario de
 // cabecalho para a justificativa dos pontos medios (round-trip
@@ -80,21 +80,6 @@ interface MenstruationFlowRecordRaw {
   metadata?: { id?: string };
   time?: string;
   flow?: number;
-}
-
-// Calcula YYYY-MM-DD em BRT a partir de um ISO datetime. Decompoe
-// usando getUTC* apos shift de TZ_OFFSET_MIN, mesma estrategia que
-// formatDateYmd em paths.ts e isoToDataLocalYmd em passos.ts.
-function isoToDataLocalYmd(iso: string): string {
-  const utc = new Date(iso);
-  if (Number.isNaN(utc.getTime())) {
-    return '';
-  }
-  const local = new Date(utc.getTime() + TZ_SHIFT_MS);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 // Le pessoa atual do store, com fallback defensivo para pessoa_a.

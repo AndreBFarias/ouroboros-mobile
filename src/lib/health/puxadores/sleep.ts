@@ -29,16 +29,16 @@ import { listVaultFolder } from '@/lib/vault/reader';
 import { MARKDOWN_FOLDER } from '@/lib/vault/paths';
 import { useSettings } from '@/lib/stores/settings';
 import { useVault } from '@/lib/stores/vault';
+import { isoToDataLocalYmd } from '@/lib/datetime/local';
 import type { Puxador } from '@/lib/health/autopullScheduler';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 // Janela default se since vier null (mesma do scheduler — 7 dias).
 const JANELA_DEFAULT_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Fuso fixo São Paulo (UTC-3, sem DST desde 2019). Mesmo offset usado
-// por formatDateYmd em paths.ts.
-const TZ_OFFSET_MIN = -180;
-const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
+// Calculo de dia-local (isoToDataLocalYmd) agora vem do helper canonico
+// src/lib/datetime/local.ts (Intl-based, default America/Sao_Paulo).
+// Preserva o BRT anterior bit-a-bit.
 
 // Teto defensivo de duracao (24h) — mesma constante do SonoSchema.
 const DURACAO_MAX_MIN = 1440;
@@ -51,19 +51,6 @@ interface SleepRecordRaw {
   metadata?: { id?: string; dataOrigin?: { packageName?: string } };
   startTime?: string;
   endTime?: string;
-}
-
-// Calcula YYYY-MM-DD em BRT a partir de um ISO datetime. Mesma
-// estrategia que isoToDataLocalYmd em puxadores/passos.ts (decompoe via
-// getUTC* apos shift de TZ_OFFSET_MIN).
-function isoToDataLocalYmd(iso: string): string {
-  const utc = new Date(iso);
-  if (Number.isNaN(utc.getTime())) return '';
-  const local = new Date(utc.getTime() + TZ_SHIFT_MS);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 // Sanitiza o hc id do mesmo jeito que sonoPath, para comparar contra os

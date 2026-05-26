@@ -34,6 +34,7 @@ import { readRecords } from '../../../../modules/health-connect/src';
 import { escreverMedida } from '@/lib/vault/medidas';
 import { useSettings } from '@/lib/stores/settings';
 import { useVault } from '@/lib/stores/vault';
+import { isoToDataLocalYmd, startOfTodayLocal } from '@/lib/datetime/local';
 import type { Puxador } from '@/lib/health/autopullScheduler';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { Medida } from '@/lib/schemas/medidas';
@@ -41,10 +42,10 @@ import type { Medida } from '@/lib/schemas/medidas';
 // Janela default se since vier null (mesma do scheduler — 7 dias).
 const JANELA_DEFAULT_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Fuso fixo Sao Paulo (UTC-3, sem DST desde 2019). Mesmo offset usado
-// por formatDateYmd em paths.ts e por puxadores/passos.ts.
-const TZ_OFFSET_MIN = -180;
-const TZ_SHIFT_MS = TZ_OFFSET_MIN * 60_000;
+// Calculo de dia-local (isoToDataLocalYmd) e barreira do dia em curso
+// (startOfTodayLocal) agora vem do helper canonico
+// src/lib/datetime/local.ts (Intl-based, default America/Sao_Paulo).
+// Preserva o BRT anterior bit-a-bit.
 
 // Shape do WeightRecord vindo da bridge nativa (espelha
 // WeightRecordReadResult em src/lib/health/sync.ts).
@@ -59,33 +60,6 @@ interface BodyFatRecordRaw {
   metadata?: { id?: string };
   time?: string;
   percentage?: number;
-}
-
-// Calcula YYYY-MM-DD em BRT a partir de um ISO datetime. Decompoe
-// usando getUTC* apos shift de TZ_OFFSET_MIN, mesma estrategia que
-// formatDateYmd em paths.ts (consistencia entre arquivo escrito e
-// calculo posterior).
-function isoToDataLocalYmd(iso: string): string {
-  const utc = new Date(iso);
-  if (Number.isNaN(utc.getTime())) {
-    return '';
-  }
-  const local = new Date(utc.getTime() + TZ_SHIFT_MS);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-// Inicio do dia local (00:00 BRT) para uma data UTC. Barreira do dia
-// em curso (mesma logica de passos).
-function startOfTodayLocal(now: Date): Date {
-  const local = new Date(now.getTime() + TZ_SHIFT_MS);
-  const yyyy = local.getUTCFullYear();
-  const mm = local.getUTCMonth();
-  const dd = local.getUTCDate();
-  const midnightLocalUtcMs = Date.UTC(yyyy, mm, dd, 0, 0, 0, 0) - TZ_SHIFT_MS;
-  return new Date(midnightLocalUtcMs);
 }
 
 // Le pessoa atual do store, com fallback defensivo para pessoa_a.
