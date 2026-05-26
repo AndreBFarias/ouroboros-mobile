@@ -203,10 +203,12 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
   nada util (nenhum consumidor). O intento do dono ("anexar a recap como Google
   Fotos") = **picker**: conectar → navegar sua biblioteca → escolher → anexar. Isso
   NAO existe (so URL-paste via R-MEDIA-1). Materializadas:
-  `R-INT-4-SPOTIFY-PICKER-spec.md` (P2) + `R-INT-4-YOUTUBE-PICKER-spec.md` (P3) —
-  consumidores do OAuth ja pronto, modelo Google Fotos. **Executar** (substituem os
-  consumers passivos descopados).
-- **DRIVE pendente:** real, mas entrelacada com expansao de escopo OAuth (Drive)
+  `R-INT-4-SPOTIFY-PICKER` (`5c83544`, `[ok]`) + `R-INT-4-YOUTUBE-PICKER`
+  (`878cb1e`, `[ok]`) — consumidores do OAuth ja pronto, modelo Google Fotos
+  (substituem os consumers passivos descopados). Validacao visual do estado
+  conectado e OAuth-gated → device-deferred; coberto por teste de componente + E2E.
+- **DRIVE backup/hub/notif:** backup `e512bbd` + hub `438720f` + notif `7a5275d`
+  ENTREGUES (codigo dormente p/ backup ate OAuth Drive humano R-SEC-1).
   + verificacao Google (pendencia humana R-SEC-1). Aguarda decisao.
 
 **Sequenciamento sugerido:** 3P.A (B -> C -> D, sequencial — modulo nativo compartilhado) -> 3P.B (SCHEDULER primeiro, depois 5 puxadores em paralelo via worktree) -> 3P.C (paralelo).
@@ -227,7 +229,7 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 | R-INT-2-CALENDAR-RECAP-CARD | Card "Agenda essa semana" no Recap (contagem eventos + dias) | feature | P2 | `[ok d9c8d81]` Gauntlet validado (screenshot) |
 | R-INT-4-SPOTIFY-RECAP-CARD | ~~Card "Trilha sonora"~~ | feature | P2 | `[descopado]` (ver 3P.C) |
 | R-INT-4-YOUTUBE-RECAP-CARD | ~~Card "Conteúdo curtido"~~ | feature | P3 | `[descopado]` (ver 3P.C) |
-| R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 | `[todo]` (depende Drive backup) |
+| R-INT-5-DRIVE-HUB-ATIVO | Hub Drive ativo (N backups + MB + ações) | feature | P2 | `[ok 438720f]` visual conectado device-deferred (OAuth) |
 
 **Follow-up FECHADO (`2390cd6`, 2026-05-25):** `R-INT-3-HC-RECAP-CARD-FOLLOWUP` —
 (a) gate de recap vazio agora inclui saude (recap so com dado de saude renderiza
@@ -244,7 +246,7 @@ Isso desbloqueou a validacao visual do HC-RECAP-CARD (screenshot em
 | R-INT-3-HC-NOTIF-META-PASSOS | Meta diária + notif silenciosa + badge Tela Hoje (passos HOJE live HC) | feature | P2 | `[ok ae7b04c]` valid. visual device-only (live HC) |
 | R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou X% mais que semana passada" no Recap (positive-only) | feature | P2 | `[ok 522f80e]` Gauntlet validado (screenshot, 93%) |
 | R-INT-4-SPOTIFY-AGORA-TOCANDO | ~~Badge "Tocando: <título>"~~ | feature | P3 | `[descopado]` (Spotify passivo — ver 3P.C) |
-| R-INT-5-DRIVE-NOTIF-BACKUP | Notif silenciosa "Backup salvo no Drive: X MB" | feature | P3 | `[todo]` (depende Drive backup) |
+| R-INT-5-DRIVE-NOTIF-BACKUP | Notif silenciosa "Backup salvo no Drive: X MB" | feature | P3 | `[ok 7a5275d]` |
 
 #### 3Q.D — Achado não-materializado (1)
 

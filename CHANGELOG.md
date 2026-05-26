@@ -5,6 +5,34 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q (leva 5) — Pickers Spotify/YouTube + Drive hub/notif + timezone helper (2026-05-25)
+
+- **`R-INT-4-SPOTIFY-PICKER` (`5c83544`) + `R-INT-4-YOUTUBE-PICKER` (`878cb1e`):**
+  re-escope (correcao da descope anterior). A integracao OAuth ja existia mas
+  conectar nao fazia nada util. Agora, conectado, `MidiaSpotifyTab`/`MidiaYoutubeTab`
+  mostram a biblioteca (Spotify: recently-played + top-tracks via `getRecentlyPlayed`/
+  `getTopTracks`; YouTube: liked + watch-later) → escolhe → anexa (modelo Google
+  Fotos). Fallback URL + CTA "Conectar" quando desconectado. Novos
+  `spotify/biblioteca.ts` + `youtube/biblioteca.ts` (agregam/dedup/cache). Reuso
+  total do OAuth/client/schema existentes.
+- **`R-INT-5-DRIVE-HUB-ATIVO` (`438720f`):** card Drive no hub de Integracoes
+  deixa de ser passivo — exibe resumo (N backups + MB + ultimo envio via
+  `driveResumo.ts`) + acoes "Fazer agora" (`fazerBackupDrive`) / "Restaurar"
+  (`restaurarVaultZip`).
+- **`R-INT-5-DRIVE-NOTIF-BACKUP` (`7a5275d`):** notif silenciosa "Backup salvo no
+  Drive / X MB" no success path do upload (injecao de dep, best-effort).
+- **`R-INFRA-TIMEZONE-HELPER-CANONICO` (`41363e3`):** helper unico
+  `src/lib/datetime/local.ts` (Intl) extraido de passos; migrados
+  passosHoje/sleep/medidas/menstruacao (eliminou 4 copias do offset UTC-3
+  hardcoded, -37 linhas liquidas). Paridade BRT bit-a-bit (136 testes health
+  verdes sem mudar expectativa). Sub-achado: `paths.ts` (formatDateYmd) fica para
+  `R-INFRA-TIMEZONE-PATHS-MIGRACAO` (30+ call sites, nao-trivial).
+
+**Validacao visual dos pickers/hub:** estado CONECTADO e OAuth-gated (Spotify/
+YouTube/Google) → nao mockavel no Gauntlet; coberto por teste de componente
+(mock) + E2E; validacao visual conectada fica para device+OAuth (mesma politica
+do autopull). Smoke **314 suites / 3017 testes verde**.
+
 ### Fase 3 Onda 3Q (leva 4) — Drive backup + anti-débitos (2026-05-25)
 
 - **`R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO` (`e512bbd`):** backup automático do Vault
