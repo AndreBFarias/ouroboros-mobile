@@ -159,15 +159,22 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 
 #### 3P.X — Sprints anti-debito materializadas pos Fase A+B parcial (7, sessao 2026-05-22 tarde)
 
-| ID | Tipo | P | Estim. | Origem |
+| ID | Tipo | P | Status | Origem |
 |---|---|---|---|---|
-| R-INT-3-HC-LIVE-CHECKPOINT | checkpoint | P2 | 30min pos alpha-32 | validacao live 3 writes E2E pos remocao lib upstream |
-| R-INFRA-WORKTREE-BOOTSTRAP-ENV-JSON | infra | P2 | 30min | bootstrap symlinks falhou em PASSOS (~3min diagnostico) |
-| R-INT-3-HC-DOC-VERSION-FIX | docs | P3 | 15min | comentarios SDK 1.2.0 vs real 1.1.0 |
-| R-SEC-4-PROGUARD-CLEANUP | cleanup | P3 | 20min | extraProguardRules pos remocao lib upstream |
-| R-INFRA-SETTINGS-EXPORT-SHAPE | refactor | P3 | 30min | Omit<ReturnType<...>> forca cascata |
-| R-INT-3-HC-AUTOPULL-VAULT-MIRROR | feature | P3 | 1-1.5h | espelhar ultimaSync no Vault cross-stack |
-| R-INT-3-HC-PASSOS-TIMEZONE-INTL | refactor | P3 | 45min | executor manteve UTC-3 hardcoded contra spec exigindo Intl |
+| R-INT-3-HC-LIVE-CHECKPOINT | checkpoint | P2 | `[todo]` device-blocked (precisa build) | validacao live 3 writes E2E pos remocao lib upstream |
+| R-INFRA-WORKTREE-BOOTSTRAP-ENV-JSON | infra | P2 | `[ok 2abcf53]` | bootstrap symlinks falhou em PASSOS (~3min diagnostico) |
+| R-INT-3-HC-DOC-VERSION-FIX | docs | P3 | `[ok ad2652a]` | comentarios SDK 1.2.0 vs real 1.1.0 |
+| R-SEC-4-PROGUARD-CLEANUP | cleanup | P3 | `[todo]` (Onda C — conflita app.json) | extraProguardRules pos remocao lib upstream |
+| R-INFRA-SETTINGS-EXPORT-SHAPE | refactor | P3 | `[todo]` (Onda C — conflita settings.ts) | Omit<ReturnType<...>> forca cascata |
+| R-INT-3-HC-AUTOPULL-VAULT-MIRROR | feature | P3 | `[todo]` (Onda C — conflita settings.ts) | espelhar ultimaSync no Vault cross-stack |
+| R-INT-3-HC-PASSOS-TIMEZONE-INTL | refactor | P3 | `[ok 14ad117]` | executor manteve UTC-3 hardcoded contra spec exigindo Intl |
+
+> **Onda A integrada (2026-05-25 noite):** BOOTSTRAP-ENV-JSON + DOC-VERSION-FIX +
+> PASSOS-TIMEZONE-INTL + DRIVE-BACKUP-AUTO (`e512bbd`). Smoke **313 suites / 2999
+> testes verde**. Falta Onda C (PROGUARD + SETTINGS-EXPORT-SHAPE + VAULT-MIRROR —
+> serializadas por tocarem settings.ts/app.json) + Onda B (Spotify/YouTube picker
+> + BACKGROUND) + Drive hub/notif + LIVE-CHECKPOINT (device). Novo follow-up:
+> `R-INFRA-TIMEZONE-HELPER-CANONICO`.
 
 #### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)
 
@@ -176,7 +183,7 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 | R-INT-2-CALENDAR-SYNC-EVENTOS | Auto-sync periodico Calendar (scheduler integracoes + boot + toggle) | feature | P1 | `6221adf` | `[ok]` (2026-05-25, re-escopada) |
 | R-INT-4-SPOTIFY-RECENTLY-PLAYED | ~~Puxar timeline Spotify~~ | feature | P2 | — | `[descopado]` (intento ja servido por R-MEDIA-1) |
 | R-INT-4-YOUTUBE-WATCH-HISTORY | ~~Puxar Liked Videos YouTube~~ | feature | P3 | — | `[descopado]` (intento ja servido por R-MEDIA-1) |
-| R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO | Upload ZIP backup local pro Drive semanal | feature | P2 | 1-1.5d | `R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO-spec.md` |
+| R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO | Upload ZIP backup local pro Drive semanal | feature | P2 | `e512bbd` | `[ok]` codigo dormente (runtime aguarda OAuth Drive humano R-SEC-1) |
 
 **Auditoria 2026-05-25 (dono + orquestrador):**
 - **CALENDAR re-escopada:** a spec era majoritariamente fantasma — schema

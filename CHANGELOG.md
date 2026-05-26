@@ -5,6 +5,32 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q (leva 4) — Drive backup + anti-débitos (2026-05-25)
+
+- **`R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO` (`e512bbd`):** backup automático do Vault
+  no Google Drive (opt-in). `src/lib/integracoes/google/driveBackup.ts` (cliente
+  Drive + factory `criarIntegracaoDriveBackup()` para o scheduler de integrações),
+  scope `drive.file` em `googleAuthFlow`/`googleAuth`, toggle
+  `featureToggles.backupDriveAutomatico` (default false) + tracking
+  `driveBackupUltimaSync` em `settings.ts`, card Drive ativo em
+  `IntegracoesScreen.tsx`, seção "Backup no Google Drive" em
+  `app/settings/contas-google.tsx`. Reusa o ZIP local (`executarBackup`) +
+  idempotência por sha256. **Código dormente:** runtime depende do dono registrar
+  o scope `drive.file` no Cloud Console + verificação Google (R-SEC-1) — toggle
+  off + sem scope = zero rede de saída. Retenção de N backups no Drive fica para
+  sprint futura. Gauntlet do card bloqueado por orphan-worktree no file-map do
+  Metro (infra); cobertura por teste de componente (13/13).
+- **`R-INT-3-HC-PASSOS-TIMEZONE-INTL` (`14ad117`):** puxador de passos usa
+  `Intl.DateTimeFormat` (timezone `America/Sao_Paulo`, resolve DST) em vez de
+  UTC-3 hardcoded. Comportamento BRT default preservado bit-a-bit. Helpers
+  `dataLocalYmd`/`offsetMinutos`/`startOfTodayLocal` (`__test__only__`). Achado:
+  mesmo offset hardcoded em sleep/medidas/menstruacao/passosHoje → follow-up
+  materializado `R-INFRA-TIMEZONE-HELPER-CANONICO`.
+- **`R-INFRA-WORKTREE-BOOTSTRAP-ENV-JSON` (`2abcf53`):** `bootstrap-worktree.sh`
+  agora falha (exit 1, só em worktree) quando symlink obrigatório (node_modules/
+  env.json) está ausente, e `smoke.sh` propaga o aviso. Resolve os falsos-negativos
+  recorrentes de jest/smoke em worktree fresh. Armadilha A41 no BRIEF.
+
 ### Documentação
 
 - **`R-INT-3-HC-DOC-VERSION-FIX`:** corrige resíduo textual de versão do SDK
