@@ -35,6 +35,7 @@ import { colors } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { calcularSaudeRecap, type SaudeRecap } from '@/lib/recap/saude';
+import { calcularAgendaRecap, type AgendaRecap } from '@/lib/recap/agenda';
 import {
   useRecap,
   resolverPeriodo,
@@ -49,6 +50,7 @@ import { RecapSecaoEvolucoes } from './RecapSecaoEvolucoes';
 import { RecapSecaoTarefas } from './RecapSecaoTarefas';
 import { RecapSecaoNumeros } from './RecapSecaoNumeros';
 import { RecapSecaoSaude } from './RecapSecaoSaude';
+import { RecapSecaoAgenda } from './RecapSecaoAgenda';
 import { RecapModoCalendario } from './RecapModoCalendario';
 
 // Q24.b (2026-05-13): 'memorias' nao e' um state interno -- tap nessa
@@ -185,6 +187,33 @@ export function RecapScreen() {
     };
   }, [vaultRoot, periodo, ateMs]);
 
+  // R-INT-2-CALENDAR-RECAP-CARD: agregado de agenda (eventos do Google
+  // Calendar no periodo). Espelha o padrao da saude — calculado aqui no
+  // container para reuso no predicado de recap vazio (cenario "so
+  // agenda" deve renderizar a secao, nao o EmptyState) e injetado por
+  // prop. Loading proprio evita o flash de EmptyState enquanto a query
+  // async resolve.
+  const [agenda, setAgenda] = useState<AgendaRecap | null>(null);
+  const [agendaLoading, setAgendaLoading] = useState<boolean>(true);
+  useEffect(() => {
+    let vivo = true;
+    if (!vaultRoot) {
+      setAgenda(null);
+      setAgendaLoading(false);
+      return;
+    }
+    setAgendaLoading(true);
+    void calcularAgendaRecap(vaultRoot, periodo, new Date(ateMs)).then((r) => {
+      if (vivo) {
+        setAgenda(r);
+        setAgendaLoading(false);
+      }
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [vaultRoot, periodo, ateMs]);
+
   // L2: micro-fade out + fade in ao trocar modo. Curva linear curta
   // (180ms) — nao e movimento posicional, so opacidade.
   useEffect(() => {
@@ -261,8 +290,17 @@ export function RecapScreen() {
       saude.sono !== null ||
       saude.medidaUltima !== null);
 
+  // R-INT-2-CALENDAR-RECAP-CARD: presenca de evento na agenda torna o
+  // recap nao-vazio (mesmo raciocinio da saude — sem isto, um usuario
+  // que so tem agenda no periodo cairia no EmptyState e a secao Agenda
+  // nunca apareceria). agenda === null quando nao ha evento.
+  const temDadoAgenda = agenda !== null && agenda.totalEventos > 0;
+
   const totalRecap =
-    totalListas + totalNumeros + (temDadoSaude ? 1 : 0);
+    totalListas +
+    totalNumeros +
+    (temDadoSaude ? 1 : 0) +
+    (temDadoAgenda ? 1 : 0);
 
   // R-RECAP-3: frase de empty state vem de pool determinista por
   // periodo+ano+semana. Mesma seed -> mesma frase em todo render,
@@ -427,7 +465,7 @@ export function RecapScreen() {
         <Animated.View style={estiloConteudo}>
           {modo === 'calendario' ? (
             <RecapModoCalendario />
-          ) : loading || saudeLoading ? (
+          ) : loading || saudeLoading || agendaLoading ? (
             <View
               style={{
                 flex: 1,
@@ -462,6 +500,11 @@ export function RecapScreen() {
                   no container (acima) e injetado; a secao se oculta
                   sozinha quando `saude` e null ou sem metrica. */}
               <RecapSecaoSaude saude={saude} />
+              {/* R-INT-2-CALENDAR-RECAP-CARD: eventos do Google
+                  Calendar no periodo. Agregado calculado no container
+                  (acima) e injetado; a secao se oculta sozinha quando
+                  `agenda` e null (sem evento na janela). */}
+              <RecapSecaoAgenda agenda={agenda} />
             </ScrollView>
           )}
         </Animated.View>

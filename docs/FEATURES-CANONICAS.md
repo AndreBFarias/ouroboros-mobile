@@ -570,6 +570,21 @@ malformados são silenciosamente ignorados (mesmo padrão de
     padronizou accessibilityLabel sem acento — `<count> <tipo> no periodo`).
     Tap em "fotos" redireciona para `/galeria?filtro=foto`
     (R-CROSS-FLOW-AUDIT).
+- Seções integrativas adicionais (calculadas no container, injetadas
+  por prop, render condicional próprio — ocultam-se sem dado):
+  - **Saúde essa semana** (R-INT-3-HC-RECAP-CARD) — passos, treinos,
+    sono e última medida vindos do autopull Health Connect; cada linha
+    navega para a rota canônica do dado.
+  - **Agenda essa semana** (R-INT-2-CALENDAR-RECAP-CARD) — total de
+    eventos do Google Calendar no período (cache local `.md`, soma
+    pessoa_a + pessoa_b) com resumo "N dias com compromisso · próximo:
+    <título>". Card clicável navega para `/agenda`. Oculta sem evento.
+    Agregador `calcularAgendaRecap` em `src/lib/recap/agenda.ts`. O
+    resumo é por contagem de dias (não por organizador — o
+    `AgendaEventoSchema` não tem campo organizador).
+  - Ambas entram no predicado de "recap vazio" (`temDadoSaude` /
+    `temDadoAgenda`): usuário com somente esse dado vê a seção, não o
+    EmptyState.
 - `<OuroborosLoader compacto />` durante agregação (vault grande pode
   levar 1-3s para o período "Ano").
 - Empty state silencioso por seção; "Nenhum registro neste período."

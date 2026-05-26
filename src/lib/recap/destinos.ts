@@ -114,6 +114,13 @@ export function destinoSaude(chave: SaudeChave): DestinoRecap | null {
   }
 }
 
+// R-INT-2-CALENDAR-RECAP-CARD: destino da secao Agenda do Recap. O
+// card inteiro navega para a rota canonica /agenda (lista de eventos
+// do Google Calendar). Sem sub-destinos por evento nesta versao.
+export function destinoAgenda(): DestinoRecap {
+  return { pathname: '/agenda' };
+}
+
 // Evolucoes: id segue formato fixo (humor_medio / treinos /
 // contador:<slug>). Map por prefixo.
 export function destinoEvolucao(item: EvolucaoItem): DestinoRecap | null {

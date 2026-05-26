@@ -105,6 +105,16 @@ jest.mock('@/lib/recap/saude', () => ({
   calcularSaudeRecap: (...args: unknown[]) => mockCalcularSaude(...args),
 }));
 
+// R-INT-2-CALENDAR-RECAP-CARD: o RecapScreen tambem eleva o calculo de
+// agenda. Mockamos o agregador para controlar o cenario "so agenda".
+// Default: null (sem evento) para nao interferir nos empty states
+// legados.
+const mockCalcularAgenda = jest.fn();
+jest.mock('@/lib/recap/agenda', () => ({
+  __esModule: true,
+  calcularAgendaRecap: (...args: unknown[]) => mockCalcularAgenda(...args),
+}));
+
 import { RecapScreen } from '@/components/screens/RecapScreen';
 
 const numerosZerados = {
@@ -130,6 +140,8 @@ beforeEach(() => {
   mockCanGoBack.mockReturnValue(false);
   // Default: sem dado de saude (mantem empty states legados previsiveis).
   mockCalcularSaude.mockResolvedValue(SAUDE_VAZIA);
+  // Default: sem evento na agenda (null), mantem empty states legados.
+  mockCalcularAgenda.mockResolvedValue(null);
 });
 
 describe('RecapScreen R-RECAP-3 empty states', () => {
@@ -259,5 +271,34 @@ describe('RecapScreen R-RECAP-3 empty states', () => {
     // mockCalcularSaude ja devolve SAUDE_VAZIA por default.
     const { findByLabelText } = render(<RecapScreen />);
     expect(await findByLabelText(/^vazio: /)).toBeTruthy();
+  });
+
+  // R-INT-2-CALENDAR-RECAP-CARD: usuario com SOMENTE evento na agenda
+  // (listas e numeros zerados, sem saude) deve ver a secao Agenda, nao
+  // o EmptyState. Predicado temDadoAgenda torna o recap nao-vazio.
+  it('so dado de agenda (listas e numeros zerados) -> renderiza secao Agenda, sem EmptyState', async () => {
+    mockUseRecap.mockReturnValue({
+      data: {
+        conquistas: [],
+        crises: [],
+        reflexoes: [],
+        evolucoes: [],
+        tarefasConcluidas: [],
+        numeros: numerosZerados,
+      },
+      loading: false,
+    });
+    mockCalcularAgenda.mockResolvedValue({
+      totalEventos: 5,
+      diasComEvento: 2,
+      proximoTitulo: 'Reunião',
+    });
+    const { findByLabelText, queryByLabelText } = renderComToast(
+      <RecapScreen />
+    );
+    // Secao Agenda visivel.
+    expect(await findByLabelText('secao agenda')).toBeTruthy();
+    // EmptyState global NAO aparece.
+    expect(queryByLabelText(/^vazio: /)).toBeNull();
   });
 });

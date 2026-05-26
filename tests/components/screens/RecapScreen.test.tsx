@@ -77,6 +77,15 @@ jest.mock('@/lib/recap/saude', () => ({
   calcularSaudeRecap: (...args: unknown[]) => mockCalcularSaude(...args),
 }));
 
+// R-INT-2-CALENDAR-RECAP-CARD: o RecapScreen tambem eleva o calculo de
+// agenda. Mockamos o agregador (default null = sem evento) para manter
+// o empty state previsivel dos testes legados.
+const mockCalcularAgenda = jest.fn();
+jest.mock('@/lib/recap/agenda', () => ({
+  __esModule: true,
+  calcularAgendaRecap: (...args: unknown[]) => mockCalcularAgenda(...args),
+}));
+
 // L2: mock do useConquistas para o modo Calendario nao tentar I/O.
 jest.mock('@/lib/hooks/useConquistas', () => ({
   __esModule: true,
@@ -132,6 +141,8 @@ beforeEach(() => {
   mockSearchParams = {};
   // Default: sem dado de saude no periodo (mantem empty state previsivel).
   mockCalcularSaude.mockResolvedValue(SAUDE_VAZIA);
+  // Default: sem evento na agenda (null), mantem empty state previsivel.
+  mockCalcularAgenda.mockResolvedValue(null);
 });
 
 describe('RecapScreen', () => {
