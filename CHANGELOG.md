@@ -5,6 +5,21 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 Onda 3Q (leva 3) — Recap insight semanal de passos (2026-05-25)
+
+- **`R-INT-3-HC-INSIGHT-SEMANAL` (`522f80e`):** card de insight no TOPO do Recap
+  comparando passos da semana atual vs anterior, **somente positivo** (regra de
+  tom: zero comparativo negativo). `src/lib/recap/insights.ts`
+  (`calcularInsightSaude`: janelas [ate-6..ate] vs [ate-13..ate-7], limiar 5%,
+  mínimo 3 dias por janela, divisão-por-zero guardada, retorna null se delta ≤ 0),
+  `src/components/screens/CardInsightSaude.tsx` (puro, oculto sem insight),
+  elevado no `RecapScreen` (fora do `totalRecap` — é decoração). Copy factual sem
+  exclamação: "Você caminhou X% mais que a semana passada." **Gauntlet validado**
+  (screenshot: "Você caminhou 93% mais que a semana passada." no topo, com seção
+  Saúde abaixo). +12 testes unit.
+
+Smoke **312 suítes / 2990 testes verde**. tsc strict 0, anonimato OK, PT-BR OK.
+
 ### Fase 3 Onda 3Q (leva 2) — Recap Agenda + Meta de passos (2026-05-25)
 
 - **`R-INT-2-CALENDAR-RECAP-CARD` (`d9c8d81`):** seção "Agenda essa semana" no

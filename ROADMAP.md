@@ -230,7 +230,7 @@ Isso desbloqueou a validacao visual do HC-RECAP-CARD (screenshot em
 |---|---|---|---|---|
 | R-INT-2-CALENDAR-NOTIF-PROXIMO | Notif "Evento em 15min" pré-event | feature | P1 | `[ok 4d3bca4]` |
 | R-INT-3-HC-NOTIF-META-PASSOS | Meta diária + notif silenciosa + badge Tela Hoje (passos HOJE live HC) | feature | P2 | `[ok ae7b04c]` valid. visual device-only (live HC) |
-| R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou X% mais que semana passada" no Recap | feature | P2 | `[todo]` (próxima — Onda 3) |
+| R-INT-3-HC-INSIGHT-SEMANAL | Card "Você caminhou X% mais que semana passada" no Recap (positive-only) | feature | P2 | `[ok 522f80e]` Gauntlet validado (screenshot, 93%) |
 | R-INT-4-SPOTIFY-AGORA-TOCANDO | ~~Badge "Tocando: <título>"~~ | feature | P3 | `[descopado]` (Spotify passivo — ver 3P.C) |
 | R-INT-5-DRIVE-NOTIF-BACKUP | Notif silenciosa "Backup salvo no Drive: X MB" | feature | P3 | `[todo]` (depende Drive backup) |
 
