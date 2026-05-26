@@ -137,7 +137,8 @@
             "application/octet-stream"
           ]
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true
