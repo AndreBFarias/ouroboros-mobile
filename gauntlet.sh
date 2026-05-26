@@ -29,6 +29,12 @@
 # Em sessao fresca, useFonts SDK 54 web demora 30-60s para resolver
 # na primeira navegacao. Aguarde antes de interagir.
 #
+# IMPORTANTE (R-DX-GAUNTLET-ROBUSTEZ): NAO envolva este script em
+# `nohup ./gauntlet.sh ... &` externo. O script ja' faz o detach interno
+# do Metro (setsid) e roda o health-check em foreground ate imprimir
+# "OK: ... pronto" ou "ERRO: ..." + exit code. Envolver em `nohup &`
+# externo mata o Metro filho e mascara o resultado do health-check.
+#
 # Suporte a git worktree (R-INFRA-GAUNTLET-WORKTREE-SYMLINK + R-DX-GAUNTLET-MULTI-PORTA):
 # se rodado de .claude/worktrees/<id>/, exporta EXPO_ROUTER_APP_ROOT,
 # EXPO_PROJECT_ROOT e EXPO_NO_METRO_WORKSPACE_ROOT pra forcar Metro
@@ -102,6 +108,43 @@ if [[ "$ROOT" == *"/.claude/worktrees/"* ]]; then
 else
   echo "Main repo detectado em $ROOT (modo normal)"
 fi
+
+# R-DX-GAUNTLET-ROBUSTEZ: pre-flight de higiene (idempotente).
+# Causa-raiz observada 2026-05-25: apos limpar worktrees, o file-map do
+# Metro do main referencia worktree deletado -> ENOENT watch em
+# .claude/worktrees/agent-XYZ/... -> Metro crasha pos-bundle sem bindar
+# a porta. Limpar refs orfas + caches que guardam paths de worktree morto
+# ANTES de subir o Metro evita o crash silencioso.
+preflight_higiene() {
+  echo "Pre-flight de higiene (git worktree prune + limpeza de cache orfao)..."
+
+  # 1. Remove refs de worktree orfas (worktree deletado fisicamente mas
+  #    ainda referenciado em .git/worktrees). No-op se nao houver orfaos.
+  git -C "$ROOT" worktree prune 2>/dev/null || true
+
+  # 2. Limpa caches que podem guardar paths de worktree morto.
+  #    Idempotente: rm -rf so atua se o alvo existir.
+  #    - /tmp/metro-cache: transform cache global compartilhado.
+  #    - /tmp/metro-file-map-*: TreeFS file-map (a fonte do ENOENT watch).
+  #    - node_modules/.cache/metro: cache local de transform.
+  #    - .expo: cache local do projeto.
+  #
+  #    NOTA: em worktree paralelo (outro gauntlet vivo em outra porta),
+  #    nao mexemos no file-map global pra nao quebrar o cache do vizinho.
+  local outros_gauntlets
+  outros_gauntlets=$(find /tmp -maxdepth 1 -name "gauntlet-port-*.lock" 2>/dev/null | wc -l)
+  if [[ "$outros_gauntlets" -eq 0 ]]; then
+    rm -rf /tmp/metro-cache 2>/dev/null || true
+    rm -rf /tmp/metro-file-map-* 2>/dev/null || true
+    echo "  /tmp/metro-cache + /tmp/metro-file-map-* limpos"
+  else
+    echo "  AVISO: $outros_gauntlets gauntlet(s) ativo(s); preservando cache global /tmp" >&2
+  fi
+  rm -rf "$ROOT/node_modules/.cache/metro" 2>/dev/null || true
+  rm -rf "$ROOT/.expo" 2>/dev/null || true
+  echo "  node_modules/.cache/metro + .expo limpos"
+}
+preflight_higiene
 
 CLEAR=0
 VERBOSE=0
@@ -267,17 +310,48 @@ disown 2>/dev/null || true
 # Registra lock cooperativo (PID do gauntlet, nao do filho)
 echo "$METRO_PID" > "$LOCK_FILE"
 
-# 5. Aguarda servidor responder (silencioso por padrao)
-for i in {1..60}; do
-  curl -sf "$URL_METRO" > /dev/null 2>&1 && break
-  sleep 1
-  if [[ $i -eq 60 ]]; then
-    echo "ERRO: Metro nao subiu em 60s na porta $PORT." >&2
-    echo "   tail -100 $LOG_FILE | grep -i error" >&2
-    rm -f "$LOCK_FILE" 2>/dev/null || true
-    exit 1
+# 5. Health-check pos-launch (R-DX-GAUNTLET-ROBUSTEZ).
+#    Poll do endpoint por ate HEALTH_TIMEOUT segundos (90s cobre o
+#    primeiro bundle web lento de sessao fresca). Tres saidas possiveis,
+#    nunca silenciosa:
+#      a) Metro binda a porta -> imprime "OK: Gauntlet pronto ...".
+#      b) PID do Metro morre durante o poll -> aborta cedo com
+#         "ERRO: Metro morreu ..." + tail do log.
+#      c) Timeout sem bindar -> "ERRO: Metro nao bindou ..." + tail do log.
+#    Em (b)/(c) o exit e' nao-zero pra o chamador (CI/agente) saber.
+HEALTH_TIMEOUT=90
+
+# Imprime erro padronizado: motivo + ultimas 20 linhas do log + dica.
+gauntlet_falha() {
+  local motivo="$1"
+  echo "ERRO: $motivo (porta $PORT)" >&2
+  echo "--- ultimas 20 linhas de $LOG_FILE ---" >&2
+  tail -n 20 "$LOG_FILE" 2>/dev/null >&2 || echo "   (log vazio ou inexistente)" >&2
+  echo "--- fim do log ---" >&2
+  echo "   Dica: rode './gauntlet.sh --clear' pra limpar cache e tentar de novo." >&2
+  rm -f "$LOCK_FILE" 2>/dev/null || true
+  exit 1
+}
+
+GAUNTLET_PRONTO=0
+for ((i = 1; i <= HEALTH_TIMEOUT; i++)); do
+  # Deteccao de morte: se o PID do Metro nao esta mais vivo, nao adianta
+  # esperar o resto do timeout -- aborta agora com o log.
+  if ! kill -0 "$METRO_PID" 2>/dev/null; then
+    gauntlet_falha "Metro morreu (PID $METRO_PID) apos ${i}s sem bindar"
   fi
+  if curl -sf "$URL_METRO" > /dev/null 2>&1; then
+    GAUNTLET_PRONTO=1
+    break
+  fi
+  sleep 1
 done
+
+if [[ $GAUNTLET_PRONTO -ne 1 ]]; then
+  gauntlet_falha "Metro nao bindou em ${HEALTH_TIMEOUT}s"
+fi
+
+echo "OK: Gauntlet pronto em $URL_GAUNTLET"
 
 # 6. Abre navegador (silencioso)
 if command -v xdg-open >/dev/null 2>&1; then
