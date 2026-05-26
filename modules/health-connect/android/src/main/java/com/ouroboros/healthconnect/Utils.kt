@@ -24,7 +24,7 @@ import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
-import androidx.health.connect.client.records.metadata.DataOrigin
+import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.units.Mass
 import androidx.health.connect.client.units.Percentage
@@ -149,17 +149,20 @@ internal fun mapToRecord(input: Map<String, Any?>): Record {
   }
 }
 
-// Metadata canonico para inserts. recordingMethod ajustavel por caller
+// Metadata canonico para inserts. O construtor publico Metadata(...) virou
+// internal na connect-client 1.1.0 estavel; usa-se os factory methods do
+// companion. ACTIVELY_RECORDED exige um Device nao-nulo -> usamos o proprio
+// telefone (TYPE_PHONE, o app roda nele). MANUAL_ENTRY (input do usuario)
+// dispensa Device. id, dataOrigin e lastModifiedTime sao preenchidos pelo
+// HC no momento do insert. recordingMethod mantido por caller
 // (ExerciseSession=ACTIVELY_RECORDED, demais=MANUAL_ENTRY).
-private fun buildInsertMetadata(recordingMethod: Int): Metadata = Metadata(
-  /* id = */ "",
-  /* dataOrigin = */ DataOrigin(""),
-  /* lastModifiedTime = */ Instant.now(),
-  /* clientRecordId = */ null,
-  /* clientRecordVersion = */ 0L,
-  /* device = */ null,
-  /* recordingMethod = */ recordingMethod
-)
+private fun buildInsertMetadata(recordingMethod: Int): Metadata =
+  when (recordingMethod) {
+    Metadata.RECORDING_METHOD_ACTIVELY_RECORDED ->
+      Metadata.activelyRecorded(Device(type = Device.TYPE_PHONE))
+    Metadata.RECORDING_METHOD_MANUAL_ENTRY -> Metadata.manualEntry()
+    else -> Metadata.unknownRecordingMethod()
+  }
 
 private fun buildExerciseSession(input: Map<String, Any?>): ExerciseSessionRecord {
   val startTime = (input["startTime"] as? String)
@@ -170,15 +173,17 @@ private fun buildExerciseSession(input: Map<String, Any?>): ExerciseSessionRecor
     ?: throw IllegalArgumentException("ExerciseSession.exerciseType ausente")
   val title = input["title"] as? String
   val notes = input["notes"] as? String
+  // Ordem dos parametros na connect-client 1.1.0: metadata ANTES de
+  // exerciseType (mudou em relacao ao alpha que o codigo original assumia).
   return ExerciseSessionRecord(
     /* startTime = */ Instant.parse(startTime),
     /* startZoneOffset = */ null,
     /* endTime = */ Instant.parse(endTime),
     /* endZoneOffset = */ null,
+    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_ACTIVELY_RECORDED),
     /* exerciseType = */ exerciseType,
     /* title = */ title,
-    /* notes = */ notes,
-    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_ACTIVELY_RECORDED)
+    /* notes = */ notes
   )
 }
 
@@ -229,10 +234,11 @@ private fun buildMenstruationFlow(input: Map<String, Any?>): MenstruationFlowRec
       "MenstruationFlow.flow fora do intervalo 1..3: $flow"
     )
   }
+  // Ordem na connect-client 1.1.0: metadata ANTES de flow.
   return MenstruationFlowRecord(
     /* time = */ Instant.parse(time),
     /* zoneOffset = */ null,
-    /* flow = */ flow,
-    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_MANUAL_ENTRY)
+    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_MANUAL_ENTRY),
+    /* flow = */ flow
   )
 }
