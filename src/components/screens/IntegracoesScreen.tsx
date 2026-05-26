@@ -44,11 +44,18 @@ import {
   Video,
   type LucideProps,
 } from '@/lib/icons';
-import { Header, Screen } from '@/components/ui';
+import { Header, Screen, useOptionalToast } from '@/components/ui';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
 import { useSettings } from '@/lib/stores/settings';
+import {
+  carregarDriveResumo,
+  type DriveResumo,
+} from '@/lib/integracoes/google/driveResumo';
+import { fazerBackupDrive } from '@/lib/integracoes/google/driveBackup';
+import { listarBackupsArquivados } from '@/lib/backup/executarBackup';
+import { restaurarVaultZip } from '@/lib/services/restaurarVault';
 import { useSpotifyAuth } from '@/lib/integracoes/spotify/store';
 import { useYouTubeAuth } from '@/lib/integracoes/youtube/store';
 import { verificarDisponibilidade } from '@/lib/health/availability';
@@ -76,6 +83,21 @@ interface IntegracaoDescritor {
   statusTexto: string;
   // Rota destino. null quando placeholder ('em_breve').
   rota: string | null;
+  // Acoes inline opcionais (botoes no rodape do card). Usado pelo card
+  // Drive (R-INT-5-DRIVE-HUB-ATIVO) para "Fazer agora" / "Restaurar"
+  // sem sair do hub. Ausente nos demais cards (so navegam).
+  acoes?: CardAcao[];
+}
+
+// Acao inline de um card: rotulo PT-BR + handler. `ocupado` desabilita
+// o botao enquanto a operacao roda (evita double-tap em upload/restore).
+interface CardAcao {
+  // Slug ASCII para accessibilityLabel/key.
+  slug: string;
+  // Rotulo do botao (PT-BR sentence case com acento).
+  rotulo: string;
+  onPress: () => void;
+  ocupado?: boolean;
 }
 
 interface CardIntegracaoProps {
@@ -84,7 +106,7 @@ interface CardIntegracaoProps {
 }
 
 function CardIntegracao({ descritor, onPress }: CardIntegracaoProps) {
-  const { icone: Icon, nome, corIcone, estado, statusTexto } = descritor;
+  const { icone: Icon, nome, corIcone, estado, statusTexto, acoes } = descritor;
   const desabilitado = estado === 'em_breve' || estado === 'indisponivel';
 
   // Rotulo curto do estado para o badge / chip.
@@ -170,6 +192,50 @@ function CardIntegracao({ descritor, onPress }: CardIntegracaoProps) {
       >
         {statusTexto}
       </Text>
+      {acoes && acoes.length > 0 ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: spacing.sm,
+            paddingTop: spacing.xs,
+          }}
+        >
+          {acoes.map((acao) => (
+            <Pressable
+              key={acao.slug}
+              onPress={() => {
+                if (acao.ocupado) return;
+                haptics.light();
+                acao.onPress();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`acao ${descritor.slug} ${acao.slug}`}
+              accessibilityState={{ disabled: !!acao.ocupado }}
+              disabled={!!acao.ocupado}
+              style={{
+                paddingVertical: spacing.xs,
+                paddingHorizontal: spacing.md,
+                borderRadius: radius.chip,
+                borderWidth: 1,
+                borderColor: colors.bgElev,
+                backgroundColor: colors.bg,
+                opacity: acao.ocupado ? 0.5 : 1,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.fg,
+                  fontFamily: 'JetBrainsMono_500Medium',
+                  fontSize: 13,
+                  lineHeight: 20,
+                }}
+              >
+                {acao.rotulo}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -203,6 +269,16 @@ function textoUltimaSync(epochMs: number | null): string {
 
 export function IntegracoesScreen() {
   const router = useRouter();
+  // Toast opcional: no-op quando renderizado fora do ToastProvider
+  // (ambiente de teste isolado). Evita crash em smoke do componente.
+  const toast = useOptionalToast();
+  // R-INT-5-DRIVE-HUB-ATIVO: resumo de backups Drive (N backups, MB,
+  // ultimo envio). Carregado no mount; recarregado apos "Fazer agora".
+  const [driveResumo, setDriveResumo] = useState<DriveResumo | null>(null);
+  // Flags de operacao em andamento para o card Drive (desabilita os
+  // botoes durante upload/restore, evita double-tap).
+  const [driveUploadando, setDriveUploadando] = useState(false);
+  const [driveRestaurando, setDriveRestaurando] = useState(false);
   // Estado de Health Connect: lazy probe do SDK + ler quantos tipos
   // estao concedidos. Roda uma vez no mount (idempotente; o detalhe
   // /settings/integracoes refaz com mais profundidade).
@@ -275,6 +351,82 @@ export function IntegracoesScreen() {
       }
     })();
   }, []);
+
+  // Carrega o resumo de backups Drive no mount. Idempotente; o adapter
+  // ja trata web/sem-vault devolvendo resumo vazio honesto.
+  const carregarResumo = useCallback(async () => {
+    try {
+      const r = await carregarDriveResumo();
+      if (mountedRef.current) setDriveResumo(r);
+    } catch {
+      // Falha de leitura nao deve quebrar o hub; card cai no texto
+      // padrao do toggle.
+    }
+  }, []);
+
+  useEffect(() => {
+    void carregarResumo();
+  }, [carregarResumo]);
+
+  // Acao "Fazer agora": dispara o upload do ZIP de backup local mais
+  // recente para o Drive (reusa fazerBackupDrive de R-INT-5-BACKUP, sem
+  // reimplementar). Em web ou sem scope o modulo devolve no-op gracioso
+  // com mensagem; refletimos no toast sem alarmismo.
+  const fazerBackupAgora = useCallback(async () => {
+    if (driveUploadando) return;
+    setDriveUploadando(true);
+    try {
+      const r = await fazerBackupDrive('', new Date());
+      if (!mountedRef.current) return;
+      if (r.uploadado) {
+        toast.show('Backup enviado ao Drive.', 'success');
+      } else if (r.jaExistia) {
+        toast.show('Backup já estava no Drive.', 'info');
+      } else {
+        toast.show(r.erro ?? 'Não foi possível enviar agora.', 'warn');
+      }
+      await carregarResumo();
+    } catch {
+      if (mountedRef.current) {
+        toast.show('Falha ao enviar o backup.', 'error');
+      }
+    } finally {
+      if (mountedRef.current) setDriveUploadando(false);
+    }
+  }, [driveUploadando, toast, carregarResumo]);
+
+  // Acao "Restaurar": restaura o backup local mais recente via o fluxo
+  // canonico restaurarVaultZip (nao destrutivo: cria pasta restaurado-
+  // <data>/). Reuso integral; nao reimplementamos restore. O download do
+  // ZIP a partir do Drive remoto depende do scope dormente (R-SEC-1);
+  // ate la restauramos o espelho local, que e' o mesmo artefato enviado.
+  const restaurarBackup = useCallback(async () => {
+    if (driveRestaurando) return;
+    setDriveRestaurando(true);
+    try {
+      const backups = await listarBackupsArquivados();
+      const recente = backups[0];
+      if (!recente) {
+        if (mountedRef.current) {
+          toast.show('Nenhum backup disponível para restaurar.', 'warn');
+        }
+        return;
+      }
+      const res = await restaurarVaultZip(recente.uri);
+      if (!mountedRef.current) return;
+      if (res.ok) {
+        toast.show(`Restaurado: ${res.totalEscritos} arquivos.`, 'success');
+      } else {
+        toast.show(res.motivo ?? 'Não foi possível restaurar.', 'warn');
+      }
+    } catch {
+      if (mountedRef.current) {
+        toast.show('Falha ao restaurar o backup.', 'error');
+      }
+    } finally {
+      if (mountedRef.current) setDriveRestaurando(false);
+    }
+  }, [driveRestaurando, toast]);
 
   // Descritor Health Connect.
   // - estado:
@@ -434,10 +586,33 @@ export function IntegracoesScreen() {
         icone: Cloud,
         corIcone: colors.yellow,
         estado: 'conectado',
-        statusTexto: driveBackupToggle
-          ? 'Backup automático ligado. Envia o ZIP do Vault toda semana.'
-          : 'Backup automático desligado. Ligue em Contas Google.',
+        // Resumo real (N backups, MB, ultimo envio) quando carregado;
+        // fallback no texto do toggle enquanto o resumo nao resolveu.
+        statusTexto:
+          driveResumo !== null
+            ? driveResumo.texto
+            : driveBackupToggle
+              ? 'Backup automático ligado. Envia o ZIP do Vault toda semana.'
+              : 'Backup automático desligado. Ligue em Contas Google.',
         rota: '/settings/contas-google',
+        acoes: [
+          {
+            slug: 'fazer_agora',
+            rotulo: driveUploadando ? 'Enviando…' : 'Fazer agora',
+            onPress: () => {
+              void fazerBackupAgora();
+            },
+            ocupado: driveUploadando,
+          },
+          {
+            slug: 'restaurar',
+            rotulo: driveRestaurando ? 'Restaurando…' : 'Restaurar',
+            onPress: () => {
+              void restaurarBackup();
+            },
+            ocupado: driveRestaurando,
+          },
+        ],
       }
     : {
         slug: 'google_drive',

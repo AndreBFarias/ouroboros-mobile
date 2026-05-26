@@ -129,6 +129,34 @@ jest.mock('@/lib/integracoes/youtube/store', () => ({
     selector(mockStateYouTube.current),
 }));
 
+// R-INT-5-DRIVE-HUB-ATIVO: resumo Drive + acoes "Fazer agora" /
+// "Restaurar". Mockamos o resumo (linha 2 do card), o upload e o
+// restore. Os fakes sao deterministicos (sem rede, sem FileSystem).
+const mockCarregarDriveResumo = jest.fn();
+const mockFazerBackupDrive = jest.fn();
+const mockListarBackupsArquivados = jest.fn();
+const mockRestaurarVaultZip = jest.fn();
+
+jest.mock('@/lib/integracoes/google/driveResumo', () => ({
+  __esModule: true,
+  carregarDriveResumo: () => mockCarregarDriveResumo(),
+}));
+
+jest.mock('@/lib/integracoes/google/driveBackup', () => ({
+  __esModule: true,
+  fazerBackupDrive: (...args: unknown[]) => mockFazerBackupDrive(...args),
+}));
+
+jest.mock('@/lib/backup/executarBackup', () => ({
+  __esModule: true,
+  listarBackupsArquivados: () => mockListarBackupsArquivados(),
+}));
+
+jest.mock('@/lib/services/restaurarVault', () => ({
+  __esModule: true,
+  restaurarVaultZip: (...args: unknown[]) => mockRestaurarVaultZip(...args),
+}));
+
 import { IntegracoesScreen } from '@/components/screens/IntegracoesScreen';
 
 beforeEach(() => {
@@ -151,6 +179,27 @@ beforeEach(() => {
   mockStateYouTube.current = {
     conta: { accessToken: null, ultimaConexao: 0, invalido: false },
   };
+  mockCarregarDriveResumo.mockReset();
+  mockFazerBackupDrive.mockReset();
+  mockListarBackupsArquivados.mockReset();
+  mockRestaurarVaultZip.mockReset();
+  // Resumo Drive padrao: nada carregado ainda (resolve null e cai no
+  // fallback do toggle). Cada teste sobrescreve quando precisa.
+  mockCarregarDriveResumo.mockResolvedValue({
+    totalBackups: 0,
+    bytesTotais: 0,
+    ultimoUploadMs: null,
+    texto: 'Nenhum backup local para enviar ainda.',
+  });
+  mockFazerBackupDrive.mockResolvedValue({ uploadado: true, bytes: 1024 });
+  mockListarBackupsArquivados.mockResolvedValue([]);
+  mockRestaurarVaultZip.mockResolvedValue({
+    ok: true,
+    raizDestino: '/tmp/restaurado',
+    totalEscritos: 3,
+    totalIgnorados: 0,
+    falhas: [],
+  });
 });
 
 describe('IntegracoesScreen — render dos 5 cards', () => {
@@ -264,6 +313,109 @@ describe('IntegracoesScreen — render dos 5 cards', () => {
 
     fireEvent.press(getByLabelText('card integracao youtube'));
     expect(mockPush).toHaveBeenCalledWith('/settings/integracoes');
+  });
+});
+
+describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-ATIVO)', () => {
+  // Helper: conecta uma conta Google para o card Drive virar conectado.
+  function comContaGoogle() {
+    mockStateGoogle.current = {
+      contas: {
+        pessoa_a: { accessToken: 'token-a-valido', ultimaConexao: Date.now() },
+        pessoa_b: { accessToken: null, ultimaConexao: 0 },
+      },
+    };
+  }
+
+  it('card Drive conectado exibe o resumo carregado (N backups, MB, ultimo envio)', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+    mockCarregarDriveResumo.mockResolvedValueOnce({
+      totalBackups: 3,
+      bytesTotais: 3 * 1024 * 1024,
+      ultimoUploadMs: Date.now(),
+      texto: '3 backups · 3.0 MB · Último envio: agora mesmo.',
+    });
+
+    const { getByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(
+        getByText('3 backups · 3.0 MB · Último envio: agora mesmo.')
+      ).toBeTruthy();
+    });
+  });
+
+  it('card Drive conectado expoe acoes Fazer agora e Restaurar', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(
+        getByLabelText('acao google_drive fazer_agora')
+      ).toBeTruthy();
+      expect(getByLabelText('acao google_drive restaurar')).toBeTruthy();
+    });
+  });
+
+  it('Fazer agora dispara fazerBackupDrive e recarrega o resumo', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('acao google_drive fazer_agora')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('acao google_drive fazer_agora'));
+
+    await waitFor(() => {
+      expect(mockFazerBackupDrive).toHaveBeenCalledTimes(1);
+    });
+    // Resumo recarrega: 1 no mount + 1 apos upload OK.
+    await waitFor(() => {
+      expect(mockCarregarDriveResumo.mock.calls.length).toBeGreaterThanOrEqual(
+        2
+      );
+    });
+  });
+
+  it('Restaurar restaura o backup local mais recente via restaurarVaultZip', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+    mockListarBackupsArquivados.mockResolvedValueOnce([
+      { uri: '/tmp/auto/backup-recente.zip', nome: 'backup-recente.zip', modificadoEmMs: 1, bytes: 10, snapshot: null },
+    ]);
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('acao google_drive restaurar')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('acao google_drive restaurar'));
+
+    await waitFor(() => {
+      expect(mockRestaurarVaultZip).toHaveBeenCalledWith(
+        '/tmp/auto/backup-recente.zip'
+      );
+    });
+  });
+
+  it('Drive desconectado nao mostra acoes', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    // Sem conta Google -> desconectado, sem acoes.
+
+    const { queryByLabelText, getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado google_drive desconectado')).toBeTruthy();
+    });
+    expect(queryByLabelText('acao google_drive fazer_agora')).toBeNull();
+    expect(queryByLabelText('acao google_drive restaurar')).toBeNull();
   });
 });
 
