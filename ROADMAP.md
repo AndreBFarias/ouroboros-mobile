@@ -188,6 +188,19 @@ Materializados em `e5ceb26`; executores da sessao anterior morreram pre-commit.
 | R-INFRA-TIMEZONE-PATHS-MIGRACAO | refactor | P3 | `[ok 953e059]` paridade BRT bit-a-bit (575 testes) | paths.ts UTC-3 hardcoded -> helper canonico |
 | R-INT-3-HC-DOC-VERSION-FIX-RESIDUO | docs | P3 | `[ok 402660f]` | build.gradle:11 citava 1.2.0-alpha04 (usa 1.1.0) |
 
+#### 3P.Z — Build dev-client sem EAS + fix bridge HC 1.1.0 (2026-05-26)
+
+Preparacao do dev-client (validacao live). Build CI achou bug nativo nunca compilado.
+
+| ID | Tipo | P | Status | Origem |
+|---|---|---|---|---|
+| R-DX-DEVCLIENT-CI | dx | P1 | `[ok 2e6cbdd]` workflow assembleDebug assinado keystore EAS | EAS quota esgotada; dev-client sem EAS |
+| R-INT-3-HC-AUTOPULL-BACKGROUND (ativacao) | infra | P2 | `[ok 81d8b3e]` deps `expo-task-manager`+`expo-background-task` instaladas + plugin | gate nativo do background |
+| R-INT-3-HC-BRIDGE-INSERT-1-1-0-FIX | fix | P1 | `[ok 1445453]` build dev-client verde, APK assinado SHA-1 OK | Metadata internal + ordem records 1.1.0 (1o build da bridge) |
+
+> **Artefato:** `builds/dev-client-1445453.apk` (94M, arm64 debug, keystore EAS →
+> OAuth + update in-place). Pronto para `R-INT-3-HC-LIVE-CHECKPOINT` (device).
+
 #### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)
 
 | ID | Sprint | Tipo | P | Estim. | Spec |

@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 — Build dev-client sem EAS + fix bridge HC 1.1.0 (2026-05-26)
+
+Preparação do dev-client para validação live no device (EAS quota esgotada).
+
+- **Requirements do AUTOPULL-BACKGROUND (`81d8b3e`):** `expo-task-manager ~14.0.9`
+  + `expo-background-task ~1.0.10` instalados (config plugin auto-add no
+  `app.json`) — ativa o gate nativo do `R-INT-3-HC-AUTOPULL-BACKGROUND`. Smoke
+  3061 verde com as deps (require guarded segue no-op em ambiente sem nativo).
+- **`R-DX-DEVCLIENT-CI` (`2e6cbdd`):** workflow `.github/workflows/build-dev-client.yml`
+  — espelha o de release mas `assembleDebug` + `developmentClient`, **assinado
+  com a MESMA keystore EAS** (Q17.e) → SHA-1 bate o Google Cloud Console (OAuth
+  funciona no dev-client) + update in-place sobre o release sem wipe. Trigger
+  `workflow_dispatch` / tag `devclient-*`; artefato `ouroboros-dev-client-apk`.
+- **`R-INT-3-HC-BRIDGE-INSERT-1-1-0-FIX` (`1445453`):** o 1º build da bridge HC
+  nativa (nunca compilada antes — alpha-31 é pré-D) falhou em
+  `compileDebugKotlin`: `Utils.kt` usava o construtor `Metadata(...)` (virou
+  `internal` na `connect-client:1.1.0`) e a ordem de params de
+  `ExerciseSessionRecord`/`MenstruationFlowRecord` (metadata mudou de posição).
+  Fix: factory methods (`manualEntry()` / `activelyRecorded(Device(TYPE_PHONE))`)
+  + reordem, API verificada nas signature files do androidx 1.1.0. Build
+  dev-client verde, APK assinado (SHA-1 OK), artefato `dev-client-1445453.apk`.
+
 ### Fase 3 follow-ups (leva 8) — Robustez Gauntlet + flake jest + timezone paths + doc (2026-05-26)
 
 Recuperação dos 4 follow-ups materializados em `e5ceb26`; os executores
