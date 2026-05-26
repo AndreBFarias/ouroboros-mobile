@@ -17,7 +17,30 @@ jest.mock('expo-auth-session', () => ({
   makeRedirectUri: () => 'https://auth.expo.io/@owner/slug',
 }));
 
-// expo-constants e env.json sao mockados via doMock dentro de cada
+// R-INFRA-JEST-ENV-MOCK-FLAKE (2026-05-26): mock base de env.json via
+// jest.mock hoisted no topo, identico ao padrao canonico estavel de
+// googleAuthFlow-pickClientIdSafe.test.ts. O shape anterior usava apenas
+// jest.doMock(..., { virtual: true }) dentro de carregar(), o que falhava
+// no run completo do smoke DENTRO de worktree (env.json e symlink).
+//
+// Causa raiz: { virtual: true } diz ao Jest que o modulo nao existe
+// fisicamente, mas env.json existe (symlink). Quando outra suite carrega
+// env.json antes desta no mesmo worker, o resolver segue o symlink ate o
+// realpath do repo main e popula o cache sob essa chave. O import de
+// oauth.ts (`import envJson from '../../../../env.json'`) resolve para o
+// realpath, mas o jest.doMock virtual registra sob o path do symlink do
+// worktree -> as chaves divergem e o mock nao intercepta. Resultado:
+// getClientIdFromEnv le o env.json real (sem spotify.client_id) e lanca.
+//
+// Fix: jest.mock hoisted (sem virtual) registra o mock para o specifier
+// ANTES de qualquer require resolver o path fisicamente, tornando-o
+// deterministico independente de symlink/ordem de carga. jest.doMock
+// dentro de carregar() continua sobrescrevendo por teste apos resetModules.
+jest.mock('../../../../env.json', () => ({
+  spotify: { client_id: 'cid-base' },
+}));
+
+// expo-constants e env.json sao remockados via doMock dentro de cada
 // teste pra permitir mudar appOwnership e spotify.client_id sem
 // problema de hoisting.
 
@@ -30,11 +53,7 @@ function carregar(
     __esModule: true,
     default: { appOwnership: ownership },
   }));
-  jest.doMock(
-    '../../../../env.json',
-    () => (envObj === null ? {} : envObj),
-    { virtual: true }
-  );
+  jest.doMock('../../../../env.json', () => (envObj === null ? {} : envObj));
   return require('@/lib/integracoes/spotify/oauth');
 }
 
