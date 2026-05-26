@@ -144,6 +144,85 @@ describe('escreverEstado: escreverEstadoCanonicoImediato', () => {
     expect(body).toBe('');
   });
 
+  // R-INT-3-HC-AUTOPULL-VAULT-MIRROR: settings antigos espelhados antes
+  // desta sprint (sem hcAutopullUltimaSync) continuam validando porque a
+  // chave e optional no schema.
+  it('settings sem hcAutopullUltimaSync continua validando (compat retroativa)', async () => {
+    const payload = {
+      somVibracao: { geral: true, despertar: true, conquista: true, botoes: true },
+      pessoa: {
+        ativa: 'pessoa_a' as const,
+        vaultCompartilhado: true,
+        tipoCompanhia: 'sozinho' as const,
+      },
+      featureToggles: {
+        cicloMenstrual: true,
+        alarmePessoal: true,
+        todoLeve: true,
+        contadorDiasSem: true,
+        calendarioConquistas: true,
+        widgetHomescreen: true,
+        widgetMostraNome: false,
+        mostrarFinancasEmDesenvolvimento: false,
+        backupAutomaticoSemanal: false,
+        healthConnectSync: false,
+        recapAmbientAudio: false,
+        recapAudioAnexadoAutoplay: true,
+      },
+      privacidade: { biometriaAbrir: false, ocultarTranscricoes: false },
+      midia: { capPorRegistro: 4, permitirAudio: true },
+      recap: { slideshowIntervaloS: 4 },
+    };
+    await escreverEstadoCanonicoImediato('settings', payload);
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+    const [, meta] = mockWriteVaultFile.mock.calls[0];
+    expect(meta).not.toHaveProperty('hcAutopullUltimaSync');
+  });
+
+  // R-INT-3-HC-AUTOPULL-VAULT-MIRROR: payload com tracking por tipo HC
+  // valida e chega ao writer preservando o mapa (mistura de ISO e null).
+  it('settings com hcAutopullUltimaSync valida e espelha o mapa', async () => {
+    const hc = {
+      Steps: '2026-05-22T10:00:00-03:00',
+      ExerciseSession: null,
+      Weight: null,
+      BodyFat: null,
+      HeartRate: null,
+      SleepSession: null,
+      MenstruationFlow: null,
+    };
+    const payload = {
+      somVibracao: { geral: true, despertar: true, conquista: true, botoes: true },
+      pessoa: {
+        ativa: 'pessoa_a' as const,
+        vaultCompartilhado: true,
+        tipoCompanhia: 'sozinho' as const,
+      },
+      featureToggles: {
+        cicloMenstrual: true,
+        alarmePessoal: true,
+        todoLeve: true,
+        contadorDiasSem: true,
+        calendarioConquistas: true,
+        widgetHomescreen: true,
+        widgetMostraNome: false,
+        mostrarFinancasEmDesenvolvimento: false,
+        backupAutomaticoSemanal: false,
+        healthConnectSync: false,
+        recapAmbientAudio: false,
+        recapAudioAnexadoAutoplay: true,
+      },
+      privacidade: { biometriaAbrir: false, ocultarTranscricoes: false },
+      midia: { capPorRegistro: 4, permitirAudio: true },
+      recap: { slideshowIntervaloS: 4 },
+      hcAutopullUltimaSync: hc,
+    };
+    await escreverEstadoCanonicoImediato('settings', payload);
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+    const [, meta] = mockWriteVaultFile.mock.calls[0];
+    expect(meta.hcAutopullUltimaSync).toEqual(hc);
+  });
+
   it('valida sessao com schema (rascunhos null, flags completas)', async () => {
     await escreverEstadoCanonicoImediato('sessao', {
       ultimaRota: '/saude-fisica',

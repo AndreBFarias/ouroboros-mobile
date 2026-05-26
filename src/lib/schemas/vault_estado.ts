@@ -88,6 +88,29 @@ export const EstadoSettingsSchema = z.object({
   recap: z.object({
     slideshowIntervaloS: z.number().int().min(2).max(10),
   }),
+  // R-INT-3-HC-AUTOPULL-VAULT-MIRROR (2026-05-22): tracking
+  // canonico do scheduler de pull do Health Connect. Mapa
+  // tipo -> ISO 8601 do sucesso mais recente (ou null se nunca puxou).
+  // Optional para tolerar settings antigos espelhados antes
+  // desta sprint (mesmo padrao de recapAudioAnexadoAutoplay).
+  // Os 7 literais duplicam TipoHC (src/lib/health/tipos.ts) de
+  // proposito: mantem este schema auto-contido para o sibling
+  // Python parsear sem coupling com health/tipos. Tipo novo em
+  // tipos.ts exige atualizar aqui tambem (trade-off consciente).
+  hcAutopullUltimaSync: z
+    .record(
+      z.enum([
+        'Steps',
+        'ExerciseSession',
+        'Weight',
+        'BodyFat',
+        'HeartRate',
+        'SleepSession',
+        'MenstruationFlow',
+      ]),
+      z.string().nullable()
+    )
+    .optional(),
   atualizadoEm: IsoDatetime,
 });
 export type EstadoSettings = z.infer<typeof EstadoSettingsSchema>;

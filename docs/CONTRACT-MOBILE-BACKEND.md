@@ -848,6 +848,7 @@ Container que agrupa até 10 rotinas existentes para o ciclo de treino do usuár
 | `featureToggles` | object | sim | 11 booleans cobrindo features opcionais. |
 | `privacidade` | object | sim | `{ biometriaAbrir, ocultarTranscricoes }`. |
 | `midia` | object | sim | `{ capPorRegistro >= 1, permitirAudio }`. |
+| `hcAutopullUltimaSync` | object | não | Mapa `{ Steps, ExerciseSession, Weight, BodyFat, HeartRate, SleepSession, MenstruationFlow }` -> ISO 8601 do último pull HC bem-sucedido ou null. R-INT-3-HC-AUTOPULL-VAULT-MIRROR. |
 | `atualizadoEm` | ISO 8601 | sim | Carimbo do writer canônico. |
 
 Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem este `.md` a cada toggle (debounced 500ms). Sibling Python lê para saber configurações do usuário sem reler SecureStore.

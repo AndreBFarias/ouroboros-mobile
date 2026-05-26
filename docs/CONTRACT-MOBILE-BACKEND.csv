@@ -180,6 +180,7 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.23,estado_settings,1,featureToggles,object,sim,11 booleans cobrindo features opcionais.
 5.23,estado_settings,1,privacidade,object,sim,"{ biometriaAbrir, ocultarTranscricoes }`."
 5.23,estado_settings,1,midia,object,sim,"{ capPorRegistro >= 1, permitirAudio }`."
+5.23,estado_settings,1,hcAutopullUltimaSync,object,não,"Mapa `{ Steps, ExerciseSession, Weight, BodyFat, HeartRate, SleepSession, MenstruationFlow }` -> ISO 8601 do último pull HC bem-sucedido ou null. R-INT-3-HC-AUTOPULL-VAULT-MIRROR."
 5.23,estado_settings,1,atualizadoEm,ISO 8601,sim,Carimbo do writer canônico.
 5.24,estado_sessao,1,_schema_version,inteiro,sim (escrita),
 5.24,estado_sessao,1,version,literal `1,sim,

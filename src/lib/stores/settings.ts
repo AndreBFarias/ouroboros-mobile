@@ -189,7 +189,9 @@ export interface SettingsState {
 //
 // Atencao: este shape e' o snapshot do ZIP exportavel. NAO confundir com
 // o payload do mirror Vault (subscriber escreverEstadoCanonico mais
-// abaixo), que e' estrito e nao inclui os trackings de sync.
+// abaixo), que e' estrito. Desde R-INT-3-HC-AUTOPULL-VAULT-MIRROR o
+// mirror inclui hcAutopullUltimaSync; calendarSyncUltimaSync e
+// driveBackupUltimaSync seguem fora do payload canonico.
 export interface SettingsExportShape {
   somVibracao: SettingsState['somVibracao'];
   pessoa: SettingsState['pessoa'];
@@ -535,13 +537,12 @@ function filtrarBooleansConhecidos<T extends Record<string, boolean>>(
 // useVaultMock (writer trata branch); em mobile real escreve via
 // SAF/file:// atomic.
 useSettings.subscribe((state) => {
-  // hcAutopullUltimaSync (R-INT-3-HC-AUTOPULL-SCHEDULER) NAO entra no
-  // payload do mirror Vault: EstadoSettingsSchema e estrito sobre o
-  // shape e adicionar a chave forca migracao cross-stack do sibling
-  // Python. SecureStore (persist do zustand) ja garante persistencia
-  // confiavel — Vault mirror permanece como "snapshot exportavel para
-  // recap". Anti-debito: sprint futura R-INT-3-HC-AUTOPULL-VAULT-MIRROR
-  // estende o schema e o subscriber se houver demanda.
+  // R-INT-3-HC-AUTOPULL-VAULT-MIRROR (2026-05-22): hcAutopullUltimaSync
+  // agora entra no mirror canonico. Sibling Python protocolo-ouroboros
+  // pode ler tracking do sync HC mais recente por tipo (cross-device
+  // awareness e diagnostico de gaps de coleta). EstadoSettingsSchema
+  // foi estendido com a chave opcional; settings antigos sem ela
+  // continuam parseando.
   escreverEstadoCanonico('settings', {
     somVibracao: { ...state.somVibracao },
     pessoa: { ...state.pessoa },
@@ -549,5 +550,6 @@ useSettings.subscribe((state) => {
     privacidade: { ...state.privacidade },
     midia: { ...state.midia },
     recap: { ...state.recap },
+    hcAutopullUltimaSync: { ...state.hcAutopullUltimaSync },
   });
 });
