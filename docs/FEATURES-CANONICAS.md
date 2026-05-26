@@ -102,6 +102,12 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 - 4 tipos: foto / áudio / vídeo / oEmbed (Spotify, YouTube).
 - Mídia obrigatória — sem mídia, não salva.
 - Companion `.md` com YAML frontmatter (formalizado em M39).
+- Picker de biblioteca YouTube (R-INT-4-YOUTUBE-PICKER): quando o
+  YouTube está conectado (`useYouTubeAuth`), a aba YouTube do
+  `MidiaPicker` lista a biblioteca (Liked + Watch Later via
+  `youtube/biblioteca.ts`); toque preenche a `MidiaYoutube`. Atalho
+  "Colar link" e fallback URL + CTA "Conectar YouTube" quando
+  desconectado. Consome o client read-only; não toca OAuth/schema.
 
 ### 2.5 Microfone — F-14 / M06.5 (Tela 18, **dev-client only**)
 
