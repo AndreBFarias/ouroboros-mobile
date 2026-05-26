@@ -8,8 +8,9 @@
 // HC moderno (com.google.android.apps.healthdata >= 2026.04.16.00.release)
 // retornando SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED.
 //
-// API nova (1.2.0-alpha04): construtor Metadata(...) virou internal desde
-// alpha12; usar factory methods (Metadata.activelyRecorded, manualEntry etc).
+// Nota de API (serie alpha 1.2.0-alphaNN, NAO instalada aqui): o construtor
+// Metadata(...) virou internal desde a alpha12; usar factory methods
+// (Metadata.activelyRecorded, manualEntry etc). Esta build usa a 1.1.0 estavel.
 // Sub-sprint A nao instancia Metadata diretamente (so availability +
 // permissions); B/C/D vao tocar.
 
