@@ -5,6 +5,18 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 anti-débito (leva 6) — ProGuard cleanup + Settings export shape (2026-05-25)
+
+- **`R-SEC-4-PROGUARD-CLEANUP` (`e8f5ddd`):** remove referência morta a
+  `react-native-health-connect` (lib upstream removida) das `extraProguardRules`
+  em `app.json` + regra defensiva `-keepclasseswithmembernames` para os record
+  types HC. AC release-logcat fica device-deferred (alpha-32).
+- **`R-INFRA-SETTINGS-EXPORT-SHAPE` (`e25b860`):** interface canônica
+  `SettingsExportShape` (10 campos) substitui o `Omit<ReturnType<...>>` em
+  `exportarVault.ts` — setter novo na store não força mais editar os consumidores
+  do snapshot. Roundtrip export→restore provado idêntico (snapshot-symmetry +
+  restaurarVault verdes). Smoke **319 suítes / 3054 testes verde**.
+
 ### Fase 3 Onda 3Q (leva 5) — Pickers Spotify/YouTube + Drive hub/notif + timezone helper (2026-05-25)
 
 - **`R-INT-4-SPOTIFY-PICKER` (`5c83544`) + `R-INT-4-YOUTUBE-PICKER` (`878cb1e`):**
