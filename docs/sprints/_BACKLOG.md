@@ -8,6 +8,50 @@
 > **Atualizado**: 2026-05-15 noite (após auditoria + Onda R
 > consolidada).
 
+---
+
+## Estado real (2026-05-26) — pós Onda 3P/3Q + Expo SDK 56
+
+> O "Resumo executivo" e as Fases 1–4 abaixo são de 2026-05-15 e estão em **grande
+> parte executados** (Ondas 2/3I/3J/3K/3N/3P/3Q + R-SEC-6 vulns + R-DX bypass +
+> upgrade SDK 56). Status real de cada tile: `ROADMAP.md`. Esta seção consolida o
+> que **de fato falta** até `v1.0.0`.
+
+**HEAD `d41536f` · Expo SDK 56 (RN 0.85) · smoke 323 suítes / 3073 testes · npm audit 0.**
+
+### Falta até v1.0.0 (todas com spec)
+
+| ID | O que falta | Tipo | Quem |
+|---|---|---|---|
+| R-INT-3-HC-LIVE-CHECKPOINT | validar autopull HC + pickers OAuth + badge passos + background no device | validação | maestro + device |
+| R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE | mover `defineTask` p/ top-level (achado; confirmar na live) | fix | executor |
+| R-CRIT-2 | OAuth consent app name (Cloud Console) | humana | dono ~5min |
+| R-SEC-1 | Google OAuth verification + scope Drive (destrava Drive dormente) | humana | dono 2-3h + prop |
+| R-SEC-2 + R-PLAYCONSOLE-SETUP | Play Console $25 + setup | humana | dono 40min + prop |
+| R-OPS-4 | branch protection (`scripts/setup-branch-protection.sh`) | humana | dono ~1min |
+| R-ROT-1-C | review copy emocional do diário | humana+feature | dono review |
+| M37.2 | Calendar escrita (criar/editar/deletar evento; opt-in, leitura M37.1 já OK) | feature | executor (provável v1.1) |
+| M41 / M-RELEASE-ASSETS / M-SOBRE-RELEASE-NOTES | release `v1.0.0` final (build alpha-32 SDK 56, tag, notes) | release | maestro + dono |
+
+### Achados contingentes (backlog — NÃO bloqueiam v1.0.0)
+
+Registrados por anti-débito mas **sem spec individual** — materializar só se o dono
+pedir (evita specs especulativas):
+
+- **R-INT-3-HC-DEDUP** — dedup de records HC via `clientRecordId` (a bridge não dedupa).
+- **R-INT-3-HC-AUTOPULL-TELEMETRIA** — histórico de syncs ("se dono pedir").
+- **R-INT-3-HC-AUTOPULL-UI-MANUAL** — botão "Sincronizar agora" ("se dono pedir").
+- **R-INT-3-HC-SETTINGS-STATUS** — UI "Última sync HC" em `/settings/integracoes`.
+- **R-INT-3-LOGGER-CONDICIONAL** — gate `__DEV__` nos ~15 `console.log` `[hc-autopull]`/
+  `[integracoes]` (aparecem no logcat release; qualidade pré-v1.0.0).
+- **R-INT-4-YOUTUBE-MUSIC-HISTORY** — YT Music history ("se houver demanda").
+- **R-RECAP-7** — formato de share social adicional ("se dono quiser").
+- **R-SEC-PROGUARD-HC-EXTENDED** — `-keep` extra se surgir `ClassNotFound` de não-record
+  em release (condicional; ainda não ocorreu).
+- **R-BUNDLE-DIET-CALENDARS-REPLACE** — substituir `react-native-calendars` (descopado v1.1).
+
+---
+
 ## Resumo executivo
 
 | Fase | Tema | # sprints | Estim. ativa | Bloqueia release |
@@ -231,4 +275,3 @@ execução. Detalhes em cada spec individual.
 > correspondente, com Ordem / P / Estimativa preenchidos).
 
 <!-- entries auto-geradas vao aqui -->
-
