@@ -290,7 +290,7 @@ const SpecCss = () =>
       position: relative;
     }
     .spec-not ul li:before {
-      content: '✕';
+      content: '';
       position: absolute;
       left: 0;
       top: 0;
@@ -684,7 +684,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Pull-to-refresh força releitura do vault. Tap em entrada abre detalhe somente-leitura. Long press copia path .md pra clipboard."
             validacao="Se vault não foi configurado → empty state com CTA pra ajustes. Se vazio → ilustração + 'comece registrando'."
             dados="leitura de daily/YYYY-MM-DD.md + eventos/ filtrados por data" />
-          
+
             <Feature
             id="F-02"
             flag="core"
@@ -694,7 +694,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Tap no path .md no rodapé copia. Botão 'abrir no obsidian' dispara intent de share. Sem botão editar — edição é desktop."
             validacao="Markdown renderizado com biblioteca tipo Markwon. Imagens carregadas do path relativo do vault."
             dados="leitura única do .md selecionado" />
-          
+
             <Feature
             id="F-03"
             flag="core"
@@ -704,7 +704,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Filtros são chips no topo, multi-seleção. Busca debounce 300ms. Resultado destaca match no preview."
             validacao="Index in-memory atualizado on file watch. Vault > 1000 arquivos: indexação assíncrona com Room."
             dados="leitura recursiva do vault inteiro" />
-          
+
           </div>
 
           {/* SECAO B */}
@@ -721,7 +721,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Slider haptic em cada parada. Tags são chips pré-definidas + freeform. Salva em daily/YYYY-MM-DD.md no campo 'humor:'."
             validacao="1 registro por pessoa por dia. Re-registro substitui o valor com confirmação."
             dados="daily/YYYY-MM-DD.md · campos humor, humor_tags, humor_nota" />
-          
+
             <Feature
             id="F-05"
             flag="core"
@@ -731,7 +731,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="WorkManager schedule. Inline action via NotificationCompat.Action com RemoteInput. Reply tap → grava + dismiss notification."
             validacao="Se já registrou hoje → notificação não aparece. Snooze adia 1h."
             dados="daily/YYYY-MM-DD.md" />
-          
+
             <Feature
             id="F-06"
             flag="core"
@@ -741,7 +741,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Form bottom sheet. Lugar via geocoding reverso (opt-in). Pessoas: chips com André/Vitória + freeform."
             validacao="Texto obrigatório (≥3 chars). Toast confirma com microcopy: 'anotado. tao bom.' (positivo) / 'registrado. respira.' (negativo)."
             dados="eventos/YYYY-MM-DD-slug.md" />
-          
+
           </div>
 
           {/* SECAO C */}
@@ -758,7 +758,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Tap rotaciona FAB 45° (vira X) e abre 4 botões em arco. Tap fora ou no X fecha. Cada ação abre o sheet/modal correspondente."
             validacao="Acessível via gesto (back fecha). Labels micro 11px sob cada botão."
             dados="—" />
-          
+
             <Feature
             id="F-08"
             flag="core"
@@ -768,7 +768,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Cantos cyan aparecem quando 4 bordas são detectadas. Captura 72dp branco no centro. ML Kit document scanner + text recognition."
             validacao="OCR confiança < 0.7 → marca campo como 'revisar'. Imagem original salva em assets/, referenciada por path relativo."
             dados="financas/YYYY-MM-DD-slug.md + assets/YYYY-MM-DD-slug.jpg" />
-          
+
             <Feature
             id="F-09"
             flag="core"
@@ -778,7 +778,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Activity transparente. Path .md de destino visível em ciano mono — atualiza em tempo real conforme tipo é detectado. Tempo total < 5s."
             validacao="Se não conseguir extrair valor + destino, modal expande pra form mínimo. Cancel descarta."
             dados="financas/YYYY-MM-DD-slug.md" />
-          
+
           </div>
 
           {/* SECAO D */}
@@ -795,7 +795,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Tap em célula → preview da entrada. Toggle no topo alterna single/overlap. Modo sobreposto: 2 heatmaps a 50% opacity, interseção mais escura."
             validacao="5 níveis fixos (red → green). Sem normalização — valor cru."
             dados="leitura agregada de daily/*.md" />
-          
+
             <Feature
             id="F-11"
             flag="core"
@@ -805,7 +805,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Sem botão adicionar. Subtitle 'abaixo da média' sempre neutro — nunca verde/vermelho. Pipeline rodado pelo desktop popula um cache .json."
             validacao="Se cache .json não existe → empty state explicativo."
             dados="leitura de .ouroboros/financas-cache.json" />
-          
+
             <Feature
             id="F-12"
             flag="core"
@@ -815,7 +815,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Radio horizontal pra pessoa ativa (André / Vitória). Vault compartilhado por padrão. Path do último arquivo sincronizado em ciano mono."
             validacao="Indicador colorido de status: cyan (ok), yellow (syncing), red (conflito)."
             dados="SharedPreferences + DataStore" />
-          
+
             <Feature
             id="F-13"
             flag="core"
@@ -825,7 +825,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="3 perguntas sequenciais. Frame 3 → app abre direto na tela 01 (Hoje). Pode ser pulado a qualquer momento."
             validacao="Sem pessoa selecionada → bloqueio do botão next. Demais campos opcionais."
             dados="DataStore" />
-          
+
           </div>
 
           {/* SECAO E */}
@@ -842,7 +842,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Hold-to-talk no FAB radial. Waveform live. Solta → transcrição via SpeechRecognizer (offline package). Edita texto antes de salvar."
             validacao="Sem mic permission → onboarding inline. Áudio < 3s descartado."
             dados="daily/YYYY-MM-DD.md + assets/YYYY-MM-DD-HHmm.m4a" />
-          
+
             <Feature
             id="F-15"
             flag="add"
@@ -852,7 +852,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="AlarmManager + setExactAndAllowWhileIdle. Notificação full-screen intent. Snooze 5/10/30min."
             validacao="Hora obrigatória. Recorrência: dias da semana ou diário. Som customizável."
             dados="alarmes/slug.md" />
-          
+
             <Feature
             id="F-16"
             flag="add"
@@ -862,7 +862,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Swipe direita → completa. Swipe esquerda → arquiva. Tap no checkbox toggle. Items completos vão pro fim com strikethrough."
             validacao="Lista limitada a 20 itens visíveis — força foco. Arquivados ficam no .md mas somem da view."
             dados="tarefas/YYYY-MM-DD-slug.md" />
-          
+
             <Feature
             id="F-17"
             flag="add"
@@ -872,7 +872,7 @@ streak atual começou em 15/12.`}</pre>
             comportamento="Card grande mostra número de dias. Tap longo → reset com confirmação. Histórico de resets visível no detalhe."
             validacao="Sem gamificação — sem celebração visual em milestones. Apenas o número. Reset registra timestamp em 'resets:'."
             dados="contadores/slug.md" />
-          
+
           </div>
         </div>
 

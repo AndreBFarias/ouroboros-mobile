@@ -49,7 +49,7 @@ const Screen07_Galeria = ({ filled }) => (
 
     {!filled ? (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}>⚇</div>
+        <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}></div>
         <div style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.6 }}>
           Nenhum exercício cadastrado ainda.<br/>toque + pra criar.
         </div>
@@ -65,7 +65,7 @@ const Screen07_Galeria = ({ filled }) => (
               aspectRatio: 1, background: 'var(--bg-elev)', borderRadius: 6,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'var(--muted-decor)', fontSize: 22,
-            }}>⚇</div>
+            }}></div>
             <div>
               <div style={{ color: 'var(--orange)', fontSize: 12 }}>{ex.name}</div>
               <div className="mut" style={{ fontSize: 10 }}>{ex.group}</div>
@@ -97,7 +97,7 @@ const Screen08_Detalhe = ({ filled }) => (
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--muted-decor)', fontSize: 38, marginBottom: 12,
           maxHeight: 230,
-        }}>⚇ gif</div>
+        }}> gif</div>
 
         <div style={{ marginBottom: 8 }}>
           <span className="chip" style={{ background: 'rgba(139,233,253,0.15)', color: 'var(--cyan)', borderColor: 'var(--cyan)' }}>Peito</span>
@@ -133,7 +133,7 @@ const Screen08_Detalhe = ({ filled }) => (
     ) : (
       <>
         <div className="gif-up" style={{ marginBottom: 14 }}>
-          ⚇<br/>tocar pra adicionar gif
+          <br/>tocar pra adicionar gif
         </div>
 
         <div className="cap" style={{ marginBottom: 4 }}>Nome</div>
@@ -457,7 +457,7 @@ const Screen13_Comparativo = ({ filled }) => (
 
     {!filled ? (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
-        <div style={{ fontSize: 32, color: 'var(--muted-decor)', marginBottom: 10 }}>↕</div>
+        <div style={{ fontSize: 32, color: 'var(--muted-decor)', marginBottom: 10 }}></div>
         <div className="mut" style={{ fontSize: 13, lineHeight: 1.6 }}>
           Registre medidas pra comparar depois.
         </div>

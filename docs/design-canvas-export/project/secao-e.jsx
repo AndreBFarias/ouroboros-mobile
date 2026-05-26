@@ -62,7 +62,7 @@ const Screen25_Mic = ({ filled }) => {
           boxShadow: filled
             ? '0 0 0 8px rgba(255,85,85,0.18)'
             : '0 4px 16px rgba(189,147,249,0.35)',
-        }}>{filled ? '■' : '◉'}</div>
+        }}>{filled ? '■' : ''}</div>
       </div>
 
       {/* transcricao ao vivo */}
@@ -116,7 +116,7 @@ const Screen26_Alarme = ({ filled }) => {
     >
       {!filled ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
-          <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}>◷</div>
+          <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}></div>
           <div className="mut" style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>
             Nenhum lembrete configurado.
           </div>
@@ -193,7 +193,7 @@ const Screen27_Todo = ({ filled }) => {
 
       {!filled ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
-          <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}>☐</div>
+          <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}></div>
           <div className="mut" style={{ fontSize: 13, lineHeight: 1.6 }}>
             Nada pendente. Respira.
           </div>

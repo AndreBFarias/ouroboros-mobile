@@ -15,12 +15,12 @@ const Screen14_FAB = ({ filled = false }) => {
   const fabX = 350, fabY = 730;
   const radius = 165;
   const items = [
-    { id: 'humor',  color: 'var(--pink)',   icon: '♡',  label: 'humor' },
-    { id: 'voz',    color: 'var(--cyan)',   icon: '◉',  label: 'voz' },
-    { id: 'cam',    color: 'var(--orange)', icon: '▭',  label: 'camera' },
-    { id: 'ex',     color: 'var(--green)',  icon: '⚇',  label: 'exercício' },
-    { id: 'vit',    color: 'var(--yellow)', icon: '✧',  label: 'Vitória' },
-    { id: 'trig',   color: 'var(--red)',    icon: '△',  label: 'trigger' },
+    { id: 'humor',  color: 'var(--pink)',   icon: '',  label: 'humor' },
+    { id: 'voz',    color: 'var(--cyan)',   icon: '',  label: 'voz' },
+    { id: 'cam',    color: 'var(--orange)', icon: '',  label: 'camera' },
+    { id: 'ex',     color: 'var(--green)',  icon: '',  label: 'exercício' },
+    { id: 'vit',    color: 'var(--yellow)', icon: '',  label: 'Vitória' },
+    { id: 'trig',   color: 'var(--red)',    icon: '',  label: 'trigger' },
   ];
   // distribute em arco de 110° (apontando esquerda) até 200° (apontando cima)
   // ou seja, 6 angulos entre 105 e 205 graus (medido do +x, sentido CCW = subindo/esquerda)
@@ -210,7 +210,7 @@ const Screen16_Scanner = ({ filled = false }) => {
             width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 20, color: 'var(--yellow)',
-          }}>⚡</div>
+          }}></div>
         </div>
       </PhoneFrame>
     );

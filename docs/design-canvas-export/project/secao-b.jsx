@@ -161,7 +161,7 @@ const Screen18_Diario = ({ filled }) => {
         background: 'transparent', border: '1px dashed var(--bg-elev)',
         padding: '10px', borderRadius: 8, color: 'var(--cyan)', fontSize: 12,
         marginBottom: 8, cursor: 'pointer', fontFamily: 'inherit',
-      }}>◉ gravar audio</button>
+      }}> gravar audio</button>
 
       <button className={isTrigger ? 'btn btn-red' : 'btn btn-grn'}>
         Registrar
@@ -272,7 +272,7 @@ const Screen20_Evento = ({ filled }) => (
       borderRadius: 8, padding: '8px', fontSize: 12, color: filled ? 'var(--cyan)' : 'var(--muted)',
       fontFamily: 'inherit', cursor: 'pointer', marginBottom: 6,
       width: '100%', textAlign: 'center',
-    }}>{filled ? '✓ pinheiros, São Paulo' : '◎ usar localização atual'}</button>
+    }}>{filled ? ' pinheiros, São Paulo' : ' usar localização atual'}</button>
 
     <div className="cap" style={{ marginBottom: 4, marginTop: 8 }}>Quando</div>
     <div style={{ marginBottom: 12 }}>

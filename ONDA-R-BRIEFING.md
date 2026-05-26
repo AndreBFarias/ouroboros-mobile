@@ -483,7 +483,7 @@ A seção "Próximos" da Tela Hoje deve mesclar **eventos da agenda Google** e *
 #### Comportamento esperado
 
 - Merge cronológico de `agenda` (cache MD per Q06095d / M37.1.2) + `alarmes` (schema alarme).
-- Cada item indica origem com micro-ícone (📅 calendar, ⏰ alarme).
+- Cada item indica origem com micro-ícone ( calendar,  alarme).
 - Tap em evento agenda abre detalhe somente-leitura (escrita virá em E6 M37.2).
 - Tap em alarme abre `/alarmes/[id]/editar`.
 
@@ -817,7 +817,7 @@ Rotinas hoje têm naming/UX levemente enviesado para exercícios físicos. O don
 
 #### Comportamento esperado
 
-- Categorias visíveis no form de criação: Medicação 💊 / Saúde física 💪 / Hábito 🌀 / Outro ⚙️.
+- Categorias visíveis no form de criação: Medicação  / Saúde física  / Hábito  / Outro .
 - Templates de exemplo prontos: "Tomar remédio", "Tomar água", "Caminhar 30min".
 - Texto do empty state inclui exemplo não-exercício.
 

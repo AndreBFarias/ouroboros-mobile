@@ -35,7 +35,7 @@ const Screen21_HumorPage = ({ filled }) => {
     >
       {!filled ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
-          <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}>♡</div>
+          <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}></div>
           <div className="mut" style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>
             Registre seu humor pra começar a ver padrões.
           </div>
@@ -116,7 +116,7 @@ const Screen22_Financeiro = ({ filled }) => (
 
     {!filled ? (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
-        <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}>◯</div>
+        <div style={{ fontSize: 36, color: 'var(--muted-decor)', marginBottom: 10 }}></div>
         <div className="mut" style={{ fontSize: 13, lineHeight: 1.6 }}>
           Rode o pipeline no desktop pra carregar dados.
         </div>
