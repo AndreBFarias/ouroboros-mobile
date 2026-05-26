@@ -5,6 +5,18 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Fase 3 anti-débito (leva 7) — Mirror hcAutopullUltimaSync no Vault (2026-05-25)
+
+- **`R-INT-3-HC-AUTOPULL-VAULT-MIRROR` (`5b191e0`):** o subscriber de
+  `escreverEstadoCanonico('settings', ...)` passa a incluir
+  `hcAutopullUltimaSync` (timestamp da última sync do autopull HC por tipo) no
+  `estado_settings` espelhado no Vault — cross-stack, pro backend desktop ver o
+  estado de sync. Schema `EstadoSettingsSchema` ganhou o campo opcional
+  (backward-compat). Contrato `CONTRACT-MOBILE-BACKEND.md/.csv` §5.23 atualizado
+  (drift check 235 campos em sync). Coordenação cross-repo: issue
+  `protocolo-ouroboros#34` aberta pro parser desktop. Smoke verde
+  (`npm test` 3058/3058; flake spotify/oauth é só de worktree).
+
 ### Fase 3 anti-débito (leva 6) — ProGuard cleanup + Settings export shape (2026-05-25)
 
 - **`R-SEC-4-PROGUARD-CLEANUP` (`e8f5ddd`):** remove referência morta a

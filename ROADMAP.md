@@ -166,7 +166,7 @@ PASSOS/EXERCICIO/SLEEP nao tem write-back HC — guard so cobre medidas+menstrua
 | R-INT-3-HC-DOC-VERSION-FIX | docs | P3 | `[ok ad2652a]` | comentarios SDK 1.2.0 vs real 1.1.0 |
 | R-SEC-4-PROGUARD-CLEANUP | cleanup | P3 | `[ok e8f5ddd]` (AC7 release device-deferred) | extraProguardRules pos remocao lib upstream |
 | R-INFRA-SETTINGS-EXPORT-SHAPE | refactor | P3 | `[ok e25b860]` | Omit<ReturnType<...>> forca cascata |
-| R-INT-3-HC-AUTOPULL-VAULT-MIRROR | feature | P3 | `[todo]` (Onda C — conflita settings.ts) | espelhar ultimaSync no Vault cross-stack |
+| R-INT-3-HC-AUTOPULL-VAULT-MIRROR | feature | P3 | `[ok 5b191e0]` (sibling issue protocolo-ouroboros#34 aberta) | espelhar ultimaSync no Vault cross-stack |
 | R-INT-3-HC-PASSOS-TIMEZONE-INTL | refactor | P3 | `[ok 14ad117]` | executor manteve UTC-3 hardcoded contra spec exigindo Intl |
 
 > **Onda A integrada (2026-05-25 noite):** BOOTSTRAP-ENV-JSON + DOC-VERSION-FIX +
