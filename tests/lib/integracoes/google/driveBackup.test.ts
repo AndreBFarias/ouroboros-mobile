@@ -163,6 +163,60 @@ describe('executarBackupDrive', () => {
     ).toBe(true);
   });
 
+  it('sucesso dispara notificarSucesso com os bytes do ZIP', async () => {
+    const notif: number[] = [];
+    const { deps } = depsBase({
+      notificarSucesso: async (bytes) => {
+        notif.push(bytes);
+      },
+    });
+    const r = await executarBackupDrive(deps);
+    expect(r.uploadado).toBe(true);
+    expect(notif).toHaveLength(1);
+    expect(notif[0]).toBe(r.bytes);
+  });
+
+  it('no-op gracioso (sem token) nao dispara notificarSucesso', async () => {
+    const notif: number[] = [];
+    const { http } = criarHttpFake();
+    const r = await executarBackupDrive({
+      refreshToken: async () => null,
+      acharBackupLocal: async () => ({ uri: 'x', nome: 'x.zip' }),
+      lerZipBase64: async () => 'QQ==',
+      calcularSha: () => 'sha',
+      http,
+      notificarSucesso: async (bytes) => {
+        notif.push(bytes);
+      },
+    });
+    expect(r.uploadado).toBe(false);
+    expect(notif).toHaveLength(0);
+  });
+
+  it('idempotencia (ja existia) nao dispara notificarSucesso', async () => {
+    const notif: number[] = [];
+    const { http } = criarHttpFake({
+      listar: async (query) => {
+        if (query.includes(DRIVE_PROP_SHA256)) {
+          return [{ id: 'ja-existe-id', name: 'backup-antigo.zip' }];
+        }
+        return [];
+      },
+    });
+    const r = await executarBackupDrive({
+      refreshToken: async () => 'tok',
+      acharBackupLocal: async () => ({ uri: 'u', nome: 'b.zip' }),
+      lerZipBase64: async () => 'QUJD',
+      calcularSha: () => 'sha-dup',
+      http,
+      notificarSucesso: async (bytes) => {
+        notif.push(bytes);
+      },
+    });
+    expect(r.jaExistia).toBe(true);
+    expect(notif).toHaveLength(0);
+  });
+
   it('pasta ja existe: reusa folderId, nao cria de novo', async () => {
     const { http, chamadas } = criarHttpFake({
       listar: async (query) => {

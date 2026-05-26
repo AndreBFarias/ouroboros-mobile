@@ -102,6 +102,11 @@ export interface ExecutarBackupDriveDeps {
   calcularSha: (conteudoBase64: string) => string;
   // Cliente Drive.
   http: DriveHttp;
+  // Notificacao silenciosa best-effort apos upload bem-sucedido. Recebe
+  // os bytes do ZIP enviado. Opcional: ausente em testes puros e em web
+  // (no-op). Qualquer falha e' engolida pelo proprio helper; o executor
+  // ainda assim nao espera o resultado para nao bloquear o retorno.
+  notificarSucesso?: (bytes: number) => Promise<unknown>;
 }
 
 // Monta a query files.list para localizar a pasta de backups por nome,
@@ -172,6 +177,12 @@ export async function executarBackupDrive(
     // descontando padding).
     const limpos = conteudoBase64.replace(/=+$/g, '');
     const bytes = Math.floor((limpos.length * 3) / 4);
+    // Notif silenciosa de confirmacao (best-effort): so no sucesso. Nao
+    // damos await para nao bloquear o retorno do backup; o helper engole
+    // qualquer falha internamente. Se ausente (testes puros/web), no-op.
+    if (deps.notificarSucesso) {
+      void deps.notificarSucesso(bytes);
+    }
     return { uploadado: true, fileId, bytes };
   } catch (e) {
     const msg =
@@ -292,6 +303,8 @@ export async function fazerBackupDrive(
   const { listarBackupsArquivados } = require('@/lib/backup/executarBackup') as typeof import('@/lib/backup/executarBackup');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { sha256Base64 } = require('@/lib/crypto/sha256') as typeof import('@/lib/crypto/sha256');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { notificarBackupDrive } = require('@/lib/notifications/driveBackup') as typeof import('@/lib/notifications/driveBackup');
   return executarBackupDrive({
     refreshToken: () => useGoogleAuth.getState().refreshIfNeeded(pessoa),
     acharBackupLocal: async () => {
@@ -306,6 +319,7 @@ export async function fazerBackupDrive(
       }),
     calcularSha: (conteudoBase64) => sha256Base64(conteudoBase64),
     http: driveHttpReal,
+    notificarSucesso: (bytes) => notificarBackupDrive(bytes),
   });
 }
 
