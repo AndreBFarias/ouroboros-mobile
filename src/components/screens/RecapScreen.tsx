@@ -37,6 +37,10 @@ import { useVault } from '@/lib/stores/vault';
 import { calcularSaudeRecap, type SaudeRecap } from '@/lib/recap/saude';
 import { calcularAgendaRecap, type AgendaRecap } from '@/lib/recap/agenda';
 import {
+  calcularInsightSaude,
+  type InsightSaude,
+} from '@/lib/recap/insights';
+import {
   useRecap,
   resolverPeriodo,
   type PeriodoChave,
@@ -51,6 +55,7 @@ import { RecapSecaoTarefas } from './RecapSecaoTarefas';
 import { RecapSecaoNumeros } from './RecapSecaoNumeros';
 import { RecapSecaoSaude } from './RecapSecaoSaude';
 import { RecapSecaoAgenda } from './RecapSecaoAgenda';
+import { CardInsightSaude } from './CardInsightSaude';
 import { RecapModoCalendario } from './RecapModoCalendario';
 
 // Q24.b (2026-05-13): 'memorias' nao e' um state interno -- tap nessa
@@ -213,6 +218,30 @@ export function RecapScreen() {
       vivo = false;
     };
   }, [vaultRoot, periodo, ateMs]);
+
+  // R-INT-3-HC-INSIGHT-SEMANAL: insight comparativo de passos (semana
+  // atual vs anterior). Decoracao no topo do Recap — NAO entra no
+  // predicado totalRecap (se so houver insight e nada mais, ainda
+  // mostramos EmptyState; mas como o insight depende de passos,
+  // normalmente havera tambem a secao Saude). Janela sempre 7d vs 7d
+  // a partir de `ate`, independente do periodo selecionado. POSITIVE
+  // ONLY: a funcao retorna null quando o delta nao e positivo, entao
+  // o card simplesmente nao aparece (sem loading proprio — decoracao
+  // pode resolver depois do conteudo sem piscar EmptyState).
+  const [insight, setInsight] = useState<InsightSaude | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    if (!vaultRoot) {
+      setInsight(null);
+      return;
+    }
+    void calcularInsightSaude(vaultRoot, new Date(ateMs)).then((r) => {
+      if (vivo) setInsight(r);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [vaultRoot, ateMs]);
 
   // L2: micro-fade out + fade in ao trocar modo. Curva linear curta
   // (180ms) — nao e movimento posicional, so opacidade.
@@ -487,6 +516,11 @@ export function RecapScreen() {
               contentContainerStyle={{ paddingBottom: 32, gap: 24 }}
               showsVerticalScrollIndicator={false}
             >
+              {/* R-INT-3-HC-INSIGHT-SEMANAL: card de insight no topo.
+                  Decoracao positiva (passos da semana vs anterior). Se
+                  oculta sozinho quando `insight` e null (delta nao
+                  positivo, dados insuficientes ou sem vault). */}
+              <CardInsightSaude insight={insight} />
               <RecapSecaoConquistas itens={data.conquistas} />
               <RecapSecaoCrises itens={data.crises} />
               <RecapSecaoReflexoes itens={data.reflexoes} />

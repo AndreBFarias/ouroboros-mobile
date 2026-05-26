@@ -606,6 +606,16 @@ malformados são silenciosamente ignorados (mesmo padrão de
   - Ambas entram no predicado de "recap vazio" (`temDadoSaude` /
     `temDadoAgenda`): usuário com somente esse dado vê a seção, não o
     EmptyState.
+- **Insight semanal de passos** (R-INT-3-HC-INSIGHT-SEMANAL) — card no
+  topo do Recap (antes de todas as seções) com uma frase factual e
+  sóbria quando a soma de passos dos últimos 7 dias supera a dos 7 dias
+  anteriores. Ex.: "Você caminhou 18% mais que a semana passada."
+  **POSITIVE ONLY (ADR-0005):** nunca gera comparativo negativo — se o
+  delta for ≤ 0 ou abaixo do limiar (5%), o card não renderiza. Exige
+  ao menos 3 dias com registro em cada janela para evitar base ruim.
+  Agregador `calcularInsightSaude` em `src/lib/recap/insights.ts`;
+  componente puro `CardInsightSaude`. Decoração: não entra no predicado
+  de "recap vazio" (`totalRecap`).
 - `<OuroborosLoader compacto />` durante agregação (vault grande pode
   levar 1-3s para o período "Ano").
 - Empty state silencioso por seção; "Nenhum registro neste período."
