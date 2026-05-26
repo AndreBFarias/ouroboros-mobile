@@ -49,6 +49,18 @@ export const GOOGLE_DISCOVERY = {
 export const SCOPE_READONLY =
   'https://www.googleapis.com/auth/calendar.events.readonly';
 
+// R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO (2026-05-25): scope para upload de
+// arquivos criados pelo proprio app no Drive do usuario. drive.file e' o
+// scope MINIMO (nao-sensivel ao ponto de exigir verificacao pesada como
+// drive completo): da acesso apenas a arquivos que o app criou/abriu, nao
+// ao Drive inteiro. Mesmo assim, o Google exige que o scope seja
+// registrado no OAuth consent screen do Cloud Console antes do upload
+// funcionar em release (passo humano R-SEC-1). Ate la, o codigo fica
+// dormente: o toggle backupDriveAutomatico nasce OFF e o cliente Drive so
+// e' chamado quando o usuario liga explicitamente.
+export const SCOPE_DRIVE_FILE =
+  'https://www.googleapis.com/auth/drive.file';
+
 export interface ClientIdInfo {
   clientId: string;
   redirectUri: string;

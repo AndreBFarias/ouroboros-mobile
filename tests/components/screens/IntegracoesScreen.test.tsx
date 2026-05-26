@@ -1,9 +1,13 @@
-// R-INT-1 (2026-05-16) + R-INT-4 (2026-05-17): smoke do hub /integracoes.
+// R-INT-1 (2026-05-16) + R-INT-4 (2026-05-17) + R-INT-5 (2026-05-25):
+// smoke do hub /integracoes.
 //
 // Cobertura:
 //  - Renderiza 5 cards (HC, Calendar, Spotify, YouTube, Drive).
 //  - Spotify/YouTube refletem estado real (conectado/desconectado)
-//    pos R-INT-4; somente Drive permanece "em_breve".
+//    pos R-INT-4.
+//  - R-INT-5: Drive deixou de ser "em_breve". Sem conta Google ->
+//    desconectado (navegavel); com conta -> conectado refletindo o
+//    toggle de backup automatico.
 //  - Estado HC desconectado quando availability='available' e zero
 //    permissoes -> rotulo 'Desconectado'.
 //  - Estado HC conectado quando availability='available' e ha
@@ -59,7 +63,11 @@ type StateGoogleMock = {
   contas: { pessoa_a: ContaMock; pessoa_b: ContaMock };
 };
 type StateSettingsMock = {
-  featureToggles: { healthConnectSync: boolean };
+  featureToggles: {
+    healthConnectSync: boolean;
+    // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: o card Drive le este toggle.
+    backupDriveAutomatico: boolean;
+  };
 };
 
 // Prefixo mockXxx eh obrigatorio para variaveis acessadas dentro de
@@ -74,7 +82,9 @@ const mockStateGoogle: { current: StateGoogleMock } = {
   },
 };
 const mockStateSettings: { current: StateSettingsMock } = {
-  current: { featureToggles: { healthConnectSync: false } },
+  current: {
+    featureToggles: { healthConnectSync: false, backupDriveAutomatico: false },
+  },
 };
 
 jest.mock('@/lib/stores/googleAuth', () => ({
@@ -133,7 +143,7 @@ beforeEach(() => {
     },
   };
   mockStateSettings.current = {
-    featureToggles: { healthConnectSync: false },
+    featureToggles: { healthConnectSync: false, backupDriveAutomatico: false },
   };
   mockStateSpotify.current = {
     conta: { accessToken: null, ultimaConexao: 0, invalido: false },
@@ -159,23 +169,43 @@ describe('IntegracoesScreen — render dos 5 cards', () => {
     });
   });
 
-  it('rotula somente Drive como "Em breve" pos R-INT-4', async () => {
+  it('Drive desconectado quando nenhuma conta Google (R-INT-5)', async () => {
     mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
 
     const { getByLabelText } = render(<IntegracoesScreen />);
 
     await waitFor(() => {
-      // Drive permanece placeholder ate sprint futura.
-      expect(getByLabelText('estado google_drive em_breve')).toBeTruthy();
-      // Spotify/YouTube agora refletem estado real (desconectado default).
+      // R-INT-5: Drive deixou de ser placeholder. Sem conta Google
+      // conectada o estado e' "desconectado" (precisa conectar antes).
+      expect(getByLabelText('estado google_drive desconectado')).toBeTruthy();
+      // Spotify/YouTube refletem estado real (desconectado default).
       expect(getByLabelText('estado spotify desconectado')).toBeTruthy();
       expect(getByLabelText('estado youtube desconectado')).toBeTruthy();
     });
 
-    // Drive card desabilitado: tap nao dispara push.
+    // R-INT-5: card Drive agora e' navegavel -> /settings/contas-google.
     const cardDrive = getByLabelText('card integracao google_drive');
     fireEvent.press(cardDrive);
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith('/settings/contas-google');
+  });
+
+  it('Drive conectado reflete toggle de backup (R-INT-5)', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    mockStateGoogle.current = {
+      contas: {
+        pessoa_a: { accessToken: 'token-a-valido', ultimaConexao: Date.now() },
+        pessoa_b: { accessToken: null, ultimaConexao: 0 },
+      },
+    };
+    mockStateSettings.current = {
+      featureToggles: { healthConnectSync: false, backupDriveAutomatico: true },
+    };
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado google_drive conectado')).toBeTruthy();
+    });
   });
 
   it('rotula Spotify como Conectado quando store tem accessToken', async () => {
@@ -277,7 +307,7 @@ describe('IntegracoesScreen — estado Health Connect', () => {
       { recordType: 'Weight', accessType: 'write' },
     ]);
     mockStateSettings.current = {
-      featureToggles: { healthConnectSync: true },
+      featureToggles: { healthConnectSync: true, backupDriveAutomatico: false },
     };
 
     const { getByLabelText, getByText } = render(<IntegracoesScreen />);

@@ -213,6 +213,11 @@ export function IntegracoesScreen() {
   // healthConnectSync e o toggle canonico do opt-in (Q17.c). Quando
   // ON significa que o usuario aceitou sync automatico ao salvar.
   const hcSyncToggle = useSettings((s) => s.featureToggles.healthConnectSync);
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: toggle do backup off-device. Reflete
+  // " (backup ligado/desligado)" no card Drive. Default OFF.
+  const driveBackupToggle = useSettings(
+    (s) => s.featureToggles.backupDriveAutomatico
+  );
   // Estado das contas Google: pega max ultimaConexao das duas pessoas
   // para o "Última sincronizacao" do Calendar.
   const contas = useGoogleAuth((s) => s.contas);
@@ -414,15 +419,35 @@ export function IntegracoesScreen() {
           : 'Toque para conectar sua conta YouTube.',
         rota: '/settings/integracoes',
       };
-  const descritorDrive: IntegracaoDescritor = {
-    slug: 'google_drive',
-    nome: 'Google Drive',
-    icone: Cloud,
-    corIcone: colors.yellow,
-    estado: 'em_breve',
-    statusTexto: 'Backup automático do Vault na nuvem.',
-    rota: null,
-  };
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: Drive deixa de ser placeholder. O
+  // upload reusa o OAuth Google (mesmo store do Calendar) + o ZIP de
+  // backup local. Estado:
+  //   - sem conta Google -> desconectado (conectar em /settings/contas-google).
+  //   - com conta Google  -> conectado; statusTexto reflete o toggle de
+  //     backup automatico (default OFF). O scope drive.file e' concedido
+  //     no consentimento, mas o upload runtime aguarda o registro do scope
+  //     no Cloud Console (passo humano R-SEC-1).
+  const descritorDrive: IntegracaoDescritor = algumGoogleConectado
+    ? {
+        slug: 'google_drive',
+        nome: 'Google Drive',
+        icone: Cloud,
+        corIcone: colors.yellow,
+        estado: 'conectado',
+        statusTexto: driveBackupToggle
+          ? 'Backup automático ligado. Envia o ZIP do Vault toda semana.'
+          : 'Backup automático desligado. Ligue em Contas Google.',
+        rota: '/settings/contas-google',
+      }
+    : {
+        slug: 'google_drive',
+        nome: 'Google Drive',
+        icone: Cloud,
+        corIcone: colors.yellow,
+        estado: 'desconectado',
+        statusTexto: 'Conecte uma conta Google para o backup na nuvem.',
+        rota: '/settings/contas-google',
+      };
 
   const descritores: IntegracaoDescritor[] = [
     descritorHC,

@@ -25,6 +25,7 @@ import {
   pickClientId,
   refreshAccessToken,
   revogarToken,
+  SCOPE_DRIVE_FILE,
   SCOPE_READONLY,
   trocarCodePorToken,
 } from '@/lib/services/googleAuthFlow';
@@ -131,13 +132,25 @@ export const useGoogleAuth = create<GoogleAuthState>()(
           // PKCE manual usando AuthRequest. Construimos a request,
           // disparamos, e processamos o resultado em uma so funcao
           // sem hook (chamada de servico, nao componente).
+          // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: incluimos SCOPE_DRIVE_FILE no
+          // consentimento. include_granted_scopes=true habilita
+          // autorizacao incremental: o token resultante combina os scopes
+          // ja concedidos (calendar.events.readonly) com o novo drive.file
+          // sem forcar o usuario a reconsentir tudo do zero em re-conexao.
+          // O upload Drive so sera exercido depois que o dono ligar o
+          // toggle backupDriveAutomatico (default OFF); ate la o scope fica
+          // concedido porem ocioso.
           const request = new AuthSession.AuthRequest({
             clientId,
-            scopes: [SCOPE_READONLY, 'openid', 'email'],
+            scopes: [SCOPE_READONLY, SCOPE_DRIVE_FILE, 'openid', 'email'],
             redirectUri,
             usePKCE: true,
             responseType: AuthSession.ResponseType.Code,
-            extraParams: { access_type: 'offline', prompt: 'consent' },
+            extraParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+              include_granted_scopes: 'true',
+            },
           });
           await request.makeAuthUrlAsync(GOOGLE_DISCOVERY);
           const resultado = await request.promptAsync(GOOGLE_DISCOVERY, {

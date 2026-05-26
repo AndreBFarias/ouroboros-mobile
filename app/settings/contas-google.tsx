@@ -8,10 +8,13 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Header, Screen, useToast } from '@/components/ui';
+import { Button, Header, Screen, Toggle, useToast } from '@/components/ui';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { useGoogleAuth, type ContaGoogle } from '@/lib/stores/googleAuth';
+import { useSettings } from '@/lib/stores/settings';
+import { useVault } from '@/lib/stores/vault';
+import { fazerBackupDrive } from '@/lib/integracoes/google/driveBackup';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
@@ -124,6 +127,42 @@ export default function ContasGoogleScreen() {
   const revogar = useGoogleAuth((s) => s.revogar);
   const tipoCompanhia = usePessoa((s) => s.filtroPessoa);
   const [revogando, setRevogando] = useState<PessoaAutor | null>(null);
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: toggle + acao manual de backup Drive.
+  const driveBackupToggle = useSettings(
+    (s) => s.featureToggles.backupDriveAutomatico
+  );
+  const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
+  const setDriveBackupUltimaSync = useSettings(
+    (s) => s.setDriveBackupUltimaSync
+  );
+  const vaultRoot = useVault((s) => s.vaultRoot);
+  const [enviandoDrive, setEnviandoDrive] = useState(false);
+  // Pelo menos uma conta Google conectada habilita o backup Drive.
+  const algumGoogleConectado =
+    (typeof contas.pessoa_a.accessToken === 'string' &&
+      contas.pessoa_a.accessToken.length > 0) ||
+    (typeof contas.pessoa_b.accessToken === 'string' &&
+      contas.pessoa_b.accessToken.length > 0);
+
+  const handleBackupDriveAgora = useCallback(async () => {
+    if (enviandoDrive) return;
+    setEnviandoDrive(true);
+    try {
+      const r = await fazerBackupDrive(vaultRoot ?? '', new Date());
+      if (r.uploadado) {
+        setDriveBackupUltimaSync(new Date().toISOString());
+        toast.show('Backup enviado ao Drive.', 'info');
+      } else if (r.jaExistia) {
+        toast.show('Este backup já está no Drive.', 'info');
+      } else {
+        toast.show(r.erro ?? 'Não foi possível enviar.', 'error');
+      }
+    } catch {
+      toast.show('Erro ao enviar o backup. Tente novamente.', 'error');
+    } finally {
+      setEnviandoDrive(false);
+    }
+  }, [enviandoDrive, vaultRoot, setDriveBackupUltimaSync, toast]);
 
   const handleRevogar = useCallback(
     async (pessoa: PessoaAutor) => {
@@ -183,6 +222,83 @@ export default function ContasGoogleScreen() {
               }}
             />
           ) : null}
+        </SecaoLista>
+
+        <SecaoLista titulo="Backup no Google Drive">
+          <View
+            accessibilityLabel="linha toggle backup drive"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              minHeight: 56,
+              paddingHorizontal: spacing.base,
+            }}
+          >
+            <View style={{ flex: 1, paddingRight: spacing.md }}>
+              <Text
+                style={{
+                  color: colors.fg,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: typography.body.size,
+                  lineHeight:
+                    typography.body.size * typography.body.lineHeight,
+                }}
+              >
+                Backup automático no Drive
+              </Text>
+              <Text
+                style={{
+                  color: colors.muted,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: typography.caption.size,
+                  lineHeight:
+                    typography.caption.size * typography.caption.lineHeight,
+                  marginTop: 2,
+                }}
+              >
+                Envia o ZIP do Vault para o seu Drive uma vez por semana.
+              </Text>
+            </View>
+            <Toggle
+              value={driveBackupToggle}
+              onChange={(v) =>
+                setFeatureToggle('backupDriveAutomatico', v)
+              }
+              disabled={!algumGoogleConectado}
+              accessibilityLabel="toggle backup automatico drive"
+            />
+          </View>
+          {!algumGoogleConectado ? (
+            <Text
+              style={{
+                color: colors.mutedDecor,
+                fontSize: typography.caption.size,
+                paddingHorizontal: spacing.base,
+                marginTop: spacing.xs,
+              }}
+            >
+              Conecte uma conta Google acima para ativar o backup na nuvem.
+            </Text>
+          ) : (
+            <View
+              style={{
+                marginTop: spacing.base,
+                paddingHorizontal: spacing.base,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <Button
+                label={enviandoDrive ? 'Enviando...' : 'Fazer backup agora'}
+                variant="ghost"
+                onPress={() => {
+                  void handleBackupDriveAgora();
+                }}
+                disabled={enviandoDrive}
+                accessibilityLabel="fazer backup drive agora"
+              />
+            </View>
+          )}
         </SecaoLista>
 
         <View style={{ marginTop: spacing.xl, alignItems: 'center' }}>

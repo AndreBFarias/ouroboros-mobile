@@ -86,6 +86,13 @@ export interface SettingsState {
     // (privacy-first; o usuario ja conectou OAuth mas o pull periodico e'
     // escolha consciente). Quando off, o wiring em _layout faz early-return.
     googleCalendarSync: boolean;
+    // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO (2026-05-25): opt-in para enviar o
+    // ZIP de backup local mais recente ao Google Drive (off-device safety
+    // net) 1x/semana. Default false (privacy-first + sem rede de saida sem
+    // consentimento explicito). Mesmo ligado, o upload depende do scope
+    // drive.file estar registrado no OAuth consent (passo humano R-SEC-1);
+    // ate la o cliente Drive fica dormente.
+    backupDriveAutomatico: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -116,6 +123,12 @@ export interface SettingsState {
   // Espelha o padrao de hcAutopullUltimaSync (mas por pessoa, ja que
   // cada conta Google e' independente). Persistido via secureStorage.
   calendarSyncUltimaSync: Record<PessoaAutor, string | null>;
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO (2026-05-25): timestamp ISO 8601 do
+  // ultimo upload Drive bem-sucedido. Lido pelo wiring para o throttle
+  // semanal (igual ao backup local). null = nunca enviou. Persistido via
+  // secureStorage; NAO entra no mirror Vault (mesma postura de
+  // hcAutopullUltimaSync/calendarSyncUltimaSync).
+  driveBackupUltimaSync: string | null;
   // R-INT-3-HC-NOTIF-META-PASSOS (2026-05-25): meta diaria de passos
   // (default 8000). Alimenta a badge "X / Y passos" na Tela Hoje e o
   // gatilho da notificacao silenciosa de meta atingida. Persistido via
@@ -154,6 +167,9 @@ export interface SettingsState {
   // R-INT-2-CALENDAR-SYNC-EVENTOS: setter imutavel do tracking de ultima
   // sync do Calendar por pessoa. Chamado pelo wiring em sucesso.
   setCalendarSyncUltimaSync: (pessoa: PessoaAutor, iso: string) => void;
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: setter do tracking do ultimo upload
+  // Drive. Chamado pelo wiring apos upload OK (uploadado=true).
+  setDriveBackupUltimaSync: (iso: string) => void;
   // R-INT-3-HC-NOTIF-META-PASSOS: setter da meta diaria de passos.
   // Chamado pelo stepper em /settings/integracoes.
   setMetaPassosDia: (valor: number) => void;
@@ -174,6 +190,7 @@ const DEFAULT_STATE_V2: Omit<
   | 'setRecap'
   | 'setHCAutopullUltimaSync'
   | 'setCalendarSyncUltimaSync'
+  | 'setDriveBackupUltimaSync'
   | 'setMetaPassosDia'
   | 'resetar'
 > = {
@@ -221,6 +238,10 @@ const DEFAULT_STATE_V2: Omit<
     // periodico do Calendar so dispara quando o usuario liga em
     // Configuracoes; ate la, a agenda atualiza apenas ao abrir /agenda.
     googleCalendarSync: false,
+    // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: default OFF (opt-in). Sem rede de
+    // saida sem consentimento; o upload Drive so acontece quando o dono
+    // liga aqui E o scope drive.file ja foi concedido (R-SEC-1).
+    backupDriveAutomatico: false,
   },
   privacidade: {
     biometriaAbrir: false,
@@ -254,6 +275,8 @@ const DEFAULT_STATE_V2: Omit<
     pessoa_a: null,
     pessoa_b: null,
   },
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: nunca enviou ate o primeiro upload.
+  driveBackupUltimaSync: null,
   // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria default 8000 passos.
   metaPassosDia: 8000,
 };
@@ -301,6 +324,12 @@ export const useSettings = create<SettingsState>()(
             ...s.calendarSyncUltimaSync,
             [pessoa]: iso,
           },
+        })),
+      // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: marca o instante do ultimo
+      // upload Drive bem-sucedido. Chamado pelo wiring apos uploadado=true.
+      setDriveBackupUltimaSync: (iso) =>
+        set(() => ({
+          driveBackupUltimaSync: iso,
         })),
       // R-INT-3-HC-NOTIF-META-PASSOS: clamp defensivo. Meta minima 1
       // passo (zero desabilitaria a feature de forma confusa) e maxima
@@ -439,6 +468,12 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ...DEFAULT_STATE_V2.calendarSyncUltimaSync,
       ...((ps.calendarSyncUltimaSync as Record<string, unknown>) ?? {}),
     } as SettingsState['calendarSyncUltimaSync'],
+    // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: aceita string ISO persistida,
+    // senao null (instalacoes pre-sprint ou shape corrompido).
+    driveBackupUltimaSync:
+      typeof ps.driveBackupUltimaSync === 'string'
+        ? ps.driveBackupUltimaSync
+        : DEFAULT_STATE_V2.driveBackupUltimaSync,
     // R-INT-3-HC-NOTIF-META-PASSOS: aceita numero positivo persistido,
     // senao cai no default 8000 (instalacoes pre-sprint ou shape
     // corrompido).

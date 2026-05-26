@@ -159,6 +159,7 @@ function snapshotValido(): SnapshotSettings {
         recapAmbientAudio: false,
         recapAudioAnexadoAutoplay: true,
         googleCalendarSync: false,
+        backupDriveAutomatico: false,
       },
       privacidade: {
         biometriaAbrir: true,
@@ -184,6 +185,7 @@ function snapshotValido(): SnapshotSettings {
         pessoa_a: null,
         pessoa_b: null,
       },
+      driveBackupUltimaSync: null,
       metaPassosDia: 8000,
     },
     onboarding: {

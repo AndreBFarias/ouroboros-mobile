@@ -77,6 +77,7 @@ export interface SnapshotSettings {
     | 'setRecap'
     | 'setHCAutopullUltimaSync'
     | 'setCalendarSyncUltimaSync'
+    | 'setDriveBackupUltimaSync'
     | 'setMetaPassosDia'
     | 'resetar'
   >;
@@ -214,6 +215,9 @@ export function gerarSnapshotSettings(): SnapshotSettings {
       // R-INT-2-CALENDAR-SYNC-EVENTOS: idem para o tracking do Calendar
       // por pessoa (restaura throttle em re-instalacao).
       calendarSyncUltimaSync: s.calendarSyncUltimaSync,
+      // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: tracking do ultimo upload Drive
+      // entra no export para restaurar o throttle semanal em re-instalacao.
+      driveBackupUltimaSync: s.driveBackupUltimaSync,
       // R-INT-3-HC-NOTIF-META-PASSOS: meta diaria de passos entra no
       // export para restaurar a preferencia em re-instalacao.
       metaPassosDia: s.metaPassosDia,
