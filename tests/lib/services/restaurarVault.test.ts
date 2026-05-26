@@ -163,6 +163,7 @@ function snapshotValido(): SnapshotSettings {
       recapAudioAnexadoAutoplay: true,
       googleCalendarSync: false,
       backupDriveAutomatico: false,
+      hcAutopullBackground: false,
     },
     privacidade: {
       biometriaAbrir: true,

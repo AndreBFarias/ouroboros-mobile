@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Heart, Footprints, Minus, Plus } from '@/lib/icons';
-import { Button, Header, Screen, useToast } from '@/components/ui';
+import { Button, Header, Screen, Toggle, useToast } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import {
@@ -134,6 +134,16 @@ export default function SettingsIntegracoesScreen() {
     [metaPassosDia, setMetaPassosDia]
   );
 
+  // R-INT-3-HC-AUTOPULL-BACKGROUND: opt-in para o autopull rodar com o app
+  // fechado (task de background). Default false. O wiring em _layout reage a
+  // este toggle e registra/desregistra a task guarded.
+  const hcBackgroundToggle = useSettings(
+    (s) => s.featureToggles.hcAutopullBackground
+  );
+  const alternarHcBackground = useCallback((proximo: boolean) => {
+    useSettings.getState().setFeatureToggle('hcAutopullBackground', proximo);
+  }, []);
+
   // R-INT-3-HC-EMPIRICAL: 'needs_update' nao bloqueia funcionalidade
   // (HC moderno aceita request mesmo reportando SDK obsoleto). Label
   // reflete realidade do device.
@@ -251,6 +261,46 @@ export default function SettingsIntegracoesScreen() {
               </>
             ) : null}
           </View>
+          {permissoes.length > 0 ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: spacing.base,
+                marginTop: spacing.sm,
+              }}
+              accessibilityLabel="linha sincronizar em segundo plano"
+            >
+              <View style={{ flex: 1, gap: spacing.xs }}>
+                <Text
+                  style={{
+                    color: colors.fg,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 14,
+                    lineHeight: 22,
+                  }}
+                >
+                  Sincronizar em segundo plano
+                </Text>
+                <Text
+                  style={{
+                    color: colors.muted,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 12,
+                    lineHeight: 18,
+                  }}
+                >
+                  Atualiza os dados mesmo com o app fechado. Usa mais bateria.
+                </Text>
+              </View>
+              <Toggle
+                value={hcBackgroundToggle}
+                onChange={alternarHcBackground}
+                accessibilityLabel="sincronizar em segundo plano"
+              />
+            </View>
+          ) : null}
         </View>
 
         <View

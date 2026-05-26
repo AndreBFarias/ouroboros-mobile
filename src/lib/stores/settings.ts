@@ -93,6 +93,13 @@ export interface SettingsState {
     // drive.file estar registrado no OAuth consent (passo humano R-SEC-1);
     // ate la o cliente Drive fica dormente.
     backupDriveAutomatico: boolean;
+    // R-INT-3-HC-AUTOPULL-BACKGROUND (2026-05-25): opt-in para rodar o
+    // autopull HC com o app FECHADO (task de background via WorkManager).
+    // Default false (custo de bateria; o foreground via boot/AppState ja
+    // cobre o caso comum). Quando ON, o wiring em _layout registra a task
+    // guarded; quando OFF, desregistra. Sem efeito ate o dev-client/APK ser
+    // recompilado com expo-task-manager + expo-background-task (gate nativo).
+    hcAutopullBackground: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -271,6 +278,11 @@ const DEFAULT_STATE_V2: Omit<
     // saida sem consentimento; o upload Drive so acontece quando o dono
     // liga aqui E o scope drive.file ja foi concedido (R-SEC-1).
     backupDriveAutomatico: false,
+    // R-INT-3-HC-AUTOPULL-BACKGROUND: default OFF (opt-in). Custo de bateria;
+    // o autopull foreground (boot/AppState) ja cobre o uso comum. Migracao de
+    // instalacoes existentes e' coberta pelo spread de DEFAULT_STATE_V2 em
+    // mesclarDefaults (chave nova ausente no persistedState recebe false).
+    hcAutopullBackground: false,
   },
   privacidade: {
     biometriaAbrir: false,

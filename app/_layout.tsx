@@ -29,6 +29,13 @@ import { HCToastBridge } from '@/lib/health/useHCToast';
 // `puxadorSono` (nome canonico do codebase, alinhado com schemas/sono.ts
 // e tests/lib/health/puxadores/sleep.test.ts), nao `puxadorSleep`.
 import { orquestrarHCAutopull } from '@/lib/health/autopullScheduler';
+// R-INT-3-HC-AUTOPULL-BACKGROUND (2026-05-25): registro guarded da task de
+// background (app fechado). No-op sem lib nativa (gate de build). Bloco de
+// wiring separado do useEffect foreground [hc-autopull].
+import {
+  registrarHCAutopullBackground,
+  desregistrarHCAutopullBackground,
+} from '@/lib/health/autopullBackgroundTask';
 import { puxadorPassos } from '@/lib/health/puxadores/passos';
 import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
 import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
@@ -388,6 +395,26 @@ export default function RootLayout() {
       sub.remove();
     };
   }, [appPronto]);
+
+  // R-INT-3-HC-AUTOPULL-BACKGROUND (2026-05-25): registra/desregistra a task
+  // de background do autopull HC (app fechado) conforme o toggle opt-in
+  // hcAutopullBackground. Bloco SEPARADO do useEffect foreground [hc-autopull]
+  // acima (que cobre boot/AppState 'active'); este cobre o caso app fechado.
+  // O registro e' guarded: sem expo-task-manager/expo-background-task
+  // compilados no dev-client (gate nativo) vira no-op silencioso, entao o
+  // bundle/smoke atual nao quebra. Reage a mudanca do toggle: ON registra,
+  // OFF desregistra. Espera appPronto para nao competir com o boot.
+  const hcBackgroundToggle = useSettings(
+    (s) => s.featureToggles.hcAutopullBackground
+  );
+  useEffect(() => {
+    if (!appPronto) return;
+    if (hcBackgroundToggle) {
+      void registrarHCAutopullBackground();
+    } else {
+      void desregistrarHCAutopullBackground();
+    }
+  }, [appPronto, hcBackgroundToggle]);
 
   if (mostrarBootScreen) {
     // M25: enquanto JetBrainsMono carrega, mostra a marca animada em
