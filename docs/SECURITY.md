@@ -109,7 +109,47 @@ o build se a varredura retornar findings.
 Última auditoria registrada: **2026-05-19** (R-SEC-5).
 Resultado: **0 findings** em 420 commits.
 
-## 5. Referências
+## 5. Vulnerabilidades de dependências (npm audit)
+
+Auditoria via `npm audit`. Critério: zero HIGH/CRITICAL; moderate de
+toolchain de build documentadas se não forem removíveis sem breaking.
+
+### 5.1 Estado atual (R-SEC-6, 2026-05-26)
+
+`npm audit` reportou 24 vulnerabilidades (1 low, 22 moderate, 1 high)
+no setup (`santuario` → `install.sh`). Tratamento sem subir o SDK
+(decisão do dono via AskUserQuestion):
+
+- `npm audit fix` (sem `--force`) corrigiu a HIGH (`fast-uri`
+  3.1.0→3.1.2) + `ws` + `@tootallnate/once` via bumps transitivos no lock.
+- `overrides` em `package.json` forçaram as versões corrigidas das 3
+  raízes restantes, eliminando também a cadeia `@expo/*` derivada:
+  - `postcss` → `^8.5.10` (era 8.4.49; XSS GHSA-qx2v-qp2m-jg93).
+  - `uuid` → `^11.1.1` (era 7.0.3; buffer bounds GHSA-w5hq-g745-h8pq;
+    vivia só em `xcode`, caminho iOS prebuild que este projeto
+    Android-only nunca exercita).
+  - `brace-expansion@5` → `^5.0.6` (era 5.0.5; DoS GHSA-jxxr-4gwj-5jf2;
+    override seletivo `@5` preserva as 1.1.14/2.1.1 não-vulneráveis).
+
+Resultado: **`npm audit` → 0 vulnerabilidades**, mantendo Expo SDK 54.
+Validado por `npx tsc --noEmit` (0), `npx expo export --platform android`
+(bundle Hermes 8,64 MB, dentro do ADR-0027) e smoke 321 suítes / 3061
+testes verde. Sem risco residual.
+
+### 5.2 Por que não subir Expo SDK 56
+
+`npm audit fix --force` instalaria `expo@56` + `expo-splash-screen@56`
+(breaking, 2 saltos de major) às vésperas do v1.0.0. Como os overrides
+zeraram as vulnerabilidades sem isso, o upgrade fica como débito mapeado
+em `docs/sprints/R-INFRA-EXPO-SDK-56-UPGRADE-spec.md` (executar pós-release).
+
+### 5.3 Auditar
+
+```bash
+npm audit                 # esperado: found 0 vulnerabilities
+```
+
+## 6. Referências
 
 - [`docs/CONTEXTO.md`](CONTEXTO.md) — anonimato e regras de
   privacidade.

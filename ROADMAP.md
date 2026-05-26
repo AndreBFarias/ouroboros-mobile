@@ -201,6 +201,17 @@ Preparacao do dev-client (validacao live). Build CI achou bug nativo nunca compi
 > **Artefato:** `builds/dev-client-1445453.apk` (94M, arm64 debug, keystore EAS →
 > OAuth + update in-place). Pronto para `R-INT-3-HC-LIVE-CHECKPOINT` (device).
 
+#### 3P.AA — Seguranca deps + DX Gauntlet (2026-05-26)
+
+Demanda do dono: corrigir vulnerabilidades npm (urgente) + bypass de onboarding
+no Gauntlet web para validacao visual com exatidao.
+
+| ID | Tipo | P | Status | Origem |
+|---|---|---|---|---|
+| R-SEC-6-NPM-AUDIT-FIX | fix | P1 | `[ok]` 24->0 vulns via `audit fix` + overrides postcss/uuid/brace-expansion; SDK 54 mantido; tsc 0, export 8.64MB, smoke 321/3061 | `npm audit` no setup |
+| R-DX-GAUNTLET-ONBOARDING-BYPASS | infra | P2 | `[todo]` bypass onboarding default + flag `?onboarding=1` no Gauntlet web | DX validacao visual no Chrome |
+| R-INFRA-EXPO-SDK-56-UPGRADE | infra | P2 | `[todo-futuro]` upgrade 54->56 zera postcss/uuid de raiz (pos-v1.0.0) | debito mapeado de R-SEC-6 |
+
 #### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)
 
 | ID | Sprint | Tipo | P | Estim. | Spec |

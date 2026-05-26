@@ -5,6 +5,28 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### R-SEC-6 — Zera 24 vulnerabilidades npm sem subir SDK (2026-05-26)
+
+`npm audit` no setup (`santuario` → `install.sh`) acusou 24 vulnerabilidades
+(1 low, 22 moderate, 1 high). Corrigidas mantendo Expo SDK 54 — decisão do dono,
+porque `npm audit fix --force` subiria para SDK 56 (breaking, 2 majors) às
+vésperas do v1.0.0.
+
+- **`npm audit fix`** (sem `--force`) zerou a HIGH `fast-uri` (3.1.0→3.1.2,
+  path traversal + host confusion) + `ws` + `@tootallnate/once` via bumps
+  transitivos no `package-lock.json` (sem tocar `package.json`).
+- **`overrides`** em `package.json` forçaram as 3 raízes restantes:
+  `postcss ^8.5.10` (era 8.4.49, XSS), `uuid ^11.1.1` (era 7.0.3, buffer
+  bounds; vivia só no `xcode`/prebuild iOS, nunca exercitado num projeto
+  Android-only) e `brace-expansion@5 ^5.0.6` (era 5.0.5, DoS; override
+  seletivo `@5` preserva as 1.1.14/2.1.1 não-vulneráveis). Isso eliminou
+  também toda a cadeia `@expo/*` transitiva.
+- Resultado: `npm audit` → **0 vulnerabilidades**. Validado por `tsc` (0),
+  `expo export --platform android` (bundle Hermes 8,64 MB, dentro do ADR-0027)
+  e smoke 321 suítes / 3061 testes verde. Sem risco residual.
+- Débito do upgrade Expo 54→56 mapeado em
+  `docs/sprints/R-INFRA-EXPO-SDK-56-UPGRADE-spec.md` (executar pós-v1.0.0).
+
 ### Fase 3 — Build dev-client sem EAS + fix bridge HC 1.1.0 (2026-05-26)
 
 Preparação do dev-client para validação live no device (EAS quota esgotada).
