@@ -674,7 +674,7 @@ malformados são silenciosamente ignorados (mesmo padrão de
 - Helpers de leitura novos: `listarHumor`, `listarDiarios`,
   `listarEventos` (`src/lib/vault/`).
 
-### 7.1 Modo Memórias (slideshow Wrapped) — Q24.b / R-RECAP-3 a R-RECAP-6
+### 7.1 Modo Memórias (slideshow Wrapped) — Q24.b / R-RECAP-3 a R-RECAP-7
 
 Slideshow full-screen estilo Instagram Stories/Spotify Wrapped acessado
 do Recap. Rota: `/recap-memorias?de=…&ate=…`.
@@ -705,17 +705,25 @@ do Recap. Rota: `/recap-memorias?de=…&ate=…`.
   - Esquerda: Pausar (Play/Pause toggle) + Compartilhar (R-RECAP-6,
     `Share2`, left=64dp, ao lado direito do Pausar).
   - Direita: Fechar (X) — volta ao Recap.
-- **Compartilhamento** (R-RECAP-6, 2026-05-16): tap em Compartilhar
-  pausa o slideshow, captura o slide visível como PNG **1080×1920**
-  (formato Instagram Stories, dimensões forçadas via
-  `react-native-view-shot` `captureRef` com `width`/`height`), salva
-  em `cacheDirectory/recap-share-<slideId>-<timestamp>.png` e dispara
-  share intent nativo via `expo-sharing` (`mimeType: 'image/png'`,
-  `dialogTitle: 'Compartilhar'`). **Export efêmero** — não persiste
-  no Vault. Cleanup do PNG temp após o share sheet fechar
-  (best-effort). Em web devolve toast "Compartilhamento indisponível.";
-  erros de captura mostram toast "Não foi possível capturar." sem
-  travar a UI. Double-tap protegido pelo estado `compartilhando`.
+- **Compartilhamento** (R-RECAP-6, 2026-05-16; formato escolhível
+  R-RECAP-7, 2026-05-26): tap em Compartilhar pausa o slideshow e
+  abre um overlay de escolha de formato com dois botões — **Stories**
+  (PNG **1080×1920**, vertical 9:16) e **Post quadrado** (PNG
+  **1080×1080**, feed 1:1). Ao escolher, captura o slide visível com
+  as dimensões forçadas do formato via `react-native-view-shot`
+  `captureRef` (`width`/`height`), salva em
+  `cacheDirectory/recap-share-<slideId>-<formato>-<timestamp>.png` e
+  dispara share intent nativo via `expo-sharing`
+  (`mimeType: 'image/png'`, `dialogTitle: 'Compartilhar'`). O helper
+  `exportarSlideMemorias` aceita `formato: 'stories' | 'quadrado'`
+  (default `'stories'`, retrocompat). **Export efêmero** — não
+  persiste no Vault. Cleanup do PNG temp após o share sheet fechar
+  (best-effort). Cancelar o overlay (botão ou backdrop) retoma o
+  slideshow se não estava pausado manualmente. Em web devolve toast
+  "Compartilhamento indisponível."; erros de captura mostram toast
+  "Não foi possível capturar." sem travar a UI. Double-tap protegido
+  pelo estado `compartilhando`. Overlay em RN puro (sem sheet nativo),
+  A28/A44-safe.
 - **Tom ADR-0005** preservado: zero exclamação, frases de testemunha
   calma ("Você esteve presente.", "Passaram por aqui.", "Continue.").
 - Paleta `colorsMemorias` exclusiva (gradient + dourado pálido)
