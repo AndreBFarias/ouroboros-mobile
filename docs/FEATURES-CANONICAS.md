@@ -108,6 +108,16 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   `youtube/biblioteca.ts`); toque preenche a `MidiaYoutube`. Atalho
   "Colar link" e fallback URL + CTA "Conectar YouTube" quando
   desconectado. Consome o client read-only; não toca OAuth/schema.
+- Limitação de API documentada (R-INT-4-YOUTUBE-MUSIC-HISTORY,
+  `[descopado v1.1]`): a YouTube Data API v3 **não expõe histórico de
+  reprodução** (removido pelo Google em 2016 por privacidade; playlist
+  `HL` não recuperável, `WL` retorna 403). Não há API oficial do
+  YouTube Music. O único sinal read-only estável é "vídeos curtidos"
+  (`LL` / `myRating=like`), que já é servido pelo picker acima. Por
+  isso não existe card passivo de "trilha/conteúdo do YouTube" no
+  Recap — alinhado com a decisão de 2026-05-25 que descopou os cards
+  passivos de Spotify/YouTube (`ROADMAP.md` §3P.C) em favor do modelo
+  picker.
 
 ### 2.5 Microfone — F-14 / M06.5 (Tela 18, **dev-client only**)
 

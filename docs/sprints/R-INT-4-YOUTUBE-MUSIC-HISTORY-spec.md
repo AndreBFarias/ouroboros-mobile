@@ -56,3 +56,67 @@ npm test --silent -- --testPathPattern="youtube|recap"
 ## Proof-of-work
 1. Resultado da investigação (o que a API permite). 2. diff. 3. jest verde. 4. smoke.
 5. hash+branch. 6. Se descopado: decisão documentada no spec + FEATURES-CANONICAS.
+
+---
+
+## Resultado da investigação (Passo 0) — 2026-05-26
+
+Investigação concluída antes de qualquer linha de código. Evidência cruzada
+de três fontes: docs oficiais (conhecimento + comentários já validados no
+`client.ts`), grep no codebase e histórico de decisão no `ROADMAP.md`.
+
+### O que a YouTube Data API v3 realmente permite (read-only, sem API paga)
+
+- **Histórico de reprodução (watch history): indisponível.** O Google removeu
+  o acesso ao histórico de reprodução via API pública em 2016, por privacidade.
+  A playlist especial `HL` (history) não é recuperável via API; a playlist `WL`
+  (Watch Later) retorna `403` para a maioria dos clientes OAuth (já tratado em
+  `client.ts:getWatchLater` como lista vazia). Confirmado também pela spec irmã
+  `R-INT-4-YOUTUBE-WATCH-HISTORY-spec.md` (linhas 11 e 94).
+- **YouTube Music history: indisponível pelo caminho do projeto.** Não existe
+  API oficial do YouTube Music. As bibliotecas que expõem esse dado (ex.:
+  `ytmusicapi`) são engenharia reversa baseada em cookies/headers de navegador
+  — **não** usam o token OAuth `youtube.readonly` que o app possui, são frágeis
+  (quebram quando o Google muda endpoints internos) e contrariam o espírito do
+  **ADR-0007** (sem dependência paga/instável). Logo, "música ouvida" não é
+  obtível com as restrições do projeto.
+- **Único sinal read-only estável: vídeos curtidos (`LL` / `videos?myRating=like`).**
+  Já exposto por `client.ts:getLiked` e já agregado por
+  `youtube/biblioteca.ts` (Liked + Watch Later, dedup por `video_id`).
+
+### Por que o proxy "curtidos recentes" NÃO agrega valor novo aqui
+
+1. **Já consumido.** `getLiked` já alimenta o **picker** de biblioteca YouTube
+   (`MidiaYoutubeTab.tsx`, R-INT-4-YOUTUBE-PICKER, `878cb1e`, `[ok]`) — o
+   usuário já navega seus curtidos para anexar a uma memória (modelo Google
+   Fotos). Um agregador `musica.ts` espelhando isso seria redundante.
+2. **O card de Recap passivo foi uma decisão arquitetural DESCOPADA** em
+   2026-05-25 (auditoria dono + orquestrador, `ROADMAP.md` §3P.C):
+   - `R-INT-4-YOUTUBE-RECAP-CARD` ("Card Conteúdo curtido") → `[descopado]`.
+   - `R-INT-4-SPOTIFY-RECAP-CARD`, `-RECENTLY-PLAYED`, `-WATCH-HISTORY`,
+     `-AGORA-TOCANDO` → todos `[descopado]`.
+   - Razão registrada: o intento do dono ("anexar à recap como Google Fotos")
+     foi servido pelo **picker**, não por cards passivos de histórico. O
+     YouTube não tem camada de cache `.md` no Vault (diferente do Calendar, que
+     alimenta `recap/agenda.ts`); criar uma ressuscitaria exatamente o padrão
+     que o projeto rejeitou um dia antes.
+
+### Decisão: DESCOPAR para v1.1 — documentação apenas, sem código novo
+
+Conforme a própria ressalva da spec ("se a API não permitir, NÃO forçar —
+documentar e descopar") e o precedente do `ROADMAP.md` §3P.C:
+
+- **Não** implementar `src/lib/integracoes/youtube/musica.ts`.
+- **Não** criar card de Recap nem `src/lib/recap/conteudo.ts` (revogaria a
+  decisão de 2026-05-25).
+- A capacidade read-only que existe (Liked/Watch Later) **permanece** servida
+  pelo picker R-INT-4-YOUTUBE-PICKER — nenhuma regressão.
+- Limitação registrada em `docs/FEATURES-CANONICAS.md` (seção 2.4, picker
+  YouTube).
+- **Reabrir só se** surgir caminho oficial e OAuth-compatível para histórico do
+  YouTube/YT Music (improvável no horizonte v1.x), OU se o dono pedir
+  explicitamente um agregador de "curtidos recentes" no Recap aceitando que é
+  proxy de curtidas, não de reprodução.
+
+**Status final desta sprint:** `[descopado v1.1]` — documental, sem mudança em
+`src/`/`app/`. Sem validação visual (não toca UI).
