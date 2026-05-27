@@ -142,6 +142,16 @@ export interface SettingsState {
   // secureStorage. NAO entra no mirror Vault (mesma decisao de
   // hcAutopullUltimaSync: EstadoSettingsSchema e estrito).
   metaPassosDia: number;
+  // R-INT-3-HC-SYNC-PAINEL (2026-05-26): telemetria da ULTIMA rodada de
+  // autopull HC (agregada, nao por tipo). rodadoEm = ISO do disparo;
+  // novos = total de records puxados; erros = quantos puxadores falharam.
+  // Gravado por orquestrarHCAutopull no fim de toda rodada (boot/
+  // foreground/manual). Alimenta a linha "Ultima rodada: N novos" do
+  // painel de sync em /settings/integracoes. undefined = nenhuma rodada
+  // ainda. EFEMERO: NAO entra no mirror Vault nem no snapshot exportavel
+  // (mesma postura de calendarSyncUltimaSync/driveBackupUltimaSync — e
+  // diagnostico de UI, nao estado canonico cross-device).
+  hcAutopullUltimaRodada?: { rodadoEm: string; novos: number; erros: number };
   // Mutators canonicos. Sprints opt-in chamam apenas os toggles
   // relevantes; setSync/setLembrete foram removidos no shape v2.
   setSomVibracao: <K extends keyof SettingsState['somVibracao']>(
@@ -180,6 +190,14 @@ export interface SettingsState {
   // R-INT-3-HC-NOTIF-META-PASSOS: setter da meta diaria de passos.
   // Chamado pelo stepper em /settings/integracoes.
   setMetaPassosDia: (valor: number) => void;
+  // R-INT-3-HC-SYNC-PAINEL: registra a telemetria da rodada de autopull
+  // recem-concluida. Chamado por orquestrarHCAutopull (todo caller:
+  // boot/foreground/manual). Sempre sobrescreve (so a ultima importa).
+  setHCAutopullUltimaRodada: (rodada: {
+    rodadoEm: string;
+    novos: number;
+    erros: number;
+  }) => void;
   resetar: () => void;
 }
 
@@ -228,6 +246,7 @@ const DEFAULT_STATE_V2: Omit<
   | 'setCalendarSyncUltimaSync'
   | 'setDriveBackupUltimaSync'
   | 'setMetaPassosDia'
+  | 'setHCAutopullUltimaRodada'
   | 'resetar'
 > = {
   somVibracao: {
@@ -383,6 +402,17 @@ export const useSettings = create<SettingsState>()(
             Number.isFinite(n) && n > 0 ? Math.min(n, 100000) : 8000;
           return { metaPassosDia: seguro };
         }),
+      // R-INT-3-HC-SYNC-PAINEL: grava a telemetria da rodada. Clamp
+      // defensivo em novos/erros (nunca negativo; arredonda) para nao
+      // exibir "-3 novos" se um caller passar lixo.
+      setHCAutopullUltimaRodada: (rodada) =>
+        set(() => ({
+          hcAutopullUltimaRodada: {
+            rodadoEm: rodada.rodadoEm,
+            novos: Math.max(0, Math.round(rodada.novos) || 0),
+            erros: Math.max(0, Math.round(rodada.erros) || 0),
+          },
+        })),
       resetar: () => set({ ...DEFAULT_STATE_V2 }),
     }),
     {
@@ -524,7 +554,37 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ps.metaPassosDia > 0
         ? ps.metaPassosDia
         : DEFAULT_STATE_V2.metaPassosDia,
+    // R-INT-3-HC-SYNC-PAINEL: telemetria opcional. Carrega o valor
+    // persistido apenas se o shape estiver integro (rodadoEm string +
+    // novos/erros numeros); senao undefined (instalacoes pre-sprint ou
+    // shape corrompido). O spread `...ps` acima ja teria copiado um
+    // valor cru, mas reescrevemos para garantir tipagem segura.
+    hcAutopullUltimaRodada: lerUltimaRodada(ps.hcAutopullUltimaRodada),
   } as SettingsState;
+}
+
+// Helper: valida o shape persistido de hcAutopullUltimaRodada. Retorna
+// undefined para qualquer entrada que nao seja um objeto integro
+// (defesa contra persist corrompido ou shape antigo).
+function lerUltimaRodada(
+  v: unknown
+): { rodadoEm: string; novos: number; erros: number } | undefined {
+  if (v === null || typeof v !== 'object') return undefined;
+  const o = v as Record<string, unknown>;
+  if (
+    typeof o.rodadoEm === 'string' &&
+    typeof o.novos === 'number' &&
+    Number.isFinite(o.novos) &&
+    typeof o.erros === 'number' &&
+    Number.isFinite(o.erros)
+  ) {
+    return {
+      rodadoEm: o.rodadoEm,
+      novos: o.novos,
+      erros: o.erros,
+    };
+  }
+  return undefined;
 }
 
 // Helper: filtra apenas chaves do alvo que estao presentes no antigo

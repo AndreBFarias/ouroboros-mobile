@@ -139,6 +139,38 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       expect(s.recap.slideshowIntervaloS).toBe(4);
     });
   });
+
+  // R-INT-3-HC-SYNC-PAINEL: telemetria da ultima rodada de autopull HC.
+  describe('hcAutopullUltimaRodada (telemetria)', () => {
+    it('default e undefined (nenhuma rodada ainda)', () => {
+      expect(useSettings.getState().hcAutopullUltimaRodada).toBeUndefined();
+    });
+
+    it('setHCAutopullUltimaRodada grava o shape integro', () => {
+      useSettings.getState().setHCAutopullUltimaRodada({
+        rodadoEm: '2026-05-26T10:00:00.000Z',
+        novos: 7,
+        erros: 1,
+      });
+      const r = useSettings.getState().hcAutopullUltimaRodada;
+      expect(r).toEqual({
+        rodadoEm: '2026-05-26T10:00:00.000Z',
+        novos: 7,
+        erros: 1,
+      });
+    });
+
+    it('clamp defensivo: valores negativos viram 0 e nao-inteiros arredondam', () => {
+      useSettings.getState().setHCAutopullUltimaRodada({
+        rodadoEm: '2026-05-26T10:00:00.000Z',
+        novos: -3,
+        erros: 2.7,
+      });
+      const r = useSettings.getState().hcAutopullUltimaRodada;
+      expect(r?.novos).toBe(0);
+      expect(r?.erros).toBe(3);
+    });
+  });
 });
 
 // Migracao v1 -> v2: testa o callback `migrate` direto, simulando o
