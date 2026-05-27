@@ -120,6 +120,19 @@ function definirTask(taskManager: TaskManagerLike): void {
   });
 }
 
+// R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE: define a task no ESCOPO GLOBAL do
+// modulo (roda no import — este modulo e importado cedo por app/_layout.tsx).
+// O Expo recomenda defineTask em top-level: quando o SO acorda o app SO para
+// executar a task em background, o JS roda do zero e o handler precisa JA
+// existir no carregamento do modulo, nao dentro de uma funcao acionada por
+// useEffect (havia janela em que o SO podia tentar rodar antes do handler).
+// Guard: no-op sem a lib nativa (Jest/web/Expo Go sem prebuild). Idempotente
+// (taskDefinida). registrarHCAutopullBackground mantem definirTask como defesa.
+(() => {
+  const tm = carregarTaskManager();
+  if (tm) definirTask(tm);
+})();
+
 // Registra a task de background no WorkManager. No-op silencioso quando as
 // libs nativas estao ausentes (gate de build). Idempotente: registrar duas
 // vezes e' tolerado pelo expo-background-task. Chamado pelo wiring em

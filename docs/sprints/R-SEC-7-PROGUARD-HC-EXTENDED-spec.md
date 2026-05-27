@@ -7,6 +7,16 @@
 
 > ID **R-SEC-7** (R-SEC-5 = secret-leak-audit, R-SEC-6 = npm-audit já usados).
 
+> **STATUS: `[ok-analise]` — RESOLVIDO POR ANÁLISE 2026-05-26, sem mudança de código.**
+> A regra existente em `app.json` `-keep class androidx.health.connect.client.** { *; }`
+> é **recursiva** (`**`) e já cobre `androidx.health.connect.client.request.**`,
+> `.units.**`, builders, request objects e todas as subpackages — tornar regras
+> específicas seria redundante (débito). Confirmado via
+> `grep -oE "androidx.health.connect.client[^ ]*" app.json`: já há `client.**` +
+> `client.records.**`. **Nenhuma regra nova necessária.** Reabrir SOMENTE se a validação
+> live (R-INT-3-HC-LIVE-CHECKPOINT, release alpha-32) acusar `ClassNotFoundException` de
+> classe HC concreta fora desse glob — aí adicionar o `-keep` pontual da classe real.
+
 ## Fonte canônica
 
 `docs/sprints/R-SEC-4-PROGUARD-CLEANUP-spec.md` (não-objetivo): "se durante validação real
