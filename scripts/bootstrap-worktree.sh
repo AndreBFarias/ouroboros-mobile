@@ -81,6 +81,16 @@ if [[ ! -e .env ]] && [[ -f "$MAIN_REPO/.env" ]]; then
   echo "OK: .env symlink criado"
 fi
 
+# Symlink expo-env.d.ts (opcional: gitignored, gerado por expo start/export).
+# Sem ele, o `/// <reference types="expo/types" />` some e tsc/smoke falham com
+# TS2882 'Cannot find module ../global.css' em app/_layout.tsx -- falso-positivo
+# que quebrava o typecheck em worktree fresco. Achado confirmado por 4 sprints
+# da onda contingente 2026-05-26 (DEDUP, SYNC-PAINEL, YOUTUBE, RECAP-7).
+if [[ ! -e expo-env.d.ts ]] && [[ -f "$MAIN_REPO/expo-env.d.ts" ]]; then
+  ln -sfn "$MAIN_REPO/expo-env.d.ts" .
+  echo "OK: expo-env.d.ts symlink criado"
+fi
+
 # Verifica integridade: symlink obrigatorio broken tambem conta como erro
 for f in node_modules env.json; do
   if [[ -L "$f" ]] && [[ ! -e "$f" ]]; then
