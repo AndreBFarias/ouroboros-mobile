@@ -68,9 +68,17 @@ export interface ReadRecordsResult {
 // bridge nativa.
 //
 // IMPORTANTE: HC nao dedupa records por padrao. Chamar insertRecords()
-// 2x com o mesmo payload cria 2 records duplicados. Sub-sprint D pode
-// introduzir clientRecordId para habilitar dedup pelo lado do HC; esta
-// sub-sprint nao implementa.
+// 2x com o mesmo payload cria 2 records duplicados. Para evitar isso, o
+// caller pode prover um `clientRecordId` deterministico (derivado do dado
+// do Vault, ex: peso-<ISO> ou treino-<ISO>). O HC trata records com mesmo
+// (packageName, clientRecordId) como o MESMO record -> upsert por versao,
+// nao duplica. clientRecordId e' opcional: quando ausente, o builder
+// Kotlin usa Metadata sem id e o HC gera UUID novo a cada insert (sem
+// dedup). Aplicado pelo write-back Vault->HC em
+// src/lib/health/sync.ts (R-INT-3-HC-DEDUP).
+//
+// Restricao do HC: clientRecordId deve ser nao-vazio quando presente; o
+// caller garante isso (sempre deriva de campos obrigatorios do dado).
 export interface InsertExerciseSessionInput {
   recordType: 'ExerciseSession';
   startTime: string; // ISO 8601 com offset
@@ -78,6 +86,7 @@ export interface InsertExerciseSessionInput {
   exerciseType: number; // codigo HC (ex: 2 = BODY_WEIGHT_WORKOUT generic)
   title?: string;
   notes?: string;
+  clientRecordId?: string; // dedup deterministico (ver bloco acima)
 }
 
 export interface InsertWeightInput {
@@ -86,18 +95,21 @@ export interface InsertWeightInput {
   // Sub-mapa para alinhar com shape ja usado em sync.ts. Bridge nativa
   // aceita apenas unit='kilograms'.
   weight: { value: number; unit: 'kilograms' };
+  clientRecordId?: string; // dedup deterministico (ver bloco acima)
 }
 
 export interface InsertBodyFatInput {
   recordType: 'BodyFat';
   time: string;
   percentage: number; // 0..100
+  clientRecordId?: string; // dedup deterministico (ver bloco acima)
 }
 
 export interface InsertMenstruationFlowInput {
   recordType: 'MenstruationFlow';
   time: string;
   flow: 1 | 2 | 3; // FLOW_LIGHT | FLOW_MEDIUM | FLOW_HEAVY
+  clientRecordId?: string; // dedup deterministico (ver bloco acima)
 }
 
 export type InsertRecordInput =
@@ -262,8 +274,9 @@ export async function readRecords(
 // reportarFalhaHC('no_module').
 //
 // IMPORTANTE: HC nao dedupa records por padrao. Chamar 2x com o mesmo
-// payload cria 2 records duplicados. Dedup e responsabilidade do caller
-// (sub-sprint D pode usar clientRecordId derivado do uuid do Vault).
+// payload cria 2 records duplicados. Dedup e responsabilidade do caller:
+// passar `clientRecordId` deterministico em cada InsertXInput (derivado do
+// dado do Vault) faz o HC upsert em vez de duplicar (R-INT-3-HC-DEDUP).
 export async function insertRecords(
   records: InsertRecordInput[]
 ): Promise<string[]> {

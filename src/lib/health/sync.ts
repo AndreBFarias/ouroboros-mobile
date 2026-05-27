@@ -245,6 +245,26 @@ function logSucessoHC(tipo: HCSyncTipo): void {
   console.log(`[hc-sync] tipo=${tipo} status=ok`);
 }
 
+// R-INT-3-HC-DEDUP: deriva um clientRecordId deterministico para cada
+// write-back Vault->HC. O HC nao dedupa records por padrao; reinserir o
+// mesmo dado (re-save de uma medida no mesmo dia, re-sync de um treino)
+// duplicaria sem isto. Records com mesmo (packageName, clientRecordId)
+// sao tratados pelo HC como o MESMO record -> upsert.
+//
+// Estabilidade: cada writer monta a chave a partir do timestamp canonico
+// do dado no Vault. Medidas e ciclo nascem com granularidade de dia
+// (caller normaliza para T12:00:00Z, ver medidas.ts / ciclo.ts), entao
+// re-save do mesmo dia gera o mesmo ISO -> mesmo id. Treino usa o instante
+// de inicio (data da sessao menos duracao), estavel para a mesma sessao.
+//
+// Prefixo por tipo so para legibilidade em debug; o HC ja escopa o
+// clientRecordId por recordType, entao nao ha colisao entre tipos.
+const HC_CLIENT_ID_PREFIX = 'ouroboros';
+
+function derivarClientRecordId(tipo: string, isoTimestamp: string): string {
+  return `${HC_CLIENT_ID_PREFIX}-${tipo}-${isoTimestamp}`;
+}
+
 // Escreve TreinoSessao do Vault em HC como ExerciseSessionRecord.
 // Best-effort: se HC indisponivel ou save falhar, nao propaga erro
 // para o caller (o save no Vault ja aconteceu). Retorna true em
@@ -262,14 +282,18 @@ export async function escreverTreinoEmHC(meta: TreinoSessao): Promise<boolean> {
     const fim = new Date(meta.data);
     const duracaoMin = Math.max(1, meta.duracao_min);
     const inicio = new Date(fim.getTime() - duracaoMin * 60_000);
+    const inicioIso = inicio.toISOString();
     await mod.insertRecords([
       {
         recordType: 'ExerciseSession',
-        startTime: inicio.toISOString(),
+        startTime: inicioIso,
         endTime: fim.toISOString(),
         exerciseType: HC_EXERCISE_TYPE_GENERIC,
         title: meta.rotina ?? 'Treino Ouroboros',
         notes: meta.observacoes ?? undefined,
+        // Dedup: chave estavel pelo instante de inicio da sessao. Mesma
+        // sessao (mesmo meta.data + duracao) -> mesmo id -> upsert no HC.
+        clientRecordId: derivarClientRecordId('treino', inicioIso),
       },
     ]);
     logSucessoHC('treino');
@@ -292,11 +316,16 @@ export async function escreverPesoEmHC(
   const mod = carregarModulo();
   if (!mod) return reportarFalhaHC('peso', 'no_module');
   try {
+    const timeIso = data.toISOString();
     await mod.insertRecords([
       {
         recordType: 'Weight',
-        time: data.toISOString(),
+        time: timeIso,
         weight: { value: kg, unit: 'kilograms' },
+        // Dedup: chave estavel pelo timestamp. Medidas nascem por dia
+        // (caller normaliza para T12:00:00Z) -> re-save do mesmo dia
+        // reusa o id -> upsert no HC em vez de duplicar.
+        clientRecordId: derivarClientRecordId('peso', timeIso),
       },
     ]);
     logSucessoHC('peso');
@@ -319,11 +348,14 @@ export async function escreverBodyFatEmHC(
   const mod = carregarModulo();
   if (!mod) return reportarFalhaHC('gordura', 'no_module');
   try {
+    const timeIso = data.toISOString();
     await mod.insertRecords([
       {
         recordType: 'BodyFat',
-        time: data.toISOString(),
+        time: timeIso,
         percentage,
+        // Dedup: chave estavel pelo timestamp (mesma logica do peso).
+        clientRecordId: derivarClientRecordId('bodyfat', timeIso),
       },
     ]);
     logSucessoHC('gordura');
@@ -345,11 +377,15 @@ export async function escreverMenstruacaoEmHC(
   const mod = carregarModulo();
   if (!mod) return reportarFalhaHC('menstruacao', 'no_module');
   try {
+    const timeIso = data.toISOString();
     await mod.insertRecords([
       {
         recordType: 'MenstruationFlow',
-        time: data.toISOString(),
+        time: timeIso,
         flow: intensidade,
+        // Dedup: chave estavel pelo dia. Ciclo nasce por dia (caller
+        // normaliza para T12:00:00Z) -> re-save do mesmo dia reusa o id.
+        clientRecordId: derivarClientRecordId('menstruacao', timeIso),
       },
     ]);
     logSucessoHC('menstruacao');

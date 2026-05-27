@@ -123,8 +123,9 @@ private fun menstruationFlowToMap(record: MenstruationFlowRecord): Map<String, A
 //
 // Metadata para inserts: id vazio (HC gera UUID), dataOrigin vazio (HC
 // preenche com packageName do app), lastModifiedTime=Instant.now(),
-// clientRecordId=null (caller pode prover dedup futuramente em
-// sub-sprint D), clientRecordVersion=0, device=null,
+// clientRecordId opcional (caller em sync.ts deriva um id deterministico
+// do dado do Vault -> HC faz upsert em vez de duplicar; R-INT-3-HC-DEDUP),
+// clientRecordVersion=0, device=null,
 // recordingMethod=ACTIVELY_RECORDED para ExerciseSession e
 // MANUAL_ENTRY para Weight/BodyFat/MenstruationFlow (input do usuario).
 //
@@ -156,13 +157,31 @@ internal fun mapToRecord(input: Map<String, Any?>): Record {
 // dispensa Device. id, dataOrigin e lastModifiedTime sao preenchidos pelo
 // HC no momento do insert. recordingMethod mantido por caller
 // (ExerciseSession=ACTIVELY_RECORDED, demais=MANUAL_ENTRY).
-private fun buildInsertMetadata(recordingMethod: Int): Metadata =
-  when (recordingMethod) {
+//
+// clientRecordId (R-INT-3-HC-DEDUP): quando o caller (sync.ts) fornece um
+// id deterministico nao-vazio, usa-se as variantes ...WithId do companion
+// (clientRecordVersion default 0). O HC trata records com mesmo
+// (packageName, clientRecordId) como o MESMO record -> upsert, sem
+// duplicar em re-saves. clientRecordId vazio ou ausente cai nas factories
+// sem id (comportamento legado: HC gera UUID novo a cada insert).
+private fun buildInsertMetadata(
+  recordingMethod: Int,
+  clientRecordId: String? = null
+): Metadata {
+  val phone = Device(type = Device.TYPE_PHONE)
+  val temId = !clientRecordId.isNullOrEmpty()
+  return when (recordingMethod) {
     Metadata.RECORDING_METHOD_ACTIVELY_RECORDED ->
-      Metadata.activelyRecorded(Device(type = Device.TYPE_PHONE))
-    Metadata.RECORDING_METHOD_MANUAL_ENTRY -> Metadata.manualEntry()
-    else -> Metadata.unknownRecordingMethod()
+      if (temId) Metadata.activelyRecordedWithId(clientRecordId!!, phone)
+      else Metadata.activelyRecorded(phone)
+    Metadata.RECORDING_METHOD_MANUAL_ENTRY ->
+      if (temId) Metadata.manualEntryWithId(clientRecordId!!)
+      else Metadata.manualEntry()
+    else ->
+      if (temId) Metadata.unknownRecordingMethodWithId(clientRecordId!!)
+      else Metadata.unknownRecordingMethod()
   }
+}
 
 private fun buildExerciseSession(input: Map<String, Any?>): ExerciseSessionRecord {
   val startTime = (input["startTime"] as? String)
@@ -173,6 +192,7 @@ private fun buildExerciseSession(input: Map<String, Any?>): ExerciseSessionRecor
     ?: throw IllegalArgumentException("ExerciseSession.exerciseType ausente")
   val title = input["title"] as? String
   val notes = input["notes"] as? String
+  val clientRecordId = input["clientRecordId"] as? String
   // Ordem dos parametros na connect-client 1.1.0: metadata ANTES de
   // exerciseType (mudou em relacao ao alpha que o codigo original assumia).
   return ExerciseSessionRecord(
@@ -180,7 +200,10 @@ private fun buildExerciseSession(input: Map<String, Any?>): ExerciseSessionRecor
     /* startZoneOffset = */ null,
     /* endTime = */ Instant.parse(endTime),
     /* endZoneOffset = */ null,
-    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_ACTIVELY_RECORDED),
+    /* metadata = */ buildInsertMetadata(
+      Metadata.RECORDING_METHOD_ACTIVELY_RECORDED,
+      clientRecordId
+    ),
     /* exerciseType = */ exerciseType,
     /* title = */ title,
     /* notes = */ notes
@@ -201,11 +224,15 @@ private fun buildWeight(input: Map<String, Any?>): WeightRecord {
   if (unit != null && unit != "kilograms") {
     throw IllegalArgumentException("Weight.weight.unit nao suportado: $unit")
   }
+  val clientRecordId = input["clientRecordId"] as? String
   return WeightRecord(
     /* time = */ Instant.parse(time),
     /* zoneOffset = */ null,
     /* weight = */ Mass.kilograms(value),
-    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_MANUAL_ENTRY)
+    /* metadata = */ buildInsertMetadata(
+      Metadata.RECORDING_METHOD_MANUAL_ENTRY,
+      clientRecordId
+    )
   )
 }
 
@@ -215,11 +242,15 @@ private fun buildBodyFat(input: Map<String, Any?>): BodyFatRecord {
   // Caller envia escala 0..100 (mesmo shape de src/lib/health/sync.ts:321).
   val percentage = (input["percentage"] as? Number)?.toDouble()
     ?: throw IllegalArgumentException("BodyFat.percentage ausente")
+  val clientRecordId = input["clientRecordId"] as? String
   return BodyFatRecord(
     /* time = */ Instant.parse(time),
     /* zoneOffset = */ null,
     /* percentage = */ Percentage(percentage),
-    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_MANUAL_ENTRY)
+    /* metadata = */ buildInsertMetadata(
+      Metadata.RECORDING_METHOD_MANUAL_ENTRY,
+      clientRecordId
+    )
   )
 }
 
@@ -234,11 +265,15 @@ private fun buildMenstruationFlow(input: Map<String, Any?>): MenstruationFlowRec
       "MenstruationFlow.flow fora do intervalo 1..3: $flow"
     )
   }
+  val clientRecordId = input["clientRecordId"] as? String
   // Ordem na connect-client 1.1.0: metadata ANTES de flow.
   return MenstruationFlowRecord(
     /* time = */ Instant.parse(time),
     /* zoneOffset = */ null,
-    /* metadata = */ buildInsertMetadata(Metadata.RECORDING_METHOD_MANUAL_ENTRY),
+    /* metadata = */ buildInsertMetadata(
+      Metadata.RECORDING_METHOD_MANUAL_ENTRY,
+      clientRecordId
+    ),
     /* flow = */ flow
   )
 }
