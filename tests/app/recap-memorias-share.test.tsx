@@ -282,10 +282,22 @@ describe('recap-memorias R-RECAP-6 (botao compartilhar)', () => {
       expect(getByLabelText('compartilhar como stories')).toBeTruthy();
     });
     fireEvent.press(getByLabelText('compartilhar como stories'));
+    // Esperar o CICLO de share completo antes de reabrir. mockExportar e'
+    // chamado no inicio de executarShare, mas `compartilhando` so reseta no
+    // finally -- apos exportar + compartilhar + remover. mockRemover e' o
+    // ultimo await antes do finally; esperar por ele garante que o guard
+    // `if (compartilhando) return` de abrirEscolhaFormato ja liberou. (Sem
+    // isso o teste reabria durante a captura e batia no guard -- fragil a
+    // ordem de microtask: passava por sorte no SDK 56, falhava no 54.)
     await waitFor(() => {
       expect(mockExportar).toHaveBeenCalledTimes(1);
+      expect(mockRemover).toHaveBeenCalledTimes(1);
     });
-    // Segundo ciclo: reabre.
+    // Flush do microtask do finally (setCompartilhando(false)) que roda
+    // logo apos o await removerSlidePngTemp resolver.
+    await act(async () => {});
+    // Segundo ciclo: reabre (estado ja limpo, como no app real apos o
+    // share sheet fechar).
     fireEvent.press(getByLabelText('compartilhar slide'));
     await waitFor(() => {
       expect(getByLabelText('compartilhar como post quadrado')).toBeTruthy();
