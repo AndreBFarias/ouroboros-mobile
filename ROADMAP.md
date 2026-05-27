@@ -9,6 +9,32 @@ fechamento de sprint.
 > final. Toda sprint que introduz/modifica/remove feature deve
 > atualizar esse arquivo no mesmo commit.
 
+> **Estado da plataforma (2026-05-27): Expo SDK 54.** O upgrade para
+> o SDK 56 foi tentado e **revertido** — a validação live revelou que
+> o `expo-av` (usado em 12 arquivos) foi removido do SDK 56 e crasha o
+> app no boot (`NoClassDefFoundError: LazyKType`). As vulns que
+> motivavam o upgrade já estavam zeradas no SDK 54 (R-SEC-6 overrides),
+> então o ganho era marginal. Experimento preservado na branch
+> `sdk56-experiment`. Onda SDK 56 futura tem como pré-requisito a
+> sprint `R-INFRA-EXPO-AV-MIGRACAO` (migrar `expo-av` → `expo-audio`
+> + `expo-video`). Ver `CHANGELOG.md` e
+> [`docs/sprints/R-INFRA-EXPO-AV-MIGRACAO-spec.md`](docs/sprints/R-INFRA-EXPO-AV-MIGRACAO-spec.md).
+
+#### Onda de contingentes pós-HC (2026-05-26) — 7 entregues no SDK 54
+
+| ID | Tipo | Status |
+|---|---|---|
+| R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE | fix | `[ok 12090f4]` defineTask no escopo global do módulo |
+| R-INT-3-HC-DEDUP | fix | `[ok afb9207]` clientRecordId determinístico + factories `*WithId` |
+| R-INT-3-HC-SYNC-PAINEL | feature | `[ok 3a759f2]` painel status+manual+telemetria em /settings/integracoes |
+| R-RECAP-7-SHARE-FORMATO-QUADRADO | feature | `[ok bb8770c]` share 1080×1080 (feed) + stories |
+| R-INT-3-LOGGER-CONDICIONAL | fix | `[ok 71bdd3e]` devLog gate `__DEV__` |
+| R-INT-4-YOUTUBE-MUSIC-HISTORY | feature | `[descopado v1.1 efc82fd]` API sem watch history |
+| R-SEC-7-PROGUARD-HC-EXTENDED | infra | `[ok-analise 12090f4]` regra recursiva já cobre, redundante |
+| (infra) bootstrap expo-env.d.ts + fix teste recap | infra | `[ok 4a5f9bc / 0dc1a58]` |
+| **R-BUNDLE-DIET-CALENDARS-REPLACE** | refactor | `[todo]` refactor grande (3–5d), sessão dedicada |
+| **R-INFRA-EXPO-AV-MIGRACAO** | refactor | `[todo]` pré-req do SDK 56 futuro (12 arquivos áudio/vídeo) |
+
 ## Onda R — Refinamentos pós alpha-11 + Segurança v1.0.0 (2026-05-15+)
 
 Continuação da Onda Q. Briefing canônico:

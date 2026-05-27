@@ -5,6 +5,57 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Tentativa de upgrade Expo SDK 56 — REVERTIDA por bloqueador de runtime (2026-05-27)
+
+O upgrade Expo 54→56 (RN 0.81→0.85, React 19.1→19.2, TS 5.9→6.0) foi executado,
+passou no smoke e **compilou no CI** (build nativo verde). Mas a **validação live no
+Xiaomi (HyperOS/Android 15)** revelou um **crash no boot**:
+
+```
+java.lang.NoClassDefFoundError: Failed resolution of: Lexpo/modules/kotlin/types/LazyKType;
+  at expo.modules.av.video.VideoViewModule.definition(VideoViewModule.kt:118)
+```
+
+**Causa raiz:** o **`expo-av` foi removido do SDK 56** (ausente do
+`bundledNativeModules`; substituído por `expo-audio` + `expo-video`). O projeto usa
+`expo-av` em 12 arquivos. Como o `AppContext` registra todos os módulos nativos no
+boot, a mera presença do `expo-av` (referência à classe `LazyKType`, removida do
+`expo-modules-core` 56) derruba o app na inicialização. O CI não pega porque
+`NoClassDefFoundError` é erro de runtime, não de compilação.
+
+**Decisão:** reverter para o **SDK 54 estável**. O motivo original do SDK 56 (zerar
+vulns transitivas `postcss`/`uuid`) já fora resolvido no SDK 54 via `overrides`
+(R-SEC-6, `npm audit` 0), então o upgrade não trazia benefício de segurança
+incremental — apenas risco às vésperas do v1.0.0. O experimento SDK 56 fica
+preservado na branch `sdk56-experiment`; a migração `expo-av → expo-audio +
+expo-video` é pré-requisito documentado de uma futura onda SDK 56.
+
+### Onda de contingentes pós-HC — 7 sprints entregues (2026-05-26)
+
+Execução dos achados contingentes (DEDUP, painel sync, recap quadrado, logger, etc.).
+Entregues sobre o SDK 54 (re-aplicados por cherry-pick após a reversão acima). Smoke
+**326 suítes / 3112 testes** verde.
+
+- **R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE** — `defineTask` movido para o escopo global
+  do módulo (roda no import via `_layout`), como o Expo recomenda; o registro por
+  `useEffect` deixava janela para o SO acordar antes do handler existir.
+- **R-INT-3-HC-DEDUP** — `clientRecordId` determinístico (`<prefix>-<tipo>-<iso>`) nos
+  write-backs HC; bridge Kotlin usa as factories `*WithId` da connect-client 1.1.0.
+  Re-save do mesmo dado não duplica no HC.
+- **R-INT-3-HC-SYNC-PAINEL** — painel "Sincronização" em `/settings/integracoes`: última
+  sync por tipo, botão "Sincronizar agora", telemetria. Helper `haRelativo.ts`.
+- **R-RECAP-7-SHARE-FORMATO-QUADRADO** — share do slide Memórias em 1080×1080 (feed) além
+  do 1080×1920 (stories); escolha de formato antes do capture.
+- **R-INT-3-LOGGER-CONDICIONAL** — helper `devLog` (gate `__DEV__`); logs HC/integrações
+  fora do logcat release.
+- **R-INT-4-YOUTUBE-MUSIC-HISTORY** — descopado v1.1 (YouTube Data API não expõe watch
+  history; YT Music só via engenharia reversa, viola ADR-0007).
+- **R-SEC-7-PROGUARD-HC-EXTENDED** — resolvido por análise (regra `client.** { *; }` já
+  recursiva, redundante).
+- **Infra** — `bootstrap-worktree.sh` symlinka `expo-env.d.ts` (evita TS2882 falso em
+  worktree); teste `recap-memorias-share` espera o ciclo de share completo antes de
+  reabrir o overlay (corrige fragilidade a ordem de microtask).
+
 ### R-DX-GAUNTLET-ONBOARDING-BYPASS — Onboarding bypassado por default no Gauntlet web + flag opt-in (2026-05-26)
 
 DX de validação visual no Chrome. Antes, abrir o Gauntlet caía sempre no
