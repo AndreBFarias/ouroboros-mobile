@@ -26,6 +26,12 @@
 // dispara share intent nativo via expo-sharing. Export efemero
 // (cacheDirectory), nao persiste no Vault.
 //
+// R-RECAP-7 (2026-05-26) -- escolha de formato antes do capture.
+// Tap em Compartilhar pausa e abre um overlay com dois botoes:
+// "Stories" (1080x1920) e "Post quadrado" (1080x1080). O formato
+// escolhido e' repassado a exportarSlideMemorias. Overlay com RN
+// puro (sem dependencia de sheet nativo), A28/A44-safe.
+//
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -58,12 +64,14 @@ import { useOptionalToast } from '@/components/ui';
 import { KenBurns } from '@/components/recap/KenBurns';
 import { fraseTransicaoPara } from '@/lib/copy/recap-transicoes';
 import { colorsMemorias } from '@/theme/tokens';
-// R-RECAP-6: export PNG 1080x1920 + share intent. Export efemero
+// R-RECAP-6: export PNG + share intent. Export efemero
 // (cacheDirectory), nao persiste no Vault.
+// R-RECAP-7: FormatoShare ('stories' | 'quadrado') escolhido na UI.
 import {
   exportarSlideMemorias,
   compartilharSlidePng,
   removerSlidePngTemp,
+  type FormatoShare,
 } from '@/lib/midia/exportarSlideMemorias';
 
 // Track ambient CC0 (drone harmonico 60s loop). Require estatico:
@@ -135,6 +143,15 @@ export default function RecapMemoriasTela() {
   // double-tap durante a captura/share (caller seta true ao iniciar,
   // false no finally).
   const [compartilhando, setCompartilhando] = useState(false);
+  // R-RECAP-7: overlay de escolha de formato aberto. Quando true,
+  // mostra dois botoes (Stories / Post quadrado). Tap no Compartilhar
+  // abre; escolher um formato ou cancelar fecha.
+  const [escolhendoFormato, setEscolhendoFormato] = useState(false);
+  // R-RECAP-7: memoriza se o slide ja estava pausado manualmente
+  // ANTES de abrir o overlay de escolha. A retomada (no finally do
+  // capture, ou no cancelar) so acontece se estava ativo. Ref porque
+  // o valor e' lido em callbacks assincronos sem virar dependencia.
+  const estavaPausadoAntesShareRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // R-RECAP-6: ref do container do slide capturavel. Posicionado no
   // mesmo n'o do <View style={styles.conteudo}>. captureRef captura
@@ -367,50 +384,72 @@ export default function RecapMemoriasTela() {
     if (index > 0) setIndex(index - 1);
   };
 
-  // R-RECAP-6: handler de tap em Compartilhar. Pausa o slideshow,
-  // captura o slide visivel via captureRef (PNG 1080x1920), dispara
-  // share intent, e ao final retoma se nao estava pausado por outro
-  // motivo. Guard contra double-tap via `compartilhando`. Erros sao
-  // toast-feedback (nao trava UI).
-  const compartilharSlide = useCallback(async () => {
-    if (compartilhando) return;
-    const slideId = slides[index]?.id ?? `idx-${index}`;
-    // Memoriza se o usuario ja tinha o slide pausado manualmente.
-    // Retomada so acontece se o estado anterior estava ativo (nao
-    // pausado).
-    const estavaPausado = pausado;
-    setCompartilhando(true);
+  // R-RECAP-7: tap em Compartilhar abre o overlay de escolha de
+  // formato. Pausa o slideshow enquanto o overlay esta aberto e
+  // memoriza se ja estava pausado manualmente (para a retomada
+  // posterior so acontecer se estava ativo). Guard contra reabrir
+  // durante captura em andamento.
+  const abrirEscolhaFormato = useCallback(() => {
+    if (compartilhando || escolhendoFormato) return;
+    estavaPausadoAntesShareRef.current = pausado;
     setPausado(true);
-    toast.show('Preparando…', 'info');
-    try {
-      const res = await exportarSlideMemorias({
-        slideRef: slideViewRef,
-        slideId,
-      });
-      if (!res.uri) {
-        if (res.motivo === 'web') {
-          toast.show('Compartilhamento indisponível.', 'warn');
-        } else {
-          toast.show('Não foi possível capturar.', 'error');
-        }
-        return;
-      }
-      const ok = await compartilharSlidePng(res.uri);
-      if (!ok) {
-        toast.show('Compartilhamento cancelado.', 'info');
-      }
-      // Cleanup best-effort do PNG temporario (apos share sheet
-      // fechar). Falha silenciosa: o OS pode limpar cache sozinho.
-      await removerSlidePngTemp(res.uri);
-    } catch {
-      toast.show('Não foi possível capturar.', 'error');
-    } finally {
-      setCompartilhando(false);
-      if (!estavaPausado) {
-        setPausado(false);
-      }
+    setEscolhendoFormato(true);
+  }, [compartilhando, escolhendoFormato, pausado]);
+
+  // R-RECAP-7: fecha o overlay sem compartilhar. Retoma o slideshow
+  // se nao estava pausado manualmente antes.
+  const cancelarEscolhaFormato = useCallback(() => {
+    setEscolhendoFormato(false);
+    if (!estavaPausadoAntesShareRef.current) {
+      setPausado(false);
     }
-  }, [compartilhando, slides, index, pausado, toast]);
+  }, []);
+
+  // R-RECAP-6/7: captura o slide visivel via captureRef no formato
+  // escolhido, dispara share intent, e ao final retoma se nao estava
+  // pausado por outro motivo. Guard contra double-tap via
+  // `compartilhando`. Erros sao toast-feedback (nao trava UI).
+  const executarShare = useCallback(
+    async (formato: FormatoShare) => {
+      if (compartilhando) return;
+      const slideId = slides[index]?.id ?? `idx-${index}`;
+      const estavaPausado = estavaPausadoAntesShareRef.current;
+      setEscolhendoFormato(false);
+      setCompartilhando(true);
+      setPausado(true);
+      toast.show('Preparando…', 'info');
+      try {
+        const res = await exportarSlideMemorias({
+          slideRef: slideViewRef,
+          slideId,
+          formato,
+        });
+        if (!res.uri) {
+          if (res.motivo === 'web') {
+            toast.show('Compartilhamento indisponível.', 'warn');
+          } else {
+            toast.show('Não foi possível capturar.', 'error');
+          }
+          return;
+        }
+        const ok = await compartilharSlidePng(res.uri);
+        if (!ok) {
+          toast.show('Compartilhamento cancelado.', 'info');
+        }
+        // Cleanup best-effort do PNG temporario (apos share sheet
+        // fechar). Falha silenciosa: o OS pode limpar cache sozinho.
+        await removerSlidePngTemp(res.uri);
+      } catch {
+        toast.show('Não foi possível capturar.', 'error');
+      } finally {
+        setCompartilhando(false);
+        if (!estavaPausado) {
+          setPausado(false);
+        }
+      }
+    },
+    [compartilhando, slides, index, toast]
+  );
 
   // IMPORTANTE: hooks abaixo (useMemo) DEVEM rodar antes do early return
   // de loading. Senao react quebra a contagem de hooks entre renders
@@ -492,7 +531,7 @@ export default function RecapMemoriasTela() {
       </Pressable>
 
       <Pressable
-        onPress={compartilharSlide}
+        onPress={abrirEscolhaFormato}
         disabled={compartilhando}
         accessibilityRole="button"
         accessibilityLabel="compartilhar slide"
@@ -516,6 +555,56 @@ export default function RecapMemoriasTela() {
         >
           {fraseTransicao}
         </Text>
+      ) : null}
+
+      {/* R-RECAP-7: overlay de escolha de formato. Aparece sobre tudo
+          (zIndex 30 > header 20) quando o usuario toca Compartilhar.
+          Backdrop tappable cancela. Dois botoes: Stories (9:16) e
+          Post quadrado (1:1). Tom ADR-0005 (sem exclamacao). RN puro
+          (sem sheet nativo), A28/A44-safe. */}
+      {escolhendoFormato ? (
+        <View style={styles.formatoOverlay}>
+          <Pressable
+            onPress={cancelarEscolhaFormato}
+            accessibilityRole="button"
+            accessibilityLabel="cancelar escolha de formato"
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.formatoSheet}>
+            <Text style={styles.formatoTitulo}>Escolha o formato</Text>
+            <Pressable
+              onPress={() => executarShare('stories')}
+              disabled={compartilhando}
+              accessibilityRole="button"
+              accessibilityLabel="compartilhar como stories"
+              style={styles.formatoBotao}
+              hitSlop={8}
+            >
+              <Text style={styles.formatoBotaoTitulo}>Stories</Text>
+              <Text style={styles.formatoBotaoSub}>Vertical, 9:16</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => executarShare('quadrado')}
+              disabled={compartilhando}
+              accessibilityRole="button"
+              accessibilityLabel="compartilhar como post quadrado"
+              style={styles.formatoBotao}
+              hitSlop={8}
+            >
+              <Text style={styles.formatoBotaoTitulo}>Post quadrado</Text>
+              <Text style={styles.formatoBotaoSub}>Feed, 1:1</Text>
+            </Pressable>
+            <Pressable
+              onPress={cancelarEscolhaFormato}
+              accessibilityRole="button"
+              accessibilityLabel="cancelar"
+              style={styles.formatoCancelar}
+              hitSlop={8}
+            >
+              <Text style={styles.formatoCancelarTexto}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
       ) : null}
 
       {/* Zonas de tap (esquerda volta, direita avanca, longpress pausa).
@@ -846,5 +935,68 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     textAlign: 'center',
     letterSpacing: 1,
+  },
+  // R-RECAP-7: overlay de escolha de formato. Backdrop escuro
+  // translucido cobre toda a tela; sheet ancorado embaixo.
+  formatoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15,7,28,0.72)',
+    justifyContent: 'flex-end',
+    zIndex: 30,
+  },
+  // Hierarquia por contraste (fundo sobreposto), sem borda dura.
+  // Respiracao generosa (padding 24, gap entre botoes).
+  formatoSheet: {
+    backgroundColor: 'rgba(26,13,46,0.98)',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 36,
+    gap: 12,
+  },
+  formatoTitulo: {
+    color: colorsMemorias.fg,
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 16,
+    lineHeight: 26,
+    letterSpacing: 1,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  formatoBotao: {
+    backgroundColor: 'rgba(189,147,249,0.12)',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    gap: 4,
+  },
+  formatoBotaoTitulo: {
+    color: colorsMemorias.fg,
+    fontFamily: 'JetBrainsMono_500Medium',
+    fontSize: 17,
+    lineHeight: 26,
+  },
+  formatoBotaoSub: {
+    color: colorsMemorias.fg,
+    fontFamily: 'JetBrainsMono_400Regular',
+    fontSize: 13,
+    lineHeight: 20,
+    opacity: 0.7,
+  },
+  formatoCancelar: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  formatoCancelarTexto: {
+    color: colorsMemorias.fg,
+    fontFamily: 'JetBrainsMono_400Regular',
+    fontSize: 15,
+    lineHeight: 24,
+    opacity: 0.65,
   },
 });

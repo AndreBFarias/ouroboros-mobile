@@ -38,8 +38,11 @@ import {
   exportarSlideMemorias,
   compartilharSlidePng,
   removerSlidePngTemp,
+  dimensoesShare,
   RECAP_SHARE_LARGURA,
   RECAP_SHARE_ALTURA,
+  RECAP_SHARE_QUADRADO_LARGURA,
+  RECAP_SHARE_QUADRADO_ALTURA,
 } from '@/lib/midia/exportarSlideMemorias';
 
 const captureRefSpy = captureRef as unknown as jest.Mock;
@@ -70,7 +73,84 @@ describe('exportarSlideMemorias (R-RECAP-6)', () => {
     expect(RECAP_SHARE_ALTURA).toBe(1920);
   });
 
-  it('captura mockada retorna URI valida em cacheDirectory', async () => {
+  // R-RECAP-7: formato quadrado 1080x1080 (feed/post).
+  it('dimensoes do quadrado sao 1080x1080 (feed/post)', () => {
+    expect(RECAP_SHARE_QUADRADO_LARGURA).toBe(1080);
+    expect(RECAP_SHARE_QUADRADO_ALTURA).toBe(1080);
+  });
+
+  it('dimensoesShare devolve 1080x1920 para stories e 1080x1080 para quadrado', () => {
+    expect(dimensoesShare('stories')).toEqual({
+      largura: 1080,
+      altura: 1920,
+    });
+    expect(dimensoesShare('quadrado')).toEqual({
+      largura: 1080,
+      altura: 1080,
+    });
+  });
+
+  it('formato "quadrado" passa width/height 1080x1080 ao captureRef', async () => {
+    captureRefSpy.mockResolvedValue('file:///tmp/native-capture.png');
+    const ref = { current: {} };
+    await exportarSlideMemorias({
+      slideRef: ref,
+      slideId: 'numeros',
+      formato: 'quadrado',
+      timestamp: 7,
+    });
+    expect(captureRefSpy).toHaveBeenCalledTimes(1);
+    const opts = captureRefSpy.mock.calls[0][1];
+    expect(opts.width).toBe(1080);
+    expect(opts.height).toBe(1080);
+    expect(opts.format).toBe('png');
+    expect(opts.result).toBe('tmpfile');
+  });
+
+  it('formato "stories" explicito passa 1080x1920 ao captureRef', async () => {
+    captureRefSpy.mockResolvedValue('file:///tmp/native-capture.png');
+    const ref = { current: {} };
+    await exportarSlideMemorias({
+      slideRef: ref,
+      slideId: 'numeros',
+      formato: 'stories',
+      timestamp: 8,
+    });
+    const opts = captureRefSpy.mock.calls[0][1];
+    expect(opts.width).toBe(1080);
+    expect(opts.height).toBe(1920);
+  });
+
+  it('sem formato (retrocompat) usa stories 1080x1920', async () => {
+    captureRefSpy.mockResolvedValue('file:///tmp/native-capture.png');
+    const ref = { current: {} };
+    await exportarSlideMemorias({
+      slideRef: ref,
+      slideId: 'numeros',
+      timestamp: 9,
+    });
+    const opts = captureRefSpy.mock.calls[0][1];
+    expect(opts.width).toBe(1080);
+    expect(opts.height).toBe(1920);
+  });
+
+  it('nome do arquivo inclui o formato escolhido (quadrado)', async () => {
+    captureRefSpy.mockResolvedValue('file:///tmp/native-capture.png');
+    const ref = { current: {} };
+    const res = await exportarSlideMemorias({
+      slideRef: ref,
+      slideId: 'vitorias',
+      formato: 'quadrado',
+      timestamp: 555,
+    });
+    expect(res.uri).toBe(
+      'file:///mock/cache/recap-share-vitorias-quadrado-555.png'
+    );
+  });
+
+  it('captura mockada retorna URI valida em cacheDirectory (formato no nome)', async () => {
+    // R-RECAP-7: o nome do arquivo agora inclui o formato. Sem
+    // formato explicito -> 'stories' (default retrocompat).
     captureRefSpy.mockResolvedValue('file:///tmp/native-capture.png');
     const ref = { current: {} };
     const res = await exportarSlideMemorias({
@@ -80,11 +160,11 @@ describe('exportarSlideMemorias (R-RECAP-6)', () => {
     });
     expect(res.motivo).toBeNull();
     expect(res.uri).toBe(
-      'file:///mock/cache/recap-share-numeros-1747400000000.png'
+      'file:///mock/cache/recap-share-numeros-stories-1747400000000.png'
     );
   });
 
-  it('passa width/height 1080x1920 ao captureRef', async () => {
+  it('passa width/height 1080x1920 ao captureRef (default stories)', async () => {
     captureRefSpy.mockResolvedValue('file:///tmp/native-capture.png');
     const ref = { current: {} };
     await exportarSlideMemorias({
@@ -110,7 +190,7 @@ describe('exportarSlideMemorias (R-RECAP-6)', () => {
     });
     expect(copyAsyncSpy).toHaveBeenCalledWith({
       from: 'file:///tmp/native-capture.png',
-      to: 'file:///mock/cache/recap-share-midias-42.png',
+      to: 'file:///mock/cache/recap-share-midias-stories-42.png',
     });
     expect(deleteAsyncSpy).toHaveBeenCalledWith(
       'file:///tmp/native-capture.png',
