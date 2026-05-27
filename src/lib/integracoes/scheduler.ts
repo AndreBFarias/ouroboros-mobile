@@ -23,6 +23,9 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 
+// R-INT-3-LOGGER-CONDICIONAL: logs de diagnostico so em __DEV__.
+import { devLog } from '@/lib/util/devLog';
+
 // Contrato canonico de uma integracao concreta. Cada integracao
 // (Calendar agora; Spotify/YouTube depois) entrega uma instancia cujo
 // `sincronizar` escreve no Vault e devolve um resumo. `nome` identifica
@@ -56,7 +59,7 @@ export async function orquestrarIntegracoes(
 ): Promise<OrquestrarIntegracoesResult> {
   const rodadoEm = new Date().toISOString();
 
-  console.log('[integracoes]', 'inicio', {
+  devLog('[integracoes]', 'inicio', {
     rodadoEm,
     n: integracoes.length,
   });
@@ -88,7 +91,7 @@ export async function orquestrarIntegracoes(
 
   const totalNovos = agregado.reduce((acc, i) => acc + i.novos, 0);
   const totalErros = agregado.filter((i) => i.erro !== null).length;
-  console.log('[integracoes]', 'fim', {
+  devLog('[integracoes]', 'fim', {
     rodadoEm,
     totalNovos,
     totalErros,

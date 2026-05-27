@@ -23,6 +23,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 
+import { devLog } from '@/lib/util/devLog';
 import { useSettings } from '@/lib/stores/settings';
 import type { TipoHC } from '@/lib/health/tipos';
 
@@ -81,7 +82,7 @@ export async function orquestrarHCAutopull(
   const ultimaSync = useSettings.getState().hcAutopullUltimaSync;
   const setUltimaSync = useSettings.getState().setHCAutopullUltimaSync;
 
-  console.log('[hc-autopull]', 'inicio', { rodadoEm, n: puxadores.length });
+  devLog('[hc-autopull]', 'inicio', { rodadoEm, n: puxadores.length });
 
   // Promise.allSettled isola falha por puxador. Se 1 puxador rejeitar,
   // os outros ainda completam e o resultado agrega o erro como string.
@@ -129,7 +130,7 @@ export async function orquestrarHCAutopull(
 
   const totalNovos = tipos.reduce((acc, t) => acc + t.novos, 0);
   const totalErros = tipos.filter((t) => t.erro !== null).length;
-  console.log('[hc-autopull]', 'fim', {
+  devLog('[hc-autopull]', 'fim', {
     rodadoEm,
     totalNovos,
     totalErros,
