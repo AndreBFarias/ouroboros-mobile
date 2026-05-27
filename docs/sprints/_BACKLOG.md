@@ -35,8 +35,13 @@
 
 ### Achados contingentes (backlog — NÃO bloqueiam v1.0.0)
 
-Registrados por anti-débito mas **sem spec individual** — materializar só se o dono
-pedir (evita specs especulativas):
+> **ATUALIZAÇÃO 2026-05-26:** o dono pediu execução de todos. **7 fechados** (ver
+> `ROADMAP.md` §3P.AB): DEDUP, SYNC-PAINEL (= SETTINGS-STATUS+UI-MANUAL+TELEMETRIA),
+> RECAP-7, LOGGER-CONDICIONAL, YOUTUBE-MUSIC (descopado v1.1), PROGUARD-HC-EXTENDED
+> (resolvido por análise) + defineTask-scope + fix bootstrap. **Pendente: só
+> R-BUNDLE-DIET-CALENDARS-REPLACE** (refactor grande 3–5d).
+
+Lista original (registrada por anti-débito):
 
 - **R-INT-3-HC-DEDUP** — dedup de records HC via `clientRecordId` (a bridge não dedupa).
 - **R-INT-3-HC-AUTOPULL-TELEMETRIA** — histórico de syncs ("se dono pedir").

@@ -5,6 +5,36 @@ Versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased] — Refundação v1.0 (2026-05-02 em diante)
 
+### Onda contingentes pós-SDK56 — 7 sprints HC/Recap/DX (2026-05-26)
+
+Execução dos achados contingentes (dono pediu os 10). 4 via agentes em worktree
+paralelo, 2 fixes cirúrgicos do orquestrador, 1 achado de infra confirmado por 4 agentes.
+Smoke 323→**327 suítes / 3113 testes** (+40). CALENDARS-REPLACE (o 8º, refactor grande
+de 3–5 dias) segue pendente.
+
+- **R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE** (`e26e632`) — `defineTask` movido para o
+  escopo global do módulo (roda no import via `_layout`), como o Expo recomenda para
+  background tasks; o registro por `useEffect` deixava janela para o SO acordar antes do
+  handler existir.
+- **R-INT-3-HC-DEDUP** (`2b2e265`) — `clientRecordId` determinístico (`<prefix>-<tipo>-<iso>`)
+  nos 4 write-backs HC; bridge Kotlin usa as factories `*WithId` da connect-client 1.1.0
+  (API confirmada por decompile do AAR). Re-save do mesmo dado não duplica no HC.
+- **R-INT-3-HC-SYNC-PAINEL** (`eeb3909`) — painel "Sincronização" em `/settings/integracoes`:
+  última sync por tipo, botão "Sincronizar agora", telemetria da última rodada. Consolidou
+  3 contingentes (SETTINGS-STATUS + UI-MANUAL + TELEMETRIA). Helper `haRelativo.ts`.
+- **R-RECAP-7-SHARE-FORMATO-QUADRADO** (`c914106`) — share do slide Memórias em 1080×1080
+  (feed) além do 1080×1920 (stories); escolha de formato antes do capture.
+- **R-INT-3-LOGGER-CONDICIONAL** (`975a6d8`) — helper `devLog` (gate `__DEV__`); 14 logs
+  `[hc-autopull]`/`[integracoes]`/`[hc-sync]` deixam de poluir o logcat release.
+- **R-INT-4-YOUTUBE-MUSIC-HISTORY** (`4c6ee54`) — **descopado v1.1**: YouTube Data API v3
+  não expõe watch history; YT Music só via engenharia reversa (viola ADR-0007). Decisão
+  documentada.
+- **R-SEC-7-PROGUARD-HC-EXTENDED** (`e26e632`) — **resolvido por análise**: a regra
+  `androidx.health.connect.client.** { *; }` já é recursiva e cobre request/units/builders.
+  Sem mudança de código (redundante).
+- **Infra (`3ee3bb2`)** — `bootstrap-worktree.sh` passa a symlinkar `expo-env.d.ts` (achado
+  de DX confirmado por 4 agentes: ausência causava `TS2882` falso em worktree fresco).
+
 ### R-INFRA-EXPO-SDK-56-UPGRADE — Upgrade Expo SDK 54 para 56 (RN 0.85, React 19.2, TS6) (2026-05-26)
 
 Upgrade de plataforma executado a pedido do dono (antecipado vs o plano de

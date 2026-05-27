@@ -211,12 +211,23 @@ no Gauntlet web para validacao visual com exatidao.
 | R-SEC-6-NPM-AUDIT-FIX | fix | P1 | `[ok]` 24->0 vulns via `audit fix` + overrides postcss/uuid/brace-expansion; SDK 54 mantido; tsc 0, export 8.64MB, smoke 321/3061 | `npm audit` no setup |
 | R-DX-GAUNTLET-ONBOARDING-BYPASS | infra | P2 | `[ok]` bypass default + flag `?onboarding=1` (com reset do done persistido) + gauntlet.sh --onboarding; guardado por MODO_DEV_WEB/__DEV__; jest 21/21, tsc 0, dead-code OK, smoke 322/3072; validado visual no Gauntlet (/ -> Tela Hoje, ?onboarding=1 -> onboarding, screenshots) | DX validacao visual no Chrome |
 | R-INFRA-EXPO-SDK-56-UPGRADE | infra | P2 | `[ok 021c00c]` upgrade 54->56 (rn 0.85, react 19.2, ts6) executado+mergeado; 6 camadas de fix (jest-preset/scheduleOnUI/types-jest/css-interop-helper/config-plugins-hoist); tsc 0, smoke 323/3073, bundle 8.4MB, audit 0; build nativo CI verde (run 26480485827). Pendente: validacao live device | dono antecipou; valida CI |
-| R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE | fix | P2 | `[todo]` mover defineTask p/ top-level (autopullBackgroundTask.ts:95 dentro de definirTask, nao escopo global). Spec materializada 2026-05-26. Confirmar na validacao live (R-INT-3-HC-LIVE-CHECKPOINT) | achado sessao SDK56/autopull-bg |
+| R-INT-3-HC-BACKGROUND-DEFINETASK-SCOPE | fix | P2 | `[ok e26e632]` defineTask no escopo global do modulo (roda no import via _layout); tsc 0, jest 3/3. Confirmar comportamento na validacao live | achado sessao SDK56/autopull-bg |
 
-> **Achados contingentes (backlog, sem spec individual, NAO bloqueiam v1.0.0):** ver
-> `docs/sprints/_BACKLOG.md` secao "Achados contingentes" — R-INT-3-HC-DEDUP,
-> -AUTOPULL-TELEMETRIA, -AUTOPULL-UI-MANUAL, -SETTINGS-STATUS, -LOGGER-CONDICIONAL,
-> R-INT-4-YOUTUBE-MUSIC-HISTORY, R-RECAP-7, R-SEC-PROGUARD-HC-EXTENDED. Materializar so se o dono pedir.
+#### 3P.AB — Onda contingentes pos-SDK56 (2026-05-26)
+
+Dono pediu execucao dos 9 contingentes. 4 via agentes em worktree, 2 fixes orquestrador,
+1 descope, 1 analise, 1 achado infra. Smoke 323->327 / 3113 (+40). Build pendente.
+
+| ID | Tipo | P | Status |
+|---|---|---|---|
+| R-INT-3-HC-DEDUP | fix | P2 | `[ok 2b2e265]` clientRecordId deterministico + factories *WithId (AAR decompilado); +7 testes |
+| R-INT-3-HC-SYNC-PAINEL | feature | P3 | `[ok eeb3909]` painel status+manual+telemetria em /settings/integracoes; consolida SETTINGS-STATUS+UI-MANUAL+TELEMETRIA; helper haRelativo |
+| R-RECAP-7-SHARE-FORMATO-QUADRADO | feature | P3 | `[ok c914106]` share 1080x1080 (feed) + 1080x1920 (stories); escolha de formato |
+| R-INT-3-LOGGER-CONDICIONAL | fix | P3 | `[ok 975a6d8]` devLog gate __DEV__; 14 logs fora do logcat release |
+| R-INT-4-YOUTUBE-MUSIC-HISTORY | feature | P3 | `[descopado v1.1 4c6ee54]` API v3 sem watch history; YT Music so via eng. reversa (viola ADR-0007) |
+| R-SEC-7-PROGUARD-HC-EXTENDED | infra | P3 | `[ok-analise e26e632]` regra `client.** {*;}` ja recursiva cobre request/units; redundante, sem codigo |
+| (infra) bootstrap-worktree expo-env.d.ts | infra | P3 | `[ok 3ee3bb2]` symlink evita TS2882 falso em worktree (achado confirmado por 4 agentes) |
+| R-BUNDLE-DIET-CALENDARS-REPLACE | refactor | P3 | `[todo]` refactor grande (3-5d): substituir react-native-calendars por custom. Spec materializada |
 
 #### 3P.C — Integracoes complementares — AUDITADA 2026-05-25 (2 phantom, 1 ok, 1 pendente)
 
