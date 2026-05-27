@@ -21,6 +21,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 
+import { devLog } from '@/lib/util/devLog';
 import { orquestrarHCAutopull } from '@/lib/health/autopullScheduler';
 import { puxadorPassos } from '@/lib/health/puxadores/passos';
 import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
@@ -95,7 +96,7 @@ function definirTask(taskManager: TaskManagerLike): void {
   taskManager.defineTask(HC_AUTOPULL_BACKGROUND_TASK, async () => {
     const ligado = useSettings.getState().featureToggles.hcAutopullBackground;
     if (!ligado) {
-      console.log('[hc-autopull]', 'background skip (toggle off)');
+      devLog('[hc-autopull]', 'background skip (toggle off)');
       return;
     }
     try {
@@ -108,14 +109,14 @@ function definirTask(taskManager: TaskManagerLike): void {
       ]);
       const totalNovos = r.tipos.reduce((acc, t) => acc + t.novos, 0);
       const totalErros = r.tipos.filter((t) => t.erro !== null).length;
-      console.log('[hc-autopull]', 'background ok', {
+      devLog('[hc-autopull]', 'background ok', {
         rodadoEm: r.rodadoEm,
         totalNovos,
         totalErros,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.log('[hc-autopull]', 'background erro', msg);
+      devLog('[hc-autopull]', 'background erro', msg);
     }
   });
 }
@@ -141,7 +142,7 @@ export async function registrarHCAutopullBackground(): Promise<void> {
   const taskManager = carregarTaskManager();
   const backgroundTask = carregarBackgroundTask();
   if (!taskManager || !backgroundTask) {
-    console.log(
+    devLog(
       '[hc-autopull]',
       'background indisponivel (lib nativa ausente; exige rebuild)'
     );
@@ -152,10 +153,10 @@ export async function registrarHCAutopullBackground(): Promise<void> {
     await backgroundTask.registerTaskAsync(HC_AUTOPULL_BACKGROUND_TASK, {
       minimumInterval: INTERVALO_MINIMO_S,
     });
-    console.log('[hc-autopull]', 'background registrado');
+    devLog('[hc-autopull]', 'background registrado');
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.log('[hc-autopull]', 'background registro falhou', msg);
+    devLog('[hc-autopull]', 'background registro falhou', msg);
   }
 }
 
@@ -172,9 +173,9 @@ export async function desregistrarHCAutopullBackground(): Promise<void> {
     );
     if (!registrada) return;
     await backgroundTask.unregisterTaskAsync(HC_AUTOPULL_BACKGROUND_TASK);
-    console.log('[hc-autopull]', 'background desregistrado');
+    devLog('[hc-autopull]', 'background desregistrado');
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.log('[hc-autopull]', 'background desregistro falhou', msg);
+    devLog('[hc-autopull]', 'background desregistro falhou', msg);
   }
 }

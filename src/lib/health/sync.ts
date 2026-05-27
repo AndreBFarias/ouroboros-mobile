@@ -21,6 +21,7 @@
 // `console.log` em cada save documenta sucesso/falha pra debug live.
 //
 // Comentarios sem acento (convencao shell/CI).
+import { devLog } from '@/lib/util/devLog';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 import {
   emitHCSyncFail,
@@ -234,7 +235,7 @@ function reportarFalhaHC(
   const mensagem = mensagemCanonica(tipo, motivo);
   // Log de debug visivel em logcat / DevTools. Mantemos prefixo
   // canonico [hc-sync] pra facilitar grep durante validacao Nivel C.
-  console.log(
+  devLog(
     `[hc-sync] tipo=${tipo} status=fail motivo=${motivo} erro=${String(erro ?? '')}`
   );
   emitHCSyncFail({ tipo, motivo, mensagem, erro });
@@ -242,7 +243,7 @@ function reportarFalhaHC(
 }
 
 function logSucessoHC(tipo: HCSyncTipo): void {
-  console.log(`[hc-sync] tipo=${tipo} status=ok`);
+  devLog(`[hc-sync] tipo=${tipo} status=ok`);
 }
 
 // R-INT-3-HC-DEDUP: deriva um clientRecordId deterministico para cada
