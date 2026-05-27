@@ -135,5 +135,16 @@ export async function orquestrarHCAutopull(
     totalErros,
   });
 
+  // R-INT-3-HC-SYNC-PAINEL (2026-05-26): grava a telemetria agregada da
+  // rodada no settings store. Todo caller (boot/foreground em _layout e
+  // o botao manual "Sincronizar agora" em /settings/integracoes) passa
+  // a alimentar a linha "Ultima rodada: N novos" do painel sem precisar
+  // duplicar a agregacao. Efemero (nao espelha no Vault).
+  useSettings.getState().setHCAutopullUltimaRodada({
+    rodadoEm,
+    novos: totalNovos,
+    erros: totalErros,
+  });
+
   return { rodadoEm, tipos };
 }

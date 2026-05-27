@@ -36,7 +36,9 @@ function fakePuxador(
 }
 
 // Limpa hcAutopullUltimaSync para todos os tipos antes de cada teste.
-// Garante isolamento entre cenarios (sem leak de estado).
+// Garante isolamento entre cenarios (sem leak de estado). Tambem zera a
+// telemetria (R-INT-3-HC-SYNC-PAINEL) para que cada cenario observe a
+// rodada que ele dispara.
 beforeEach(() => {
   useSettings.setState({
     hcAutopullUltimaSync: {
@@ -48,6 +50,7 @@ beforeEach(() => {
       SleepSession: null,
       MenstruationFlow: null,
     },
+    hcAutopullUltimaRodada: undefined,
   });
 });
 
@@ -175,5 +178,44 @@ describe('orquestrarHCAutopull', () => {
 
     expect(res.rodadoEm).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     expect(new Date(res.rodadoEm).toString()).not.toBe('Invalid Date');
+  });
+});
+
+// R-INT-3-HC-SYNC-PAINEL: o orquestrador grava a telemetria agregada da
+// rodada em hcAutopullUltimaRodada (alimenta a linha "Ultima rodada: N
+// novos" do painel de sync). Aqui validamos a gravacao via store real.
+describe('orquestrarHCAutopull: telemetria hcAutopullUltimaRodada', () => {
+  it('grava total de novos somado e zero erros quando tudo OK', async () => {
+    const p1 = fakePuxador('Steps', { novos: 5, erro: null });
+    const p2 = fakePuxador('Weight', { novos: 3, erro: null });
+
+    const res = await orquestrarHCAutopull([p1, p2]);
+
+    const rodada = useSettings.getState().hcAutopullUltimaRodada;
+    expect(rodada).toBeDefined();
+    expect(rodada?.novos).toBe(8);
+    expect(rodada?.erros).toBe(0);
+    // rodadoEm da telemetria casa com o do resultado retornado.
+    expect(rodada?.rodadoEm).toBe(res.rodadoEm);
+  });
+
+  it('conta erros e soma apenas novos dos puxadores OK', async () => {
+    const p1 = fakePuxador('Steps', { novos: 4, erro: null });
+    const p2 = fakePuxador('Weight', { novos: 0, erro: 'permission_denied' });
+    const p3 = fakePuxador('BodyFat', new Error('boom'));
+
+    await orquestrarHCAutopull([p1, p2, p3]);
+
+    const rodada = useSettings.getState().hcAutopullUltimaRodada;
+    expect(rodada?.novos).toBe(4);
+    expect(rodada?.erros).toBe(2);
+  });
+
+  it('sobrescreve a telemetria a cada nova rodada (so a ultima importa)', async () => {
+    await orquestrarHCAutopull([fakePuxador('Steps', { novos: 9, erro: null })]);
+    expect(useSettings.getState().hcAutopullUltimaRodada?.novos).toBe(9);
+
+    await orquestrarHCAutopull([fakePuxador('Steps', { novos: 1, erro: null })]);
+    expect(useSettings.getState().hcAutopullUltimaRodada?.novos).toBe(1);
   });
 });

@@ -28,20 +28,44 @@ import {
   type PermissionItem,
 } from '@/lib/health/permissions';
 import { useSettings } from '@/lib/stores/settings';
+import { orquestrarHCAutopull } from '@/lib/health/autopullScheduler';
+import type { TipoHC } from '@/lib/health/tipos';
+import { puxadorPassos } from '@/lib/health/puxadores/passos';
+import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
+import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
+import { puxadorMenstruacao } from '@/lib/health/puxadores/menstruacao';
+import { puxadorSono } from '@/lib/health/puxadores/sleep';
+import { haRelativoDeIso } from '@/lib/datetime/haRelativo';
+
+// Rotulos PT-BR (sentence case, com acento) dos tipos HC. Reusado pela
+// lista de permissoes e pelo painel "Sincronizacao" (ultima sync por
+// tipo). Mantido alinhado com o map de availability/permissions.
+const ROTULO_TIPO: Record<TipoHC, string> = {
+  Steps: 'Passos',
+  ExerciseSession: 'Sessões de treino',
+  Weight: 'Peso',
+  BodyFat: 'Percentual de gordura',
+  HeartRate: 'Frequência cardíaca',
+  SleepSession: 'Sono',
+  MenstruationFlow: 'Ciclo menstrual',
+};
 
 function rotuloPermission(p: PermissionItem): string {
-  const map: Record<string, string> = {
-    Steps: 'Passos',
-    ExerciseSession: 'Sessões de treino',
-    Weight: 'Peso',
-    BodyFat: 'Percentual de gordura',
-    HeartRate: 'Frequência cardíaca',
-    SleepSession: 'Sono',
-    MenstruationFlow: 'Ciclo menstrual',
-  };
   const acao = p.accessType === 'read' ? 'ler' : 'escrever';
-  return `${acao} ${map[p.recordType] ?? p.recordType}`;
+  return `${acao} ${ROTULO_TIPO[p.recordType as TipoHC] ?? p.recordType}`;
 }
+
+// R-INT-3-HC-SYNC-PAINEL: mesmo array de puxadores injetado no boot path
+// (app/_layout.tsx). Sao singletons canonicos importados; reusa-los aqui
+// garante que o botao "Sincronizar agora" exerce exatamente a mesma
+// rodada que o autopull foreground.
+const PUXADORES_AUTOPULL = [
+  puxadorPassos,
+  puxadorExercicio,
+  puxadorMedidas,
+  puxadorMenstruacao,
+  puxadorSono,
+];
 
 export default function SettingsIntegracoesScreen() {
   const router = useRouter();
@@ -143,6 +167,66 @@ export default function SettingsIntegracoesScreen() {
   const alternarHcBackground = useCallback((proximo: boolean) => {
     useSettings.getState().setFeatureToggle('hcAutopullBackground', proximo);
   }, []);
+
+  // R-INT-3-HC-SYNC-PAINEL: painel de sincronizacao. Le do store o
+  // tracking de ultima sync por tipo e a telemetria da ultima rodada.
+  // Subscricao por campo para re-render quando o autopull (manual ou
+  // foreground) atualizar.
+  const hcAutopullUltimaSync = useSettings((s) => s.hcAutopullUltimaSync);
+  const hcAutopullUltimaRodada = useSettings((s) => s.hcAutopullUltimaRodada);
+  const [sincronizando, setSincronizando] = useState<boolean>(false);
+
+  // Ordem canonica dos tipos para a lista (estavel, nao depende de
+  // ordem de chaves do objeto). So entram tipos com sync registrada
+  // (non-null) — listar 7x "Nunca sincronizado" seria ruido.
+  const ORDEM_TIPOS: TipoHC[] = [
+    'Steps',
+    'ExerciseSession',
+    'Weight',
+    'BodyFat',
+    'HeartRate',
+    'SleepSession',
+    'MenstruationFlow',
+  ];
+  const linhasUltimaSync = ORDEM_TIPOS.map((tipo) => ({
+    tipo,
+    rotulo: ROTULO_TIPO[tipo],
+    relativo: haRelativoDeIso(hcAutopullUltimaSync[tipo]),
+  })).filter((l) => l.relativo !== null);
+
+  // R-INT-3-HC-AUTOPULL-UI-MANUAL: dispara uma rodada de autopull sob
+  // demanda. Reusa o orquestrador (que ja grava a telemetria). Toast
+  // factual (ADR-0005: sem exclamacao, sem gamificacao, sem comparativo).
+  const handleSincronizarAgora = useCallback(async () => {
+    if (sincronizando) return;
+    setSincronizando(true);
+    void haptics.light();
+    try {
+      const r = await orquestrarHCAutopull(PUXADORES_AUTOPULL);
+      const novos = r.tipos.reduce((acc, t) => acc + t.novos, 0);
+      const erros = r.tipos.filter((t) => t.erro !== null).length;
+      if (erros > 0) {
+        toast.show(
+          `Sincronizado com ${erros} ${
+            erros === 1 ? 'aviso' : 'avisos'
+          }. ${novos} ${novos === 1 ? 'novo registro' : 'novos registros'}.`,
+          'warn'
+        );
+      } else {
+        toast.show(
+          `Sincronizado. ${novos} ${
+            novos === 1 ? 'novo registro' : 'novos registros'
+          }.`,
+          'success'
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.show(`Não foi possível sincronizar: ${msg}`, 'error');
+    } finally {
+      setSincronizando(false);
+    }
+  }, [sincronizando, toast]);
 
   // R-INT-3-HC-EMPIRICAL: 'needs_update' nao bloqueia funcionalidade
   // (HC moderno aceita request mesmo reportando SDK obsoleto). Label
@@ -298,6 +382,88 @@ export default function SettingsIntegracoesScreen() {
                 value={hcBackgroundToggle}
                 onChange={alternarHcBackground}
                 accessibilityLabel="sincronizar em segundo plano"
+              />
+            </View>
+          ) : null}
+          {permissoes.length > 0 ? (
+            <View
+              style={{
+                marginTop: spacing.base,
+                paddingTop: spacing.base,
+                borderTopWidth: 1,
+                borderTopColor: colors.bgElev,
+                gap: spacing.sm,
+              }}
+              accessibilityLabel="painel sincronizacao health connect"
+            >
+              <Text
+                style={{
+                  color: colors.muted,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: 12,
+                  lineHeight: 18,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                }}
+              >
+                Sincronização
+              </Text>
+              {linhasUltimaSync.length > 0 ? (
+                <View style={{ gap: spacing.xs }}>
+                  {linhasUltimaSync.map((l) => (
+                    <Text
+                      key={l.tipo}
+                      style={{
+                        color: colors.mutedDecor,
+                        fontFamily: 'JetBrainsMono_400Regular',
+                        fontSize: 12,
+                        lineHeight: 18,
+                      }}
+                    >
+                      {`Última sync: ${l.rotulo} ${l.relativo}`}
+                    </Text>
+                  ))}
+                </View>
+              ) : (
+                <Text
+                  style={{
+                    color: colors.mutedDecor,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 12,
+                    lineHeight: 18,
+                  }}
+                >
+                  Ainda sem sincronização registrada.
+                </Text>
+              )}
+              {hcAutopullUltimaRodada ? (
+                <Text
+                  accessibilityLabel="telemetria ultima rodada"
+                  style={{
+                    color: colors.muted,
+                    fontFamily: 'JetBrainsMono_400Regular',
+                    fontSize: 12,
+                    lineHeight: 18,
+                  }}
+                >
+                  {(() => {
+                    const n = hcAutopullUltimaRodada.novos;
+                    const quando = haRelativoDeIso(
+                      hcAutopullUltimaRodada.rodadoEm
+                    );
+                    const base = `Última rodada: ${n} ${
+                      n === 1 ? 'novo registro' : 'novos registros'
+                    }`;
+                    return quando ? `${base} (${quando})` : `${base}.`;
+                  })()}
+                </Text>
+              ) : null}
+              <Button
+                label="Sincronizar agora"
+                onPress={handleSincronizarAgora}
+                variant="ghost"
+                disabled={sincronizando}
+                accessibilityLabel="sincronizar agora"
               />
             </View>
           ) : null}

@@ -347,6 +347,37 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
   com a data local BRT). Disparada pelo próprio `<BadgePassos>` ao
   computar os passos. No-op em web/Expo Go.
 
+### 3.7.2 Painel de sincronização HC — R-INT-3-HC-SYNC-PAINEL (2026-05-26)
+
+Bloco "Sincronização" dentro do card "Conexão Saúde (Android)" em
+`/settings/integracoes`. Render condicional: aparece apenas quando há
+ao menos uma permissão concedida (`permissoes.length > 0`), abaixo do
+toggle "Sincronizar em segundo plano". Consolida três indicadores:
+
+- **Última sync por tipo.** Lista "Última sync: \<tipo\> há N" lendo
+  `settings.hcAutopullUltimaSync` (ISO por tipo, gravado pelo autopull).
+  Mostra apenas os tipos já sincronizados (valor não-nulo) na ordem
+  canônica; os demais ficam ocultos para não virar ruído. Sem nenhuma
+  sync registrada, exibe "Ainda sem sincronização registrada."
+- **Telemetria da última rodada.** Linha "Última rodada: N novos
+  registros (há M)" lendo o campo novo `settings.hcAutopullUltimaRodada`
+  (`{ rodadoEm, novos, erros }`). É **efêmero**: persiste no SecureStore
+  via zustand mas **não** entra no mirror canônico do Vault nem no
+  snapshot exportável (mesma postura de `calendarSyncUltimaSync` /
+  `driveBackupUltimaSync` — diagnóstico de UI, não estado cross-device).
+  Gravado por `orquestrarHCAutopull` ao fim de toda rodada, então o
+  autopull foreground (boot/AppState em `_layout`) e o botão manual
+  alimentam a mesma linha.
+- **Botão "Sincronizar agora".** Dispara `orquestrarHCAutopull` com os
+  cinco puxadores canônicos (mesmo array do boot path) sob demanda.
+  Toast factual ao concluir (ADR-0005: sem exclamação, sem gamificação,
+  sem comparativo) — "Sincronizado. N novos registros." em sucesso, ou
+  "Sincronizado com N avisos." quando algum puxador falha.
+
+Frase relativa PT-BR ("há 3h", "há 2 dias", "agora mesmo") via helper
+canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
+`haRelativoDeIso`), prefix-free e reutilizável.
+
 ### 3.8 Hub de Integrações — R-INT-1 (2026-05-16)
 
 - Rota canônica `/integracoes` agrega todos os serviços externos
