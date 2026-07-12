@@ -161,6 +161,7 @@ function snapshotValido(): SnapshotSettings {
       healthConnectSync: false,
       recapAmbientAudio: false,
       recapAudioAnexadoAutoplay: true,
+      recapMusicaFundo: true,
       googleCalendarSync: false,
       backupDriveAutomatico: false,
       hcAutopullBackground: false,

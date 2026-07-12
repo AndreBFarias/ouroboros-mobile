@@ -680,7 +680,7 @@ malformados são silenciosamente ignorados (mesmo padrão de
 - Helpers de leitura novos: `listarHumor`, `listarDiarios`,
   `listarEventos` (`src/lib/vault/`).
 
-### 7.1 Modo Memórias (slideshow Wrapped) — Q24.b / R-RECAP-3 a R-RECAP-7
+### 7.1 Modo Memórias (slideshow Wrapped) — Q24.b / R-RECAP-3 a R-RECAP-9
 
 Slideshow full-screen estilo Instagram Stories/Spotify Wrapped acessado
 do Recap. Rota: `/recap-memorias?de=…&ate=…`.
@@ -700,16 +700,27 @@ do Recap. Rota: `/recap-memorias?de=…&ate=…`.
   hash do slide id; respeita `pausado`.
 - **Frase de transição** rotativa por slide id (pool curado, sem
   exclamação nem comparativo).
-- **Áudio ambient embutido CC0** (R-RECAP-4): toggle off por default
-  via `settings.featureToggles.recapAmbientAudio`. Loop com fade-in/out
-  500ms ao pausar/fechar.
+- **Trilha animada de fundo** (R-RECAP-9, 2026-07-11): estilo Google
+  Fotos "Memories". Uma faixa alegre é **sorteada do pool de 16**
+  (`src/lib/recap/musicaFundo.ts`, Kevin MacLeod / CC BY 4.0) na
+  abertura do slideshow e toca em loop por toda a sessão, com fade-in
+  na abertura e fade-out no encerramento/exit. Seletor determinístico
+  (seed + estado de sessão) que **não repete a mesma faixa duas vezes
+  seguidas**. Toggle `settings.featureToggles.recapMusicaFundo`
+  (**default ON** — decisão do dono) e botão de som no header.
+  Substitui o drone ambient fixo de R-RECAP-4 como controle da trilha
+  (o toggle `recapAmbientAudio` e o mp3 do drone permanecem no código
+  por retrocompatibilidade, sem serem o gate do slideshow).
 - **Áudio anexado por slide** (R-MEDIA-2): slides `vitorias`/`crises`
-  carregam `audioPath` da última conquista/trigger relevante; tocam em
-  cross-fade com o ambient. Toggle on por default via
-  `settings.featureToggles.recapAudioAnexadoAutoplay`.
+  carregam `audioPath` da última conquista/trigger relevante. Quando
+  o slide tem áudio próprio, a música de fundo faz **duck** (abaixa
+  para ~0.1, não muta — R-RECAP-9) e restaura ao sair do slide. Toggle
+  on por default via `settings.featureToggles.recapAudioAnexadoAutoplay`.
 - **Header**:
   - Esquerda: Pausar (Play/Pause toggle) + Compartilhar (R-RECAP-6,
-    `Share2`, left=64dp, ao lado direito do Pausar).
+    `Share2`, left=64dp) + **Som** (R-RECAP-9, `Volume2`/`VolumeX`,
+    left=112dp, muta/desmuta a trilha e persiste em `recapMusicaFundo`,
+    com haptic leve).
   - Direita: Fechar (X) — volta ao Recap.
 - **Compartilhamento** (R-RECAP-6, 2026-05-16; formato escolhível
   R-RECAP-7, 2026-05-26): tap em Compartilhar pausa o slideshow e

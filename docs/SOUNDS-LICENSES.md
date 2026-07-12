@@ -7,10 +7,17 @@ com os arquivos `CREDITS.md` em cada pasta de assets.
 
 ## Política
 
-- Apenas áudio CC0 ou trabalho original gerado por ferramenta
-  determinística (ffmpeg synth, sox, scipy).
+- Áudio **CC0** ou trabalho original gerado por ferramenta
+  determinística (ffmpeg synth, sox, scipy); **ou CC BY** (Creative
+  Commons Attribution) **desde que a atribuição obrigatória seja
+  satisfeita dentro do app** — atualizado em R-RECAP-9 (2026-07-11).
+  A CC BY é aceita porque o crédito visível resolve a única obrigação
+  da licença; a tela de créditos (`/settings` → Sobre → Créditos)
+  cumpre esse papel.
 - Nada de samples comerciais, gravações de músicas com direitos
-  autorais, ou áudios de terceiros sem licença explícita.
+  autorais restritivos, ou áudios de terceiros sem licença explícita.
+- Toda faixa CC BY **precisa** aparecer numa tela de créditos no app,
+  com autor + licença + link, e no `CREDITS.md` da pasta.
 - Mudança de origem (ex: substituir tom puro por sample CC0
   do freesound.org) deve atualizar este arquivo + o `CREDITS.md`
   da pasta no mesmo commit.
@@ -62,8 +69,32 @@ Detalhes técnicos completos em
 | `recap-memorias.mp3` | CC0 / domínio público | ffmpeg synth (R-RECAP-4, 2026-05-16) | drone harmônico 4 senóides A2/E3/A3/E4 × 60s × MP3 64kbit/s mono |
 
 Tom de pad discreto pensado para servir de fundo ao slideshow
-Memórias quando o usuário liga o toggle `recapAmbientAudio` em
-Configurações. Default OFF — usuário escolhe explicitamente.
+Memórias. **Aposentado como trilha padrão em R-RECAP-9** (2026-07-11):
+o slideshow passou a sortear uma faixa animada do pool
+`recap-musicas/` (abaixo). O arquivo e o toggle `recapAmbientAudio`
+permanecem no código por retrocompatibilidade, mas não são mais o
+controle da trilha do slideshow.
+
+### `assets/sounds/recap-musicas/` — Trilha animada do Recap (R-RECAP-9)
+
+Detalhes técnicos completos, atribuição e inventário faixa a faixa em
+[`assets/sounds/recap-musicas/CREDITS.md`](../assets/sounds/recap-musicas/CREDITS.md).
+
+- **16 faixas** de **Kevin MacLeod** (incompetech.com), licença
+  **Creative Commons Attribution 4.0 (CC BY 4.0)**.
+- Pool sorteado por sessão de slideshow (uma faixa por abertura,
+  modelo Google Fotos "Memories"). Seletor determinístico em
+  `src/lib/recap/musicaFundo.ts`; toggle `recapMusicaFundo`
+  (default ON) + botão de som no header do slideshow.
+- Faixas: Amazing Plan, Beachfront Celebration, Carefree, Cheery
+  Monday, Fluffing a Duck, Fun in a Bottle, Happy Alley, Itty Bitty
+  8 Bit, Jaunty Gumption, Life of Riley, Monkeys Spinning Monkeys,
+  Off to Osaka, Pixelland, Sneaky Snitch, The Builder, Wallpaper.
+- **Atribuição obrigatória** (CC BY) satisfeita pela seção "Créditos"
+  em `/settings` → Sobre: "Músicas: Kevin MacLeod (incompetech.com) —
+  CC BY 4.0" + link para `creativecommons.org/licenses/by/4.0/`.
+- Recomprimidas para 128 kbps (`ffmpeg -b:a 128k -map_metadata -1`),
+  metadados removidos.
 
 ## Outros assets sonoros
 

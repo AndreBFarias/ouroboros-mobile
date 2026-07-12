@@ -80,6 +80,13 @@ export interface SettingsState {
     // experiencia natural ("o que voce gravou volta ao seu ouvido").
     // Toggle off silencia tanto o anexado quanto o ambient.
     recapAudioAnexadoAutoplay: boolean;
+    // R-RECAP-9 (2026-07-11): trilha animada de fundo do slideshow
+    // Memorias (pool de 16 faixas alegres, estilo Google Fotos). Default
+    // TRUE (decisao do dono §6bis: o Recap e' o momento de brilho, som
+    // ligado por padrao com botao de mutar sempre visivel no header).
+    // Substitui o drone ambient fixo (recapAmbientAudio, agora
+    // aposentado como gate do slideshow) como controle da trilha.
+    recapMusicaFundo: boolean;
     // R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): opt-in para auto-sync
     // periodico do Google Calendar no boot/foreground (abastece a secao
     // "Proximos" da Tela Hoje sem o usuario abrir /agenda). Default false
@@ -289,6 +296,12 @@ const DEFAULT_STATE_V2: Omit<
     // intencao. Usuario que prefere silencio total desliga este
     // toggle (e tambem o ambient acima).
     recapAudioAnexadoAutoplay: true,
+    // R-RECAP-9: default ON (decisao do dono §6bis). A trilha animada
+    // toca por padrao no slideshow Memorias; o botao de som no header
+    // muta/desmuta a qualquer momento. Migracao de instalacoes existentes
+    // e' coberta pelo spread de DEFAULT_STATE_V2 em mesclarDefaults
+    // (chave nova ausente no persistedState recebe este default).
+    recapMusicaFundo: true,
     // R-INT-2-CALENDAR-SYNC-EVENTOS: default OFF (opt-in). O auto-sync
     // periodico do Calendar so dispara quando o usuario liga em
     // Configuracoes; ate la, a agenda atualiza apenas ao abrir /agenda.

@@ -375,9 +375,12 @@ function SecaoFeatures() {
 
 // === Secao 3.5: Modo Memorias do Recap (R-RECAP-4, 2026-05-16) ===
 //
-// Expoe duas configuracoes:
-//   - Toggle de audio ambient embutido (CC0 drone). Default OFF
-//     ("sem rede de saida" preservada pelo default - ADR-0005).
+// Expoe:
+//   - Toggle da musica de fundo animada (R-RECAP-9, pool de 16 faixas
+//     CC BY 4.0). Default ON (decisao do dono); tambem mutavel pelo
+//     botao de som no header do slideshow. Substitui o antigo toggle de
+//     drone ambient CC0.
+//   - Toggle de autoplay do audio anexado ao item (R-MEDIA-2).
 //   - Slider de intervalo do auto-avance (2-10s, default 4s).
 // O botao "Pausar" durante o slideshow nao tem persistencia — e'
 // estado de sessao apenas.
@@ -393,12 +396,15 @@ function SecaoRecapMemorias() {
       titulo="Modo Memórias do Recap"
       accessibilityLabel="secao recap memorias"
     >
+      {/* R-RECAP-9 (2026-07-11): trilha animada de fundo (pool de 16
+          faixas alegres CC BY 4.0). Default ON; o botao de som no
+          header do slideshow tambem alterna este toggle. */}
       <ToggleRow
-        label="Áudio ambient"
-        subtitulo="Trilha sonora discreta CC0 durante o slideshow."
-        valor={featureToggles.recapAmbientAudio}
-        onChange={(v) => setFeatureToggle('recapAmbientAudio', v)}
-        a11y="toggle audio ambient recap"
+        label="Música de fundo"
+        subtitulo="Trilha animada durante o slideshow de Memórias."
+        valor={featureToggles.recapMusicaFundo}
+        onChange={(v) => setFeatureToggle('recapMusicaFundo', v)}
+        a11y="toggle musica de fundo recap"
       />
       {/* R-MEDIA-2 (2026-05-16): autoplay do audio anexado ao item.
           Default ON: voltar a ouvir o que voce gravou e' parte do

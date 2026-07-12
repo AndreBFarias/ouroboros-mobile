@@ -68,7 +68,11 @@ jest.mock('@/lib/stores/settings', () => ({
       featureToggles: {
         recapAmbientAudio: false,
         recapAudioAnexadoAutoplay: true,
+        // R-RECAP-9: musica de fundo desligada (teste de loop, sem audio).
+        recapMusicaFundo: false,
       },
+      // R-RECAP-9: setter lido pelo botao de som no header.
+      setFeatureToggle: () => undefined,
     }),
 }));
 

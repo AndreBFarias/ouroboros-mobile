@@ -32,6 +32,15 @@
 // escolhido e' repassado a exportarSlideMemorias. Overlay com RN
 // puro (sem dependencia de sheet nativo), A28/A44-safe.
 //
+// R-RECAP-9 (2026-07-11) -- trilha animada estilo Google Fotos. O drone
+// ambient fixo (AMBIENT_TRACK) da lugar a uma faixa alegre sorteada de
+// um pool de 16 (src/lib/recap/musicaFundo.ts) a cada abertura do
+// slideshow; toca em loop com fade-in/out. Botao de som no header
+// (Volume2/VolumeX) muta/desmuta, persistindo no toggle
+// settings.featureToggles.recapMusicaFundo (default ON). Quando um slide
+// tem audio anexado (memoria gravada), a musica de fundo abaixa (duck
+// para MUSICA_DUCK_VOLUME) em vez de mutar, e restaura ao sair do slide.
+//
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -52,7 +61,7 @@ import Animated, {
   withSequence,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Pause, Play, Share2, X } from '@/lib/icons';
+import { Pause, Play, Share2, Volume2, VolumeX, X } from '@/lib/icons';
 import { useRecap, type PeriodoRange } from '@/lib/hooks/useRecap';
 import { useRecapMemorias, type Slide } from '@/lib/hooks/useRecapMemorias';
 import { useSettings } from '@/lib/stores/settings';
@@ -77,21 +86,30 @@ import {
   removerSlidePngTemp,
   type FormatoShare,
 } from '@/lib/midia/exportarSlideMemorias';
-
-// Track ambient CC0 (drone harmonico 60s loop). Require estatico:
-// bundler precisa de literal para empacotar.
-const AMBIENT_TRACK = require('../assets/sounds/ambient/recap-memorias.mp3');
+import { haptics } from '@/lib/haptics';
+// R-RECAP-9: pool de trilhas + seletor deterministico. A faixa da sessao
+// e' sorteada na abertura (uma por slideshow, modelo Google Fotos).
+import {
+  MUSICAS_FUNDO,
+  sortearMusica,
+  registrarMusicaTocada,
+} from '@/lib/recap/musicaFundo';
 
 // Fade-in/out em ms para entrada/saida do audio.
 const AUDIO_FADE_MS = 500;
 
-// R-MEDIA-2 (2026-05-16): volume final do ambient apos fade-in.
+// R-MEDIA-2 (2026-05-16): volume final da musica de fundo apos fade-in.
 // Espelha o `5 * 0.05` do loop interno (passo 5 de 5). Centralizado
-// como constante para a logica de pausa por audio anexado restaurar
+// como constante para a logica de duck por audio anexado restaurar
 // o volume correto sem reload da instancia.
 const AMBIENT_VOLUME_ALVO = 0.25;
-// Volume final do audio anexado. Mais alto que o ambient: e' o foco
-// da atencao no slide. Ainda nao satura (~70%).
+// R-RECAP-9: volume da musica de fundo enquanto um audio anexado toca.
+// "Duck" (abaixa, nao muta) para o audio gravado ficar em primeiro plano
+// sem cortar a trilha -- decisao da spec (§3: "abaixa para ~0.1 e
+// restaura"). Restaura a AMBIENT_VOLUME_ALVO ao sair do slide.
+const MUSICA_DUCK_VOLUME = 0.1;
+// Volume final do audio anexado. Mais alto que a musica de fundo: e' o
+// foco da atencao no slide. Ainda nao satura (~70%).
 const AUDIO_ANEXADO_VOLUME_ALVO = 0.7;
 
 function parseDate(raw: string | string[] | undefined, fallback: Date): Date {
@@ -105,16 +123,29 @@ export default function RecapMemoriasTela() {
   const router = useRouter();
   const params = useLocalSearchParams<{ de?: string; ate?: string }>();
   const intervaloS = useSettings((s) => s.recap.slideshowIntervaloS);
-  const ambientLigado = useSettings(
-    (s) => s.featureToggles.recapAmbientAudio
-  );
+  // R-RECAP-9: gate da trilha animada de fundo (default ON). Substitui
+  // o antigo recapAmbientAudio como controle do slideshow. Mutado/
+  // desmutado pelo botao de som no header (persiste no toggle).
+  const musicaLigada = useSettings((s) => s.featureToggles.recapMusicaFundo);
+  const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
   // R-MEDIA-2 (2026-05-16): toggle de autoplay do audio anexado ao
   // item (Conquista/Crise/Reflexao). Default ON. Off silencia
-  // somente o audio anexado; ambient e' controlado pelo toggle
-  // proprio acima.
+  // somente o audio anexado; a musica de fundo segue o toggle proprio.
   const audioAnexadoLigado = useSettings(
     (s) => s.featureToggles.recapAudioAnexadoAutoplay
   );
+
+  // R-RECAP-9: faixa da sessao. Sorteada UMA vez na montagem (modelo
+  // Google Fotos: uma musica por slideshow inteiro). useState com
+  // initializer garante estabilidade entre re-renders; Date.now como
+  // seed + estado de sessao do modulo evitam repetir a mesma 2x
+  // seguidas. registrarMusicaTocada marca a escolha para o proximo
+  // slideshow variar.
+  const [musicaIdx] = useState(() => sortearMusica(Date.now()));
+  useEffect(() => {
+    registrarMusicaTocada(musicaIdx);
+  }, [musicaIdx]);
+  const musicaFundo = MUSICAS_FUNDO[musicaIdx];
 
   // R-RECAP-FIX-LOOP (2026-05-17): estabilizar `range` para nao
   // disparar Maximum update depth no useRecap. Antes, `hoje =
@@ -233,12 +264,13 @@ export default function RecapMemoriasTela() {
     audioAnexadoRef.current = null;
   }, []);
 
-  // Carrega ambient quando toggle liga + slideshow nao pausado +
-  // nao em loading. Descarrega quando qualquer condicao deixa de
-  // valer ou ao desmontar.
+  // R-RECAP-9: carrega a musica de fundo da sessao quando o toggle liga
+  // + slideshow nao pausado + nao em loading. Descarrega quando qualquer
+  // condicao deixa de valer ou ao desmontar. A faixa (musicaFundo.asset)
+  // e' fixa por sessao (sorteada na montagem).
   useEffect(() => {
     if (!audioDisponivel) return;
-    if (!ambientLigado || pausado || loading) {
+    if (!musicaLigada || pausado || loading) {
       // Garantir descarregamento se ja havia instancia.
       void descarregarAmbient();
       return;
@@ -247,7 +279,7 @@ export default function RecapMemoriasTela() {
     let cancelado = false;
     (async () => {
       try {
-        const { sound } = await Audio.Sound.createAsync(AMBIENT_TRACK, {
+        const { sound } = await Audio.Sound.createAsync(musicaFundo.asset, {
           shouldPlay: false,
           isLooping: true,
           volume: 0,
@@ -276,7 +308,14 @@ export default function RecapMemoriasTela() {
       cancelado = true;
       void descarregarAmbient();
     };
-  }, [ambientLigado, pausado, loading, audioDisponivel, descarregarAmbient]);
+  }, [
+    musicaLigada,
+    pausado,
+    loading,
+    audioDisponivel,
+    musicaFundo.asset,
+    descarregarAmbient,
+  ]);
 
   // R-MEDIA-2: carrega audio anexado quando slide muda para um que
   // tem audioPath + toggle ligado + nao pausado + nao em loading.
@@ -288,16 +327,18 @@ export default function RecapMemoriasTela() {
     if (!audioDisponivel) return;
     if (!audioAnexadoLigado || pausado || loading || !audioAnexadoUri) {
       // Sem audio anexado neste slide: descarrega instancia se houver
-      // e devolve volume do ambient (se ambient ja tem instancia).
+      // e restaura o volume da musica de fundo (se ja tem instancia).
       void (async () => {
         await descarregarAudioAnexado();
         const amb = ambientSoundRef.current;
-        if (amb && ambientLigado && !pausado) {
-          // Restaura volume alvo do ambient suavemente (sem reload).
+        if (amb && musicaLigada && !pausado) {
+          // R-RECAP-9: restaura suavemente do duck (MUSICA_DUCK_VOLUME)
+          // de volta ao volume alvo, sem reload da instancia.
           for (let i = 1; i <= 5; i += 1) {
-            await amb
-              .setVolumeAsync((AMBIENT_VOLUME_ALVO * i) / 5)
-              .catch(() => undefined);
+            const v =
+              MUSICA_DUCK_VOLUME +
+              ((AMBIENT_VOLUME_ALVO - MUSICA_DUCK_VOLUME) * i) / 5;
+            await amb.setVolumeAsync(v).catch(() => undefined);
             await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / 5));
           }
         }
@@ -308,14 +349,17 @@ export default function RecapMemoriasTela() {
     let cancelado = false;
     (async () => {
       try {
-        // Antes de carregar o novo, baixa o ambient para 0 (cross-fade).
+        // R-RECAP-9: antes de carregar o audio anexado, faz duck da
+        // musica de fundo para MUSICA_DUCK_VOLUME (abaixa, nao muta) --
+        // a memoria gravada fica em primeiro plano sem cortar a trilha.
         const amb = ambientSoundRef.current;
         if (amb) {
-          for (let i = 4; i >= 0; i -= 1) {
+          for (let i = 1; i <= 5; i += 1) {
             if (cancelado) break;
-            await amb
-              .setVolumeAsync((AMBIENT_VOLUME_ALVO * i) / 5)
-              .catch(() => undefined);
+            const v =
+              AMBIENT_VOLUME_ALVO +
+              ((MUSICA_DUCK_VOLUME - AMBIENT_VOLUME_ALVO) * i) / 5;
+            await amb.setVolumeAsync(v).catch(() => undefined);
             await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / 5));
           }
         }
@@ -360,7 +404,7 @@ export default function RecapMemoriasTela() {
     audioDisponivel,
     pausado,
     loading,
-    ambientLigado,
+    musicaLigada,
     descarregarAudioAnexado,
   ]);
 
@@ -392,6 +436,14 @@ export default function RecapMemoriasTela() {
   const anterior = () => {
     if (index > 0) setIndex(index - 1);
   };
+
+  // R-RECAP-9: alterna mudo da musica de fundo. Persiste no toggle
+  // recapMusicaFundo -- o effect de carga reage ao novo valor (liga toca
+  // com fade-in, desliga descarrega com fade-out). Haptic leve.
+  const toggleMusica = useCallback(() => {
+    void haptics.light();
+    setFeatureToggle('recapMusicaFundo', !musicaLigada);
+  }, [setFeatureToggle, musicaLigada]);
 
   // R-RECAP-7: tap em Compartilhar abre o overlay de escolha de
   // formato. Pausa o slideshow enquanto o overlay esta aberto e
@@ -553,6 +605,24 @@ export default function RecapMemoriasTela() {
         hitSlop={12}
       >
         <Share2 size={22} color={colorsMemorias.fg} strokeWidth={1.6} />
+      </Pressable>
+
+      {/* R-RECAP-9: botao de som. Alterna mudo da musica de fundo
+          (Volume2 = tocando, VolumeX = mudo) e persiste em
+          recapMusicaFundo. Ao lado direito do compartilhar. */}
+      <Pressable
+        onPress={toggleMusica}
+        accessibilityRole="button"
+        accessibilityLabel={musicaLigada ? 'silenciar musica' : 'ativar musica'}
+        accessibilityState={{ selected: musicaLigada }}
+        style={styles.som}
+        hitSlop={12}
+      >
+        {musicaLigada ? (
+          <Volume2 size={22} color={colorsMemorias.fg} strokeWidth={1.6} />
+        ) : (
+          <VolumeX size={22} color={colorsMemorias.fg} strokeWidth={1.6} />
+        )}
       </Pressable>
 
       {/* Conteudo do slide */}
@@ -885,6 +955,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 60,
     left: 64,
+    zIndex: 20,
+    padding: 8,
+  },
+  // R-RECAP-9: botao de som ao lado direito do compartilhar. Compartilhar
+  // ocupa left=64 (padding 8 + icone 22 ~= 46dp util); som comeca em
+  // left=112 preservando a mesma folga de respiro do header.
+  som: {
+    position: 'absolute',
+    top: 60,
+    left: 112,
     zIndex: 20,
     padding: 8,
   },
