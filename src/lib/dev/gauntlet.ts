@@ -22,6 +22,13 @@
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+// M37.2: useGoogleAuth e importado LAZY (require dentro das funcoes
+// guardadas) porque ele arrasta googleAuthFlow -> expo-constants no load
+// do modulo, o que quebra suites de teste que importam gauntlet.ts num
+// env sem o setup do jest-expo. O tipo e' import-only (erasado em
+// runtime, nao puxa nada). O require so executa quando GAUNTLET_ATIVO
+// (web dev), nunca nos testes node (Platform.OS != 'web').
+import type { EscopoConcedido } from '@/lib/stores/googleAuth';
 import { useSessao } from '@/lib/stores/sessao';
 import { useNavegacao } from '@/lib/stores/navegacao';
 import { useSettings } from '@/lib/stores/settings';
@@ -179,6 +186,16 @@ export interface GauntletAPI {
     pessoa: 'pessoa_a' | 'pessoa_b',
     eventos: AgendaEvento[]
   ): number;
+  // M37.2 (calendar escrita): conecta uma conta Google mock com o escopo
+  // dado, sem passar pelo flow OAuth. Injeta token sintetico
+  // ('mock-access-token-*') que dispara os branches mock de
+  // calendarApi/calendarCache. Usado pelo E2E de escrita para alcancar
+  // deterministicamente o estado write-enabled (FAB verde ativo) sem
+  // depender de cliques em botoes RN-Web volateis. No-op em mobile.
+  setContaGoogleMock(
+    pessoa: 'pessoa_a' | 'pessoa_b',
+    escopo: EscopoConcedido
+  ): void;
 }
 
 // Refs internas. routerRef e setado por <InstaladorGauntlet/>
@@ -288,6 +305,30 @@ function aplicarReset(): void {
   // V4.0 (INFRA-VAULT-WEB-MOCK): zera vault mock para isolar E2E. Sem
   // isto, arquivos gravados em sprint anterior vazariam para a proxima.
   useVaultMock.getState().limpar();
+  // M37.2: zera contas Google mock para isolar E2E de escrita (evita que
+  // uma conta write-enabled de um caso vaze para o proximo). Require lazy
+  // (so roda sob GAUNTLET_ATIVO via reset()); ver nota no import.
+  const { useGoogleAuth } = require('@/lib/stores/googleAuth') as typeof import('@/lib/stores/googleAuth');
+  useGoogleAuth.setState({
+    contas: {
+      pessoa_a: {
+        accessToken: null,
+        refreshToken: null,
+        expiraEm: 0,
+        email: null,
+        ultimaConexao: 0,
+        invalido: false,
+      },
+      pessoa_b: {
+        accessToken: null,
+        refreshToken: null,
+        expiraEm: 0,
+        email: null,
+        ultimaConexao: 0,
+        invalido: false,
+      },
+    },
+  });
   // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
   // em web para que reload nao re-hidrate estado anterior. Em mobile,
   // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
@@ -600,6 +641,27 @@ const api: GauntletAPI = {
   setArquivoMock: comGuard(
     (uri: string, conteudo: string) =>
       useVaultMock.getState().setArquivo(uri, conteudo),
+    undefined as void
+  ),
+  setContaGoogleMock: comGuard(
+    (pessoa: 'pessoa_a' | 'pessoa_b', escopo: EscopoConcedido) => {
+      const { useGoogleAuth } = require('@/lib/stores/googleAuth') as typeof import('@/lib/stores/googleAuth');
+      const contas = useGoogleAuth.getState().contas;
+      useGoogleAuth.setState({
+        contas: {
+          ...contas,
+          [pessoa]: {
+            accessToken: 'mock-access-token-dev-web',
+            refreshToken: 'mock-refresh-token-dev-web',
+            expiraEm: Date.now() + 3600_000,
+            email: 'usuario.mock@example.com',
+            ultimaConexao: Date.now(),
+            invalido: false,
+            escoposConcedidos: escopo,
+          },
+        },
+      });
+    },
     undefined as void
   ),
 };

@@ -33,11 +33,25 @@ export interface EventoCalendar {
   descricao?: string;
 }
 
+// M37.2 (escrita): payload de criacao de evento. inicioIso/fimIso vem
+// em ISO 8601 com offset local; timeZone acompanha para o Google
+// interpretar o horario corretamente (default 'America/Sao_Paulo',
+// decisao M37.2 secao 9 -- fuso fixo Brasil).
+export interface NovoEventoInput {
+  titulo: string;
+  inicioIso: string;
+  fimIso: string;
+  local?: string;
+  descricao?: string;
+  timeZone: string;
+}
+
 export type ApiErrorCode =
   | 'invalido'
   | 'quota'
   | 'rate_limit'
   | 'erro_google'
+  | 'conflito'
   | 'rede';
 
 export class ApiError extends Error {
@@ -230,4 +244,243 @@ function parseRetryAfterMs(header: string | null): number | null {
   // Pode vir como HTTP-date; fallback para null e callsite usa
   // backoff exponencial.
   return null;
+}
+
+// M37.2 -- escrita no Google Calendar.
+
+interface EscritaOpcoes {
+  // Numero maximo de retries para 429 e 5xx. Default 1.
+  maxRetry?: number;
+  delay?: (ms: number) => Promise<void>;
+  fetchImpl?: typeof fetch;
+  // Id do evento gerado pelo cliente (idempotencia). Quando ausente,
+  // criarEvento gera um base32hex aleatorio. Reusar o mesmo id em
+  // retries garante que o Google deduplique (2a insercao com mesmo id
+  // volta 409) em vez de criar duplicata quando a rede falha no meio.
+  eventId?: string;
+}
+
+// Alfabeto base32hex (RFC 4648): 0-9 seguido de a-v. Google Calendar
+// aceita apenas estes caracteres em ids gerados pelo cliente, com 5 a
+// 1024 chars. 26 chars dao entropia suficiente para evitar colisao
+// acidental entre eventos distintos sem precisar de RNG criptografico
+// (idempotencia, nao seguranca).
+const BASE32HEX = '0123456789abcdefghijklmnopqrstuv';
+
+export function gerarEventoId(): string {
+  let out = '';
+  for (let i = 0; i < 26; i += 1) {
+    out += BASE32HEX[Math.floor(Math.random() * BASE32HEX.length)];
+  }
+  return out;
+}
+
+interface GoogleEventoInsertBody {
+  id: string;
+  summary: string;
+  location?: string;
+  description?: string;
+  start: { dateTime: string; timeZone: string };
+  end: { dateTime: string; timeZone: string };
+}
+
+function insertBodyFromInput(
+  input: NovoEventoInput,
+  eventId: string
+): GoogleEventoInsertBody {
+  const body: GoogleEventoInsertBody = {
+    id: eventId,
+    summary: input.titulo,
+    start: { dateTime: input.inicioIso, timeZone: input.timeZone },
+    end: { dateTime: input.fimIso, timeZone: input.timeZone },
+  };
+  if (typeof input.local === 'string' && input.local.length > 0) {
+    body.location = input.local;
+  }
+  if (typeof input.descricao === 'string' && input.descricao.length > 0) {
+    body.description = input.descricao;
+  }
+  return body;
+}
+
+// Cria um evento no calendar primary. Idempotente por eventId: um retry
+// interno (5xx/429) reusa o mesmo id, entao o Google deduplica em vez de
+// duplicar. Mesma tabela de erros HTTP do listarEventos, com adicao do
+// 409 -> ApiError 'conflito' (evento com este id ja existe).
+//
+// Em web __DEV__ com token mock, devolve um EventoCalendar sintetico sem
+// rede (Nivel A). Branch dead-code em release Android.
+export async function criarEvento(
+  token: string,
+  input: NovoEventoInput,
+  pessoa: PessoaAutor,
+  opcoes: EscritaOpcoes = {}
+): Promise<EventoCalendar> {
+  const eventId = opcoes.eventId ?? gerarEventoId();
+
+  if (isMockToken(token)) {
+    const evento: EventoCalendar = {
+      id: eventId,
+      titulo: input.titulo,
+      inicio: input.inicioIso,
+      fim: input.fimIso,
+    };
+    if (typeof input.local === 'string' && input.local.length > 0) {
+      evento.local = input.local;
+    }
+    if (typeof input.descricao === 'string' && input.descricao.length > 0) {
+      evento.descricao = input.descricao;
+    }
+    return evento;
+  }
+
+  const maxRetry = opcoes.maxRetry ?? 1;
+  const delay = opcoes.delay ?? sleepReal;
+  const doFetch = opcoes.fetchImpl ?? fetch;
+  const url = `${CALENDAR_BASE}/calendars/primary/events`;
+  const body = JSON.stringify(insertBodyFromInput(input, eventId));
+
+  let tentativas = 0;
+  while (true) {
+    let res: Response;
+    try {
+      res = await doFetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+      });
+    } catch {
+      throw new ApiError('rede');
+    }
+
+    if (res.status === 200 || res.status === 201) {
+      const raw = (await res.json()) as GoogleEventoRaw;
+      const evento = eventoFromRaw(raw);
+      if (evento === null) {
+        // Google aceitou mas devolveu payload sem campos minimos;
+        // reconstruimos a partir do input para nao perder o evento.
+        const fallback: EventoCalendar = {
+          id: typeof raw.id === 'string' ? raw.id : eventId,
+          titulo: input.titulo,
+          inicio: input.inicioIso,
+          fim: input.fimIso,
+        };
+        if (typeof input.local === 'string' && input.local.length > 0) {
+          fallback.local = input.local;
+        }
+        if (
+          typeof input.descricao === 'string' &&
+          input.descricao.length > 0
+        ) {
+          fallback.descricao = input.descricao;
+        }
+        return fallback;
+      }
+      return evento;
+    }
+
+    if (res.status === 401) {
+      useGoogleAuth.getState().marcarInvalido(pessoa);
+      throw new ApiError('invalido', await safeText(res));
+    }
+
+    if (res.status === 403) {
+      throw new ApiError('quota', await safeText(res));
+    }
+
+    if (res.status === 409) {
+      // Evento com este id ja existe: a insercao anterior (ou um retry)
+      // ja vingou. Idempotencia satisfeita -- tratamos como conflito
+      // para o caller decidir (toast "Evento ja existe").
+      throw new ApiError('conflito', await safeText(res));
+    }
+
+    if (res.status === 429 || res.status >= 500) {
+      if (tentativas >= maxRetry) {
+        throw new ApiError(
+          res.status === 429 ? 'rate_limit' : 'erro_google',
+          await safeText(res)
+        );
+      }
+      const baseMs = parseRetryAfterMs(res.headers.get('Retry-After'));
+      const backoffMs = baseMs ?? Math.min(1000 * 2 ** tentativas, 8000);
+      await delay(backoffMs);
+      tentativas += 1;
+      continue;
+    }
+
+    throw new ApiError('erro_google', await safeText(res));
+  }
+}
+
+// Apaga um evento do calendar primary pelo id. Idempotente: 404/410
+// (evento ja removido) resolve sem erro. Mesma tabela de erros do
+// criarEvento para 401/403/429/5xx. Mock em web __DEV__: no-op.
+export async function deletarEvento(
+  token: string,
+  id: string,
+  pessoa: PessoaAutor,
+  opcoes: EscritaOpcoes = {}
+): Promise<void> {
+  if (isMockToken(token)) {
+    return;
+  }
+
+  const maxRetry = opcoes.maxRetry ?? 1;
+  const delay = opcoes.delay ?? sleepReal;
+  const doFetch = opcoes.fetchImpl ?? fetch;
+  const url = `${CALENDAR_BASE}/calendars/primary/events/${encodeURIComponent(
+    id
+  )}`;
+
+  let tentativas = 0;
+  while (true) {
+    let res: Response;
+    try {
+      res = await doFetch(url, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      throw new ApiError('rede');
+    }
+
+    // 200/204 = removido; 404/410 = ja nao existe (idempotente).
+    if (
+      res.status === 200 ||
+      res.status === 204 ||
+      res.status === 404 ||
+      res.status === 410
+    ) {
+      return;
+    }
+
+    if (res.status === 401) {
+      useGoogleAuth.getState().marcarInvalido(pessoa);
+      throw new ApiError('invalido', await safeText(res));
+    }
+
+    if (res.status === 403) {
+      throw new ApiError('quota', await safeText(res));
+    }
+
+    if (res.status === 429 || res.status >= 500) {
+      if (tentativas >= maxRetry) {
+        throw new ApiError(
+          res.status === 429 ? 'rate_limit' : 'erro_google',
+          await safeText(res)
+        );
+      }
+      const baseMs = parseRetryAfterMs(res.headers.get('Retry-After'));
+      const backoffMs = baseMs ?? Math.min(1000 * 2 ** tentativas, 8000);
+      await delay(backoffMs);
+      tentativas += 1;
+      continue;
+    }
+
+    throw new ApiError('erro_google', await safeText(res));
+  }
 }

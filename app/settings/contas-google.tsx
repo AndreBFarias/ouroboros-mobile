@@ -98,6 +98,18 @@ function CartaoConta({ pessoa, conta, onRevogar }: CartaoContaProps) {
           >
             Conectado {rotuloDias(diasDesde(conta.ultimaConexao))}
           </Text>
+          <Text
+            style={{
+              color: colors.mutedDecor,
+              fontSize: typography.micro.size,
+              marginTop: spacing.xs,
+            }}
+            accessibilityLabel={`escopo google ${pessoa}`}
+          >
+            {conta.escoposConcedidos === 'write'
+              ? 'Permissão: leitura e escrita'
+              : 'Permissão: apenas leitura'}
+          </Text>
           <View style={{ marginTop: spacing.base, alignSelf: 'flex-start' }}>
             <Button
               label="Revogar"

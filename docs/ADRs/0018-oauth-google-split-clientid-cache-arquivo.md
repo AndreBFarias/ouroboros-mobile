@@ -233,6 +233,66 @@ o código lê `env.installed.client_id` em runtime via
   armadilha conhecida; só não é mais bloqueante na v1.0.
 - Setup detalhado em `docs/SETUP-OAUTH-GOOGLE.md`.
 
+## Adendo 2026-07-11 — M37.2 escrita: idempotência + atualização otimista
+
+Entrega da escrita (criar / deletar evento) pela rota `/agenda`.
+Detalha três pontos que a Decisão 3 deixou em aberto.
+
+### Escopo escalado — implementação real
+
+- A store passou a rastrear o escopo por conta em
+  `useGoogleAuth.contas[pessoa].escoposConcedidos`, tipado como um
+  **valor único** `'readonly' | 'write'` (opcional), não um array como
+  a Decisão 3 sugeria — o nível é mutuamente exclusivo, não uma lista.
+  O campo é derivado da string `scope` que o Google devolve no token
+  (`escopoCalendarDaResposta`).
+- `autenticar()` (conexão inicial) pede `calendar.events.readonly` →
+  `escoposConcedidos: 'readonly'`. O novo
+  `autenticarComEscopoEscrita(pessoa)` reexecuta o flow PKCE pedindo
+  `calendar.events` (read+write) → `'write'`. Google obriga
+  reconsentimento no browser; **não há upgrade silencioso**.
+- Contas conectadas antes de M37.2 não trazem o campo (`undefined`);
+  a UI trata `undefined` como readonly e mostra o banner "Reautorize
+  para criar eventos". O FAB verde "Novo evento" só aparece com escopo
+  `write`.
+
+### Idempotência da criação
+
+- `criarEvento` gera um **id de cliente base32hex** (`gerarEventoId`,
+  alfabeto `0-9a-v`, 26 chars — dentro das regras do Calendar API para
+  ids gerados pelo cliente) e o envia no corpo do POST. Um retry interno
+  (5xx/429) **reusa o mesmo id**, então o Google deduplica: a segunda
+  inserção com o mesmo id volta **409**, que mapeamos para
+  `ApiError('conflito')` em vez de criar duplicata.
+- Double-tap no botão "Criar" é coberto por `salvando` (botão
+  desabilitado durante o I/O). Não há fila offline (decisão M37.2 §9):
+  sem rede, o FAB avisa "Sem conexão" e não cria.
+- `deletarEvento` é idempotente por natureza: 404/410 (evento já
+  removido) resolvem sem erro.
+
+### Atualização otimista do cache
+
+- Após o POST 200/201, o evento entra imediatamente no estado da tela
+  **e** no cache local via `adicionarEventoNoCache` (novo helper de
+  `calendarCache.ts`), sem esperar o próximo `listarEventos` completo.
+  Delete espelha via `removerEventoDoCache`. Ambos são best-effort
+  (envoltos em `comTimeout`); falha de cache local não desfaz a escrita
+  remota.
+- **Nota sobre o path do cache:** a Decisão 2 descrevia
+  `media/cache/agenda-<pessoa>.json` (JSON único). Desde M37.1.2 /
+  ADR-0019 o cache é **um `.md` por evento** em
+  `agenda/<pessoa>/YYYY-MM-DD-<eventId>.md`; os novos helpers delegam a
+  `salvarEventoAgenda` / `apagarEventoAgenda` do módulo `vault/agenda`.
+  O JSON único da Decisão 2 é legado.
+
+### Roteamento por SeletorPara
+
+O `<SeletorPara>` (M33) no form de novo evento roteia a escrita para a
+conta Google da pessoa escolhida: `mim`/`casal` → conta ativa; `outra`
+→ a conta do parceiro (exige que esse parceiro esteja conectado com
+escopo `write`, senão toast orientando a reautorizar). Em modo sozinho o
+seletor fica oculto e o default `mim` (conta ativa) vale.
+
 ## Referências
 
 - ADR-0007 (Zero Telemetria, Zero Analytics)

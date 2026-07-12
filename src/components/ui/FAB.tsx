@@ -24,6 +24,10 @@ export interface FABProps {
   icon?: ReactNode;
   accessibilityLabel?: string;
   disabled?: boolean;
+  // M37.2: cor de fundo. Default roxo (colors.purple, acao primaria de
+  // navegacao). A rota /agenda passa colors.green para o FAB "Novo
+  // evento" (acao de criar), distinguindo-o visualmente do FABMenu roxo.
+  background?: string;
 }
 
 const SIZE = 56;
@@ -33,6 +37,7 @@ export function FAB({
   icon,
   accessibilityLabel = 'acao rapida',
   disabled = false,
+  background = colors.purple,
 }: FABProps) {
   const [pressed, setPressed] = useState(false);
   const insets = useSafeAreaInsets();
@@ -71,7 +76,7 @@ export function FAB({
           width: SIZE,
           height: SIZE,
           borderRadius: radius.fab,
-          backgroundColor: colors.purple,
+          backgroundColor: background,
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000',

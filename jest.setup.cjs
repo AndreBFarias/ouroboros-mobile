@@ -221,12 +221,19 @@ jest.mock('@gorhom/bottom-sheet', () => {
     React.createElement(RN.View, rest, children);
   const BottomSheetScrollView = ({ children, ...rest }) =>
     React.createElement(RN.ScrollView, rest, children);
+  // M37.2: BottomSheetTextInput vira TextInput. Antes ausente do mock
+  // global, o que forcava cada teste de sheet com campo de texto
+  // (SheetNovaTarefa, SheetNovoEvento) a re-mockar localmente e quebrava
+  // testes de tela cheia que renderizam esses sheets (app/agenda).
+  const BottomSheetTextInput = (props) =>
+    React.createElement(RN.TextInput, props);
   return {
     __esModule: true,
     default: BottomSheet,
     BottomSheetBackdrop,
     BottomSheetView,
     BottomSheetScrollView,
+    BottomSheetTextInput,
   };
 });
 
