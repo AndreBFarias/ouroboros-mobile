@@ -432,6 +432,15 @@ export const useSettings = create<SettingsState>()(
       name: 'ouroboros.settings.v2',
       storage: createJSONStorage(() => secureStorage),
       version: 2,
+      // R-RECAP-9b (2026-07-11): merge custom que roda em TODA hidratacao
+      // (nao so' em troca de versao, como o migrate). Sem ele, o zustand
+      // aplica o merge SHALLOW padrao (`{...currentState, ...persistedState}`),
+      // e o objeto `featureToggles` persistido (sem chaves novas de sprints
+      // posteriores) SUBSTITUI o default inteiro -> a chave nova hidrata
+      // `undefined`. Foi o que deixou `recapMusicaFundo` mudo por default em
+      // instalacoes ja-v2 (que nao disparam migrate). Reusa mesclarDefaults
+      // (deep-merge) e preserva as ACOES do store via spread de currentState.
+      merge: mergeSettingsPersistido,
       // Migracao conservadora v0/v1 -> v2. Le valores antigos se
       // existirem, mapeia para o novo shape preservando intencao do
       // usuario, preenche defaults v2 para chaves novas. Nunca crasha:
@@ -574,6 +583,30 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
     // valor cru, mas reescrevemos para garantir tipagem segura.
     hcAutopullUltimaRodada: lerUltimaRodada(ps.hcAutopullUltimaRodada),
   } as SettingsState;
+}
+
+// R-RECAP-9b (2026-07-11): funcao de merge da hidratacao do persist.
+// Exportada para o teste de regressao exercitar o CODIGO REAL (cabeado em
+// `merge` no persist config acima) em vez de uma replica tautologica.
+//
+// Roda em toda hidratacao. Guard obrigatorio: mesclarDefaults acessa campos
+// de `ps` (ex: ps.somVibracao) e crasharia com null/nao-objeto. O spread
+// de `currentState` PRIMEIRO preserva as ACOES do store (setFeatureToggle,
+// resetar, ...), que mesclarDefaults nao carrega (retorna so' campos de
+// estado); os campos de estado do deep-merge sobrescrevem apenas os campos
+// de estado, nunca as funcoes. Convive com o migrate (que roda ANTES na
+// pipeline do zustand para v0/v1 -> v2); mesclarDefaults e' idempotente.
+export function mergeSettingsPersistido(
+  persistedState: unknown,
+  currentState: SettingsState
+): SettingsState {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return currentState;
+  }
+  return {
+    ...currentState,
+    ...mesclarDefaults(persistedState as Record<string, unknown>),
+  };
 }
 
 // Helper: valida o shape persistido de hcAutopullUltimaRodada. Retorna
