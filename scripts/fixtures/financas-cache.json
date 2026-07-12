@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "gerado_em": "2026-05-01T22:18:40-03:00",
+  "periodo_referencia": "2026-04-27 a 2026-05-03",
+  "gasto_semana": 873.45,
+  "gasto_semana_anterior": 921.10,
+  "delta_textual": "abaixo da media",
+  "top_categorias": [
+    { "nome": "Mercado", "valor": 326.19, "percentual": 0.37 },
+    { "nome": "Delivery", "valor": 158.79, "percentual": 0.18 },
+    { "nome": "Farmacia", "valor": 104.0, "percentual": 0.12 },
+    { "nome": "Transporte", "valor": 89.6, "percentual": 0.10 },
+    { "nome": "Pets", "valor": 75.0, "percentual": 0.09 }
+  ],
+  "ultimas_transacoes": [
+    {
+      "data": "2026-05-01",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 57.86,
+      "destino": "compras online",
+      "categoria": "Compras Online"
+    },
+    {
+      "data": "2026-04-30",
+      "autor": "pessoa_b",
+      "tipo": "credito",
+      "valor": 12.5,
+      "destino": "estorno cashback",
+      "categoria": "Estorno"
+    },
+    {
+      "data": "2026-04-30",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 179.6,
+      "destino": "mercado generico",
+      "categoria": "Mercado"
+    },
+    {
+      "data": "2026-04-29",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 46.99,
+      "destino": "transferencia",
+      "categoria": "Outros"
+    },
+    {
+      "data": "2026-04-29",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 133.81,
+      "destino": "supermercado generico",
+      "categoria": "Mercado"
+    },
+    {
+      "data": "2026-04-28",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 50.0,
+      "destino": "transferencia",
+      "categoria": "Outros"
+    },
+    {
+      "data": "2026-04-28",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 25.0,
+      "destino": "agropecuaria local",
+      "categoria": "Pets"
+    },
+    {
+      "data": "2026-04-28",
+      "autor": "pessoa_b",
+      "tipo": "despesa",
+      "valor": 58.79,
+      "destino": "delivery generico",
+      "categoria": "Delivery"
+    },
+    {
+      "data": "2026-04-27",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 12.78,
+      "destino": "supermercado generico",
+      "categoria": "Mercado"
+    },
+    {
+      "data": "2026-04-27",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 52.0,
+      "destino": "drogaria local",
+      "categoria": "Farmacia"
+    },
+    {
+      "data": "2026-04-27",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 25.0,
+      "destino": "agropecuaria local",
+      "categoria": "Pets"
+    },
+    {
+      "data": "2026-04-27",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 52.0,
+      "destino": "drogaria local",
+      "categoria": "Farmacia"
+    },
+    {
+      "data": "2026-04-26",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 27.0,
+      "destino": "loja generica",
+      "categoria": "Outros"
+    },
+    {
+      "data": "2026-04-26",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 20.38,
+      "destino": "concessionaria energia",
+      "categoria": "Energia"
+    },
+    {
+      "data": "2026-04-26",
+      "autor": "pessoa_b",
+      "tipo": "despesa",
+      "valor": 19.8,
+      "destino": "transporte por app",
+      "categoria": "Transporte"
+    },
+    {
+      "data": "2026-04-25",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 89.9,
+      "destino": "mercado generico",
+      "categoria": "Mercado"
+    },
+    {
+      "data": "2026-04-25",
+      "autor": "pessoa_b",
+      "tipo": "despesa",
+      "valor": 34.5,
+      "destino": "delivery generico",
+      "categoria": "Delivery"
+    },
+    {
+      "data": "2026-04-24",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 41.2,
+      "destino": "transporte por app",
+      "categoria": "Transporte"
+    },
+    {
+      "data": "2026-04-24",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 65.4,
+      "destino": "mercado generico",
+      "categoria": "Mercado"
+    },
+    {
+      "data": "2026-04-24",
+      "autor": "pessoa_a",
+      "tipo": "despesa",
+      "valor": 28.5,
+      "destino": "delivery generico",
+      "categoria": "Delivery"
+    }
+  ]
+}

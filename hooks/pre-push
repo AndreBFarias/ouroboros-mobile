@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Pre-push hook: anonimato (Regra -1) + smoke completo antes de push.
+# check_anonimato.sh explicito para fail-fast em strings proibidas
+# (atribuicao de autoria, nomes reais, etc) antes do smoke pesado.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo ">> anonimato pre-push"
+./scripts/check_anonimato.sh
+
+./scripts/smoke.sh
+
+# R-AUDIT-CI-GATES (2026-07-11): encadeia o hook global de identidade
+# quando presente (mesma logica do hooks/pre-commit). No-op silencioso se
+# ausente. Sentinela previne recursao. O pre-push global recebe os mesmos
+# argumentos ($remote $url) e herda o stdin (lista de refs).
+GLOBAL_HOOK="${XDG_CONFIG_HOME:-$HOME/.config}/git/hooks/pre-push"
+if [[ -x "$GLOBAL_HOOK" && -z "${OUROBOROS_GLOBAL_HOOK:-}" ]]; then
+  OUROBOROS_GLOBAL_HOOK=1 "$GLOBAL_HOOK" "$@" || exit $?
+fi

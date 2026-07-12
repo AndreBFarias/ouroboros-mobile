@@ -1,0 +1,48 @@
+name: ci
+
+# R-AUDIT-CI-GATES (2026-07-11). Gate de qualidade server-side: roda
+# ./scripts/smoke.sh (anonimato Regra -1, dados de teste, strings UI PT-BR
+# acentuadas, contract drift, tsc, eslint, jest) em todo PR e push pra
+# main. Coexiste com anonymity-check.yml (que audita metadados de commit).
+#
+# Quando marcado como required check em branch protection (o check name e'
+# o nome do job: "quality-gate"; ver scripts/setup-branch-protection.sh),
+# um PR com tsc vermelho, teste falhando, string UI sem acento ou mencao a
+# IA no fonte NAO mergeia. E' a rede que OBRIGA os invariantes que ate
+# aqui so' existiam como convencao manual (smoke rodado a mao) e hooks
+# locais dormentes.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install npm deps
+        run: npm ci --legacy-peer-deps
+
+      - name: Smoke (anonimato + PT-BR + test-data + tsc + eslint + jest + doctor de hooks)
+        run: ./scripts/smoke.sh

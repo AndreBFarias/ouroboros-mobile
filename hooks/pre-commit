@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Pre-commit hook: bloqueia commit se anonimato ou dados de teste estiverem
+# violados. Roda lint nos arquivos staged quando o projeto existir.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+./scripts/check_anonimato.sh
+./scripts/check_test_data.sh
+
+# M-PT-BR-AUDIT (2026-05-04): bloqueia commit com strings UI sem
+# acentuacao canonica em src/ ou app/. Override por linha via
+# // ptbr-allow: <razao> ou exclusao em batch via .ptbr-violations.txt
+python3 scripts/check_strings_ui_ptbr.py
+
+# R-SEC-5 (2026-05-19): bloqueia commit que introduz secret detectavel
+# por gitleaks (tokens AWS, GCP, GitHub, OAuth, chaves privadas etc).
+# Degrada graciosamente se gitleaks ausente: warning, sem bloqueio.
+# Bypass intencional via git commit --no-verify (uso raro, registrado).
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --no-banner --redact || {
+    echo "ERRO: gitleaks detectou possivel secret no diff staged."
+    echo "      Aborte o commit ou rode com --no-verify se for falso positivo."
+    exit 1
+  }
+elif [[ -x /tmp/gitleaks ]]; then
+  /tmp/gitleaks protect --staged --no-banner --redact || {
+    echo "ERRO: gitleaks detectou possivel secret no diff staged."
+    echo "      Aborte o commit ou rode com --no-verify se for falso positivo."
+    exit 1
+  }
+else
+  echo "AVISO: gitleaks nao instalado. Instale via docs/SECURITY.md secao 1.2 para protecao anti-leak."
+fi
+
+if [[ -f package.json ]]; then
+  STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
+  if [[ -n "$STAGED" ]]; then
+    # AUDIT-T3-DX D1 (2026-05-15): auto-formato silencioso via prettier
+    # nos arquivos staged antes do lint. Filosofia identica ao bloco
+    # anonimato/whitespace existente: nao bloqueia, apenas formata e
+    # re-stagea. Se prettier falhar (binario ausente), ignora silencioso
+    # para nao quebrar commit em maquina sem node_modules.
+    npx --no-install prettier --write --log-level=warn $STAGED 2>/dev/null || true
+    git add $STAGED
+    npx --no-install eslint $STAGED || { echo "ERRO: eslint falhou nos arquivos staged"; exit 1; }
+  fi
+fi
+
+# R-AUDIT-CI-GATES (2026-07-11): quando core.hooksPath aponta pro projeto
+# (via scripts/install-hooks.sh), o git so' invoca ESTE hook — o hook
+# global de identidade do usuario deixa de rodar sozinho (exclusao mutua).
+# Encadeia-o aqui quando presente e executavel, propagando o exit code.
+# No-op silencioso se ausente (CI, outra maquina): nada quebra por falta do
+# global. A sentinela OUROBOROS_GLOBAL_HOOK previne recursao caso o global
+# algum dia delegue de volta pra este repo.
+GLOBAL_HOOK="${XDG_CONFIG_HOME:-$HOME/.config}/git/hooks/pre-commit"
+if [[ -x "$GLOBAL_HOOK" && -z "${OUROBOROS_GLOBAL_HOOK:-}" ]]; then
+  OUROBOROS_GLOBAL_HOOK=1 "$GLOBAL_HOOK" "$@" || exit $?
+fi
