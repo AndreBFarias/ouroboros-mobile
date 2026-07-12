@@ -32,7 +32,7 @@ import {
   type ManifestEntry,
   type SnapshotSettings,
 } from '@/lib/services/exportarVault';
-import { useSettings } from '@/lib/stores/settings';
+import { useSettings, DEFAULT_STATE_V2 } from '@/lib/stores/settings';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { usePessoa } from '@/lib/stores/pessoa';
 
@@ -305,12 +305,26 @@ export function aplicarSnapshot(
 
   // Aplica em ordem: settings -> onboarding -> pessoa. setState
   // recebe shape parcial; zustand mescla com mutators existentes.
+  //
+  // R-RECAP-9b (2026-07-11): deep-merge de cada sub-objeto com os defaults
+  // v2 ANTES de aplicar. Restaurar um backup ANTIGO (exportado antes de uma
+  // sprint que adicionou um featureToggle/chave nova) traz o objeto sem a
+  // chave nova; sem o merge, o setState wholesale substituiria o objeto
+  // inteiro e a chave nova hidrataria `undefined` (mesma classe de bug que
+  // o `merge` custom do persist resolveu -- esta e' a segunda porta, via
+  // restore). O spread do default PRIMEIRO back-filla as chaves ausentes; a
+  // escolha organica do snapshot vence o default (spread do snapshot por
+  // cima). Spread de undefined/null e' no-op, entao endurece tambem contra
+  // snapshot corrompido/parcial (sub-objeto ausente cai no default limpo).
   useSettings.setState({
-    somVibracao: snap.settings.somVibracao,
-    pessoa: snap.settings.pessoa,
-    featureToggles: snap.settings.featureToggles,
-    privacidade: snap.settings.privacidade,
-    midia: snap.settings.midia,
+    somVibracao: { ...DEFAULT_STATE_V2.somVibracao, ...snap.settings.somVibracao },
+    pessoa: { ...DEFAULT_STATE_V2.pessoa, ...snap.settings.pessoa },
+    featureToggles: {
+      ...DEFAULT_STATE_V2.featureToggles,
+      ...snap.settings.featureToggles,
+    },
+    privacidade: { ...DEFAULT_STATE_V2.privacidade, ...snap.settings.privacidade },
+    midia: { ...DEFAULT_STATE_V2.midia, ...snap.settings.midia },
   });
   // R-INT-3-HC-NOTIF-META-PASSOS: campo aditivo. Snaps antigos
   // (exportados antes da sprint) nao tem metaPassosDia; quando ausente

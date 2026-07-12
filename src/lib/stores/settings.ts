@@ -241,7 +241,11 @@ export interface SettingsExportShape {
 // - somVibracao: tudo TRUE (geral mestre on, 3 contextuais on).
 // - featureToggles: tudo TRUE excepto widgetMostraNome (privacidade).
 // - cap de midia em 4 itens por registro.
-const DEFAULT_STATE_V2: Omit<
+// R-RECAP-9b (2026-07-11): exportado para o back-fill do restore de
+// snapshot (aplicarSnapshot em restaurarVault.ts). Restaurar um backup
+// antigo substituiria os sub-objetos inteiros; o restore agora faz
+// deep-merge com estes defaults para nao reintroduzir chaves undefined.
+export const DEFAULT_STATE_V2: Omit<
   SettingsState,
   | 'setSomVibracao'
   | 'setPessoa'
