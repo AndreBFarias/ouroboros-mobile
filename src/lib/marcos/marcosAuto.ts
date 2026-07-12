@@ -25,6 +25,11 @@ import { saveMarco } from '@/lib/marcos/saveMarco';
 import { hashMarcoConteudo } from '@/lib/marcos/hash';
 import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import {
+  dataLocalYmd,
+  isoToDataLocalYmd,
+  ymdMenosDias,
+} from '@/lib/datetime/local';
+import {
   DiarioEmocionalSchema,
   type DiarioEmocionalMeta,
 } from '@/lib/schemas/diario_emocional';
@@ -118,10 +123,13 @@ function avaliarSeteDiasConsecutivos(
   // até hoje (ou até ontem, contando ida até hoje).
   const ultimos = filtrados.slice(-7);
   const datas = new Set(ultimos);
+  // Janela ancorada em BRT: humor.data e YMD-local, entao "hoje" e a
+  // janela dos ultimos 7 dias tambem precisam ser YMD-local (nao UTC).
+  // Antes, toISOString gerava YMD UTC e a noite (21h-23h59 BRT) o i=0
+  // caia no dia seguinte, fora do conjunto -> o marco nunca disparava.
+  const hojeYmd = dataLocalYmd(agora);
   for (let i = 0; i < 7; i++) {
-    const d = new Date(agora);
-    d.setDate(d.getDate() - i);
-    const ymd = d.toISOString().slice(0, 10);
+    const ymd = ymdMenosDias(hojeYmd, i);
     if (!datas.has(ymd)) return null;
   }
   return {
@@ -166,16 +174,20 @@ function avaliarPrimeiraConquistaSemana(
   autor: PessoaAutor,
   agora: Date
 ): CandidatoMarco | null {
-  // Calcula segunda feira da semana atual.
-  const segunda = new Date(agora);
-  const dia = segunda.getDay(); // 0=dom, 1=seg, ... 6=sab
-  const diff = dia === 0 ? -6 : 1 - dia;
-  segunda.setDate(segunda.getDate() + diff);
-  segunda.setHours(0, 0, 0, 0);
+  // Segunda-feira da semana corrente ancorada em BRT. O dia-da-semana de
+  // uma data-calendario e o mesmo em qualquer fuso quando lido em UTC-
+  // midnight; assim a fronteira da semana deixa de depender do fuso do
+  // runtime (CI-UTC e device-BRT concordam).
+  const hojeYmd = dataLocalYmd(agora);
+  const [ano, mes, diaDoMes] = hojeYmd.split('-').map((x) => parseInt(x, 10));
+  const diaSemana = new Date(Date.UTC(ano, mes - 1, diaDoMes)).getUTCDay(); // 0=dom
+  const segundaYmd = ymdMenosDias(hojeYmd, diaSemana === 0 ? 6 : diaSemana - 1);
 
   const conquistas = diarios
     .filter((d) => d.autor === autor && d.modo === 'conquista')
-    .filter((d) => new Date(d.data).getTime() >= segunda.getTime())
+    // Converte o ISO absoluto do diario para o YMD-BRT em que a conquista
+    // foi vivida; comparacao lexicografica de YMD == cronologica.
+    .filter((d) => isoToDataLocalYmd(d.data) >= segundaYmd)
     .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0));
   if (conquistas.length >= 1) {
     return {

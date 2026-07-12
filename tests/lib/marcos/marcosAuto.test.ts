@@ -2,6 +2,8 @@
 // e o dedupe via hash.
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 import type { Marco } from '@/lib/schemas/marco';
+import type { HumorMeta } from '@/lib/schemas/humor';
+import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 
 const mockListarTreinos = jest.fn();
 const mockListarMarcos = jest.fn();
@@ -186,5 +188,165 @@ describe('verificarMarcosAuto', () => {
     expect(arg.meta.auto).toBe(true);
     expect(arg.meta.origem).toBe('client');
     expect(arg.meta.hash).toMatch(/^[0-9a-f]{12}$/);
+  });
+});
+
+// Fabrica um retorno de readVaultFile para um arquivo de humor: o
+// modulo consome apenas r.meta, entao devolvemos a meta minima valida
+// com o campo data (YMD-local BRT).
+function fakeHumor(
+  data: string,
+  autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'
+): { meta: HumorMeta } {
+  return {
+    meta: {
+      tipo: 'humor',
+      data,
+      autor,
+      humor: 3,
+      energia: 3,
+      ansiedade: 3,
+      foco: 3,
+      tags: [],
+    },
+  };
+}
+
+// Fabrica um retorno de readVaultFile para um diario emocional em modo
+// conquista. Campo data e ISO8601 absoluto (instante), diferente do
+// humor (YMD puro). O readVaultFile e mockado (bypassa o schema); o
+// criterio 5 le apenas autor/modo/data, entao a meta minima basta.
+// Cast via unknown por ser um objeto parcial de proposito.
+function fakeConquista(
+  dataIso: string,
+  autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'
+): { meta: DiarioEmocionalMeta } {
+  return {
+    meta: {
+      tipo: 'diario_emocional',
+      data: dataIso,
+      autor,
+      modo: 'conquista',
+    } as unknown as DiarioEmocionalMeta,
+  };
+}
+
+// Semeia listVaultFolder + readVaultFile a partir de uma lista de YMDs
+// de humor consecutivos. Os arquivos vivem em markdown/humor-<ymd>.md
+// (matchesFeaturePrefix 'humor-'); readVaultFile devolve a meta por URI.
+function semearHumores(ymds: string[]): void {
+  mockListVaultFolder.mockResolvedValue(
+    ymds.map((d) => `${VAULT_ROOT}/markdown/humor-${d}.md`)
+  );
+  mockReadVaultFile.mockImplementation(async (uri: string) => {
+    const m = /humor-(\d{4}-\d{2}-\d{2})\.md$/.exec(uri);
+    return m ? fakeHumor(m[1]) : null;
+  });
+}
+
+// Semeia diarios em modo conquista a partir de instantes ISO. Cada
+// conquista vira markdown/diario-<i>.md (matchesFeaturePrefix 'diario-');
+// sem arquivos de humor, so o criterio 5 pode disparar.
+function semearConquistas(
+  isos: string[],
+  autor: 'pessoa_a' | 'pessoa_b' = 'pessoa_a'
+): void {
+  const porUri = new Map<string, { meta: DiarioEmocionalMeta }>();
+  const uris = isos.map((iso, i) => {
+    const uri = `${VAULT_ROOT}/markdown/diario-${i}.md`;
+    porUri.set(uri, fakeConquista(iso, autor));
+    return uri;
+  });
+  mockListVaultFolder.mockResolvedValue(uris);
+  mockReadVaultFile.mockImplementation(async (uri: string) => porUri.get(uri) ?? null);
+}
+
+describe('avaliarSeteDiasConsecutivos (criterio 3, ancorado em BRT)', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  // 7 dias BRT consecutivos terminando em 2026-07-10.
+  const seteDias = [
+    '2026-07-04',
+    '2026-07-05',
+    '2026-07-06',
+    '2026-07-07',
+    '2026-07-08',
+    '2026-07-09',
+    '2026-07-10',
+  ];
+
+  it('cria "Sete dias acompanhando" as 23:30 BRT (UTC ja virou o dia)', async () => {
+    // 2026-07-11T02:30:00Z = 23:30 BRT de 2026-07-10 (janela 21h-23h59).
+    // No codigo velho a janela UTC do i=0 e 2026-07-11, fora do conjunto
+    // -> nenhum marco. Ancorado em BRT, o i=0 e 2026-07-10 -> dispara.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-11T02:30:00Z'));
+    semearHumores(seteDias);
+
+    await verificarMarcosAuto();
+
+    const houveSeteDias = mockSaveMarco.mock.calls.some((c) => {
+      const arg = c[0] as { meta: Marco };
+      return arg.meta.descricao.includes('Sete dias acompanhando');
+    });
+    expect(houveSeteDias).toBe(true);
+  });
+
+  it('cria "Sete dias acompanhando" ao meio-dia BRT (nao-regressao)', async () => {
+    // 2026-07-10T15:00:00Z = 12:00 BRT; UTC e BRT no mesmo dia. Caso que
+    // ja funcionava antes do fix: garante que a mudanca nao regride.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-10T15:00:00Z'));
+    semearHumores(seteDias);
+
+    await verificarMarcosAuto();
+
+    const houveSeteDias = mockSaveMarco.mock.calls.some((c) => {
+      const arg = c[0] as { meta: Marco };
+      return arg.meta.descricao.includes('Sete dias acompanhando');
+    });
+    expect(houveSeteDias).toBe(true);
+  });
+});
+
+describe('avaliarPrimeiraConquistaSemana (criterio 5, fronteira BRT)', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('conquista vivida na segunda BRT da semana corrente dispara o marco', async () => {
+    // agora = qua 2026-07-15 12:00 BRT; segunda da semana = 2026-07-13.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-15T15:00:00Z'));
+    // Conquista vivida seg 2026-07-13 12:00 BRT (dentro da semana).
+    semearConquistas(['2026-07-13T15:00:00Z']);
+
+    await verificarMarcosAuto();
+
+    const houve = mockSaveMarco.mock.calls.some((c) => {
+      const arg = c[0] as { meta: Marco };
+      return arg.meta.descricao.includes('Primeira conquista');
+    });
+    expect(houve).toBe(true);
+  });
+
+  it('conquista do domingo BRT (semana anterior) NAO conta, mesmo com UTC ja em segunda', async () => {
+    // agora = qua 2026-07-15 12:00 BRT; segunda da semana = 2026-07-13.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-15T15:00:00Z'));
+    // Instante 2026-07-13T01:00Z: em UTC ja e segunda 13, mas em BRT e
+    // domingo 2026-07-12 22:00 (semana anterior). A fronteira BRT exclui;
+    // no codigo antigo (UTC) a conquista contaria na semana corrente.
+    semearConquistas(['2026-07-13T01:00:00Z']);
+
+    await verificarMarcosAuto();
+
+    const houve = mockSaveMarco.mock.calls.some((c) => {
+      const arg = c[0] as { meta: Marco };
+      return arg.meta.descricao.includes('Primeira conquista');
+    });
+    expect(houve).toBe(false);
   });
 });
