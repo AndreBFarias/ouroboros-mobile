@@ -1,0 +1,21 @@
+# Lista de arquivos com violacoes PT-BR pendentes de retrofit em batch.
+# Excluidos temporariamente do check_strings_ui_ptbr.py para nao quebrar smoke.
+# Cada linha e um path relativo a raiz do repo.
+# Linhas iniciadas por '#' sao comentario.
+#
+# RETROFIT FECHADO 2026-05-04 EM A2.x — todos os 3 arquivos corrigidos:
+#   - src/lib/diario/permissions.ts: 'permissao de microfone negada'
+#     -> 'Permissão de microfone negada.'
+#   - app/_dev/gauntlet.tsx: extinto (refatorado por A2 — agora wrapper).
+#   - src/lib/dev/gauntletDashboard.tsx: titulo="Acoes" -> titulo="Ações".
+#
+# Lista vazia. Se aparecer linha aqui no futuro, e exclusao temporaria
+# de batch novo a ser fechado em sub-sprint.
+#
+# H2 ADR-0023 (M-VAULT-LAYOUT-POR-TIPO): comentarios documentam paths
+# literais (markdown/, m4a/, mp4/, gif/) e seus prefixos (audio-,
+# video-, exercicio-, diario-). Sao identificadores de filename, nao
+# strings UI. ptbr-audit detecta tokens 'audio'/'video'/'diario'/
+# 'exercicio' em jsx-text dentro de comentarios. Ignorado em batch.
+src/lib/boot/migrarVaultLayoutPorTipo.ts
+src/lib/boot/reagendamento.ts

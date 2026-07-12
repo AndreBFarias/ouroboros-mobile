@@ -1,0 +1,40 @@
+# Maestro flow: onboarding 4 frames + primeiro humor + primeiro evento.
+# Alvo: <90s end-to-end. Roda apos limpar dados (uninstall + reinstall
+# da APK) para garantir que o app cai na rota de onboarding.
+appId: com.ouroboros.mobile
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Bem-vindo ao Ouroboros"
+- tapOn: "Próximo"
+- assertVisible: "Como você usa o app"
+- tapOn: "Sozinho"
+- tapOn: "Próximo"
+- assertVisible: "Como prefere ser chamado"
+- inputText: "Pessoa A"
+- tapOn: "Próximo"
+- assertVisible: "Onde fica o Vault"
+- tapOn: "Selecionar pasta"
+- # SAF picker -- Maestro nao automatiza picker do sistema.
+  # Caller deve preparar o emulador/celular com pasta ja selecionada.
+  takeScreenshot: "onboarding-saf-picker"
+- # Stub: assume que o usuario completa o picker manualmente em <30s
+  # ou que o estado SecureStore ja tem vaultRoot pre-configurado.
+  waitForAnimationToEnd: 30000
+- assertVisible: "Tela 01"
+- # Primeiro humor rapido
+- tapOn: "Humor"
+- assertVisible: "Como esta o humor agora"
+- tapOn:
+    point: "50%,40%"
+- tapOn: "Salvar"
+- assertVisible: "Salvo"
+- # Primeiro evento positivo
+- tapOn: "Hoje"
+- tapOn:
+    id: "fab"
+- tapOn: "Evento positivo"
+- inputText: "Primeiro registro do app"
+- tapOn: "Salvar"
+- assertVisible: "Anotado"
+- takeScreenshot: "onboarding-completo-final"

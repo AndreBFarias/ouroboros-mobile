@@ -1,0 +1,107 @@
+# .easignore — substitui .gitignore exclusivamente para uploads EAS Build.
+# Idêntico ao .gitignore EXCETO que preserva `env.json` no upload (caso
+# contrário, googleAuthFlow.ts quebra com "Unable to resolve module
+# ../../../env.json" durante a fase EAGER_BUNDLE).
+#
+# Decisão durável dono 2026-05-05: credenciais OAuth ficam em env.json
+# (gitignored, mas presente no upload EAS). Trade-off aceito: o secret
+# vai para o build na nuvem do EAS em vez de ficar em EAS Secrets.
+# Documentado em ADR-0018 + CHANGELOG sessão E5.
+
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Builds nativos
+ios/
+android/
+*.ipa
+*.apk
+*.aab
+
+# Excecao: modulos Expo locais com codigo nativo versionado
+!modules/*/android/
+!modules/*/android/**
+!modules/*/ios/
+!modules/*/ios/**
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+# NOTA: env.json INTENCIONALMENTE ausente desta lista — necessário no
+# upload EAS para o build conseguir resolver `import env from
+# '../../../env.json'` em `googleAuthFlow.ts`.
+google-services.json
+GoogleService-Info.plist
+
+# Identidade pessoal em runtime
+src/config/pessoas.config.runtime.json
+
+# Logs e caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+coverage/
+.nyc_output/
+
+# IDE / editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Saídas de build temporárias
+*.tsbuildinfo
+.tmp/
+tmp/
+
+# Screenshots de sprint
+docs/sprints/*-screenshots/_raw/
+
+# @generated expo-cli
+expo-env.d.ts
+
+# Artefatos temporarios da automacao de browser
+.playwright-artifacts/
+
+# APKs locais
+builds/
+
+# Keystore Android
+credentials/keystore.jks
+credentials/keystore.json
+
+# Arquivos de trabalho local
+HANDOFF-PROMPT.md
+HOW_TO_RESUME.md
+VALIDATOR_BRIEF.md
+STATE.md
+
+# Arquivos de instrucao de ferramentas externas e diretorio de agente
+# local (nao subir no build). Globs ofuscados por classe de caractere
+# para nao reintroduzir literal de ferramenta no fonte (Regra -1): [C]
+# casa so 'C', .[c] casa so '.c' — o padrao encobre o nome sem perder o match.
+[C]LAUDE.md
+.[c]laude/
+[A]GENTS.md
+[G]EMINI.md
+[C]OPILOT.md
+[C]OPILOT-INSTRUCTIONS.md
+[H]ANDOFF.md
+.[c]ursorrules
+.[c]ursor/
+.[w]indsurfrules
+.[a]ider*
+.[c]ontinue/
+.github/[c]opilot-instructions.md

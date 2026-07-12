@@ -1,0 +1,6 @@
+/* M-GAUNTLET-FAST-BOOT: cor de fundo Dracula bgPage carregada antes
+   do React montar evita white flash. Comentarios sem acento. */
+html, body {
+  background-color: #14151a;
+  color-scheme: dark;
+}

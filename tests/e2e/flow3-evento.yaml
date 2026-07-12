@@ -1,0 +1,22 @@
+# Maestro flow 3 (BRIEFING §5): Evento positivo com lugar.
+# Alvo: <25s do tap no FAB ate confirmacao "Anotado".
+appId: com.ouroboros.mobile
+---
+- launchApp
+- assertVisible: "Hoje"
+- tapOn:
+    id: "fab"
+- tapOn: "Evento"
+- assertVisible: "Positivo ou negativo"
+- tapOn: "Positivo"
+- inputText: "Pizza com amigos no Sao Domingos"
+- # Bairro: opcional -- pode vir do GPS auto-detect (M09).
+#   Sem GPS, deixar vazio ou digitar.
+- tapOn: "Buscar bairro"
+- inputText: "Saude"
+- tapOn: "Confirmar"
+- # Midia opcional (M07.x exige se for marcar como conquista).
+- # Aqui apenas evento positivo simples sem midia.
+- tapOn: "Salvar"
+- assertVisible: "Anotado"
+- takeScreenshot: "flow3-evento-final"

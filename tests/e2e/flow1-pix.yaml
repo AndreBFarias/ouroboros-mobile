@@ -1,0 +1,20 @@
+# Maestro flow 1 (BRIEFING §5): PIX recebido via share intent.
+# Alvo: <5s do tap no comprovante ate confirmacao "Salvo no Vault".
+appId: com.ouroboros.mobile
+---
+- launchApp
+- # Pre-condicao: app deve ter recebido um intent SEND com mimeType
+#   image/png contendo screenshot do comprovante. Maestro nao
+#   automatiza intents externos -- caller dispara via:
+#   adb shell am start -a android.intent.action.SEND \
+#     -t image/png --eu android.intent.extra.STREAM file:///sdcard/Pictures/pix-comprovante.png \
+#     -n com.ouroboros.mobile/.ShareReceiver
+- assertVisible: "Receber compartilhamento"
+- assertVisible: "Comprovante"
+- tapOn: "Comprovante"
+- assertVisible: "Categoria"
+- tapOn: "PIX"
+- inputText: "Recebimento de fulano"
+- tapOn: "Salvar"
+- assertVisible: "Salvo no Vault"
+- takeScreenshot: "flow1-pix-final"

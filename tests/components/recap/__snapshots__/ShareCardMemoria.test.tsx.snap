@@ -1,0 +1,109 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ShareCardMemoria (R-RECAP-8) snapshot de estrutura do slide abertura (quadrado) 1`] = `
+<View
+  accessibilityLabel="share card abertura quadrado"
+  collapsable={false}
+  style={
+    [
+      {
+        "backgroundColor": "#1a0d2e",
+        "overflow": "hidden",
+        "width": "100%",
+      },
+      {
+        "aspectRatio": 1,
+      },
+    ]
+  }
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#1a0d2e",
+        "bottom": 0,
+        "left": 0,
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "backgroundColor": "#3a1755",
+        "borderRadius": 9999,
+        "height": "55%",
+        "left": "-25%",
+        "opacity": 0.5,
+        "position": "absolute",
+        "top": "-20%",
+        "width": "90%",
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "backgroundColor": "#0f4d6b",
+        "borderRadius": 9999,
+        "bottom": "-20%",
+        "height": "55%",
+        "opacity": 0.35,
+        "position": "absolute",
+        "right": "-25%",
+        "width": "90%",
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flex": 1,
+        "justifyContent": "center",
+        "paddingHorizontal": 40,
+        "paddingVertical": 48,
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "gap": 6,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#fdf6e3",
+            "fontFamily": "JetBrainsMono_500Medium",
+            "fontSize": 32,
+            "lineHeight": 44,
+            "textAlign": "center",
+          }
+        }
+      >
+        Olhe o que ficou.
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#fdf6e3",
+            "fontFamily": "JetBrainsMono_400Regular",
+            "fontSize": 16,
+            "lineHeight": 26,
+            "opacity": 0.85,
+            "textAlign": "center",
+          }
+        }
+      >
+        Dessa semana.
+      </Text>
+    </View>
+  </View>
+</View>
+`;

@@ -1,0 +1,22 @@
+# Maestro flow 2 (BRIEFING §5): Diario emocional modo trigger.
+# Alvo: <30s do tap no FAB ate confirmacao "Registrado".
+appId: com.ouroboros.mobile
+---
+- launchApp
+- assertVisible: "Hoje"
+- tapOn:
+    id: "fab"
+- tapOn: "Diario emocional"
+- assertVisible: "Trigger ou vitoria"
+- tapOn: "Trigger"
+- inputText: "Discussao com chefe"
+- # Slider intensidade (1-5). Maestro nao manipula slider via swipe
+#   confiavel; o teste assume default 3 que e razoavel para trigger.
+- tapOn: "Estrategia que ajudou"
+- inputText: "Caminhada de 10 minutos"
+- # Tags emocoes -- ChipGroup multi
+- tapOn: "Raiva"
+- tapOn: "Ansiedade"
+- tapOn: "Salvar"
+- assertVisible: "Registrado"
+- takeScreenshot: "flow2-trigger-final"

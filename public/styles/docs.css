@@ -1,0 +1,208 @@
+/* docs.css — folha de estilo dos documentos HTML servidos via GitHub Pages
+   (privacy.html, terms.html). Paleta Dracula identica ao app mobile
+   (docs/BRIEFING.md secao 3). JetBrains Mono local em public/fonts/.
+   Comentarios sem acento (convencao shell/CI). */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono_400Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono_500Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg-page: #14151a;
+  --bg: #282a36;
+  --bg-alt: #1e1f29;
+  --bg-elev: #44475a;
+  --fg: #f8f8f2;
+  --muted: #c9c9cc;
+  --muted-decor: #6272a4;
+  --purple: #bd93f9;
+  --pink: #ff79c6;
+  --cyan: #8be9fd;
+  --green: #50fa7b;
+  --yellow: #f1fa8c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-page);
+  color: var(--fg);
+  color-scheme: dark;
+  font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+
+header.doc-header {
+  border-bottom: 1px solid var(--bg-elev);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+header.doc-header h1 {
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: var(--purple);
+  letter-spacing: -0.01em;
+}
+
+header.doc-header p.meta {
+  margin: 0;
+  color: var(--muted-decor);
+  font-size: 14px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 40px 0 16px;
+  color: var(--cyan);
+  letter-spacing: -0.005em;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 24px 0 12px;
+  color: var(--fg);
+}
+
+p {
+  margin: 0 0 16px;
+  color: var(--fg);
+}
+
+p.lead {
+  color: var(--muted);
+}
+
+ul, ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+  color: var(--fg);
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+strong {
+  font-weight: 500;
+  color: var(--yellow);
+}
+
+code {
+  font-family: inherit;
+  background-color: var(--bg-alt);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--pink);
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: underline;
+  text-decoration-color: var(--muted-decor);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
+}
+
+a:hover {
+  text-decoration-color: var(--cyan);
+}
+
+section {
+  margin-bottom: 32px;
+}
+
+section.callout {
+  background-color: var(--bg-alt);
+  border-left: 3px solid var(--purple);
+  padding: 16px 20px;
+  border-radius: 4px;
+  margin: 24px 0;
+}
+
+section.callout p:last-child {
+  margin-bottom: 0;
+}
+
+footer.doc-footer {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--bg-elev);
+  color: var(--muted-decor);
+  font-size: 14px;
+}
+
+footer.doc-footer a {
+  color: var(--muted);
+}
+
+nav.doc-nav {
+  margin-bottom: 32px;
+  font-size: 14px;
+  color: var(--muted-decor);
+}
+
+nav.doc-nav a {
+  color: var(--cyan);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bg-elev);
+  vertical-align: top;
+}
+
+th {
+  color: var(--purple);
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  main {
+    padding: 32px 20px 64px;
+  }
+  header.doc-header h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 18px;
+  }
+}
