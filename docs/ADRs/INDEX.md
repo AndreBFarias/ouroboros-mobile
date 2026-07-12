@@ -1,0 +1,34 @@
+# Architecture Decision Records — Ouroboros Mobile
+
+Os ADRs aqui são imutáveis após mergeados. Mudanças viram ADR nova
+com referência "Supersedes ADR-NNNN" no cabeçalho.
+
+| ID | Título | Status | Sprint |
+|---|---|---|---|
+| 0001 | Vault em Markdown Puro | Aceito | M01 |
+| 0002 | Sync Delegado ao Syncthing/Obsidian Sync | Aceito | M01 |
+| 0003 | ML Kit On-device, Sem Rede | Aceito | M01 |
+| 0004 | Mobile Só Captura, Desktop Processa | Aceito | M01 |
+| 0005 | Sem Gamificação, Intencional | Aceito | M01 |
+| 0006 | Stack Expo + React Native + NativeWind + Moti + Reanimated + gluestack-ui | Aceito | M01 |
+| 0007 | Zero Telemetria, Zero Analytics, Zero Crash Reporting Remoto | Aceito | M01 |
+| 0008 | Tema Custom em tokens.ts, Não Material 3 | Aceito | M01 |
+| 0009 | Validação por Anotação Runtime (zod) | Aceito | M01 |
+| 0010 | Estética Como Fundação, Não Polimento | Aceito | M01 |
+| 0011 | Identidade de Pessoas Genérica (PESSOA_A / PESSOA_B) | Aceito (estendido por ADR-0015) | M01 |
+| 0012 | Cache Mobile Readonly Gerado pelo Backend | Aceito | M00.docs |
+| 0013 | Capitalização da UI: Sentence Case com Acentuação PT-BR | Aceito (revoga BRIEFING §1 e §2.4) | M01.5 |
+| 0014 | Vault Mobile em Pasta Dedicada (~/Protocolo-Ouroboros/) | Aceito | M03 + M00.docs |
+| 0015 | Identidade de Pessoas em Runtime com Nome e Foto | Aceito (estende ADR-0011) | M03 + M03.2 + M00.docs |
+| 0016 | Vault Auto-criado em /sdcard/Documents/Ouroboros sem SAF | Aceito (estende ADR-0014) | M22 (refundação v1.0) |
+| 0017 | Mídia em Formato Original com .md Companion | Aceito | M39 (refundação v1.0) |
+| 0018 | OAuth Google: split clientId + cache em arquivo + escopo mínimo | Aceito (estende ADR-0007) | M37.1 + M37.2 (refundação v1.0) |
+| 0019 | Persistência canônica em `.md` individual no Vault | Aceito (estende ADR-0001 / 0014 / 0017) | M37.1.2 (refundação v1.0) |
+| 0021 | Recap e Calendário de Conquistas unificados em uma tela só (toggle modo Lista/Calendário) | Aceito (substitui parte de M11.5) | M-RECAP-CALENDARIO-UNIFICAR / L2 (golden-zebra v1.0.0) |
+| 0022 | Vault em pasta escolhida pelo usuário (onboarding pergunta) | Aceito (substitui parte de ADR-0014 / 0016) | M-VAULT-PASTA-NAO-HARDCODED / H3 (golden-zebra v1.0.0) |
+| 0023 | Vault organizado por tipo de arquivo (`markdown/`, `jpg/`, `m4a/`, …) | Aceito (substitui parte de ADR-0017) | M-VAULT-LAYOUT-POR-TIPO / H2 (golden-zebra v1.0.0) |
+| 0024 | Share Intent grava em `inbox/` como exceção parcial ao layout-por-tipo | Aceito (substitui parte de ADR-0023) | M-SHARE-INTENT-LAYOUT / G1 |
+| 0025 | Renomeação lexical canônica: Crise / Conquista / Gatilho / Reflexão | Aceito | R0 (M-LEX-CRISE-CONQUISTA-GATILHO-REFLEXAO / Onda R Fase 1) |
+| 0026 | Tela Hoje foco em ação (Decisão D1 = Opção C) | Aceito | R-HOME-1 (M-HOJE-PRIORIDADE-RECORRENCIA, Onda R Fase 2) |
+| 0027 | Limite de bundle Hermes revisado (10,5 MB) | Aceito | R-ADR-LIMITE-BUNDLE-V2 |
+| 0028 | Card "Vocês" reintroduz estado do casal na Home (revisão parcial de ADR-0026/D1) | Aceito | R-HOME-4a |
