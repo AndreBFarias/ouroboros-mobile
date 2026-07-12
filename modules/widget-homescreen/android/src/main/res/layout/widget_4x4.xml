@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:background="@color/dracula_bg"
+  android:padding="14dp">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <TextView
+      android:id="@+id/widget_avatar_inicial"
+      android:layout_width="48dp"
+      android:layout_height="48dp"
+      android:gravity="center"
+      android:textColor="@color/dracula_bg"
+      android:textSize="22sp"
+      android:textStyle="bold"
+      android:fontFamily="monospace"
+      android:background="@color/dracula_purple"
+      android:text="A" />
+
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:layout_marginStart="12dp"
+      android:orientation="vertical">
+
+      <TextView
+        android:id="@+id/widget_titulo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/dracula_muted"
+        android:fontFamily="monospace"
+        android:textSize="11sp"
+        android:text="@string/widget_titulo_humor" />
+
+      <TextView
+        android:id="@+id/widget_humor_valor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/dracula_fg"
+        android:fontFamily="monospace"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:text="—" />
+    </LinearLayout>
+  </LinearLayout>
+
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="10dp"
+    android:background="@color/dracula_bg_elev" />
+
+  <TextView
+    android:id="@+id/widget_frase"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textColor="@color/dracula_muted"
+    android:fontFamily="monospace"
+    android:textSize="12sp"
+    android:lineSpacingMultiplier="1.4"
+    android:maxLines="2"
+    android:ellipsize="end"
+    android:text="@string/widget_frase_default" />
+
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:textColor="@color/dracula_muted_decor"
+    android:fontFamily="monospace"
+    android:textSize="10sp"
+    android:text="@string/widget_heatmap_titulo" />
+
+  <LinearLayout
+    android:id="@+id/widget_heatmap"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginTop="6dp"
+    android:weightSum="7">
+
+    <View android:id="@+id/widget_heat_0" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <View android:id="@+id/widget_heat_1" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <View android:id="@+id/widget_heat_2" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <View android:id="@+id/widget_heat_3" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <View android:id="@+id/widget_heat_4" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <View android:id="@+id/widget_heat_5" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <View android:id="@+id/widget_heat_6" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:background="@color/dracula_bg_elev" />
+  </LinearLayout>
+
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:weightSum="4">
+
+    <TextView
+      android:id="@+id/widget_btn_humor"
+      android:layout_width="0dp"
+      android:layout_height="44dp"
+      android:layout_weight="1"
+      android:layout_marginEnd="6dp"
+      android:gravity="center"
+      android:textColor="@color/dracula_fg"
+      android:fontFamily="monospace"
+      android:textSize="11sp"
+      android:background="@color/dracula_bg_elev"
+      android:text="@string/widget_atalho_humor" />
+
+    <TextView
+      android:id="@+id/widget_btn_voz"
+      android:layout_width="0dp"
+      android:layout_height="44dp"
+      android:layout_weight="1"
+      android:layout_marginEnd="6dp"
+      android:gravity="center"
+      android:textColor="@color/dracula_fg"
+      android:fontFamily="monospace"
+      android:textSize="11sp"
+      android:background="@color/dracula_bg_elev"
+      android:text="@string/widget_atalho_voz" />
+
+    <TextView
+      android:id="@+id/widget_btn_camera"
+      android:layout_width="0dp"
+      android:layout_height="44dp"
+      android:layout_weight="1"
+      android:layout_marginEnd="6dp"
+      android:gravity="center"
+      android:textColor="@color/dracula_fg"
+      android:fontFamily="monospace"
+      android:textSize="11sp"
+      android:background="@color/dracula_bg_elev"
+      android:text="@string/widget_atalho_camera" />
+
+    <TextView
+      android:id="@+id/widget_btn_vitoria"
+      android:layout_width="0dp"
+      android:layout_height="44dp"
+      android:layout_weight="1"
+      android:gravity="center"
+      android:textColor="@color/dracula_fg"
+      android:fontFamily="monospace"
+      android:textSize="11sp"
+      android:background="@color/dracula_bg_elev"
+      android:text="@string/widget_atalho_vitoria" />
+  </LinearLayout>
+</LinearLayout>

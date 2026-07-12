@@ -1,0 +1,859 @@
+import {
+  useFonts,
+  JetBrainsMono_400Regular,
+  JetBrainsMono_500Medium,
+} from '@expo-google-fonts/jetbrains-mono';
+import { Stack, useRouter, usePathname } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useRef } from 'react';
+
+// Q22.B (2026-05-13): obrigatorio chamar antes de qualquer
+// AuthRequest.promptAsync resolver. Sem isso, o callback OAuth do
+// google (deep link `com.googleusercontent.apps...:/oauthredirect`)
+// vaza pro expo-router e exibe "Unmatched Route" em vez de fechar o
+// browser + entregar o code pro app. Chamada top-level garantida
+// fora de qualquer hook ou guard.
+WebBrowser.maybeCompleteAuthSession();
+import { Appearance, AppState, LogBox, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { OuroborosLoader } from '@/components/brand';
+import { ToastProvider, useToast } from '@/components/ui';
+import { MenuLateral } from '@/components/chrome/MenuLateral';
+import { FABMenu } from '@/components/chrome/FABMenu';
+// R-INT-3: bridge que escuta falhas do Health Connect sync e exibe
+// toast explicito (warn). Montado dentro do ToastProvider abaixo.
+import { HCToastBridge } from '@/lib/health/useHCToast';
+// R-INT-3-HC-AUTOPULL-WIRING (2026-05-22): orquestrador + 5 puxadores
+// concretos injetados no boot path. Nota: o puxador de sono exporta
+// `puxadorSono` (nome canonico do codebase, alinhado com schemas/sono.ts
+// e tests/lib/health/puxadores/sleep.test.ts), nao `puxadorSleep`.
+import { orquestrarHCAutopull } from '@/lib/health/autopullScheduler';
+// R-INT-3-HC-AUTOPULL-BACKGROUND (2026-05-25): registro guarded da task de
+// background (app fechado). No-op sem lib nativa (gate de build). Bloco de
+// wiring separado do useEffect foreground [hc-autopull].
+import {
+  registrarHCAutopullBackground,
+  desregistrarHCAutopullBackground,
+} from '@/lib/health/autopullBackgroundTask';
+import { puxadorPassos } from '@/lib/health/puxadores/passos';
+import { puxadorExercicio } from '@/lib/health/puxadores/exercicio';
+import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
+import { puxadorMenstruacao } from '@/lib/health/puxadores/menstruacao';
+import { puxadorSono } from '@/lib/health/puxadores/sleep';
+// R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): auto-sync periodico do
+// Google Calendar no boot/foreground. Espelha o wiring do HC autopull
+// acima. Orquestrador puro + integracao concreta com dependencias
+// (refreshIfNeeded, listarEventos, sincronizarSnapshotAgenda) injetadas.
+import { orquestrarIntegracoes } from '@/lib/integracoes/scheduler';
+import { criarIntegracaoCalendar } from '@/lib/integracoes/calendarSync';
+import { agendarNotifsPreEvento } from '@/lib/notifications/calendarPreEvent';
+import { listarEventos } from '@/lib/services/calendarApi';
+import { sincronizarSnapshotAgenda } from '@/lib/vault/agenda';
+import { useGoogleAuth } from '@/lib/stores/googleAuth';
+import { useSettings } from '@/lib/stores/settings';
+import { colors } from '@/theme/tokens';
+import { useDeepLinkListener } from '@/lib/boot/deepLink';
+import { useShareIntentListener } from '@/lib/boot/useShareIntentListener';
+import { BiometriaGate } from '@/lib/boot/biometriaGate';
+import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
+import { useAppPronto } from '@/lib/boot/useAppPronto';
+import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
+import { pedirPermissao as pedirPermissaoNotificacao } from '@/lib/services/alarmesNotificacoes';
+import { instalarResponseListener } from '@/lib/services/notificationResponseListener';
+import {
+  avaliarBackupAutomatico,
+  cancelarTimer as cancelarTimerBackup,
+} from '@/lib/backup/agendarBackup';
+import { applyDraculaWeb } from '@/lib/web/draculaPolish';
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { useVault } from '@/lib/stores/vault';
+import { useSessao } from '@/lib/stores/sessao';
+import { useHasHydrated } from '@/lib/stores/hydrated';
+import { useUltimaRota, isRotaRestauravel } from '@/lib/hooks/useUltimaRota';
+import { useBootStatus, selectBootPronto } from '@/lib/boot/useBootStatus';
+import {
+  inicializarVaultEscolhido,
+  loadVaultRoot,
+  pedirPermissaoStorage,
+  sugestaoVaultUriDefault,
+} from '@/lib/vault/permissions';
+// M-GAUNTLET-DEAD-CODE-V2: imports diretos de @/lib/dev/gauntlet
+// vazavam 5 markers no bytecode Hermes Android (__gauntlet,
+// instalarGauntlet, useGaleriaMock, MODO_DEV_WEB, adicionarFotoMock).
+// Substituidos por:
+//   - MODO_DEV_WEB do micro-modulo gauntletAtivo (zero markers).
+//   - bootstrap* do gauntletBootstrap (require lazy guardado por
+//     __DEV__; Babel/Metro DCE elimina o branch em release).
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
+import {
+  iniciarModoDev,
+  sinalizarBootDev,
+  registrarRouterDev,
+  registrarPathnameDev,
+  autoSeedDev,
+  resetarOnboardingDev,
+} from '@/lib/dev/gauntletBootstrap';
+import '../global.css';
+
+// Mantem a splash visivel até as fontes carregarem.
+SplashScreen.preventAutoHideAsync();
+
+// Suprime warning de SafeAreaView vindo de dependencia transitiva.
+// Migracao para react-native-safe-area-context já foi feita no código
+// proprio (ver Screen.tsx). Warning persiste por terceiros.
+LogBox.ignoreLogs([
+  'SafeAreaView has been deprecated',
+  // A28 (2026-05-06): suprime red box de autolinking RN para
+  // modulos nativos que so existem em dev-client/release APK
+  // (Expo Go tem set fixo de modulos pre-compilados). Wrappers
+  // em src/lib/diario/transcribe.ts, src/lib/scanner/launch.ts,
+  // src/lib/scanner/text-recognition.ts ja sao require lazy +
+  // safe stubs; em Expo Go retornam erro gracioso quando a
+  // funcao e chamada. O log ainda aparece via console.warn mas
+  // sem dialog vermelho bloqueante.
+  'Cannot find native module',
+  'expo-notifications',
+  'expo-av',
+]);
+
+// ADR-008: Dracula e identidade, não tema selecionavel. Forcamos dark
+// sempre em todas as plataformas.
+// - tailwind.config.js darkMode='class' alinhado com setFlag.
+// - Em RN nativo (Android/iOS), Appearance.setColorScheme('dark').
+// - No Web, adicionamos a classe 'dark' no documentElement para o
+//   CSS gerado pelo NativeWind aplicar as variantes dark:.
+// Em Web o Appearance pode não expor setColorScheme; usamos try/catch.
+try {
+  (
+    StyleSheet as unknown as { setFlag?: (k: string, v: string) => void }
+  ).setFlag?.('darkMode', 'class');
+  Appearance.setColorScheme?.('dark');
+} catch {
+  // Plataforma não suporta uma das duas APIs (web).
+}
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.add('dark');
+}
+// Polish CSS adicional para Web (M00.6). Inerte em nativo. Roda
+// uma unica vez na carga do bundle; applyDraculaWeb e idempotente.
+applyDraculaWeb();
+
+export default function RootLayout() {
+  const [loaded] = useFonts({
+    JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium,
+  });
+
+  // M27.3: substitui o guard useRef do M27.1 por hook agregador
+  // useAppPronto que combina useFonts + hidratacao das 3 stores
+  // criticas (onboarding, vault, sessao) com latch em store global
+  // (useBootStatus). Uma vez pronto, sempre pronto -- elimina o
+  // residual de oscilacao em sessao fresh do Chrome dev quando
+  // useFonts SDK 54 demora 30-60s e BiometriaGate/SessaoBootGate
+  // disparam re-renders intermediarios.
+  //
+  // Mantemos a variavel local mostrarBootScreen com a mesma
+  // semantica anterior (true = renderiza OuroborosLoader bloqueante)
+  // para reduzir delta no JSX abaixo.
+  const appPronto = useAppPronto({ fontesProntas: loaded });
+  const mostrarBootScreen = !appPronto;
+
+  // Boot hook: registra listener de share intent (M00.5; M08 plugara
+  // o fluxo real). Hook idempotente ao desmontar.
+  useDeepLinkListener();
+  // Q22.G (2026-05-13): listener canonico de share intent nativo
+  // via expo-share-intent. Captura action.SEND (texto/foto/PDF) de
+  // outros apps (banco, galeria) e roteia pra /share-receive.
+  useShareIntentListener();
+
+  // M27.3: hideAsync idempotente. Spec exige UMA unica chamada.
+  // Ref guard local ao componente; useFonts em SDK 54 web pode
+  // oscilar e re-entregar loaded=true (ja documentado em M27.1).
+  // O appPronto e o gatilho canonico de "tudo pronto" (fontes +
+  // stores hidratadas), entao usamos ele como trigger principal.
+  const splashEsconderRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (!appPronto) return;
+    if (splashEsconderRef.current) return;
+    splashEsconderRef.current = true;
+    SplashScreen.hideAsync();
+    // Auditoria 2026-05-04: sinaliza boot completo para a
+    // automacao de browser via __gauntlet.aguardarBoot() / tempoDeBoot().
+    if (MODO_DEV_WEB) sinalizarBootDev();
+  }, [appPronto]);
+
+  // Boot hook: reagenda alarmes/limpeza/marcos auto/widget. M00.5
+  // cria o orquestrador vazio; cada sprint dona faz BOOT_HOOKS.push
+  // no proprio modulo.
+  useEffect(() => {
+    void reagendarTodosBootHooks();
+  }, []);
+
+  // M16 categorias de notificação com action buttons (Soneca/Desligar).
+  // Idempotente: chamar de novo sobrescreve a categoria com mesmo ID.
+  // Roda uma vez no mount; em Web vira no-op.
+  useEffect(() => {
+    void registrarCategoriasAlarme();
+  }, []);
+
+  // R-ROT-1-A: listener das acoes Soneca/Desligar das notificacoes de
+  // alarme. Soneca registra historico no vault (alimenta sugestao
+  // temporal) + agenda re-disparo. Desligar cancela snooze pendente.
+  // Le vaultRoot lazy (getState) pra capturar valor corrente quando
+  // usuario tocar o botao - listener so e instalado uma vez no mount.
+  useEffect(() => {
+    const sub = instalarResponseListener(() => useVault.getState().vaultRoot);
+    return () => sub.remove();
+  }, []);
+
+  // M30: pedir permissao de notificacao proativamente apos onboarding.
+  // useEffect DIRETO (nao BOOT_HOOKS) - decisao CONTRACT 7.9: falha
+  // precisa propagar a UI via toast. Idempotente uma vez por instalacao
+  // via useSessao.permissoesPedidas.notif. Em web no-op (pedirPermissao
+  // ja retorna false silenciosamente). Renderizado dentro do provider
+  // ToastProvider via PermissaoNotificacaoGate (precisa do hook
+  // useToast); aqui o componente e montado abaixo no JSX.
+
+  // M-GAUNTLET: em web + EXPO_PUBLIC_GAUNTLET=1, instala
+  // window.__gauntlet com APIs JS deterministicas (seed, reset,
+  // setNomes, abrir, abrirSheet, etc). Em mobile release, dead-code
+  // (Platform.OS bloqueia MODO_DEV_WEB).
+  useEffect(() => {
+    if (MODO_DEV_WEB) iniciarModoDev();
+  }, []);
+
+  // R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): migration one-shot que
+  // escreve a primeira copia canonica dos 5 stores em vault/_estado/.
+  // Dispara apenas quando appPronto (stores hidratadas) para garantir
+  // que getState() reflete o estado restaurado do SecureStore. Fire-
+  // and-forget: nao bloqueia primeiro frame nem render. Idempotente
+  // via flag useSessao.flags.estadoMigradoParaVault.
+  useEffect(() => {
+    if (!appPronto) return;
+    void import('@/lib/boot/migrarEstadoParaVault').then(
+      ({ migrarEstadoParaVault }) => migrarEstadoParaVault()
+    );
+  }, [appPronto]);
+
+  // R-CROSS-FLOW-FIX-1 (2026-05-16): aciona avaliarBackupAutomatico no
+  // boot apos appPronto, mesma janela do migrarEstadoParaVault. Antes,
+  // o helper existia + era testado mas nao tinha caller -- toggle
+  // backupAutomaticoSemanal em Settings nunca disparava o backup
+  // semanal no boot. Helper e idempotente (defesa contra dupla-
+  // registro de timer via timerHandle de modulo). Fire-and-forget:
+  // nao bloqueia render. Em web ou toggle OFF, e no-op. Cleanup
+  // chama cancelarTimer (no-op se nao havia).
+  useEffect(() => {
+    if (!appPronto) return;
+    void avaliarBackupAutomatico();
+    return () => {
+      cancelarTimerBackup();
+    };
+  }, [appPronto]);
+
+  // R-INT-3-HC-AUTOPULL-WIRING (2026-05-22): dispara autopull do Health
+  // Connect no boot apos appPronto e a cada foreground. Respeita o
+  // toggle featureToggles.healthConnectSync (default false; ligado em
+  // Settings) e throttle de 60min via min(hcAutopullUltimaSync). Fire-
+  // and-forget: nao bloqueia render. Sem este wiring o scheduler + 5
+  // puxadores ficam codigo morto (nenhum caller no boot path). O guard
+  // de write-back (writeback-guard) ja esta na main, entao ligar isto
+  // nao causa loop HC -> Vault -> HC. Cleanup remove o listener de
+  // AppState (A26: sem leak).
+  useEffect(() => {
+    if (!appPronto) return;
+
+    const THROTTLE_MS = 60 * 60 * 1000;
+    const puxadores = [
+      puxadorPassos,
+      puxadorExercicio,
+      puxadorMedidas,
+      puxadorMenstruacao,
+      puxadorSono,
+    ];
+
+    function podeDisparar(): boolean {
+      const s = useSettings.getState();
+      if (!s.featureToggles.healthConnectSync) return false;
+      const ultimas = Object.values(s.hcAutopullUltimaSync).filter(
+        (v): v is string => typeof v === 'string'
+      );
+      if (ultimas.length === 0) return true; // primeira sync
+      const maisAntigo = Math.min(
+        ...ultimas.map((iso) => new Date(iso).getTime())
+      );
+      return Date.now() - maisAntigo >= THROTTLE_MS;
+    }
+
+    async function disparar(): Promise<void> {
+      if (!podeDisparar()) return;
+      try {
+        const r = await orquestrarHCAutopull(puxadores);
+        const totalNovos = r.tipos.reduce((acc, t) => acc + t.novos, 0);
+        const totalErros = r.tipos.filter((t) => t.erro !== null).length;
+        console.log('[hc-autopull]', 'wiring boot/foreground', {
+          rodadoEm: r.rodadoEm,
+          totalNovos,
+          totalErros,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.log('[hc-autopull]', 'wiring erro', msg);
+      }
+    }
+
+    // Disparo 1: boot apos appPronto.
+    void disparar();
+
+    // Disparo 2: cada vez que o app volta para 'active' (foreground).
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void disparar();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [appPronto]);
+
+  // R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): dispara auto-sync do
+  // Google Calendar no boot apos appPronto e a cada foreground, para
+  // que a secao "Proximos" da Tela Hoje fique fresca SEM o usuario abrir
+  // /agenda. Espelha o wiring do HC autopull acima (mesmo estilo, log
+  // [integracoes]). Respeita featureToggles.googleCalendarSync (default
+  // false, opt-in) com early-return, e throttle de 60min via
+  // calendarSyncUltimaSync. Fire-and-forget: nao bloqueia render. Token
+  // null (conta nao conectada/invalida) vira no-op gracioso dentro da
+  // integracao — nunca crasha. Cleanup remove o listener de AppState.
+  useEffect(() => {
+    if (!appPronto) return;
+
+    const THROTTLE_MS = 60 * 60 * 1000;
+
+    function podeDisparar(): boolean {
+      const s = useSettings.getState();
+      if (!s.featureToggles.googleCalendarSync) return false;
+      const ultimas = Object.values(s.calendarSyncUltimaSync).filter(
+        (v): v is string => typeof v === 'string'
+      );
+      if (ultimas.length === 0) return true; // primeira sync
+      const maisAntigo = Math.min(
+        ...ultimas.map((iso) => new Date(iso).getTime())
+      );
+      return Date.now() - maisAntigo >= THROTTLE_MS;
+    }
+
+    async function disparar(): Promise<void> {
+      if (!podeDisparar()) return;
+      // Injeta as dependencias reais. A integracao sincroniza ambas as
+      // pessoas (cada conta Google e' independente). refreshIfNeeded
+      // devolve null se a conta nao conectou/invalidou => no-op.
+      const integracao = criarIntegracaoCalendar({
+        refreshToken: (pessoa) =>
+          useGoogleAuth.getState().refreshIfNeeded(pessoa),
+        listar: listarEventos,
+        sincronizarSnapshot: sincronizarSnapshotAgenda,
+        vaultRoot: useVault.getState().vaultRoot,
+        // R-INT-2-CALENDAR-NOTIF-PROXIMO: agenda notificacao 15min antes
+        // de cada evento futuro sincronizado. Gate natural pelo
+        // googleCalendarSync (se o sync nao roda, isto nao e' chamado).
+        agendarNotifs: agendarNotifsPreEvento,
+      });
+      try {
+        const r = await orquestrarIntegracoes([integracao]);
+        const totalNovos = r.integracoes.reduce((acc, i) => acc + i.novos, 0);
+        const totalErros = r.integracoes.filter((i) => i.erro !== null).length;
+        console.log('[integracoes]', 'wiring boot/foreground', {
+          rodadoEm: r.rodadoEm,
+          totalNovos,
+          totalErros,
+        });
+        // Marca ultima sync de ambas as pessoas no sucesso da rodada
+        // (mesma semantica do snapshot completo: o throttle vale para a
+        // proxima rodada inteira, nao por evento).
+        const calendarOk = r.integracoes.some(
+          (i) => i.nome === 'google_calendar' && i.erro === null
+        );
+        if (calendarOk) {
+          const agora = r.rodadoEm;
+          useSettings.getState().setCalendarSyncUltimaSync('pessoa_a', agora);
+          useSettings.getState().setCalendarSyncUltimaSync('pessoa_b', agora);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.log('[integracoes]', 'wiring erro', msg);
+      }
+    }
+
+    // Disparo 1: boot apos appPronto.
+    void disparar();
+
+    // Disparo 2: cada vez que o app volta para 'active' (foreground).
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void disparar();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [appPronto]);
+
+  // R-INT-3-HC-AUTOPULL-BACKGROUND (2026-05-25): registra/desregistra a task
+  // de background do autopull HC (app fechado) conforme o toggle opt-in
+  // hcAutopullBackground. Bloco SEPARADO do useEffect foreground [hc-autopull]
+  // acima (que cobre boot/AppState 'active'); este cobre o caso app fechado.
+  // O registro e' guarded: sem expo-task-manager/expo-background-task
+  // compilados no dev-client (gate nativo) vira no-op silencioso, entao o
+  // bundle/smoke atual nao quebra. Reage a mudanca do toggle: ON registra,
+  // OFF desregistra. Espera appPronto para nao competir com o boot.
+  const hcBackgroundToggle = useSettings(
+    (s) => s.featureToggles.hcAutopullBackground
+  );
+  useEffect(() => {
+    if (!appPronto) return;
+    if (hcBackgroundToggle) {
+      void registrarHCAutopullBackground();
+    } else {
+      void desregistrarHCAutopullBackground();
+    }
+  }, [appPronto, hcBackgroundToggle]);
+
+  if (mostrarBootScreen) {
+    // M25: enquanto JetBrainsMono carrega, mostra a marca animada em
+    // fundo bg-page (Dracula). Substitui o `return null` antigo que
+    // deixava a tela preta vazia. O loader vive dentro do early return
+    // (CONTRACT secao 7.9: nao e BOOT_HOOK, e UI bloqueante visivel).
+    // M27.1: usa flag persistente para evitar oscilacao de useFonts
+    // em web (vide guard fontesPersistentementeCarregadas acima).
+    // M-GAUNTLET: envolve em FrameMobileDev para que captura
+    // visual respeite viewport mobile mesmo durante boot.
+    return (
+      <FrameMobileDev>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: colors.bgPage,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <OuroborosLoader />
+        </View>
+      </FrameMobileDev>
+    );
+  }
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <FrameMobileDev>
+        <BiometriaGate bypass={MODO_DEV_WEB}>
+          <ToastProvider>
+            <OnboardingGuard />
+            <VaultBootGate />
+            <SessaoBootGate />
+            <PermissaoNotificacaoGate />
+            <PathnameSyncDev />
+            {/* R-INT-3: bridge HC -> Toast. Renderiza null; subscreve
+              ao emitHCSyncFail e mostra toast warn em
+              permission_denied / api_error. */}
+            <HCToastBridge />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'slide_from_right',
+                contentStyle: { backgroundColor: '#282a36' },
+              }}
+            >
+              {/* Rota modal raiz para o share intent receiver (M08). A
+                activity de share abre direto aqui sem expor a Stack
+                principal; cancelar/salvar usam router.dismissAll()
+                para devolver foco ao app de origem. */}
+              <Stack.Screen
+                name="share-receive"
+                options={{
+                  presentation: 'modal',
+                  headerShown: false,
+                }}
+              />
+              {/* M26: 4 rotas modais raiz que abrem BottomSheet. Sao
+                registradas com presentation='transparentModal' para que
+                o root Stack (#282a36) nao vaze por baixo, e
+                contentStyle.backgroundColor=#14151a (bgPage Dracula)
+                forca fundo opaco. Combina com Screen padded={false}
+                dentro de cada rota para eliminar a Armadilha A18
+                (tela preta quando expand do sheet falha). */}
+              <Stack.Screen
+                name="humor-rapido"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="diario-emocional"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="eventos"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="scanner"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              {/* M-CAPTURA-UNIFICADA: rota modal de decisao entre
+                "Reflexao com foto" (R-FAB-2 renomeou de "Registrar
+                momento") e "Escanear documento". Mesmo padrao M26
+                (transparentModal + bg Dracula opaco) para mitigar
+                Armadilha A18 (tela preta se sheet falha em expand). */}
+              <Stack.Screen
+                name="captura"
+                options={{
+                  presentation: 'transparentModal',
+                  contentStyle: { backgroundColor: '#14151a' },
+                  animation: 'fade_from_bottom',
+                }}
+              />
+              {/* M36: rota modal /recap. Espelho otimista do Vault em
+                periodo selecionavel. Apresentacao modal padrao (slide
+                de baixo) com fundo opaco Dracula (#14151a) ja garantido
+                pelo Screen e pelo contentStyle do Stack raiz. */}
+              <Stack.Screen
+                name="recap"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
+                  contentStyle: { backgroundColor: '#14151a' },
+                }}
+              />
+            </Stack>
+            {/* M27: overlays globais. Ordem de zIndex declarada em
+              CONTRACT secao 7.10 (Stack 0 -> FABMenu 10 ->
+              MenuLateral 20 -> BiometriaGate 30 -> Toast 40).
+              Renderizados FORA da Stack para sobrepor qualquer
+              rota; FABMenu se auto-esconde em rotas modais via
+              rotaEsconderFAB(usePathname()). */}
+            <FABMenu />
+            <MenuLateral />
+          </ToastProvider>
+        </BiometriaGate>
+      </FrameMobileDev>
+    </GestureHandlerRootView>
+  );
+}
+
+// M-GAUNTLET: em web + MODO_DEV_WEB, envolve toda a UI em um frame
+// 412x892dp centralizado para que captura visual reflita celular real
+// sem stretch desktop. Em mobile nativo (Platform.OS !== 'web') vira
+// pass-through. Sem isto, validacao em Chrome desktop pega layout
+// esticado e esconde bugs de overflow horizontal.
+function FrameMobileDev({ children }: { children: React.ReactNode }) {
+  if (!MODO_DEV_WEB) {
+    return <>{children}</>;
+  }
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: '#0a0a0e',
+        alignItems: 'center',
+      }}
+    >
+      <View
+        style={{
+          flex: 1,
+          width: 412,
+          maxWidth: 412,
+          minHeight: 892,
+          backgroundColor: colors.bgPage,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: colors.bgElev,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: detecta a flag opt-in ?onboarding=1
+// na URL para FORCAR o fluxo de onboarding mesmo em dev web. Le
+// window.location.search com guards de typeof (window/location sao
+// undefined em nativo, onde a funcao sempre retorna false). Aceita
+// qualquer valor presente da chave `onboarding` (ex: ?onboarding=1)
+// como pedido de onboarding fresh.
+function querOnboardingFresh(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (typeof window.location === 'undefined') return false;
+  const search = window.location.search ?? '';
+  return new URLSearchParams(search).has('onboarding');
+}
+
+// A28 (2026-05-06): guard global para forcar /onboarding como rota
+// raiz sempre que onboarding nao foi concluido. Sem este guard, em
+// cenarios de Expo Go com expo-router state stale, share intent OEM
+// ou deeplink residual, o app pode abrir direto em /share-receive
+// ou outra rota -- gerando "Vault nao autorizado" e POP_TO_TOP error
+// quando o usuario tenta voltar (Stack vazia). useEffect direto roda
+// apos mount; idempotente via verificacao de pathname atual.
+//
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: em dev web (MODO_DEV_WEB) e SEM a
+// flag ?onboarding=1, em vez de redirecionar para /onboarding, aplica
+// o seed de boot (autoSeedDev) que seta done=true sincrono. O proximo
+// render do guard ja ve onboardingDone=true e nao redireciona, caindo
+// na tela util. Com a flag, o comportamento original (redirect ao
+// onboarding) e preservado, permitindo validar o fluxo no Chrome.
+function OnboardingGuard() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const onboardingHidratado = useHasHydrated(useOnboarding);
+  const onboardingDone = useOnboarding((s) => s.done);
+
+  useEffect(() => {
+    if (!onboardingHidratado) return;
+    // Bypass dev web (flag ?onboarding=1): forca o fluxo de onboarding
+    // mesmo quando done=true ja foi persistido pelo seed do bypass.
+    // Reseta uma vez (done->false) e deixa o proximo render cair no
+    // redirect abaixo. Sem a flag, done=true mantem a tela util.
+    if (MODO_DEV_WEB && querOnboardingFresh()) {
+      if (onboardingDone) {
+        resetarOnboardingDev();
+        return;
+      }
+    } else if (onboardingDone) {
+      return;
+    }
+    // ja esta em onboarding ou em algum subpath dele -> nao redireciona.
+    if (pathname?.startsWith('/onboarding')) return;
+    // Bypass dev web (sem a flag): seed sincrono em vez de redirecionar.
+    if (MODO_DEV_WEB && !querOnboardingFresh()) {
+      autoSeedDev();
+      return;
+    }
+    router.replace('/onboarding');
+  }, [onboardingHidratado, onboardingDone, pathname, router]);
+
+  return null;
+}
+
+// M-GAUNTLET: sincroniza routerRef + pathnameRef do modulo gauntlet
+// com o expo-router runtime. Sem isto, window.__gauntlet.abrir() nao
+// tem como navegar (router so existe dentro de hooks). Componente
+// inerte (return null) que so chama setters em useEffect. No-op em
+// mobile real e em web sem flag.
+function PathnameSyncDev() {
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!MODO_DEV_WEB) return;
+    registrarRouterDev({
+      replace: (rota: string) =>
+        router.replace(rota as Parameters<typeof router.replace>[0]),
+      push: (rota: string) =>
+        router.push(rota as Parameters<typeof router.push>[0]),
+    });
+  }, [router]);
+  useEffect(() => {
+    if (!MODO_DEV_WEB) return;
+    registrarPathnameDev(pathname ?? '/');
+  }, [pathname]);
+  return null;
+}
+
+// M30: gate de permissao de notificacao. Roda dentro do ToastProvider
+// porque a falha precisa propagar a UI via toast (decisao CONTRACT
+// secao 7.9: nao pode ser silenciado em BOOT_HOOKS). Idempotente uma
+// vez por instalacao via useSessao.permissoesPedidas.notif.
+//
+// Logica:
+//  1. Espera onboarding done E permissoesPedidas.notif === false.
+//  2. Chama pedirPermissao() (no-op em web).
+//  3. Marca via useSessao.marcarPermissaoPedida('notif') APOS request -
+//     independente do resultado, para nao reciclar dialog do SO.
+//  4. Em falha (granted === false), exibe toast informativo.
+//
+// useEffect direto (nao BOOT_HOOKS) garante que toast.show tenha o
+// provider hidratado e o gate seja re-acionado se o usuario fechar e
+// reabrir antes de hidratar onboarding.done (raro, mas defensivo).
+function PermissaoNotificacaoGate() {
+  const toast = useToast();
+  const onboardingHidratado = useHasHydrated(useOnboarding);
+  const sessaoHidratada = useHasHydrated(useSessao);
+  // Lock por mount: evita re-disparar se a hidratacao oscilar.
+  const pedidoRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (pedidoRef.current) return;
+    if (!onboardingHidratado || !sessaoHidratada) return;
+    const onboardingDone = useOnboarding.getState().done;
+    if (!onboardingDone) return;
+    const jaPedido = useSessao.getState().permissoesPedidas.notif;
+    if (jaPedido) return;
+    pedidoRef.current = true;
+    void (async () => {
+      let concedida = false;
+      try {
+        concedida = await pedirPermissaoNotificacao();
+      } catch {
+        concedida = false;
+      }
+      // Marca como pedida independente do resultado para nao tentar
+      // de novo no proximo boot (pessoa ja decidiu, respeitar).
+      try {
+        useSessao.getState().marcarPermissaoPedida('notif');
+      } catch {
+        // Store sem hidratacao; ok, proximo boot tenta de novo.
+      }
+      if (!concedida) {
+        toast.show(
+          'Permita notificações em Configurações para receber alarmes.',
+          'info'
+        );
+      }
+    })();
+    // toast captura snapshot uma unica vez na mount; segue padrao
+    // de VaultBootGate.
+  }, [onboardingHidratado, sessaoHidratada]);
+  return null;
+}
+
+// M22: gate critico de Vault. Roda dentro do ToastProvider porque o
+// erro de permissao precisa propagar visualmente ao usuario (toast),
+// nao pode ser silenciado em BOOT_HOOKS (vide CONTRACT secao 7.9).
+// Reentra na inicializacao quando o usuario fecha o onboarding com
+// done=true mas o vaultRoot ainda esta null - cobre o caso de o
+// usuario apagar a pasta no file manager entre sessoes.
+function VaultBootGate() {
+  const toast = useToast();
+  useEffect(() => {
+    const onboardingDone = useOnboarding.getState().done;
+    const vaultRoot = useVault.getState().vaultRoot;
+    if (!onboardingDone || vaultRoot) return;
+    // H3 (ADR-0022): a URI nao e mais hardcoded. Tentativa de
+    // recuperacao em ordem:
+    //   1. Le do SecureStore (pode estar persistida mas o store em
+    //      memoria foi limpo).
+    //   2. Cai na sugestao default (/sdcard/Documents/Ouroboros/) +
+    //      pedido de permissao. Se o probe falhar, exibe toast e o
+    //      usuario re-escolhe via Settings/Vault.
+    (async () => {
+      try {
+        const persisted = await loadVaultRoot();
+        if (persisted && persisted.trim().length > 0) {
+          await inicializarVaultEscolhido(persisted);
+          return;
+        }
+        // V4.0.2: pedir permissao bloqueante; se nao concedida, toast
+        // acionavel em vez de silencioso fail no probe.
+        const granted = await pedirPermissaoStorage();
+        if (!granted) {
+          toast.show(
+            'Permissão de armazenamento necessária. Ative em Configurações.',
+            'error'
+          );
+          return;
+        }
+        await inicializarVaultEscolhido(sugestaoVaultUriDefault());
+      } catch {
+        toast.show(
+          'Não foi possível acessar a pasta do Vault. Verifique as permissões em Configurações.',
+          'error'
+        );
+      }
+    })();
+    // toast trocaria identidade entre renders; usamos snapshot via
+    // useEffect uma unica vez na mount do gate. Plugin react-hooks
+    // nao habilitado no eslint config do projeto.
+  }, []);
+  return null;
+}
+
+// M24: gate de sessao. Espera as 3 stores (onboarding, vault, sessao)
+// hidratarem do SecureStore e, em uma unica execucao, restaura a
+// ultima rota visitada via router.replace - desde que essa rota nao
+// seja modal e o onboarding esteja concluido. Em paralelo, mantem o
+// ultimaRota atualizado a cada navegacao via useUltimaRota.
+//
+// Decisao CONTRACT secao 7.9: useEffect direto (nao BOOT_HOOKS)
+// porque a logica precisa do router e da hidratacao multi-store; um
+// hook idempotente em background desacoplaria do timing de boot.
+//
+// M27.4 (Caminho A -- latch persistente): le useBootStatus.pronto via
+// selector estavel. Se o latch global ja virou true em algum momento
+// anterior (boot completado em sessao previa do componente, ou em
+// cenario gauntlet onde reset()+seed()+abrir() reciclam as 3 stores
+// em sequencia rapida e o componente re-monta), tratamos como "ja
+// restaurado" -- nao tentamos novo router.replace. Sem isto, a
+// cascata `useHasHydrated` apos reset disparava re-render do efeito,
+// e em conjunto com `useUltimaRota` (M24.1) gerava "Maximum update
+// depth exceeded" em sequencia <2s. Documentado em M27.4-spec.md.
+function SessaoBootGate() {
+  const router = useRouter();
+  const onboardingHidratado = useHasHydrated(useOnboarding);
+  const vaultHidratado = useHasHydrated(useVault);
+  const sessaoHidratada = useHasHydrated(useSessao);
+  // M27.4: latch global -- uma vez bootstrapado, gate vira no-op.
+  // Selector estavel evita re-subscribe a cada render.
+  const bootPronto = useBootStatus(selectBootPronto);
+  // Lock para garantir que o restore so acontece uma vez por mount.
+  // Sem isso, useEffect re-disparado por mudanca de hidratacao
+  // poderia tentar router.replace varias vezes.
+  const restauradoRef = useRef<boolean>(false);
+
+  // Atualiza ultima rota a cada navegacao. Usa pathname interno; nada
+  // a fazer enquanto a sessao nao hidrata (evita gravar rota inicial
+  // antes do restore).
+  useUltimaRota();
+
+  useEffect(() => {
+    // M27.4 fast-path: latch global ja indica que o boot foi
+    // concluido alguma vez. Nada a restaurar -- evita cascata em
+    // reset()+seed()+abrir() do gauntlet.
+    if (bootPronto && !restauradoRef.current) {
+      restauradoRef.current = true;
+      return;
+    }
+    if (restauradoRef.current) return;
+    if (!onboardingHidratado || !vaultHidratado || !sessaoHidratada) return;
+    restauradoRef.current = true;
+
+    const onboardingDone = useOnboarding.getState().done;
+    if (!onboardingDone) return;
+    const vaultRoot = useVault.getState().vaultRoot;
+    if (!vaultRoot) return;
+
+    const ultimaRota = useSessao.getState().ultimaRota;
+    if (!isRotaRestauravel(ultimaRota)) return;
+    if (ultimaRota === null) return;
+
+    // router.replace porque "boot na rota X" nao deve criar entrada de
+    // historico que volte para a rota inicial. Cast porque expo-router
+    // usa template literal types restritivas; o pathname guardado e
+    // sempre devolvido pelo proprio router via usePathname(), entao
+    // garantidamente valido em runtime.
+    router.replace(ultimaRota as Parameters<typeof router.replace>[0]);
+  }, [
+    bootPronto,
+    onboardingHidratado,
+    vaultHidratado,
+    sessaoHidratada,
+    router,
+  ]);
+
+  return null;
+}

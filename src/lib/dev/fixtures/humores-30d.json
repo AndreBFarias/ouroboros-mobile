@@ -1,0 +1,401 @@
+{
+  "schema": "humores-30d",
+  "versao": 1,
+  "descricao": "Seed deterministico de 30 dias de humor. offsetDias relativo a hoje (0=hoje, -29=mais antigo).",
+  "diasCobertos": 30,
+  "totalCelulas": 33,
+  "celulas": [
+    {
+      "offsetDias": -29,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 4,
+      "ansiedade": 3,
+      "foco": 5,
+      "tags": [
+        "irritacao"
+      ]
+    },
+    {
+      "offsetDias": -29,
+      "autor": "pessoa_b",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 4,
+      "foco": 2,
+      "tags": [
+        "tranquilidade"
+      ]
+    },
+    {
+      "offsetDias": -28,
+      "autor": "pessoa_b",
+      "humor": 4,
+      "energia": 5,
+      "ansiedade": 5,
+      "foco": 4,
+      "tags": [
+        "calma",
+        "irritacao",
+        "foco"
+      ]
+    },
+    {
+      "offsetDias": -27,
+      "autor": "pessoa_a",
+      "humor": 2,
+      "energia": 3,
+      "ansiedade": 4,
+      "foco": 5,
+      "tags": [
+        "tranquilidade",
+        "irritacao",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -26,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 3,
+      "ansiedade": 3,
+      "foco": 3,
+      "tags": [
+        "foco",
+        "alegria"
+      ]
+    },
+    {
+      "offsetDias": -25,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 3,
+      "ansiedade": 3,
+      "foco": 4,
+      "tags": [
+        "irritacao",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -24,
+      "autor": "pessoa_b",
+      "humor": 4,
+      "energia": 1,
+      "ansiedade": 3,
+      "foco": 2,
+      "tags": [
+        "alegria"
+      ]
+    },
+    {
+      "offsetDias": -23,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 1,
+      "foco": 4,
+      "tags": [
+        "irritacao"
+      ]
+    },
+    {
+      "offsetDias": -22,
+      "autor": "pessoa_a",
+      "humor": 5,
+      "energia": 5,
+      "ansiedade": 1,
+      "foco": 5,
+      "tags": [
+        "tranquilidade"
+      ]
+    },
+    {
+      "offsetDias": -21,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 5,
+      "ansiedade": 5,
+      "foco": 4,
+      "tags": [
+        "calma",
+        "tranquilidade"
+      ]
+    },
+    {
+      "offsetDias": -20,
+      "autor": "pessoa_b",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 4,
+      "foco": 3,
+      "tags": [
+        "cansaco",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -19,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 2,
+      "ansiedade": 2,
+      "foco": 3,
+      "tags": [
+        "ansiedade"
+      ]
+    },
+    {
+      "offsetDias": -19,
+      "autor": "pessoa_b",
+      "humor": 2,
+      "energia": 4,
+      "ansiedade": 2,
+      "foco": 1,
+      "tags": [
+        "irritacao",
+        "ansiedade"
+      ]
+    },
+    {
+      "offsetDias": -18,
+      "autor": "pessoa_b",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 3,
+      "foco": 3,
+      "tags": [
+        "irritacao",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -17,
+      "autor": "pessoa_b",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 3,
+      "foco": 2,
+      "tags": [
+        "tranquilidade",
+        "ansiedade"
+      ]
+    },
+    {
+      "offsetDias": -16,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 3,
+      "foco": 1,
+      "tags": [
+        "tranquilidade",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -15,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 5,
+      "ansiedade": 5,
+      "foco": 4,
+      "tags": [
+        "ansiedade"
+      ]
+    },
+    {
+      "offsetDias": -14,
+      "autor": "pessoa_a",
+      "humor": 5,
+      "energia": 4,
+      "ansiedade": 3,
+      "foco": 4,
+      "tags": [
+        "ansiedade",
+        "foco",
+        "irritacao"
+      ]
+    },
+    {
+      "offsetDias": -13,
+      "autor": "pessoa_b",
+      "humor": 4,
+      "energia": 4,
+      "ansiedade": 3,
+      "foco": 4,
+      "tags": [
+        "ansiedade",
+        "cansaco"
+      ]
+    },
+    {
+      "offsetDias": -12,
+      "autor": "pessoa_a",
+      "humor": 1,
+      "energia": 3,
+      "ansiedade": 4,
+      "foco": 1,
+      "tags": [
+        "foco",
+        "irritacao",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -11,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 5,
+      "ansiedade": 3,
+      "foco": 4,
+      "tags": [
+        "foco",
+        "alegria",
+        "tranquilidade"
+      ]
+    },
+    {
+      "offsetDias": -10,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 4,
+      "ansiedade": 3,
+      "foco": 2,
+      "tags": [
+        "cansaco"
+      ]
+    },
+    {
+      "offsetDias": -9,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 5,
+      "ansiedade": 4,
+      "foco": 3,
+      "tags": [
+        "cansaco",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -9,
+      "autor": "pessoa_b",
+      "humor": 3,
+      "energia": 4,
+      "ansiedade": 4,
+      "foco": 5,
+      "tags": [
+        "cansaco",
+        "ansiedade"
+      ]
+    },
+    {
+      "offsetDias": -8,
+      "autor": "pessoa_a",
+      "humor": 5,
+      "energia": 4,
+      "ansiedade": 5,
+      "foco": 4,
+      "tags": [
+        "ansiedade",
+        "foco"
+      ]
+    },
+    {
+      "offsetDias": -7,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 5,
+      "ansiedade": 3,
+      "foco": 4,
+      "tags": [
+        "ansiedade",
+        "alegria"
+      ]
+    },
+    {
+      "offsetDias": -6,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 2,
+      "ansiedade": 4,
+      "foco": 5,
+      "tags": [
+        "tranquilidade"
+      ]
+    },
+    {
+      "offsetDias": -5,
+      "autor": "pessoa_b",
+      "humor": 3,
+      "energia": 3,
+      "ansiedade": 5,
+      "foco": 5,
+      "tags": [
+        "tranquilidade",
+        "ansiedade"
+      ]
+    },
+    {
+      "offsetDias": -4,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 5,
+      "ansiedade": 3,
+      "foco": 5,
+      "tags": [
+        "alegria",
+        "foco",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": -3,
+      "autor": "pessoa_a",
+      "humor": 5,
+      "energia": 3,
+      "ansiedade": 4,
+      "foco": 4,
+      "tags": [
+        "ansiedade",
+        "tranquilidade"
+      ]
+    },
+    {
+      "offsetDias": -2,
+      "autor": "pessoa_a",
+      "humor": 3,
+      "energia": 5,
+      "ansiedade": 5,
+      "foco": 5,
+      "tags": [
+        "alegria"
+      ]
+    },
+    {
+      "offsetDias": -1,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 3,
+      "ansiedade": 4,
+      "foco": 4,
+      "tags": [
+        "irritacao",
+        "calma"
+      ]
+    },
+    {
+      "offsetDias": 0,
+      "autor": "pessoa_a",
+      "humor": 4,
+      "energia": 2,
+      "ansiedade": 5,
+      "foco": 2,
+      "tags": [
+        "calma",
+        "tranquilidade"
+      ]
+    }
+  ]
+}

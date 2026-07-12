@@ -1,0 +1,667 @@
+// M-GAUNTLET: modulo central da interface dev de validacao visual.
+// Expoe window.__gauntlet quando GAUNTLET_ATIVO em web. APIs JS
+// determinisicas para controlar o app sem
+// depender de cliques em refs volateis ou eventos sinteticos do
+// React-Native-Web.
+//
+// Garantia anti-vazamento:
+//   GAUNTLET_ATIVO = Platform.OS === 'web' && __DEV__.
+// Em mobile (Android/iOS), Platform.OS !== 'web' bloqueia.
+// Em release web (bundling production), __DEV__ vira false e o
+// modulo inteiro e tree-shaken pelo Metro/Hermes.
+// __DEV__ e injecao do react-native em build time (sempre disponivel,
+// nao depende de env var do shell).
+//
+// Uso (apenas em modo dev):
+//   window.__gauntlet.seed();
+//   window.__gauntlet.setNomes('Alice', 'Bob');
+//   await window.__gauntlet.abrirSheet('humor-rapido');
+//   const e = window.__gauntlet.estado();
+//
+// Comentarios sem acento (convencao shell/CI).
+import { useOnboarding } from '@/lib/stores/onboarding';
+import { useVault } from '@/lib/stores/vault';
+import { usePessoa } from '@/lib/stores/pessoa';
+import { useSessao } from '@/lib/stores/sessao';
+import { useNavegacao } from '@/lib/stores/navegacao';
+import { useSettings } from '@/lib/stores/settings';
+import { useGaleriaMock } from '@/lib/dev/galeriaMock';
+import { useHumorMock } from '@/lib/dev/humorMock';
+import { useDiarioMock } from '@/lib/dev/diarioMock';
+import { useEventosMock } from '@/lib/dev/eventosMock';
+import { useFrasesMock } from '@/lib/dev/frasesMock';
+import { useVaultMock } from '@/lib/dev/vaultMockStore';
+import { slugDeFrase, stringifyCompanionMidia } from '@/lib/midia/companion';
+import type { Para } from '@/lib/schemas/para';
+import {
+  AgendaEventoSchema,
+  type AgendaEvento,
+} from '@/lib/vault/agenda';
+// M-GAUNTLET-DEAD-CODE-V2: a flag canonica vive em gauntletAtivo (micro-
+// modulo zero-deps). Reexportamos como GAUNTLET_ATIVO aqui para back-compat
+// de testes existentes (jest mocks de '@/lib/dev/gauntlet') e do
+// gauntletDashboard. Consumidores em runtime de release devem importar
+// diretamente de '@/lib/dev/gauntletAtivo' para evitar arrastar este
+// modulo pesado.
+import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
+
+export const GAUNTLET_ATIVO: boolean = MODO_DEV_WEB;
+
+export interface GauntletEstado {
+  onboardingDone: boolean;
+  tipoCompanhia: string;
+  vaultRoot: string | null;
+  nomes: { pessoa_a: string; pessoa_b: string };
+  fotos: { pessoa_a: string | null; pessoa_b: string | null };
+  ultimaRota: string | null;
+  menuAberto: boolean;
+  rota: string;
+  // Auditoria 2026-05-04 (item 25): timestamp do mount inicial
+  // do RootLayout em ms (Date.now()) e ms ate fontes prontas.
+  bootIniciadoEm: number;
+  bootCompletadoEm: number | null;
+  // Auditoria 2026-05-04 (item 24): true quando useFonts resolveu.
+  bootCompleto: boolean;
+}
+
+export interface SeedOpcoes {
+  // Default: 'Nome_A' (Regra-1, defaults genericos).
+  nomeA?: string;
+  // Default: null (modo sozinho). Quando string, ativa modo casal
+  // implicito setando tipoCompanhia 'casal'.
+  nomeB?: string | null;
+  // Default: 'web://mock-vault/Ouroboros'. Prefixo web:// dispara
+  // fallback determiniscao em loaders (M27.1 caminho C).
+  vaultRoot?: string;
+  // Default: null (sem rota a restaurar; vai para Home).
+  ultimaRota?: string | null;
+}
+
+// Tipo router minimo. expo-router useRouter retorna isto.
+interface RouterLike {
+  replace: (rota: string) => void;
+  push: (rota: string) => void;
+}
+
+export interface GauntletAPI {
+  seed(opts?: SeedOpcoes): void;
+  reset(): void;
+  setNomes(nomeA: string, nomeB?: string | null): void;
+  setVaultRoot(root: string): void;
+  setOnboardingDone(done: boolean): void;
+  setUltimaRota(rota: string | null): void;
+  // G4 (INFRA-GAUNTLET-AMIGOS-API): muda useOnboarding.tipoCompanhia
+  // em runtime para o E2E exercer ramificacao de useNomeDe('ambos')
+  // (retorna 'Casal' / 'Todos' / 'Ambos' conforme modo).
+  setTipoCompanhia(modo: 'sozinho' | 'casal' | 'amigos'): void;
+  abrir(rota: string): Promise<void>;
+  abrirMenu(): void;
+  fecharMenu(): void;
+  abrirSheet(
+    rota: 'humor-rapido' | 'diario-emocional' | 'eventos' | 'scanner'
+  ): Promise<void>;
+  estado(): GauntletEstado;
+  // APIs novas pos auditoria 2026-05-04.
+  // Aguarda fontes carregarem e stores hidratarem. Resolve true
+  // quando pronto, false em timeout (default 60s).
+  aguardarBoot(timeoutMs?: number): Promise<boolean>;
+  // Retorna ms entre primeiro mount do RootLayout e fontes prontas.
+  // null se ainda nao completou.
+  tempoDeBoot(): number | null;
+  // Retorna buffer de console.error capturado nesta sessao.
+  consoleErros(): Array<{ ts: number; msg: string }>;
+  // M11.1 (§2.6): simula adicao manual de foto na aba Fotos sem
+  // chamar expo-image-picker (que nao funciona em RN-Web). Insere
+  // entrada in-memory na useGaleriaMock que o useFotosAgregadas
+  // mescla quando GAUNTLET_ATIVO. No-op em mobile (guard ja filtra).
+  adicionarFotoMock(): Promise<void>;
+  // M-AUDIT-MIGUE-FRASE-WEB-MOCK (2026-05-08): mock determiniscico do
+  // salvarFrase em web/dev. Gera companion .md identico ao mobile real
+  // (mesmo path canonico H2 markdown/frase-YYYY-MM-DD-<slug>.md, mesmo
+  // frontmatter via stringifyCompanionMidia) e empilha em useFrasesMock.
+  // Caller (salvarFrase em web __DEV__) recebe { ok: true, arquivo: rel }
+  // e o MenuCapturaVerde dispara o toast verde "Frase salva." normal.
+  // No-op em mobile (guard ja filtra).
+  salvarFraseMock(
+    texto: string,
+    meta: { autor: 'pessoa_a' | 'pessoa_b'; para: Para }
+  ): { ok: boolean; arquivo: string | null };
+  // M-GAUNTLET-SEED-V2: popula stores mock com fixtures realistas.
+  // 'humores-30d' alimenta useHumorMock (heatmap colorido).
+  // 'diarios-3' alimenta useDiarioMock (3 entradas: trigger + vitoria
+  // + reflexao). 'eventos-7' alimenta useEventosMock (7 eventos em
+  // -7d a hoje). 'saude-7d' (R-INT-3-HC-RECAP-CARD-FOLLOWUP) popula o
+  // useVaultMock com passos/sono/treinos/medidas canonicos para a secao
+  // Saude do Recap aparecer preenchida. No-op em mobile (guard ja filtra).
+  seedComDados(
+    fixture: 'humores-30d' | 'diarios-3' | 'eventos-7' | 'saude-7d'
+  ): Promise<void>;
+  // V4.0 (INFRA-VAULT-WEB-MOCK, 2026-05-08): le conteudo serializado
+  // de um arquivo .md do Vault mock (web/dev). Util para E2E auditar
+  // que features de save (devicesIndex, frase, humor, etc) realmente
+  // gravaram no path canonico esperado. Retorna null se nao existe
+  // ou se rodando em mobile (no-op por guard).
+  lerVaultMock(uri: string): string | null;
+  // V4.0: lista todas as URIs gravadas no Vault mock. Ordenado
+  // alfabeticamente. Retorna [] em mobile.
+  listarVaultMock(): string[];
+  // R-INFRA-GAUNTLET-AGENDA-MOCK (2026-05-17): escreve um arquivo
+  // arbitrario no Vault mock. Simetrico a lerVaultMock. Usado pelo
+  // E2E playwright para popular alarmes/tarefas/eventos crus sem
+  // depender de schema-validacao. Para eventos agenda, prefira
+  // setEventosAgendaMock (valida e usa path canonico). No-op em
+  // mobile (guard ja filtra).
+  setArquivoMock(uri: string, conteudo: string): void;
+  // V4 v2 (escopo expandido pos-rejeicao formal V4 v1, 2026-05-08):
+  // re-dispara todos os BOOT_HOOKS registrados em
+  // @/lib/boot/reagendamento.ts. Necessario porque BOOT_HOOKS rodam
+  // uma unica vez no mount do RootLayout (atraves do hook React de
+  // boot), e isso ocorre ANTES de __gauntlet.seed() definir vaultRoot.
+  // Hooks que dependem de vaultRoot (atualizarDeviceIndexHook,
+  // migrarLembretesHook, migrarAssetsHook, etc) fazem early return
+  // no boot inicial. E2Es que validam efeitos de boot precisam
+  // re-disparar a fila apos seed. No-op em mobile (guard ja filtra).
+  disparaBootHooks(): Promise<void>;
+  // R-INFRA-GAUNTLET-AGENDA-MOCK (2026-05-17): popula eventos da
+  // agenda Google da pessoa diretamente no useVaultMock, sem precisar
+  // de OAuth sync. Cada evento vira um .md em
+  // markdown/agenda-<pessoa>-YYYY-MM-DD-<id>.md, formato canonico
+  // identico ao salvarEventoAgenda mobile. Util para E2E playwright
+  // validar mescla agenda+alarmes (R-HOME-2) sem rede.
+  //
+  // Eventos sao validados contra AgendaEventoSchema; entradas
+  // invalidas sao ignoradas (warning em console). Requer vaultRoot
+  // ja definido em useVault (chame seed() antes). No-op em mobile
+  // (guard filtra).
+  //
+  // Retorna o numero de eventos persistidos (filtrando invalidos).
+  setEventosAgendaMock(
+    pessoa: 'pessoa_a' | 'pessoa_b',
+    eventos: AgendaEvento[]
+  ): number;
+}
+
+// Refs internas. routerRef e setado por <InstaladorGauntlet/>
+// via setRouterRef. pathnameRef e atualizado por hook que escuta
+// usePathname (delegado ao instalador).
+let routerRef: RouterLike | null = null;
+let pathnameRef: string = '/';
+
+// Auditoria 2026-05-04: timestamps de boot e buffer de erros.
+const bootIniciadoEm = Date.now();
+let bootCompletadoEm: number | null = null;
+const errosCapturados: Array<{ ts: number; msg: string }> = [];
+
+export function setRouterRef(router: RouterLike): void {
+  routerRef = router;
+}
+
+export function setPathnameRef(pathname: string): void {
+  pathnameRef = pathname;
+}
+
+// Marca boot completo (chamado pelo RootLayout quando useFonts
+// resolve pela primeira vez).
+export function marcarBootCompleto(): void {
+  if (bootCompletadoEm === null) {
+    bootCompletadoEm = Date.now();
+  }
+}
+
+function lerEstado(): GauntletEstado {
+  const ob = useOnboarding.getState();
+  const vt = useVault.getState();
+  const ps = usePessoa.getState();
+  const ss = useSessao.getState();
+  const nv = useNavegacao.getState();
+  return {
+    onboardingDone: ob.done,
+    tipoCompanhia: ob.tipoCompanhia,
+    vaultRoot: vt.vaultRoot,
+    nomes: ps.nomes,
+    fotos: ps.fotos,
+    ultimaRota: ss.ultimaRota,
+    menuAberto: nv.menuAberto,
+    rota: pathnameRef,
+    bootIniciadoEm,
+    bootCompletadoEm,
+    bootCompleto: bootCompletadoEm !== null,
+  };
+}
+
+function aplicarSeed(opts?: SeedOpcoes): void {
+  const nomeA = opts?.nomeA ?? 'Nome_A';
+  const nomeB = opts?.nomeB ?? null;
+  const vaultRoot = opts?.vaultRoot ?? 'web://mock-vault/Ouroboros';
+  const ultimaRota = opts?.ultimaRota ?? null;
+  const tipoCompanhia = nomeB ? 'casal' : 'sozinho';
+  // setState bypassa persist async; estado fica em memoria, suficiente
+  // para validacao de UI em web. Reload da pagina perde o seed -- por
+  // design.
+  useOnboarding.setState({ done: true, tipoCompanhia });
+  useVault.setState({ vaultRoot });
+  usePessoa.setState({
+    nomes: { pessoa_a: nomeA, pessoa_b: nomeB ?? 'Nome_B' },
+    fotos: { pessoa_a: null, pessoa_b: null },
+  });
+  useSessao.setState({ ultimaRota });
+  // Auditoria 2026-05-04 (item 6): garantir consistencia com reset.
+  useNavegacao.setState({ menuAberto: false });
+  // M-GAUNTLET-SEED-DUO: useSettings.pessoa.tipoCompanhia e o canonico
+  // atual (M29). Componentes M31/M33 leem dele -- sem isto, modo casal
+  // do seed nao reflete em UI nova (chips ficam ocultos).
+  // Valores: 'sozinho' | 'duo' (canonico M29, distinto de useOnboarding
+  // legado que ainda aceita 'casal'/'amigos').
+  const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
+  const settingsAtual = useSettings.getState();
+  useSettings.setState({
+    pessoa: {
+      ...settingsAtual.pessoa,
+      tipoCompanhia: tipoCompanhiaSettings,
+    },
+  });
+}
+
+function aplicarReset(): void {
+  useOnboarding.setState({ done: false, tipoCompanhia: 'sozinho' });
+  useVault.setState({ vaultRoot: null });
+  usePessoa.setState({
+    nomes: { pessoa_a: 'Nome_A', pessoa_b: 'Nome_B' },
+    fotos: { pessoa_a: null, pessoa_b: null },
+  });
+  useSessao.setState({ ultimaRota: null });
+  useNavegacao.setState({ menuAberto: false });
+  // M-GAUNTLET-SEED-DUO: reset tambem do canonico useSettings.
+  const settingsAtual = useSettings.getState();
+  useSettings.setState({
+    pessoa: { ...settingsAtual.pessoa, tipoCompanhia: 'sozinho' },
+  });
+  // M11.1: galeria mock zerada para que cada caso E2E comece limpo.
+  useGaleriaMock.getState().limpar();
+  // M-GAUNTLET-SEED-V2: zerar stores de dados (humor, diario, eventos)
+  // para isolar casos E2E.
+  useHumorMock.getState().limpar();
+  useDiarioMock.getState().limpar();
+  useEventosMock.getState().limpar();
+  // M-AUDIT-MIGUE-FRASE-WEB-MOCK: zera frases mock para isolar E2E.
+  useFrasesMock.getState().limpar();
+  // V4.0 (INFRA-VAULT-WEB-MOCK): zera vault mock para isolar E2E. Sem
+  // isto, arquivos gravados em sprint anterior vazariam para a proxima.
+  useVaultMock.getState().limpar();
+  // Auditoria 2026-05-04 (item 7): limpar localStorage do persist
+  // em web para que reload nao re-hidrate estado anterior. Em mobile,
+  // o GAUNTLET_ATIVO=false ja impede chegar ate aqui.
+  // W2.1 (2026-05-08): chaves alinhadas 1:1 com `name:` declarado em
+  // src/lib/stores/*.ts. Sem fallback por prefixo -- explicito evita
+  // limpar chaves de outras apps. Se nova store persist for adicionada,
+  // adicionar a chave aqui no mesmo commit.
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage?.removeItem('ouroboros.onboarding.v3');
+      window.localStorage?.removeItem('ouroboros.vault.v1');
+      window.localStorage?.removeItem('ouroboros.pessoa.v1');
+      window.localStorage?.removeItem('ouroboros.sessao.v1');
+      window.localStorage?.removeItem('ouroboros.settings.v2');
+      window.localStorage?.removeItem('ouroboros.google.v1');
+    } catch {
+      // ignora -- modo privado, iframe sem permissao.
+    }
+  }
+  // Reseta pathnameRef interno.
+  pathnameRef = '/';
+}
+
+function aplicarSetNomes(nomeA: string, nomeB?: string | null): void {
+  const tipoCompanhia = nomeB ? 'casal' : 'sozinho';
+  usePessoa.setState({
+    nomes: { pessoa_a: nomeA, pessoa_b: nomeB ?? 'Nome_B' },
+  });
+  useOnboarding.setState({ tipoCompanhia });
+  // M-GAUNTLET-SEED-DUO: espelha em useSettings (canonico M29).
+  const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
+  const settingsAtual = useSettings.getState();
+  useSettings.setState({
+    pessoa: {
+      ...settingsAtual.pessoa,
+      tipoCompanhia: tipoCompanhiaSettings,
+    },
+  });
+}
+
+function navegar(rota: string): Promise<void> {
+  if (!routerRef) {
+    throw new Error('Gauntlet: router nao instalado. Aguarde o mount.');
+  }
+  routerRef.replace(rota);
+  // Pequeno delay para o expo-router processar antes do caller
+  // consumir snapshot (Promise resolve no proximo macrotask).
+  return new Promise((resolve) => setTimeout(resolve, 50));
+}
+
+// Helper: noop em mobile/release; chama fn em dev/web.
+// Auditoria 2026-05-04 (item 3, 5): cada metodo publico checa
+// GAUNTLET_ATIVO antes de tocar nas stores. Sem isto, import direto
+// da const `gauntlet` em mobile real vazaria bypass.
+function comGuard<T extends unknown[], R>(
+  fn: (...args: T) => R,
+  fallback: R
+): (...args: T) => R {
+  return (...args: T): R => {
+    if (!GAUNTLET_ATIVO) return fallback;
+    return fn(...args);
+  };
+}
+
+const ESTADO_MOCK_MOBILE: GauntletEstado = {
+  onboardingDone: false,
+  tipoCompanhia: 'sozinho',
+  vaultRoot: null,
+  nomes: { pessoa_a: 'Nome_A', pessoa_b: 'Nome_B' },
+  fotos: { pessoa_a: null, pessoa_b: null },
+  ultimaRota: null,
+  menuAberto: false,
+  rota: '/',
+  bootIniciadoEm: 0,
+  bootCompletadoEm: null,
+  bootCompleto: false,
+};
+
+async function aguardarBoot(timeoutMs: number = 60000): Promise<boolean> {
+  if (!GAUNTLET_ATIVO) return false;
+  const inicio = Date.now();
+  while (Date.now() - inicio < timeoutMs) {
+    if (bootCompletadoEm !== null) return true;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+
+function tempoDeBoot(): number | null {
+  if (!GAUNTLET_ATIVO) return null;
+  if (bootCompletadoEm === null) return null;
+  return bootCompletadoEm - bootIniciadoEm;
+}
+
+function consoleErros(): Array<{ ts: number; msg: string }> {
+  if (!GAUNTLET_ATIVO) return [];
+  return errosCapturados.slice();
+}
+
+// M-GAUNTLET-SEED-V2: aplica fixture nas stores mock. Import dinamico
+// para evitar ciclo (seedDeterministico importa gauntlet). require()
+// resolve sob demanda, mas TS strict precisa de tipo explicito.
+async function aplicarSeedComDados(
+  fixture: 'humores-30d' | 'diarios-3' | 'eventos-7' | 'saude-7d'
+): Promise<void> {
+  // Import dinamico do seedDeterministico para quebrar ciclo. Em
+  // tempo de execucao web/dev, o bundle ja inclui ambos os modulos.
+  const seed = await import('@/lib/dev/seedDeterministico');
+  if (fixture === 'humores-30d') {
+    seed.seedHumores(30);
+  } else if (fixture === 'diarios-3') {
+    seed.seedDiarios(3);
+  } else if (fixture === 'eventos-7') {
+    seed.seedEventos(7);
+  } else if (fixture === 'saude-7d') {
+    seed.seedSaude(7);
+  }
+}
+
+// M11.1: insere entrada deterministica em useGaleriaMock simulando
+// "usuario tocou FAB + escolheu foto". Path nao bate em arquivo
+// real -- e so um marcador para o useFotosAgregadas mostrar a
+// thumbnail no grid quando estiver em web/dev.
+async function aplicarAdicionarFotoMock(): Promise<void> {
+  const ts = Date.now();
+  const data = new Date(ts).toISOString().slice(0, 10);
+  const slug = `mock-${ts}`;
+  useGaleriaMock.getState().adicionar({
+    uri: `web://mock/foto-${ts}.jpg`,
+    data,
+    origemPath: `media/fotos/mock-${ts}.jpg`,
+    origemSlug: slug,
+  });
+}
+
+// R-INFRA-GAUNTLET-AGENDA-MOCK: valida cada evento contra
+// AgendaEventoSchema e delega ao useVaultMock.setEventos a escrita
+// .md em massa. Eventos invalidos sao logados e ignorados (defensivo
+// para inputs malformados no E2E). Retorna quantidade persistida.
+function aplicarSetEventosAgendaMock(
+  pessoa: 'pessoa_a' | 'pessoa_b',
+  eventos: AgendaEvento[]
+): number {
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[gauntlet.setEventosAgendaMock] vaultRoot nao definido; chame seed() antes.'
+      );
+    }
+    return 0;
+  }
+  const validos: AgendaEvento[] = [];
+  for (const ev of eventos) {
+    const parsed = AgendaEventoSchema.safeParse(ev);
+    if (!parsed.success) {
+      if (typeof console !== 'undefined') {
+        console.warn(
+          `[gauntlet.setEventosAgendaMock] evento invalido ignorado: ${parsed.error.message}`
+        );
+      }
+      continue;
+    }
+    validos.push(parsed.data);
+  }
+  if (validos.length === 0) return 0;
+  useVaultMock.getState().setEventos(vaultRoot, pessoa, validos);
+  return validos.length;
+}
+
+// M-AUDIT-MIGUE-FRASE-WEB-MOCK: gera companion .md determiniscico
+// (mesmo path H2, mesmo frontmatter que o mobile real) e empilha em
+// useFrasesMock. Resolucao de colisao simples: se ja existe entrada
+// com mesmo `arquivo`, sufixa -2, -3, ... (max 99) ate achar livre.
+// Espelha resolverColisao do salvarFrase mas em memoria.
+function aplicarSalvarFraseMock(
+  texto: string,
+  meta: { autor: 'pessoa_a' | 'pessoa_b'; para: Para }
+): { ok: boolean; arquivo: string | null } {
+  const trimmed = texto.trim();
+  if (trimmed.length === 0) return { ok: false, arquivo: null };
+  const agora = new Date();
+  const data = agora.toISOString().slice(0, 10);
+  const slug = slugDeFrase(trimmed);
+  const baseRel = `markdown/frase-${data}-${slug}.md`;
+  const existentes = useFrasesMock.getState().frases.map((f) => f.arquivo);
+  let rel = baseRel;
+  if (existentes.includes(baseRel)) {
+    const m = baseRel.match(/^(.*)(\.md)$/);
+    const prefix = m ? (m[1] as string) : baseRel;
+    const ext = m ? (m[2] as string) : '';
+    let achou = false;
+    for (let i = 2; i <= 99; i += 1) {
+      const cand = `${prefix}-${i}${ext}`;
+      if (!existentes.includes(cand)) {
+        rel = cand;
+        achou = true;
+        break;
+      }
+    }
+    if (!achou) rel = `${prefix}-${Date.now()}${ext}`;
+  }
+  const basename = rel.split('/').pop() ?? rel;
+  const companion = stringifyCompanionMidia({
+    tipo: 'midia_frase',
+    arquivo: basename,
+    data: agora.toISOString(),
+    autor: meta.autor,
+    para: meta.para,
+    legenda: trimmed,
+  });
+  useFrasesMock.getState().adicionar({
+    arquivo: rel,
+    texto: trimmed,
+    autor: meta.autor,
+    para: meta.para,
+    companion,
+    data: agora.toISOString(),
+  });
+  return { ok: true, arquivo: rel };
+}
+
+const api: GauntletAPI = {
+  seed: comGuard(aplicarSeed, undefined as void),
+  reset: comGuard(aplicarReset, undefined as void),
+  setNomes: comGuard(aplicarSetNomes, undefined as void),
+  setVaultRoot: comGuard(
+    (root: string) => useVault.setState({ vaultRoot: root }),
+    undefined as void
+  ),
+  setOnboardingDone: comGuard(
+    (done: boolean) => useOnboarding.setState({ done }),
+    undefined as void
+  ),
+  setUltimaRota: comGuard(
+    (rota: string | null) => useSessao.setState({ ultimaRota: rota }),
+    undefined as void
+  ),
+  setTipoCompanhia: comGuard(
+    (modo: 'sozinho' | 'casal' | 'amigos') =>
+      useOnboarding.setState({ tipoCompanhia: modo }),
+    undefined as void
+  ),
+  abrir: async (rota) => {
+    if (!GAUNTLET_ATIVO) return;
+    return navegar(rota);
+  },
+  abrirMenu: comGuard(
+    () => useNavegacao.setState({ menuAberto: true }),
+    undefined as void
+  ),
+  fecharMenu: comGuard(
+    () => useNavegacao.setState({ menuAberto: false }),
+    undefined as void
+  ),
+  abrirSheet: async (rota) => {
+    if (!GAUNTLET_ATIVO) return;
+    // Garante seed minimo antes de tentar abrir sheet (rota modal
+    // exige onboarding done + vaultRoot, senao redireciona para
+    // /onboarding).
+    if (!useOnboarding.getState().done) {
+      aplicarSeed();
+    }
+    // Auditoria 2026-05-04 (item 14): aviso explicito da limitacao
+    // @gorhom/bottom-sheet em web.
+    if (typeof console !== 'undefined' && typeof window !== 'undefined') {
+      console.warn(
+        '[gauntlet] abrirSheet em web pode redirecionar para chrome-error pela limitacao @gorhom/bottom-sheet. Use Nivel B para sheets.'
+      );
+    }
+    await navegar(`/${rota}`);
+  },
+  estado: () => (GAUNTLET_ATIVO ? lerEstado() : ESTADO_MOCK_MOBILE),
+  aguardarBoot,
+  tempoDeBoot,
+  consoleErros,
+  adicionarFotoMock: async () => {
+    if (!GAUNTLET_ATIVO) return;
+    await aplicarAdicionarFotoMock();
+  },
+  salvarFraseMock: (texto, meta) => {
+    if (!GAUNTLET_ATIVO) return { ok: false, arquivo: null };
+    return aplicarSalvarFraseMock(texto, meta);
+  },
+  seedComDados: async (fixture) => {
+    if (!GAUNTLET_ATIVO) return;
+    await aplicarSeedComDados(fixture);
+  },
+  lerVaultMock: comGuard(
+    (uri: string) => useVaultMock.getState().getArquivo(uri) ?? null,
+    null as string | null
+  ),
+  listarVaultMock: comGuard(
+    () => useVaultMock.getState().listar(),
+    [] as string[]
+  ),
+  disparaBootHooks: async () => {
+    if (!GAUNTLET_ATIVO) return;
+    // Import dinamico para evitar ciclo: gauntlet.ts e leve em
+    // tempo de require, e reagendamento.ts ja importa varios
+    // modulos de feature lazy. Em web/dev o bundle ja inclui ambos.
+    const { reagendarTodosBootHooks } =
+      await import('@/lib/boot/reagendamento');
+    await reagendarTodosBootHooks();
+  },
+  setEventosAgendaMock: (pessoa, eventos) => {
+    if (!GAUNTLET_ATIVO) return 0;
+    return aplicarSetEventosAgendaMock(pessoa, eventos);
+  },
+  setArquivoMock: comGuard(
+    (uri: string, conteudo: string) =>
+      useVaultMock.getState().setArquivo(uri, conteudo),
+    undefined as void
+  ),
+};
+
+// Auditoria 2026-05-04 (item 27): captura console.error para
+// inspecao via __gauntlet.consoleErros(). So ativa
+// em modo dev web para nao impactar perf de release.
+if (GAUNTLET_ATIVO && typeof console !== 'undefined') {
+  const origError = console.error;
+  console.error = (...args: unknown[]) => {
+    try {
+      const msg = args
+        .map((a) => (typeof a === 'string' ? a : JSON.stringify(a)))
+        .join(' ');
+      errosCapturados.push({ ts: Date.now(), msg });
+      if (errosCapturados.length > 200) errosCapturados.shift();
+    } catch {
+      // nao deixa o capturador derrubar console.error original.
+    }
+    origError(...(args as Parameters<typeof console.error>));
+  };
+}
+
+export function instalarGauntlet(): void {
+  if (!GAUNTLET_ATIVO) return;
+  if (typeof globalThis === 'undefined') return;
+  // Idempotente: chamadas repetidas substituem a referencia, util
+  // em hot-reload do Metro.
+  (globalThis as unknown as { __gauntlet: GauntletAPI }).__gauntlet = api;
+}
+
+export function desinstalarGauntlet(): void {
+  if (typeof globalThis === 'undefined') return;
+  delete (globalThis as unknown as { __gauntlet?: GauntletAPI }).__gauntlet;
+}
+
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: auto-seed de boot no Gauntlet web.
+// Por default, em dev web, o app abre com onboarding ja concluido para
+// que a navegacao caia direto numa tela util sem chamar
+// window.__gauntlet.seed() manualmente. Reusa aplicarSeed (motor
+// canonico de seed onboarding+vault+nomes). Idempotente: se done ja e
+// true, e no-op (preserva nomes e estado de uma sessao anterior). No-op
+// total quando GAUNTLET_ATIVO=false (mobile/release) pelo mesmo guard
+// das demais APIs.
+export function autoSeedOnboardingSeNecessario(): void {
+  if (!GAUNTLET_ATIVO) return;
+  if (useOnboarding.getState().done) return;
+  aplicarSeed();
+}
+
+// R-DX-GAUNTLET-ONBOARDING-BYPASS: reseta o onboarding (done=false) para
+// FORCAR o fluxo fresh quando a flag ?onboarding=1 esta presente.
+// Necessario porque o bypass default persiste done=true no storage
+// (zustand persist intercepta o setState do aplicarSeed); sem este reset,
+// a flag nao conseguiria reabrir o onboarding numa sessao ja seedada.
+// No-op em mobile/release pelo guard GAUNTLET_ATIVO.
+export function resetarOnboardingParaFluxoDev(): void {
+  if (!GAUNTLET_ATIVO) return;
+  useOnboarding.getState().resetar();
+}
+
+// Exporta direto para casos onde se prefere
+// import vs window. Em testes Jest, esta API tambem fica disponivel
+// via mock direto da modulo.
+export const gauntlet: GauntletAPI = api;

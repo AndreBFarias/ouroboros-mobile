@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:background="@color/dracula_bg"
+  android:padding="12dp">
+
+  <TextView
+    android:id="@+id/widget_todo_titulo"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textColor="@color/dracula_muted"
+    android:fontFamily="monospace"
+    android:textSize="11sp"
+    android:text="@string/widget_todo_titulo" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_marginTop="8dp">
+
+    <TextView
+      android:id="@+id/widget_todo_input"
+      android:layout_width="0dp"
+      android:layout_height="44dp"
+      android:layout_weight="1"
+      android:gravity="center_vertical"
+      android:paddingStart="12dp"
+      android:paddingEnd="12dp"
+      android:textColor="@color/dracula_muted"
+      android:fontFamily="monospace"
+      android:textSize="13sp"
+      android:background="@color/dracula_bg_elev"
+      android:text="@string/widget_todo_input_hint" />
+
+    <TextView
+      android:id="@+id/widget_todo_btn_add"
+      android:layout_width="44dp"
+      android:layout_height="44dp"
+      android:layout_marginStart="6dp"
+      android:gravity="center"
+      android:textColor="@color/dracula_bg"
+      android:fontFamily="monospace"
+      android:textSize="22sp"
+      android:textStyle="bold"
+      android:background="@color/dracula_purple"
+      android:text="@string/widget_todo_btn_add" />
+  </LinearLayout>
+
+  <View
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="10dp"
+    android:background="@color/dracula_bg_elev" />
+
+  <TextView
+    android:id="@+id/widget_todo_count"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textColor="@color/dracula_fg"
+    android:fontFamily="monospace"
+    android:textSize="13sp"
+    android:text="@string/widget_todo_sem_pendentes" />
+</LinearLayout>

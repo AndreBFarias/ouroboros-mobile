@@ -1,0 +1,237 @@
+// Gate de biometria real (M15). Quando
+// useSettings.privacidade.biometriaAbrir === true, intercepta a
+// renderizacao da arvore e mostra tela de bloqueio até
+// LocalAuthentication.authenticateAsync resolver com sucesso.
+//
+// Comportamento canonico:
+//   - Toggle off (default): renderiza children direto, sem lock.
+//   - Toggle on:
+//       1. Mostra UI de bloqueio escura com botao "Desbloquear" e
+//          icone de impressao digital.
+//       2. authenticateAsync com promptMessage em PT-BR.
+//       3. Sucesso -> renderiza children.
+//       4. Falha -> permanece na tela com mensagem em red e botao
+//          "Tentar novamente".
+//   - Web: gate desligado (LocalAuthentication não tem implementacao
+//     web útil); renderiza children. Comportamento documentado em
+//     `STATE.md` -> Nível A não cobre biometria.
+//
+// Reativo: o useEffect re-dispara quando o toggle vira true em
+// runtime (settings -> ligar -> volta -> abre).
+//
+// Deep links do widget homescreen (M20): o expo-router empilha a
+// rota destino (ex: /humor-rapido?source=widget) antes do gate
+// montar; quando autenticado=true, children renderiza a rota
+// correta sem desvio extra. O gate trata o caso de forma
+// transparente -- nenhum bypass necessario.
+import { ReactNode, useEffect, useState, useCallback } from 'react';
+import { Platform, Pressable, Text, View } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { Fingerprint } from '@/lib/icons';
+// N2 (M-MOTI-FIX-CRITICOS): substitui MotiView por Animated.View do
+// Reanimated puro. Boot path critico (gate de biometria monta antes
+// de qualquer rota) + transform animado (scale) = padrao A28.
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { haptics } from '@/lib/haptics';
+import { useSettings } from '@/lib/stores/settings';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
+
+interface BiometriaGateProps {
+  children: ReactNode;
+  // M-GAUNTLET: bypass explicito do gate em modo dev. Pula auth e
+  // renderiza children direto. Combinado com GAUNTLET_ATIVO no
+  // _layout.tsx, garante que validacao visual via Chrome nao trava
+  // em prompt de biometria.
+  bypass?: boolean;
+}
+
+export function BiometriaGate({
+  children,
+  bypass = false,
+}: BiometriaGateProps) {
+  // Auditoria 2026-05-04 (item 4): bypass so vale em build dev.
+  // __DEV__ vira false em release; mesmo se um caller passar
+  // bypass={true} por engano, em release a auth roda normalmente.
+  const bypassReal =
+    bypass && (typeof __DEV__ !== 'undefined' ? __DEV__ : false);
+  const ativa = useSettings((s) => s.privacidade.biometriaAbrir);
+  const [autenticado, setAutenticado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [tentando, setTentando] = useState(false);
+
+  const tentar = useCallback(async () => {
+    if (!ativa || bypassReal) {
+      setAutenticado(true);
+      return;
+    }
+    if (Platform.OS === 'web') {
+      // Web não suporta LocalAuthentication útil; libera para não
+      // bloquear o smoke do Chrome.
+      setAutenticado(true);
+      return;
+    }
+    setTentando(true);
+    setErro(null);
+    try {
+      const supported = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!supported || !enrolled) {
+        // Sem hardware ou sem cadastro: libera com aviso silencioso.
+        // Spec: não prender o usuario por falta de hardware.
+        setAutenticado(true);
+        return;
+      }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Desbloqueie para continuar',
+        cancelLabel: 'Cancelar',
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        haptics.success();
+        setAutenticado(true);
+      } else {
+        haptics.error();
+        setErro('Falha ao autenticar.');
+      }
+    } catch {
+      setErro('Erro inesperado.');
+    } finally {
+      setTentando(false);
+    }
+  }, [ativa, bypassReal]);
+
+  useEffect(() => {
+    if (!ativa || bypassReal) {
+      setAutenticado(true);
+      return;
+    }
+    setAutenticado(false);
+    void tentar();
+  }, [ativa, bypassReal, tentar]);
+
+  if (!ativa || bypassReal || autenticado) {
+    return <>{children}</>;
+  }
+
+  return (
+    <View
+      accessibilityRole="alert"
+      accessibilityLabel="bloqueio biometria"
+      style={{
+        flex: 1,
+        backgroundColor: colors.bgPage,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing.lg,
+      }}
+    >
+      <FingerprintAnim />
+      <Text
+        style={{
+          color: colors.fg,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: typography.heading2.size,
+          lineHeight: typography.heading2.size * typography.heading2.lineHeight,
+          textAlign: 'center',
+          marginBottom: spacing.sm,
+        }}
+      >
+        Aguardando biometria
+      </Text>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: typography.body.size,
+          lineHeight: typography.body.size * typography.body.lineHeight,
+          textAlign: 'center',
+          marginBottom: spacing.xl,
+        }}
+      >
+        Toque no leitor para desbloquear o app.
+      </Text>
+      {erro ? (
+        <Text
+          style={{
+            color: colors.red,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: typography.caption.size,
+            lineHeight: typography.caption.size * typography.caption.lineHeight,
+            marginBottom: spacing.base,
+          }}
+        >
+          {erro}
+        </Text>
+      ) : null}
+      <Pressable
+        onPress={() => {
+          if (tentando) return;
+          haptics.light();
+          void tentar();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="tentar novamente biometria"
+        style={{
+          backgroundColor: colors.purple,
+          paddingHorizontal: spacing.xl,
+          paddingVertical: spacing.md,
+          borderRadius: radius.card,
+          minHeight: 48,
+          opacity: tentando ? 0.5 : 1,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.bg,
+            fontFamily: 'JetBrainsMono_500Medium',
+            fontSize: typography.body.size,
+          }}
+        >
+          {tentando ? 'Tentando…' : 'Tentar novamente'}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+// N2 (M-MOTI-FIX-CRITICOS): sub-componente extraido para usar
+// useSharedValue + withSpring (Reanimated puro). Padrao A28: opacity
+// 0->1 e scale 0.94->1 no mount, springs.default canonico
+// (damping 18, stiffness 200).
+function FingerprintAnim() {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.94);
+
+  useEffect(() => {
+    opacity.value = withSpring(1, { damping: 18, stiffness: 200 });
+    scale.value = withSpring(1, { damping: 18, stiffness: 200 });
+  }, [opacity, scale]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          width: 96,
+          height: 96,
+          borderRadius: 48,
+          backgroundColor: colors.bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing.xl,
+        },
+        animStyle,
+      ]}
+    >
+      <Fingerprint size={48} color={colors.purple} strokeWidth={1.5} />
+    </Animated.View>
+  );
+}

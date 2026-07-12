@@ -1,0 +1,699 @@
+// Tela /integracoes (R-INT-1, 2026-05-16) -- hub canonico de
+// integracoes externas. Substitui a entrada unica de Health Connect
+// (Q17, /settings/integracoes) por um agregador que expoe os
+// servicos suportados em um so lugar.
+//
+// Cards renderizados:
+//   1. Saude Fisica (Health Connect Android) -- detalhe completo em
+//      /settings/integracoes (mantido para retrocompat e pra concentrar
+//      o fluxo de permissoes).
+//   2. Agenda (Google Calendar) -- detalhe em /settings/contas-google
+//      (gerencia OAuth pessoa_a/pessoa_b). Last sync = max(ultimaConexao)
+//      entre as duas contas.
+//   3. Spotify -- R-INT-4 (2026-05-17): OAuth PKCE + Web API read-only.
+//      Estados: conectado/desconectado/conexao expirada. Tap leva ao
+//      detalhe /settings/integracoes.
+//   4. YouTube -- R-INT-4 (2026-05-17): Google OAuth scope
+//      youtube.readonly + YouTube Data API v3. Estados como Spotify.
+//   5. Google Drive (placeholder) -- futura, "Em breve".
+//
+// Cada card mostra:
+//   - Icone e nome canonico (PT-BR com acento)
+//   - Estado: Conectado / Desconectado / Em breve
+//   - Ultima sincronizacao em texto humano (reusa descreverDelta)
+//   - Tap navega para a tela de detalhe (HC, Google) ou e desabilitado
+//     com badge "Em breve" para placeholders.
+//
+// Decisao R-INT-1: NAO recriamos a logica OAuth nem o flow HC aqui.
+// Hub e read-only sobre os stores existentes; navegacao para detalhe
+// preserva todo o codigo entregue em Q17 (HC) e Q22.B (Google Calendar).
+// R-INT-4 estendeu Spotify/YouTube com a mesma filosofia: stores
+// proprios (useSpotifyAuth, useYouTubeAuth), Hub apenas le state e
+// reflete estado.
+//
+// Comentarios sem acento (convencao shell/CI). Strings PT-BR sentence
+// case com acentuacao. accessibilityLabel sem acento.
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { ScrollView, Text, View, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import {
+  Activity,
+  Calendar,
+  Cloud,
+  Music,
+  Video,
+  type LucideProps,
+} from '@/lib/icons';
+import { Header, Screen, useOptionalToast } from '@/components/ui';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { haptics } from '@/lib/haptics';
+import { useGoogleAuth } from '@/lib/stores/googleAuth';
+import { useSettings } from '@/lib/stores/settings';
+import {
+  carregarDriveResumo,
+  type DriveResumo,
+} from '@/lib/integracoes/google/driveResumo';
+import { fazerBackupDrive } from '@/lib/integracoes/google/driveBackup';
+import { listarBackupsArquivados } from '@/lib/backup/executarBackup';
+import { restaurarVaultZip } from '@/lib/services/restaurarVault';
+import { useSpotifyAuth } from '@/lib/integracoes/spotify/store';
+import { useYouTubeAuth } from '@/lib/integracoes/youtube/store';
+import { verificarDisponibilidade } from '@/lib/health/availability';
+import { listarPermissoesConcedidas } from '@/lib/health/permissions';
+import type { ComponentType } from 'react';
+
+export type EstadoIntegracao =
+  | 'conectado'
+  | 'desconectado'
+  | 'indisponivel'
+  | 'em_breve';
+
+interface IntegracaoDescritor {
+  // Slug ASCII para accessibilityLabel e key.
+  slug: string;
+  // Nome canonico exibido (PT-BR com acento).
+  nome: string;
+  // Icone do lucide shim.
+  icone: ComponentType<LucideProps>;
+  // Cor de destaque do icone.
+  corIcone: string;
+  // Estado computado.
+  estado: EstadoIntegracao;
+  // Texto de status (linha 2 do card). Ja em PT-BR sentence case.
+  statusTexto: string;
+  // Rota destino. null quando placeholder ('em_breve').
+  rota: string | null;
+  // Acoes inline opcionais (botoes no rodape do card). Usado pelo card
+  // Drive (R-INT-5-DRIVE-HUB-ATIVO) para "Fazer agora" / "Restaurar"
+  // sem sair do hub. Ausente nos demais cards (so navegam).
+  acoes?: CardAcao[];
+}
+
+// Acao inline de um card: rotulo PT-BR + handler. `ocupado` desabilita
+// o botao enquanto a operacao roda (evita double-tap em upload/restore).
+interface CardAcao {
+  // Slug ASCII para accessibilityLabel/key.
+  slug: string;
+  // Rotulo do botao (PT-BR sentence case com acento).
+  rotulo: string;
+  onPress: () => void;
+  ocupado?: boolean;
+}
+
+interface CardIntegracaoProps {
+  descritor: IntegracaoDescritor;
+  onPress: () => void;
+}
+
+function CardIntegracao({ descritor, onPress }: CardIntegracaoProps) {
+  const { icone: Icon, nome, corIcone, estado, statusTexto, acoes } = descritor;
+  const desabilitado = estado === 'em_breve' || estado === 'indisponivel';
+
+  // Rotulo curto do estado para o badge / chip.
+  const rotuloEstado: Record<EstadoIntegracao, string> = {
+    conectado: 'Conectado',
+    desconectado: 'Desconectado',
+    indisponivel: 'Indisponível',
+    em_breve: 'Em breve',
+  };
+  // Cor do rotulo de estado:
+  // - conectado    -> verde
+  // - desconectado -> muted (neutro, evita alarmismo)
+  // - indisponivel -> mutedDecor
+  // - em_breve     -> mutedDecor
+  const corEstado: Record<EstadoIntegracao, string> = {
+    conectado: colors.green,
+    desconectado: colors.muted,
+    indisponivel: colors.mutedDecor,
+    em_breve: colors.mutedDecor,
+  };
+
+  return (
+    <Pressable
+      onPress={() => {
+        if (desabilitado) return;
+        haptics.light();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`card integracao ${descritor.slug}`}
+      accessibilityState={{ disabled: desabilitado }}
+      disabled={desabilitado}
+      style={{
+        backgroundColor: colors.bgAlt,
+        borderRadius: radius.card,
+        padding: spacing.lg,
+        gap: spacing.sm,
+        borderWidth: 1,
+        borderColor: colors.bgElev,
+        opacity: desabilitado ? 0.6 : 1,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+        }}
+      >
+        <Icon size={20} color={corIcone} strokeWidth={1.75} />
+        <Text
+          style={{
+            color: colors.fg,
+            fontFamily: 'JetBrainsMono_500Medium',
+            fontSize: 16,
+            lineHeight: 24,
+            flex: 1,
+          }}
+        >
+          {nome}
+        </Text>
+        <Text
+          style={{
+            color: corEstado[estado],
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: typography.micro.size,
+            lineHeight: 18,
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+          }}
+          accessibilityLabel={`estado ${descritor.slug} ${estado}`}
+        >
+          {rotuloEstado[estado]}
+        </Text>
+      </View>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: 13,
+          lineHeight: 20,
+        }}
+      >
+        {statusTexto}
+      </Text>
+      {acoes && acoes.length > 0 ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: spacing.sm,
+            paddingTop: spacing.xs,
+          }}
+        >
+          {acoes.map((acao) => (
+            <Pressable
+              key={acao.slug}
+              onPress={() => {
+                if (acao.ocupado) return;
+                haptics.light();
+                acao.onPress();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`acao ${descritor.slug} ${acao.slug}`}
+              accessibilityState={{ disabled: !!acao.ocupado }}
+              disabled={!!acao.ocupado}
+              style={{
+                paddingVertical: spacing.xs,
+                paddingHorizontal: spacing.md,
+                borderRadius: radius.chip,
+                borderWidth: 1,
+                borderColor: colors.bgElev,
+                backgroundColor: colors.bg,
+                opacity: acao.ocupado ? 0.5 : 1,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.fg,
+                  fontFamily: 'JetBrainsMono_500Medium',
+                  fontSize: 13,
+                  lineHeight: 20,
+                }}
+              >
+                {acao.rotulo}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+// Texto humano para "Última sincronizacao". Calculo manual em
+// thresholds proximos a descreverDelta de syncStatus.ts (60s, 30min,
+// 6h) pra manter consistencia visual com o CardStatus do Settings.
+// Independente daquele util porque a copy ali diz "Atualizado" e
+// aqui dizemos "Sincronizado".
+function textoUltimaSync(epochMs: number | null): string {
+  if (epochMs === null || epochMs <= 0) return 'Nunca sincronizado.';
+  const d = new Date(epochMs);
+  const delta = Date.now() - d.getTime();
+  if (delta < 60 * 1000) return 'Sincronizado agora mesmo.';
+  if (delta < 30 * 60 * 1000) {
+    const min = Math.floor(delta / (60 * 1000));
+    return `Sincronizado há ${min} min.`;
+  }
+  if (delta < 6 * 60 * 60 * 1000) {
+    const h = Math.floor(delta / (60 * 60 * 1000));
+    return `Sincronizado há ${h}h.`;
+  }
+  if (delta < 24 * 60 * 60 * 1000) {
+    const h = Math.floor(delta / (60 * 60 * 1000));
+    return `Última sincronização há ${h}h.`;
+  }
+  const dias = Math.floor(delta / (24 * 60 * 60 * 1000));
+  if (dias === 1) return 'Última sincronização ontem.';
+  return `Última sincronização há ${dias} dias.`;
+}
+
+export function IntegracoesScreen() {
+  const router = useRouter();
+  // Toast opcional: no-op quando renderizado fora do ToastProvider
+  // (ambiente de teste isolado). Evita crash em smoke do componente.
+  const toast = useOptionalToast();
+  // R-INT-5-DRIVE-HUB-ATIVO: resumo de backups Drive (N backups, MB,
+  // ultimo envio). Carregado no mount; recarregado apos "Fazer agora".
+  const [driveResumo, setDriveResumo] = useState<DriveResumo | null>(null);
+  // Flags de operacao em andamento para o card Drive (desabilita os
+  // botoes durante upload/restore, evita double-tap).
+  const [driveUploadando, setDriveUploadando] = useState(false);
+  const [driveRestaurando, setDriveRestaurando] = useState(false);
+  // Estado de Health Connect: lazy probe do SDK + ler quantos tipos
+  // estao concedidos. Roda uma vez no mount (idempotente; o detalhe
+  // /settings/integracoes refaz com mais profundidade).
+  const [statusHC, setStatusHC] = useState<
+    'available' | 'needs_update' | 'unavailable' | 'verificando'
+  >('verificando');
+  const [permissoesHC, setPermissoesHC] = useState<number>(0);
+  // healthConnectSync e o toggle canonico do opt-in (Q17.c). Quando
+  // ON significa que o usuario aceitou sync automatico ao salvar.
+  const hcSyncToggle = useSettings((s) => s.featureToggles.healthConnectSync);
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: toggle do backup off-device. Reflete
+  // " (backup ligado/desligado)" no card Drive. Default OFF.
+  const driveBackupToggle = useSettings(
+    (s) => s.featureToggles.backupDriveAutomatico
+  );
+  // Estado das contas Google: pega max ultimaConexao das duas pessoas
+  // para o "Última sincronizacao" do Calendar.
+  const contas = useGoogleAuth((s) => s.contas);
+  const pessoaA = contas.pessoa_a;
+  const pessoaB = contas.pessoa_b;
+  const contaAConectada =
+    typeof pessoaA.accessToken === 'string' && pessoaA.accessToken.length > 0;
+  const contaBConectada =
+    typeof pessoaB.accessToken === 'string' && pessoaB.accessToken.length > 0;
+  const algumGoogleConectado = contaAConectada || contaBConectada;
+  const ultimaConexaoGoogle = Math.max(
+    pessoaA.ultimaConexao ?? 0,
+    pessoaB.ultimaConexao ?? 0
+  );
+
+  // R-INT-4 (2026-05-17): estado das contas Spotify e YouTube.
+  // Cada store expoe `conta` unica (sem split pessoa); v1 nao tenta
+  // gerenciar 2 contas Spotify por device.
+  const contaSpotify = useSpotifyAuth((s) => s.conta);
+  const contaYoutube = useYouTubeAuth((s) => s.conta);
+  const spotifyConectado =
+    typeof contaSpotify.accessToken === 'string' &&
+    contaSpotify.accessToken.length > 0 &&
+    !contaSpotify.invalido;
+  const youtubeConectado =
+    typeof contaYoutube.accessToken === 'string' &&
+    contaYoutube.accessToken.length > 0 &&
+    !contaYoutube.invalido;
+
+  // R-INTEGRACOES-CANCELADO-PATTERN (2026-05-21): mountedRef em vez da
+  // flag local antiga. Consistente com SecaoBackupAutomatico (hunt-3).
+  // mountedRef cobre todos os efeitos async do componente; reduz risco
+  // de auditor futuro confundir uso correto vs bugado do antigo pattern.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const s = await verificarDisponibilidade();
+        if (!mountedRef.current) return;
+        setStatusHC(s);
+        if (s === 'available') {
+          const lista = await listarPermissoesConcedidas();
+          if (!mountedRef.current) return;
+          setPermissoesHC(lista.length);
+        }
+      } catch {
+        if (mountedRef.current) setStatusHC('unavailable');
+      }
+    })();
+  }, []);
+
+  // Carrega o resumo de backups Drive no mount. Idempotente; o adapter
+  // ja trata web/sem-vault devolvendo resumo vazio honesto.
+  const carregarResumo = useCallback(async () => {
+    try {
+      const r = await carregarDriveResumo();
+      if (mountedRef.current) setDriveResumo(r);
+    } catch {
+      // Falha de leitura nao deve quebrar o hub; card cai no texto
+      // padrao do toggle.
+    }
+  }, []);
+
+  useEffect(() => {
+    void carregarResumo();
+  }, [carregarResumo]);
+
+  // Acao "Fazer agora": dispara o upload do ZIP de backup local mais
+  // recente para o Drive (reusa fazerBackupDrive de R-INT-5-BACKUP, sem
+  // reimplementar). Em web ou sem scope o modulo devolve no-op gracioso
+  // com mensagem; refletimos no toast sem alarmismo.
+  const fazerBackupAgora = useCallback(async () => {
+    if (driveUploadando) return;
+    setDriveUploadando(true);
+    try {
+      const r = await fazerBackupDrive('', new Date());
+      if (!mountedRef.current) return;
+      if (r.uploadado) {
+        toast.show('Backup enviado ao Drive.', 'success');
+      } else if (r.jaExistia) {
+        toast.show('Backup já estava no Drive.', 'info');
+      } else {
+        toast.show(r.erro ?? 'Não foi possível enviar agora.', 'warn');
+      }
+      await carregarResumo();
+    } catch {
+      if (mountedRef.current) {
+        toast.show('Falha ao enviar o backup.', 'error');
+      }
+    } finally {
+      if (mountedRef.current) setDriveUploadando(false);
+    }
+  }, [driveUploadando, toast, carregarResumo]);
+
+  // Acao "Restaurar": restaura o backup local mais recente via o fluxo
+  // canonico restaurarVaultZip (nao destrutivo: cria pasta restaurado-
+  // <data>/). Reuso integral; nao reimplementamos restore. O download do
+  // ZIP a partir do Drive remoto depende do scope dormente (R-SEC-1);
+  // ate la restauramos o espelho local, que e' o mesmo artefato enviado.
+  const restaurarBackup = useCallback(async () => {
+    if (driveRestaurando) return;
+    setDriveRestaurando(true);
+    try {
+      const backups = await listarBackupsArquivados();
+      const recente = backups[0];
+      if (!recente) {
+        if (mountedRef.current) {
+          toast.show('Nenhum backup disponível para restaurar.', 'warn');
+        }
+        return;
+      }
+      const res = await restaurarVaultZip(recente.uri);
+      if (!mountedRef.current) return;
+      if (res.ok) {
+        toast.show(`Restaurado: ${res.totalEscritos} arquivos.`, 'success');
+      } else {
+        toast.show(res.motivo ?? 'Não foi possível restaurar.', 'warn');
+      }
+    } catch {
+      if (mountedRef.current) {
+        toast.show('Falha ao restaurar o backup.', 'error');
+      }
+    } finally {
+      if (mountedRef.current) setDriveRestaurando(false);
+    }
+  }, [driveRestaurando, toast]);
+
+  // Descritor Health Connect.
+  // - estado:
+  //   - permissoes > 0 -> conectado
+  //   - status available, sem permissoes -> desconectado
+  //   - status needs_update / unavailable -> indisponivel
+  // - statusTexto: pequena explicacao.
+  const descritorHC: IntegracaoDescritor = ((): IntegracaoDescritor => {
+    if (statusHC === 'verificando') {
+      return {
+        slug: 'health_connect',
+        nome: 'Saúde Física',
+        icone: Activity,
+        corIcone: colors.pink,
+        estado: 'desconectado',
+        statusTexto: 'Verificando disponibilidade…',
+        rota: '/settings/integracoes',
+      };
+    }
+    if (statusHC === 'unavailable') {
+      return {
+        slug: 'health_connect',
+        nome: 'Saúde Física',
+        icone: Activity,
+        corIcone: colors.pink,
+        estado: 'indisponivel',
+        statusTexto: 'Conexão Saúde indisponível neste dispositivo.',
+        rota: null,
+      };
+    }
+    if (statusHC === 'needs_update') {
+      return {
+        slug: 'health_connect',
+        nome: 'Saúde Física',
+        icone: Activity,
+        corIcone: colors.pink,
+        estado: 'desconectado',
+        statusTexto: 'Atualização da Conexão Saúde necessária.',
+        rota: '/settings/integracoes',
+      };
+    }
+    if (permissoesHC > 0) {
+      const sufixo = hcSyncToggle ? ' (sync ligado)' : ' (sync desligado)';
+      return {
+        slug: 'health_connect',
+        nome: 'Saúde Física',
+        icone: Activity,
+        corIcone: colors.pink,
+        estado: 'conectado',
+        statusTexto: `${permissoesHC} ${
+          permissoesHC === 1 ? 'tipo conectado' : 'tipos conectados'
+        }${sufixo}.`,
+        rota: '/settings/integracoes',
+      };
+    }
+    return {
+      slug: 'health_connect',
+      nome: 'Saúde Física',
+      icone: Activity,
+      corIcone: colors.pink,
+      estado: 'desconectado',
+      statusTexto: 'Toque para conectar à Conexão Saúde.',
+      rota: '/settings/integracoes',
+    };
+  })();
+
+  // Descritor Google Calendar.
+  // Ultima sync = max(ultimaConexao_a, ultimaConexao_b).
+  const descritorCalendar: IntegracaoDescritor = algumGoogleConectado
+    ? {
+        slug: 'google_calendar',
+        nome: 'Agenda',
+        icone: Calendar,
+        corIcone: colors.cyan,
+        estado: 'conectado',
+        statusTexto: textoUltimaSync(
+          ultimaConexaoGoogle > 0 ? ultimaConexaoGoogle : null
+        ),
+        rota: '/settings/contas-google',
+      }
+    : {
+        slug: 'google_calendar',
+        nome: 'Agenda',
+        icone: Calendar,
+        corIcone: colors.cyan,
+        estado: 'desconectado',
+        statusTexto: 'Toque para conectar uma conta Google.',
+        rota: '/settings/contas-google',
+      };
+
+  // Spotify e YouTube: R-INT-4 (2026-05-17) entregou OAuth read-only.
+  // Estado real ja consumido dos stores; texto reflete "Conectado /
+  // Toque para conectar". Rota: /settings/integracoes (mesma tela
+  // detalhe usada para HC; futura sprint pode separar). Por enquanto,
+  // o tap dispara navegacao para a tela de detalhe via /settings;
+  // como ainda nao existe rota dedicada Spotify/YouTube, a v1 abre
+  // /settings/integracoes onde o usuario ve o status. Subspec
+  // R-INT-4.B podera criar /settings/spotify e /settings/youtube.
+  const descritorSpotify: IntegracaoDescritor = spotifyConectado
+    ? {
+        slug: 'spotify',
+        nome: 'Spotify',
+        icone: Music,
+        corIcone: colors.green,
+        estado: 'conectado',
+        statusTexto: textoUltimaSync(
+          contaSpotify.ultimaConexao > 0 ? contaSpotify.ultimaConexao : null
+        ),
+        rota: '/settings/integracoes',
+      }
+    : {
+        slug: 'spotify',
+        nome: 'Spotify',
+        icone: Music,
+        corIcone: colors.green,
+        estado: 'desconectado',
+        statusTexto: contaSpotify.invalido
+          ? 'Conexão expirada. Toque para reconectar.'
+          : 'Toque para conectar sua conta Spotify.',
+        rota: '/settings/integracoes',
+      };
+  const descritorYoutube: IntegracaoDescritor = youtubeConectado
+    ? {
+        slug: 'youtube',
+        nome: 'YouTube',
+        icone: Video,
+        corIcone: colors.red,
+        estado: 'conectado',
+        statusTexto: textoUltimaSync(
+          contaYoutube.ultimaConexao > 0 ? contaYoutube.ultimaConexao : null
+        ),
+        rota: '/settings/integracoes',
+      }
+    : {
+        slug: 'youtube',
+        nome: 'YouTube',
+        icone: Video,
+        corIcone: colors.red,
+        estado: 'desconectado',
+        statusTexto: contaYoutube.invalido
+          ? 'Conexão expirada. Toque para reconectar.'
+          : 'Toque para conectar sua conta YouTube.',
+        rota: '/settings/integracoes',
+      };
+  // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: Drive deixa de ser placeholder. O
+  // upload reusa o OAuth Google (mesmo store do Calendar) + o ZIP de
+  // backup local. Estado:
+  //   - sem conta Google -> desconectado (conectar em /settings/contas-google).
+  //   - com conta Google  -> conectado; statusTexto reflete o toggle de
+  //     backup automatico (default OFF). O scope drive.file e' concedido
+  //     no consentimento, mas o upload runtime aguarda o registro do scope
+  //     no Cloud Console (passo humano R-SEC-1).
+  const descritorDrive: IntegracaoDescritor = algumGoogleConectado
+    ? {
+        slug: 'google_drive',
+        nome: 'Google Drive',
+        icone: Cloud,
+        corIcone: colors.yellow,
+        estado: 'conectado',
+        // Resumo real (N backups, MB, ultimo envio) quando carregado;
+        // fallback no texto do toggle enquanto o resumo nao resolveu.
+        statusTexto:
+          driveResumo !== null
+            ? driveResumo.texto
+            : driveBackupToggle
+              ? 'Backup automático ligado. Envia o ZIP do Vault toda semana.'
+              : 'Backup automático desligado. Ligue em Contas Google.',
+        rota: '/settings/contas-google',
+        acoes: [
+          {
+            slug: 'fazer_agora',
+            rotulo: driveUploadando ? 'Enviando…' : 'Fazer agora',
+            onPress: () => {
+              void fazerBackupAgora();
+            },
+            ocupado: driveUploadando,
+          },
+          {
+            slug: 'restaurar',
+            rotulo: driveRestaurando ? 'Restaurando…' : 'Restaurar',
+            onPress: () => {
+              void restaurarBackup();
+            },
+            ocupado: driveRestaurando,
+          },
+        ],
+      }
+    : {
+        slug: 'google_drive',
+        nome: 'Google Drive',
+        icone: Cloud,
+        corIcone: colors.yellow,
+        estado: 'desconectado',
+        statusTexto: 'Conecte uma conta Google para o backup na nuvem.',
+        rota: '/settings/contas-google',
+      };
+
+  const descritores: IntegracaoDescritor[] = [
+    descritorHC,
+    descritorCalendar,
+    descritorSpotify,
+    descritorYoutube,
+    descritorDrive,
+  ];
+
+  const navegar = useCallback(
+    (rota: string | null) => {
+      if (rota === null) return;
+      router.push(rota as Parameters<typeof router.push>[0]);
+    },
+    [router]
+  );
+
+  return (
+    <Screen>
+      <Header title="Integrações" onBack={() => router.back()} />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingTop: spacing.base,
+          paddingBottom: spacing.huge,
+          gap: spacing.md,
+          paddingHorizontal: spacing.lg,
+        }}
+        showsVerticalScrollIndicator={false}
+        accessibilityLabel="lista integracoes"
+      >
+        <Text
+          style={{
+            color: colors.muted,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: 13,
+            lineHeight: 20,
+            paddingBottom: spacing.sm,
+          }}
+        >
+          Conecte serviços externos para enriquecer o Recap e o
+          acompanhamento de saúde física.
+        </Text>
+
+        {descritores.map((d) => (
+          <CardIntegracao
+            key={d.slug}
+            descritor={d}
+            onPress={() => navegar(d.rota)}
+          />
+        ))}
+
+        <Text
+          style={{
+            color: colors.mutedDecor,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: 12,
+            lineHeight: 18,
+            textAlign: 'center',
+            paddingTop: spacing.base,
+            paddingHorizontal: spacing.base,
+          }}
+        >
+          Novas integrações em sprints futuras.
+        </Text>
+      </ScrollView>
+    </Screen>
+  );
+}
+
+// Export-also nomeado para testes (mock direto da screen ao inves do
+// app/integracoes wrapper). Tambem nomeado para alinhamento com outros
+// screens em src/components/screens/ que exportam named.
+export default IntegracoesScreen;
