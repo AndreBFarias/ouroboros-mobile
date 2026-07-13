@@ -69,5 +69,10 @@ module.exports = {
     '^yaml$': '<rootDir>/node_modules/yaml/dist/index.js',
     '^lucide-react-native/dist/esm/icons/(.*)\\.mjs$':
       '<rootDir>/node_modules/lucide-react-native/dist/cjs/icons/$1.js',
+    // env.json (credenciais OAuth) e gitignored e ausente no CI. Todo
+    // import estatico de env.json resolve para um fixture de mock, para
+    // as suites nao dependerem do arquivo real. Testes que precisam de
+    // valores especificos sobrescrevem via jest.mock/doMock local.
+    '(\\.\\./)+env\\.json$': '<rootDir>/tests/__fixtures__/env.mock.json',
   },
 };
