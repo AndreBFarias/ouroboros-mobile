@@ -7,15 +7,19 @@
 //
 // Self-hide (padrao R-HOME-4a): durante loading ou sem rollover o card
 // retorna null -- sem empty state, o card simplesmente some (feed
-// adaptativo). Nenhuma caixa "Nada ...". O UndoOverlay fica montado a
-// parte para que o toast "Desfazer" sobreviva a conclusao da ULTIMA
-// tarefa rolada (a lista esvazia mas o undo precisa dos 5s).
+// adaptativo). Nenhuma caixa "Nada ...".
+//
+// R-HOME-5: o toast "Desfazer" saiu do card. Antes cada secao montava seu
+// proprio <UndoOverlay/> dentro do feed (atras dos cards, bug B4); agora o
+// estado vive na store toastUndo e um unico <UndoOverlayHost/> no root da
+// Tela Hoje o renderiza, entao o toast sobrevive a conclusao da ULTIMA
+// tarefa rolada sem o card precisar continuar montado.
 //
 // Espelha SecaoTodoHoje: loader proprio via useFocusEffect + listarTarefas
 // (double-read transitorio -- o registry FEED_CARDS monta cada card sem
 // props, entao nao ha loader compartilhado). Reusa o
 // padrao checkbox-inline + toast Desfazer do R-HOME-3 (CheckboxTarefaInline
-// + useToastUndo), com a mesma logica otimista + rollback.
+// + store toastUndo), com a mesma logica otimista + rollback.
 //
 // Tom (ADR-0005 / regra de tom): titulo em muted (prioridade secundaria,
 // nao urgencia como o orange do To-do). Rotulo "ontem" / "ha N dias" e
@@ -37,7 +41,7 @@ import {
 } from '@/lib/vault/tarefas';
 import { selecionarRollover } from '@/lib/tarefas/rollover';
 import { CheckboxTarefaInline } from '@/components/tarefas/CheckboxTarefaInline';
-import { useToastUndo } from '@/lib/hooks/useToastUndo';
+import { useToastUndoStore } from '@/lib/stores/toastUndo';
 
 const LIMITE_ROLLOVER = 5;
 
@@ -46,7 +50,7 @@ export function SecaoAindaDeOntem() {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const [tarefas, setTarefas] = useState<TarefaListada[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { mostrarUndo, UndoOverlay } = useToastUndo();
+  const mostrarUndo = useToastUndoStore((s) => s.mostrarUndo);
 
   const carregar = useCallback(async () => {
     if (!vaultRoot) {
@@ -143,91 +147,87 @@ export function SecaoAindaDeOntem() {
     [vaultRoot, tarefas, aplicarOtimista, mostrarUndo]
   );
 
-  // Self-hide: durante loading nao ha nada a mostrar nem undo possivel.
-  if (loading) return null;
+  // Self-hide: durante loading ou sem rollover nao ha nada a mostrar. O
+  // toast "Desfazer" nao mora mais aqui (R-HOME-5): vive na store e e
+  // renderizado pelo <UndoOverlayHost/> no root da Tela Hoje, entao
+  // sobrevive naturalmente a conclusao da ULTIMA tarefa rolada.
+  if (loading || visiveis.length === 0) return null;
 
-  // A lista visivel so aparece quando ha rollover. O UndoOverlay fica
-  // montado a parte para sobreviver a conclusao da ultima tarefa rolada.
   return (
-    <>
-      {visiveis.length > 0 ? (
-        <View style={{ gap: spacing.md }}>
-          <Text
+    <View style={{ gap: spacing.md }}>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: 16,
+        }}
+      >
+        Ainda de ontem
+      </Text>
+      <View style={{ gap: spacing.sm }}>
+        {visiveis.map((t) => (
+          <View
+            key={t.rel}
             style={{
-              color: colors.muted,
-              fontFamily: 'JetBrainsMono_500Medium',
-              fontSize: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.sm,
             }}
           >
-            Ainda de ontem
-          </Text>
-          <View style={{ gap: spacing.sm }}>
-            {visiveis.map((t) => (
-              <View
-                key={t.rel}
+            <View style={{ flex: 1 }}>
+              <CheckboxTarefaInline
+                id={t.rel}
+                tarefa={{ titulo: t.meta.titulo, feito: t.meta.feito }}
+                onCheck={handleCheck}
+                onLongPress={abrirTodo}
+              />
+            </View>
+            <View
+              style={{
+                paddingVertical: spacing.xs,
+                paddingHorizontal: spacing.md,
+                borderRadius: radius.chip,
+                backgroundColor: colors.bgAlt,
+              }}
+            >
+              <Text
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing.sm,
+                  color: colors.muted,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: 12,
+                  lineHeight: 18,
                 }}
               >
-                <View style={{ flex: 1 }}>
-                  <CheckboxTarefaInline
-                    id={t.rel}
-                    tarefa={{ titulo: t.meta.titulo, feito: t.meta.feito }}
-                    onCheck={handleCheck}
-                    onLongPress={abrirTodo}
-                  />
-                </View>
-                <View
-                  style={{
-                    paddingVertical: spacing.xs,
-                    paddingHorizontal: spacing.md,
-                    borderRadius: radius.chip,
-                    backgroundColor: colors.bgAlt,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colors.muted,
-                      fontFamily: 'JetBrainsMono_400Regular',
-                      fontSize: 12,
-                      lineHeight: 18,
-                    }}
-                  >
-                    {t.rotulo}
-                  </Text>
-                </View>
-              </View>
-            ))}
-            {excedentes > 0 ? (
-              <Pressable
-                onPress={abrirTodo}
-                accessibilityRole="button"
-                accessibilityLabel="abrir tarefas"
-                hitSlop={12}
-                style={{
-                  paddingVertical: spacing.sm,
-                  paddingHorizontal: spacing.base,
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.muted,
-                    fontFamily: 'JetBrainsMono_400Regular',
-                    fontSize: 13,
-                    lineHeight: 20,
-                  }}
-                >
-                  {`e mais ${excedentes} em Tarefas`}
-                </Text>
-              </Pressable>
-            ) : null}
+                {t.rotulo}
+              </Text>
+            </View>
           </View>
-        </View>
-      ) : null}
-      <UndoOverlay />
-    </>
+        ))}
+        {excedentes > 0 ? (
+          <Pressable
+            onPress={abrirTodo}
+            accessibilityRole="button"
+            accessibilityLabel="abrir tarefas"
+            hitSlop={12}
+            style={{
+              paddingVertical: spacing.sm,
+              paddingHorizontal: spacing.base,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: 13,
+                lineHeight: 20,
+              }}
+            >
+              {`e mais ${excedentes} em Tarefas`}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
