@@ -12,6 +12,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { agregarRecap, resolverPeriodo } from '@/lib/hooks/useRecap';
+import { dataLocalYmd } from '@/lib/datetime/local';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
@@ -142,20 +143,18 @@ describe('resolverPeriodo', () => {
   // R-RECAP-PERIODO-DIA (2026-05-21): 'dia' cobre 00:00 -> 23:59:59
   // do dia local de `agora`. Range < 24h, sempre dentro do mesmo dia
   // civil. Util para fechar Recap do dia direto da Tela Hoje.
-  it('dia cobre as bordas civis (00:00 ate 23:59:59.999)', () => {
+  it('dia cobre as bordas do dia civil BRT (independente do fuso do runtime)', () => {
     const r = resolverPeriodo('dia', agora);
-    expect(r.de.getHours()).toBe(0);
-    expect(r.de.getMinutes()).toBe(0);
-    expect(r.de.getSeconds()).toBe(0);
-    expect(r.de.getMilliseconds()).toBe(0);
-    expect(r.ate.getHours()).toBe(23);
-    expect(r.ate.getMinutes()).toBe(59);
-    expect(r.ate.getSeconds()).toBe(59);
-    expect(r.ate.getMilliseconds()).toBe(999);
-    // Mesmo dia civil em ambos os extremos.
-    expect(r.de.getDate()).toBe(r.ate.getDate());
-    expect(r.de.getMonth()).toBe(r.ate.getMonth());
-    expect(r.de.getFullYear()).toBe(r.ate.getFullYear());
+    const ymdHoje = dataLocalYmd(agora);
+    // Bordas ancoradas no dia civil de Sao Paulo, nao no fuso do runtime:
+    // o CI roda em UTC e a janela precisa bater com humor.data (YMD-local).
+    expect(dataLocalYmd(r.de)).toBe(ymdHoje);
+    expect(dataLocalYmd(r.ate)).toBe(ymdHoje);
+    // 1ms antes de `de` cai em ontem; 1ms depois de `ate` cai em amanha.
+    expect(dataLocalYmd(new Date(r.de.getTime() - 1))).not.toBe(ymdHoje);
+    expect(dataLocalYmd(new Date(r.ate.getTime() + 1))).not.toBe(ymdHoje);
+    // Cobre o dia civil inteiro (24h menos 1ms).
+    expect(r.ate.getTime() - r.de.getTime()).toBe(86_400_000 - 1);
   });
 
   it('dia nao polui a referencia `agora` recebida', () => {

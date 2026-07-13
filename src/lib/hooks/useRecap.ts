@@ -27,6 +27,7 @@ import {
   type ItemMidiaStandalone,
 } from '@/lib/vault/midiaCompanion';
 import { diasEntre } from '@/lib/util/diasEntre';
+import { startOfTodayLocal } from '@/lib/datetime/local';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
@@ -80,18 +81,20 @@ export function resolverPeriodo(
     }
     return custom;
   }
+  // Ancora a janela no dia civil BRT (nao no fuso do runtime). humor.data
+  // e evento.data sao YMD-local de Sao Paulo; se a fronteira do dia usar
+  // setHours no runtime-TZ, ela escorrega ~3h quando o processo roda em
+  // UTC (CI) e registros da vespera vazam para o dia. startOfTodayLocal
+  // devolve a meia-noite BRT do dia de `agora`. SP nao tem DST, entao
+  // somar/subtrair dias em ms preserva a meia-noite local.
+  const inicioDia = startOfTodayLocal(agora);
   if (chave === 'dia') {
-    const de = new Date(agora);
-    de.setHours(0, 0, 0, 0);
-    const ate = new Date(agora);
-    ate.setHours(23, 59, 59, 999);
-    return { de, ate };
+    const ate = new Date(inicioDia.getTime() + 86_400_000 - 1);
+    return { de: inicioDia, ate };
   }
   const ate = agora;
-  const de = new Date(agora);
   const dias = chave === 'semana' ? 7 : chave === 'mes' ? 30 : 365;
-  de.setDate(de.getDate() - dias + 1);
-  de.setHours(0, 0, 0, 0);
+  const de = new Date(inicioDia.getTime() - (dias - 1) * 86_400_000);
   return { de, ate };
 }
 
