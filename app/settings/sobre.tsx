@@ -3,7 +3,7 @@
 // o mini-changelog amigavel lido de RELEASE_NOTES (TS estruturado, nao
 // import bruto do CHANGELOG.md). Texto em sentence case PT-BR
 // completa. Sem analytics, sem opt-out (ADR-0007).
-import { ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Header, Screen } from '@/components/ui';
 import { SecaoSobre } from '@/components/settings/SecaoSobre';
@@ -155,6 +155,66 @@ function SecaoCreditos() {
           dados e sem dependência de serviços remotos.
         </Text>
       </View>
+      <SecaoCreditosMusicas />
     </SecaoLista>
+  );
+}
+
+// R-RECAP-9 (2026-07-11): atribuicao obrigatoria da licenca CC BY 4.0
+// das trilhas do Recap (Kevin MacLeod). A CC BY exige credito visivel;
+// esta secao satisfaz a obrigacao no proprio app. Inventario completo
+// em assets/sounds/recap-musicas/CREDITS.md.
+function SecaoCreditosMusicas() {
+  const urlLicenca = 'https://creativecommons.org/licenses/by/4.0/';
+  return (
+    <View
+      accessibilityLabel="creditos musicas recap"
+      style={{
+        backgroundColor: colors.bgAlt,
+        borderRadius: radius.card,
+        padding: spacing.base,
+        marginTop: spacing.sm,
+        gap: spacing.xs,
+      }}
+    >
+      <Text
+        style={{
+          color: colors.fg,
+          fontFamily: 'JetBrainsMono_500Medium',
+          fontSize: typography.body.size,
+          lineHeight: typography.body.size * typography.body.lineHeight,
+        }}
+      >
+        Músicas do Recap
+      </Text>
+      <Text
+        style={{
+          color: colors.muted,
+          fontFamily: 'JetBrainsMono_400Regular',
+          fontSize: typography.body.size,
+          lineHeight: typography.body.size * typography.body.lineHeight,
+        }}
+      >
+        Kevin MacLeod (incompetech.com). Licenciadas sob Creative Commons
+        Attribution 4.0 (CC BY 4.0).
+      </Text>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel="abrir licenca creative commons by 4.0"
+        onPress={() => Linking.openURL(urlLicenca)}
+        hitSlop={8}
+      >
+        <Text
+          style={{
+            color: colors.purple,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: typography.caption.size,
+            lineHeight: typography.caption.size * typography.body.lineHeight,
+          }}
+        >
+          creativecommons.org/licenses/by/4.0
+        </Text>
+      </Pressable>
+    </View>
   );
 }

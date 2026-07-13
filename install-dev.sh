@@ -232,6 +232,14 @@ adb connect "$IP:5555"
 echo "OK: ADB wireless em $IP:5555. Pode desconectar o cabo."
 EOF
 
+# 5.1b adb-wifi-pair.sh — pareamento por codigo SEM cabo (Android 11+).
+# Versionado no repo (nao gerado aqui); so garante permissao de execucao.
+if [[ -f scripts/adb-wifi-pair.sh ]]; then
+  chmod +x scripts/adb-wifi-pair.sh
+else
+  echo "AVISO: scripts/adb-wifi-pair.sh ausente (esperado no repo)."
+fi
+
 # 5.2 start-emulator.sh
 cat > scripts/start-emulator.sh <<'EOF'
 #!/usr/bin/env bash

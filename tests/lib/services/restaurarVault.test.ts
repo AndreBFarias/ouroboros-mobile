@@ -161,6 +161,7 @@ function snapshotValido(): SnapshotSettings {
       healthConnectSync: false,
       recapAmbientAudio: false,
       recapAudioAnexadoAutoplay: true,
+      recapMusicaFundo: true,
       googleCalendarSync: false,
       backupDriveAutomatico: false,
       hcAutopullBackground: false,
@@ -311,6 +312,44 @@ describe('aplicarSnapshot (M-AUDIT-MIGUE-RESTORE-SNAPSHOT)', () => {
     );
     expect(r.ok).toBe(false);
     expect(r.motivo).toBe('snapshot-invalido');
+  });
+
+  // R-RECAP-9b (2026-07-11): restaurar um backup ANTIGO (exportado antes do
+  // R-RECAP-9) traz featureToggles SEM recapMusicaFundo. Sem o back-fill, o
+  // setState wholesale reintroduzia recapMusicaFundo=undefined -> musica muda
+  // (mesma classe do bug do persist, segunda porta via restore).
+  it('back-filla featureToggle novo ausente do snapshot antigo, preservando escolha organica', () => {
+    const snap = snapshotValido();
+    // Escolha organica do usuario no backup: cicloMenstrual desligado.
+    snap.settings.featureToggles.cicloMenstrual = false;
+    // Simula backup pre-R-RECAP-9: a chave nova nao existia no shape exportado.
+    delete (
+      snap.settings.featureToggles as unknown as Record<string, unknown>
+    ).recapMusicaFundo;
+    expect(snap.settings.featureToggles.recapMusicaFundo).toBeUndefined();
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    // Back-fill: a chave nova recebe o default v2 (LIGADA), nao undefined.
+    expect(useSettings.getState().featureToggles.recapMusicaFundo).toBe(true);
+    // Escolha organica do snapshot vence o default (persistido por cima).
+    expect(useSettings.getState().featureToggles.cicloMenstrual).toBe(false);
+    // Outra escolha organica preservada (widgetMostraNome=true no fixture).
+    expect(useSettings.getState().featureToggles.widgetMostraNome).toBe(true);
+  });
+
+  it('back-filla sub-objeto ausente do snapshot corrompido (spread de undefined e no-op)', () => {
+    const snap = snapshotValido();
+    // Snapshot corrompido: featureToggles inteiro ausente.
+    delete (snap.settings as unknown as Record<string, unknown>).featureToggles;
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    // Cai nos defaults v2 limpos em vez de virar undefined.
+    expect(useSettings.getState().featureToggles.recapMusicaFundo).toBe(true);
+    expect(useSettings.getState().featureToggles.cicloMenstrual).toBe(true);
   });
 
   it('tolera snapshot antigo sem sexoDeclarado/permissoes (campo aditivo)', () => {

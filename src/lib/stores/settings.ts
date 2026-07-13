@@ -80,6 +80,13 @@ export interface SettingsState {
     // experiencia natural ("o que voce gravou volta ao seu ouvido").
     // Toggle off silencia tanto o anexado quanto o ambient.
     recapAudioAnexadoAutoplay: boolean;
+    // R-RECAP-9 (2026-07-11): trilha animada de fundo do slideshow
+    // Memorias (pool de 16 faixas alegres, estilo Google Fotos). Default
+    // TRUE (decisao do dono §6bis: o Recap e' o momento de brilho, som
+    // ligado por padrao com botao de mutar sempre visivel no header).
+    // Substitui o drone ambient fixo (recapAmbientAudio, agora
+    // aposentado como gate do slideshow) como controle da trilha.
+    recapMusicaFundo: boolean;
     // R-INT-2-CALENDAR-SYNC-EVENTOS (2026-05-25): opt-in para auto-sync
     // periodico do Google Calendar no boot/foreground (abastece a secao
     // "Proximos" da Tela Hoje sem o usuario abrir /agenda). Default false
@@ -234,7 +241,11 @@ export interface SettingsExportShape {
 // - somVibracao: tudo TRUE (geral mestre on, 3 contextuais on).
 // - featureToggles: tudo TRUE excepto widgetMostraNome (privacidade).
 // - cap de midia em 4 itens por registro.
-const DEFAULT_STATE_V2: Omit<
+// R-RECAP-9b (2026-07-11): exportado para o back-fill do restore de
+// snapshot (aplicarSnapshot em restaurarVault.ts). Restaurar um backup
+// antigo substituiria os sub-objetos inteiros; o restore agora faz
+// deep-merge com estes defaults para nao reintroduzir chaves undefined.
+export const DEFAULT_STATE_V2: Omit<
   SettingsState,
   | 'setSomVibracao'
   | 'setPessoa'
@@ -289,6 +300,12 @@ const DEFAULT_STATE_V2: Omit<
     // intencao. Usuario que prefere silencio total desliga este
     // toggle (e tambem o ambient acima).
     recapAudioAnexadoAutoplay: true,
+    // R-RECAP-9: default ON (decisao do dono §6bis). A trilha animada
+    // toca por padrao no slideshow Memorias; o botao de som no header
+    // muta/desmuta a qualquer momento. Migracao de instalacoes existentes
+    // e' coberta pelo spread de DEFAULT_STATE_V2 em mesclarDefaults
+    // (chave nova ausente no persistedState recebe este default).
+    recapMusicaFundo: true,
     // R-INT-2-CALENDAR-SYNC-EVENTOS: default OFF (opt-in). O auto-sync
     // periodico do Calendar so dispara quando o usuario liga em
     // Configuracoes; ate la, a agenda atualiza apenas ao abrir /agenda.
@@ -419,6 +436,15 @@ export const useSettings = create<SettingsState>()(
       name: 'ouroboros.settings.v2',
       storage: createJSONStorage(() => secureStorage),
       version: 2,
+      // R-RECAP-9b (2026-07-11): merge custom que roda em TODA hidratacao
+      // (nao so' em troca de versao, como o migrate). Sem ele, o zustand
+      // aplica o merge SHALLOW padrao (`{...currentState, ...persistedState}`),
+      // e o objeto `featureToggles` persistido (sem chaves novas de sprints
+      // posteriores) SUBSTITUI o default inteiro -> a chave nova hidrata
+      // `undefined`. Foi o que deixou `recapMusicaFundo` mudo por default em
+      // instalacoes ja-v2 (que nao disparam migrate). Reusa mesclarDefaults
+      // (deep-merge) e preserva as ACOES do store via spread de currentState.
+      merge: mergeSettingsPersistido,
       // Migracao conservadora v0/v1 -> v2. Le valores antigos se
       // existirem, mapeia para o novo shape preservando intencao do
       // usuario, preenche defaults v2 para chaves novas. Nunca crasha:
@@ -561,6 +587,30 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
     // valor cru, mas reescrevemos para garantir tipagem segura.
     hcAutopullUltimaRodada: lerUltimaRodada(ps.hcAutopullUltimaRodada),
   } as SettingsState;
+}
+
+// R-RECAP-9b (2026-07-11): funcao de merge da hidratacao do persist.
+// Exportada para o teste de regressao exercitar o CODIGO REAL (cabeado em
+// `merge` no persist config acima) em vez de uma replica tautologica.
+//
+// Roda em toda hidratacao. Guard obrigatorio: mesclarDefaults acessa campos
+// de `ps` (ex: ps.somVibracao) e crasharia com null/nao-objeto. O spread
+// de `currentState` PRIMEIRO preserva as ACOES do store (setFeatureToggle,
+// resetar, ...), que mesclarDefaults nao carrega (retorna so' campos de
+// estado); os campos de estado do deep-merge sobrescrevem apenas os campos
+// de estado, nunca as funcoes. Convive com o migrate (que roda ANTES na
+// pipeline do zustand para v0/v1 -> v2); mesclarDefaults e' idempotente.
+export function mergeSettingsPersistido(
+  persistedState: unknown,
+  currentState: SettingsState
+): SettingsState {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return currentState;
+  }
+  return {
+    ...currentState,
+    ...mesclarDefaults(persistedState as Record<string, unknown>),
+  };
 }
 
 // Helper: valida o shape persistido de hcAutopullUltimaRodada. Retorna
