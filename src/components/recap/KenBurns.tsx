@@ -90,11 +90,11 @@ export function KenBurns({
     };
   }, [slideId, duracao, pausado, progress]);
 
-  // Quando pausado vira true em pleno meio da animacao, paramos no
-  // valor corrente. Quando volta a false, reinicia da posicao atual
-  // ate 1 — mas para simplicidade, reinicia o ciclo a partir do
-  // valor corrente (sem reset visivel). Implementacao acima ja faz
-  // isso ao reativar via useEffect quando pausado muda.
+  // Quando pausado vira true, o cleanup cancela a animacao (para no
+  // valor corrente). Quando volta a false, o effect re-roda e RESETA
+  // progress a 0 antes de animar de novo — reinicio do ciclo, nao
+  // continuacao. E' o comportamento correto: o timer de auto-advance
+  // tambem rearma do zero, entao barra/zoom ficam sincronizados.
 
   const animatedStyle = useAnimatedStyle(() => {
     const p = progress.value;
