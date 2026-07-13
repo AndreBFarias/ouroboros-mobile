@@ -60,6 +60,7 @@ import Animated, {
   withRepeat,
   withSequence,
   cancelAnimation,
+  Easing,
 } from 'react-native-reanimated';
 import { Pause, Play, Share2, Volume2, VolumeX, X } from '@/lib/icons';
 import { useRecap, type PeriodoRange } from '@/lib/hooks/useRecap';
@@ -71,6 +72,8 @@ import { OuroborosLoader } from '@/components/brand';
 // no-op silencioso quando o provider esta ausente.
 import { useOptionalToast } from '@/components/ui';
 import { KenBurns } from '@/components/recap/KenBurns';
+// R-RECAP-9c: barra de progresso animada (scaleX) do slide ativo.
+import { BarraProgresso } from '@/components/recap/BarraProgresso';
 // R-RECAP-8 (2026-07-10): card estatico off-screen usado como alvo da
 // captura do share (evita o NPE de child null da arvore Reanimated no
 // Fabric -- armadilha A46).
@@ -174,6 +177,28 @@ export default function RecapMemoriasTela() {
 
   const [index, setIndex] = useState(0);
   const [pausado, setPausado] = useState(false);
+
+  // R-RECAP-9c: fonte unica da duracao de um slide (ms). Clampa 2..10s
+  // (mesma faixa configuravel em settings.recap.slideshowIntervaloS).
+  // Alimenta os TRES sincronizados: auto-advance (arma o setTimeout),
+  // Ken Burns (duracao do zoom/pan) e a barra de progresso (preenche
+  // 0 -> 100% no mesmo intervalo). Antes o Ken Burns usava
+  // Math.max(2000, intervaloS * 1000) sem teto superior; unificado na
+  // formula clampada para os tres terminarem juntos.
+  const intervaloMs = Math.max(2, Math.min(10, intervaloS)) * 1000;
+
+  // R-RECAP-9c: progresso (0 -> 1) do slide ATIVO. Reanimated puro
+  // (A28-safe). Reseta a cada troca de slide e anima linear ate 1 na
+  // duracao do slide; congela quando pausado. Sincronizado com o
+  // auto-advance e o Ken Burns (mesmo intervaloMs).
+  const progressoBarra = useSharedValue(0);
+  // R-RECAP-9c (B3): distingue a pausa por long-press (segurar numa zona
+  // de tap) da pausa pelo botao Pause. O onPressOut le este ref (mutacao
+  // sincrona) em vez do estado `pausado` do closure -- que pode estar
+  // stale se o dedo soltar antes do re-render commitar, deixando o
+  // slideshow preso pausado. Garante tambem que um release de navegacao
+  // nao desfaz uma pausa deliberada do botao.
+  const pausadoPorHoldRef = useRef(false);
   // R-RECAP-6: estado de captura em andamento. Habilita guard contra
   // double-tap durante a captura/share (caller seta true ao iniciar,
   // false no finally).
@@ -420,14 +445,31 @@ export default function RecapMemoriasTela() {
   useEffect(() => {
     if (loading || pausado) return;
     if (index >= slides.length - 1) return;
-    const intervaloMs = Math.max(2, Math.min(10, intervaloS)) * 1000;
     timerRef.current = setTimeout(() => {
       setIndex((i) => Math.min(i + 1, slides.length - 1));
     }, intervaloMs);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [index, pausado, loading, slides.length, intervaloS]);
+  }, [index, pausado, loading, slides.length, intervaloMs]);
+
+  // R-RECAP-9c (B2): anima a barra do slide ativo. Mesmo padrao do
+  // KenBurns (reset a 0, withTiming linear ate 1, cancelAnimation ao
+  // desmontar/pausar). Reseta e re-anima quando o slide troca ou quando
+  // pausa/retoma -- alinhado ao auto-advance, que tambem rearma o timer
+  // do zero ao retomar, mantendo barra + timer + Ken Burns sincronizados.
+  useEffect(() => {
+    progressoBarra.value = 0;
+    if (!loading && !pausado) {
+      progressoBarra.value = withTiming(1, {
+        duration: intervaloMs,
+        easing: Easing.linear,
+      });
+    }
+    return () => {
+      cancelAnimation(progressoBarra);
+    };
+  }, [index, pausado, loading, intervaloMs, progressoBarra]);
 
   const proximo = () => {
     if (index < slides.length - 1) setIndex(index + 1);
@@ -435,6 +477,22 @@ export default function RecapMemoriasTela() {
   };
   const anterior = () => {
     if (index > 0) setIndex(index - 1);
+  };
+
+  // R-RECAP-9c (B3): pausa por segurar (long-press) numa zona de tap.
+  // Marca a origem no ref (mutacao sincrona) antes de pausar.
+  const pausarPorHold = () => {
+    pausadoPorHoldRef.current = true;
+    setPausado(true);
+  };
+  // Release: so' retoma se a pausa veio de um hold nesta zona. Le o ref,
+  // nao o estado `pausado` do closure -- evita a race (soltar antes do
+  // commit) e nao desfaz uma pausa deliberada do botao Pause.
+  const retomarSePorHold = () => {
+    if (pausadoPorHoldRef.current) {
+      pausadoPorHoldRef.current = false;
+      setPausado(false);
+    }
   };
 
   // R-RECAP-9: alterna mudo da musica de fundo. Persiste no toggle
@@ -545,26 +603,23 @@ export default function RecapMemoriasTela() {
         <KenBurns
           key={`kb-${slideId}-${index}`}
           slideId={slideId}
-          duracao={Math.max(2000, intervaloS * 1000)}
+          duracao={intervaloMs}
           pausado={pausado}
         >
           <View style={styles.kenBurnsTinta} />
         </KenBurns>
       </View>
 
-      {/* Barras de progresso no topo */}
+      {/* Barras de progresso no topo. So' a do slide ativo anima
+          (scaleX 0 -> 1); passadas ficam cheias, futuras vazias. */}
       <View style={styles.barras}>
         {slides.map((_, i) => (
-          <View key={i} style={styles.barraSlot}>
-            <View
-              style={[
-                styles.barraInner,
-                {
-                  width: i < index ? '100%' : i === index ? '50%' : '0%',
-                },
-              ]}
-            />
-          </View>
+          <BarraProgresso
+            key={i}
+            indice={i}
+            estado={i < index ? 'preenchido' : i === index ? 'ativo' : 'vazio'}
+            progresso={progressoBarra}
+          />
         ))}
       </View>
 
@@ -698,13 +753,8 @@ export default function RecapMemoriasTela() {
           em TalkBack). */}
       <Pressable
         onPress={anterior}
-        onLongPress={() => setPausado(true)}
-        onPressOut={() => {
-          // Se o usuario soltou o long-press, retoma. Distingue do
-          // botao pausar pelo fato de pausado ter sido setado dentro
-          // de onLongPress, e o release sempre volta a tocar.
-          if (pausado) setPausado(false);
-        }}
+        onLongPress={pausarPorHold}
+        onPressOut={retomarSePorHold}
         style={styles.zonaEsq}
         accessibilityRole="button"
         accessibilityLabel="anterior"
@@ -712,10 +762,8 @@ export default function RecapMemoriasTela() {
       />
       <Pressable
         onPress={proximo}
-        onLongPress={() => setPausado(true)}
-        onPressOut={() => {
-          if (pausado) setPausado(false);
-        }}
+        onLongPress={pausarPorHold}
+        onPressOut={retomarSePorHold}
         style={styles.zonaDir}
         accessibilityRole="button"
         accessibilityLabel="proximo"
@@ -921,17 +969,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 4,
     zIndex: 10,
-  },
-  barraSlot: {
-    flex: 1,
-    height: 2,
-    backgroundColor: 'rgba(253,246,227,0.2)',
-    borderRadius: 1,
-    overflow: 'hidden',
-  },
-  barraInner: {
-    height: 2,
-    backgroundColor: colorsMemorias.fg,
   },
   fechar: {
     position: 'absolute',
