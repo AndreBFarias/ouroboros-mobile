@@ -53,43 +53,23 @@ export default async function caseRHome3(
       };
     }
 
-    // 2. Cria tarefa de teste via API vault direta. Em web, o vaultRoot
-    //    esta seedado para 'web://mock-vault/' -- writer cai no
-    //    localStorage adapter.
+    // 2. Cria tarefa de teste via gauntlet. Em web, o vaultRoot esta
+    //    seedado para 'web://mock-vault/' -- criarTarefaMock reusa o
+    //    criarTarefa real (writer cai no useVaultMock em web).
     const tarefaCriada = await page.evaluate(async () => {
       try {
         const w = globalThis as unknown as {
-          require?: (id: string) => unknown;
+          __gauntlet?: {
+            criarTarefaMock: (
+              meta?: Record<string, unknown>
+            ) => Promise<{ rel: string } | null>;
+          };
         };
-        const tarefasMod = w.require?.('@/lib/vault/tarefas') as
-          | undefined
-          | {
-              criarTarefa: (
-                vaultRoot: string,
-                meta: Record<string, unknown>,
-                slug: string
-              ) => Promise<{ rel: string }>;
-            };
-        const vaultMod = w.require?.('@/lib/stores/vault') as
-          | undefined
-          | { useVault: { getState: () => { vaultRoot: string | null } } };
-        if (!tarefasMod?.criarTarefa || !vaultMod?.useVault) return null;
-        const vaultRoot = vaultMod.useVault.getState().vaultRoot;
-        if (!vaultRoot) return null;
-        const slug = `r-home-3-teste-${Date.now()}`;
-        const meta = {
-          tipo: 'tarefa',
-          data: new Date().toISOString().slice(0, 10),
-          autor: 'pessoa_a',
+        if (!w.__gauntlet?.criarTarefaMock) return null;
+        const r = await w.__gauntlet.criarTarefaMock({
           titulo: 'Tarefa teste R-HOME-3',
-          feito: false,
-          feito_em: null,
-          categoria: 'outro',
-          pessoa_destino: { tipo: 'mim' },
-          alarme: null,
-        };
-        const { rel } = await tarefasMod.criarTarefa(vaultRoot, meta, slug);
-        return rel;
+        });
+        return r?.rel ?? null;
       } catch (e) {
         return `erro: ${(e as Error).message}`;
       }
@@ -236,37 +216,17 @@ export default async function caseRHome3(
     const tarefa2 = await page.evaluate(async () => {
       try {
         const w = globalThis as unknown as {
-          require?: (id: string) => unknown;
+          __gauntlet?: {
+            criarTarefaMock: (
+              meta?: Record<string, unknown>
+            ) => Promise<{ rel: string } | null>;
+          };
         };
-        const tarefasMod = w.require?.('@/lib/vault/tarefas') as
-          | undefined
-          | {
-              criarTarefa: (
-                vaultRoot: string,
-                meta: Record<string, unknown>,
-                slug: string
-              ) => Promise<{ rel: string }>;
-            };
-        const vaultMod = w.require?.('@/lib/stores/vault') as
-          | undefined
-          | { useVault: { getState: () => { vaultRoot: string | null } } };
-        if (!tarefasMod?.criarTarefa || !vaultMod?.useVault) return null;
-        const vaultRoot = vaultMod.useVault.getState().vaultRoot;
-        if (!vaultRoot) return null;
-        const slug = `r-home-3-desfazer-${Date.now()}`;
-        const meta = {
-          tipo: 'tarefa',
-          data: new Date().toISOString().slice(0, 10),
-          autor: 'pessoa_a',
+        if (!w.__gauntlet?.criarTarefaMock) return null;
+        const r = await w.__gauntlet.criarTarefaMock({
           titulo: 'Tarefa desfazer R-HOME-3',
-          feito: false,
-          feito_em: null,
-          categoria: 'outro',
-          pessoa_destino: { tipo: 'mim' },
-          alarme: null,
-        };
-        const { rel } = await tarefasMod.criarTarefa(vaultRoot, meta, slug);
-        return rel;
+        });
+        return r?.rel ?? null;
       } catch (e) {
         return `erro: ${(e as Error).message}`;
       }

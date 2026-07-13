@@ -62,26 +62,16 @@ export default async function caseRNav1(
     // 2. Ligar toggle cicloMenstrual + navegar para /ciclo.
     await page.evaluate(async () => {
       const w = globalThis as unknown as {
-        __gauntlet?: { abrir: (rota: string) => Promise<void> };
+        __gauntlet?: {
+          abrir: (rota: string) => Promise<void>;
+          setFeatureToggle: (chave: string, valor: boolean) => void;
+        };
       };
-      // Acesso direto ao toggle via require do bundle web; se nao
-      // disponivel, o /ciclo ainda monta porque o gauntlet ja seedeia
+      // Liga o toggle via gauntlet (setFeatureToggle -> useSettings real);
+      // se ausente, o /ciclo ainda monta porque o gauntlet ja seedeia
       // featureToggles padrao.
       try {
-        const settingsMod = (
-          window as unknown as {
-            require?: (id: string) => unknown;
-          }
-        ).require?.('@/lib/stores/settings') as
-          | undefined
-          | {
-              useSettings: {
-                getState: () => {
-                  setFeatureToggle: (chave: string, valor: boolean) => void;
-                };
-              };
-            };
-        settingsMod?.useSettings.getState().setFeatureToggle('cicloMenstrual', true);
+        w.__gauntlet?.setFeatureToggle('cicloMenstrual', true);
       } catch {
         // ignored
       }

@@ -44,6 +44,15 @@ import {
   AgendaEventoSchema,
   type AgendaEvento,
 } from '@/lib/vault/agenda';
+// R-CI-E2E-WEB-c: tipos das novas APIs de mock (criarTarefaMock,
+// criarDiarioMock, salvarRascunhoMock). Import type-only -- erasado em
+// runtime, nao arrasta os modulos de I/O (tarefas.ts puxa getDeviceId ->
+// expo-constants; saveDiario idem). Os valores sao carregados via require
+// LAZY dentro das funcoes guardadas (mesmo padrao do googleAuth acima),
+// so executando sob GAUNTLET_ATIVO (web dev), nunca nos testes node.
+import type { Tarefa } from '@/lib/schemas/tarefa';
+import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
+import type { RascunhoKey } from '@/lib/stores/sessao';
 // M-GAUNTLET-DEAD-CODE-V2: a flag canonica vive em gauntletAtivo (micro-
 // modulo zero-deps). Reexportamos como GAUNTLET_ATIVO aqui para back-compat
 // de testes existentes (jest mocks de '@/lib/dev/gauntlet') e do
@@ -195,6 +204,37 @@ export interface GauntletAPI {
   setContaGoogleMock(
     pessoa: 'pessoa_a' | 'pessoa_b',
     escopo: EscopoConcedido
+  ): void;
+  // R-CI-E2E-WEB-c: cria uma tarefa no Vault mock reusando o criarTarefa
+  // real (em web o writer cai no useVaultMock, logo a tarefa aparece em
+  // listarTarefas da Home). Encapsula o formato do TarefaSchema num so
+  // lugar -- antes cada caso E2E duplicava o meta a mao via
+  // globalThis.require (que nao existe mais no bundle web dev). meta
+  // parcial sobrescreve os defaults. Retorna { rel } do arquivo criado,
+  // ou null se vaultRoot ausente. No-op (null) em mobile pelo guard.
+  criarTarefaMock(
+    meta?: Partial<Tarefa>
+  ): Promise<{ rel: string } | null>;
+  // R-CI-E2E-WEB-c: grava um diario emocional no Vault mock reusando o
+  // saveDiario real. Usado pelo E2E R-HOME-4d para injetar uma lembranca
+  // datada no passado (card "Relembrando"), que os fixtures genericos de
+  // seedComDados nao cobrem. Retorna { uri } ou null se vaultRoot
+  // ausente. No-op (null) em mobile pelo guard.
+  criarDiarioMock(
+    meta: DiarioEmocionalMeta,
+    body: string
+  ): Promise<{ uri: string } | null>;
+  // R-CI-E2E-WEB-c: liga/desliga um featureToggle via useSettings real.
+  // Substitui o acesso quebrado a useSettings via require/import dinamico
+  // nos casos de ciclo (R-NAV-1) e financas em desenvolvimento (M35).
+  // No-op em mobile pelo guard.
+  setFeatureToggle(chave: string, valor: boolean): void;
+  // R-CI-E2E-WEB-c: salva um rascunho de formulario via useSessao real.
+  // Usado pelo E2E R-FAB-2 para reproduzir o estado pos-camera (rascunho
+  // do diario emocional com foto). No-op em mobile pelo guard.
+  salvarRascunhoMock(
+    chave: RascunhoKey,
+    parcial: Record<string, unknown>
   ): void;
 }
 
@@ -551,6 +591,69 @@ function aplicarSalvarFraseMock(
   return { ok: true, arquivo: rel };
 }
 
+// R-CI-E2E-WEB-c: cria uma tarefa reusando o criarTarefa canonico. Le o
+// vaultRoot do useVault (seedado por seed() para web://mock-vault/...),
+// preenche os defaults do TarefaSchema e mescla o meta parcial por cima.
+// O require e' LAZY porque tarefas.ts arrasta getDeviceId -> expo-constants
+// no load do modulo, o que quebraria as suites jest que importam
+// gauntlet.ts (jest.requireActual). So executa sob GAUNTLET_ATIVO (web
+// dev). Mesmo racional do require lazy de googleAuth (ver nota no topo).
+async function aplicarCriarTarefaMock(
+  meta?: Partial<Tarefa>
+): Promise<{ rel: string } | null> {
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[gauntlet.criarTarefaMock] vaultRoot nao definido; chame seed() antes.'
+      );
+    }
+    return null;
+  }
+  const { criarTarefa } =
+    require('@/lib/vault/tarefas') as typeof import('@/lib/vault/tarefas');
+  const hoje = new Date().toISOString().slice(0, 10);
+  const base: Tarefa = {
+    tipo: 'tarefa',
+    data: hoje,
+    autor: 'pessoa_a',
+    titulo: 'Tarefa mock',
+    feito: false,
+    feito_em: null,
+    categoria: 'outro',
+    pessoa_destino: { tipo: 'mim' },
+    alarme: null,
+    silenciar_sugestao_ate: null,
+  };
+  const metaFinal: Tarefa = { ...base, ...(meta ?? {}) };
+  const slug = `mock-tarefa-${Date.now()}`;
+  const { rel } = await criarTarefa(vaultRoot, metaFinal, slug);
+  return { rel };
+}
+
+// R-CI-E2E-WEB-c: grava um diario emocional reusando o saveDiario
+// canonico (writer cai no useVaultMock em web). Le o vaultRoot do
+// useVault. require lazy pelo mesmo motivo de aplicarCriarTarefaMock
+// (saveDiario -> getDeviceId -> expo-constants no load).
+async function aplicarCriarDiarioMock(
+  meta: DiarioEmocionalMeta,
+  body: string
+): Promise<{ uri: string } | null> {
+  const vaultRoot = useVault.getState().vaultRoot;
+  if (!vaultRoot) {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[gauntlet.criarDiarioMock] vaultRoot nao definido; chame seed() antes.'
+      );
+    }
+    return null;
+  }
+  const { saveDiario } =
+    require('@/lib/diario/saveDiario') as typeof import('@/lib/diario/saveDiario');
+  const { uri } = await saveDiario(meta, body, vaultRoot);
+  return { uri };
+}
+
 const api: GauntletAPI = {
   seed: comGuard(aplicarSeed, undefined as void),
   reset: comGuard(aplicarReset, undefined as void),
@@ -661,6 +764,36 @@ const api: GauntletAPI = {
           },
         },
       });
+    },
+    undefined as void
+  ),
+  criarTarefaMock: async (meta) => {
+    if (!GAUNTLET_ATIVO) return null;
+    return aplicarCriarTarefaMock(meta);
+  },
+  criarDiarioMock: async (meta, body) => {
+    if (!GAUNTLET_ATIVO) return null;
+    return aplicarCriarDiarioMock(meta, body);
+  },
+  setFeatureToggle: comGuard((chave: string, valor: boolean) => {
+    // A assinatura real de setFeatureToggle e' generica sobre
+    // keyof featureToggles; o caller E2E passa a chave como string.
+    // useSettings ja e' importado no topo (sem custo de lazy require).
+    const setter = useSettings.getState().setFeatureToggle as (
+      c: string,
+      v: boolean
+    ) => void;
+    setter(chave, valor);
+  }, undefined as void),
+  salvarRascunhoMock: comGuard(
+    (chave: RascunhoKey, parcial: Record<string, unknown>) => {
+      // salvarRascunho e' generico sobre a chave; o caller passa um
+      // objeto solto. useSessao ja e' importado no topo.
+      const salvar = useSessao.getState().salvarRascunho as (
+        c: RascunhoKey,
+        p: Record<string, unknown>
+      ) => void;
+      salvar(chave, parcial);
     },
     undefined as void
   ),

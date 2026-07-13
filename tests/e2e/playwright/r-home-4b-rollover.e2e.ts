@@ -94,25 +94,15 @@ export default async function caseRHome4b(
     const criacao = await page.evaluate(async () => {
       try {
         const w = globalThis as unknown as {
-          require?: (id: string) => unknown;
+          __gauntlet?: {
+            criarTarefaMock: (
+              meta?: Record<string, unknown>
+            ) => Promise<{ rel: string } | null>;
+          };
         };
-        const tarefasMod = w.require?.('@/lib/vault/tarefas') as
-          | undefined
-          | {
-              criarTarefa: (
-                vaultRoot: string,
-                meta: Record<string, unknown>,
-                slug: string
-              ) => Promise<{ rel: string }>;
-            };
-        const vaultMod = w.require?.('@/lib/stores/vault') as
-          | undefined
-          | { useVault: { getState: () => { vaultRoot: string | null } } };
-        if (!tarefasMod?.criarTarefa || !vaultMod?.useVault) {
-          return { ok: false, motivo: 'modulos vault ausentes' };
+        if (!w.__gauntlet?.criarTarefaMock) {
+          return { ok: false, motivo: 'criarTarefaMock ausente' };
         }
-        const vaultRoot = vaultMod.useVault.getState().vaultRoot;
-        if (!vaultRoot) return { ok: false, motivo: 'vaultRoot nulo' };
 
         const fmt = new Intl.DateTimeFormat('en-CA', {
           timeZone: 'America/Sao_Paulo',
@@ -127,25 +117,15 @@ export default async function caseRHome4b(
           od.getUTCMonth() + 1
         ).padStart(2, '0')}-${String(od.getUTCDate()).padStart(2, '0')}`;
 
-        const base = {
-          tipo: 'tarefa',
-          autor: 'pessoa_a',
-          feito: false,
-          feito_em: null,
-          categoria: 'outro',
-          pessoa_destino: { tipo: 'mim' },
-          alarme: null,
-        };
-        const r1 = await tarefasMod.criarTarefa(
-          vaultRoot,
-          { ...base, data: ontemYmd, titulo: 'Comprar presente R-HOME-4b' },
-          `r-home-4b-ontem-${Date.now()}`
-        );
-        const r2 = await tarefasMod.criarTarefa(
-          vaultRoot,
-          { ...base, data: hojeYmd, titulo: 'Terminar relatorio R-HOME-4b' },
-          `r-home-4b-hoje-${Date.now()}`
-        );
+        const r1 = await w.__gauntlet.criarTarefaMock({
+          data: ontemYmd,
+          titulo: 'Comprar presente R-HOME-4b',
+        });
+        const r2 = await w.__gauntlet.criarTarefaMock({
+          data: hojeYmd,
+          titulo: 'Terminar relatorio R-HOME-4b',
+        });
+        if (!r1 || !r2) return { ok: false, motivo: 'vaultRoot nulo' };
         return { ok: true, ontemYmd, hojeYmd, r1: r1.rel, r2: r2.rel };
       } catch (e) {
         return { ok: false, motivo: (e as Error).message };

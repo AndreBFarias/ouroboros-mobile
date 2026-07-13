@@ -128,14 +128,16 @@ export default async function caseM35FinancasEmpty(
     // "financas" deve aparecer.
     await page.evaluate(async () => {
       const w = globalThis as unknown as {
-        __gauntlet: { fecharMenu: () => void; abrirMenu: () => void };
+        __gauntlet: {
+          fecharMenu: () => void;
+          abrirMenu: () => void;
+          setFeatureToggle: (chave: string, valor: boolean) => void;
+        };
       };
       w.__gauntlet.fecharMenu();
-      // Acesso direto ao store de settings via require dinamico (web).
-      const mod = await import('@/lib/stores/settings');
-      mod.useSettings
-        .getState()
-        .setFeatureToggle('mostrarFinancasEmDesenvolvimento', true);
+      // Liga o toggle via gauntlet (setFeatureToggle -> useSettings real);
+      // o alias @/ nao resolve em contexto de pagina do browser.
+      w.__gauntlet.setFeatureToggle('mostrarFinancasEmDesenvolvimento', true);
       w.__gauntlet.abrirMenu();
     });
     await page.waitForTimeout(800);

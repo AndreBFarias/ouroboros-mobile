@@ -113,18 +113,10 @@ export default async function caseYoutubePicker(
       };
     }
 
-    // 2. Conecta via store (dev web injeta token sintetico) e reabre.
+    // 2. Conecta via clique no CTA "Conectar YouTube". Em dev web o flow
+    //    OAuth resolve sincrono via isMockMode (token sintetico injetado
+    //    pelo proprio fluxo mock), sem depender de acesso a store.
     await page.evaluate(async () => {
-      const mod = (
-        globalThis as unknown as {
-          require?: (m: string) => unknown;
-        }
-      ).require;
-      // Em ambiente web do Expo nao ha require global confiavel; o
-      // gauntlet expoe setOnboardingDone mas nao token. Fallback:
-      // dispara o flow OAuth dev (mock) pelo CTA, que em dev web
-      // resolve sincrono via isMockMode.
-      void mod;
       const tab = document.querySelector('[aria-label="aba youtube"]');
       const cta = Array.from(tab?.querySelectorAll('*') ?? []).find(
         (el) => el.textContent?.trim() === 'Conectar YouTube'

@@ -17,53 +17,27 @@
 // Comentarios sem acento (convencao shell/CI).
 import type { PlaywrightPageLike, ResultadoE2E } from './e2e-template';
 
-// Cria uma tarefa pendente de HOJE via API vault direta (mesmo padrao do
-// r-home-3.e2e.ts). Em web o vaultRoot esta seedado e o writer cai no
-// adapter de localStorage. O titulo/slug vem de globalThis.__rhome5
-// (a interface minima de evaluate nao aceita argumentos de closure).
-// Retorna o rel criado ou uma string de erro.
+// Cria uma tarefa pendente de HOJE via gauntlet (criarTarefaMock reusa o
+// criarTarefa real; em web o writer cai no useVaultMock). O titulo vem de
+// globalThis.__rhome5 (a interface minima de evaluate nao aceita
+// argumentos de closure). Retorna o rel criado ou uma string de erro.
 async function criarTarefaHoje(
   page: PlaywrightPageLike
 ): Promise<string | null> {
   return page.evaluate(async () => {
     try {
       const w = globalThis as unknown as {
-        require?: (id: string) => unknown;
-      };
-      const tarefasMod = w.require?.('@/lib/vault/tarefas') as
-        | undefined
-        | {
-            criarTarefa: (
-              vaultRoot: string,
-              meta: Record<string, unknown>,
-              slug: string
-            ) => Promise<{ rel: string }>;
-          };
-      const vaultMod = w.require?.('@/lib/stores/vault') as
-        | undefined
-        | { useVault: { getState: () => { vaultRoot: string | null } } };
-      if (!tarefasMod?.criarTarefa || !vaultMod?.useVault) return null;
-      const vaultRoot = vaultMod.useVault.getState().vaultRoot;
-      if (!vaultRoot) return null;
-      const g = globalThis as unknown as {
+        __gauntlet?: {
+          criarTarefaMock: (
+            meta?: Record<string, unknown>
+          ) => Promise<{ rel: string } | null>;
+        };
         __rhome5?: { titulo: string; slugPrefixo: string };
       };
-      const titulo = g.__rhome5?.titulo ?? 'Tarefa R-HOME-5';
-      const slugPrefixo = g.__rhome5?.slugPrefixo ?? 'r-home-5';
-      const slug = `${slugPrefixo}-${Date.now()}`;
-      const meta = {
-        tipo: 'tarefa',
-        data: new Date().toISOString().slice(0, 10),
-        autor: 'pessoa_a',
-        titulo,
-        feito: false,
-        feito_em: null,
-        categoria: 'outro',
-        pessoa_destino: { tipo: 'mim' },
-        alarme: null,
-      };
-      const { rel } = await tarefasMod.criarTarefa(vaultRoot, meta, slug);
-      return rel;
+      if (!w.__gauntlet?.criarTarefaMock) return null;
+      const titulo = w.__rhome5?.titulo ?? 'Tarefa R-HOME-5';
+      const r = await w.__gauntlet.criarTarefaMock({ titulo });
+      return r?.rel ?? null;
     } catch (e) {
       return `erro: ${(e as Error).message}`;
     }
