@@ -67,6 +67,15 @@ export function FAB({
         position: 'absolute',
         right: spacing.lg,
         bottom: bottomCanonico,
+        // R-AGENDA-FAB-HITBOX / INTEGRATION-CONTRACT §7.10: eleva o ALVO
+        // de toque acima da lista scrollavel irma. O elevation:8 do
+        // MotiView interno so pinta o circulo por cima; no Android
+        // (Fabric) a ordem de hit-test entre irmaos segue o elevation do
+        // proprio Pressable, nao de um filho -- sem isto o ultimo card da
+        // lista cobria o centro do FAB e roubava o toque. Camada 10 (par
+        // do FABMenu roxo); zIndex cobre web/iOS.
+        zIndex: 10,
+        elevation: 10,
       }}
     >
       <MotiView
