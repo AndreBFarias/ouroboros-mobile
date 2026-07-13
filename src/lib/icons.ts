@@ -67,6 +67,8 @@ export { default as Trash2 } from 'lucide-react-native/dist/esm/icons/trash-2.mj
 export { default as TrendingUp } from 'lucide-react-native/dist/esm/icons/trending-up.mjs';
 export { default as Trophy } from 'lucide-react-native/dist/esm/icons/trophy.mjs';
 export { default as Video } from 'lucide-react-native/dist/esm/icons/video.mjs';
+export { default as Volume2 } from 'lucide-react-native/dist/esm/icons/volume-2.mjs';
+export { default as VolumeX } from 'lucide-react-native/dist/esm/icons/volume-x.mjs';
 export { default as Wallet } from 'lucide-react-native/dist/esm/icons/wallet.mjs';
 export { default as X } from 'lucide-react-native/dist/esm/icons/x.mjs';
 export { default as Zap } from 'lucide-react-native/dist/esm/icons/zap.mjs';
