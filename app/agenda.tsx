@@ -11,30 +11,52 @@
 // Comentarios sem acento (convencao shell/CI). Strings UI em PT-BR
 // sentence case com acentuacao completa. accessibilityLabel sem
 // acento (convencao screen reader).
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
-import { Button, EmptyState, Header, Screen, useToast } from '@/components/ui';
+import {
+  BottomSheet,
+  Button,
+  ConfirmarExclusao,
+  EmptyState,
+  FAB,
+  Header,
+  Screen,
+  SHEET_80,
+  useToast,
+  type BottomSheetRef,
+} from '@/components/ui';
 import { CalendarGrid } from '@/components/agenda/CalendarGrid';
+import {
+  SheetNovoEvento,
+  TIMEZONE_PADRAO,
+  type SheetNovoEventoPayload,
+} from '@/components/agenda/SheetNovoEvento';
 import { OuroborosLoader } from '@/components/brand';
-import { Calendar as CalendarIcon } from '@/lib/icons';
+import { Calendar as CalendarIcon, Plus } from '@/lib/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeBottomContentPadding } from '@/components/chrome/safeBottom';
 import { colors, spacing, typography } from '@/theme/tokens';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
-import { usePessoa } from '@/lib/stores/pessoa';
+import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
 import {
   ApiError,
+  criarEvento,
+  deletarEvento,
   listarEventos,
   type EventoCalendar,
+  type NovoEventoInput,
 } from '@/lib/services/calendarApi';
 import {
+  adicionarEventoNoCache,
   cacheEstaFresco,
   lerCacheEventos,
+  removerEventoDoCache,
   salvarCacheEventos,
 } from '@/lib/services/calendarCache';
+import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { comTimeout } from '@/lib/util/comTimeout';
 
 // Timeout maior para sync agenda: snapshot pode ter ate 30 dias de
@@ -80,7 +102,11 @@ export default function AgendaScreen() {
   const toast = useToast();
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const conta = useGoogleAuth((s) => s.contas[pessoaAtiva]);
+  const contas = useGoogleAuth((s) => s.contas);
   const autenticar = useGoogleAuth((s) => s.autenticar);
+  const autenticarComEscopoEscrita = useGoogleAuth(
+    (s) => s.autenticarComEscopoEscrita
+  );
   const refreshIfNeeded = useGoogleAuth((s) => s.refreshIfNeeded);
   const vaultRoot = useVault((s) => s.vaultRoot);
 
@@ -88,6 +114,20 @@ export default function AgendaScreen() {
   const [eventos, setEventos] = useState<EventoCalendar[]>([]);
   const [diaSelecionado, setDiaSelecionado] = useState<string>(dataIsoHoje());
   const [online, setOnline] = useState<boolean>(true);
+
+  // M37.2: escrita. sheetRef controla o SheetNovoEvento; resetKeyEvento
+  // reseta o form apos criar; eventoParaApagar dirige o ConfirmarExclusao.
+  const sheetRef = useRef<BottomSheetRef>(null);
+  const [resetKeyEvento, setResetKeyEvento] = useState<number>(0);
+  const [salvandoEvento, setSalvandoEvento] = useState<boolean>(false);
+  const [eventoParaApagar, setEventoParaApagar] =
+    useState<EventoCalendar | null>(null);
+  const [apagando, setApagando] = useState<boolean>(false);
+  const [reautorizando, setReautorizando] = useState<boolean>(false);
+
+  // Escopo de escrita da conta ativa. Contas conectadas antes de M37.2
+  // nao trazem o campo (undefined => sem escrita ate reautorizar).
+  const temEscrita = conta.escoposConcedidos === 'write';
 
   const sincronizar = useCallback(async () => {
     const token = await refreshIfNeeded(pessoaAtiva);
@@ -210,6 +250,173 @@ export default function AgendaScreen() {
     await sincronizar();
   }, [autenticar, pessoaAtiva, sincronizar, toast]);
 
+  // M37.2: sobe o escopo de readonly para write (reconsentimento OAuth).
+  const handleReautorizar = useCallback(async () => {
+    if (reautorizando) return;
+    setReautorizando(true);
+    const r = await autenticarComEscopoEscrita(pessoaAtiva);
+    setReautorizando(false);
+    if (!r.ok) {
+      if (r.motivo !== 'cancelado') {
+        toast.show('Não foi possível reautorizar. Tente novamente.', 'error');
+      }
+      return;
+    }
+    toast.show('Pronto. Você já pode criar eventos.', 'success');
+    await sincronizar();
+  }, [autenticarComEscopoEscrita, pessoaAtiva, reautorizando, sincronizar, toast]);
+
+  // Abre o sheet de novo evento. Sem rede, o FAB nao cria (decisao M37.2
+  // secao 9: sem fila offline) -- avisa e mantem fechado.
+  const handleAbrirNovoEvento = useCallback(() => {
+    if (online === false) {
+      toast.show('Sem conexão. Tente quando voltar a rede.', 'error');
+      return;
+    }
+    sheetRef.current?.expand();
+  }, [online, toast]);
+
+  // Cria o evento no Google Calendar da conta alvo (definida pelo
+  // SeletorPara: 'mim'/'casal' => conta ativa; 'outra' => parceiro).
+  // Atualizacao otimista: adiciona ao estado + cache antes do proximo
+  // refresh completo. Idempotencia via id gerado dentro de criarEvento.
+  const handleCriarEvento = useCallback(
+    async (payload: SheetNovoEventoPayload) => {
+      const alvo: PessoaAutor =
+        payload.para.tipo === 'outra' ? payload.para.pessoa : pessoaAtiva;
+      const contaAlvo = contas[alvo];
+      const alvoTemEscrita =
+        contaAlvo.escoposConcedidos === 'write' &&
+        typeof contaAlvo.accessToken === 'string' &&
+        contaAlvo.accessToken.length > 0 &&
+        !contaAlvo.invalido;
+      if (!alvoTemEscrita) {
+        toast.show(
+          alvo === pessoaAtiva
+            ? 'Reautorize para criar eventos.'
+            : `Conecte a conta de ${nomeDe(alvo)} com permissão de escrita.`,
+          'error'
+        );
+        return;
+      }
+
+      setSalvandoEvento(true);
+      try {
+        const token = await refreshIfNeeded(alvo);
+        if (token === null) {
+          toast.show('Conexão expirada. Reconecte.', 'error');
+          if (alvo === pessoaAtiva) setEstado('invalido');
+          return;
+        }
+        const input: NovoEventoInput = {
+          titulo: payload.titulo,
+          inicioIso: payload.inicioIso,
+          fimIso: payload.fimIso,
+          timeZone: TIMEZONE_PADRAO,
+        };
+        if (typeof payload.local === 'string') input.local = payload.local;
+        if (typeof payload.descricao === 'string') {
+          input.descricao = payload.descricao;
+        }
+        const evento = await criarEvento(token, input, alvo);
+
+        // Otimista: se o evento e da conta que estamos vendo, entra na
+        // lista imediatamente. Se e do parceiro (outra conta), so vai ao
+        // cache dele e aparece quando o usuario trocar de pessoa.
+        if (alvo === pessoaAtiva) {
+          setEventos((prev) => [...prev, evento]);
+        }
+        if (typeof vaultRoot === 'string' && vaultRoot.length > 0) {
+          try {
+            await comTimeout(
+              adicionarEventoNoCache(vaultRoot, alvo, evento),
+              AGENDA_SYNC_TIMEOUT_MS
+            );
+          } catch {
+            // Save resiliente: falha de cache local nao desfaz a criacao
+            // remota; o proximo refresh reconcilia.
+          }
+        }
+        toast.show('Evento criado.', 'success');
+        setResetKeyEvento((n) => n + 1);
+        sheetRef.current?.close();
+      } catch (e) {
+        if (e instanceof ApiError) {
+          if (e.code === 'conflito') {
+            toast.show('Esse evento já existe.', 'error');
+          } else if (e.code === 'invalido') {
+            toast.show('Conexão expirada. Reconecte.', 'error');
+            if (alvo === pessoaAtiva) setEstado('invalido');
+          } else if (e.code === 'quota') {
+            toast.show(
+              'Limite Google atingido. Tente em alguns minutos.',
+              'error'
+            );
+          } else if (e.code === 'rede') {
+            toast.show('Sem conexão. Tente novamente.', 'error');
+          } else {
+            toast.show('Não foi possível criar o evento.', 'error');
+          }
+        } else {
+          toast.show('Não foi possível criar o evento.', 'error');
+        }
+      } finally {
+        setSalvandoEvento(false);
+      }
+    },
+    [contas, pessoaAtiva, refreshIfNeeded, toast, vaultRoot]
+  );
+
+  // Long-press na lista do dia abre a confirmacao de exclusao. So permite
+  // quando a conta ativa tem escrita (apagar readonly retornaria 403).
+  const handleLongPressEvento = useCallback(
+    (evento: EventoCalendar) => {
+      if (!temEscrita) {
+        toast.show('Reautorize para gerenciar eventos.', 'error');
+        return;
+      }
+      setEventoParaApagar(evento);
+    },
+    [temEscrita, toast]
+  );
+
+  const handleConfirmarApagar = useCallback(async () => {
+    if (eventoParaApagar === null || apagando) return;
+    setApagando(true);
+    const alvo = eventoParaApagar;
+    try {
+      const token = await refreshIfNeeded(pessoaAtiva);
+      if (token === null) {
+        toast.show('Conexão expirada. Reconecte.', 'error');
+        setEstado('invalido');
+        return;
+      }
+      await deletarEvento(token, alvo.id, pessoaAtiva);
+      setEventos((prev) => prev.filter((e) => e.id !== alvo.id));
+      if (typeof vaultRoot === 'string' && vaultRoot.length > 0) {
+        try {
+          await comTimeout(
+            removerEventoDoCache(vaultRoot, pessoaAtiva, alvo.id),
+            AGENDA_SYNC_TIMEOUT_MS
+          );
+        } catch {
+          // Save resiliente: cache local reconcilia no proximo refresh.
+        }
+      }
+      toast.show('Evento apagado.', 'info');
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'invalido') {
+        setEstado('invalido');
+        toast.show('Conexão expirada. Reconecte.', 'error');
+      } else {
+        toast.show('Não foi possível apagar. Tente novamente.', 'error');
+      }
+    } finally {
+      setApagando(false);
+      setEventoParaApagar(null);
+    }
+  }, [apagando, eventoParaApagar, pessoaAtiva, refreshIfNeeded, toast, vaultRoot]);
+
   const eventosDia = useMemo(
     () => eventosDoDia(eventos, diaSelecionado),
     [eventos, diaSelecionado]
@@ -324,6 +531,43 @@ export default function AgendaScreen() {
               </View>
             ) : null}
 
+            {!temEscrita ? (
+              <View
+                style={{
+                  backgroundColor: colors.bgAlt,
+                  borderLeftWidth: 3,
+                  borderLeftColor: colors.green,
+                  paddingVertical: spacing.base,
+                  paddingHorizontal: spacing.lg,
+                  borderRadius: 8,
+                  marginBottom: spacing.base,
+                }}
+                accessibilityLabel="banner reautorizar escrita"
+              >
+                <Text
+                  style={{
+                    color: colors.fg,
+                    fontSize: typography.body.size,
+                    lineHeight:
+                      typography.body.size * typography.body.lineHeight,
+                  }}
+                >
+                  Reautorize para criar eventos direto na sua agenda.
+                </Text>
+                <View style={{ marginTop: spacing.base, alignSelf: 'flex-start' }}>
+                  <Button
+                    label={reautorizando ? 'Abrindo…' : 'Reautorizar'}
+                    onPress={() => {
+                      void handleReautorizar();
+                    }}
+                    variant="success"
+                    disabled={reautorizando}
+                    accessibilityLabel="reautorizar escopo escrita"
+                  />
+                </View>
+              </View>
+            ) : null}
+
             <CalendarGrid
               eventos={eventos}
               selecionado={diaSelecionado}
@@ -352,8 +596,11 @@ export default function AgendaScreen() {
                 </Text>
               ) : (
                 eventosDia.map((e) => (
-                  <View
+                  <Pressable
                     key={e.id}
+                    onLongPress={() => handleLongPressEvento(e)}
+                    delayLongPress={400}
+                    accessibilityRole="button"
                     style={{
                       backgroundColor: colors.bg,
                       paddingVertical: spacing.base,
@@ -362,6 +609,7 @@ export default function AgendaScreen() {
                       marginBottom: spacing.sm,
                     }}
                     accessibilityLabel={`evento ${e.id}`}
+                    accessibilityHint="segure para apagar"
                   >
                     <Text
                       style={{
@@ -385,13 +633,55 @@ export default function AgendaScreen() {
                         ? ` · ${e.local}`
                         : ''}
                     </Text>
-                  </View>
+                  </Pressable>
                 ))
               )}
             </View>
           </View>
         ) : null}
       </ScrollView>
+
+      {/* M37.2: FAB verde "Novo evento" no canto inferior direito. So
+          aparece com a conta ativa conectada e com escopo de escrita
+          (senao o banner de reautorizar assume o papel). Nao conflita
+          com o FABMenu roxo (canto esquerdo). */}
+      {(estado === 'online' || estado === 'offline') && temEscrita ? (
+        <FAB
+          onPress={handleAbrirNovoEvento}
+          background={colors.green}
+          icon={<Plus size={24} color={colors.bg} strokeWidth={2} />}
+          accessibilityLabel="novo evento"
+          disabled={online === false}
+        />
+      ) : null}
+
+      <BottomSheet ref={sheetRef} snapPoints={SHEET_80} index={-1}>
+        <SheetNovoEvento
+          onSalvar={(payload) => {
+            void handleCriarEvento(payload);
+          }}
+          onCancelar={() => sheetRef.current?.close()}
+          salvando={salvandoEvento}
+          resetKey={resetKeyEvento}
+        />
+      </BottomSheet>
+
+      <ConfirmarExclusao
+        visible={eventoParaApagar !== null}
+        titulo="Apagar evento?"
+        descricao={
+          eventoParaApagar !== null
+            ? `"${eventoParaApagar.titulo}" será removido do Google Calendar.`
+            : undefined
+        }
+        onConfirmar={() => {
+          void handleConfirmarApagar();
+        }}
+        onCancelar={() => {
+          if (!apagando) setEventoParaApagar(null);
+        }}
+        excluindo={apagando}
+      />
     </Screen>
   );
 }

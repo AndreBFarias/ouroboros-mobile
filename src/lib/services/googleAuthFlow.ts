@@ -49,6 +49,16 @@ export const GOOGLE_DISCOVERY = {
 export const SCOPE_READONLY =
   'https://www.googleapis.com/auth/calendar.events.readonly';
 
+// M37.2 (escrita no Google Calendar): escopo read+write dos eventos.
+// Superset de SCOPE_READONLY -- conceder calendar.events permite tanto
+// listar quanto criar/deletar eventos. Google obriga reconsentimento do
+// usuario para subir de readonly para este escopo (ver
+// autenticarComEscopoEscrita em googleAuth.ts). Escopo minimo: nao pede
+// 'calendar' completo (que daria acesso a calendarios secundarios e
+// metadados alem do necessario).
+export const SCOPE_CALENDAR_EVENTS =
+  'https://www.googleapis.com/auth/calendar.events';
+
 // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO (2026-05-25): scope para upload de
 // arquivos criados pelo proprio app no Drive do usuario. drive.file e' o
 // scope MINIMO (nao-sensivel ao ponto de exigir verificacao pesada como

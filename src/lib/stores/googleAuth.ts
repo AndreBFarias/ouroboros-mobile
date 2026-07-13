@@ -25,10 +25,27 @@ import {
   pickClientId,
   refreshAccessToken,
   revogarToken,
+  SCOPE_CALENDAR_EVENTS,
   SCOPE_DRIVE_FILE,
   SCOPE_READONLY,
   trocarCodePorToken,
 } from '@/lib/services/googleAuthFlow';
+
+// M37.2: nivel de acesso ao Google Calendar concedido pela conta.
+//   'readonly' -> so leitura (escopo calendar.events.readonly, M37.1).
+//   'write'    -> leitura + escrita (escopo calendar.events, M37.2).
+// Undefined em contas conectadas antes de M37.2 (persistidas sem o
+// campo) -- tratado como readonly pela UI ate o usuario reautorizar.
+export type EscopoConcedido = 'readonly' | 'write';
+
+// Deriva o escopo Calendar concedido a partir da string `scope` que o
+// Google devolve no token (lista separada por espaco). Se contem o
+// escopo de escrita, e 'write'; senao 'readonly'.
+function escopoCalendarDaResposta(scope: string | undefined): EscopoConcedido {
+  if (typeof scope !== 'string') return 'readonly';
+  const concedidos = scope.split(/\s+/);
+  return concedidos.includes(SCOPE_CALENDAR_EVENTS) ? 'write' : 'readonly';
+}
 
 export interface ContaGoogle {
   accessToken: string | null;
@@ -39,6 +56,9 @@ export interface ContaGoogle {
   // Marcador soft: quando true, refresh token foi rejeitado e
   // o usuario precisa reconectar. UI mostra banner "invalido".
   invalido: boolean;
+  // M37.2: nivel de acesso Calendar concedido. Opcional para compat com
+  // contas persistidas antes de M37.2 (undefined => tratado readonly).
+  escoposConcedidos?: EscopoConcedido;
 }
 
 export type AutenticarResultado =
@@ -50,6 +70,13 @@ export interface GoogleAuthState {
   // Inicia o flow OAuth. Em dev web, injeta token mock; em mobile
   // real, abre WebBrowser e troca code por token.
   autenticar: (pessoa: PessoaAutor) => Promise<AutenticarResultado>;
+  // M37.2: re-executa o flow OAuth pedindo o escopo de escrita
+  // (calendar.events). Google obriga reconsentimento do usuario para
+  // subir de readonly para write; nao ha upgrade silencioso. Atualiza
+  // escoposConcedidos para 'write' quando concedido.
+  autenticarComEscopoEscrita: (
+    pessoa: PessoaAutor
+  ) => Promise<AutenticarResultado>;
   // Revoga tokens no servidor Google e limpa locais.
   revogar: (pessoa: PessoaAutor) => Promise<void>;
   // Garante access token valido. Faz refresh se expirou em <60s.
@@ -104,6 +131,63 @@ function tokenSinteticoMock(): {
   };
 }
 
+type FlowOAuthResultado =
+  | { ok: true; tokens: import('@/lib/services/googleAuthFlow').TokenResponse }
+  | { ok: false; motivo: 'cancelado' | 'erro' | 'sem_client_id' };
+
+// Executa o flow PKCE completo com a lista de scopes fornecida e
+// devolve os tokens (ou o motivo da falha). Extraido para reuso entre
+// autenticar (readonly) e autenticarComEscopoEscrita (write, M37.2);
+// ambos so diferem nos scopes pedidos e no escoposConcedidos resultante.
+// include_granted_scopes=true habilita autorizacao incremental: o token
+// combina scopes ja concedidos com os novos sem forcar reconsentir tudo.
+async function executarFlowOAuth(
+  scopes: string[]
+): Promise<FlowOAuthResultado> {
+  try {
+    const { clientId, redirectUri } = pickClientId();
+    const request = new AuthSession.AuthRequest({
+      clientId,
+      scopes,
+      redirectUri,
+      usePKCE: true,
+      responseType: AuthSession.ResponseType.Code,
+      extraParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+        include_granted_scopes: 'true',
+      },
+    });
+    await request.makeAuthUrlAsync(GOOGLE_DISCOVERY);
+    const resultado = await request.promptAsync(GOOGLE_DISCOVERY, {
+      showInRecents: true,
+    });
+    if (resultado.type === 'cancel' || resultado.type === 'dismiss') {
+      return { ok: false, motivo: 'cancelado' };
+    }
+    if (resultado.type !== 'success') {
+      return { ok: false, motivo: 'erro' };
+    }
+    const code = resultado.params.code;
+    const codeVerifier = request.codeVerifier;
+    if (typeof code !== 'string' || typeof codeVerifier !== 'string') {
+      return { ok: false, motivo: 'erro' };
+    }
+    const tokens = await trocarCodePorToken({
+      code,
+      codeVerifier,
+      clientId,
+      redirectUri,
+    });
+    return { ok: true, tokens };
+  } catch (e) {
+    if (e instanceof Error && e.message.includes('env.json')) {
+      return { ok: false, motivo: 'sem_client_id' };
+    }
+    return { ok: false, motivo: 'erro' };
+  }
+}
+
 export const useGoogleAuth = create<GoogleAuthState>()(
   persist(
     (set, get) => ({
@@ -121,84 +205,103 @@ export const useGoogleAuth = create<GoogleAuthState>()(
                 email: mock.email,
                 ultimaConexao: Date.now(),
                 invalido: false,
+                // Mock de conexao inicial concede apenas leitura, igual
+                // ao flow real (SCOPE_READONLY). O usuario sobe para
+                // 'write' via autenticarComEscopoEscrita.
+                escoposConcedidos: 'readonly',
               },
             },
           }));
           return { ok: true };
         }
 
-        try {
-          const { clientId, redirectUri } = pickClientId();
-          // PKCE manual usando AuthRequest. Construimos a request,
-          // disparamos, e processamos o resultado em uma so funcao
-          // sem hook (chamada de servico, nao componente).
-          // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: incluimos SCOPE_DRIVE_FILE no
-          // consentimento. include_granted_scopes=true habilita
-          // autorizacao incremental: o token resultante combina os scopes
-          // ja concedidos (calendar.events.readonly) com o novo drive.file
-          // sem forcar o usuario a reconsentir tudo do zero em re-conexao.
-          // O upload Drive so sera exercido depois que o dono ligar o
-          // toggle backupDriveAutomatico (default OFF); ate la o scope fica
-          // concedido porem ocioso.
-          const request = new AuthSession.AuthRequest({
-            clientId,
-            scopes: [SCOPE_READONLY, SCOPE_DRIVE_FILE, 'openid', 'email'],
-            redirectUri,
-            usePKCE: true,
-            responseType: AuthSession.ResponseType.Code,
-            extraParams: {
-              access_type: 'offline',
-              prompt: 'consent',
-              include_granted_scopes: 'true',
+        // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: SCOPE_DRIVE_FILE incluido no
+        // consentimento inicial (ocioso ate o toggle de backup Drive).
+        // Escopo Calendar aqui e o readonly (M37.1); escrita entra so via
+        // autenticarComEscopoEscrita (M37.2).
+        const r = await executarFlowOAuth([
+          SCOPE_READONLY,
+          SCOPE_DRIVE_FILE,
+          'openid',
+          'email',
+        ]);
+        if (!r.ok) return { ok: false, motivo: r.motivo };
+        const { tokens } = r;
+        // email vem no id_token (jwt). Nao validamos assinatura aqui;
+        // confiamos no canal HTTPS direto com Google. Decode simples:
+        let email: string | null = null;
+        if (typeof tokens.id_token === 'string') {
+          email = decodeEmailDoIdToken(tokens.id_token);
+        }
+        set((s) => ({
+          contas: {
+            ...s.contas,
+            [pessoa]: {
+              accessToken: tokens.access_token,
+              refreshToken: tokens.refresh_token ?? null,
+              expiraEm: Date.now() + tokens.expires_in * 1000,
+              email,
+              ultimaConexao: Date.now(),
+              invalido: false,
+              escoposConcedidos: escopoCalendarDaResposta(tokens.scope),
             },
-          });
-          await request.makeAuthUrlAsync(GOOGLE_DISCOVERY);
-          const resultado = await request.promptAsync(GOOGLE_DISCOVERY, {
-            showInRecents: true,
-          });
-          if (resultado.type === 'cancel' || resultado.type === 'dismiss') {
-            return { ok: false, motivo: 'cancelado' };
-          }
-          if (resultado.type !== 'success') {
-            return { ok: false, motivo: 'erro' };
-          }
-          const code = resultado.params.code;
-          const codeVerifier = request.codeVerifier;
-          if (typeof code !== 'string' || typeof codeVerifier !== 'string') {
-            return { ok: false, motivo: 'erro' };
-          }
-          const tokens = await trocarCodePorToken({
-            code,
-            codeVerifier,
-            clientId,
-            redirectUri,
-          });
-          // email vem no id_token (jwt). Nao validamos assinatura aqui;
-          // confiamos no canal HTTPS direto com Google. Decode simples:
-          let email: string | null = null;
-          if (typeof tokens.id_token === 'string') {
-            email = decodeEmailDoIdToken(tokens.id_token);
-          }
+          },
+        }));
+        return { ok: true };
+      },
+      autenticarComEscopoEscrita: async (pessoa) => {
+        if (isMockMode()) {
+          const mock = tokenSinteticoMock();
           set((s) => ({
             contas: {
               ...s.contas,
               [pessoa]: {
-                accessToken: tokens.access_token,
-                refreshToken: tokens.refresh_token ?? null,
-                expiraEm: Date.now() + tokens.expires_in * 1000,
-                email,
+                ...s.contas[pessoa],
+                accessToken: mock.accessToken,
+                refreshToken: mock.refreshToken,
+                expiraEm: mock.expiraEm,
+                email: s.contas[pessoa].email ?? mock.email,
                 ultimaConexao: Date.now(),
                 invalido: false,
+                escoposConcedidos: 'write',
               },
             },
           }));
           return { ok: true };
-        } catch (e) {
-          if (e instanceof Error && e.message.includes('env.json')) {
-            return { ok: false, motivo: 'sem_client_id' };
-          }
-          return { ok: false, motivo: 'erro' };
         }
+
+        // Reconsentimento pedindo o escopo de escrita (calendar.events).
+        // Superset do readonly; include_granted_scopes preserva drive.file
+        // ja concedido. O usuario passa pelo browser de novo (Google
+        // obriga; nao ha upgrade silencioso -- decisao M37.2 secao 9).
+        const r = await executarFlowOAuth([
+          SCOPE_CALENDAR_EVENTS,
+          SCOPE_DRIVE_FILE,
+          'openid',
+          'email',
+        ]);
+        if (!r.ok) return { ok: false, motivo: r.motivo };
+        const { tokens } = r;
+        let email: string | null = null;
+        if (typeof tokens.id_token === 'string') {
+          email = decodeEmailDoIdToken(tokens.id_token);
+        }
+        set((s) => ({
+          contas: {
+            ...s.contas,
+            [pessoa]: {
+              ...s.contas[pessoa],
+              accessToken: tokens.access_token,
+              refreshToken: tokens.refresh_token ?? s.contas[pessoa].refreshToken,
+              expiraEm: Date.now() + tokens.expires_in * 1000,
+              email: email ?? s.contas[pessoa].email,
+              ultimaConexao: Date.now(),
+              invalido: false,
+              escoposConcedidos: escopoCalendarDaResposta(tokens.scope),
+            },
+          },
+        }));
+        return { ok: true };
       },
       revogar: async (pessoa) => {
         const conta = get().contas[pessoa];

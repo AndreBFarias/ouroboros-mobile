@@ -1071,7 +1071,7 @@ cinzas de vazio.
   `widgetMostraNome` toggle) + 1 alarme próximo.
 - Bridge JS → atualizar widget ao registrar humor.
 
-## 13. Calendário Google — M37.1 (entregue 2026-05-05) + M37.2 (todo)
+## 13. Calendário Google — M37.1 (entregue 2026-05-05) + M37.2 (entregue 2026-07-11)
 
 - OAuth via `expo-auth-session` com **split clientId** Expo Go
   (proxy `auth.expo.io`) vs dev-client/release (custom-scheme
@@ -1088,9 +1088,33 @@ cinzas de vazio.
     cache." sobre UI normal (cache stale aceito).
   - `invalido` — banner vermelho "Sua conexão Google
     expirou. Reconecte." + botão de reconectar.
-- **Escrita — M37.2** (todo, depende M37.1): criar / atualizar
-  / deletar evento. Pede reconsentimento subindo escopo de
-  `calendar.events.readonly` para `calendar.events`.
+- **Escrita — M37.2** (entregue 2026-07-11, depende M37.1):
+  criar e deletar evento pela rota `/agenda`.
+  - **FAB verde "Novo evento"** no canto inferior direito (não
+    conflita com o FABMenu roxo, esquerda). Só aparece com a
+    conta ativa conectada e com escopo de escrita. Abre o
+    `<SheetNovoEvento>` (BottomSheet 80%): título obrigatório,
+    data, hora início/fim (auto-roll para o dia seguinte quando
+    cruza a meia-noite), local, descrição, `<SeletorPara>`.
+    Sem rede o FAB avisa "Sem conexão" (sem fila offline).
+  - **Deletar via long-press** no item da lista do dia →
+    `<ConfirmarExclusao>` ("Apagar evento? ... será removido do
+    Google Calendar"). Só habilitado com escopo de escrita.
+  - **Reconsentimento**: subir de `calendar.events.readonly`
+    para `calendar.events` (read+write) exige re-prompt Google.
+    UX via banner "Reautorize para criar eventos" +
+    `autenticarComEscopoEscrita(pessoa)`. Sem upgrade silencioso.
+    Escopo rastreado em
+    `useGoogleAuth.contas[pessoa].escoposConcedidos`
+    (`'readonly' | 'write'`), exibido em `/settings/contas-google`.
+  - **Idempotência**: `criarEvento` gera id de cliente base32hex
+    e o reusa em retries (Google deduplica via 409 →
+    `ApiError('conflito')`). `deletarEvento` tolera 404/410.
+  - **Atualização otimista** do cache local (`.md` por evento)
+    via `adicionarEventoNoCache` / `removerEventoDoCache`;
+    reconcilia no próximo refresh (TTL 1h). Timezone fixo
+    `America/Sao_Paulo` (offset -03:00). Ver ADR-0018 (adendo
+    2026-07-11).
 - **Cache em arquivo** `media/cache/agenda-<pessoa>.json` no
   Vault (Armadilha A20 — tokens só em SecureStore, eventos em
   arquivo). TTL 1h com fallback stale-while-revalidate.

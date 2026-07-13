@@ -18,7 +18,9 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { EventoCalendar } from '@/lib/services/calendarApi';
 import {
   AgendaEventoSchema,
+  apagarEventoAgenda,
   listarEventosAgenda,
+  salvarEventoAgenda,
   sincronizarSnapshotAgenda,
   type AgendaEvento,
 } from '@/lib/vault/agenda';
@@ -150,6 +152,61 @@ export function cacheEstaFresco(
 ): boolean {
   const ttlMs = ttlMin * 60_000;
   return Date.now() - geradoEm < ttlMs;
+}
+
+// M37.2 -- atualizacao otimista do cache apos escrita no Google Calendar.
+// Em vez de refazer o listarEventos completo, mexemos so no evento
+// afetado. O snapshot completo reconcilia no proximo refresh (TTL 1h),
+// entao eventual divergencia se auto-corrige.
+
+// Adiciona (ou regrava) um unico evento no cache local. Em mobile,
+// escreve o .md individual via salvarEventoAgenda. Em web mock, faz
+// upsert por id no Map em memoria preservando geradoEm (para o TTL
+// continuar valendo e disparar refresh).
+export async function adicionarEventoNoCache(
+  vaultRoot: string,
+  pessoa: PessoaAutor,
+  evento: EventoCalendar
+): Promise<void> {
+  const sincronizadoEm = new Date().toISOString();
+
+  if (isWebMock(vaultRoot)) {
+    const found = memoryCacheWeb.get(memoryCacheKey(pessoa));
+    const base = found?.eventos ?? [];
+    const semDuplicata = base.filter((e) => e.id !== evento.id);
+    memoryCacheWeb.set(memoryCacheKey(pessoa), {
+      eventos: [...semDuplicata, evento],
+      geradoEm: found?.geradoEm ?? Date.now(),
+    });
+    return;
+  }
+
+  const ag = eventoCalendarToAgenda(evento, pessoa, sincronizadoEm);
+  if (!ag) return;
+  const descricao =
+    typeof evento.descricao === 'string' ? evento.descricao : '';
+  await salvarEventoAgenda(vaultRoot, ag, descricao);
+}
+
+// Remove um unico evento do cache local pelo id. Em mobile, apaga o .md
+// individual via apagarEventoAgenda (idempotente). Em web mock, filtra o
+// Map em memoria.
+export async function removerEventoDoCache(
+  vaultRoot: string,
+  pessoa: PessoaAutor,
+  id: string
+): Promise<void> {
+  if (isWebMock(vaultRoot)) {
+    const found = memoryCacheWeb.get(memoryCacheKey(pessoa));
+    if (!found) return;
+    memoryCacheWeb.set(memoryCacheKey(pessoa), {
+      eventos: found.eventos.filter((e) => e.id !== id),
+      geradoEm: found.geradoEm,
+    });
+    return;
+  }
+
+  await apagarEventoAgenda(vaultRoot, pessoa, id);
 }
 
 // Util para testes: zera o cache em memoria web.
