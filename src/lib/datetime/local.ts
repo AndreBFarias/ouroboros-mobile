@@ -63,6 +63,17 @@ export function isoToDataLocalYmd(iso: string, tz: string = TZ_DEFAULT): string 
   return dataLocalYmd(new Date(iso), tz);
 }
 
+// Subtrai `dias` de um YYYY-MM-DD e retorna outro YYYY-MM-DD. Ancorado
+// em meia-noite UTC (imune a DST): parseia o YMD para Date.UTC(0h),
+// subtrai dias*86_400_000 e reformata via toISOString.slice. Puro e
+// testavel; mesmo truque de diasEntre.ts/parseYmdUtc. Espera YMD bem-
+// formado (em producao vem sempre de dataLocalYmd).
+export function ymdMenosDias(ymd: string, dias: number): string {
+  const [y, m, d] = ymd.split('-').map((x) => parseInt(x, 10));
+  const ms = Date.UTC(y, m - 1, d) - dias * 86_400_000;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
 // Extrai os componentes de data-hora locais (ano/mes/dia/hora/min/seg)
 // no timezone alvo via Intl.DateTimeFormat.formatToParts. hour12:false
 // garante 00-23. Usa en-CA por consistencia, mas le os parts por type

@@ -16,24 +16,13 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import type { TarefaListada } from '@/lib/vault/tarefas';
+import { diasEntre } from '@/lib/util/diasEntre';
 
 // Item do rollover: estende TarefaListada com a distancia em dias ate
 // hoje e o rotulo PT-BR calmo ("ontem" / "ha N dias").
 export interface TarefaRollover extends TarefaListada {
   diasAtras: number;
   rotulo: string;
-}
-
-// Diferenca inteira de dias entre dois YYYY-MM-DD (b - a). Parse via
-// Date.UTC(y, m-1, d) dos dois lados: como ambos sao meia-noite UTC, a
-// diferenca e exata em dias e imune a DST (comparacao YMD-para-YMD, sem
-// depender do offset local). Retorna >= 0 quando b >= a.
-export function diasEntreYmd(aYmd: string, bYmd: string): number {
-  const paraMs = (s: string): number => {
-    const [y, m, d] = s.split('-').map((x) => parseInt(x, 10));
-    return Date.UTC(y, m - 1, d);
-  };
-  return Math.round((paraMs(bYmd) - paraMs(aYmd)) / 86_400_000);
 }
 
 // Rotulo PT-BR calmo para a distancia em dias. N=1 vira "ontem" (mais
@@ -67,7 +56,7 @@ export function selecionarRollover(
       return a.rel < b.rel ? -1 : 1;
     })
     .map((t) => {
-      const diasAtras = diasEntreYmd(t.meta.data, hojeYmd);
+      const diasAtras = diasEntre(t.meta.data, hojeYmd);
       return { ...t, diasAtras, rotulo: rotularDiasAtras(diasAtras) };
     });
 }

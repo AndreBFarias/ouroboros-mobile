@@ -2,8 +2,11 @@
 //   1. Fronteira sem duplicacao: so pendentes com data < hoje entram; a
 //      de hoje e a ja-feita ficam de fora.
 //   2. Rotulo: 1 -> "ontem"; >=2 -> "ha N dias".
-//   3. diasEntreYmd: diferenca inteira de dias, imune a virada de mes.
-//   4. Ordenacao: mais recente primeiro (data desc, empate por rel).
+//   3. Ordenacao: mais recente primeiro (data desc, empate por rel).
+//
+// A diferenca inteira de dias em YMD (virada de mes/ano) e coberta em
+// tests/lib/util/diasEntre.test.ts; o selector reusa diasEntre e o
+// provamos indiretamente via diasAtras/rotulo em selecionarRollover.
 //
 // Modulo puro: nenhum mock de Vault necessario (opera sobre
 // TarefaListada[] em memoria).
@@ -12,7 +15,6 @@
 import {
   selecionarRollover,
   rotularDiasAtras,
-  diasEntreYmd,
 } from '@/lib/tarefas/rollover';
 import type { TarefaListada } from '@/lib/vault/tarefas';
 import type { Tarefa } from '@/lib/schemas/tarefa';
@@ -42,24 +44,6 @@ function mkTarefa(
 }
 
 const HOJE = '2026-07-10';
-
-describe('diasEntreYmd', () => {
-  it('conta a diferenca inteira de dias', () => {
-    expect(diasEntreYmd('2026-07-08', '2026-07-10')).toBe(2);
-  });
-
-  it('vira o mes corretamente (30/06 -> 01/07 = 1 dia)', () => {
-    expect(diasEntreYmd('2026-06-30', '2026-07-01')).toBe(1);
-  });
-
-  it('mesmo dia = 0', () => {
-    expect(diasEntreYmd('2026-07-10', '2026-07-10')).toBe(0);
-  });
-
-  it('vira o ano corretamente (31/12 -> 01/01 = 1 dia)', () => {
-    expect(diasEntreYmd('2025-12-31', '2026-01-01')).toBe(1);
-  });
-});
 
 describe('rotularDiasAtras', () => {
   it('1 dia vira "ontem"', () => {
