@@ -12,6 +12,7 @@
     "lint": "eslint app/ src/",
     "test": "jest --watchAll=false",
     "test:e2e": "maestro test tests/e2e/",
+    "test:e2e:web": "scripts/e2e-web.sh",
     "build:dev": "eas build --profile development --platform android",
     "build:preview": "eas build --profile preview --platform android",
     "build:prod": "eas build --profile production --platform android",
@@ -74,6 +75,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "29.5.14",
     "@types/react": "~19.1.0",

@@ -114,33 +114,19 @@ export default async function caseRFab2(
     const seedRascunho = await page.evaluate(() => {
       const w = globalThis as unknown as {
         __gauntlet?: {
-          abrir: (rota: string) => Promise<void>;
+          salvarRascunhoMock: (
+            chave: string,
+            parcial: Record<string, unknown>
+          ) => void;
         };
       };
-      // Acessa o useSessao via require do require cache do Metro. O
-      // gauntlet expoe o store nas APIs de seed; aqui usamos uma
-      // sobrescrita direta via require do bundle web.
-      // Fallback: se o store nao for acessivel, ao menos confirmamos
-      // que a navegacao funciona.
+      // Reproduz o estado pos-camera que o handleReflexaoComFoto produz
+      // em mobile: seedeia o rascunho do Diario Emocional via gauntlet
+      // (salvarRascunhoMock -> useSessao real). Em web a camera nao
+      // existe, entao reproduzimos so o estado final.
       try {
-        const sessaoMod = (
-          window as unknown as {
-            require?: (id: string) => unknown;
-          }
-        ).require?.('@/lib/stores/sessao') as
-          | undefined
-          | {
-              useSessao: {
-                getState: () => {
-                  salvarRascunho: (
-                    chave: string,
-                    parcial: Record<string, unknown>
-                  ) => void;
-                };
-              };
-            };
-        if (sessaoMod?.useSessao) {
-          sessaoMod.useSessao.getState().salvarRascunho('diarioEmocional', {
+        if (w.__gauntlet?.salvarRascunhoMock) {
+          w.__gauntlet.salvarRascunhoMock('diarioEmocional', {
             modo: 'reflexao',
             midia: [{ tipo: 'foto', path: 'jpg/foto-2026-05-16-mock.jpg' }],
           });

@@ -1,0 +1,17 @@
+{
+  "_doc": "R-CI-E2E-WEB-a: casos cujo FAIL vira warn-only (nao derruba o run). Entradas por arquivo (basename dentro de tests/e2e/playwright) + razao. INCONCLUSIVO ja e warn-only por padrao na politica de status, entao aqui so entram FAIL de limitacao conhecida de ambiente web (API nativa so no device, sheet modal sob A17) ou FAIL residual pre-existente, alheio ao escopo da sprint. Sair de warn-only = remover da lista. O baseline completo do primeiro run (58 PASS / 38 FAIL-real / 13 INCONCLUSIVO em 109) alimenta a triagem futura dos demais FAIL pre-existentes (fora do escopo desta entrega). Comentarios sem acento.",
+  "casos": [
+    {
+      "arquivo": "m35-financas-empty.e2e.ts",
+      "razao": "R-CI-E2E-WEB-c corrigiu o acesso ao store (await import @/ trocado por setFeatureToggle) e o toggle passou a funcionar. O FAIL residual vem do check estrito de console.error do proprio caso, que captura um warning RN-Web pre-existente (Invalid DOM property transform-origin) alheio a esta sprint. Warn-only ate a origem do warning ser corrigida em sprint propria."
+    },
+    {
+      "arquivo": "r-home-4d-relembrando.e2e.ts",
+      "razao": "R-CI-E2E-WEB-c corrigiu criarDiarioMock: os passos 1-6 (memoria criada, rotulo de tempo, estabilidade, tap navega) passam. O FAIL residual e no assert de cold-start (temBotaoMemoria true apos reset+seed em vault vazio), comportamento do app que estava mascarado enquanto o require quebrava o caso cedo (INCONCLUSIVO). Warn-only ate triagem da persistencia do card Relembrando no cold-start."
+    },
+    {
+      "arquivo": "r-int-4-youtube-picker.e2e.ts",
+      "razao": "R-CI-E2E-WEB-c removeu apenas a referencia morta a require (void mod). O FAIL (aba youtube nao localizada / CTA ausente) e pre-existente e alheio a limpeza: a aba/CTA do YouTube nao renderiza no /captura em web. Warn-only ate triagem do fluxo do picker no Gauntlet."
+    }
+  ]
+}

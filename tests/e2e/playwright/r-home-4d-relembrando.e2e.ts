@@ -62,30 +62,19 @@ export default async function caseRHome4d(
     //    em web/dev). meta.data no passado; listarDiarios le do frontmatter.
     const memoriaOk = await page.evaluate(async () => {
       const w = globalThis as unknown as {
-        require?: (id: string) => unknown;
         __gauntlet?: {
           seedComDados: (f: string) => Promise<void>;
+          criarDiarioMock: (
+            meta: Record<string, unknown>,
+            body: string
+          ) => Promise<{ uri: string } | null>;
         };
       };
       try {
         await w.__gauntlet?.seedComDados('diarios-3');
         await w.__gauntlet?.seedComDados('humores-30d');
 
-        const diarioMod = w.require?.('@/lib/diario/saveDiario') as
-          | undefined
-          | {
-              saveDiario: (
-                meta: Record<string, unknown>,
-                body: string,
-                vaultRoot: string
-              ) => Promise<{ uri: string }>;
-            };
-        const vaultMod = w.require?.('@/lib/stores/vault') as
-          | undefined
-          | { useVault: { getState: () => { vaultRoot: string | null } } };
-        if (!diarioMod?.saveDiario || !vaultMod?.useVault) return 'sem require';
-        const vaultRoot = vaultMod.useVault.getState().vaultRoot;
-        if (!vaultRoot) return 'sem vaultRoot';
+        if (!w.__gauntlet?.criarDiarioMock) return 'sem criarDiarioMock';
 
         // -40 dias no fuso BRT.
         const local = new Date(Date.now() - 40 * 86_400_000 + -180 * 60_000);
@@ -93,7 +82,7 @@ export default async function caseRHome4d(
         const m = String(local.getUTCMonth() + 1).padStart(2, '0');
         const d = String(local.getUTCDate()).padStart(2, '0');
         const dataIso = `${y}-${m}-${d}T12:00:00-03:00`;
-        await diarioMod.saveDiario(
+        const r = await w.__gauntlet.criarDiarioMock(
           {
             tipo: 'diario_emocional',
             data: dataIso,
@@ -107,9 +96,9 @@ export default async function caseRHome4d(
             midia: [],
             para: { tipo: 'mim' },
           },
-          'Tarde tranquila e leve no parque',
-          vaultRoot
+          'Tarde tranquila e leve no parque'
         );
+        if (!r) return 'sem vaultRoot';
         return 'ok';
       } catch (e) {
         return `erro: ${(e as Error).message}`;
