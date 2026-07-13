@@ -1,16 +1,25 @@
-// Testes do useToastUndo (R-HOME-3). Cobre:
-//   - render do UndoOverlay quando mostrarUndo e disparado,
-//   - tap em "Desfazer" chama o callback + oculta o toast,
-//   - timeout default 5000ms oculta sem chamar onUndo,
-//   - dismiss programatico.
+// Testes do toast "Desfazer" (R-HOME-3, reancorado em R-HOME-5). Cobre os
+// 7 cenarios de comportamento, agora contra a store unica (toastUndo) +
+// o host de nivel de tela (UndoOverlayHost):
+//   1. idle: host nao renderiza nada quando nao ha toast,
+//   2. render: mostrarUndo exibe mensagem + botao Desfazer,
+//   3. tap em Desfazer chama o callback + oculta,
+//   4. timeout default 5000ms oculta sem chamar onUndo,
+//   5. timeoutMs customizado e respeitado,
+//   6. mostrarUndo consecutivo substitui o anterior (sem fila),
+//   7. dismiss programatico oculta sem chamar callback.
 //
-// Padrao: usa botao "trigger" pra disparar mostrarUndo via fireEvent
-// dentro de act, evitando race entre microtask e setState.
+// Padrao: botao "disparar" aciona mostrarUndo via fireEvent dentro de act,
+// evitando race entre microtask e setState.
+//
+// R-HOME-5: o estado saiu do hook por-instancia e virou store singleton,
+// entao o beforeEach reseta a store (dismiss) para isolar os cenarios.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
-import { useToastUndo } from '@/lib/hooks/useToastUndo';
+import { useToastUndoStore } from '@/lib/stores/toastUndo';
+import { UndoOverlayHost } from '@/lib/hooks/useToastUndo';
 
 interface HostProps {
   onUndo: () => void;
@@ -19,7 +28,8 @@ interface HostProps {
 }
 
 function Host({ onUndo, mensagem, timeoutMs }: HostProps) {
-  const { mostrarUndo, dismiss, UndoOverlay } = useToastUndo();
+  const mostrarUndo = useToastUndoStore((s) => s.mostrarUndo);
+  const dismiss = useToastUndoStore((s) => s.dismiss);
   return (
     <>
       <Pressable
@@ -31,13 +41,17 @@ function Host({ onUndo, mensagem, timeoutMs }: HostProps) {
       <Pressable accessibilityLabel="dismiss-programatico" onPress={dismiss}>
         <Text>dismiss</Text>
       </Pressable>
-      <UndoOverlay />
+      <UndoOverlayHost />
     </>
   );
 }
 
 beforeEach(() => {
   jest.useFakeTimers();
+  // Store e singleton de modulo: zera entre cenarios pra nao vazar toast.
+  act(() => {
+    useToastUndoStore.getState().dismiss();
+  });
 });
 
 afterEach(() => {
@@ -47,8 +61,8 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('useToastUndo', () => {
-  it('UndoOverlay nao renderiza nada quando idle', () => {
+describe('toastUndo (store + UndoOverlayHost)', () => {
+  it('UndoOverlayHost nao renderiza nada quando idle', () => {
     const { queryByLabelText } = render(
       <Host onUndo={() => undefined} mensagem="Tarefa concluida" />
     );
@@ -111,7 +125,7 @@ describe('useToastUndo', () => {
     const onUndoA = jest.fn();
     const onUndoB = jest.fn();
     function HostDuplo() {
-      const { mostrarUndo, UndoOverlay } = useToastUndo();
+      const mostrarUndo = useToastUndoStore((s) => s.mostrarUndo);
       return (
         <>
           <Pressable
@@ -126,7 +140,7 @@ describe('useToastUndo', () => {
           >
             <Text>botaoB</Text>
           </Pressable>
-          <UndoOverlay />
+          <UndoOverlayHost />
         </>
       );
     }

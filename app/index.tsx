@@ -50,6 +50,7 @@ import { useOnboarding } from '@/lib/stores/onboarding';
 import { useHasHydrated } from '@/lib/stores/hydrated';
 import { loadVaultRoot } from '@/lib/vault';
 import { FeedHoje } from '@/components/hoje/FeedHoje';
+import { UndoOverlayHost } from '@/lib/hooks/useToastUndo';
 
 // R-HOME-1: atalho Reflexao (cyan + Sparkles). Abre o diario emocional
 // em modo reflexao (terceiro modo neutro, introduzido em G2). Pill
@@ -219,6 +220,13 @@ function TelaHojeConteudo({
 
         <FeedHoje />
       </ScrollView>
+
+      {/* R-HOME-5: toast "Desfazer" em nivel de tela. Irmao DEPOIS do
+          ScrollView (fora dele) -> nao rola com o feed e, com
+          zIndex+elevation, pinta acima dos cards (corrige o bug B4). Le a
+          store toastUndo; uma unica instancia elimina o balao duplicado
+          que existia dentro de cada card. Ancorado ao rodape da tela. */}
+      <UndoOverlayHost />
     </Screen>
   );
 }

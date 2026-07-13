@@ -964,6 +964,30 @@ cinzas de vazio.
   Título em `colors.muted` (prioridade secundária vs. o `orange` do To-do).
   `accessibilityLabel` sem acento.
 
+### 9.8 Refinamentos da Home viva — R-HOME-5 (2026-07-13)
+
+Dois ajustes achados pelo dono usando o app no celular:
+
+- **Affordance ">" no card "To-do hoje" (N2):** o cabeçalho "To-do hoje"
+  virou uma linha navegável (`Pressable` no padrão de `CardVocês` /
+  `CardNaSuaSemana`), com o `<ChevronRight>` à direita, que abre a lista
+  completa `/todo`. Antes só havia um long-press invisível. O long-press
+  nos itens continua funcionando (compatibilidade). `accessibilityLabel`
+  "abrir tarefas" (sem acento). Escopo só do "To-do hoje"; o "Ainda de
+  ontem" segue navegando pela linha "e mais N em Tarefas".
+- **Toast "Desfazer" em nível de tela (B4):** o balão de tarefa concluída
+  deixou de ser montado dentro de cada card (dentro do `ScrollView`, sem
+  z-index, portanto atrás dos cards seguintes e rolando com o feed) e
+  passou a ter uma **fonte única** — a store `src/lib/stores/toastUndo.ts`
+  — com um **único `<UndoOverlayHost>`** no root da Tela Hoje, irmão
+  depois do `<ScrollView>`, ancorado ao rodapé da tela com `zIndex` +
+  `elevation` (camada 15 da tabela §7.10). O balão agora aparece por cima
+  de todo o feed e o "Desfazer" fica sempre tocável; a única fonte também
+  eliminou o toast duplicado (havia uma instância no To-do e outra no
+  Ainda de ontem). Preserva a invariante R-HOME-4a (cards sem props): as
+  seções só chamam `mostrarUndo` da store. Mesma animação sóbria
+  (`SlideInDown.springify()` / `SlideOutDown`), sem gamificação.
+
 ## 10. Opt-ins (toggle on em Settings, default ON)
 
 ### 10.1 Acompanhador de Ciclo Menstrual — M14.5 + R-NAV-1

@@ -6,16 +6,22 @@
 //
 // R-HOME-4a: self-hide. O empty state antigo (caixa "Sem tarefas
 // pendentes...") virou ausencia do card -- durante loading ou sem
-// pendentes a secao nao renderiza titulo/lista. O UndoOverlay continua
-// montado mesmo com a lista oculta, para que o toast "Desfazer" nao suma
-// ao concluir a ULTIMA tarefa pendente (a lista esvazia mas o undo
-// precisa sobreviver os 5s). UndoOverlay retorna null quando nao ha
-// toast ativo, entao nao ocupa slot no gap do feed.
+// pendentes a secao retorna null.
+//
+// R-HOME-5: o toast "Desfazer" saiu daqui. Antes cada secao montava seu
+// proprio <UndoOverlay/> dentro do card (no meio do ScrollView, sem
+// zIndex, portanto atras do feed -- bug B4); agora o estado vive na store
+// toastUndo e um unico <UndoOverlayHost/> no root da Tela Hoje o
+// renderiza, entao o toast sobrevive a conclusao da ULTIMA tarefa sem a
+// secao precisar continuar montada. A secao so dispara mostrarUndo.
+//
+// R-HOME-5 (N2): o cabecalho "To-do hoje" ganhou o ">" navegavel para a
+// lista completa /todo (antes so havia o long-press invisivel).
 //
 // R-HOME-4a: a navegacao de long-press deixou de ser prop-drilling
 // (onLongPress) e passou a ser interna via useRouter().push('/todo').
 //
-// Mantida intacta toda a logica de checkbox otimista + useToastUndo.
+// Mantida intacta toda a logica de checkbox otimista + toast Desfazer.
 //
 // R-HOME-3: checkbox extraido para <CheckboxTarefaInline> (32dp + hitSlop
 // 16 = 64dp WCAG AAA, animacao Moti spring com check escalando, strike-
@@ -35,9 +41,10 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { haptics } from '@/lib/haptics';
+import { ChevronRight } from '@/lib/icons';
 import { colors, spacing } from '@/theme/tokens';
 import { dataLocalYmd } from '@/lib/datetime/local';
 import { useVault } from '@/lib/stores/vault';
@@ -47,7 +54,7 @@ import {
   type TarefaListada,
 } from '@/lib/vault/tarefas';
 import { CheckboxTarefaInline } from '@/components/tarefas/CheckboxTarefaInline';
-import { useToastUndo } from '@/lib/hooks/useToastUndo';
+import { useToastUndoStore } from '@/lib/stores/toastUndo';
 
 const LIMITE_TODO_HOJE = 5;
 
@@ -56,7 +63,7 @@ export function SecaoTodoHoje() {
   const vaultRoot = useVault((s) => s.vaultRoot);
   const [tarefas, setTarefas] = useState<TarefaListada[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { mostrarUndo, UndoOverlay } = useToastUndo();
+  const mostrarUndo = useToastUndoStore((s) => s.mostrarUndo);
 
   const carregar = useCallback(async () => {
     if (!vaultRoot) {
@@ -159,41 +166,54 @@ export function SecaoTodoHoje() {
     [vaultRoot, tarefas, aplicarOtimista, mostrarUndo]
   );
 
-  // R-HOME-4a self-hide: durante loading nao ha nada a mostrar nem undo
-  // possivel (nenhuma tarefa foi tocada), entao oculta por completo.
-  if (loading) return null;
+  // R-HOME-4a self-hide: durante loading ou sem pendentes nao ha nada a
+  // mostrar; oculta por completo. O toast "Desfazer" nao mora mais aqui
+  // (R-HOME-5): vive na store e e renderizado por um unico
+  // <UndoOverlayHost/> no root da Tela Hoje, entao sobrevive naturalmente
+  // a conclusao da ULTIMA tarefa (a lista esvazia, o host continua).
+  if (loading || pendentes.length === 0) return null;
 
-  // Lista visivel so quando ha pendentes. O UndoOverlay fica montado a
-  // parte para sobreviver a conclusao da ultima tarefa (a lista esvazia
-  // mas o toast precisa dos 5s). UndoOverlay = null quando inativo.
   return (
-    <>
-      {pendentes.length > 0 ? (
-        <View style={{ gap: spacing.md }}>
-          <Text
-            style={{
-              color: colors.orange,
-              fontFamily: 'JetBrainsMono_500Medium',
-              fontSize: 16,
-            }}
-          >
-            To-do hoje
-          </Text>
-          <View style={{ gap: spacing.sm }}>
-            {pendentes.map((t) => (
-              <CheckboxTarefaInline
-                key={t.rel}
-                id={t.rel}
-                tarefa={{ titulo: t.meta.titulo, feito: t.meta.feito }}
-                onCheck={handleCheck}
-                onLongPress={abrirTodo}
-              />
-            ))}
-          </View>
-        </View>
-      ) : null}
-      <UndoOverlay />
-    </>
+    <View style={{ gap: spacing.md }}>
+      {/* N2 (R-HOME-5): cabecalho navegavel para a lista completa /todo,
+          no padrao ">" dos demais cards (CardVoces, CardNaSuaSemana). O
+          long-press nos itens continua funcionando (compat retroativa). */}
+      <Pressable
+        onPress={abrirTodo}
+        accessibilityRole="button"
+        accessibilityLabel="abrir tarefas"
+        hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+          minHeight: 44,
+        }}
+      >
+        <Text
+          style={{
+            flex: 1,
+            color: colors.orange,
+            fontFamily: 'JetBrainsMono_500Medium',
+            fontSize: 16,
+          }}
+        >
+          To-do hoje
+        </Text>
+        <ChevronRight size={16} color={colors.muted} strokeWidth={2.25} />
+      </Pressable>
+      <View style={{ gap: spacing.sm }}>
+        {pendentes.map((t) => (
+          <CheckboxTarefaInline
+            key={t.rel}
+            id={t.rel}
+            tarefa={{ titulo: t.meta.titulo, feito: t.meta.feito }}
+            onCheck={handleCheck}
+            onLongPress={abrirTodo}
+          />
+        ))}
+      </View>
+    </View>
   );
 }
 
