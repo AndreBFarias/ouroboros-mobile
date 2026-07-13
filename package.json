@@ -21,7 +21,7 @@
   "dependencies": {
     "@dariyd/react-native-document-scanner": "^2.0.19",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
-    "@gorhom/bottom-sheet": "^5.2.11",
+    "@gorhom/bottom-sheet": "^5.2.14",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/netinfo": "11.4.1",
     "@react-native-community/slider": "5.0.1",
