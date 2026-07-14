@@ -30,6 +30,7 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { ContadorSchema, type Contador } from '@/lib/schemas/contador';
@@ -39,22 +40,24 @@ import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 // Lista todos os contadores do Vault. Pasta inexistente => []. Retorna
 // asc por titulo (localeCompare PT-BR) para a tela de listagem não
 // mostrar ordem aleatoria de filesystem.
-export async function listarContadores(vaultRoot: string): Promise<Contador[]> {
-  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folderUri, '.md');
+//
+// R-AUDIT-VAULT-PERF: `opts.listagem` (aditivo/retrocompativel) reusa a
+// listagem unica de markdown/ do ciclo; leitura serial trocada por
+// readVaultFiles (lote). Saida/ordenacao inalteradas.
+export async function listarContadores(
+  vaultRoot: string,
+  opts?: { listagem?: string[] }
+): Promise<Contador[]> {
+  const todos =
+    opts?.listagem ??
+    (await listVaultFolder(vaultUriJoin(vaultRoot, MARKDOWN_FOLDER), '.md'));
   const arquivos = todos.filter(
     (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'contador-')
   );
 
-  const lidos: Contador[] = [];
-  for (const arquivoUri of arquivos) {
-    try {
-      const result = await readVaultFile(arquivoUri, ContadorSchema);
-      if (result) lidos.push(result.meta);
-    } catch {
-      // Ignora arquivos malformados.
-    }
-  }
+  const lidos: Contador[] = (
+    await readVaultFiles(arquivos, ContadorSchema)
+  ).map((r) => r.parsed.meta);
 
   lidos.sort((a, b) =>
     a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' })

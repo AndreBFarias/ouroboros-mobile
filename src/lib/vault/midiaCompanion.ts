@@ -34,7 +34,8 @@ import {
   vaultUriJoin,
 } from '@/lib/vault/paths';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
-import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { listVaultFolder } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 
 // Concatena root SAF e path relativo, normalizando barras. Idem
 // helpers locais espalhados (capturarFoto.joinUri etc); centralizado
@@ -286,13 +287,21 @@ export interface ItemMidiaStandalone {
 //
 // Erros: pasta inexistente -> []. Companion malformado -> ignorado.
 // Filtra sync-conflict.
+//
+// R-AUDIT-VAULT-PERF: `opts.listagem` (aditivo/retrocompativel) reusa a
+// listagem unica de markdown/ do ciclo; leitura serial trocada por
+// readVaultFiles (lote). Os companions sao pre-filtrados por prefixo de
+// feature ANTES de ler (o loop antigo dava `continue` antes de
+// readVaultFile em nao-matches), correlacionando cada URI ao seu entry.
+// Saida/ordenacao inalteradas.
 export async function listarMidiasStandalone(
-  vaultRoot: string
+  vaultRoot: string,
+  opts?: { listagem?: string[] }
 ): Promise<ItemMidiaStandalone[]> {
-  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
-  const todos = (await listVaultFolder(folderUri, '.md')).filter(
-    (u) => !ehSyncConflict(u)
-  );
+  const listagem =
+    opts?.listagem ??
+    (await listVaultFolder(vaultUriJoin(vaultRoot, MARKDOWN_FOLDER), '.md'));
+  const todos = listagem.filter((u) => !ehSyncConflict(u));
 
   // Tabela prefixo -> (tipo canonico, pasta do binario, ext fallback).
   // frase nao tem binario (so .md), scanner usa pdf ou jpg conforme
@@ -320,17 +329,28 @@ export async function listarMidiasStandalone(
     },
   ];
 
-  const itens: ItemMidiaStandalone[] = [];
+  // Pre-filtra por prefixo de feature, guardando o entry canonico de
+  // cada URI (preserva o `continue` antes da leitura no loop original).
+  const alvos: { uri: string; tipo: TipoMidiaCanonico }[] = [];
   for (const arquivoUri of todos) {
     const entry = MAPA.find((m) => matchesFeaturePrefix(arquivoUri, m.prefixo));
     if (!entry) continue;
-    let meta: MidiaCompanion | null = null;
-    try {
-      const result = await readVaultFile(arquivoUri, MidiaCompanionSchema);
-      if (result) meta = result.meta as MidiaCompanion;
-    } catch {
-      meta = null;
-    }
+    alvos.push({ uri: arquivoUri, tipo: entry.tipo });
+  }
+
+  // Le em lote apenas os companions com prefixo valido; indexa por URI
+  // para correlacionar o meta lido de volta ao seu tipo.
+  const metaPorUri = new Map<string, MidiaCompanion>();
+  for (const r of await readVaultFiles(
+    alvos.map((a) => a.uri),
+    MidiaCompanionSchema
+  )) {
+    metaPorUri.set(r.uri, r.parsed.meta as MidiaCompanion);
+  }
+
+  const itens: ItemMidiaStandalone[] = [];
+  for (const { uri: arquivoUri, tipo } of alvos) {
+    const meta = metaPorUri.get(arquivoUri);
     if (!meta) continue;
     // Normaliza data ISO para YYYY-MM-DD: o schema ja garante ISO
     // valido com offset; slice(0, 10) e' suficiente.
@@ -338,17 +358,17 @@ export async function listarMidiasStandalone(
     // binarioPath: deriva do tipo (frase nao tem binario; scanner
     // pode ser jpg ou pdf -- recuperamos ext via meta.arquivo).
     let binarioPath: string | null = null;
-    if (entry.tipo === 'midia_frase') {
+    if (tipo === 'midia_frase') {
       binarioPath = null;
     } else {
       const ext = extOf(meta.arquivo);
       if (ext.length > 0) {
-        const pasta = pastaBinarioPorExt(ext, entry.tipo);
+        const pasta = pastaBinarioPorExt(ext, tipo);
         binarioPath = `${pasta}/${meta.arquivo}`;
       }
     }
     itens.push({
-      tipo: entry.tipo,
+      tipo,
       data,
       companionUri: arquivoUri,
       binarioPath,

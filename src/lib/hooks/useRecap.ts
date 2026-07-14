@@ -15,6 +15,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useMemo, useState } from 'react';
 import { useVault } from '@/lib/stores/vault';
+import { lerListagemMarkdown } from '@/lib/vault/leituraLote';
 import { listarHumor } from '@/lib/vault/humor';
 import { listarDiarios } from '@/lib/vault/diario';
 import { listarEventos } from '@/lib/vault/eventos';
@@ -542,6 +543,14 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
         // audio-, video- via FAB) para que o agregador conte alem das
         // embutidas em diario.midia[] e evento.midia[]. Antes, fotos
         // standalone via FAB nao apareciam no Recap.
+        //
+        // R-AUDIT-VAULT-PERF (achado 12): lista markdown/ UMA vez e
+        // distribui as URIs aos 7 listar* que leem markdown/, no lugar
+        // de cada um re-listar a pasta. listarTreinos le 'treinos/' por
+        // dentro e fica FORA da listagem unica -> o fan-out cai de 8
+        // listagens para 2 (1 de markdown/ + 1 de treinos/). As leituras
+        // seguem paralelas; agregarRecap (puro) nao muda.
+        const listagem = await lerListagemMarkdown(vaultRoot);
         const [
           humor,
           diarios,
@@ -552,14 +561,14 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
           tarefas,
           midiasStandalone,
         ] = await Promise.all([
-          listarHumor(vaultRoot),
-          listarDiarios(vaultRoot),
-          listarEventos(vaultRoot),
-          listarMarcos(vaultRoot),
-          listarContadores(vaultRoot),
+          listarHumor(vaultRoot, { listagem }),
+          listarDiarios(vaultRoot, { listagem }),
+          listarEventos(vaultRoot, { listagem }),
+          listarMarcos(vaultRoot, {}, { listagem }),
+          listarContadores(vaultRoot, { listagem }),
           listarTreinos(vaultRoot),
-          listarTarefas(vaultRoot),
-          listarMidiasStandalone(vaultRoot),
+          listarTarefas(vaultRoot, { listagem }),
+          listarMidiasStandalone(vaultRoot, { listagem }),
         ]);
         if (cancelado) return;
         const agregado = agregarRecap({

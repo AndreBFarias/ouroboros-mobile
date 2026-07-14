@@ -13,7 +13,8 @@ import {
   MARKDOWN_FOLDER,
   matchesFeaturePrefix,
 } from '@/lib/vault/paths';
-import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { listVaultFolder } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { MarcoSchema, type Marco } from '@/lib/schemas/marco';
@@ -28,25 +29,24 @@ function joinUri(root: string, rel: string): string {
   return `${trimmedRoot}/${rel}`;
 }
 
+// R-AUDIT-VAULT-PERF: `opts.listagem` (aditivo/retrocompativel) reusa a
+// listagem unica de markdown/ do ciclo; leitura serial trocada por
+// readVaultFiles (lote). Filtro por autor e ordenacao inalterados.
 export async function listarMarcos(
   vaultRoot: string,
-  filtros: ListarMarcosFiltros = {}
+  filtros: ListarMarcosFiltros = {},
+  opts?: { listagem?: string[] }
 ): Promise<Marco[]> {
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folderUri, '.md');
+  const todos =
+    opts?.listagem ??
+    (await listVaultFolder(joinUri(vaultRoot, MARKDOWN_FOLDER), '.md'));
   const arquivos = todos.filter(
     (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'marco-')
   );
 
-  const lidos: Marco[] = [];
-  for (const arquivoUri of arquivos) {
-    try {
-      const result = await readVaultFile(arquivoUri, MarcoSchema);
-      if (result) lidos.push(result.meta);
-    } catch {
-      // Ignora arquivos malformados.
-    }
-  }
+  const lidos: Marco[] = (await readVaultFiles(arquivos, MarcoSchema)).map(
+    (r) => r.parsed.meta
+  );
 
   let filtrados = lidos;
   if (filtros.autor) {
