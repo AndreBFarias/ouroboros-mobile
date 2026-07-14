@@ -14,7 +14,8 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { treinosPath } from '@/lib/vault/paths';
-import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { listVaultFolder } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import {
@@ -40,6 +41,13 @@ function joinUri(root: string, rel: string): string {
 
 // Lista todas as sessoes de treino do Vault aplicando filtros
 // opcionais. Pasta inexistente => [] silenciosamente.
+//
+// R-AUDIT-VAULT-PERF: treinos vivem em 'treinos/' (nao markdown/), entao
+// esta listagem NAO entra na listagem unica de markdown/ do ciclo (o
+// Recap colapsa 8 -> 2: 1 de markdown/ + esta de treinos/). Aplicamos so
+// a leitura em lote (serial -> readVaultFiles). Os drafts sao pre-
+// filtrados ANTES de ler (o loop antigo pulava com `continue` dentro do
+// for; pre-filtrar le exatamente o mesmo conjunto).
 export async function listarTreinos(
   vaultRoot: string,
   filtros: ListarTreinosFiltros = {}
@@ -48,24 +56,20 @@ export async function listarTreinos(
   // Migracao para layout-por-tipo H2 fica para sprint dedicada.
   const folderUri = joinUri(vaultRoot, 'treinos');
   const arquivosBrutos = await listVaultFolder(folderUri, '.md');
-  const arquivos = arquivosBrutos.filter((u) => !ehSyncConflict(u));
-
-  const lidos: TreinoSessao[] = [];
-  for (const arquivoUri of arquivos) {
+  const arquivos = arquivosBrutos.filter((u) => {
+    if (ehSyncConflict(u)) return false;
     // Pula drafts (treinos/draft/...). Drafts da M13 são migrados em
     // boot por migrarDraftsParaTreinoSessao; depois disso a pasta de
     // drafts fica vazia. Mesmo assim filtramos defensivamente para
     // não parsear estrutura antiga durante a janela de migracao.
-    const decoded = decodeURIComponent(arquivoUri);
-    if (decoded.includes('/treinos/draft/')) continue;
+    const decoded = decodeURIComponent(u);
+    if (decoded.includes('/treinos/draft/')) return false;
+    return true;
+  });
 
-    try {
-      const result = await readVaultFile(arquivoUri, TreinoSessaoSchema);
-      if (result) lidos.push(result.meta);
-    } catch {
-      // Arquivo invalido; ignora silenciosamente.
-    }
-  }
+  const lidos: TreinoSessao[] = (
+    await readVaultFiles(arquivos, TreinoSessaoSchema)
+  ).map((r) => r.parsed.meta);
 
   let filtradas = lidos;
   if (filtros.autor) {

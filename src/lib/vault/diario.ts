@@ -10,7 +10,8 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
-import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { listVaultFolder } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import {
   DiarioEmocionalSchema,
@@ -32,27 +33,27 @@ function joinUri(root: string, rel: string): string {
 // rodar normalmente -- listVaultFolder ja desvia para mock store.
 // Mobile real: vaultRoot e 'file://' ou 'content://', nao bate em
 // 'web://', logo branch nunca disparava em mobile.
+//
+// R-AUDIT-VAULT-PERF: `opts.listagem` (aditivo/retrocompativel) reusa a
+// listagem unica de markdown/ do ciclo; leitura serial trocada por
+// readVaultFiles (lote). Saida/ordenacao inalteradas.
 export async function listarDiarios(
-  vaultRoot: string
+  vaultRoot: string,
+  opts?: { listagem?: string[] }
 ): Promise<DiarioEmocionalMeta[]> {
   if (!vaultRoot) {
     return [];
   }
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folderUri, '.md');
+  const todos =
+    opts?.listagem ??
+    (await listVaultFolder(joinUri(vaultRoot, MARKDOWN_FOLDER), '.md'));
   const arquivos = todos.filter(
     (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'diario-')
   );
 
-  const lidos: DiarioEmocionalMeta[] = [];
-  for (const arquivoUri of arquivos) {
-    try {
-      const result = await readVaultFile(arquivoUri, DiarioEmocionalSchema);
-      if (result) lidos.push(result.meta);
-    } catch {
-      // Ignora arquivos malformados.
-    }
-  }
+  const lidos = (await readVaultFiles(arquivos, DiarioEmocionalSchema)).map(
+    (r) => r.parsed.meta
+  );
 
   lidos.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
   return lidos;

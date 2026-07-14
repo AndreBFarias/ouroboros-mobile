@@ -38,6 +38,7 @@ import {
   matchesFeaturePrefix,
 } from '@/lib/vault/paths';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
@@ -81,29 +82,28 @@ function uriParaRelativo(uri: string, root: string): string {
 // Ordenacao final: pendentes (mais recentes primeiro por data),
 // depois feitas (mais recentes primeiro por feito_em). Caller separa
 // em grupos visuais.
+//
+// R-AUDIT-VAULT-PERF: `opts.listagem` (aditivo/retrocompativel) reusa a
+// listagem unica de markdown/ do ciclo; leitura serial trocada por
+// readVaultFiles (lote). O `rel` continua derivado da URI de origem
+// (agora vinda de readVaultFiles). Saida/ordenacao inalteradas.
 export async function listarTarefas(
-  vaultRoot: string
+  vaultRoot: string,
+  opts?: { listagem?: string[] }
 ): Promise<TarefaListada[]> {
-  const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folderUri, '.md');
+  const todos =
+    opts?.listagem ??
+    (await listVaultFolder(vaultUriJoin(vaultRoot, MARKDOWN_FOLDER), '.md'));
   const arquivos = todos.filter(
     (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'tarefa-')
   );
 
-  const lidos: TarefaListada[] = [];
-  for (const arquivoUri of arquivos) {
-    try {
-      const result = await readVaultFile(arquivoUri, TarefaSchema);
-      if (result) {
-        lidos.push({
-          meta: result.meta,
-          rel: uriParaRelativo(arquivoUri, vaultRoot),
-        });
-      }
-    } catch {
-      // Ignora arquivos malformados.
-    }
-  }
+  const lidos: TarefaListada[] = (
+    await readVaultFiles(arquivos, TarefaSchema)
+  ).map((r) => ({
+    meta: r.parsed.meta,
+    rel: uriParaRelativo(r.uri, vaultRoot),
+  }));
 
   // Pendentes primeiro (asc por data inverso), depois feitas (asc por
   // feito_em inverso). 'a < b' coercia string ISO para comparacao

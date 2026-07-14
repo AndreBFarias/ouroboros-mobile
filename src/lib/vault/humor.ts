@@ -9,7 +9,8 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
-import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
+import { listVaultFolder } from '@/lib/vault/reader';
+import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { HumorSchema, type HumorMeta } from '@/lib/schemas/humor';
 
@@ -26,25 +27,28 @@ function joinUri(root: string, rel: string): string {
 // V4.0.1 (INFRA-VAULT-MOCK-CONVERGENCIA, 2026-05-08): early return
 // para 'web://...' removido. Reader em web __DEV__ delega ao
 // useVaultMock (V4.0).
-export async function listarHumor(vaultRoot: string): Promise<HumorMeta[]> {
+//
+// R-AUDIT-VAULT-PERF: `opts.listagem` (aditivo/retrocompativel) injeta a
+// listagem de markdown/ ja lida uma vez pelo ciclo (useRecap), pulando o
+// listVaultFolder interno; leitura serial trocada por readVaultFiles
+// (lote). Saida/ordenacao inalteradas.
+export async function listarHumor(
+  vaultRoot: string,
+  opts?: { listagem?: string[] }
+): Promise<HumorMeta[]> {
   if (!vaultRoot) {
     return [];
   }
-  const folderUri = joinUri(vaultRoot, MARKDOWN_FOLDER);
-  const todos = await listVaultFolder(folderUri, '.md');
+  const todos =
+    opts?.listagem ??
+    (await listVaultFolder(joinUri(vaultRoot, MARKDOWN_FOLDER), '.md'));
   const arquivos = todos.filter(
     (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'humor-')
   );
 
-  const lidos: HumorMeta[] = [];
-  for (const arquivoUri of arquivos) {
-    try {
-      const result = await readVaultFile(arquivoUri, HumorSchema);
-      if (result) lidos.push(result.meta);
-    } catch {
-      // Ignora arquivos malformados.
-    }
-  }
+  const lidos = (await readVaultFiles(arquivos, HumorSchema)).map(
+    (r) => r.parsed.meta
+  );
 
   lidos.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
   return lidos;
