@@ -225,7 +225,14 @@ jobs:
           else
             echo "[info] release $REF_NAME nao existe — criando como draft"
             # R-OPS-1 (2026-05-17): notas curadas extraidas do CHANGELOG.
-            ./scripts/extract-changelog-section.sh CHANGELOG.md > /tmp/release-notes.md
+            # 2026-07-14: CHANGELOG.md foi removido do publico no scrub — o
+            # step passa a tolerar a ausencia (as notas viram so' o historico
+            # de commits abaixo). Sem isto o release falhava mesmo com o APK ok.
+            if [ -f CHANGELOG.md ]; then
+              ./scripts/extract-changelog-section.sh CHANGELOG.md > /tmp/release-notes.md
+            else
+              echo "# $REF_NAME" > /tmp/release-notes.md
+            fi
             # R-OPS-5 (2026-05-17): notas auto-geradas a partir dos commits
             # desde a tag anterior, anexadas abaixo das curadas. O checkout
             # com fetch-depth=1 nao tem historico — unshallow primeiro.
