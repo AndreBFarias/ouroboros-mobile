@@ -75,6 +75,11 @@ export const EstadoSettingsSchema = z.object({
     // entregue (settings v2 ja persistido em devices reais). Quando
     // ausente, a tela trata como default true ao reler do Vault.
     recapAudioAnexadoAutoplay: z.boolean().optional(),
+    // R-AUDIT-A11Y-MOVIMENTO (2026-07-13): reduce-motion app-wide.
+    // Optional para tolerar arquivos espelhados antes desta sprint
+    // (settings ja persistido em devices reais). Quando ausente, cai no
+    // default false ao reler do Vault.
+    reduzirMovimento: z.boolean().optional(),
   }),
   privacidade: z.object({
     biometriaAbrir: z.boolean(),

@@ -27,6 +27,8 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
+// R-AUDIT-A11Y-MOVIMENTO (2026-07-13): fonte unica "posso animar?".
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 
 export type KenBurnsPreset =
   | 'zoom-in-top-left'
@@ -73,13 +75,19 @@ export function KenBurns({
 }: KenBurnsProps) {
   const preset = useMemo(() => presetParaSlide(slideId), [slideId]);
   const progress = useSharedValue(0);
+  // R-AUDIT-A11Y-MOVIMENTO: com reduce-motion (sistema OU toggle), o
+  // Ken Burns vira estatico. Os hooks de Reanimated seguem declarados
+  // (regra dos hooks) -- so o effect nao arma a animacao e o estilo
+  // aplicado passa a ser o estatico (scale 1).
+  const reduzir = useReduceMotion();
 
   useEffect(() => {
     // Reseta para 0 e anima ate 1 em `duracao` ms quando slideId muda
     // ou monta. Easing linear (constante) para o efeito ficar
-    // imperceptivel/suave, sem aceleracao chamativa.
+    // imperceptivel/suave, sem aceleracao chamativa. Com reduce-motion
+    // NAO arma: progress fica em 0 (e o estilo aplicado e' o estatico).
     progress.value = 0;
-    if (!pausado) {
+    if (!pausado && !reduzir) {
       progress.value = withTiming(1, {
         duration: duracao,
         easing: Easing.linear,
@@ -88,7 +96,7 @@ export function KenBurns({
     return () => {
       cancelAnimation(progress);
     };
-  }, [slideId, duracao, pausado, progress]);
+  }, [slideId, duracao, pausado, reduzir, progress]);
 
   // Quando pausado vira true, o cleanup cancela a animacao (para no
   // valor corrente). Quando volta a false, o effect re-roda e RESETA
@@ -126,8 +134,17 @@ export function KenBurns({
 
   return (
     <Animated.View
-      style={[styles.container, animatedStyle, style]}
-      accessibilityLabel="ken burns container"
+      // R-AUDIT-A11Y-MOVIMENTO: com reduce-motion aplica o estilo
+      // estatico (scale 1) em vez do animado -- sem zoom/pan.
+      style={[styles.container, reduzir ? styles.estatico : animatedStyle, style]}
+      // R-AUDIT-A11Y-MOVIMENTO (achado 24): remove o jargao ingles
+      // "ken burns container" que vazava no TalkBack. Este container so
+      // envolve a tinta decorativa do slide (titulo/numero/frase sao
+      // renderizados fora, no overlay), entao esconder seus descendentes
+      // do leitor de tela nao esconde texto util. Mesmo par usado em
+      // ItemTarefa.tsx e CheckboxTarefaInline.tsx.
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
     >
       {children}
     </Animated.View>
@@ -148,5 +165,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     overflow: 'hidden',
+  },
+  // R-AUDIT-A11Y-MOVIMENTO: estilo estatico aplicado sob reduce-motion
+  // (sem zoom nem pan -- foto de fundo em repouso).
+  estatico: {
+    transform: [{ scale: 1 }],
   },
 });

@@ -17,7 +17,20 @@ import { render } from '@testing-library/react-native';
 import * as Reanimated from 'react-native-reanimated';
 import { OuroborosLoader } from '@/components/brand/OuroborosLoader';
 
+// R-AUDIT-A11Y-MOVIMENTO (2026-07-13): mock local do hook para
+// controlar reduce-motion. Default false -> comportamento padrao
+// (todos os testes legados abaixo assumem animacao ligada).
+const mockUseReduceMotion = jest.fn();
+jest.mock('@/lib/hooks/useReduceMotion', () => ({
+  useReduceMotion: () => mockUseReduceMotion(),
+}));
+
 describe('OuroborosLoader', () => {
+  beforeEach(() => {
+    mockUseReduceMotion.mockReset();
+    mockUseReduceMotion.mockReturnValue(false);
+  });
+
   it('renderiza com label de progressbar em modo cheio', () => {
     const tree = render(<OuroborosLoader />);
     const root = tree.getByLabelText('loader ouroboros');
@@ -175,5 +188,34 @@ describe('OuroborosLoader', () => {
     });
     const sufixosUnicos = new Set(sufixosG1);
     expect(sufixosUnicos.size).toBe(3);
+  });
+
+  // R-AUDIT-A11Y-MOVIMENTO (2026-07-13): com reduce-motion o effect que
+  // arma os loops faz early-return -- nenhum withRepeat e' chamado, os
+  // aneis ficam em repouso (shared values em 0).
+  it('com reduce-motion nao arma nenhum withRepeat (loops cortados)', () => {
+    mockUseReduceMotion.mockReturnValue(true);
+    const repeatSpy = jest.spyOn(Reanimated, 'withRepeat');
+    const tree = render(<OuroborosLoader />);
+    expect(repeatSpy).not.toHaveBeenCalled();
+    tree.unmount();
+    repeatSpy.mockRestore();
+  });
+
+  it('sem reduce-motion arma os 4 loops withRepeat (comportamento padrao)', () => {
+    mockUseReduceMotion.mockReturnValue(false);
+    const repeatSpy = jest.spyOn(Reanimated, 'withRepeat');
+    const tree = render(<OuroborosLoader />);
+    expect(repeatSpy).toHaveBeenCalledTimes(4);
+    tree.unmount();
+    repeatSpy.mockRestore();
+  });
+
+  // Label legitimo do loader NAO muda com reduce-motion (achado 24 mira
+  // so o "ken burns container"; "loader ouroboros" e' rotulo valido).
+  it('mantem o label "loader ouroboros" mesmo com reduce-motion', () => {
+    mockUseReduceMotion.mockReturnValue(true);
+    const tree = render(<OuroborosLoader />);
+    expect(tree.getByLabelText('loader ouroboros')).toBeTruthy();
   });
 });

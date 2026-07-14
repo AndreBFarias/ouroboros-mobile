@@ -74,6 +74,7 @@ export default function SettingsTela() {
         <SecaoFeatures />
         <SecaoRecapMemorias />
         <SecaoBackupAutomatico />
+        <SecaoAcessibilidade />
         <SecaoPrivacidade />
         <SecaoSobre />
         {__DEV__ ? <SecaoDev /> : null}
@@ -446,6 +447,30 @@ function SecaoRecapMemorias() {
           accessibilityLabel="slider intervalo slideshow"
         />
       </View>
+    </SecaoLista>
+  );
+}
+
+// === Secao Acessibilidade (R-AUDIT-A11Y-MOVIMENTO) ===
+//
+// Reduce-motion e' app-wide (nao so' do Recap), por isso secao
+// dedicada. O toggle aqui combina por OR com o reduce-motion do
+// sistema no hook useReduceMotion -- ligar reduz; o sistema tambem
+// reduz independente deste valor (o toggle nunca desfaz o sistema).
+
+function SecaoAcessibilidade() {
+  const featureToggles = useSettings((s) => s.featureToggles);
+  const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
+
+  return (
+    <SecaoLista titulo="Acessibilidade" accessibilityLabel="secao acessibilidade">
+      <ToggleRow
+        label="Reduzir movimento"
+        subtitulo="Desliga o zoom das fotos, o avanço automático das memórias e as animações contínuas. Segue também a configuração do sistema."
+        valor={featureToggles.reduzirMovimento}
+        onChange={(v) => setFeatureToggle('reduzirMovimento', v)}
+        a11y="toggle reduzir movimento"
+      />
     </SecaoLista>
   );
 }

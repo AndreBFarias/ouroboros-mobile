@@ -58,6 +58,9 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import { colors } from '@/theme/tokens';
+// R-AUDIT-A11Y-MOVIMENTO (2026-07-13): fonte unica "posso animar?".
+// A28-safe (so useState/useEffect + bridge), seguro no boot path.
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 
 export interface OuroborosLoaderProps {
   // Tamanho do quadrado em pixels (default 320, igual ao viewBox).
@@ -120,6 +123,12 @@ export function OuroborosLoader({
   const rotacaoG2 = useSharedValue(0);
   const rotacaoG3 = useSharedValue(0);
   const offsetFlow = useSharedValue(0);
+  // R-AUDIT-A11Y-MOVIMENTO: com reduce-motion (sistema OU toggle), os
+  // aneis ficam em repouso -- os dois effects abaixo fazem early-return
+  // sem armar loops (withRepeat native + RAF web). Os useAnimatedProps
+  // seguem declarados (regra dos hooks); com as shared values em 0
+  // emitem rotacao 0 (estatico).
+  const reduzir = useReduceMotion();
 
   // M25.2: animacao via DOM em web. react-native-svg-web nao propaga
   // animatedProps de useAnimatedProps para o atributo transform de
@@ -154,6 +163,9 @@ export function OuroborosLoader({
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
+    // R-AUDIT-A11Y-MOVIMENTO: reduce-motion nao arma o RAF web; os
+    // grupos ficam sem transform (angulo 0, sem flow).
+    if (reduzir) return;
     let raf = 0;
     const tick = () => {
       // Usa timestamp absoluto Date.now() para que re-mounts do
@@ -209,9 +221,12 @@ export function OuroborosLoader({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [idG1, idG2, idG3, idFlow]);
+  }, [idG1, idG2, idG3, idFlow, reduzir]);
 
   useEffect(() => {
+    // R-AUDIT-A11Y-MOVIMENTO: reduce-motion nao arma os loops
+    // withRepeat; as shared values ficam em 0 (aneis em repouso).
+    if (reduzir) return;
     // gs-1: 90s linear infinito (sentido horario).
     rotacaoG1.value = withRepeat(
       withTiming(360, { duration: DURACAO_GS1, easing: Easing.linear }),
@@ -249,7 +264,7 @@ export function OuroborosLoader({
       cancelAnimation(rotacaoG3);
       cancelAnimation(offsetFlow);
     };
-  }, [rotacaoG1, rotacaoG2, rotacaoG3, offsetFlow]);
+  }, [rotacaoG1, rotacaoG2, rotacaoG3, offsetFlow, reduzir]);
 
   // M25.1 + A27 (2026-05-06): em web, useAnimatedProps emite
   // transform string "rotate(angle cx cy)" para o rn-svg-web

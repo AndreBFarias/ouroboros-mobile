@@ -165,6 +165,7 @@ function snapshotValido(): SnapshotSettings {
       googleCalendarSync: false,
       backupDriveAutomatico: false,
       hcAutopullBackground: false,
+      reduzirMovimento: false,
     },
     privacidade: {
       biometriaAbrir: true,
