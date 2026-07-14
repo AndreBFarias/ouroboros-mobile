@@ -14,7 +14,7 @@
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#14151a"
     },
     "ios": {
@@ -23,7 +23,7 @@
     "android": {
       "package": "com.ouroboros.mobile",
       "label": "Ouroboros",
-      "versionCode": 23,
+      "versionCode": 24,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon-foreground.png",
         "backgroundColor": "#14151a"
@@ -80,7 +80,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon-foreground.png",
+          "icon": "./assets/notification-icon.png",
           "color": "#bd93f9",
           "defaultChannel": "default",
           "sounds": [

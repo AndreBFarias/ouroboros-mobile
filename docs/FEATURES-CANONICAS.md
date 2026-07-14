@@ -70,6 +70,28 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 | Editar nomes/fotos | M15 + M29 | Settings → "Editar nomes e fotos" |
 | Adicionar segunda pessoa | M15 + M29 | Solo → duo via Settings |
 
+### 1.1 Marca — ícone, splash e logo in-app — R-BRAND-1-LOGO (2026-07-13)
+
+A serpente Ouroboros (43 contas num degradê rosa → roxo mordendo a
+própria cauda, com anel pontilhado interno e cabeça detalhada) é a marca
+canônica do produto. Um único SVG-fonte alimenta todas as superfícies,
+via [`scripts/gen-brand-assets.sh`](../../scripts/gen-brand-assets.sh)
+(rsvg-convert + ImageMagick), garantindo que o ícone do launcher, o
+splash e a logo in-app nunca divirjam.
+
+| Superfície | Asset | Detalhe |
+|---|---|---|
+| Ícone do launcher (iOS/legacy) | `assets/icon.png` (1024) | Símbolo colorido full-bleed sobre `#14151a` |
+| Adaptive icon Android | `assets/icon-foreground.png` (1024, transparente) + `backgroundColor #14151a` | Foreground com **safe-zone** (glifo a ~62% do canvas) para a máscara ~66% não cortar as contas da borda |
+| Splash | `assets/splash.png` (2048) + `resizeMode: contain` + `backgroundColor #14151a` | Lockup completo (glifo + wordmark "PROTOCOLO OUROBOROS") centralizado com respiro; bg idêntico ao adaptiveIcon (sem salto de cor no boot) |
+| Favicon web/Gauntlet | `assets/favicon.png` (48) | Só-símbolo sobre `#14151a` |
+| Ícone de notificação | `assets/notification-icon.png` (96, **monocromático branco sobre transparente**) | Asset **separado** do ícone colorido: o Android renderiza notificação como máscara monocromática tingida por `plugins.expo-notifications.color` (`#bd93f9`). Um ícone colorido viraria blob branco ilegível — regressão numa feature core (lembretes de humor/remédio) |
+| Logo in-app | [`src/components/brand/OuroborosLogo.tsx`](../../src/components/brand/OuroborosLogo.tsx) | react-native-svg (sem dep nova), glifo portado fielmente do SVG canônico (43 contas exatas + cabeça + anel + wordmark). Props `tamanho` e `mostrarTexto` |
+
+> Ícone e splash são recursos do binário nativo (resolvidos no
+> prebuild/gradle), **não** JS live: mudá-los exige **rebuild** do
+> dev-client/APK para ver no device. A logo in-app é JS (Metro live).
+
 ## 2. Capturas ativas
 
 ### 2.1 Humor Rápido — M05 (Tela 15)
