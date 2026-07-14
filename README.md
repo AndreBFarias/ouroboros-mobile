@@ -6,6 +6,20 @@ entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
 processa. Construído com Expo + React Native, sem rede de saída,
 estética premium nativa desde o dia um.
 
+## Marca
+
+<p align="center">
+  <img src="assets/brand/ouroboros-lockup-512.png" width="200" alt="Protocolo Ouroboros" />
+</p>
+
+A serpente que morde a própria cauda: 43 contas num degradê de rosa a
+roxo, o ciclo que se fecha e recomeça. O mesmo glifo canônico alimenta o
+ícone do launcher, o splash e a logo in-app
+([`src/components/brand/OuroborosLogo.tsx`](src/components/brand/OuroborosLogo.tsx)),
+todos gerados por
+[`scripts/gen-brand-assets.sh`](scripts/gen-brand-assets.sh) a partir de
+um único SVG-fonte. "Protocolo Ouroboros" é o nome do produto.
+
 ## Status
 
 Pré-1.0 em desenvolvimento. Distribuição manual: APK assinado instalado
