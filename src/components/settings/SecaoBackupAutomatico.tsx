@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Button, Toggle, useToast } from '@/components/ui';
+import { OuroborosLoading } from '@/components/brand';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { useSettings } from '@/lib/stores/settings';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -216,12 +217,41 @@ export function SecaoBackupAutomatico() {
         </View>
       ) : null}
       {ativo ? (
-        <Button
-          label={executando ? 'Fazendo backup…' : 'Fazer backup agora'}
-          variant="ghost"
-          onPress={fazerBackupAgora}
-          accessibilityLabel="fazer backup agora"
-        />
+        executando ? (
+          // R-BRAND-2-ANIMACOES (C2): operacao longa indeterminada
+          // (backup) ganha a onda continua da marca em vez de texto
+          // seco. O anel respeita reduce-motion (fica parado). O texto
+          // permanece para leitor de tela e clareza.
+          <View
+            accessibilityLabel="fazendo backup"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.sm,
+              minHeight: 44,
+              paddingHorizontal: spacing.base,
+            }}
+          >
+            <OuroborosLoading variant="sync" tamanho={22} />
+            <Text
+              style={{
+                color: colors.muted,
+                fontFamily: 'JetBrainsMono_400Regular',
+                fontSize: typography.body.size,
+                lineHeight: typography.body.size * typography.body.lineHeight,
+              }}
+            >
+              Fazendo backup…
+            </Text>
+          </View>
+        ) : (
+          <Button
+            label="Fazer backup agora"
+            variant="ghost"
+            onPress={fazerBackupAgora}
+            accessibilityLabel="fazer backup agora"
+          />
+        )
       ) : null}
       {ativo && backups.length > 0 ? (
         <View

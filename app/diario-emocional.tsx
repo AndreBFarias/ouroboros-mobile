@@ -25,7 +25,7 @@
 // frontmatter so os PessoaId validos e marcamos contexto extra no
 // corpo livre do .md como linha "Com: <quem>." legivel pelo humano.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
@@ -44,7 +44,7 @@ import {
   type BottomSheetRef,
   type ChipOption,
 } from '@/components/ui';
-import { OuroborosLoader } from '@/components/brand';
+import { OuroborosLoader, OuroborosFechamento } from '@/components/brand';
 import { EmocaoChips } from '@/components/diario/EmocaoChips';
 import { MicrofoneButton } from '@/components/diario/MicrofoneButton';
 import { TranscreverButton } from '@/components/diario/TranscreverButton';
@@ -57,6 +57,7 @@ import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
 import { useSessao } from '@/lib/stores/sessao';
 import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 import {
   DiarioEmocionalSchema,
   type DiarioEmocionalMeta,
@@ -248,6 +249,10 @@ export default function DiarioEmocional() {
     () => rascunho?.funcionou ?? false
   );
   const [salvando, setSalvando] = useState<boolean>(false);
+  // R-BRAND-2-ANIMACOES (C1): overlay de fechamento do ciclo pos-save.
+  // goBackOnce (single-back) ja evita router.back duplicado.
+  const [fechandoCiclo, setFechandoCiclo] = useState<boolean>(false);
+  const reduzir = useReduceMotion();
   // Audio anexo: M06.5 cabea path relativo aqui quando o usuario
   // grava no MicrofoneButton. Frontmatter recebe via meta.audio.
   const [audioPath, setAudioPath] = useState<string | null>(
@@ -440,8 +445,17 @@ export default function DiarioEmocional() {
       // dupla chamada de router.back() (save → close → onChange(-1)).
       // A 2a chamada falhava com "GO_BACK was not handled by any
       // navigator". Fecha o sheet (UX de close anim) + volta uma vez.
-      goBackOnce();
-      sheetRef.current?.close();
+      //
+      // R-BRAND-2-ANIMACOES (C1): com reduce-motion, fecha e volta
+      // imediato. Sem reduce-motion, monta o micro-overlay ~350ms — nao
+      // fecha o sheet aqui: o overlay cobre a tela e o
+      // OuroborosFechamento chama goBackOnce() ao fim da cascata.
+      if (reduzir) {
+        goBackOnce();
+        sheetRef.current?.close();
+      } else {
+        setFechandoCiclo(true);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
@@ -686,6 +700,24 @@ export default function DiarioEmocional() {
             textarea via MicrofoneButton; placeholder antigo removido. */}
         </BottomSheetScrollView>
       </BottomSheet>
+      {/* R-BRAND-2-ANIMACOES (C1): overlay de fechamento do ciclo. Cobre
+          a tela por ~350ms antes de navegar; o OuroborosFechamento
+          dispara o goBackOnce() ao concluir. Nao monta com
+          reduce-motion (navegacao ja foi imediata). */}
+      {fechandoCiclo ? (
+        <View
+          accessibilityLabel="fechando o ciclo"
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: colors.bgPage,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+          }}
+        >
+          <OuroborosFechamento onConcluir={goBackOnce} />
+        </View>
+      ) : null}
     </Screen>
   );
 }

@@ -14,16 +14,10 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Input, useToast } from '@/components/ui';
+import { OuroborosLoading } from '@/components/brand';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { extractYouTubeId, youtubeThumbnailUrl } from '@/lib/midia/youtubeId';
@@ -210,7 +204,14 @@ export function MidiaYoutubeTab({
           style={{ paddingVertical: spacing.md, alignItems: 'center' }}
           accessibilityLabel="carregando biblioteca youtube"
         >
-          <ActivityIndicator color={colors.red} />
+          {/* R-BRAND-2-ANIMACOES (E2): anel inline da marca no lugar do
+              ActivityIndicator generico — respeita reduce-motion (o
+              ActivityIndicator gira sempre, ignorando a preferencia). */}
+          <OuroborosLoading
+            variant="inline"
+            cor={colors.red}
+            accessibilityLabel="carregando biblioteca youtube"
+          />
         </View>
       ) : videos.length === 0 ? (
         <Text
