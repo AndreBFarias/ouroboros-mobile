@@ -66,6 +66,9 @@ import { Pause, Play, Share2, Volume2, VolumeX, X } from '@/lib/icons';
 import { useRecap, type PeriodoRange } from '@/lib/hooks/useRecap';
 import { useRecapMemorias, type Slide } from '@/lib/hooks/useRecapMemorias';
 import { useSettings } from '@/lib/stores/settings';
+// R-AUDIT-A11Y-MOVIMENTO (2026-07-13): reduce-motion desliga o
+// auto-avanco e a barra de progresso do slideshow.
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 import { OuroborosLoader } from '@/components/brand';
 // R-RECAP-6: useOptionalToast (nao useToast) para nao explodir em
 // rotas/testes que renderizam sem ToastProvider acima. Fallback
@@ -177,6 +180,11 @@ export default function RecapMemoriasTela() {
 
   const [index, setIndex] = useState(0);
   const [pausado, setPausado] = useState(false);
+  // R-AUDIT-A11Y-MOVIMENTO: reduce-motion (sistema OU toggle). Quando
+  // ativo, o slideshow nao avanca sozinho (usuario navega no toque) e a
+  // barra de progresso fica estatica -- sem movimento continuo, que e'
+  // gatilho para o publico vulneravel (autismo/TDAH/ansiedade).
+  const reduzirMovimento = useReduceMotion();
 
   // R-RECAP-9c: fonte unica da duracao de um slide (ms). Clampa 2..10s
   // (mesma faixa configuravel em settings.recap.slideshowIntervaloS).
@@ -442,8 +450,11 @@ export default function RecapMemoriasTela() {
   }, [descarregarAmbient, descarregarAudioAnexado]);
 
   // Auto-advance configuravel.
+  // R-AUDIT-A11Y-MOVIMENTO: com reduce-motion nao arma o setTimeout --
+  // sem avanco automatico; a navegacao por toque (proximo/anterior)
+  // segue funcionando.
   useEffect(() => {
-    if (loading || pausado) return;
+    if (loading || pausado || reduzirMovimento) return;
     if (index >= slides.length - 1) return;
     timerRef.current = setTimeout(() => {
       setIndex((i) => Math.min(i + 1, slides.length - 1));
@@ -451,16 +462,20 @@ export default function RecapMemoriasTela() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [index, pausado, loading, slides.length, intervaloMs]);
+  }, [index, pausado, loading, reduzirMovimento, slides.length, intervaloMs]);
 
   // R-RECAP-9c (B2): anima a barra do slide ativo. Mesmo padrao do
   // KenBurns (reset a 0, withTiming linear ate 1, cancelAnimation ao
   // desmontar/pausar). Reseta e re-anima quando o slide troca ou quando
   // pausa/retoma -- alinhado ao auto-advance, que tambem rearma o timer
   // do zero ao retomar, mantendo barra + timer + Ken Burns sincronizados.
+  // R-AUDIT-A11Y-MOVIMENTO: com reduce-motion a barra NAO corre. Sem
+  // este gate a barra continuaria 0->1 enquanto o slide fica congelado
+  // (auto-avanco desligado) -- movimento continuo, o oposto do objetivo.
+  // Com reduce-motion progressoBarra.value fica 0 (estatico).
   useEffect(() => {
     progressoBarra.value = 0;
-    if (!loading && !pausado) {
+    if (!loading && !pausado && !reduzirMovimento) {
       progressoBarra.value = withTiming(1, {
         duration: intervaloMs,
         easing: Easing.linear,
@@ -469,7 +484,7 @@ export default function RecapMemoriasTela() {
     return () => {
       cancelAnimation(progressoBarra);
     };
-  }, [index, pausado, loading, intervaloMs, progressoBarra]);
+  }, [index, pausado, loading, reduzirMovimento, intervaloMs, progressoBarra]);
 
   const proximo = () => {
     if (index < slides.length - 1) setIndex(index + 1);

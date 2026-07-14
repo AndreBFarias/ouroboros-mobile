@@ -33,6 +33,13 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       expect(s.featureToggles.widgetMostraNome).toBe(false);
     });
 
+    // R-AUDIT-A11Y-MOVIMENTO (2026-07-13): reduce-motion default OFF (o
+    // app anima por padrao; usuario ou sistema opta pela reducao).
+    it('featureToggles.reduzirMovimento default OFF', () => {
+      useSettings.getState().resetar();
+      expect(useSettings.getState().featureToggles.reduzirMovimento).toBe(false);
+    });
+
     it('privacidade default tudo off', () => {
       const s = useSettings.getState();
       expect(s.privacidade.biometriaAbrir).toBe(false);
@@ -69,6 +76,14 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       expect(useSettings.getState().featureToggles.widgetMostraNome).toBe(true);
       // toggle principal segue default true (independente)
       expect(useSettings.getState().featureToggles.widgetHomescreen).toBe(true);
+    });
+
+    // R-AUDIT-A11Y-MOVIMENTO: reusa o mutator generico (sem mutator novo).
+    it('setFeatureToggle liga e desliga reduzirMovimento', () => {
+      useSettings.getState().setFeatureToggle('reduzirMovimento', true);
+      expect(useSettings.getState().featureToggles.reduzirMovimento).toBe(true);
+      useSettings.getState().setFeatureToggle('reduzirMovimento', false);
+      expect(useSettings.getState().featureToggles.reduzirMovimento).toBe(false);
     });
 
     it('setSomVibracao geral=false desliga mestre', () => {

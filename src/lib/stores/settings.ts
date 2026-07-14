@@ -107,6 +107,14 @@ export interface SettingsState {
     // guarded; quando OFF, desregistra. Sem efeito ate o dev-client/APK ser
     // recompilado com expo-task-manager + expo-background-task (gate nativo).
     hcAutopullBackground: boolean;
+    // R-AUDIT-A11Y-MOVIMENTO (2026-07-13): reduce-motion app-wide.
+    // Quando ON, desliga o zoom das fotos (Ken Burns), o avanco
+    // automatico das Memorias e as animacoes continuas (loader). Default
+    // false. Combinado por OR com o reduce-motion do sistema no hook
+    // useReduceMotion -- o toggle SO adiciona reducao, nunca desfaz o
+    // pedido do sistema (spec §3.5). Publico vulneravel (autismo/TDAH/
+    // ansiedade) tem movimento continuo como gatilho, nao enfeite.
+    reduzirMovimento: boolean;
   };
   privacidade: {
     biometriaAbrir: boolean;
@@ -319,6 +327,12 @@ export const DEFAULT_STATE_V2: Omit<
     // instalacoes existentes e' coberta pelo spread de DEFAULT_STATE_V2 em
     // mesclarDefaults (chave nova ausente no persistedState recebe false).
     hcAutopullBackground: false,
+    // R-AUDIT-A11Y-MOVIMENTO: default OFF. O app anima por padrao; o
+    // usuario opta por reduzir em Configuracoes > Acessibilidade, ou o
+    // reduce-motion do sistema forca a reducao independente deste toggle.
+    // Migracao de instalacoes existentes coberta pelo spread de
+    // DEFAULT_STATE_V2 em mesclarDefaults (chave nova ausente recebe false).
+    reduzirMovimento: false,
   },
   privacidade: {
     biometriaAbrir: false,

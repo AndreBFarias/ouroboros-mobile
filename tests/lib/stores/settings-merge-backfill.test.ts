@@ -111,6 +111,9 @@ describe('mergeSettingsPersistido (back-fill de featureToggles - R-RECAP-9b)', (
     expect(merged.featureToggles.hcAutopullBackground).toBe(false);
     expect(merged.featureToggles.googleCalendarSync).toBe(false);
     expect(merged.featureToggles.backupDriveAutomatico).toBe(false);
+    // R-AUDIT-A11Y-MOVIMENTO: reduzirMovimento e' chave nova (ausente no
+    // persistedState antigo); back-filla com o default false, nao undefined.
+    expect(merged.featureToggles.reduzirMovimento).toBe(false);
   });
 
   it('guard: persistedState null/undefined/nao-objeto retorna o currentState intacto', () => {

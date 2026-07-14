@@ -758,6 +758,16 @@ do Recap. Rota: `/recap-memorias?de=…&ate=…`.
   calma ("Você esteve presente.", "Passaram por aqui.", "Continue.").
 - Paleta `colorsMemorias` exclusiva (gradient + dourado pálido)
   — quebra visual intencional vs cotidiano sóbrio Dracula.
+- **Reduce-motion** (R-AUDIT-A11Y-MOVIMENTO, 2026-07-13): com reduce-
+  motion ativo (toggle "Reduzir movimento" em Configurações OU
+  reduce-motion do sistema), o slideshow fica **estático** — o Ken Burns
+  não faz zoom/pan, o **auto-avanço desliga** (o usuário navega no toque)
+  e a **barra de progresso não corre** (fica em repouso, sem o movimento
+  contínuo que seria gatilho). O `accessibilityLabel` de jargão inglês
+  "ken burns container" foi trocado por
+  `importantForAccessibility="no-hide-descendants"` (o TalkBack não
+  anuncia mais o jargão; o texto útil do slide fica no overlay, fora do
+  container). Gate via hook `useReduceMotion()` — ver §11 Acessibilidade.
 
 ## 8. Calendário Visual de Conquistas — consolidado em §7 (L2)
 
@@ -1065,6 +1075,16 @@ Dois ajustes achados pelo dono usando o app no celular:
 - **Pessoa**: vault compartilhado on/off, editar nomes/fotos,
   reinicializar pasta do Vault, adicionar segunda pessoa.
 - **Opcionais**: 6 toggles default ON.
+- **Acessibilidade** (R-AUDIT-A11Y-MOVIMENTO, 2026-07-13): seção
+  dedicada com o toggle **"Reduzir movimento"** (default OFF). Quando
+  ligado, desliga o zoom das fotos (Ken Burns), o avanço automático das
+  Memórias e as animações contínuas (loader Ouroboros). É **app-wide**,
+  não só do Recap. O valor efetivo vem do hook `useReduceMotion()`, que
+  combina este toggle por **OR** com o reduce-motion do **sistema**
+  (`AccessibilityInfo.isReduceMotionEnabled` no Android; `prefers-reduced-
+  motion` na web) — o toggle só **adiciona** redução, nunca desfaz o
+  pedido do sistema. Requisito de acessibilidade para o público
+  autismo/TDAH/ansiedade (movimento contínuo é gatilho), não enfeite.
 - **Privacidade**: biometria ao abrir / ocultar transcrições /
   `widgetMostraNome` (off por default).
 - **Mídia**: cap por registro (default 4), permitir áudio.
