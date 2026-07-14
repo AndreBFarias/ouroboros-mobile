@@ -92,6 +92,28 @@ splash e a logo in-app nunca divirjam.
 > prebuild/gradle), **não** JS live: mudá-los exige **rebuild** do
 > dev-client/APK para ver no device. A logo in-app é JS (Metro live).
 
+### 1.2 Marca — loaders animados (fechamento, onda, anel inline) — R-BRAND-2-ANIMACOES (2026-07-13)
+
+Tratamentos de loading derivados do glifo Ouroboros, em JS puro
+(Reanimated 4 + react-native-svg, zero dependência nativa nova). Peças
+**irmãs** do [`OuroborosLoader`](../../src/components/brand/OuroborosLoader.tsx)
+(o loader de boot com 14 consumidores, intocado). **Todas honram
+reduce-motion** — com o sistema OU o toggle de Configurações pedindo
+redução, o movimento não arma (anel parado / navegação imediata),
+cumprindo o princípio 01 da marca ("cobra parada respirando já é
+presença") para o público autista/ansioso.
+
+| Conceito | Componente | Onde | Comportamento |
+|---|---|---|---|
+| C1 — Fechamento do ciclo | [`OuroborosFechamento.tsx`](../../src/components/brand/OuroborosFechamento.tsx) | Save de humor ([`app/humor-rapido.tsx`](../../app/humor-rapido.tsx)) e diário ([`app/diario-emocional.tsx`](../../app/diario-emocional.tsx)) | Micro-overlay de ~350ms antes de voltar: o anel fecha na cauda e o wordmark surge. Momento de marca de conclusão calma (não gamificação). Reduce-motion: sem cascata, volta imediato |
+| C2 — Digestão / onda contínua | [`OuroborosLoading.tsx`](../../src/components/brand/OuroborosLoading.tsx) `variant="sync"` | Botão "Fazer backup agora" ([`src/components/settings/SecaoBackupAutomatico.tsx`](../../src/components/settings/SecaoBackupAutomatico.tsx)) | Anel com degradê rosa→roxo girando 1 rev/2.4s durante a operação longa indeterminada. Reduce-motion: anel parado |
+| E2 — Anel inline (só-anel) | [`OuroborosLoading.tsx`](../../src/components/brand/OuroborosLoading.tsx) `variant="inline"` | Loading inline das abas de mídia (YouTube/Spotify) | Anel minimal (sem cobra/cabeça/wordmark) no lugar do `ActivityIndicator` genérico — que ignorava reduce-motion. Cor por contexto. Reduce-motion: anel parado |
+
+> `OuroborosLoading` tem a prop `variant` **extensível por contrato**: a
+> sprint R-BRAND-3-ESTADOS-VIVOS estende com `variant` de progresso (D1),
+> erro (C3) e ritual (F2) sem tocar o corpo — cada variante é uma entrada
+> no mapa `VARIANTES`.
+
 ## 2. Capturas ativas
 
 ### 2.1 Humor Rápido — M05 (Tela 15)

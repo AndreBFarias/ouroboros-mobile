@@ -17,9 +17,10 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Button, Input, useToast } from '@/components/ui';
+import { OuroborosLoading } from '@/components/brand';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { extractSpotifyTrackId } from '@/lib/midia/spotifyId';
@@ -145,7 +146,15 @@ export function MidiaSpotifyTab({
               style={{ paddingVertical: spacing.base, alignItems: 'center' }}
               accessibilityLabel="carregando biblioteca spotify"
             >
-              <ActivityIndicator color={colors.green} />
+              {/* R-BRAND-2-ANIMACOES (E2): anel inline da marca no lugar
+                  do ActivityIndicator generico — respeita reduce-motion
+                  (o ActivityIndicator gira sempre, ignorando a
+                  preferencia). */}
+              <OuroborosLoading
+                variant="inline"
+                cor={colors.green}
+                accessibilityLabel="carregando biblioteca spotify"
+              />
             </View>
           ) : faixas.length === 0 ? (
             <Text

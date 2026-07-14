@@ -21,7 +21,7 @@
 // timeout, toast 'Não foi possível salvar: timeout salvando' libera
 // o usuario sem loader infinito.
 import { useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import {
@@ -36,9 +36,10 @@ import {
   useToast,
   type BottomSheetRef,
 } from '@/components/ui';
-import { OuroborosLoader } from '@/components/brand';
+import { OuroborosLoader, OuroborosFechamento } from '@/components/brand';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { useSessao } from '@/lib/stores/sessao';
@@ -88,6 +89,12 @@ export default function HumorRapido() {
   const [tags, setTags] = useState<string[]>(() => rascunho?.tags ?? []);
   const [frase, setFrase] = useState<string>(() => rascunho?.frase ?? '');
   const [salvando, setSalvando] = useState<boolean>(false);
+  // R-BRAND-2-ANIMACOES (C1): overlay de fechamento do ciclo pos-save.
+  const [fechandoCiclo, setFechandoCiclo] = useState<boolean>(false);
+  // Guarda para o onChange do sheet nao duplicar o router.back() durante
+  // o overlay de fechamento (o OuroborosFechamento e' quem navega).
+  const fechandoRef = useRef(false);
+  const reduzir = useReduceMotion();
 
   // M24: snapshot do rascunho atual; debounced via useAutoSaveRascunho.
   // Memoizado para nao redisparar o effect a cada render.
@@ -165,12 +172,21 @@ export default function HumorRapido() {
       // M24: limpa o rascunho pos-save para nao restaurar dados ja
       // persistidos no Vault no proximo boot.
       useSessao.getState().limparRascunho('humorRapido');
-      sheetRef.current?.close();
       toast.show('Humor salvo.', 'success');
       // Contextual: respeita Settings.somVibracao.humor. Registro de
       // humor é a interação central da Tela 16, tem toggle dedicado.
       await haptics.humor();
-      router.back();
+      // R-BRAND-2-ANIMACOES (C1): fechamento do ciclo. Com reduce-motion,
+      // fecha e volta imediato (sem cascata). Sem reduce-motion, monta o
+      // micro-overlay ~350ms — nao fecha o sheet aqui: o overlay cobre a
+      // tela e o OuroborosFechamento chama router.back() ao fim.
+      if (reduzir) {
+        sheetRef.current?.close();
+        router.back();
+      } else {
+        fechandoRef.current = true;
+        setFechandoCiclo(true);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.show(`Não foi possível salvar: ${msg}`, 'error');
@@ -196,9 +212,11 @@ export default function HumorRapido() {
         index={0}
         enablePanDownToClose
         onChange={(idx) => {
-          if (idx === -1) {
+          if (idx === -1 && !fechandoRef.current) {
             // Sheet foi fechado (gesto ou imperativo). Volta para a
             // tela anterior. router.back e idempotente quando já saiu.
+            // Durante o fechamento do ciclo (C1) quem navega e' o
+            // OuroborosFechamento — nao duplicar aqui.
             router.back();
           }
         }}
@@ -316,6 +334,24 @@ export default function HumorRapido() {
           />
         </BottomSheetScrollView>
       </BottomSheet>
+      {/* R-BRAND-2-ANIMACOES (C1): overlay de fechamento do ciclo. Cobre
+          a tela por ~350ms antes de navegar; o OuroborosFechamento
+          dispara o router.back() ao concluir. Nao monta com
+          reduce-motion (navegacao ja foi imediata). */}
+      {fechandoCiclo ? (
+        <View
+          accessibilityLabel="fechando o ciclo"
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: colors.bgPage,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+          }}
+        >
+          <OuroborosFechamento onConcluir={() => router.back()} />
+        </View>
+      ) : null}
     </Screen>
   );
 }
