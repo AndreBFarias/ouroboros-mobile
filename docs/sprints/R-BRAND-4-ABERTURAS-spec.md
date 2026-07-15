@@ -189,9 +189,13 @@ indeterminado do Frame5. Dois candidatos:
   final ate `iniciando` virar false). Semanticamente mais fraco ("vault nascendo"
   no encerramento em vez da abertura).
 
-**Recomendacao do planejador: candidato A.** O executor confirma com o dono no
-0.3 antes de codar. Se B for escolhido, o escopo em `onboarding.tsx` muda de
-"novo mount de abertura" para "swap do Frame5" e a seção 3 se ajusta.
+**Recomendacao do planejador: candidato A.**
+
+> **DECISÃO TRAVADA (dono, 2026-07-14): candidato A aceito.** A2 é o
+> reveal full-screen de abertura do onboarding; o spinner do Frame5
+> (linha 1034) permanece intocado nesta sprint e migra na R-BRAND-9.
+> O executor NÃO precisa reconfirmar no 0.3 — o candidato B abaixo fica
+> registrado só como alternativa histórica.
 
 > Nota de UX a validar no device (candidato A): em primeiro uso o usuário ve
 > A1 (boot) e logo em seguida A2 (abertura do onboarding) em sequencia. E
@@ -309,8 +313,9 @@ fica literal; so a escala temporal muda). Proposta de constantes escaladas
 
 **Plano:** portar a coreografia com as constantes nomeadas e um único
 multiplicador `TEMPO` no topo de cada conceito; entregar com `TEMPO = 0,5`
-(fecha §4). O tempo final e travado no checkpoint de device (o "feel" da
-cascata). Se o dono preferir o tempo literal do demo (~2,5s / ~2,9s), basta
+(fecha §4). **DECISÃO TRAVADA (dono, 2026-07-14): escala 0,5× aceita** —
+o ajuste fino do valor final continua no checkpoint de device (o "feel"
+da cascata). Se o feel pedir o tempo literal do demo (~2,5s / ~2,9s), basta
 `TEMPO = 1` — as duas variantes ficam documentadas. `onConcluir` dispara no
 tempo final REAL (a soma acima × TEMPO), nunca num numero cravado a mao.
 

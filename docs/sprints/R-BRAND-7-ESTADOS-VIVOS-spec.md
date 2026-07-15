@@ -324,10 +324,9 @@ Candidatos investigados que existem: cabeçalho do Recap (semântica de tempo/
 período), tela Sobre/rodapé de settings. **Entregável desta sprint**: o
 componente `B2RelogioSilencioso.tsx` completo + registrado no
 `app/_dev/showcase.tsx` (superfície de validação determinística) + montado em
-UM host de produção discreto a confirmar no checkpoint (recomendação default:
-cabeçalho do Recap). Se o dono preferir só showcase nesta sprint e o host de
-produção junto do widget em R-BRAND-10, registrar como sub-decisão — não
-inflar o escopo às cegas.
+UM host de produção discreto. **DECISÃO TRAVADA (dono, 2026-07-14): host de
+produção = cabeçalho do Recap** (default recomendado aceito). O executor não
+precisa reconfirmar no checkpoint.
 
 **Estado inspecionável (para o E2E de ângulo)**: expor um probe dev-only
 `window.__obBrandProbe()` (guardado por `__DEV__ && Platform.OS === 'web'`,
