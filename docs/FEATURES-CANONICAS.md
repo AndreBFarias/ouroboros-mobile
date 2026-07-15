@@ -109,10 +109,13 @@ presença") para o público autista/ansioso.
 | C2 — Digestão / onda contínua | [`OuroborosLoading.tsx`](../../src/components/brand/OuroborosLoading.tsx) `variant="sync"` | Botão "Fazer backup agora" ([`src/components/settings/SecaoBackupAutomatico.tsx`](../../src/components/settings/SecaoBackupAutomatico.tsx)) | Anel com degradê rosa→roxo girando 1 rev/2.4s durante a operação longa indeterminada. Reduce-motion: anel parado |
 | E2 — Anel inline (só-anel) | [`OuroborosLoading.tsx`](../../src/components/brand/OuroborosLoading.tsx) `variant="inline"` | Loading inline das abas de mídia (YouTube/Spotify) | Anel minimal (sem cobra/cabeça/wordmark) no lugar do `ActivityIndicator` genérico — que ignorava reduce-motion. Cor por contexto. Reduce-motion: anel parado |
 
-> `OuroborosLoading` tem a prop `variant` **extensível por contrato**: a
-> sprint R-BRAND-3-ESTADOS-VIVOS estende com `variant` de progresso (D1),
-> erro (C3) e ritual (F2) sem tocar o corpo — cada variante é uma entrada
-> no mapa `VARIANTES`.
+> **Nota de rota (2026-07-14):** o contrato de `variant` extensível do
+> `OuroborosLoading` foi **superado** pela onda R-BRAND-SYSTEM
+> ([`docs/sprints/_ONDA-R-BRAND-SYSTEM.md`](sprints/_ONDA-R-BRAND-SYSTEM.md)):
+> os 17 conceitos da marca passam a viver sobre o glifo canônico animável
+> (`R-BRAND-3-GLIFO`), com D1 na `R-BRAND-6`, C3 na `R-BRAND-5` e F2 na
+> `R-BRAND-8`. Os componentes desta tabela (geração v1) serão substituídos
+> pelos conceitos fiéis e aposentados na `R-BRAND-9-MIGRACAO`.
 
 ## 2. Capturas ativas
 
