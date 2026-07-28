@@ -112,17 +112,3 @@ STATE.md
 # Contem mesmo client_id que ja esta em env.json; nao usado em Android.
 client_*.plist
 Checkpoint.md
-
-# --- anti-IA (anonimato local) ---
-agente.md
-AGENTS.md
-agente.md
-COPILOT.md
-HANDOFF.md
-.cursorrules
-.windsurfrules
-.agente/
-.cursor/
-.agente*
-.continue/
-.github/copilot-instructions.md
