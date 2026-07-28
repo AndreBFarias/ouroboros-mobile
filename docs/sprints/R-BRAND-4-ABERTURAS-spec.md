@@ -1,11 +1,18 @@
 # Sprint R-BRAND-4-ABERTURAS — as duas aberturas da marca (A1 nascer da cobra no boot · A2 semente que expande no onboarding)
 
 ```
-DEPENDE:    (hard, BLOQUEANTE — verificado 2026-07-14)
-            - R-BRAND-3-GLIFO mergeada. Hoje NÃO existe:
+DEPENDE:    (hard, BLOQUEANTE — atualizado 2026-07-28 por AUDIT-P0-2)
+            - R-BRAND-3-GLIFO: base do glifo MERGEADA em 2026-07-28.
               `src/components/brand/glifo/` e `src/components/brand/conceitos/`
-              ausentes no repo (ls confirmou; grep OuroborosGlifo em src/ e app/
-              = 0 ocorrencias). A1/A2 sao "arquivos finos por conceito" que
+              existem no repo desde então (a redação anterior, de 2026-07-14,
+              dizia "hoje NÃO existe" e ficou desatualizada porque o código
+              estava pronto no disco mas fora do controle de versão).
+            - **Bloqueio remanescente e real:** o gate de performance C2
+              (mediana >=45fps no device, via `app/_dev/bench-c2.tsx`) ainda
+              NÃO foi medido — pendente do dono, nos termos da seção 1.3 de
+              `docs/FEATURES-CANONICAS.md`. Não despachar executor antes
+              dessa medição: se a mediana ficar abaixo de 45fps, a onda pausa
+              e um spec de pivô é redigido antes. A1/A2 sao "arquivos finos por conceito" que
               DIRIGEM o glifo (shared values por conta/rosto/anel/wordmark) e
               CONSOMEM `ordenarDaCabeca` — não re-portam o SVG nem o fallback
               web. Sem o glifo base + driver + `ordenarDaCabeca` esta sprint
@@ -27,7 +34,8 @@ ESTIMATIVA: 1 sprint unica, 2 conceitos irmaos (A1, A2) que compartilham a
             rosto em fase + wordmark ao final), diferindo so no gesto de
             entrada (cascata cabeca->cauda vs voo do centro). Somam 2 arquivos
             novos + 2 pontos de montagem. Abaixo do limiar de split (licao 10).
-STATUS:     [todo] (2026-07-14) — BLOQUEADA por R-BRAND-3-GLIFO ate merge.
+STATUS:     [todo] — base do glifo mergeada em 2026-07-28 (AUDIT-P0-2).
+            BLOQUEADA apenas pelo gate de performance C2, ainda não medido.
 ORIGEM:     Onda R-BRAND-SYSTEM, §4 (mapa conceito->destino) e §5 linha 1
             (`R-BRAND-4-ABERTURAS | A1 boot + A2 onboarding | Gauntlet +
             device`). Design doc aprovado pelo dono 2026-07-14 em

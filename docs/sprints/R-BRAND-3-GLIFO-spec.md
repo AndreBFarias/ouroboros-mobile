@@ -15,7 +15,12 @@ ESTIMATIVA: ~1,5 a 2 dias. Sprint única (não sub-dividida): apesar de tocar
             fundação + 3 conceitos + benchmark, é uma única área arquitetural
             (o sistema de glifo novo) e o design doc §5 a define como uma
             entrega atômica cujo gate justifica o custo de 1 sprint isolada.
-STATUS:     [todo] (2026-07-14)
+STATUS:     [ok] código mergeado em 2026-07-28 por AUDIT-P0-2 (glifo/,
+            conceitos/, bench-c2 e os dois casos de teste). A sprint estava
+            pronta no disco e fora do controle de versão desde 2026-07-14.
+            RESSALVA: o gate de performance C2 (mediana >=45fps no device)
+            NÃO foi medido — segue pendente do dono e continua bloqueando
+            R-BRAND-4 e R-BRAND-7.
 ORIGEM:     design doc _ONDA-R-BRAND-SYSTEM.md §3 (arquitetura) e §5 (linha 0
             da tabela de ondas). Decisões travadas pelo dono em 2026-07-14
             (motor Reanimated 4 puro; glifo base + 1 arquivo por conceito;

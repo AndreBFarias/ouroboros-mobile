@@ -5,11 +5,17 @@ ONDA:       R-BRAND-SYSTEM (docs/sprints/_ONDA-R-BRAND-SYSTEM.md), sprint 4 de 7
             Mapa conceito -> destino em §4 daquele doc; esta sprint entrega a
             faixa "B · Estados Vivos" (B1 respiração ambiente, B2 relógio
             silencioso in-app, B3 dupla presença).
-DEPENDE:    (hard, bloqueante para TODAS as peças)
-            - R-BRAND-3-GLIFO mergeada. Hoje NÃO existe: o diretório
-              src/components/brand/glifo/ está ausente (confirmado por
-              `ls src/components/brand/glifo/` falha) e
-              src/components/brand/conceitos/ também não existe. Esta sprint
+DEPENDE:    (hard, bloqueante para TODAS as peças — atualizado 2026-07-28
+            por AUDIT-P0-2)
+            - R-BRAND-3-GLIFO: base do glifo MERGEADA em 2026-07-28.
+              `src/components/brand/glifo/` e `src/components/brand/conceitos/`
+              existem no repo desde então (a redação anterior dizia
+              "hoje NÃO existe" e ficou desatualizada porque o código estava
+              pronto no disco mas fora do controle de versão).
+            - **Bloqueio remanescente e real:** o gate de performance C2
+              (mediana >=45fps no device, via `app/_dev/bench-c2.tsx`) ainda
+              NÃO foi medido — pendente do dono, nos termos da seção 1.3 de
+              `docs/FEATURES-CANONICAS.md`. Esta sprint
               consome a base do glifo daquela sprint: geometria.ts (43 contas
               [cx, cy, cor] + paths do rosto + anel + wordmark + constantes de
               centro), ordenarDaCabeca.ts (port do orderFromHead) e o driver
@@ -26,8 +32,9 @@ BLOQUEIA:   nada estrutural. É folha na árvore da onda; R-BRAND-9-MIGRACAO
 ESTIMATIVA: sprint única (3 peças na mesma área arquitetural — componentes de
             marca + 4 pontos de wire-up de UI). ~2-2.5 dias. Ver §12 (arquivos
             tocados) para a justificativa de não dividir.
-STATUS:     [todo] — BLOQUEIO ATIVO: aguarda R-BRAND-3-GLIFO mergeada. Não
-            despachar executor enquanto `ls src/components/brand/glifo/` falhar.
+STATUS:     [todo] — base do glifo mergeada em 2026-07-28 (AUDIT-P0-2).
+            BLOQUEIO REMANESCENTE: gate de performance C2 não medido. Não
+            despachar executor antes da medição de >=45fps no device.
 ORIGEM:     design doc da onda aprovado pelo dono em 2026-07-14
             (docs/sprints/_ONDA-R-BRAND-SYSTEM.md §4/§5) e coreografias de
             referência em docs/design/ouroboros/coreografias-extraidas.js
