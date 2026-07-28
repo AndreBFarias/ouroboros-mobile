@@ -117,6 +117,38 @@ presença") para o público autista/ansioso.
 > `R-BRAND-8`. Os componentes desta tabela (geração v1) serão substituídos
 > pelos conceitos fiéis e aposentados na `R-BRAND-9-MIGRACAO`.
 
+### 1.3 Marca — glifo canônico animável + monomarks E1/E2/E3 — R-BRAND-3-GLIFO (2026-07-14)
+
+Fundação da onda R-BRAND-SYSTEM: a marca deixa de ser uma coleção de
+aproximações e passa a ser uma **anatomia estável** sobre a qual cada
+conceito dirige apenas opacidade/transform/cor. Três peças novas em
+`src/components/brand/glifo/`:
+
+| Peça | Arquivo | Papel |
+|---|---|---|
+| Geometria canônica | [`glifo/geometria.ts`](../../src/components/brand/glifo/geometria.ts) | **Fonte única** dos dados: 43 contas `[cx,cy,hex]`, `RAIO_CONTA`, paths do rosto (cauda/cabeça/boca), olho, anel (path + atributos), `viewBox`, wordmark e os dois centros de animação `CENTRO` (corpo) e `RING_CENTER` (anel, anti-wobble). O `OuroborosLogo` agora consome estes dados (fim da cópia duplicada das 43 contas) |
+| Ordenador de contas | [`glifo/ordenarDaCabeca.ts`](../../src/components/brand/glifo/ordenarDaCabeca.ts) | Função **pura** (porte de `orderFromHead`): ordena as contas ao redor do corpo a partir da âncora da cabeça. `ccw` → `conta-01` no pescoço e `conta-43` perto da boca. Coberta por teste Jest |
+| Glifo animável | [`glifo/OuroborosGlifo.tsx`](../../src/components/brand/glifo/OuroborosGlifo.tsx) | Render canônico + `driver` opcional de shared values por elemento (43 contas + rosto + rotação do anel) e overrides de cor. Sem driver → estático, idêntico ao `OuroborosLogo`. Web usa rAF+DOM (M25.2); native usa prop `rotation` (A27); UUID por instância (R-CRIT-4); reduce-motion incondicional |
+
+Os três monomarks mais simples são os primeiros consumidores
+(`src/components/brand/conceitos/`):
+
+| Conceito | Componente | Comportamento |
+|---|---|---|
+| E1 — head-only | [`E1HeadOnly.tsx`](../../src/components/brand/conceitos/E1HeadOnly.tsx) | Recorte da cabeça (viewBox `90 30 140 55`, só contas 01/02/42/43 + rosto). O olho pisca a cada ~5,2s. Reduce-motion: olho estático em 0.65 |
+| E2 — só-anel | [`E2RingOnly.tsx`](../../src/components/brand/conceitos/E2RingOnly.tsx) | Apenas o anel pontilhado girando 40s/rev com origem em `RING_CENTER` (sem wobble). Reduce-motion: anel parado |
+| E3 — wordmark + ponto | [`E3Wordmark.tsx`](../../src/components/brand/conceitos/E3Wordmark.tsx) | Lockup estático: ponto em degradê rosa→roxo + "ouroboros" (mono, roxo) + "protocolo" (mono, secundário, tracking largo) |
+
+**Gate de performance (C2, pior caso).** A onda inteira depende de um
+teste: 43 contas escritas por frame (47 shared values/frame via um
+único `useFrameCallback`) sustentam **≥ 45fps** no device mid-range
+(Galaxy A32 / HyperOS)? O instrumento vive em [`app/_dev/bench-c2.tsx`](../../app/_dev/bench-c2.tsx)
+(rota dev, dead-code em release). **Resultado:** _medição no device
+pendente do dono_ (checkpoint Nível C — dev-client + Metro USB +
+`screenrecord`/`gfxinfo`, 3 execuções). Enquanto o número não fecha, as
+sprints R-BRAND-4…9 permanecem bloqueadas; se `mediana(fps) < 45`, a onda
+pausa e um spec de pivô Skia é redigido antes de qualquer sprint seguinte.
+
 ## 2. Capturas ativas
 
 ### 2.1 Humor Rápido — M05 (Tela 15)
