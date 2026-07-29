@@ -848,6 +848,30 @@ do Recap. Rota: `/recap-memorias?de=…&ate=…`.
   anuncia mais o jargão; o texto útil do slide fica no overlay, fora do
   container). Gate via hook `useReduceMotion()` — ver §11 Acessibilidade.
 
+### 7.2 Ids de conquista únicos — AUDIT-P1-7 (2026-07-28)
+
+Cada item da seção Conquistas carrega um `id` que a lista usa como
+`key` do React, como rótulo de acessibilidade e como parâmetro de
+navegação para o detalhe. Duas formas colidiam e o Recap podia perder
+itens, embaralhá-los ou abrir a conquista errada no toque:
+
+- **Marcos** usavam `marco:<data>:<autor>`. A `data` de marco
+  automático tem granularidade de minuto e os cinco critérios de
+  `marcosAuto` são avaliados e gravados no mesmo laço — até cinco
+  marcos do mesmo autor nasciam com id idêntico. O id agora inclui o
+  `hash` de conteúdo (autor + descrição), o mesmo que já servia de
+  chave de dedupe entre cliente e backend; marcos sem `hash` gravado
+  recebem o cálculo na hora.
+- **Tarefas concluídas** usavam `tarefa:<data>:<título>`. Como `data`
+  é YMD, duas tarefas homônimas no mesmo dia ("Tomar remédio" de manhã
+  e de noite) colidiam. O id agora é `tarefa:<rel>` — o caminho
+  relativo do `.md`, único por construção desde T2-LOCK-VAULT (slug
+  com sufixo aleatório + sufixo de `deviceId`). Vale para a conquista
+  e para o detalhe em Tarefas concluídas.
+
+Os prefixos de origem (`marco:`, `tarefa:`, `contador:`) continuam
+intactos: `destinoConquista` segue roteando pelo prefixo.
+
 ## 8. Calendário Visual de Conquistas — consolidado em §7 (L2)
 
 > **Histórico:** M11.5 / Tela 25 entregou esta tela como rota
@@ -1086,6 +1110,18 @@ Dois ajustes achados pelo dono usando o app no celular:
   seções só chamam `mostrarUndo` da store. Mesma animação sóbria
   (`SlideInDown.springify()` / `SlideOutDown`), sem gamificação.
 
+### 9.9 Alarme mensal no card "Próximos" — AUDIT-P1-7 (2026-07-28)
+
+O card "Próximos" derivava o dia de um alarme **mensal** do dia de
+hoje, não do dia configurado. Efeito: um alarme mensal do dia 5 era
+anunciado na Home em **todos** os dias do mês, enquanto a notificação
+tocava certo — Home e agendador liam o mesmo campo com critérios
+diferentes. Agora o dia sai de `data_unica` com o mesmo critério do
+agendador nativo (`getDate()`, default dia 1 quando ausente ou
+inválida). Mês que não tem o dia configurado (dia 31 em fevereiro) é
+pulado em vez de ganhar clamp para o dia 28 — a Home nunca anuncia
+data que o usuário não configurou nem data inexistente.
+
 ## 10. Opt-ins (toggle on em Settings, default ON)
 
 ### 10.1 Acompanhador de Ciclo Menstrual — M14.5 + R-NAV-1
@@ -1120,6 +1156,17 @@ Dois ajustes achados pelo dono usando o app no celular:
   horário, rejeitar silencia por 30 dias.
 - Migração one-shot lembretes v1 → alarmes pré-cadastrados off
   (M30).
+- **Alarme de recorrência única se encerra** (AUDIT-P1-7,
+  2026-07-28) — duas frentes. (a) `agendarAlarme` recusa data já
+  vencida: antes só o formato era validado e um alarme de março
+  continuava sendo pedido ao sistema em todo boot, ocupando uma das
+  64 vagas do cap global (`LIMITE_SCHEDULES`) que a própria função
+  conta antes de agendar — alarmes vivos deixavam de ser agendados
+  por causa de alarmes mortos. (b) Tocar "Desligar" na notificação
+  de um alarme `unica` grava `ativo: false` e `ultimo_disparo` no
+  `.md` (o campo existe desde M16 e até aqui nenhum consumidor o
+  escrevia). Alarmes recorrentes seguem intocados: "Desligar"
+  encerra a ocorrência, não a série.
 
 ### 10.3 To-do Leve — F-16 / M17 + M31 v2
 
@@ -1341,6 +1388,18 @@ São **dois** widgets independentes, no mesmo módulo Expo nativo
   instalação pelo boot hook `limparDuplicatasAgenda`
   (flag `useSessao.flags.duplicatasAgendaLimpas`), que mantém
   por id apenas o `.md` de `sincronizado_em` mais recente.
+- **Refresh não reescreve `.md` sem mudança** (AUDIT-P1-7,
+  2026-07-28) — a comparação de igualdade que protege a
+  idempotência de `sincronizarSnapshotAgenda` incluía
+  `sincronizado_em`, campo que o próprio sync carimba com o
+  timestamp do refresh corrente. Como o caller gera um timestamp
+  novo a cada chamada, a comparação era sempre falsa e **todos**
+  os `.md` de agenda eram regravados a cada sync — mtime novo em
+  cada arquivo e churn puro nos 4 dispositivos do Syncthing, sem
+  informação nova. Agora a comparação olha só o conteúdo do evento
+  (id, pessoa, título, início, fim, local, fonte). O campo continua
+  no frontmatter: a remoção de eventos apagados no Google segue
+  usando `sincronizado_em < timestamp do snapshot`.
 - **Sub-sprints ainda abertas**:
   - M37.1.3 (bug-fix corretivo — mock dev-web de
     `calendarApi.listarEventos` para o fluxo "Conectar"

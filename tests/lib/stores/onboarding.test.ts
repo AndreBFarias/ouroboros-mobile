@@ -1,4 +1,7 @@
-import { useOnboarding } from '@/lib/stores/onboarding';
+import {
+  useOnboarding,
+  mergeOnboardingPersistido,
+} from '@/lib/stores/onboarding';
 
 describe('useOnboarding', () => {
   beforeEach(() => {
@@ -124,5 +127,107 @@ describe('useOnboarding', () => {
       expect(observado).toContain(true);
       expect(observado).toContain(false);
     });
+  });
+});
+
+// AUDIT-P1-8 (2026-07-28): back-fill da hidratacao (armadilha A47).
+//
+// Esta store nao tem version/migrate: TODA hidratacao passa pelo merge.
+// Sem o custom, valia o merge SHALLOW do zustand, onde o objeto
+// `permissoes` persistido -- sem a permissao nova de uma sprint
+// posterior -- SUBSTITUI o default inteiro e a chave hidrata
+// `undefined`. Consequencia visivel: o app volta a pedir uma permissao
+// que o usuario ja concedeu.
+//
+// Os testes chamam a funcao REAL `mergeOnboardingPersistido` (a mesma
+// cabeada em `merge` no persist config), com persistedState organico ao
+// qual falta chave nested.
+describe('mergeOnboardingPersistido (back-fill nested - AUDIT-P1-8)', () => {
+  beforeEach(() => {
+    useOnboarding.getState().resetar();
+  });
+
+  // Instalacao organica: onboarding concluido em modo casal, com
+  // permissoes concedidas. `localizacao` ausente (simula permissao
+  // adicionada por sprint posterior a instalacao) e `sexoDeclarado` so'
+  // com pessoa_a (o Frame ainda nao perguntava pela pessoa_b).
+  function persistidoAntigo(): Record<string, unknown> {
+    return {
+      done: true,
+      tipoCompanhia: 'casal',
+      sexoDeclarado: { pessoa_a: 'feminino' },
+      permissoes: {
+        storage: true,
+        camera: true,
+        microfone: true,
+        notificacoes: false,
+        // localizacao AUSENTE de proposito.
+      },
+    };
+  }
+
+  it('back-filla permissao nova com o default false sem re-pedir as concedidas', () => {
+    const persistido = persistidoAntigo();
+    expect(
+      (persistido.permissoes as Record<string, unknown>).localizacao
+    ).toBeUndefined();
+
+    const merged = mergeOnboardingPersistido(
+      persistido,
+      useOnboarding.getState()
+    );
+
+    // O fix: a chave nova recebe o default (false), nao undefined.
+    expect(merged.permissoes.localizacao).toBe(false);
+    // Escolhas organicas preservadas: concedidas continuam concedidas e
+    // a negada continua negada.
+    expect(merged.permissoes.storage).toBe(true);
+    expect(merged.permissoes.camera).toBe(true);
+    expect(merged.permissoes.microfone).toBe(true);
+    expect(merged.permissoes.notificacoes).toBe(false);
+  });
+
+  it('back-filla sexoDeclarado incompleto com null, preservando o declarado', () => {
+    const merged = mergeOnboardingPersistido(
+      persistidoAntigo(),
+      useOnboarding.getState()
+    );
+
+    expect(merged.sexoDeclarado.pessoa_a).toBe('feminino');
+    expect(merged.sexoDeclarado.pessoa_b).toBeNull();
+  });
+
+  it('preserva chaves planas e as acoes do store apos a hidratacao', () => {
+    const merged = mergeOnboardingPersistido(
+      persistidoAntigo(),
+      useOnboarding.getState()
+    );
+
+    expect(merged.done).toBe(true);
+    expect(merged.tipoCompanhia).toBe('casal');
+    expect(typeof merged.setPermissao).toBe('function');
+    expect(typeof merged.marcarConcluido).toBe('function');
+    expect(typeof merged.resetar).toBe('function');
+  });
+
+  it('back-filla sub-objeto ausente por inteiro (persistido pre-J1)', () => {
+    const merged = mergeOnboardingPersistido(
+      { done: true, tipoCompanhia: 'sozinho' },
+      useOnboarding.getState()
+    );
+
+    expect(merged.permissoes.storage).toBe(false);
+    expect(merged.permissoes.localizacao).toBe(false);
+    expect(merged.sexoDeclarado.pessoa_a).toBeNull();
+  });
+
+  it('guard: persistedState null/undefined/nao-objeto retorna o currentState intacto', () => {
+    const atual = useOnboarding.getState();
+    expect(mergeOnboardingPersistido(null, atual)).toBe(atual);
+    expect(mergeOnboardingPersistido(undefined, atual)).toBe(atual);
+    expect(mergeOnboardingPersistido('lixo', atual)).toBe(atual);
+    expect(typeof mergeOnboardingPersistido(null, atual).setPermissao).toBe(
+      'function'
+    );
   });
 });

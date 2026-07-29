@@ -7,7 +7,10 @@
 //   - desconectar: zera conta.
 //
 // Comentarios sem acento.
-import { useSpotifyAuth } from '@/lib/integracoes/spotify/store';
+import {
+  useSpotifyAuth,
+  mergeSpotifyPersistido,
+} from '@/lib/integracoes/spotify/store';
 import * as spotifyOAuth from '@/lib/integracoes/spotify/oauth';
 
 const CONTA_VAZIA = {
@@ -144,5 +147,81 @@ describe('useSpotifyAuth.desconectar', () => {
     });
     useSpotifyAuth.getState().desconectar();
     expect(useSpotifyAuth.getState().conta).toEqual(CONTA_VAZIA);
+  });
+});
+
+// AUDIT-P1-8 (2026-07-28): back-fill da hidratacao (armadilha A47).
+//
+// Store sem version/migrate: TODA hidratacao passa pelo merge. Sem o
+// custom, valia o merge SHALLOW do zustand, onde o objeto `conta`
+// persistido substitui o default inteiro -- um campo novo de
+// ContaSpotify hidrata `undefined` em toda conta ja conectada.
+//
+// Os testes chamam a funcao REAL `mergeSpotifyPersistido` (a mesma
+// cabeada em `merge` no persist config).
+describe('mergeSpotifyPersistido (back-fill nested - AUDIT-P1-8)', () => {
+  beforeEach(() => {
+    useSpotifyAuth.setState({ conta: { ...CONTA_VAZIA } });
+  });
+
+  // Conta organica conectada antes de `scope` entrar em ContaSpotify.
+  function persistidoAntigo(): Record<string, unknown> {
+    return {
+      conta: {
+        accessToken: 'spotify-token-organico',
+        refreshToken: 'spotify-refresh-organico',
+        expiraEm: 1_800_000_000_000,
+        ultimaConexao: 1_700_000_000_000,
+        invalido: false,
+        // scope AUSENTE de proposito (campo novo do shape).
+      },
+    };
+  }
+
+  it('back-filla campo novo da conta com o default, preservando os tokens', () => {
+    const persistido = persistidoAntigo();
+    expect((persistido.conta as Record<string, unknown>).scope).toBeUndefined();
+
+    const merged = mergeSpotifyPersistido(
+      persistido,
+      useSpotifyAuth.getState()
+    );
+
+    // O fix: cai no default null, nao em undefined.
+    expect(merged.conta.scope).toBeNull();
+    // Conexao organica intacta: sem isto o usuario seria deslogado.
+    expect(merged.conta.accessToken).toBe('spotify-token-organico');
+    expect(merged.conta.refreshToken).toBe('spotify-refresh-organico');
+    expect(merged.conta.expiraEm).toBe(1_800_000_000_000);
+    expect(merged.conta.ultimaConexao).toBe(1_700_000_000_000);
+    expect(merged.conta.invalido).toBe(false);
+  });
+
+  it('back-filla conta ausente por inteiro (persistido corrompido)', () => {
+    const merged = mergeSpotifyPersistido({}, useSpotifyAuth.getState());
+
+    expect(merged.conta).toEqual(CONTA_VAZIA);
+  });
+
+  it('preserva as acoes do store apos a hidratacao', () => {
+    const merged = mergeSpotifyPersistido(
+      persistidoAntigo(),
+      useSpotifyAuth.getState()
+    );
+
+    expect(typeof merged.autenticar).toBe('function');
+    expect(typeof merged.desconectar).toBe('function');
+    expect(typeof merged.refreshIfNeeded).toBe('function');
+    expect(typeof merged.marcarInvalido).toBe('function');
+  });
+
+  it('guard: persistedState null/undefined/nao-objeto retorna o currentState intacto', () => {
+    const atual = useSpotifyAuth.getState();
+    expect(mergeSpotifyPersistido(null, atual)).toBe(atual);
+    expect(mergeSpotifyPersistido(undefined, atual)).toBe(atual);
+    expect(mergeSpotifyPersistido('lixo', atual)).toBe(atual);
+    expect(typeof mergeSpotifyPersistido(null, atual).autenticar).toBe(
+      'function'
+    );
   });
 });

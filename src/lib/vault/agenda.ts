@@ -200,7 +200,9 @@ export async function apagarEventoAgenda(
 //      (eventos deletados remotamente).
 //
 // Retorna contadores para diagnostico. Idempotente: rodar 2x com a
-// mesma lista e mesmo timestamp resulta em {0, 0, 0}.
+// mesma lista resulta em {0, 0, 0} mesmo com timestamps de
+// sincronizacao DIFERENTES (AUDIT-P1-7) -- que e o unico cenario que o
+// caller real produz. Nenhum .md e reescrito quando nada mudou de fato.
 export async function sincronizarSnapshotAgenda(
   vaultRoot: string,
   pessoa: PessoaAutor,
@@ -281,8 +283,21 @@ export async function sincronizarSnapshotAgenda(
   return { adicionados, atualizados, removidos };
 }
 
-// Igualdade estrutural simples de dois eventos (todos os campos do
-// schema). Usado para idempotencia em sincronizarSnapshotAgenda.
+// Igualdade de CONTEUDO de dois eventos. Usado para idempotencia em
+// sincronizarSnapshotAgenda.
+//
+// AUDIT-P1-7: `sincronizado_em` ficou de fora de proposito. E metadado
+// de sincronizacao, nao conteudo do evento, e sincronizarSnapshotAgenda
+// carimba todos os eventos com o timestamp do snapshot corrente antes
+// de comparar. Como o caller real (calendarCache.ts) gera um timestamp
+// novo a cada refresh, incluir o campo tornava a comparacao sempre
+// falsa: o guard de idempotencia nunca disparava e todos os .md eram
+// reescritos, tocando o mtime de cada arquivo e fazendo o Syncthing
+// propagar churn sem informacao nova para os 4 dispositivos.
+//
+// O campo continua sendo gravado no frontmatter: a etapa de remocao
+// (eventos que sumiram do Google) segue comparando
+// `ev.sincronizado_em < sincronizadoEm`.
 function eventosIguais(a: AgendaEvento, b: AgendaEvento): boolean {
   return (
     a.id === b.id &&
@@ -291,7 +306,6 @@ function eventosIguais(a: AgendaEvento, b: AgendaEvento): boolean {
     a.inicio === b.inicio &&
     a.fim === b.fim &&
     a.local === b.local &&
-    a.fonte === b.fonte &&
-    a.sincronizado_em === b.sincronizado_em
+    a.fonte === b.fonte
   );
 }

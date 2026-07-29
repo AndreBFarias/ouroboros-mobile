@@ -404,9 +404,60 @@ export const useGoogleAuth = create<GoogleAuthState>()(
       storage: createJSONStorage(() => secureStorage),
       // Persistimos contas inteiras (tokens curtos, cabem em 2KB).
       partialize: (s) => ({ contas: s.contas }),
+      // AUDIT-P1-8 (2026-07-28): merge custom na hidratacao (armadilha
+      // A47). Aqui o aninhamento e' DUPLO -- `contas` e, dentro dele,
+      // `contas.pessoa_a` / `contas.pessoa_b`. O merge shallow padrao do
+      // zustand substituiria `contas` inteiro pelo persistido; um merge
+      // raso de um nivel so' resolveria a metade do problema (a conta de
+      // uma pessoa ausente), deixando de pe' o caso mais provavel: campo
+      // novo dentro de ContaGoogle (foi o que aconteceu com
+      // escoposConcedidos na M37.2) hidratando `undefined` em toda conta
+      // ja conectada. Por isso mesclarConta roda por pessoa.
+      merge: mergeGoogleAuthPersistido,
     }
   )
 );
+
+// AUDIT-P1-8: segundo nivel do deep-merge. Back-filla os campos de uma
+// ContaGoogle persistida contra CONTA_VAZIA. Conta ausente/corrompida
+// vira conta vazia limpa em vez de undefined.
+//
+// escoposConcedidos e' opcional de proposito e nao esta em CONTA_VAZIA:
+// conta conectada antes da M37.2 continua sem o campo (tratada como
+// readonly pela UI), que e' o contrato descrito no tipo.
+function mesclarConta(conta: unknown): ContaGoogle {
+  if (!conta || typeof conta !== 'object') {
+    return { ...CONTA_VAZIA };
+  }
+  return {
+    ...CONTA_VAZIA,
+    ...(conta as Record<string, unknown>),
+  } as ContaGoogle;
+}
+
+// AUDIT-P1-8 (2026-07-28): funcao de merge da hidratacao do persist.
+// Exportada para o teste exercitar o CODIGO REAL (cabeado em `merge`
+// acima) em vez de uma replica tautologica. Guard para persistedState
+// null/nao-objeto e spread de `currentState` PRIMEIRO para preservar as
+// ACOES do store (autenticar, revogar, refreshIfNeeded, ...).
+export function mergeGoogleAuthPersistido(
+  persistedState: unknown,
+  currentState: GoogleAuthState
+): GoogleAuthState {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return currentState;
+  }
+  const ps = persistedState as Record<string, unknown>;
+  const contas = (ps.contas as Record<string, unknown>) ?? {};
+  return {
+    ...currentState,
+    ...ps,
+    contas: {
+      pessoa_a: mesclarConta(contas.pessoa_a),
+      pessoa_b: mesclarConta(contas.pessoa_b),
+    },
+  };
+}
 
 // Decode rudimentar do payload de um JWT id_token Google. NAO
 // valida assinatura — apenas extrai 'email'. Confiamos no canal

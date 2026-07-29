@@ -52,6 +52,15 @@ function fixture(over: Partial<Alarme> = {}): Alarme {
   };
 }
 
+// AUDIT-P1-7: data ISO relativa a agora. Fixtures de alarme 'unica'
+// precisam ser datadas em relacao ao relogio do runtime -- desde que
+// agendarAlarme recusa data vencida, uma data literal no futuro
+// apodrece e derrubaria a suite quando aquele dia chegasse.
+function isoRelativo(dias: number): string {
+  const d = new Date(Date.now() + dias * 24 * 60 * 60 * 1000);
+  return d.toISOString().replace('Z', '+00:00');
+}
+
 beforeEach(() => {
   memInterna.clear();
   jest.clearAllMocks();
@@ -294,7 +303,9 @@ describe('agendarAlarme — recorrencias v2 (M30)', () => {
     const a = fixture({
       slug: 'consulta',
       recorrencia: 'unica',
-      data_unica: '2026-12-25T15:30:00-03:00',
+      // AUDIT-P1-7: data no futuro relativa ao runtime (antes era um
+      // literal que venceria em 25/12/2026 e passaria a reprovar).
+      data_unica: isoRelativo(30),
       dias_semana: [],
     });
     const res = await agendarAlarme(a);
@@ -420,6 +431,40 @@ describe('agendarAlarme — recorrencias v2 (M30)', () => {
     );
     expect(chamadas).toHaveLength(0);
   });
+
+  // AUDIT-P1-7 item 2a: 'unica' com data no passado nao vira schedule.
+  // Antes so o formato era validado; um alarme de marco continuava
+  // sendo pedido ao SO em julho, ocupando uma das 64 vagas do cap que
+  // a propria funcao se da ao trabalho de contar.
+  it('AUDIT-P1-7: unica com data vencida nao agenda e nao ocupa vaga do cap', async () => {
+    const a = fixture({
+      slug: 'consulta-vencida',
+      recorrencia: 'unica',
+      data_unica: isoRelativo(-120),
+      dias_semana: [],
+    });
+    const res = await agendarAlarme(a);
+    expect(res).toEqual({ ids: [], estourou: false });
+    const chamadas = (
+      Notifications.scheduleNotificationAsync as jest.Mock
+    ).mock.calls.filter((c) =>
+      String(c[0]?.identifier ?? '').includes('consulta-vencida')
+    );
+    expect(chamadas).toHaveLength(0);
+    expect(await contarSchedulesAlarmes()).toBe(0);
+  });
+
+  it('AUDIT-P1-7: unica com data no futuro continua agendando', async () => {
+    const a = fixture({
+      slug: 'consulta-futura',
+      recorrencia: 'unica',
+      data_unica: isoRelativo(7),
+      dias_semana: [],
+    });
+    const res = await agendarAlarme(a);
+    expect(res.ids).toEqual(['ouroboros.alarme.consulta-futura.once']);
+    expect(await contarSchedulesAlarmes()).toBe(1);
+  });
 });
 
 describe('reagendarAlarmes', () => {
@@ -458,5 +503,34 @@ describe('reagendarAlarmes', () => {
     const carregar = jest.fn().mockResolvedValue([]);
     await reagendarAlarmes(carregar);
     expect(memInterna.has('ouroboros.alarme.x.d0')).toBe(false);
+  });
+
+  // AUDIT-P1-7 item 2a (dano real): reagendarAlarmes filtra por
+  // `ativo`, e nada grava ativo:false depois do disparo de um 'unica'.
+  // Sem a checagem de data vencida em agendarAlarme, o alarme morto
+  // renascia em todo boot e roubava vaga do cap de 64 dos vivos.
+  it('AUDIT-P1-7: nao ressuscita alarme unica vencido no boot', async () => {
+    const carregar = jest.fn().mockResolvedValue([
+      fixture({
+        slug: 'vencido',
+        recorrencia: 'unica',
+        data_unica: isoRelativo(-150),
+        dias_semana: [],
+        ativo: true,
+      }),
+      fixture({
+        slug: 'futuro',
+        recorrencia: 'unica',
+        data_unica: isoRelativo(15),
+        dias_semana: [],
+        ativo: true,
+      }),
+    ]);
+
+    await reagendarAlarmes(carregar);
+
+    expect(Array.from(memInterna.keys()).sort()).toEqual([
+      'ouroboros.alarme.futuro.once',
+    ]);
   });
 });

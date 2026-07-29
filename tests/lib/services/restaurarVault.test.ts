@@ -124,6 +124,7 @@ import {
 } from '@/lib/stores/settings';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { PESSOAS_CONFIG } from '@/config/pessoas.config';
 
 const VAULT = 'file:///mock/vault';
 
@@ -351,6 +352,94 @@ describe('aplicarSnapshot (M-AUDIT-MIGUE-RESTORE-SNAPSHOT)', () => {
     // Cai nos defaults v2 limpos em vez de virar undefined.
     expect(useSettings.getState().featureToggles.recapMusicaFundo).toBe(true);
     expect(useSettings.getState().featureToggles.cicloMenstrual).toBe(true);
+  });
+
+  // AUDIT-P1-8 (2026-07-28): a segunda porta do A47 estava fechada so'
+  // para settings. O guard `if (snap.onboarding.permissoes)` cobre o
+  // sub-objeto AUSENTE por inteiro, nao o sub-objeto PRESENTE com uma
+  // chave faltando -- que e' a forma exata da armadilha. Restaurar um
+  // backup exportado antes da sprint que adicionou uma permissao trazia
+  // `permissoes` sem ela.
+  it('back-filla permissao ausente do snapshot antigo, preservando as concedidas', () => {
+    const snap = snapshotValido();
+    // Escolha organica do backup: microfone negado, camera concedida.
+    snap.onboarding.permissoes = {
+      storage: true,
+      camera: true,
+      microfone: false,
+      notificacoes: true,
+    } as unknown as NonNullable<typeof snap.onboarding.permissoes>;
+    expect(
+      (snap.onboarding.permissoes as unknown as Record<string, unknown>)
+        .localizacao
+    ).toBeUndefined();
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    // Back-fill: a permissao nova recebe o default false em vez de
+    // `undefined` (que faria o app re-pedir permissao ja resolvida).
+    expect(useOnboarding.getState().permissoes.localizacao).toBe(false);
+    // Escolhas organicas do backup vencem o default.
+    expect(useOnboarding.getState().permissoes.storage).toBe(true);
+    expect(useOnboarding.getState().permissoes.camera).toBe(true);
+    expect(useOnboarding.getState().permissoes.microfone).toBe(false);
+    expect(useOnboarding.getState().permissoes.notificacoes).toBe(true);
+  });
+
+  it('back-filla sexoDeclarado incompleto do snapshot antigo', () => {
+    const snap = snapshotValido();
+    snap.onboarding.sexoDeclarado = {
+      pessoa_a: 'nao-binario',
+    } as unknown as NonNullable<typeof snap.onboarding.sexoDeclarado>;
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    expect(useOnboarding.getState().sexoDeclarado.pessoa_a).toBe('nao-binario');
+    expect(useOnboarding.getState().sexoDeclarado.pessoa_b).toBeNull();
+  });
+
+  it('back-filla nomes/fotos incompletos do snapshot antigo', () => {
+    const snap = snapshotValido();
+    // Backup de quem usava sozinho: so' pessoa_a tem nome e foto.
+    snap.pessoa.nomes = {
+      pessoa_a: 'Restaurada A',
+    } as unknown as typeof snap.pessoa.nomes;
+    snap.pessoa.fotos = {
+      pessoa_a: 'file:///mock/foto-a.jpg',
+    } as unknown as typeof snap.pessoa.fotos;
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    // Back-fill: cai no default generico e no null, nao em undefined
+    // (que derrubaria o avatar de pessoa_b para a inicial sem nome).
+    expect(usePessoa.getState().nomes.pessoa_b).toBe(
+      PESSOAS_CONFIG.pessoa_b.nome
+    );
+    expect(usePessoa.getState().fotos.pessoa_b).toBeNull();
+    // Escolhas organicas do backup preservadas.
+    expect(usePessoa.getState().nomes.pessoa_a).toBe('Restaurada A');
+    expect(usePessoa.getState().fotos.pessoa_a).toBe('file:///mock/foto-a.jpg');
+  });
+
+  it('back-filla nomes/fotos ausentes por inteiro (snapshot corrompido)', () => {
+    const snap = snapshotValido();
+    delete (snap.pessoa as unknown as Record<string, unknown>).nomes;
+    delete (snap.pessoa as unknown as Record<string, unknown>).fotos;
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    expect(usePessoa.getState().nomes).toEqual({
+      pessoa_a: PESSOAS_CONFIG.pessoa_a.nome,
+      pessoa_b: PESSOAS_CONFIG.pessoa_b.nome,
+    });
+    expect(usePessoa.getState().fotos).toEqual({
+      pessoa_a: null,
+      pessoa_b: null,
+    });
   });
 
   it('tolera snapshot antigo sem sexoDeclarado/permissoes (campo aditivo)', () => {

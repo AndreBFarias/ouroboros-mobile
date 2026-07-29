@@ -2,7 +2,10 @@
 // revogar, autenticar (mock branch web dev).
 //
 // Comentarios sem acento.
-import { useGoogleAuth } from '@/lib/stores/googleAuth';
+import {
+  useGoogleAuth,
+  mergeGoogleAuthPersistido,
+} from '@/lib/stores/googleAuth';
 import * as googleAuthFlow from '@/lib/services/googleAuthFlow';
 
 const CONTA_VAZIA = {
@@ -191,5 +194,133 @@ describe('useGoogleAuth.revogar', () => {
       .mockRejectedValue(new Error('network'));
     await useGoogleAuth.getState().revogar('pessoa_a');
     expect(useGoogleAuth.getState().contas.pessoa_a.accessToken).toBeNull();
+  });
+});
+
+// AUDIT-P1-8 (2026-07-28): back-fill da hidratacao (armadilha A47), com
+// aninhamento DUPLO.
+//
+// Store sem version/migrate: TODA hidratacao passa pelo merge. Sem o
+// custom, valia o merge SHALLOW do zustand -- `contas` persistido
+// substitui o default inteiro. Um merge raso de UM nivel so' cobriria a
+// conta ausente; o caso mais provavel e' campo novo DENTRO de
+// ContaGoogle (foi o que a M37.2 fez com escoposConcedidos), que exige
+// mesclar contas.pessoa_a e contas.pessoa_b individualmente.
+//
+// Os testes chamam a funcao REAL `mergeGoogleAuthPersistido` (a mesma
+// cabeada em `merge` no persist config).
+describe('mergeGoogleAuthPersistido (back-fill nested duplo - AUDIT-P1-8)', () => {
+  beforeEach(() => {
+    useGoogleAuth.setState({
+      contas: {
+        pessoa_a: { ...CONTA_VAZIA },
+        pessoa_b: { ...CONTA_VAZIA },
+      },
+    });
+  });
+
+  // Instalacao organica: pessoa_a conectou o Google ANTES de um campo
+  // novo entrar em ContaGoogle (aqui `invalido`, que e' o marcador soft
+  // lido pela UI), e pessoa_b nunca conectou -- a chave inteira dela nem
+  // existe no blob persistido.
+  function persistidoAntigo(): Record<string, unknown> {
+    return {
+      contas: {
+        pessoa_a: {
+          accessToken: 'token-organico',
+          refreshToken: 'refresh-organico',
+          expiraEm: 1_800_000_000_000,
+          email: 'test@example.com',
+          ultimaConexao: 1_700_000_000_000,
+          // invalido AUSENTE de proposito (campo novo do shape).
+        },
+        // pessoa_b AUSENTE de proposito (nunca conectou).
+      },
+    };
+  }
+
+  it('back-filla campo novo DENTRO da conta persistida (segundo nivel)', () => {
+    const persistido = persistidoAntigo();
+    const contaA = (persistido.contas as Record<string, any>).pessoa_a;
+    expect(contaA.invalido).toBeUndefined();
+
+    const merged = mergeGoogleAuthPersistido(
+      persistido,
+      useGoogleAuth.getState()
+    );
+
+    // O fix de segundo nivel: recebe o default false. Com `undefined` a
+    // UI trataria a conta como valida por falsy, mas qualquer leitura
+    // explicita do campo veria lixo.
+    expect(merged.contas.pessoa_a.invalido).toBe(false);
+    // Tokens organicos preservados (persistido vence o default).
+    expect(merged.contas.pessoa_a.accessToken).toBe('token-organico');
+    expect(merged.contas.pessoa_a.refreshToken).toBe('refresh-organico');
+    expect(merged.contas.pessoa_a.email).toBe('test@example.com');
+    expect(merged.contas.pessoa_a.expiraEm).toBe(1_800_000_000_000);
+  });
+
+  it('back-filla conta ausente por inteiro com CONTA_VAZIA (primeiro nivel)', () => {
+    const merged = mergeGoogleAuthPersistido(
+      persistidoAntigo(),
+      useGoogleAuth.getState()
+    );
+
+    expect(merged.contas.pessoa_b).toEqual(CONTA_VAZIA);
+    expect(merged.contas.pessoa_b.accessToken).toBeNull();
+    expect(merged.contas.pessoa_b.invalido).toBe(false);
+  });
+
+  it('mantem escoposConcedidos ausente em conta pre-M37.2 (opcional por contrato)', () => {
+    const merged = mergeGoogleAuthPersistido(
+      persistidoAntigo(),
+      useGoogleAuth.getState()
+    );
+
+    // O campo e' opcional: undefined significa "readonly" para a UI. O
+    // back-fill nao pode inventar 'write' aqui.
+    expect(merged.contas.pessoa_a.escoposConcedidos).toBeUndefined();
+  });
+
+  it('preserva escoposConcedidos quando a conta ja o tem', () => {
+    const persistido = persistidoAntigo();
+    (persistido.contas as Record<string, any>).pessoa_a.escoposConcedidos =
+      'write';
+
+    const merged = mergeGoogleAuthPersistido(
+      persistido,
+      useGoogleAuth.getState()
+    );
+
+    expect(merged.contas.pessoa_a.escoposConcedidos).toBe('write');
+  });
+
+  it('back-filla contas ausente por inteiro (persistido corrompido)', () => {
+    const merged = mergeGoogleAuthPersistido({}, useGoogleAuth.getState());
+
+    expect(merged.contas.pessoa_a).toEqual(CONTA_VAZIA);
+    expect(merged.contas.pessoa_b).toEqual(CONTA_VAZIA);
+  });
+
+  it('preserva as acoes do store apos a hidratacao', () => {
+    const merged = mergeGoogleAuthPersistido(
+      persistidoAntigo(),
+      useGoogleAuth.getState()
+    );
+
+    expect(typeof merged.autenticar).toBe('function');
+    expect(typeof merged.revogar).toBe('function');
+    expect(typeof merged.refreshIfNeeded).toBe('function');
+    expect(typeof merged.marcarInvalido).toBe('function');
+  });
+
+  it('guard: persistedState null/undefined/nao-objeto retorna o currentState intacto', () => {
+    const atual = useGoogleAuth.getState();
+    expect(mergeGoogleAuthPersistido(null, atual)).toBe(atual);
+    expect(mergeGoogleAuthPersistido(undefined, atual)).toBe(atual);
+    expect(mergeGoogleAuthPersistido('lixo', atual)).toBe(atual);
+    expect(typeof mergeGoogleAuthPersistido(null, atual).autenticar).toBe(
+      'function'
+    );
   });
 });

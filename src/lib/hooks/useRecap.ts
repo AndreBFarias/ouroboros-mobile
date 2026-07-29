@@ -28,6 +28,7 @@ import {
   type ItemMidiaStandalone,
 } from '@/lib/vault/midiaCompanion';
 import { diasEntre } from '@/lib/util/diasEntre';
+import { hashMarcoConteudo } from '@/lib/marcos/hash';
 import { startOfTodayLocal } from '@/lib/datetime/local';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
@@ -332,7 +333,15 @@ export function agregarRecap(input: {
   }
   for (const m of marcosFiltrados) {
     conquistas.push({
-      id: `marco:${m.data}:${m.autor}`,
+      // AUDIT-P1-7: `data` de marco automatico tem granularidade de
+      // minuto (nowIso de marcosAuto) e os 5 criterios sao gravados no
+      // mesmo laco -- ate 5 marcos do mesmo autor nasciam com id
+      // identico e viravam key duplicada no React. O hash de conteudo
+      // (autor + descricao) desempata por construcao; marcos sem hash
+      // gravado (origem backend antiga) recebem o mesmo calculo.
+      id: `marco:${m.data}:${m.autor}:${
+        m.hash ?? hashMarcoConteudo(m.autor, m.descricao)
+      }`,
       origem: 'marco',
       data: m.data,
       frase: truncar(m.descricao, 120),
@@ -352,9 +361,13 @@ export function agregarRecap(input: {
       });
     }
   }
-  for (const { meta } of tarefasFiltradas) {
+  for (const { meta, rel } of tarefasFiltradas) {
     conquistas.push({
-      id: `tarefa:${meta.data}:${meta.titulo}`,
+      // AUDIT-P1-7: `data` da tarefa e YMD, entao duas tarefas
+      // homonimas no mesmo dia ("Tomar remédio" de manha e de noite)
+      // colidiam. `rel` e unico por construcao desde T2-LOCK-VAULT
+      // (slug com sufixo random + suffix de deviceId).
+      id: `tarefa:${rel}`,
       origem: 'tarefa_concluida',
       data: meta.feito_em ?? meta.data,
       frase: truncar(fraseTarefa(meta), 120),
@@ -450,8 +463,11 @@ export function agregarRecap(input: {
 
   // Tarefas concluidas (detalhe). Ordenacao por feito_em desc.
   const tarefasConcluidas: TarefaConcluidaItem[] = tarefasFiltradas.map(
-    ({ meta }) => ({
-      id: `tarefa:${meta.feito_em}:${meta.titulo}`,
+    ({ meta, rel }) => ({
+      // AUDIT-P1-7: mesma forma da conquista de tarefa. `feito_em` tem
+      // granularidade melhor que `data`, mas herda a mesma colisao
+      // quando duas homonimas sao concluidas no mesmo instante.
+      id: `tarefa:${rel}`,
       titulo: meta.titulo,
       categoria: meta.categoria,
       feito_em: meta.feito_em as string,

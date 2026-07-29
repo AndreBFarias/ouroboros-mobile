@@ -228,6 +228,37 @@ export const useSpotifyAuth = create<SpotifyAuthState>()(
       name: STORAGE_KEY,
       storage: createJSONStorage(() => secureStorage),
       partialize: (s) => ({ conta: s.conta }),
+      // AUDIT-P1-8 (2026-07-28): merge custom na hidratacao (armadilha
+      // A47). Sem ele o merge SHALLOW padrao do zustand faz o objeto
+      // `conta` persistido substituir o default inteiro: um campo novo
+      // em ContaSpotify (foi o caso de `scope`) hidrata `undefined` em
+      // toda conta ja conectada, e o codigo que le esse campo passa a
+      // decidir por lixo. Store sem version/migrate; o merge roda em
+      // toda hidratacao e por isso basta.
+      merge: mergeSpotifyPersistido,
     }
   )
 );
+
+// AUDIT-P1-8 (2026-07-28): funcao de merge da hidratacao do persist.
+// Exportada para o teste exercitar o CODIGO REAL (cabeado em `merge`
+// acima) em vez de uma replica tautologica. Guard para persistedState
+// null/nao-objeto e spread de `currentState` PRIMEIRO para preservar as
+// ACOES do store (autenticar, desconectar, refreshIfNeeded, ...).
+export function mergeSpotifyPersistido(
+  persistedState: unknown,
+  currentState: SpotifyAuthState
+): SpotifyAuthState {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return currentState;
+  }
+  const ps = persistedState as Record<string, unknown>;
+  return {
+    ...currentState,
+    ...ps,
+    conta: {
+      ...CONTA_VAZIA,
+      ...((ps.conta as Record<string, unknown>) ?? {}),
+    } as ContaSpotify,
+  };
+}

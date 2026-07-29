@@ -174,6 +174,15 @@ export async function agendarAlarme(alarme: Alarme): Promise<AgendarResultado> {
       if (Number.isNaN(date.getTime())) {
         return { ids: [], estourou: false };
       }
+      // AUDIT-P1-7: data ja vencida nao vira schedule. Antes so o
+      // formato era validado, e como nada grava ativo:false depois do
+      // disparo, reagendarAlarmes re-pedia o alarme morto ao SO em
+      // todo boot. Ele ocupava uma das 64 vagas de LIMITE_SCHEDULES --
+      // exatamente o recurso que esta funcao conta antes de agendar --
+      // e podia impedir o agendamento de alarmes vivos.
+      if (date.getTime() <= Date.now()) {
+        return { ids: [], estourou: false };
+      }
       const identifier = idOnce(parsed.data.slug);
       await Notifications.scheduleNotificationAsync({
         identifier,

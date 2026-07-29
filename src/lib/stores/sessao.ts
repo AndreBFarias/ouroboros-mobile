@@ -301,6 +301,14 @@ export const useSessao = create<SessaoState>()(
         flags: state.flags,
         atualizadoEm: state.atualizadoEm,
       }),
+      // AUDIT-P1-8 (2026-07-28): merge custom que roda em TODA hidratacao
+      // (o migrate abaixo so' roda quando a versao persistida < versao
+      // atual). Sem ele vale o merge SHALLOW padrao do zustand, onde o
+      // objeto `flags` persistido -- sem a chave nova de uma sprint
+      // posterior -- SUBSTITUI o default inteiro e a flag hidrata
+      // `undefined` (armadilha A47 do BRIEF). O migrate cobre so' quem
+      // sobe de versao; o merge cobre toda instalacao ja na versao atual.
+      merge: mergeSessaoPersistido,
       // M27: rotas migraram de /(tabs)/* para raiz. Usuarios pre-M27
       // tem ultimaRota no SecureStore com prefixo /(tabs)/...; sem
       // migrate, qualquer boot tenta router.replace para rota
@@ -400,6 +408,57 @@ export const useSessao = create<SessaoState>()(
     }
   )
 );
+
+// AUDIT-P1-8: shape que o merge devolve, sem as acoes -- o mesmo que o
+// partialize grava.
+type SessaoPersistido = typeof DEFAULT_STATE;
+
+// AUDIT-P1-8: deep-merge do estado persistido com os defaults, um
+// sub-objeto por vez. Chave ausente dentro de rascunhos/
+// permissoesPedidas/flags cai no default do modulo em vez de virar
+// `undefined`; chave presente vence o default (escolha organica do
+// usuario). Spread de `ps` no topo mantem as chaves planas
+// (ultimaRota, atualizadoEm) e e' idempotente.
+function mesclarDefaultsSessao(ps: Record<string, unknown>): SessaoPersistido {
+  return {
+    ...DEFAULT_STATE,
+    ...ps,
+    rascunhos: {
+      ...RASCUNHOS_VAZIOS,
+      ...((ps.rascunhos as Record<string, unknown>) ?? {}),
+    },
+    permissoesPedidas: {
+      ...PERMISSOES_VAZIAS,
+      ...((ps.permissoesPedidas as Record<string, unknown>) ?? {}),
+    },
+    flags: {
+      ...FLAGS_VAZIAS,
+      ...((ps.flags as Record<string, unknown>) ?? {}),
+    },
+  } as SessaoPersistido;
+}
+
+// AUDIT-P1-8 (2026-07-28): funcao de merge da hidratacao do persist
+// (armadilha A47). Exportada para o teste de regressao exercitar o
+// CODIGO REAL (cabeado em `merge` no persist config acima) em vez de uma
+// replica tautologica -- mesmo motivo registrado em settings.ts.
+//
+// Guard obrigatorio: mesclarDefaultsSessao acessa campos de `ps` e
+// crasharia com null/nao-objeto. O spread de `currentState` PRIMEIRO
+// preserva as ACOES do store (salvarRascunho, marcarFlagBoot, ...), que
+// mesclarDefaultsSessao nao carrega (devolve so' campos de estado).
+export function mergeSessaoPersistido(
+  persistedState: unknown,
+  currentState: SessaoState
+): SessaoState {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return currentState;
+  }
+  return {
+    ...currentState,
+    ...mesclarDefaultsSessao(persistedState as Record<string, unknown>),
+  };
+}
 
 // R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
 // que espelha o estado em vault/_estado/sessao-<deviceId>.md. Debounced

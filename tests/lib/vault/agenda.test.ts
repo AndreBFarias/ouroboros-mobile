@@ -329,6 +329,10 @@ describe('sincronizarSnapshotAgenda', () => {
     expect(mockDeleteAsync).toHaveBeenCalledTimes(1);
   });
 
+  // Caso degenerado: mesmo timestamp nas duas pontas. Continua valido,
+  // mas cobre so a combinacao que o caller real NUNCA produz --
+  // calendarCache.ts gera `new Date(Date.now()).toISOString()` a cada
+  // refresh. O caso realista esta no teste AUDIT-P1-7 logo abaixo.
   it('idempotencia: rodar 2x com mesma lista e mesmo ts -> {0,0,0}', async () => {
     mockListVaultFolder.mockResolvedValueOnce([
       'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
@@ -343,6 +347,70 @@ describe('sincronizarSnapshotAgenda', () => {
     expect(r).toEqual({ adicionados: 0, atualizados: 0, removidos: 0 });
     expect(mockWriteVaultFile).not.toHaveBeenCalled();
     expect(mockDeleteAsync).not.toHaveBeenCalled();
+  });
+
+  // AUDIT-P1-7 item 4: eventosIguais comparava sincronizado_em, campo
+  // que o proprio sincronizarSnapshotAgenda carimba com o timestamp do
+  // refresh corrente. Como o caller gera um timestamp novo a cada
+  // chamada, a comparacao era sempre falsa, o guard de idempotencia
+  // nunca disparava e TODOS os .md de agenda eram reescritos -- mtime
+  // novo em cada arquivo, churn puro no Syncthing dos 4 devices.
+  it('AUDIT-P1-7: idempotencia com timestamps DIFERENTES (caller real) -> {0,0,0}', async () => {
+    const TS_NOVO = '2026-05-05T20:07:31-03:00';
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: eventoBase, body: '' });
+
+    const r = await sincronizarSnapshotAgenda(
+      VAULT_ROOT,
+      'pessoa_a',
+      [{ ...eventoBase, sincronizado_em: TS_NOVO }],
+      TS_NOVO
+    );
+
+    expect(r).toEqual({ adicionados: 0, atualizados: 0, removidos: 0 });
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+    expect(mockDeleteAsync).not.toHaveBeenCalled();
+  });
+
+  it('AUDIT-P1-7: 3 refreshes seguidos sem mudanca nao reescrevem nenhum .md', async () => {
+    const URI = 'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md';
+    for (let i = 0; i < 3; i++) {
+      mockListVaultFolder.mockResolvedValueOnce([URI]);
+      // O .md no disco mantem o sincronizado_em da primeira gravacao:
+      // como nao ha reescrita, o campo nao acompanha os refreshes.
+      mockReadVaultFile.mockResolvedValueOnce({ meta: eventoBase, body: '' });
+      const ts = `2026-05-05T20:0${i + 1}:00-03:00`;
+      const r = await sincronizarSnapshotAgenda(
+        VAULT_ROOT,
+        'pessoa_a',
+        [{ ...eventoBase, sincronizado_em: ts }],
+        ts
+      );
+      expect(r).toEqual({ adicionados: 0, atualizados: 0, removidos: 0 });
+    }
+    expect(mockWriteVaultFile).not.toHaveBeenCalled();
+  });
+
+  // Contraprova: sincronizado_em saiu da comparacao, mas mudanca de
+  // conteudo real continua sendo detectada e regravada.
+  it('AUDIT-P1-7: mudanca de conteudo com ts novo ainda conta como atualizada', async () => {
+    const TS_NOVO = '2026-05-05T20:07:31-03:00';
+    mockListVaultFolder.mockResolvedValueOnce([
+      'content://test/vault/markdown/agenda-pessoa_a-2026-05-07-abc123.md',
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: eventoBase, body: '' });
+
+    const r = await sincronizarSnapshotAgenda(
+      VAULT_ROOT,
+      'pessoa_a',
+      [{ ...eventoBase, local: 'Sala 3', sincronizado_em: TS_NOVO }],
+      TS_NOVO
+    );
+
+    expect(r).toEqual({ adicionados: 0, atualizados: 1, removidos: 0 });
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
   });
 
   it('cenario combinado: 1 novo + 1 atualizado + 1 removido', async () => {

@@ -8,6 +8,9 @@
 //   3. Agenda o re-disparo one-shot via agendarSnooze.
 //
 // Quando o usuario toca "Desligar", cancela qualquer snooze pendente.
+// AUDIT-P1-7: se o alarme for de recorrencia 'unica', o Desligar
+// tambem o encerra no Vault (ativo:false + ultimo_disparo) para que
+// ele nao volte a ser agendado no proximo boot.
 //
 // Por que aqui (e nao em agendarSnooze): a responsabilidade de
 // "responder ao usuario" e distinta de "agendar o re-disparo". A funcao
@@ -26,7 +29,7 @@ import {
   agendarSnooze,
   cancelarSnooze,
 } from '@/lib/services/alarmesNotificacoes';
-import { lerAlarme, registrarSnooze } from '@/lib/vault/alarmes';
+import { escreverAlarme, lerAlarme, registrarSnooze } from '@/lib/vault/alarmes';
 
 // Shape estavel do tipo de resposta (forma simplificada de
 // NotificationResponse do expo-notifications). Mantemos local para
@@ -72,6 +75,27 @@ export async function tratarRespostaNotificacao(
 
   if (actionId === DESLIGAR_ACTION_ID) {
     await cancelarSnooze(slug);
+    // AUDIT-P1-7: alarme 'unica' morre no Desligar. Sem gravar
+    // ativo:false o .md continua ativo, a UI segue mostrando o alarme
+    // ligado e reagendarAlarmes o devolve para a fila do SO em cada
+    // boot. `ultimo_disparo` existe no schema desde M16 ("ISO datetime
+    // do ultimo Desligar") e so agora ganha um escritor.
+    //
+    // Recorrentes (diaria/semanal/mensal) ficam intocados: Desligar
+    // encerra a ocorrencia, nao a serie.
+    try {
+      const alarme = await lerAlarme(vaultRoot, slug);
+      if (alarme && alarme.recorrencia === 'unica') {
+        await escreverAlarme(vaultRoot, {
+          ...alarme,
+          ativo: false,
+          ultimo_disparo: new Date().toISOString().replace('Z', '+00:00'),
+        });
+      }
+    } catch {
+      // Persistencia best-effort: falha de I-O aqui nao pode derrubar
+      // o canal de notificacao (mesma politica do ramo de Soneca).
+    }
   }
 }
 

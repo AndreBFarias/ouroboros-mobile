@@ -33,8 +33,12 @@ import {
   type SnapshotSettings,
 } from '@/lib/services/exportarVault';
 import { useSettings, DEFAULT_STATE_V2 } from '@/lib/stores/settings';
-import { useOnboarding } from '@/lib/stores/onboarding';
-import { usePessoa } from '@/lib/stores/pessoa';
+import {
+  useOnboarding,
+  PERMISSOES_DEFAULT,
+  SEXO_DEFAULT,
+} from '@/lib/stores/onboarding';
+import { usePessoa, NOMES_DEFAULT, FOTOS_DEFAULT } from '@/lib/stores/pessoa';
 
 export interface RestauracaoFalha {
   path: string;
@@ -343,18 +347,38 @@ export function aplicarSnapshot(
     done: snap.onboarding.done,
     tipoCompanhia: snap.onboarding.tipoCompanhia,
   };
+  //
+  // AUDIT-P1-8 (2026-07-28): o guard `if (...)` cobre o sub-objeto
+  // AUSENTE por inteiro (snapshot antigo, anterior ao campo aditivo);
+  // nao cobria o sub-objeto PRESENTE com uma chave faltando, que e' a
+  // forma exata do A47. Restaurar um backup exportado antes da sprint
+  // que adicionou uma permissao trazia `permissoes` sem ela -> a chave
+  // hidratava `undefined` -> o app voltava a pedir permissao ja
+  // concedida. Mesmo deep-merge de settings acima: default PRIMEIRO
+  // (back-fill), snapshot por cima (escolha organica vence).
   if (snap.onboarding.sexoDeclarado) {
-    onboardingPatch.sexoDeclarado = snap.onboarding.sexoDeclarado;
+    onboardingPatch.sexoDeclarado = {
+      ...SEXO_DEFAULT,
+      ...snap.onboarding.sexoDeclarado,
+    };
   }
   if (snap.onboarding.permissoes) {
-    onboardingPatch.permissoes = snap.onboarding.permissoes;
+    onboardingPatch.permissoes = {
+      ...PERMISSOES_DEFAULT,
+      ...snap.onboarding.permissoes,
+    };
   }
   useOnboarding.setState(onboardingPatch);
+  // AUDIT-P1-8: idem para pessoa. `nomes`/`fotos` sao aplicados sem
+  // guard (o tipo os declara obrigatorios), entao o spread do default
+  // cobre os dois casos de uma vez: sub-objeto com chave faltando e
+  // sub-objeto ausente num snapshot corrompido (spread de undefined e'
+  // no-op e sobra o default limpo, nunca `undefined`).
   usePessoa.setState({
     pessoaAtiva: snap.pessoa.pessoaAtiva,
     filtroPessoa: snap.pessoa.filtroPessoa,
-    nomes: snap.pessoa.nomes,
-    fotos: snap.pessoa.fotos,
+    nomes: { ...NOMES_DEFAULT, ...snap.pessoa.nomes },
+    fotos: { ...FOTOS_DEFAULT, ...snap.pessoa.fotos },
   });
 
   return { ok: true };

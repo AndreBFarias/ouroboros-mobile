@@ -96,6 +96,28 @@ function partesLocaisBRT(d: Date): {
   };
 }
 
+// Dia do mes de um alarme mensal. Espelha alarmesNotificacoes.ts
+// (case 'mensal'): deriva de data_unica.getDate() quando presente e
+// valida, com default 1 quando ausente ou invalida.
+//
+// AUDIT-P1-7: a Home e o agendador nativo precisam ler o MESMO campo
+// com o MESMO criterio. Antes o card "Proximos" usava o dia de hoje e
+// os dois divergiam -- a notificacao tocava no dia certo enquanto a
+// Home anunciava o alarme todo dia do mes.
+function diaDoMesMensal(alarme: Alarme): number {
+  if (!alarme.data_unica) return 1;
+  const d = new Date(alarme.data_unica);
+  if (Number.isNaN(d.getTime())) return 1;
+  return d.getDate();
+}
+
+// Quantos dias tem um mes (mes em 1-12). Dia 0 do mes seguinte e o
+// ultimo dia do mes corrente. Aritmetica em UTC: nao depende do fuso
+// do runtime.
+function diasNoMes(ano: number, mes: number): number {
+  return new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+}
+
 // Calcula proximo disparo do alarme a partir de agora considerando
 // recorrencia. Devolve ISO datetime BRT (-03:00) ou null quando nao
 // ha disparo plausivel.
@@ -104,7 +126,9 @@ function partesLocaisBRT(d: Date): {
 //  - 'unica'  : usa data_unica direto.
 //  - 'diaria' : monta hoje as HH:MM no fuso BRT; se ja passou, amanha.
 //  - 'semanal': pega o proximo dia da semana em dias_semana.
-//  - 'mensal' : aproximacao identica a diaria mas com mes seguinte.
+//  - 'mensal' : dia do mes vem de data_unica (mesmo criterio do
+//               agendador nativo); mes corrente se ainda nao passou,
+//               senao o mes seguinte.
 function proximoDisparo(alarme: Alarme, agora: Date): string | null {
   if (!alarme.ativo) return null;
   const [hh, mm] = alarme.horario.split(':').map((s) => parseInt(s, 10));
@@ -141,12 +165,20 @@ function proximoDisparo(alarme: Alarme, agora: Date): string | null {
   }
 
   if (alarme.recorrencia === 'mensal') {
+    const dia = diaDoMesMensal(alarme);
     for (let offset = 0; offset < 2; offset++) {
       const p = partesLocaisBRT(agora);
       const mesAlvo = p.mes + offset;
       const anoAlvo = p.ano + (mesAlvo > 12 ? 1 : 0);
       const mesNorm = ((mesAlvo - 1) % 12) + 1;
-      const candidatoIso = isoLocalBRT(anoAlvo, mesNorm, p.dia, hh, mm);
+      // Mes curto: dia 31 nao existe em fevereiro. Pular e mais honesto
+      // que fazer clamp para o dia 28 (data que o usuario nao
+      // configurou) e que confiar no rollover do Date -- verificado em
+      // runtime: `new Date('2026-02-31T09:00:00-03:00')` NAO devolve
+      // Invalid Date, escorrega para 3 de marco e devolveria ao card a
+      // string de uma data inexistente.
+      if (dia > diasNoMes(anoAlvo, mesNorm)) continue;
+      const candidatoIso = isoLocalBRT(anoAlvo, mesNorm, dia, hh, mm);
       if (new Date(candidatoIso).getTime() >= agora.getTime()) {
         return candidatoIso;
       }
