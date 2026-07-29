@@ -90,6 +90,7 @@ import {
 //   - bootstrap* do gauntletBootstrap (require lazy guardado por
 //     __DEV__; Babel/Metro DCE elimina o branch em release).
 import { MODO_DEV_WEB } from '@/lib/dev/gauntletAtivo';
+import { devLog } from '@/lib/util/devLog';
 import {
   iniciarModoDev,
   sinalizarBootDev,
@@ -311,14 +312,14 @@ export default function RootLayout() {
         const r = await orquestrarHCAutopull(puxadores);
         const totalNovos = r.tipos.reduce((acc, t) => acc + t.novos, 0);
         const totalErros = r.tipos.filter((t) => t.erro !== null).length;
-        console.log('[hc-autopull]', 'wiring boot/foreground', {
+        devLog('[hc-autopull]', 'wiring boot/foreground', {
           rodadoEm: r.rodadoEm,
           totalNovos,
           totalErros,
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.log('[hc-autopull]', 'wiring erro', msg);
+        devLog('[hc-autopull]', 'wiring erro', msg);
       }
     }
 
@@ -382,7 +383,7 @@ export default function RootLayout() {
         const r = await orquestrarIntegracoes([integracao]);
         const totalNovos = r.integracoes.reduce((acc, i) => acc + i.novos, 0);
         const totalErros = r.integracoes.filter((i) => i.erro !== null).length;
-        console.log('[integracoes]', 'wiring boot/foreground', {
+        devLog('[integracoes]', 'wiring boot/foreground', {
           rodadoEm: r.rodadoEm,
           totalNovos,
           totalErros,
@@ -400,7 +401,7 @@ export default function RootLayout() {
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.log('[integracoes]', 'wiring erro', msg);
+        devLog('[integracoes]', 'wiring erro', msg);
       }
     }
 
