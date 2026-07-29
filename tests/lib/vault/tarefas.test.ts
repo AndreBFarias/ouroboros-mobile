@@ -16,7 +16,9 @@ const mockWriteAsString = jest.fn();
 const mockDeleteAsync = jest.fn();
 const mockMakeDir = jest.fn();
 const mockEscreverAlarme = jest.fn();
+const mockLerAlarme = jest.fn();
 const mockAgendarAlarme = jest.fn();
+const mockCancelarAlarme = jest.fn();
 
 jest.mock('@/lib/vault/reader', () => ({
   __esModule: true,
@@ -40,12 +42,15 @@ jest.mock('expo-file-system/legacy', () => ({
 jest.mock('@/lib/vault/alarmes', () => ({
   __esModule: true,
   escreverAlarme: (...args: unknown[]) => mockEscreverAlarme(...args),
+  lerAlarme: (...args: unknown[]) => mockLerAlarme(...args),
 }));
 jest.mock('@/lib/services/alarmesNotificacoes', () => ({
   __esModule: true,
   agendarAlarme: (...args: unknown[]) => mockAgendarAlarme(...args),
+  cancelarAlarme: (...args: unknown[]) => mockCancelarAlarme(...args),
 }));
 
+import type { Alarme } from '@/lib/schemas/alarme';
 import {
   listarTarefas,
   lerTarefa,
@@ -389,6 +394,198 @@ describe('marcarFeito', () => {
     await expect(
       marcarFeito(VAULT_ROOT, 'markdown/tarefa-inexistente.md', true)
     ).rejects.toThrow(/nao encontrada/);
+  });
+});
+
+// AUDIT-P1-3: concluir uma tarefa precisa desmontar o alarme
+// companion. Duas metades, ambas obrigatorias:
+//
+//  1. cancelarAlarme(slug) mata os schedules ja registrados no SO
+//     (senao a notificacao das 08:00 toca mesmo com a tarefa marcada
+//     as 07:00).
+//  2. companion .md gravado com ativo: false — senao reagendarAlarmes
+//     (BOOT_HOOKS) recria o schedule no proximo boot, porque so filtra
+//     por `alarme.ativo`.
+//
+// O bloco `alarme` da propria tarefa fica intacto de proposito:
+// preserva slug_vinculado e mantem a premissa da decisao S2 (reabrir
+// nao re-agenda; re-ativar exige edicao explicita do alarme).
+describe('marcarFeito - alarme companion (AUDIT-P1-3)', () => {
+  const REL_TAREFA = 'markdown/tarefa-tomar-remedio-1234.md';
+  const SLUG_COMPANION = 'tomar-remedio-1234-alarme';
+
+  function tarefaComAlarme(over: Partial<Tarefa> = {}): Tarefa {
+    return fixture({
+      titulo: 'Tomar remédio',
+      alarme: {
+        ativo: true,
+        data_hora_iso: '2026-04-29T08:00:00-03:00',
+        recorrencia: 'diaria',
+        slug_vinculado: SLUG_COMPANION,
+      },
+      ...over,
+    });
+  }
+
+  function companionAtivo(over: Partial<Alarme> = {}): Alarme {
+    return {
+      tipo: 'alarme',
+      slug: SLUG_COMPANION,
+      titulo: 'Tomar remédio',
+      horario: '08:00',
+      dias_semana: [],
+      recorrencia: 'diaria',
+      data_unica: '2026-04-29T08:00:00-03:00',
+      tag: 'outro',
+      som: 'gentle',
+      ativo: true,
+      snooze_minutos: 5,
+      criado_em: '2026-04-29T07:00:00+00:00',
+      ultimo_disparo: null,
+      notification_ids: [],
+      snooze_id: null,
+      historico_snoozes: [],
+      silenciar_sugestao_ate: null,
+      ...over,
+    };
+  }
+
+  // lerTarefa e o read de metaAntigo dentro de escreverTarefa batem no
+  // mesmo mock; roteamos por URI para servir os dois.
+  function cabearLeitura(tarefa: Tarefa): void {
+    mockReadVaultFile.mockImplementation((uri: string) =>
+      Promise.resolve(
+        uri.includes('/markdown/tarefa-') ? { meta: tarefa, body: '' } : null
+      )
+    );
+  }
+
+  beforeEach(() => {
+    mockWriteVaultFile.mockResolvedValue(undefined);
+    mockCancelarAlarme.mockResolvedValue(undefined);
+    mockLerAlarme.mockResolvedValue(companionAtivo());
+    mockEscreverAlarme.mockResolvedValue({
+      uri: `${VAULT_ROOT}/markdown/alarme-${SLUG_COMPANION}.md`,
+      rel: `markdown/alarme-${SLUG_COMPANION}.md`,
+    });
+  });
+
+  it('concluir tarefa cancela o alarme companion vinculado', async () => {
+    cabearLeitura(tarefaComAlarme());
+
+    const agora = new Date('2026-04-29T07:00:00-03:00');
+    const out = await marcarFeito(VAULT_ROOT, REL_TAREFA, true, agora);
+
+    expect(out.feito).toBe(true);
+    expect(mockCancelarAlarme).toHaveBeenCalledTimes(1);
+    expect(mockCancelarAlarme).toHaveBeenCalledWith(SLUG_COMPANION);
+  });
+
+  it('grava ativo: false no companion (boot nao ressuscita)', async () => {
+    cabearLeitura(tarefaComAlarme());
+
+    await marcarFeito(VAULT_ROOT, REL_TAREFA, true);
+
+    expect(mockLerAlarme).toHaveBeenCalledWith(VAULT_ROOT, SLUG_COMPANION);
+    expect(mockEscreverAlarme).toHaveBeenCalledTimes(1);
+    expect(mockEscreverAlarme).toHaveBeenCalledWith(
+      VAULT_ROOT,
+      expect.objectContaining({ slug: SLUG_COMPANION, ativo: false }),
+      ''
+    );
+  });
+
+  it('preserva o bloco alarme da tarefa (slug_vinculado intacto, S2)', async () => {
+    cabearLeitura(tarefaComAlarme());
+
+    const out = await marcarFeito(VAULT_ROOT, REL_TAREFA, true);
+
+    expect(out.alarme).toEqual({
+      ativo: true,
+      data_hora_iso: '2026-04-29T08:00:00-03:00',
+      recorrencia: 'diaria',
+      slug_vinculado: SLUG_COMPANION,
+    });
+  });
+
+  it('nao cancela nada quando a tarefa nao tem alarme vinculado', async () => {
+    cabearLeitura(fixture({ alarme: null }));
+
+    await marcarFeito(VAULT_ROOT, REL_TAREFA, true);
+
+    expect(mockCancelarAlarme).not.toHaveBeenCalled();
+    expect(mockLerAlarme).not.toHaveBeenCalled();
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('nao cancela quando o alarme existe mas sem slug_vinculado', async () => {
+    cabearLeitura(
+      fixture({
+        alarme: {
+          ativo: true,
+          data_hora_iso: '2026-04-29T08:00:00-03:00',
+          recorrencia: 'diaria',
+        },
+      })
+    );
+
+    await marcarFeito(VAULT_ROOT, REL_TAREFA, true);
+
+    expect(mockCancelarAlarme).not.toHaveBeenCalled();
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('desmarcar (feito: false) nao mexe no companion', async () => {
+    cabearLeitura(
+      tarefaComAlarme({ feito: true, feito_em: '2026-04-29T07:00:00-03:00' })
+    );
+
+    await marcarFeito(VAULT_ROOT, REL_TAREFA, false);
+
+    expect(mockCancelarAlarme).not.toHaveBeenCalled();
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('companion ausente no Vault: cancela schedules e nao escreve', async () => {
+    cabearLeitura(tarefaComAlarme());
+    mockLerAlarme.mockResolvedValueOnce(null);
+
+    await marcarFeito(VAULT_ROOT, REL_TAREFA, true);
+
+    expect(mockCancelarAlarme).toHaveBeenCalledWith(SLUG_COMPANION);
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('companion ja inativo: nao reescreve o .md', async () => {
+    cabearLeitura(tarefaComAlarme());
+    mockLerAlarme.mockResolvedValueOnce(companionAtivo({ ativo: false }));
+
+    await marcarFeito(VAULT_ROOT, REL_TAREFA, true);
+
+    expect(mockCancelarAlarme).toHaveBeenCalledWith(SLUG_COMPANION);
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('falha de cancelarAlarme nao propaga (tarefa ja persistida)', async () => {
+    cabearLeitura(tarefaComAlarme());
+    mockCancelarAlarme.mockRejectedValueOnce(new Error('sem permissao'));
+
+    await expect(
+      marcarFeito(VAULT_ROOT, REL_TAREFA, true)
+    ).resolves.toMatchObject({ feito: true });
+    expect(mockWriteVaultFile).toHaveBeenCalled();
+    // Desativacao do companion segue mesmo com o cancel falhando.
+    expect(mockEscreverAlarme).toHaveBeenCalledTimes(1);
+  });
+
+  it('falha ao desativar companion nao propaga', async () => {
+    cabearLeitura(tarefaComAlarme());
+    mockEscreverAlarme.mockRejectedValueOnce(new Error('SAF indisponivel'));
+
+    await expect(
+      marcarFeito(VAULT_ROOT, REL_TAREFA, true)
+    ).resolves.toMatchObject({ feito: true });
+    expect(mockCancelarAlarme).toHaveBeenCalledWith(SLUG_COMPANION);
   });
 });
 

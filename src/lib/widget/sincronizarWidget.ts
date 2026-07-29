@@ -166,7 +166,23 @@ export async function sincronizarCountPendentes(): Promise<void> {
 }
 
 // Boot hook wrapper. Drena fila + sincroniza count em uma chamada
-// idempotente. Plugado em BOOT_HOOKS (reagendamento.ts).
+// idempotente.
+//
+// Plugado em BOOT_HOOKS como ULTIMO hook da fila
+// (src/lib/boot/reagendamento.ts, wrapper sincronizarWidgetTodoHook):
+// depende do layout final do Vault (roda depois das migrations
+// migrarLayoutVault e migrarT2DeviceIdSuffix) e e I/O pesado que nao e
+// pre-requisito de ninguem. O registro so passou a existir na
+// AUDIT-P1-1A (2026-07-28) — antes disso este comentario afirmava o
+// registro que nunca tinha sido feito, e a fila nunca era drenada
+// automaticamente.
+//
+// A drenagem so tem efeito real em device Android: fora dele a bridge
+// nativa devolve null, lerFilaTodoWidget retorna [] e a funcao sai
+// cedo. Alem disso, hoje nada chega a fila em runtime porque o
+// RemoteInput do provider nativo nao esta anexado ao PendingIntent —
+// e a AUDIT-P1-1B. Este hook garante que o que ja esta enfileirado
+// (ou o que a 1B vier a enfileirar) nao morra no cacheDir.
 export async function sincronizarWidgetTodoBootHook(): Promise<void> {
   await drenarFilaTodoWidget();
   await sincronizarCountPendentes();

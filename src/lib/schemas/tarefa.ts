@@ -95,8 +95,11 @@ export type TarefaPessoaDestino = z.infer<typeof TarefaPessoaDestinoSchema>;
 // M31 v2: bloco de alarme vinculado. Quando ativo === true, o caller
 // cria um Alarme em alarmes/<slug-tarefa>-alarme.md ANTES de salvar a
 // tarefa, popula slug_vinculado e o wrapper alarmesNotificacoes agenda
-// o trigger nativo. Marcar tarefa como feita cancela o alarme (M30
-// idempotente via cancelarAlarme(slug_vinculado)).
+// o trigger nativo. Marcar a tarefa como feita desmonta esse alarme
+// (AUDIT-P1-3): marcarFeito cancela os schedules via
+// cancelarAlarme(slug_vinculado) e grava ativo: false no companion .md
+// para o boot não o ressuscitar. Este bloco aqui não muda ao concluir —
+// slug_vinculado segue válido para reedição do alarme.
 //
 // Recorrencia espelha o vocabulario do AlarmeSchema (M30) para reuso
 // direto sem mapper. data_hora_iso e o instante absoluto; recorrencia

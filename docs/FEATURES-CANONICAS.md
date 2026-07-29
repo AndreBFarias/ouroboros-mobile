@@ -883,7 +883,10 @@ do Recap. Rota: `/recap-memorias?de=…&ate=…`.
   esquerda + título; cor diferencia evento (purple/`Calendar`),
   alarme (cyan/`Bell`) e tarefa (green/`Check`). Devices sem OAuth
   conectado: graceful fallback mostrando apenas alarmes/tarefas,
-  sem mensagem de erro de auth (R-HOME-2).
+  sem mensagem de erro de auth (R-HOME-2). Um evento remarcado no
+  Google entra uma vez só: a cópia `.md` da data antiga é apagada
+  no sync (AUDIT-P1-4, detalhe em §13) — antes o mesmo compromisso
+  podia ocupar duas linhas da timeline, uma delas na data errada.
 - **Humor do dia** — mantida.
 - **Esta jornada** — substitui as duas listas separadas
   (Diário emocional + Eventos) por uma timeline cronológica única
@@ -927,6 +930,12 @@ R-HOME-3 (refinamento do checkbox de R-HOME-1):
 - **Strike-through** + cor `muted` no título quando feita.
 - **Persistência otimista**: UI atualiza antes do `marcarFeito`
   resolver no vault. Em erro, rollback automático + haptic erro.
+- **Marcar como feita desliga o alarme vinculado** (AUDIT-P1-3,
+  2026-07-28): `marcarFeito` cancela os disparos já agendados no
+  sistema e grava `ativo: false` no alarme companion. Antes disso,
+  concluir "Tomar remédio" às 07:00 não impedia a notificação das
+  08:00 — e, em recorrência diária, o disparo voltava a cada boot.
+  Reabrir a tarefa não religa o alarme (decisão S2).
 - **Toast "Desfazer" 5s** (`useToastUndo` em `src/lib/hooks/`)
   padrão Material Design. Tap reverte o estado e refaz o save.
   Só aparece quando o usuário marca como **feita** (reabrir
@@ -1120,7 +1129,12 @@ Dois ajustes achados pelo dono usando o app no celular:
 - **Pessoa destino** (M31): mim / outra / casal / terceiro (com
   nome).
 - **Alarme vinculado** opcional (cria companion em
-  `alarmes/<slug>-alarme.md`).
+  `alarmes/<slug>-alarme.md`). **Concluir a tarefa desmonta esse
+  alarme** (AUDIT-P1-3, 2026-07-28): os disparos agendados são
+  cancelados e o companion passa a `ativo: false`, de modo que o
+  reagendamento de boot não o ressuscita. O bloco `alarme` da tarefa
+  fica intacto (o vínculo continua válido para reedição); reativar
+  exige editar o alarme explicitamente (decisão S2).
 - Drag & drop reordering.
 - Busca por título.
 - **Aba Concluídas** collapsable (default colapsada se >5 itens).
@@ -1131,6 +1145,15 @@ Dois ajustes achados pelo dono usando o app no celular:
 
 - CRUD de contadores.
 - Reset preserva histórico (recorde + lista de resets).
+- **Contagem em dia civil local** (AUDIT-P1-2-DIASENTRE-FUSO,
+  2026-07-28): o número de dias e o recorde comparam o dia do
+  calendário no fuso do app (`America/Sao_Paulo`), não o dia UTC.
+  Antes, das 21:00 às 23:59 o card mostrava **+1 dia**; se a pessoa
+  resetasse nessa janela, o número inflado era gravado em `recorde` —
+  e recorde nunca decresce, então o erro ficava permanente. Uma rotina
+  one-shot de boot (`sanearRecordesContadores`) desconta a inflação dos
+  recordes já gravados, sem nunca reduzir um recorde que o histórico de
+  resets prove legítimo.
 - **Mensagens de apoio** sóbrias (M32) em 6 faixas: 0 / <5 / <30
   / <100 / <365 / ≥365 dias.
 - **Indicador de marcos** discreto: 5d / 30d / 100d / 365d
@@ -1186,13 +1209,54 @@ Dois ajustes achados pelo dono usando o app no celular:
     cacheDirectory (M15).
 - **Sobre**: versão, contribuidores anônimos, ADRs.
 
-## 12. Widget Homescreen Android — M20 (Tela 26)
+## 12. Widgets Homescreen Android
+
+São **dois** widgets independentes, no mesmo módulo Expo nativo
+(`modules/widget-homescreen/`), ambos sob o toggle
+`featureToggles.widgetHomescreen` (default ligado).
+
+### 12.1 Widget de humor — M20 (Tela 26)
 
 - Módulo Expo nativo (Glance JetPack).
 - 2 layouts: 4×2 (compacto) e 4×4 (expandido).
 - Mostra humor do dia + nome (configurável via
   `widgetMostraNome` toggle) + 1 alarme próximo.
 - Bridge JS → atualizar widget ao registrar humor.
+- Boot hook `atualizarWidgetHomescreenHook`: refresca o widget ao
+  abrir o app mesmo sem humor novo (rate-limit interno de 1 update
+  por minuto).
+
+### 12.2 Widget Quick To-do — R-WIDG-1 (dreno plugado na AUDIT-P1-1A)
+
+- Widget 4×2 separado, "Ouroboros tarefas": campo de texto para
+  escrever uma tarefa direto da tela inicial mais o **contador de
+  tarefas pendentes**.
+- **Fila de entrada**: o widget roda em processo de
+  `BroadcastReceiver` e não tem permissão SAF para escrever no Vault.
+  Ele só anexa a entry em `cacheDir/widget-todo-queue.json`; o
+  contador é lido de `cacheDir/widget-todo-count.json`, gravado pelo
+  JS.
+- **Drenagem no boot** (AUDIT-P1-1A, 2026-07-28):
+  `sincronizarWidgetTodoBootHook` é o **último** hook de
+  `BOOT_HOOKS` (`src/lib/boot/reagendamento.ts`). Converte cada entry
+  da fila em `Tarefa` real no Vault via `criarTarefa` e ressincroniza
+  o contador. Roda por último porque depende do layout final do Vault
+  (depois de `migrarLayoutVaultHook` e `migrarT2DeviceIdSuffixHook`),
+  depende de `vaultRoot`, e é I/O pesado que não é pré-requisito de
+  nenhum outro hook. Idempotente: fila vazia sai cedo e a fila é
+  limpa após o processamento, evitando replay.
+- **Tela `/widget-config`**: instruções de uso, toggle do widget e
+  dois botões de ação — "Sincronizar agora" (drena a fila na hora,
+  sem esperar o próximo boot) e "Atualizar contador". Não é a Android
+  Configuration Activity nativa, que foi deliberadamente pulada.
+- **Como chegar nela**: Settings → seção "Features opcionais" → linha
+  "Widget tarefas" (visível enquanto o toggle "Widget na tela
+  inicial" estiver ligado).
+- **Limite conhecido**: o `RemoteInput` do provider Kotlin é
+  construído e ainda não anexado ao `PendingIntent`, então em device
+  real a digitação no widget ainda não chega à fila — escopo da
+  sprint AUDIT-P1-1B. A drenagem já está garantida para tudo que
+  chegue à fila por qualquer caminho.
 
 ## 13. Calendário Google — M37.1 (entregue 2026-05-05) + M37.2 (entregue 2026-07-11)
 
@@ -1262,6 +1326,21 @@ Dois ajustes achados pelo dono usando o app no celular:
   zod (`AgendaEventoSchema`). Boot hook idempotente migra
   caches JSON legados de M37.1 para o novo formato. Sem
   mudança de UX.
+- **Remarcação não duplica o evento (AUDIT-P1-4, 2026-07-28)**:
+  o nome do arquivo embute a data, então mudar o dia de um
+  evento no Google muda o path do `.md`. Até esta sprint o
+  arquivo da data antiga sobrevivia — a etapa de remoção só
+  apaga ids ausentes do snapshot, e o id continua presente —,
+  e o compromisso aparecia duas vezes: uma na data certa e
+  outra na data que não existe mais. Agora
+  `sincronizarSnapshotAgenda` apaga todas as cópias do id
+  (`apagarEventoAgenda` varre por sufixo `-<id>.md`) antes de
+  gravar quando o path derivado muda ou quando o Vault já
+  carrega mais de um `.md` para o mesmo id. Vaults que já
+  acumularam a duplicata são saneados uma única vez por
+  instalação pelo boot hook `limparDuplicatasAgenda`
+  (flag `useSessao.flags.duplicatasAgendaLimpas`), que mantém
+  por id apenas o `.md` de `sincronizado_em` mais recente.
 - **Sub-sprints ainda abertas**:
   - M37.1.3 (bug-fix corretivo — mock dev-web de
     `calendarApi.listarEventos` para o fluxo "Conectar"
@@ -1389,6 +1468,33 @@ png/  jpg/  m4a/  mp4/  pdf/  gif/     # binários por extensão
 > Layout legado pré-H2 (por feature: `daily/`, `eventos/`, `media/fotos/`,
 > `inbox/...`) está sendo migrado automaticamente pelo boot hook
 > `migrarVaultLayoutPorTipo` no primeiro boot pós-update.
+
+### Migração de layout: falha parcial é visível e recuperável (AUDIT-P1-5)
+
+Todos os leitores do app varrem apenas `markdown/`. Um arquivo que falhe
+a cópia durante a migração e fique em `daily/`/`contadores/` **some do
+histórico, do Recap e das médias** — o dado continua íntegro no disco,
+mas nenhuma tela o enxerga.
+
+Até 2026-07-28 a flag `vaultLayoutMigrado` subia incondicionalmente ao
+fim da migração, inclusive quando arquivos falhavam, e a própria flag é
+o guard de entrada — nenhum boot futuro re-tentava. O registro sumia sem
+erro e sem log.
+
+Comportamento canônico atual:
+
+- A migração devolve `{ migrados, falhas, pathsFalhos }`. "Destino já
+  existia" conta como sucesso idempotente, não como falha.
+- `vaultLayoutMigrado` só é marcada quando `falhas === 0`. Com falha
+  parcial a flag permanece `false` e o próximo boot re-tenta — seguro,
+  porque destino existente nunca é sobrescrito.
+- As falhas são registradas por `devLog` (contagem e paths relativos,
+  nunca o conteúdo do arquivo), portanto só em `__DEV__`.
+- Vaults já afetados pela versão anterior passam por uma varredura
+  one-shot de recuperação (`recuperarOrfaosVaultLayout`), guardada pela
+  flag `vaultLayoutOrfaosVarridos`. Ela ignora `vaultLayoutMigrado`,
+  reexecuta os oito passos e resgata o que ficou para trás. Em Vault
+  sadio as pastas legadas estão vazias e a varredura é no-op.
 
 ## 17. Schemas YAML canônicos (19 ativos)
 

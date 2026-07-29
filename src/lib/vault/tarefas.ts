@@ -42,7 +42,7 @@ import { readVaultFiles } from '@/lib/vault/leituraLote';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { TarefaSchema, type Tarefa } from '@/lib/schemas/tarefa';
-import { escreverAlarme } from '@/lib/vault/alarmes';
+import { escreverAlarme, lerAlarme } from '@/lib/vault/alarmes';
 import {
   agendarAlarme,
   cancelarAlarme,
@@ -147,7 +147,9 @@ export async function lerTarefa(
 // (ativo: true -> false), cancela schedules sem regravar companion.
 // Operacao silenciosa em falha (mantem write da tarefa como source of
 // truth canonico, conforme decisao M31). marcarFeito/reabrirTarefa
-// passam por aqui mas nao mudam data_hora_iso -> branch inerte.
+// passam por aqui mas nao mudam data_hora_iso -> branch inerte; o
+// desmonte do alarme ao concluir vive no proprio marcarFeito
+// (AUDIT-P1-3).
 export async function escreverTarefa(
   vaultRoot: string,
   rel: string,
@@ -259,11 +261,13 @@ async function reagendarAlarmeCompanion(
 // por garantir que slug e unico (sufixo random recomendado).
 //
 // M31: branch alarme vinculado. Quando meta.alarme.ativo === true e
-// meta.alarme.data_hora_iso esta preenchido, monta um Alarme e o
+// meta.alarme.data_hora_iso está preenchido, monta um Alarme e o
 // persiste em alarmes/<slug>-alarme.md ANTES de gravar a tarefa,
-// agendando o trigger nativo via agendarAlarme. O slug_vinculado e
-// gravado dentro do meta.alarme da tarefa para cancelamento idempotente
-// posterior (marcarFeito futuro pode chamar cancelarAlarme(slug)).
+// agendando o trigger nativo via agendarAlarme. O slug_vinculado é
+// gravado dentro do meta.alarme da tarefa e é o que torna possível o
+// cancelamento idempotente na conclusão: marcarFeito chama
+// cancelarAlarme(slug_vinculado) e grava ativo: false no companion
+// (AUDIT-P1-3).
 //
 // Falha ao agendar/escrever alarme nao impede a criacao da tarefa: o
 // alarme companion fica como TODO (slug_vinculado preenchido mas sem
@@ -357,9 +361,54 @@ function construirAlarmeDeTarefa(meta: Tarefa, slug: string): Alarme | null {
   return parsed.success ? parsed.data : null;
 }
 
+// AUDIT-P1-3 (2026-07-28): desmonta o alarme companion de uma tarefa
+// recém-concluída. São duas metades e as duas são necessárias:
+//
+//   1. cancelarAlarme(slug) mata os schedules já registrados no SO.
+//      Sem isso a notificação das 08:00 toca mesmo com a tarefa
+//      marcada como feita às 07:00.
+//   2. companion .md regravado com ativo: false. Sem isso
+//      reagendarAlarmes (BOOT_HOOKS, alarmesNotificacoes) recria o
+//      schedule no próximo boot, porque a única condição que ele
+//      olha é `alarme.ativo`.
+//
+// Silencioso nas duas metades: quem chama já persistiu a tarefa e uma
+// falha aqui não pode derrubar a conclusão. Idempotente: cancelarAlarme
+// varre por prefixo de slug e a regravação é pulada quando o companion
+// já está inativo.
+//
+// O bloco `alarme` da própria tarefa fica intacto de propósito —
+// preserva slug_vinculado e sustenta a decisão S2 (reabrir não
+// re-agenda; re-ativar exige edição explícita do alarme).
+async function desativarAlarmeCompanion(
+  vaultRoot: string,
+  slug: string
+): Promise<void> {
+  try {
+    await cancelarAlarme(slug);
+  } catch {
+    // Ignora: o schedule pode nem existir (web, permissão negada).
+  }
+  try {
+    const companion = await lerAlarme(vaultRoot, slug);
+    if (companion && companion.ativo) {
+      await escreverAlarme(vaultRoot, { ...companion, ativo: false }, '');
+    }
+  } catch {
+    // Ignora: companion desatualizado é preferível a perder a
+    // conclusão da tarefa. Os schedules já foram cancelados acima.
+  }
+}
+
 // Marca tarefa como feita ou pendente, regravando o frontmatter.
 // Caller fornece path relativo e novo estado; meta atual e relido,
 // modificado e regravado. Operacao idempotente.
+//
+// AUDIT-P1-3 (2026-07-28): concluir (feito === true) uma tarefa com
+// alarme companion vinculado desmonta esse alarme via
+// desativarAlarmeCompanion — cancela os schedules no SO e grava
+// ativo: false no companion .md. Desmarcar (feito === false) não mexe
+// no companion: quem reabre não re-agenda (decisão S2).
 export async function marcarFeito(
   vaultRoot: string,
   rel: string,
@@ -376,6 +425,13 @@ export async function marcarFeito(
     feito_em: feito ? agora.toISOString() : null,
   };
   await escreverTarefa(vaultRoot, rel, atualizado);
+
+  // Depois da escrita: a tarefa é a entidade canônica e já está salva;
+  // o desmonte do alarme é efeito colateral silencioso.
+  const slugVinculado = atual.alarme?.slug_vinculado;
+  if (feito && slugVinculado) {
+    await desativarAlarmeCompanion(vaultRoot, slugVinculado);
+  }
   return atualizado;
 }
 
@@ -384,13 +440,14 @@ export async function marcarFeito(
 // (chamar em tarefa ja pendente nao quebra). Lanca quando a tarefa nao
 // existe (alinha com marcarFeito).
 //
-// S2 (M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR): nao re-agenda o alarme
-// companion ao reabrir. Quando o usuario reabre uma tarefa, o alarme
-// original ja foi cancelado por marcarFeito (decisao M30); a sprint S2
-// decidiu manter o companion cancelado e exigir edicao explicita do
-// alarme para re-ativar. Re-agendamento automatico em edicao de
-// data_hora_iso/recorrencia agora vive em escreverTarefa via
-// reagendarAlarmeCompanion.
+// S2 (M-AUDIT-MIGUE-TAREFA-ALARME-REAGENDAR): não re-agenda o alarme
+// companion ao reabrir. Quando o usuário reabre uma tarefa, o alarme
+// original já foi desmontado por marcarFeito — schedules cancelados no
+// SO e companion .md com ativo: false (AUDIT-P1-3 implementou o que
+// esta decisão já pressupunha). A sprint S2 decidiu manter o companion
+// cancelado e exigir edição explícita do alarme para re-ativar.
+// Re-agendamento automático em edição de data_hora_iso/recorrência
+// vive em escreverTarefa via reagendarAlarmeCompanion.
 export async function reabrirTarefa(
   vaultRoot: string,
   rel: string

@@ -58,6 +58,21 @@ beforeEach(() => {
   mockDeleteAsync.mockResolvedValue(undefined);
 });
 
+// AUDIT-P1-4: reconstitui o estado final da pasta a partir dos mocks.
+// Parte dos arquivos que existiam, tira os que deleteAsync apagou e
+// soma os que writeVaultFile gravou. Permite assertar "sobrou
+// exatamente 1 arquivo" em vez de so contar chamadas.
+function arquivosRestantes(iniciais: string[]): string[] {
+  const apagados = new Set(
+    mockDeleteAsync.mock.calls.map((c) => c[0] as string)
+  );
+  const restantes = new Set(iniciais.filter((u) => !apagados.has(u)));
+  for (const chamada of mockWriteVaultFile.mock.calls) {
+    restantes.add(chamada[0] as string);
+  }
+  return [...restantes].sort();
+}
+
 describe('AgendaEventoSchema', () => {
   it('aceita evento com 7 campos canonicos', () => {
     const r = AgendaEventoSchema.safeParse(eventoBase);
@@ -381,5 +396,124 @@ describe('sincronizarSnapshotAgenda', () => {
       TS_BASE
     );
     expect(r).toEqual({ adicionados: 1, atualizados: 1, removidos: 1 });
+  });
+
+  // AUDIT-P1-4: o path do .md embute a data (agendaEventoPath usa
+  // inicio.slice(0,10)). Evento remarcado no Google mantem o mesmo id,
+  // entao a etapa de remocao (que so olha ids ausentes do snapshot)
+  // nunca apagava o arquivo da data antiga -- duplicata permanente.
+  it('AUDIT-P1-4: evento remarcado para outro dia sobra exatamente 1 .md (na data nova)', async () => {
+    const PATH_ANTIGO =
+      'content://test/vault/markdown/agenda-pessoa_a-2026-08-03-ev_dentista.md';
+    const PATH_NOVO =
+      'content://test/vault/markdown/agenda-pessoa_a-2026-08-10-ev_dentista.md';
+    const noVault: AgendaEvento = {
+      ...eventoBase,
+      id: 'ev_dentista',
+      titulo: 'Dentista',
+      inicio: '2026-08-03T09:00:00-03:00',
+      fim: '2026-08-03T10:00:00-03:00',
+      sincronizado_em: '2026-05-04T20:00:00-03:00',
+    };
+    // Listagem 1: listarEventosAgenda interno do sincronizar.
+    mockListVaultFolder.mockResolvedValueOnce([PATH_ANTIGO]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: noVault, body: '' });
+    // Listagem 2: apagarEventoAgenda dirigido, antes de gravar o novo.
+    mockListVaultFolder.mockResolvedValueOnce([PATH_ANTIGO]);
+
+    const remarcado: AgendaEvento = {
+      ...noVault,
+      inicio: '2026-08-10T09:00:00-03:00',
+      fim: '2026-08-10T10:00:00-03:00',
+    };
+    const r = await sincronizarSnapshotAgenda(
+      VAULT_ROOT,
+      'pessoa_a',
+      [remarcado],
+      TS_BASE
+    );
+
+    expect(r).toEqual({ adicionados: 0, atualizados: 1, removidos: 0 });
+    expect(mockDeleteAsync).toHaveBeenCalledTimes(1);
+    expect(mockDeleteAsync).toHaveBeenCalledWith(PATH_ANTIGO);
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+    expect(arquivosRestantes([PATH_ANTIGO])).toEqual([PATH_NOVO]);
+  });
+
+  // AUDIT-P1-4: vault que ja carrega a duplicata (criada por syncs
+  // anteriores ao fix) colapsa no proximo snapshot, mesmo quando o
+  // evento recebido e identico ao registro mais recente -- o guard de
+  // idempotencia nao pode curto-circuitar enquanto houver 2 arquivos
+  // para o mesmo id.
+  it('AUDIT-P1-4: duplicata preexistente do mesmo id colapsa em 1 .md', async () => {
+    const PATH_ANTIGO =
+      'content://test/vault/markdown/agenda-pessoa_a-2026-08-03-ev_dentista.md';
+    const PATH_ATUAL =
+      'content://test/vault/markdown/agenda-pessoa_a-2026-08-10-ev_dentista.md';
+    const orfao: AgendaEvento = {
+      ...eventoBase,
+      id: 'ev_dentista',
+      titulo: 'Dentista',
+      inicio: '2026-08-03T09:00:00-03:00',
+      fim: '2026-08-03T10:00:00-03:00',
+      sincronizado_em: '2026-05-04T20:00:00-03:00',
+    };
+    const corrente: AgendaEvento = {
+      ...orfao,
+      inicio: '2026-08-10T09:00:00-03:00',
+      fim: '2026-08-10T10:00:00-03:00',
+      sincronizado_em: TS_BASE,
+    };
+    // Listagem 1: os dois .md do mesmo id (estado corrompido pre-fix).
+    mockListVaultFolder.mockResolvedValueOnce([PATH_ANTIGO, PATH_ATUAL]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: orfao, body: '' });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: corrente, body: '' });
+    // Listagem 2: apagarEventoAgenda varre por sufixo '-<id>.md'.
+    mockListVaultFolder.mockResolvedValueOnce([PATH_ANTIGO, PATH_ATUAL]);
+
+    const r = await sincronizarSnapshotAgenda(
+      VAULT_ROOT,
+      'pessoa_a',
+      [corrente],
+      TS_BASE
+    );
+
+    expect(r).toEqual({ adicionados: 0, atualizados: 1, removidos: 0 });
+    expect(mockDeleteAsync).toHaveBeenCalledTimes(2);
+    expect(mockWriteVaultFile).toHaveBeenCalledTimes(1);
+    expect(arquivosRestantes([PATH_ANTIGO, PATH_ATUAL])).toEqual([PATH_ATUAL]);
+  });
+
+  // AUDIT-P1-4: evento apagado no Google que tinha duplicata some
+  // inteiro e conta 1 removido (nao 2 -- apagarEventoAgenda ja varre
+  // todas as copias do id numa chamada so).
+  it('AUDIT-P1-4: evento removido remotamente com duplicata conta removidos=1', async () => {
+    const PATH_ANTIGO =
+      'content://test/vault/markdown/agenda-pessoa_a-2026-08-03-ev_dentista.md';
+    const PATH_ATUAL =
+      'content://test/vault/markdown/agenda-pessoa_a-2026-08-10-ev_dentista.md';
+    const orfao: AgendaEvento = {
+      ...eventoBase,
+      id: 'ev_dentista',
+      inicio: '2026-08-03T09:00:00-03:00',
+      fim: '2026-08-03T10:00:00-03:00',
+      sincronizado_em: '2026-05-04T20:00:00-03:00',
+    };
+    const corrente: AgendaEvento = {
+      ...orfao,
+      inicio: '2026-08-10T09:00:00-03:00',
+      fim: '2026-08-10T10:00:00-03:00',
+      sincronizado_em: '2026-05-04T20:00:00-03:00',
+    };
+    mockListVaultFolder.mockResolvedValueOnce([PATH_ANTIGO, PATH_ATUAL]);
+    mockReadVaultFile.mockResolvedValueOnce({ meta: orfao, body: '' });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: corrente, body: '' });
+    mockListVaultFolder.mockResolvedValueOnce([PATH_ANTIGO, PATH_ATUAL]);
+
+    const r = await sincronizarSnapshotAgenda(VAULT_ROOT, 'pessoa_a', [], TS_BASE);
+
+    expect(r).toEqual({ adicionados: 0, atualizados: 0, removidos: 1 });
+    expect(mockDeleteAsync).toHaveBeenCalledTimes(2);
+    expect(arquivosRestantes([PATH_ANTIGO, PATH_ATUAL])).toEqual([]);
   });
 });

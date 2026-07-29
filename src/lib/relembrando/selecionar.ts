@@ -16,8 +16,15 @@
 //
 // Sobre `hoje`: espera-se um Date cujos campos de calendario UTC
 // representem o "hoje" no fuso do app (o hook passa o Date ajustado a
-// BRT). Isso casa com diasEntre, que trunca ambos os lados por dia UTC
-// e portanto compara os YYYY-MM-DD reais das strings do Vault.
+// BRT). O modulo reduz esse Date a YYYY-MM-DD UMA vez (ymdDeHoje) e
+// compara sempre string-contra-string com as datas do Vault.
+//
+// AUDIT-P1-2-DIASENTRE-FUSO (2026-07-28): diasEntre passou a converter
+// Date para dia civil local via Intl. Como o `hoje` daqui JA vem
+// deslocado -180min pelo hook, passar o Date direto aplicaria o
+// deslocamento duas vezes (entre 00:00 e 02:59 BRT cairia no dia
+// anterior). Passamos o YMD ja derivado, que diasEntre aceita
+// inalterado -- resultado bit-a-bit igual ao anterior.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { diasEntre } from '@/lib/util/diasEntre';
@@ -104,12 +111,16 @@ export function selecionarRelembranca(
   hoje: Date,
   limiarDias: number = LIMIAR_DIAS
 ): Relembranca | null {
+  // YMD de hoje derivado uma unica vez: alimenta a idade, a efeméride e
+  // a semente de rotacao (ver nota AUDIT-P1-2 no topo do arquivo).
+  const hojeYmd = ymdDeHoje(hoje);
+
   // 1. Normaliza idade e filtra por limiar.
   const filtrados: CandidatoComIdade[] = [];
   for (const c of candidatos) {
     let idade: number;
     try {
-      idade = diasEntre(c.data, hoje);
+      idade = diasEntre(c.data, hojeYmd);
     } catch {
       // Data malformada: descarta em silencio (mesmo espirito dos
       // listadores do Vault, que ignoram registros invalidos).
@@ -123,7 +134,7 @@ export function selecionarRelembranca(
 
   // 2. Efeméride (prioridade maxima): mesmo mes/dia de hoje + idade
   //    suficiente. Vence o mais antigo (maior idade).
-  const hojeMd = mesDiaDe(ymdDeHoje(hoje));
+  const hojeMd = mesDiaDe(hojeYmd);
   if (hojeMd) {
     let efemeride: CandidatoComIdade | null = null;
     for (const c of filtrados) {
@@ -147,7 +158,7 @@ export function selecionarRelembranca(
     if (a.data !== b.data) return a.data < b.data ? 1 : -1;
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
-  const seed = hashDia(ymdDeHoje(hoje));
+  const seed = hashDia(hojeYmd);
   const escolhido = pool[seed % pool.length];
   return montar(escolhido, false);
 }

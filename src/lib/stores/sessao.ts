@@ -86,7 +86,14 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //     agenda/<pessoa>/ (M37.1.2, ADR-0019).
 //   - vaultLayoutMigrado (H2 ADR-0023): indica se a rotina ja migrou
 //     o Vault do layout legado por feature (daily/, eventos/, etc.)
-//     para o layout-por-tipo (markdown/, jpg/, m4a/, etc.).
+//     para o layout-por-tipo (markdown/, jpg/, m4a/, etc.). Desde
+//     AUDIT-P1-5 so sobe quando a migracao termina SEM falhas.
+//   - vaultLayoutOrfaosVarridos (AUDIT-P1-5 2026-07-28): indica se a
+//     varredura one-shot de recuperacao ja rodou. Ate AUDIT-P1-5 a flag
+//     vaultLayoutMigrado subia mesmo com arquivos que falharam a copia,
+//     deixando orfaos no layout legado que nenhum leitor enxerga (todos
+//     varrem markdown/). Como vaultLayoutMigrado ja esta true nesses
+//     Vaults, a recuperacao precisa de flag propria para rodar uma vez.
 //   - t2DeviceIdSuffixMigrado (T2-LOCK-VAULT 2026-05-15): indica se a
 //     rotina ja renomeou arquivos canonicos (.md sem suffix de
 //     deviceId) para a forma '-<deviceIdAtual>.md'. Pos-T2 todos os
@@ -97,12 +104,26 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //     canonicos (settings, sessao, onboarding, pessoa, navegacao) em
 //     vault/_estado/. Pos-migration, subscribers de cada store mantem
 //     o vault atualizado.
+//   - duplicatasAgendaLimpas (AUDIT-P1-4 2026-07-28): indica se a rotina
+//     one-shot ja colapsou os .md duplicados de agenda (mesmo id em
+//     datas diferentes) deixados por eventos remarcados no Google antes
+//     do fix de sincronizarSnapshotAgenda. Default false DE PROPOSITO:
+//     sao exatamente as instalacoes que podem carregar a duplicata.
+//   - recordesContadoresSaneados (AUDIT-P1-2-DIASENTRE-FUSO 2026-07-28):
+//     indica se a rotina one-shot ja corrigiu os `recorde` de contador
+//     inflados em +1 dia pelo truncamento UTC antigo de diasEntre. NAO
+//     e idempotente por construcao (reaplicar subtrairia mais um dia de
+//     um recorde ja correto), entao a flag e o unico guarda -- por isso
+//     ela sobe mesmo quando nenhum arquivo precisou de correcao.
 export interface FlagsBootState {
   canalV1Deletado: boolean;
   cacheAgendaMigrado: boolean;
   vaultLayoutMigrado: boolean;
   t2DeviceIdSuffixMigrado: boolean;
   estadoMigradoParaVault: boolean;
+  vaultLayoutOrfaosVarridos: boolean;
+  recordesContadoresSaneados: boolean;
+  duplicatasAgendaLimpas: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -147,6 +168,9 @@ const FLAGS_VAZIAS: FlagsBootState = {
   vaultLayoutMigrado: false,
   t2DeviceIdSuffixMigrado: false,
   estadoMigradoParaVault: false,
+  vaultLayoutOrfaosVarridos: false,
+  recordesContadoresSaneados: false,
+  duplicatasAgendaLimpas: false,
 };
 
 const DEFAULT_STATE: Omit<
@@ -285,7 +309,7 @@ export const useSessao = create<SessaoState>()(
       // /saude-fisica; /(tabs) -> /). Sprint L1 renomeou /memoria
       // para /saude-fisica; ultimaRota=/memoria persistido pre-L1
       // e' migrado abaixo na v3.
-      version: 5,
+      version: 8,
       migrate: (state: any, version: number) => {
         if (version < 2 && state && typeof state.ultimaRota === 'string') {
           if (state.ultimaRota.startsWith('/(tabs)/')) {
@@ -333,6 +357,43 @@ export const useSessao = create<SessaoState>()(
           state.flags.estadoMigradoParaVault === undefined
         ) {
           state.flags.estadoMigradoParaVault = false;
+        }
+        // AUDIT-P1-5 (2026-07-28): garante vaultLayoutOrfaosVarridos em
+        // estados pre-AUDIT-P1-5. Default false DE PROPOSITO: sao
+        // exatamente as instalacoes que podem ter orfaos no layout
+        // legado, e a varredura de recuperacao precisa rodar uma vez.
+        if (
+          version < 6 &&
+          state &&
+          state.flags &&
+          state.flags.vaultLayoutOrfaosVarridos === undefined
+        ) {
+          state.flags.vaultLayoutOrfaosVarridos = false;
+        }
+        // AUDIT-P1-2-DIASENTRE-FUSO (2026-07-28): garante
+        // recordesContadoresSaneados em estados anteriores. Default
+        // false DE PROPOSITO: sao exatamente as instalacoes que podem
+        // ter recorde inflado pelo truncamento UTC antigo, e o
+        // saneamento precisa rodar uma vez.
+        if (
+          version < 7 &&
+          state &&
+          state.flags &&
+          state.flags.recordesContadoresSaneados === undefined
+        ) {
+          state.flags.recordesContadoresSaneados = false;
+        }
+        // AUDIT-P1-4 (2026-07-28): garante duplicatasAgendaLimpas em
+        // estados anteriores. Default false DE PROPOSITO: sao exatamente
+        // as instalacoes cujos eventos remarcados no Google podem ter
+        // deixado .md orfao na data antiga.
+        if (
+          version < 8 &&
+          state &&
+          state.flags &&
+          state.flags.duplicatasAgendaLimpas === undefined
+        ) {
+          state.flags.duplicatasAgendaLimpas = false;
         }
         return state;
       },

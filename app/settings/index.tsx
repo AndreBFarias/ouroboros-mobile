@@ -307,6 +307,7 @@ function RadioPessoa({ label, ativa, onPress, cor }: RadioPessoaProps) {
 // Widget. Defaults TRUE para o app nascer cheio.
 
 function SecaoFeatures() {
+  const router = useRouter();
   const featureToggles = useSettings((s) => s.featureToggles);
   const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
 
@@ -353,13 +354,29 @@ function SecaoFeatures() {
         a11y="toggle widget homescreen"
       />
       {featureToggles.widgetHomescreen ? (
-        <ToggleRow
-          label="Mostrar nome no widget"
-          subtitulo="Por padrão, o widget mostra apenas a inicial."
-          valor={featureToggles.widgetMostraNome}
-          onChange={(v) => setFeatureToggle('widgetMostraNome', v)}
-          a11y="toggle widget mostra nome"
-        />
+        <>
+          <ToggleRow
+            label="Mostrar nome no widget"
+            subtitulo="Por padrão, o widget mostra apenas a inicial."
+            valor={featureToggles.widgetMostraNome}
+            onChange={(v) => setFeatureToggle('widgetMostraNome', v)}
+            a11y="toggle widget mostra nome"
+          />
+          {/* AUDIT-P1-1A (2026-07-28): unico ponto de entrada do app
+              para /widget-config, a tela do widget de tarefas. A rota
+              existia desde a R-WIDG-1 mas era orfa — nenhuma tela
+              navegava para ela, embora o comentario do proprio
+              app/widget-config.tsx ja descrevesse este item aqui.
+              Condicionado ao toggle widgetHomescreen, como o item
+              acima: quem desliga o widget perde o link, e o proprio
+              toggle continua na secao para religar. */}
+          <LinkSubTela
+            titulo="Widget tarefas"
+            subtitulo="Instruções de uso e sincronização manual da fila."
+            onPress={() => router.push('/widget-config')}
+            accessibilityLabel="widget tarefas"
+          />
+        </>
       ) : null}
       <ToggleRow
         label="Mostrar finanças em desenvolvimento"

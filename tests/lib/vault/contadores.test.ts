@@ -294,6 +294,36 @@ describe('registrarReset', () => {
     expect(out.recorde).toBe(8);
   });
 
+  // AUDIT-P1-2-DIASENTRE-FUSO (2026-07-28): reset dentro da janela
+  // 21:00-23:59 BRT. Antes, diasEntre truncava `agora` pelo dia UTC
+  // (que ja tinha virado) e gravava 8 em `recorde`; como recorde nunca
+  // decresce (Math.max), a inflacao ficava permanente e a pessoa
+  // passava a precisar de 9 dias reais para "bater" um recorde que
+  // nunca fez.
+  it('nao infla recorde em reset na janela 21:00-23:59 BRT', async () => {
+    const atual = fixture({
+      inicio: '2026-07-20',
+      recorde: 0,
+      resets: [],
+    });
+    mockReadVaultFile.mockResolvedValueOnce({ meta: atual, body: '' });
+    mockWriteVaultFile.mockResolvedValueOnce(undefined);
+
+    // 2026-07-28T01:30Z = 2026-07-27 22:30 BRT (dia UTC ja e 28).
+    const agora = new Date('2026-07-28T01:30:00Z');
+    const out = await registrarReset(VAULT_ROOT, 'sem-cigarro', agora);
+
+    // 20/07 -> 27/07 em dia civil local = 7 dias (nao 8).
+    expect(out.recorde).toBe(7);
+    // Inicio volta para o dia civil BRT do reset, nao para o dia UTC.
+    expect(out.inicio).toBe('2026-07-27');
+    expect(mockWriteVaultFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ recorde: 7, inicio: '2026-07-27' }),
+      ''
+    );
+  });
+
   it('lanca quando contador nao existe', async () => {
     // T2: lerContador tenta suffix e canonico; ambos null.
     mockReadVaultFile.mockResolvedValue(null);

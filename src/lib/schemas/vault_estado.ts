@@ -151,6 +151,16 @@ export const EstadoSessaoSchema = z.object({
     vaultLayoutMigrado: z.boolean(),
     t2DeviceIdSuffixMigrado: z.boolean(),
     estadoMigradoParaVault: z.boolean(),
+    // AUDIT-P1-5 (2026-07-28): varredura one-shot que recupera orfaos
+    // deixados pela migracao de layout. Optional para tolerar arquivos
+    // espelhados antes desta sprint (sessao ja persistida em devices
+    // reais); ausente equivale a false.
+    vaultLayoutOrfaosVarridos: z.boolean().optional(),
+    // AUDIT-P1-4 (2026-07-28): limpeza one-shot das duplicatas de agenda
+    // (mesmo id em datas diferentes). Optional pelo mesmo motivo acima:
+    // sessoes espelhadas antes desta sprint nao carregam a chave, e
+    // ausente equivale a false.
+    duplicatasAgendaLimpas: z.boolean().optional(),
   }),
   atualizadoEm: IsoDatetime,
 });

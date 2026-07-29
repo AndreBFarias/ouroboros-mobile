@@ -57,6 +57,10 @@ import { useDeepLinkListener } from '@/lib/boot/deepLink';
 import { useShareIntentListener } from '@/lib/boot/useShareIntentListener';
 import { BiometriaGate } from '@/lib/boot/biometriaGate';
 import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
+// AUDIT-P1-4: import de side-effect. O modulo se registra em BOOT_HOOKS
+// (padrao do cabecalho de reagendamento.ts) e precisa ser carregado
+// antes do RootLayout montar para entrar na rodada de boot.
+import '@/lib/boot/limparDuplicatasAgenda';
 import { useAppPronto } from '@/lib/boot/useAppPronto';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { pedirPermissao as pedirPermissaoNotificacao } from '@/lib/services/alarmesNotificacoes';
@@ -233,6 +237,21 @@ export default function RootLayout() {
     if (!appPronto) return;
     void import('@/lib/boot/migrarEstadoParaVault').then(
       ({ migrarEstadoParaVault }) => migrarEstadoParaVault()
+    );
+  }, [appPronto]);
+
+  // AUDIT-P1-2-DIASENTRE-FUSO (2026-07-28): rotina one-shot que desfaz
+  // o +1 dia que o truncamento UTC antigo de diasEntre gravou em
+  // `recorde` de contador (dano permanente: Math.max nunca decresce).
+  // Mesma janela do migrarEstadoParaVault -- precisa das stores
+  // hidratadas para ler a flag one-shot do SecureStore. Fire-and-forget:
+  // nao bloqueia render. vaultRoot lido lazy (getState) para pegar o
+  // valor ja restaurado. Sem vaultRoot, no-op.
+  useEffect(() => {
+    if (!appPronto) return;
+    void import('@/lib/boot/sanearRecordesContadores').then(
+      ({ sanearRecordesContadores }) =>
+        sanearRecordesContadores(useVault.getState().vaultRoot ?? '')
     );
   }, [appPronto]);
 

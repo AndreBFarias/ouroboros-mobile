@@ -207,11 +207,17 @@ export async function sincronizarSnapshotAgenda(
   eventos: AgendaEvento[],
   sincronizadoEm: string
 ): Promise<SincronizacaoResultado> {
-  // Indexa estado atual por id antes de mexer.
+  // Indexa estado atual por id antes de mexer. Alem do registro mais
+  // recente de cada id, conta quantos .md existem por id: como o nome
+  // do arquivo embute a data (agendaEventoPath), um mesmo id pode ter
+  // sobrado em mais de uma data (duplicata herdada de syncs anteriores
+  // ao AUDIT-P1-4).
   const atual = await listarEventosAgenda(vaultRoot, pessoa);
   const atualPorId = new Map<string, AgendaEvento>();
+  const arquivosPorId = new Map<string, number>();
   for (const ev of atual) {
     atualPorId.set(ev.id, ev);
+    arquivosPorId.set(ev.id, (arquivosPorId.get(ev.id) ?? 0) + 1);
   }
 
   let adicionados = 0;
@@ -230,9 +236,26 @@ export async function sincronizarSnapshotAgenda(
       adicionados += 1;
       continue;
     }
-    if (eventosIguais(existente, evComTs)) {
-      // Idempotencia: ja existe e e identico. Nao reescreve.
+    // AUDIT-P1-4: o path deriva de inicio, entao remarcar o evento
+    // muda o nome do arquivo. Sem apagar antes de gravar, o .md da
+    // data antiga fica orfao para sempre: a etapa de remocao abaixo so
+    // olha ids ausentes do snapshot, e este id continua presente.
+    // Mesmo tratamento quando o Vault ja carrega mais de um .md para o
+    // id (duplicata criada antes deste fix). apagarEventoAgenda varre
+    // por sufixo '-<id>.md', entao limpa todas as copias numa passada,
+    // independente da data no nome.
+    const idSeguro = sanitizarEventoId(ev.id);
+    const pathMudou =
+      agendaEventoPath(pessoa, existente.inicio, idSeguro) !==
+      agendaEventoPath(pessoa, evComTs.inicio, idSeguro);
+    const duplicado = (arquivosPorId.get(ev.id) ?? 1) > 1;
+    if (!pathMudou && !duplicado && eventosIguais(existente, evComTs)) {
+      // Idempotencia: ja existe, e identico e ocupa um arquivo so.
+      // Nao reescreve.
       continue;
+    }
+    if (pathMudou || duplicado) {
+      await apagarEventoAgenda(vaultRoot, pessoa, ev.id);
     }
     await salvarEventoAgenda(vaultRoot, evComTs);
     atualizados += 1;
@@ -240,11 +263,17 @@ export async function sincronizarSnapshotAgenda(
 
   // Remove eventos cujo sincronizado_em e menor que o snapshot.
   // (Equivalente a: ids do Vault que nao chegaram no snapshot novo.)
+  // idsRemovidos evita repetir a varredura e contar duas vezes quando o
+  // mesmo id aparece em mais de um arquivo (AUDIT-P1-4): uma chamada de
+  // apagarEventoAgenda ja apaga todas as copias daquele id.
   let removidos = 0;
+  const idsRemovidos = new Set<string>();
   for (const ev of atual) {
     if (idsRecebidos.has(ev.id)) continue;
+    if (idsRemovidos.has(ev.id)) continue;
     if (ev.sincronizado_em < sincronizadoEm) {
       await apagarEventoAgenda(vaultRoot, pessoa, ev.id);
+      idsRemovidos.add(ev.id);
       removidos += 1;
     }
   }

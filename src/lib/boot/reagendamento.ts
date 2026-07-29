@@ -2,13 +2,26 @@
 // idempotente no início do app faz `BOOT_HOOKS.push(suaFuncao)` em
 // seu proprio modulo (CONTRACT seções 1.7 e 5.4).
 //
-// Lista canonica plugada (5 hooks):
-//   - M11 migrarDraftsParaTreinoSessao (sempre, idempotente)
-//   - M11 verificarMarcosAuto (uma vez por dia)
-//   - M16 reagendarAlarmes (sempre, idempotente)
-//   - M17 limparLixeiraExpirada (uma vez por dia)
-//   - M20 atualizarWidgetHomescreen (sempre, com rate-limit interno)
-//   - M15 reagendarLembretes (sempre, idempotente)
+// Lista canonica plugada (16 hooks), na ordem real do BOOT_HOOKS.push
+// no fim deste arquivo. Manter esta lista sincronizada com o push: o
+// cabecalho ficou defasado ate a AUDIT-P1-1A (dizia "5 hooks" e
+// enumerava 6, com 15 registrados de fato).
+//   1.  M11 migrarDraftsParaTreinoSessao (sempre, idempotente)
+//   2.  M11 verificarMarcosAuto (uma vez por dia)
+//   3.  M30 migrarLembretesParaAlarmes (uma vez, antes do reagendar)
+//   4.  M30 apagarChannelsLegadosUmaVez (uma vez por instalacao)
+//   5.  M16 reagendarAlarmes (sempre, idempotente)
+//   6.  M17 limparLixeiraExpirada (uma vez por dia)
+//   7.  M20 atualizarWidgetHomescreen (sempre, com rate-limit interno)
+//   8.  M15 reagendarLembretes (sempre, idempotente)
+//   9.  M39 migrarAssetsLegacyParaMedia (idempotente, depende de vault)
+//   10. M37.1.2 migrarCacheAgendaJsonParaMd (uma vez por instalacao)
+//   11. H2/ADR-0023 migrarVaultLayoutPorTipo (uma vez por instalacao)
+//   12. AUDIT-T2 migrarArquivosCanonicosParaDeviceId (uma vez)
+//   13. M38 atualizarDeviceIndex (sempre, idempotente)
+//   14. AUDIT-T1-BUGS B1 limparArquivosWritingOrfaos (sempre)
+//   15. V4.0.2 reconciliarTipoCompanhia (sempre, so stores em memoria)
+//   16. AUDIT-P1-1A sincronizarWidgetTodoBootHook (sempre, idempotente)
 //
 // Em M00.5 a lista comeca vazia. O orquestrador roda cada hook em
 // sequência, isolando erros: falha de um não trava os demais.
@@ -218,6 +231,30 @@ const reconciliarTipoCompanhiaHook: BootHook = async () => {
   }
 };
 
+// AUDIT-P1-1A (2026-07-28): drena a fila do widget Quick To-do
+// (R-WIDG-1). O widget roda em processo de BroadcastReceiver e so tem
+// permissao para escrever em cacheDir/widget-todo-queue.json; quem
+// converte cada entry em Tarefa real no Vault e este hook. Ate esta
+// sprint o wrapper existia sem nenhum call site: a fila nunca era
+// drenada automaticamente e o cacheDir e apagado pelo Android sob
+// pressao de armazenamento, entao entry enfileirada virava perda
+// silenciosa de dado.
+//
+// Escopo honesto: isto fecha a camada JS. Hoje, em device real, nada
+// chega a fila porque o RemoteInput do provider nativo e construido e
+// nunca anexado ao PendingIntent — corrigido na AUDIT-P1-1B. O ganho
+// aqui e nao perder o que ja esta enfileirado (devices com o widget
+// instalado antes de alpha-14) e destravar a 1B, que sem este dreno
+// continuaria escrevendo num cacheDir que ninguem le.
+//
+// Idempotente: fila vazia sai cedo, e limparFilaTodoWidget evita
+// replay. Em web/iOS a bridge nativa devolve null e vira no-op.
+const sincronizarWidgetTodoHook: BootHook = async () => {
+  const { sincronizarWidgetTodoBootHook } =
+    await import('@/lib/widget/sincronizarWidget');
+  await sincronizarWidgetTodoBootHook();
+};
+
 BOOT_HOOKS.push(
   migrarDraftsHook,
   marcosAutoHook,
@@ -259,5 +296,22 @@ BOOT_HOOKS.push(
   // V4.0.2: reconcilia tipoCompanhia entre useOnboarding e useSettings.
   // Sem dependencia de I/O (so toca stores em memoria), entao roda por
   // ultimo sem afetar arranque. Idempotente.
-  reconciliarTipoCompanhiaHook
+  reconciliarTipoCompanhiaHook,
+  // AUDIT-P1-1A: drena a fila do widget Quick To-do. Por ultimo, por
+  // tres razoes:
+  //   1. Depende do layout final do Vault. drenarFilaTodoWidget grava
+  //      via criarTarefa e sincronizarCountPendentes le via
+  //      listarTarefas, que varre MARKDOWN_FOLDER. Precisa rodar DEPOIS
+  //      de migrarLayoutVaultHook (consolida tudo em markdown/) e de
+  //      migrarT2DeviceIdSuffixHook (renomeia canonicos para
+  //      -<deviceId>.md); antes disso a tarefa nasceria no meio de uma
+  //      reorganizacao e o count sairia de uma varredura que ainda vai
+  //      mudar.
+  //   2. Depende de vaultRoot, como migrarAssetsHook, migrarCacheAgenda
+  //      e atualizarDeviceIndex — todos ja na metade final da lista.
+  //   3. E I/O pesado (listVaultFolder + readVaultFiles do diretorio
+  //      inteiro) e nao e pre-requisito de ninguem: mesmo argumento que
+  //      este arquivo ja usa para migrarAssetsHook, seu custo nao deve
+  //      atrasar o arranque interativo do app.
+  sincronizarWidgetTodoHook
 );
