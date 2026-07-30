@@ -312,39 +312,38 @@ fácil de esquecer (regressão recorrente entre alphas 10-12).
 Agora o workflow é idempotente:
 
 1. **Ensure release exists (draft if new)** — se a release já
-   existe, reusa. Senão, cria como **draft** com notas extraídas
-   do `CHANGELOG.md` via `scripts/extract-changelog-section.sh`,
-   apontando para o SHA da tag.
+   existe, reusa. Senão, cria como **draft** apontando para o SHA
+   da tag. As notas saíam de `CHANGELOG.md` via
+   `scripts/extract-changelog-section.sh`; esse arquivo foi
+   descontinuado (ver nota abaixo) e o workflow passou a tolerar a
+   ausência dele, criando a release sem notas automáticas.
 2. **Attach APK to release on tag** — anexa o `.apk` à release
    (existente ou draft criado no passo 1).
 3. **Publish release (remove draft)** — se a release estava em
    draft, marca como `--draft=false`. Idempotente: no-op se já
    estava publicada.
 
-### Notas auto-extraídas do CHANGELOG
+### Notas de release — CHANGELOG descontinuado (2026-07-29)
 
-`scripts/extract-changelog-section.sh` extrai a **primeira seção
-`### `** do CHANGELOG (sem incluir o cabeçalho `## [Unreleased]`),
-parando no segundo `### ` ou EOF. Exemplo:
-
-```bash
-./scripts/extract-changelog-section.sh CHANGELOG.md
-# imprime em stdout:
-#   ### Fase 3 Onda 3D.3 — R-NAV-3-V2 ... (2026-05-17)
-#   <conteúdo da seção>
-```
-
-Exit codes:
-- `0` sucesso (conteúdo em stdout, log em stderr).
-- `1` arquivo não encontrado.
-- `2` nenhum cabeçalho `### ` encontrado.
+> **Decisão do dono, 2026-07-29.** `CHANGELOG.md` e `ROADMAP.md` foram
+> removidos da árvore pública no scrub de 2026-07-12 e ficam
+> **formalmente descontinuados**. O rastreamento de trabalho vive em
+> `docs/sprints/`; manter um CHANGELOG paralelo criaria duas fontes de
+> verdade divergentes. As versões anteriores dos dois arquivos seguem
+> preservadas para consulta histórica fora da árvore pública.
+>
+> Consequências práticas:
+> - `scripts/extract-changelog-section.sh` não tem mais entrada; o
+>   workflow `build-android-apk.yml` já trata a ausência do arquivo
+>   (`if [ -f CHANGELOG.md ]`) e segue sem notas automáticas.
+> - As notas de cada release passam a ser escritas à mão no corpo da
+>   release do GitHub, ou derivadas dos `docs/sprints/` daquele ciclo.
 
 ### Fluxo de release recomendado
 
 ```bash
-# 1. Garanta que o CHANGELOG.md tenha como primeira ### a seção
-#    da versão que está prestes a ser lançada. As entradas anteriores
-#    continuam abaixo, intocadas.
+# 1. Escreva as notas da versão direto no corpo da release do GitHub
+#    (ou derive-as dos specs de docs/sprints/ entregues no ciclo).
 
 # 2. Crie e empurre a tag — o workflow faz o resto:
 VERSION=v1.0.0-alpha-13

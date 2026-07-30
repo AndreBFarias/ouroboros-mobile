@@ -10,6 +10,9 @@ ORIGEM:     achado [P3-4] da auditoria de 2026-07-28. Partiu de um grep por
             "e2e|playwright" em `.github/workflows/` que não retorna nada,
             cruzado com a contagem de arquivos de caso e com a mensagem literal
             do commit de merge que registra o baseline vermelho.
+DECISAO:    (dono, 2026-07-29) estratégia confirmada: subconjunto smoke nos PRs
+            e suíte completa em cron noturno. Rodar a suíte inteira em todo PR,
+            como manda o texto de R-CI-E2E-WEB-b, fica descartado.
 ```
 
 ## Problema (ativo de teste caro, obrigatório por regra, e inerte)
@@ -106,7 +109,10 @@ válido e deve ser seguido, com uma revisão de escopo (abaixo).
 
 O escopo de `R-CI-E2E-WEB-b` como escrito manda rodar a suíte inteira
 em todo PR e push. Isso não é viável no custo atual (ver
-§Dimensionamento). Esta sprint o revisa para **duas velocidades**:
+§Dimensionamento). Decisão do dono, 2026-07-29: esta sprint o revisa
+para **duas velocidades** — subconjunto smoke nos PRs, suíte completa em
+cron noturno. A variante "suíte inteira em todo PR" está descartada e
+não é uma escolha do passo 0 da execução:
 
 1. **Subconjunto smoke em PR.** Criar
    `tests/e2e/harness/e2e-smoke.json` — lista explícita de nomes de

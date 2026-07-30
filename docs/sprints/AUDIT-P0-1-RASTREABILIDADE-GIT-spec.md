@@ -11,6 +11,10 @@ ORIGEM:     achado [P0-1] da auditoria de 2026-07-28. Verificado por comparaçã
             `git rev-list --count` (main, --all, --branches, --remotes),
             `git ls-remote --heads origin`, `git branch --no-merged main` e
             leitura literal de STATE.md:188-189 contra o remoto real.
+DECISAO:    (dono, 2026-07-29) `ROADMAP.md` e `CHANGELOG.md` ficam
+            descontinuados (opção B do item 4 do Escopo); as 4 branches foram
+            preservadas via bundle git anexado a release de repositório
+            privado — não por push ao remoto público — e isso já foi executado.
 ```
 
 ## Problema (rastreabilidade quebrada em três frentes)
@@ -108,15 +112,15 @@ os dois ausentes.
 
 ## Escopo (mínimo)
 
-1. Empurrar as 4 branches locais não mescladas para o remoto, como estão,
-   sem squash nem rebase: `git push origin backup-pre-sdk56 r-audit-ci-gates
-   scrub-staging sdk56-experiment`. Alternativa equivalente, se o dono
-   preferir não poluir a lista de branches do GitHub: criar tags anotadas de
-   arquivo (`git tag arquivo/backup-pre-sdk56 backup-pre-sdk56` etc.) e
-   empurrar só as tags (`git push origin --tags`). As duas variantes cumprem
-   o mesmo objetivo (nenhum commit fica acessível só neste disco); a escolha
-   entre branch remota e tag de arquivo fica para o dono decidir no passo 0
-   da execução — este spec não escolhe por ele.
+1. **Já executado — decisão do dono, 2026-07-29.** As 4 branches locais não
+   mescladas (`backup-pre-sdk56`, `r-audit-ci-gates`, `scrub-staging`,
+   `sdk56-experiment`) foram preservadas como **bundle git anexado a uma
+   release de repositório privado**, como estão, sem squash nem rebase. O push
+   ao remoto público ficou descartado porque republicaria material que o scrub
+   de 12/07 removeu por compliance; a variante de tag anotada pública cai pelo
+   mesmo motivo. Objetivo cumprido: nenhum commit fica acessível só neste
+   disco. O executor desta sprint não repete o passo — apenas confirma que o
+   bundle está anexado à release privada antes de seguir para o item 2.
 2. `git add docs/sprints/` (caminho explícito, não `-A` global) e commit dos
    418 specs, incluindo os 406 soltos. Antes de commitar, confirmar que
    nenhum arquivo novo carrega dado sensível — a auditoria já confirmou zero
@@ -124,27 +128,25 @@ os dois ausentes.
    confere de novo especificamente em `docs/sprints/` (`git diff --cached
    docs/sprints/ | grep -iE "client_secret|AIza|senha|password"` como
    sanity-check antes do commit).
-3. Corrigir `STATE.md:188-189`: depois do passo 1, reescrever a frase para
-   descrever o estado real (branches empurradas como refs de arquivo, ou
-   substituídas por tags — conforme a escolha do dono). Se por algum motivo
-   o dono decidir não empurrar nenhuma branch, a linha não pode continuar
-   afirmando "preservadas no remoto" — nesse caso, reescrever para o estado
-   real ("preservadas só localmente, risco assumido").
-4. Decisão do dono sobre `ROADMAP.md`/`CHANGELOG.md` — apresentar as duas
-   opções, sem escolher por ele:
-   - **Opção A (recriar).** `git show r-audit-ci-gates:ROADMAP.md >
-     ROADMAP.md` e `git show r-audit-ci-gates:CHANGELOG.md > CHANGELOG.md`
-     (as versões de 2026-07-11, um dia antes do scrub, as mais completas
-     das três branches candidatas). Revisar o que ficou desatualizado desde
-     então (a onda `R-BRAND-SYSTEM` e as sprints `AUDIT-*` não estão lá) e
-     commitar como ponto de partida, não como verdade absoluta do presente.
-   - **Opção B (descontinuar formalmente).** Declarar os dois arquivos
-     obsoletos por decisão do dono, e atualizar `HOW_TO_RESUME.md` (as 7
-     linhas citadas acima) e qualquer outra referência viva em `STATE.md`
-     para não apontar mais para arquivos que não existem — documentando o
-     motivo do abandono no próprio `HOW_TO_RESUME.md`.
-   Este spec materializa as duas alternativas; a escolha é do dono no passo
-   0 da execução.
+3. Corrigir `STATE.md:188-189`: a frase "preservadas no remoto" está errada e
+   passa a descrever o estado real — as duas branches citadas ali, e as outras
+   duas, estão preservadas em bundle git anexado a release de repositório
+   privado, não como refs no remoto público. A linha não pode continuar
+   afirmando o que `git ls-remote --heads origin` contradiz.
+4. `ROADMAP.md` e `CHANGELOG.md` ficam **descontinuados** — decisão do dono,
+   2026-07-29. Motivo registrado: o rastreamento do projeto vive hoje em
+   `docs/sprints/`, e a sprint `AUDIT-P3-5` reaponta o detector de fantasmas
+   para lá; restaurar as ~8.500 linhas desatualizadas das versões de
+   2026-07-11 criaria duas fontes de verdade concorrentes. Os dois arquivos
+   seguem preservados no bundle do arquivo privado do item 1, para consulta
+   histórica. Trabalho desta sprint:
+   - atualizar `HOW_TO_RESUME.md` (linhas 63, 163, 170-172, 197, 255, 402,
+     450-451) e qualquer outra referência viva em `STATE.md` para não apontar
+     mais para arquivos que não existem, documentando no próprio
+     `HOW_TO_RESUME.md` o motivo da descontinuação e onde consultar o
+     histórico;
+   - **não** recriar os arquivos a partir de `r-audit-ci-gates` nem de
+     qualquer outra branch. Recriar está descartado.
 5. NÃO-objetivo: reescrever o histórico de `main` (sem rebase/squash/
    force-push em `main`); mesclar `backup-pre-sdk56`/`r-audit-ci-gates`/
    `scrub-staging`/`sdk56-experiment` em `main` (esta sprint só evita que
@@ -156,11 +158,15 @@ os dois ausentes.
 ## Proof-of-work
 
 ```bash
+# Item 1 ja executado: as 4 branches estao no bundle git anexado a release do
+# repositorio privado. A evidencia e' aquela release, nao o remoto publico.
 git ls-remote --heads origin | grep -cE "backup-pre-sdk56|r-audit-ci-gates|scrub-staging|sdk56-experiment"
-# 4 apos o push (ou 0 se o dono optar pela variante de tags — nesse caso
-# checar `git ls-remote --tags origin | grep -c arquivo/` = 4)
+# 0 esperado no remoto publico — resultado correto, nao falha
 
-git ls-files docs/sprints/ | grep -c '\.md$'      # 418 (ou o total resultante da decisao do passo 4)
+git ls-files docs/sprints/ | grep -c '\.md$'      # 418
+
+ls ROADMAP.md CHANGELOG.md 2>&1                   # segue ausente (descontinuados)
+grep -rn "ROADMAP.md\|CHANGELOG.md" HOW_TO_RESUME.md   # so' em texto que explica a descontinuacao
 diff <(ls docs/sprints/*.md | sort) <(git ls-files docs/sprints/ | grep '\.md$' | sort)   # vazio
 git status --short docs/sprints/                  # nada untracked remanescente
 

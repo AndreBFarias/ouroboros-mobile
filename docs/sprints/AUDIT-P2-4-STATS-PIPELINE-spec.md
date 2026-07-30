@@ -10,6 +10,9 @@ ORIGEM:     achados [P2-4] / [NI-04] da auditoria de 2026-07-28. Encontrado por 
             `main @ b5bf2db`, com uma correção relevante ao enquadramento original: a
             auditoria classificou o pipeline como "sem quem consumiria o resultado". A
             verificação encontrou consumidores declarados — ver §Ligar ou remover.
+DECISAO:    (dono, 2026-07-29) LIGAR o pipeline, confirmando a recomendação do
+            spec. Os 4 arquivos `_estado/stats-*.md` são contrato declarado com
+            o repositório irmão; a hipótese de remoção fica descartada.
 ```
 
 ## Problema (gatilho ausente num pipeline com contrato publicado)
@@ -85,7 +88,7 @@ neste repositório. O propósito declarado do read-model
 (`R-VAULT-CANONICAL-COMPLETE-B-spec.md:22-25`) é permitir que o ETL leia séries
 históricas sem reagregar o Vault inteiro.
 
-**Recomendação: LIGAR.**
+**Recomendação: LIGAR. Decisão do dono, 2026-07-29: LIGAR — confirmada.**
 
 Justificativa: remover exigiria reverter dois documentos canônicos de contrato
 (`CONTRACT-MOBILE-BACKEND.md`, `SCHEMA-VAULT-ESTADO.md`), o schema
@@ -95,12 +98,15 @@ unilateralmente um contrato acordado com outro repositório. O custo de ligar é
 o custo de remover é uma renegociação de contrato mais 468 linhas testadas jogadas fora.
 
 Ressalva honesta que precisa ficar registrada: **nenhuma tela do app lê esses arquivos.**
-O benefício é inteiramente para o consumo externo. Se o dono decidir que o ETL do desktop
-não vai mais consumir stats pré-agregadas, a recomendação se inverte para remover — e aí
-esta sprint deve ser substituída por uma de limpeza que toque também os dois documentos
-de contrato. A decisão é do dono e antecede a execução.
+O benefício é inteiramente para o consumo externo — e o dono decidiu em 2026-07-29 que
+esse benefício basta, porque o contrato com o repositório irmão está declarado nos dois
+documentos canônicos e vale. A hipótese de remover os 4 arquivos e renegociar o contrato
+está encerrada; não é mais uma bifurcação desta sprint.
 
 ## Escopo (mínimo)
+
+Decisão do dono (2026-07-29): **ligar**. O que segue aberto é apenas o ponto de disparo
+(item 1), não o "se".
 
 1. Escolher **um** ponto de disparo e implementá-lo. Duas opções, com o tradeoff explícito:
    - **(a) Um `BootHook` + chamada pós-save nos writers de vault.** Chamar

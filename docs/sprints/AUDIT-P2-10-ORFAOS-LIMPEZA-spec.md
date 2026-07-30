@@ -4,13 +4,19 @@
 STATUS:     materializada 2026-07-28 (achado da auditoria de 2026-07-28)
 PRIORIDADE: baixa (nenhum item causa defeito ao usuário hoje; o custo é de manutenção e
             de ruído em auditorias futuras)
-DEPENDE:    nenhuma. Dois itens têm bloqueio de decisão do dono antes da execução —
-            ver §5.2 (FiltrosBar) e §5.3 (OuroborosLogo)
+DEPENDE:    nenhuma. O bloqueio de decisão do dono que existia em §5.2 (FiltrosBar) e
+            §5.3 (OuroborosLogo) está resolvido — ver o campo DECISAO. Sprint liberada.
 ORIGEM:     achados soltos de [P2] / [NI-09] / [NI-10] / [NI-11] / [NI-13] da auditoria de
             2026-07-28. Reverificados um a um nesta materialização em `main @ b5bf2db`.
             Dois deles não sobreviveram à verificação: `OuroborosLogo` é trabalho em curso
             e os componentes de Finanças têm preservação declarada em spec. Ambos viram
             NÃO-objetivo explícito abaixo.
+DECISAO:    (dono, 2026-07-29) REMOVER os três órfãos com substituto nomeado —
+            `FotoDetalhe.tsx` (120L), `calendario/Timeline.tsx` (57L) e
+            `app/em-construcao.tsx` (45L), 222 linhas. `FiltrosBar.tsx` **sai desta
+            sprint**: é a opção (B) do §5.2 e passa a ser escopo de
+            `AUDIT-P2-11-FILTROSBAR-RECAP`. `OuroborosLogo` e os 4 componentes de
+            Finanças seguem NÃO-objetivo, sem alteração.
 ```
 
 ## Problema (código morto confirmado, com dois falsos alvos)
@@ -49,32 +55,73 @@ const renderItem = ({ item }: { item: ItemGaleria }) => (
 );
 ```
 
-`app/galeria/detalhe/[slug].tsx` (223 linhas) é rota real, alcançável também por
+**Substituto nomeado: `app/galeria/detalhe/[slug].tsx`** (223 linhas). É rota real —
+deep-linkável, com histórico de navegação — alcançável também por
 `src/lib/recap/destinos.ts:51` e `app/recap-lista.tsx:232`. Cobre a mesma intenção
-(detalhe de um item da galeria) com mais informação (frontmatter completo). Manter duas
-implementações concorrentes do mesmo gesto é o que produz divergência.
+(detalhe de um item da galeria) com **mais** informação: frontmatter completo, contra só
+metadata no sheet. Manter duas implementações concorrentes do mesmo gesto é o que produz
+divergência.
+
+**Quando e por que órfãou** (arqueologia de 2026-07-29, não estava no achado original):
+o componente **perdeu o consumidor**, não foi abandonado. Commit `5684b16`, 2026-05-07
+(*"l1 memorias-para-saude-fisica + 3 abas + fotos sai exercicios entra"*) deletou
+`src/components/screens/MemoriasFotosTab.tsx`, e era **o** único consumidor:
+
+```
+$ git show 5684b16^:src/components/screens/MemoriasFotosTab.tsx | grep -n FotoDetalhe
+3:// abre FotoDetalhe com metadata + atalho para registro origem.
+40:import { FotoDetalhe } from './FotoDetalhe';
+231:          <FotoDetalhe
+```
+
+A aba Fotos foi extinta; ninguém removeu o `FotoDetalhe` junto. Reforço para a execução:
+os dois botões do sheet apontam para rotas `/(tabs)/...` que **não existem** desde M27, ou
+seja, mesmo remontado hoje o componente navegaria para o vazio.
 
 Ressalva honesta: o tipo `FotoAgregada` de `src/lib/hooks/useFotosAgregadas.ts` **é**
 amplamente usado (galeria, saúde física, medidas) e não sai junto. Só o componente sai.
 
-### 5.2 `src/components/calendario/` (290 linhas) — REMOVER, com decisão do dono antes
+### 5.2 `src/components/calendario/Timeline.tsx` (57 linhas) — REMOVER
 
-| Arquivo | Linhas | Evidência |
-|---|---:|---|
-| `src/components/calendario/FiltrosBar.tsx` | 233 | `grep -rn "\bFiltrosBar\b" src app tests` → 1 hit, **comentário** em `src/lib/stores/filtroEfetivo.ts:42`. Zero imports. |
-| `src/components/calendario/Timeline.tsx` | 57 | `grep -rn "import.*Timeline\|<Timeline" src app tests` → **0 hits**. |
+| Arquivo | Linhas | Evidência | Destino |
+|---|---:|---|---|
+| `src/components/calendario/Timeline.tsx` | 57 | `grep -rn "import.*Timeline\|<Timeline" src app tests` → **0 hits**. | **sai nesta sprint** |
+| `src/components/calendario/FiltrosBar.tsx` | 233 | `grep -rn "\bFiltrosBar\b" src app tests` → 1 hit externo, **comentário** em `src/lib/stores/filtroEfetivo.ts:42`. Zero imports. | **fica** — `AUDIT-P2-11` |
 
-Zero cobertura em `tests/`. Não existe `src/components/calendario/index.ts`.
+Zero cobertura em `tests/` para os dois (não existe `tests/components/calendario/`). Não
+existe `src/components/calendario/index.ts`, logo não há re-export por barril. O diretório
+**continua existindo** depois desta sprint, com o `FiltrosBar.tsx` dentro.
 
 Contexto: são resíduo do ADR-0021 (`docs/ADRs/0021-recap-calendario-unificado.md`,
-Aceito, 2026-05-07), que unificou Recap e Calendário. `docs/FEATURES-CANONICAS.md:854-859`
-registra que o `CalendarioConquistasScreen` foi removido e que *"a `<Timeline>`
-horizontal foi substituída pela visão calendário mensal + lista vertical do dia
-selecionado"*.
+Aceito, 2026-05-07), que unificou Recap e Calendário.
 
-- **`Timeline.tsx`** — substituição declarada em documento canônico. Remoção sem ressalva.
-- **`FiltrosBar.tsx`** — remoção sela um efeito colateral que precisa ser decidido, não
-  herdado.
+**`Timeline.tsx` — substituto nomeado em documento canônico.** É o único dos órfãos desta
+varredura cuja substituição está declarada por escrito na fonte de verdade funcional do
+projeto. `docs/FEATURES-CANONICAS.md:876-885` (§8, nota histórica do ADR-0021), literal:
+
+> O componente legacy `CalendarioConquistasScreen` foi removido. A `<Timeline>`
+> horizontal foi substituída pela visão calendário mensal + lista vertical do dia
+> selecionado.
+
+Concretamente, o substituto é **`src/components/screens/RecapModoCalendario.tsx`**: os dots
+roxos no grid mensal fazem o papel de panorama do período, e a lista vertical do dia
+selecionado (`:187-188`) faz o papel de leitura item a item — **mesmo `<ConquistaCard>`**
+que a `<Timeline>` usava, **mesma fonte de dados** (`useConquistas`).
+Trocou-se scroll horizontal por seleção de dia mais scroll vertical. Não é esquecimento: é
+decisão registrada de que a representação vertical venceu. **Remoção sem ressalva.**
+
+Nota de valor residual, para ler antes de apagar (não é argumento para manter): a lógica de
+stagger de `Timeline.tsx:22-36` é um cálculo bem comentado de teto de 600 ms com piso de
+30 ms por card, abandonando o piso acima de 20 itens. Se outra lista do app precisar de
+stagger com teto, vale reler este arquivo no histórico antes de reinventar.
+
+**`FiltrosBar.tsx` — decisão do dono de 2026-07-29: não sai desta sprint.** Escolhida a
+opção **(B)** descrita abaixo. A barra é preservada e passa a ser montada dentro do modo
+Calendário do Recap pela sprint **`AUDIT-P2-11-FILTROSBAR-RECAP`**, com um subconjunto dos
+filtros. Consequência direta: **nada de `src/lib/hooks/useConquistas.ts` e de
+`src/lib/conquistas/filtros.ts` é tocado aqui** — os cinco setters e os cinco
+`filtrarPorX` continuam como estão, porque passam a ter consumidor real na sprint seguinte.
+A subseção a seguir fica como registro do que motivou a decisão.
 
 #### O efeito colateral: 5 filtros de conquista sem controle de usuário
 
@@ -109,10 +156,27 @@ Duas saídas, e a escolha é do dono:
   usuário o controle dos filtros. Deixa de ser limpeza e vira feature — sprint própria,
   fora desta.
 
-**Recomendação: (A) REMOVER**, porque manter UI construída e desmontada "por precaução" é
-precisamente o mecanismo que gerou este catálogo. Mas a remoção fecha uma porta de
-produto, então **exige confirmação explícita do dono registrada antes da execução**. Sem
-essa confirmação, executar apenas a remoção de `Timeline.tsx`.
+**Recomendação original desta spec: (A) REMOVER**, porque manter UI construída e desmontada
+"por precaução" é precisamente o mecanismo que gerou este catálogo. Registrada aqui porque
+a recomendação era de **higiene**, sob esse critério.
+
+**Decidido pelo dono em 2026-07-29: (B).** O eixo da decisão mudou — o dono quer a
+capacidade de volta, e nesse eixo a higiene deixa de ser o critério dominante. Sustentação
+por escrito, que a recomendação (A) teria descartado:
+
+- `ADR-0021:86-94` **adiou**, não matou: *"a exposição visual desses filtros no novo modo
+  fica documentada como melhoria futura (não bloqueia v1.0.0). O hook continua expondo os
+  setters; uma sprint subsequente pode adicionar uma `<FiltrosBar>` embutida sem mexer no
+  shape do hook."*
+- `ADR-0021:111-114` reconhece a perda como **temporária**: *"usuário que dependia dos
+  filtros perde-os temporariamente. Mitigação: os filtros voltam em sprint futura, agora
+  embutidos no Recap."*
+- `docs/FEATURES-CANONICAS.md:697-698` repete o compromisso: *"os 5 filtros M11.5 ficam no
+  estado, exposição visual embutida volta em sprint subsequente"*.
+
+Ou seja: a intenção nunca foi revogada, só nunca foi materializada em spec. A sprint
+prometida agora existe — **`AUDIT-P2-11-FILTROSBAR-RECAP`** — e é lá que o item vive. Esta
+sprint não toca `FiltrosBar.tsx`.
 
 ### 5.3 `OuroborosLogo` — PRESERVAR (trabalho em curso, NÃO-objetivo)
 
@@ -190,52 +254,69 @@ app/em-construcao.tsx:17:export default function EmConstrucao() {
 Um hit em todo o repositório: a própria declaração. Zero `router.push`, zero `<Link href>`,
 zero `?sprint=` montado, zero teste.
 
-O contrato que a criou está em `docs/sprints/INTEGRATION-CONTRACT.md` §5.2 ("Rota órfã"),
-e descreve um padrão de navegação por abas (`app/(tabs)/_layout.tsx`,
-`app/(tabs)/em-construcao.tsx`) que não corresponde mais à estrutura de rotas do app. O
-cabeçalho do próprio arquivo (`app/em-construcao.tsx:1-6`) diz que ele *"permanece como
-fallback generico para deep link manual"* — mas nenhum deep link do app o produz, e um
-deep link digitado à mão para uma rota que não existe já cai em `+not-found`.
+O contrato que a criou está em `docs/sprints/INTEGRATION-CONTRACT.md` §5.2 ("Rota órfã",
+`:472` em diante), e descreve um padrão de navegação por abas — *"stub default em
+`app/(tabs)/em-construcao.tsx` (criado em M00.5)"*, `:483-484` — para garantir que
+*"toda rota declarada no navigator tem destino renderizável"*. Não era feature: era
+dispositivo de integração, andaime para o usuário não tocar numa aba e crashar o app.
+
+**Substituto nomeado: `+not-found`**, o fallback nativo do Expo Router. E o pressuposto do
+contrato não existe mais: a estrutura `(tabs)` foi **dissolvida no M27** (`5db8c3e`,
+2026-05-03, que trocou bottom tabs por menu lateral e no caminho moveu o arquivo de
+`app/(tabs)/em-construcao.tsx` para `app/em-construcao.tsx`). Não há navigator com rota
+declarada apontando para o vazio, então o problema que o stub resolvia **deixou de
+ocorrer**.
+
+O cabeçalho do próprio arquivo (`app/em-construcao.tsx:1-6`) se auto-preserva — *"permanece
+como fallback generico para deep link manual"* — mas a auto-preservação não se sustenta
+porque **não há emissor**: zero `router.push`, zero `<Link href>`, zero `?sprint=` montado
+em todo o repositório, e um deep link digitado à mão para rota inexistente já cai em
+`+not-found`.
 
 **Recomendação: REMOVER.** É código morto por sucesso: todas as sprints que apontariam
-para cá fecharam. A auto-preservação declarada no comentário não se sustenta porque não
-há emissor de deep link.
+para cá fecharam. Reativá-lo exigiria primeiro **recriar** o problema que ele resolve. Se
+algum dia o padrão voltar a ser necessário, reescrever 45 linhas triviais é mais barato que
+carregar um stub morto e reexplicá-lo em cada auditoria.
 
 ## Ligar ou remover — resumo
 
-| Item | Recomendação | Verificação |
-|---|---|---|
-| 5.1 `FotoDetalhe.tsx` | **REMOVER** | confirmou o achado |
-| 5.2 `calendario/Timeline.tsx` | **REMOVER** | confirmou o achado |
-| 5.2 `calendario/FiltrosBar.tsx` | **REMOVER**, após decisão do dono sobre os 5 filtros | confirmou o achado e o efeito colateral |
-| 5.3 `OuroborosLogo` | **PRESERVAR** — NÃO-objetivo | **desmentiu**: trabalho ativo em `r-brand-system` |
-| 5.4 Componentes de Finanças | **PRESERVAR** — NÃO-objetivo | **desmentiu**: M35 proíbe apagar, por escrito |
-| 5.5 `app/em-construcao.tsx` | **REMOVER** | confirmou o achado |
+| Item | Linhas | Decisão do dono (2026-07-29) | Substituto nomeado |
+|---|---:|---|---|
+| 5.1 `FotoDetalhe.tsx` | 120 | **REMOVER** | `app/galeria/detalhe/[slug].tsx` |
+| 5.2 `calendario/Timeline.tsx` | 57 | **REMOVER** | `RecapModoCalendario.tsx` (calendário mensal + lista vertical), declarado em `FEATURES-CANONICAS.md:876-885` |
+| 5.5 `app/em-construcao.tsx` | 45 | **REMOVER** | `+not-found`; problema extinto com a dissolução de `(tabs)` no M27 |
+| | **222** | total que sai desta sprint | |
+| 5.2 `calendario/FiltrosBar.tsx` | 233 | **PRESERVAR** — opção (B) | vira feature: `AUDIT-P2-11-FILTROSBAR-RECAP` |
+| 5.3 `OuroborosLogo` | — | **PRESERVAR** — NÃO-objetivo | trabalho ativo em `R-BRAND-9` |
+| 5.4 Componentes de Finanças | 486 | **PRESERVAR** — NÃO-objetivo | M35 proíbe apagar, por escrito |
 
 ## Escopo (mínimo)
 
-1. Deletar `src/components/screens/FotoDetalhe.tsx`.
-2. Deletar `src/components/calendario/Timeline.tsx`.
-3. Deletar `app/em-construcao.tsx` e a referência obsoleta em
-   `docs/sprints/INTEGRATION-CONTRACT.md` §5.2, ou marcar a seção como histórica.
-4. **Bloqueio humano:** obter e registrar a decisão do dono sobre os cinco filtros de
-   conquista (§5.2, opções A e B) antes de tocar `FiltrosBar.tsx`. Se A, deletar
-   `FiltrosBar.tsx` e, no mesmo commit, remover os setters não usados de
-   `src/lib/hooks/useConquistas.ts:132-150` e **despublicar** (remover o `export`, sem
-   apagar a função) os cinco filtros individuais de `src/lib/conquistas/filtros.ts`, que
-   continuam necessários internamente a `aplicarFiltros` mas não têm consumidor externo
-   além dos testes — ajustando `tests/lib/conquistas/filtros.test.ts` para exercitá-los
-   pela superfície pública `aplicarFiltros`. Se B, esta sprint não toca `FiltrosBar.tsx`
-   e o item vira sprint de feature própria.
-5. Atualizar `docs/FEATURES-CANONICAS.md`: §8 (nota do ADR-0021) registra a remoção do
-   resíduo `src/components/calendario/`; registrar também que a rota `/em-construcao`
-   deixou de existir.
+1. Deletar `src/components/screens/FotoDetalhe.tsx` (120 linhas).
+2. Deletar `src/components/calendario/Timeline.tsx` (57 linhas). O diretório
+   `src/components/calendario/` **permanece**, com o `FiltrosBar.tsx` dentro.
+3. Deletar `app/em-construcao.tsx` (45 linhas) e marcar
+   `docs/sprints/INTEGRATION-CONTRACT.md` §5.2 (`:472` em diante) como **histórica** —
+   preferível a apagar, porque o contrato tem valor documental sobre por que o padrão
+   existiu; sem isso a seção passa a descrever um arquivo inexistente e uma estrutura
+   `app/(tabs)/` que não existe desde o M27.
+4. **NÃO tocar `src/components/calendario/FiltrosBar.tsx`** — bloqueio resolvido pela
+   decisão do dono de 2026-07-29 (opção B, §5.2). Por consequência, **não** remover os
+   setters de `src/lib/hooks/useConquistas.ts` (definições em `:122-145`, reexport no
+   objeto de retorno em `:154-159`) e **não** despublicar os cinco `filtrarPorX` de
+   `src/lib/conquistas/filtros.ts` (`:48`, `:77`, `:108`, `:117`, `:131`): todos passam a
+   ter consumidor real em `AUDIT-P2-11-FILTROSBAR-RECAP`. Mexer neles aqui criaria
+   trabalho a desfazer na sprint seguinte.
+5. Atualizar `docs/FEATURES-CANONICAS.md`: §8 (nota histórica do ADR-0021, `:876-885`)
+   registra a remoção do resíduo `Timeline.tsx` e que a exposição dos filtros passou a ter
+   sprint própria; registrar também que a rota `/em-construcao` deixou de existir.
 6. Caso E2E em `tests/e2e/playwright/audit-p2-10-orfaos-limpeza.e2e.ts`, copiado de
    `tests/e2e/playwright/e2e-template.ts`. Assert de comportamento: as rotas e telas que
    permanecem continuam navegáveis após a remoção — galeria abre detalhe de item, Recap
    abre no modo Calendário, Configurações renderiza inteira. O E2E aqui existe para provar
    que a remoção não levou vizinho junto, que é o único risco real desta sprint.
-7. NÃO-objetivo: `OuroborosLogo` e o diretório `src/components/brand/` (§5.3).
+7. NÃO-objetivo: `OuroborosLogo` e o diretório `src/components/brand/` (§5.3), e
+   `src/components/calendario/FiltrosBar.tsx` (§5.2, item 4 acima).
 8. NÃO-objetivo: os quatro componentes de `src/components/financas/` e
    `src/lib/schemas/financas-cache.ts` (§5.4).
 9. NÃO-objetivo: os órfãos triviais de export catalogados em [NI-16]
@@ -251,18 +332,21 @@ há emissor de deep link.
 ```bash
 # 1. Os arquivos removidos nao deixam referencia pendurada
 grep -rn "FotoDetalhe" --include="*.ts" --include="*.tsx" src app tests          # 0 hits
-grep -rn "components/calendario" --include="*.ts" --include="*.tsx" src app tests # 0 hits
+grep -rn "calendario/Timeline" --include="*.ts" --include="*.tsx" src app tests  # 0 hits
+ls src/components/calendario/                                                    # so' FiltrosBar.tsx
 grep -rn "em-construcao\|EmConstrucao" --include="*.ts" --include="*.tsx" src app tests  # 0 hits
 
 # 2. Os itens preservados continuam intactos (guarda contra remocao acidental)
 test -f src/components/brand/OuroborosLogo.tsx && echo "OuroborosLogo preservado"
+test -f src/components/calendario/FiltrosBar.tsx && echo "FiltrosBar preservado (AUDIT-P2-11)"
 ls src/components/financas/*.tsx | wc -l                                         # 4
+git diff --stat -- src/lib/hooks/useConquistas.ts src/lib/conquistas/filtros.ts   # vazio
 
 # 3. Aritmetica da remocao (validar antes de executar)
 #    FotoDetalhe 120 + Timeline 57 + em-construcao 45 = 222 linhas
-#    com a opcao A de 5.2, mais FiltrosBar 233 = 455 linhas
+#    FiltrosBar (233) NAO entra: opcao B, escopo de AUDIT-P2-11
 wc -l src/components/screens/FotoDetalhe.tsx src/components/calendario/Timeline.tsx \
-      app/em-construcao.tsx src/components/calendario/FiltrosBar.tsx
+      app/em-construcao.tsx                                                      # 222 total
 
 # 4. Gates do projeto
 npx tsc --noEmit                                     # exit 0

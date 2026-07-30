@@ -11,6 +11,9 @@ ORIGEM:     achados [P2-3] / [IN-03] da auditoria de 2026-07-28. Encontrado por 
             de exports sem consumidor em `src/lib/integracoes/`. Reverificado nesta
             materialização em `main @ b5bf2db`: `criarIntegracaoDriveBackup` tem 1 hit em
             `src/` (a própria definição) e nenhum em `app/`; só os testes o exercitam.
+DECISAO:    (dono, 2026-07-29) ligar o agendamento semanal, confirmando a
+            recomendação do spec. A alternativa de amenizar a copy para
+            descrever um toggle sem efeito fica descartada.
 ```
 
 ## Problema (UI que mente)
@@ -81,10 +84,12 @@ teve razão para tocar, já que o app dizia que o automático estava ligado.
 
 ## Ligar ou remover
 
-Este achado tem duas saídas honestas: **ligar o agendamento** ou **corrigir o texto para
+Este achado tinha duas saídas honestas: **ligar o agendamento** ou **corrigir o texto para
 descrever a realidade** (um botão manual e um toggle sem efeito).
 
-**Recomendação: LIGAR o agendamento.**
+**Recomendação: LIGAR o agendamento. Decisão do dono, 2026-07-29: LIGAR —
+confirmada.** Reescrever a copy para descrever um toggle sem efeito está descartado e não
+volta à mesa no passo 0 da execução.
 
 Justificativa:
 
@@ -119,6 +124,11 @@ de fato depois que o dono concluir R-SEC-1. **Enquanto R-SEC-1 estiver pendente,
 da UI não pode afirmar que o envio acontece.** Ver item 4 do Escopo.
 
 ## Escopo (mínimo)
+
+Decisão do dono (2026-07-29): **ligar o agendamento semanal**. O item 4 abaixo não é a
+alternativa descartada de "amenizar o texto": é o complemento obrigatório de honestidade
+enquanto R-SEC-1 estiver pendente, sobre uma copy que já descreve um envio que agora
+passa a existir.
 
 1. Em `app/_layout.tsx`, dentro do `useEffect` que já orquestra integrações
    (`:328-399`), montar o array condicionalmente: além do Calendar (guardado por

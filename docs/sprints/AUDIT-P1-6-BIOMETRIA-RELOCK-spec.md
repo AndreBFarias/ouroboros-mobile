@@ -11,6 +11,9 @@ ORIGEM:     achado [P1-6] da auditoria de 2026-07-28. Encontrado ao verificar de
             `useEffect` que o zera depende de `[ativa, bypassReal, tentar]`.
             Confirmado por varredura exaustiva dos `AppState.addEventListener` do
             app inteiro — são três, e nenhum toca o gate.
+DECISAO:    (dono, 2026-07-29) timeout de re-lock fixado em 60 segundos. Deixa
+            de ser valor aberto: é o default a implementar na chave
+            `privacidade.biometriaTimeoutSegundos`.
 ```
 
 ## Problema (a tranca só fecha em cold start)
@@ -128,8 +131,10 @@ nova precisa sair cedo nos três casos (`!ativa`, `bypassReal`,
 2. **Timeout configurável.** Chave nova
    `privacidade.biometriaTimeoutSegundos: number`.
 
-   **Default proposto: 60 segundos — valor é decisão do dono.** Racional a
-   confirmar (alternativas: 0 / 30 / 120 / 300):
+   **Default: 60 segundos — decisão do dono, 2026-07-29.** É o valor a
+   implementar; as alternativas consideradas (0 / 30 / 120 / 300) ficam
+   descartadas e não voltam à mesa no passo 0 da execução. Racional
+   registrado:
    - **Por que não 0 (re-trancar sempre).** O app se manda para o background em
      fluxos legítimos e frequentes: o seletor de pasta do Vault (SAF), o
      `expo-image-picker`, o document picker do backup, a câmera, o share intent.

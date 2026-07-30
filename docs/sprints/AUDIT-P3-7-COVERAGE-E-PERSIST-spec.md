@@ -10,6 +10,10 @@ ORIGEM:     achado [P3-7] da auditoria de 2026-07-28. A varredura de cobertura
             os 252 arquivos de `src/lib` e os 73 de `app/` contra o conteúdo de
             `tests/` por caminho de import, e ordenou o resultado por raio de
             explosão em vez de por tamanho de arquivo.
+DECISAO:    (dono, 2026-07-29) piso de cobertura travado no patamar atual
+            medido, arredondado para baixo: Statements 74, Branches 62,
+            Functions 74, Lines 76. Propósito é impedir regressão, não forçar
+            subida.
 ```
 
 ## Problema (nada mede a cobertura, e o módulo mais crítico está a zero)
@@ -116,15 +120,21 @@ aceitável.
    cenário de falha descrito acima. Mockar `expo-secure-store` e
    `Platform` com `jest.mock`, seguindo o padrão já usado nas suítes de
    `tests/lib/stores/`.
-2. **Threshold calibrado no patamar atual, não aspiracional.**
-   Adicionar `coverageThreshold` global a `jest.config.js` com valores
-   alguns pontos abaixo da medição do dia da execução (a medição de
-   2026-07-28 dá `74/62/74/76`; usar algo como
-   `statements: 72, branches: 60, functions: 72, lines: 73`). O
-   objetivo é **impedir regressão**, não forçar subida. Um piso
-   aspiracional nasce vermelho e é revertido na primeira semana.
-   Remedir e recalibrar no momento da execução — os números podem ter
-   mudado.
+2. **Threshold travado no patamar atual medido — decisão do dono,
+   2026-07-29.** Adicionar `coverageThreshold` global a `jest.config.js`
+   com a medição de 2026-07-28 arredondada para baixo:
+
+   ```
+   statements: 74, branches: 62, functions: 74, lines: 76
+   ```
+
+   (de `74.27 / 62.83 / 74.26 / 76.00`). O objetivo é **impedir
+   regressão**, não forçar subida — piso aspiracional está descartado,
+   porque nasce vermelho e é revertido na primeira semana. Remedir
+   imediatamente antes de fixar; se a medição do dia da execução divergir
+   da de 2026-07-28, aplicar a mesma regra ao número novo (patamar
+   medido, arredondado para baixo) e registrar a diferença no PR. A regra
+   é o arredondamento para baixo, não uma folga escolhida caso a caso.
 3. **Um caminho para coletar.** Script `"test:coverage": "jest
    --coverage --watchAll=false"` em `package.json`. Decidir e
    documentar onde o threshold é cobrado: rodar coverage em todo
@@ -143,10 +153,13 @@ aceitável.
 ## Trabalho de limpeza que esta sprint destrava
 
 Esta sprint **não** deixa o CI vermelho se o passo 2 for respeitado —
-o threshold é calibrado abaixo do estado atual por construção. O risco
-é o oposto: um threshold alto demais trava PRs legítimos. A
-recomendação de folga de 2 a 3 pontos existe para absorver a variação
-natural entre execuções.
+o threshold é o patamar já medido, arredondado para baixo. A folga é
+apenas a fração decimal descartada no arredondamento (no máximo 0,83
+ponto, em branches), e é isso que a decisão do dono fixou: piso rente ao
+medido, para que qualquer queda apareça. A contrapartida operacional é
+que a medição precisa ser refeita imediatamente antes de fixar os
+números (passo 2), porque sem folga larga uma variação entre execuções
+reprova de verdade — e denunciar queda é exatamente o trabalho do piso.
 
 A fila que ela **torna explícita**:
 

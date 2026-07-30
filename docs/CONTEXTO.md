@@ -252,8 +252,14 @@ Obsidian Sync rodam fora do App. Mobile só observa status para tela 23
 ## 5. Regras Invioláveis
 
 Essas regras não são guidelines. Não são melhores práticas. São bloqueios
-hard-coded em `scripts/check_anonimato.sh`, `hooks/pre-commit` e CI. Quem
-violar não consegue commitar.
+verificáveis por script — `scripts/check_anonimato.sh`,
+`scripts/check_test_data.sh` e `scripts/check_strings_ui_ptbr.py`,
+agregados em `scripts/smoke.sh` — acionados pelo `hooks/pre-commit` local
+e pelo CI.
+
+Onde cada gate bloqueia de fato hoje, e onde ainda **não** bloqueia, está
+registrado na subseção "Onde o Bloqueio de Qualidade Acontece de Fato",
+no fim desta seção. Leia antes de assumir que uma regra é inescapável.
 
 ### Regra -1: Anonimato Absoluto
 
@@ -275,7 +281,23 @@ autoria. Não existe nome de IA em lugar nenhum.
 **Exceções legítimas (só em `docs/` ou no próprio script de validação):**
 
 - `scripts/check_anonimato.sh` precisa conter os padrões para detectá-los
-- `src/config/pessoas.config.ts` é a única exceção para nomes pessoais
+- `src/config/pessoas.config.ts` é a única exceção para nomes pessoais, e
+  hoje traz apenas **defaults genéricos** (`Nome_A` / `Nome_B`). Os nomes
+  reais entram em runtime via `src/lib/stores/pessoa.ts` (SecureStore),
+  preenchidos no onboarding (tela 24, frame 1) e editáveis em Settings
+  (tela 23) — nunca em código versionado
+
+### Regra do Mapa Funcional
+
+[`FEATURES-CANONICAS.md`](FEATURES-CANONICAS.md) é a fonte de verdade
+única sobre **o que o app faz**. Toda sprint que introduz, modifica ou
+remove feature **deve atualizar esse arquivo no mesmo commit**. Sprint
+entregue sem essa atualização é recusada na validação.
+
+Divisão de responsabilidade: este `CONTEXTO.md` governa **como se
+trabalha** (regras de processo); o `FEATURES-CANONICAS.md` governa **o que
+existe** (mapa funcional). Ver "Onde Cada Documento Vive", no fim desta
+seção.
 
 ### Regra Zero: GitHub Workflow
 
@@ -285,7 +307,8 @@ Toda tarefa segue:
 2. `gh issue edit N --add-label "status:in-progress" --remove-label "status:ready"`
 3. `gh issue develop N --checkout` → cria branch
 4. Trabalhar e commitar com mensagens impessoais
-5. Validar (`scripts/check_anonimato.sh`, `npm run lint`, `npm test`)
+5. Validar com `./scripts/smoke.sh` (agrega anonimato, dados de teste,
+   acentuação PT-BR, `tsc`, lint e Jest)
 6. `gh pr create --body "Closes #N"`
 7. `gh pr merge --squash --delete-branch`
 
@@ -314,16 +337,21 @@ acentuação completa em PT-BR**.
 |----------|--------|---------------|------------|
 | Código (variáveis, funções, classes) | Inglês | camelCase / PascalCase | N/A |
 | Comentários no código | PT-BR | Sentence case | Sim, completa |
-| Mensagens de UI no App (botões, toasts, labels) | PT-BR | **lowercase intencional** | Sim, completa |
+| Mensagens de UI no App (botões, toasts, labels) | PT-BR | **Sentence case** (revisado em 2026-04-28) | Sim, completa, obrigatória |
 | Documentação (`.md`) | PT-BR | Title Case em headings, Sentence case em prosa | Sim, completa |
 | Commit messages | PT-BR | lowercase | **Sem acento** |
 | Schemas YAML (chaves) | Inglês ou PT-BR sem acento | snake_case | N/A |
 | Schemas YAML (valores texto) | PT-BR | Sentence case | Sim, completa |
 
-**Por que lowercase intencional na UI:**
-A UI usa JetBrains Mono em tudo. Mono font + lowercase passa o tom de
+**Revisão de 2026-04-28 — a UI passou de lowercase para Sentence case.**
+O bloco abaixo registra a convenção original e a razão tipográfica dela;
+vale como histórico, não como instrução. Em tela nova ou revisada, use
+Sentence case com acentuação completa.
+
+**Por que lowercase era intencional na UI (convenção até 2026-04-28):**
+A UI usa JetBrains Mono em tudo. Mono font + lowercase passava o tom de
 notebook técnico, dossiê pessoal, terminal — exatamente o que o App é.
-Caps lock ou Title Case na UI quebra a identidade. Isso vale para:
+Caps lock ou Title Case na UI quebrava a identidade. Isso valia para:
 
 - Botões: "salvar no inbox", "registrar", "concluir rotina"
 - Labels: "humor", "energia", "ansiedade"
@@ -334,6 +362,37 @@ Caps lock ou Title Case na UI quebra a identidade. Isso vale para:
 **Title Case em headings** ("Sistema Visual", "Componentes
 Base", "Fundação Estética") e **Sentence case em prosa** com acentuação
 completa em PT-BR.
+
+#### Auditoria Automática de Acentuação (M-PT-BR-AUDIT, 2026-05-04)
+
+`python3 scripts/check_strings_ui_ptbr.py` varre `src/` e `app/` por
+strings de UI literais e checa cada token contra
+`scripts/dicionario_ptbr_canonico.json` (149 pares curados). O script está
+integrado em `scripts/smoke.sh` e em `hooks/pre-commit`.
+
+Válvulas de escape, nessa ordem de preferência:
+
+- Override por linha: comentário `// ptbr-allow: <razao>` na mesma linha
+- Exclusão em batch: `.ptbr-violations.txt` na raiz, uma path por linha,
+  para casos de retrofit ainda pendente
+
+Exemplos de violação típica e correção:
+
+| Errado (sem acento) | Correto (com acento) |
+|---|---|
+| `"Nao"` | `"Não"` |
+| `"Voce"` | `"Você"` |
+| `"Musica"` | `"Música"` |
+| `"Video"` | `"Vídeo"` |
+| `"Acoes"` | `"Ações"` |
+| `"Tambem"` | `"Também"` |
+| `"Configuracoes"` | `"Configurações"` |
+| `"Notificacao"` | `"Notificação"` |
+| `"Atencao"` | `"Atenção"` |
+| `"Ultima atualizacao"` | `"Última atualização"` |
+
+`accessibilityLabel` continua **sem acento** (convenção de leitor de
+tela). O script detecta esse caso e ignora automaticamente.
 
 ### Regra de Tom
 
@@ -359,9 +418,10 @@ Detalhado em `BRIEFING.md`. Enforced via revisão manual e checklist de PR.
 
 Validação: `scripts/check_test_data.sh`.
 
-### Regra de Estética
+### Regra de Estética (ADR-010)
 
-Cinco princípios da Seção 2 do `BRIEFING.md` são **inegociáveis**:
+Cinco princípios da Seção 2 do `BRIEFING.md` são **inegociáveis**
+(formalizados em `docs/ADRs/0010-estetica-fundacao.md`):
 
 1. **Física acima de tempo** — springs, não durations lineares
 2. **Silêncio visual e respiração** — espaço generoso, line-height 1.5+
@@ -370,6 +430,150 @@ Cinco princípios da Seção 2 do `BRIEFING.md` são **inegociáveis**:
 5. **Transições com física natural** — slides com curva, não corte seco
 
 PR que viole essas regras volta para refação, não merge.
+
+### Regra de Validação Visual — Gauntlet Obrigatório
+
+**Decisão durável de 2026-05-04:** o **Gauntlet (Nível A+) é a única forma
+aceita de validação visual web** para qualquer sprint que toque UI. Abrir
+o navegador direto, sem o Gauntlet, está **proibido** desde a descoberta
+de 6 problemas estruturais em 2026-05-03 — o gate de biometria
+redirecionando, o carregamento de fontes oscilando no SDK 54, refs
+voláteis, evento de mouse sintético, seed do persist do store, e o bottom
+sheet de terceiros quebrando em web. Todos produziam validação
+falso-positiva ou falso-negativa.
+
+Os quatro níveis:
+
+- **Nível A+ — Gauntlet (obrigatório).** Atalho único:
+
+  ```bash
+  ./gauntlet.sh
+  ```
+
+  O script mata Metro órfão, sobe `./run.sh --web`, aguarda
+  `localhost:8081`, abre o navegador em `/_dev/gauntlet` e mostra o log em
+  foreground; `Ctrl-C` derruba tudo limpo. Em modo dev (`__DEV__`) o
+  `window.__gauntlet` é instalado automaticamente com um conjunto de APIs
+  JS determinísticas (entre elas `seed`, `reset`, `setNomes`,
+  `setVaultRoot`, `setOnboardingDone`, `setUltimaRota`,
+  `setTipoCompanhia`, `abrir`, `abrirMenu`, `fecharMenu`, `abrirSheet`,
+  `estado`, `seedComDados`, `adicionarFotoMock`) e com bypass dos gates de
+  biometria, vault e onboarding. Frame mobile 412×892dp centralizado em
+  **todas** as rotas em modo dev. Em release Android é dead-code
+  (verificado: o bundle exportado não contém `__gauntlet`).
+- **Nível A (legado) — proibido em sprint nova.** Mantido apenas em
+  documentação histórica.
+- **Nível B — emulador Android** (sob demanda, sem pedir permissão).
+  `emulator -avd ouroboros-test -no-window`. Cobre APIs nativas (haptic,
+  SAF, SecureStore) e não interfere com o celular físico.
+- **Nível C — celular físico** (**exige permissão explícita**). Só para
+  Syncthing real, share intent de outros apps, fotos reais da galeria e
+  checkpoint visual de fim de sprint. O motivo é declarado por escrito, o
+  dono do repositório aprova, e a sessão é curta (menos de 2 minutos).
+
+#### Protocolo Canônico de Teste no Device (decisão durável de 2026-05-25)
+
+**Método padrão e sempre preferido para validar no celular: dev-client +
+Metro via USB.** Não se usa o APK de release do git para iteração.
+
+1. **Pré-requisito:** um **dev-client APK que contenha os módulos nativos
+   atuais** instalado no device. Mudança em código nativo (por exemplo as
+   bridges `modules/health-connect/` e `modules/widget-homescreen/`)
+   **inválida** dev-clients antigos — é preciso rebuildar o dev-client.
+   Mudança só de JS (telas, stores, lógica) **não** exige rebuild: o Metro
+   entrega o JS novo ao vivo.
+2. **Fluxo** (ver `scripts/adb-install-bypass.sh` e
+   `scripts/adb-vault-pull.sh`):
+
+   ```bash
+   ./scripts/adb-vault-pull.sh   # BACKUP do Vault ANTES de qualquer troca de app
+   adb push builds/dev-client-<hash>.apk /data/local/tmp/app.apk
+   adb shell pm install -r -t /data/local/tmp/app.apk   # bypass de OEM restritivo
+   adb reverse tcp:8081 tcp:8081
+   npx expo start --dev-client
+   ```
+
+   Navegação cega no device via `uiautomator dump`; `screencap` para
+   evidência.
+3. **Cuidado com troca de assinatura:** instalar um dev-client (keystore de
+   debug) por cima de um APK de release exige **desinstalar** primeiro, o
+   que **apaga os dados do app no device** (SecureStore e Vault interno, se
+   estiver em `documentDirectory`). Rodar `adb-vault-pull.sh` antes é
+   obrigatório. O ideal é dev-client e release compartilharem a **mesma
+   keystore**, permitindo update in-place sem wipe.
+4. **APK do git (release ou preview) só no final**, depois de concluir o
+   trabalho em aberto. É artefato de distribuição, não ferramenta de
+   iteração. O build de serviço gerenciado esgota cota mensal — usar
+   `.github/workflows/build-android-apk.yml` (push de tag `v*-alpha-*`).
+
+> Regra de ouro: **se a feature é só JS, dev-client + Metro mostra ao vivo
+> sem build.** Se toca código nativo novo, rebuildar o dev-client primeiro.
+> Nunca queimar build do git para testar trabalho ainda em aberto.
+
+#### Entrega Obrigatória de Toda Sprint Que Toca UI
+
+1. Código + suíte Jest verde (a suíte inteira, sem baseline degradado).
+2. **1 caso E2E** em `tests/e2e/playwright/<id-da-sprint>.e2e.ts`, copiado
+   do template `tests/e2e/playwright/e2e-template.ts`, com asserts sobre
+   **comportamento** — não só presença visual.
+3. Screenshots em `docs/sprints/<ID-DA-SPRINT>-screenshots-gauntlet/`
+   (capturados no Nível A+).
+4. Validação rodada via automação de browser sobre o Gauntlet, com a
+   sprint navegada e clicada como app real, antes de declarar `[ok]`.
+5. Checkpoint Nível C apenas se a sprint envolve API nativa (haptic, SAF,
+   share intent) ou se é marco crítico (release final).
+
+Sprint nova sem o caso E2E correspondente é recusada na validação.
+
+### Onde o Bloqueio de Qualidade Acontece de Fato
+
+Registro do estado real, apurado na auditoria de 2026-07-28. Vale mais que
+a intenção declarada em qualquer outro lugar deste documento.
+
+**Hooks locais — dormentes por padrão.** O `hooks/pre-commit` só bloqueia
+**se** `scripts/install-hooks.sh` tiver rodado neste clone, apontando
+`core.hooksPath` para `hooks`. Sem isso os hooks do projeto ficam
+dormentes e o commit local não é barrado. Rode `scripts/doctor_hooks.sh`
+para ver o estado do clone. Reduzir esse atrito é ação pendente registrada
+na sprint `AUDIT-P3-8`.
+
+**CI — roda, mas ainda não é obrigatório.** O
+`.github/workflows/ci.yml` executa o job `quality-gate`
+(`./scripts/smoke.sh`, que inclui anonimato, dados de teste, acentuação
+PT-BR, `tsc`, lint e Jest) em todo PR e em todo push para `main`. Porém, na
+proteção de branch da `main`, o **único** required status check hoje é
+`scan-commits` (de `.github/workflows/anonymity-check.yml`). Consequência
+prática: um PR pode mergear com o `quality-gate` vermelho, porque o botão
+de merge não consulta esse job.
+
+Ou seja: **hoje o gate é informativo, não impeditivo.** Ler o resultado do
+`quality-gate` antes de mergear é responsabilidade de quem mergeia.
+Promover o `quality-gate` a required check é ação pendente na sprint
+`AUDIT-P3-1` — e é ação na configuração do repositório, não commit, por
+isso depende do dono. Atenção: `scripts/setup-branch-protection.sh`, se
+rodado como está hoje, **trava todos os merges**, porque inclui na lista
+de required um check que só dispara em tag.
+
+### Onde Cada Documento Vive
+
+Hierarquia de fontes, para resolver de saída a dúvida de qual documento
+manda:
+
+| Documento | Governa | Status |
+|---|---|---|
+| `docs/CONTEXTO.md` (este arquivo) | Regras de processo e restrições invioláveis | **Canônico.** Em divergência com qualquer outra cópia de regras, este vence |
+| `docs/FEATURES-CANONICAS.md` | O que o app faz (mapa funcional) | **Canônico.** Atualização obrigatória no mesmo commit da sprint |
+| `docs/BRIEFING.md` | Design system, princípios estéticos, telas, schemas | Canônico para decisão visual (ver Seção 7) |
+| `docs/ADRs/` | Decisões arquiteturais, uma por arquivo | Canônico para o "por quê" de cada escolha; índice em `docs/ADRs/INDEX.md` |
+| `docs/sprints/` | Planos de sprint e specs de auditoria | Histórico de execução. **Só um subconjunto é versionado**, por decisão de compliance — a maioria dos specs existe apenas no disco de trabalho |
+| Arquivo de regras da raiz | Cópia de conveniência das regras desta seção | **Não versionado.** Espelho para leitura automática por ferramenta que abra o repositório; nunca fonte |
+
+Existem também **arquivos de trabalho local não versionados** na raiz
+(estado corrente, roteiro de retomada, brief de validação, checkpoint
+operacional), deliberadamente fora do git. Eles são úteis para quem está
+com o clone na mão e **não podem ser citados como fonte** em documento
+público nem em PR: quem clona o repositório não os recebe. Regra prática:
+se a informação precisa sobreviver ao clone, ela pertence a `docs/`.
 
 ---
 

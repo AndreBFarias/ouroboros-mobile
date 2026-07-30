@@ -10,6 +10,10 @@ ORIGEM:     achado [P3-6] da auditoria de 2026-07-28. A varredura de conformidad
             formas canônicas de uma string chegar à tela num app React Native e
             achou a que falta. As 3 strings foram localizadas por grep direto e
             o caminho de renderização de cada uma foi seguido até o `<Text>`.
+DECISAO:    (dono, 2026-07-29) acentuação em comentário de código segue a
+            convenção declarada no cabeçalho do próprio arquivo; onde o arquivo
+            não declarar nada, PT-BR acentuado. Vale só para comentário — string
+            de UI segue sempre acentuada.
 ```
 
 ## Problema (o validador é exaustivo em 3 formas de 4)
@@ -129,6 +133,30 @@ O quarto padrão vai acusar essa linha. Correção preferida: acentuar o
 exemplo (documentação melhor, e o exemplo passa a mostrar a forma
 certa), não suprimir com `ptbr-allow`.
 
+### Nota de decisão — acentuação em comentários de código (dono, 2026-07-29)
+
+Decisão geral, registrada aqui porque este é o spec de acentuação do
+projeto: **comentário de código segue a convenção declarada no cabeçalho
+do próprio arquivo.** Onde o arquivo não declarar nada, o default é
+PT-BR acentuado.
+
+O que isso significa para quem executa:
+
+- vale **apenas para comentários de código**. Não muda nada em strings
+  de UI, que seguem acentuadas em todos os casos, sem exceção, e
+  independentemente do arquivo onde nascem — inclusive as 4 corrigidas no
+  item 5 do Escopo;
+- não é licença para desacentuar comentário que já está acentuado. Onde o
+  arquivo declara convenção sem acento (o caso típico é script de shell e
+  config de CI), o comentário acompanha o cabeçalho; onde o arquivo é
+  silencioso, a prosa vai acentuada;
+- o comentário de `src/lib/hooks/useToastUndo.tsx:7` cai no default
+  acentuado, e o que ele cita é uma string de UI — logo, acentuar é a
+  correção certa, coerente com a preferência já registrada acima;
+- `accessibilityLabel` continua **sem acento** por convenção de leitor de
+  tela, e o validador já o ignora. Não é comentário nem string visível, e
+  não entra nesta decisão.
+
 ## Escopo (mínimo)
 
 1. **Quarto padrão no validador.** Adicionar `RE_FUNC_ARG_STRING` a
@@ -148,7 +176,10 @@ certa), não suprimir com `ptbr-allow`.
 3. **Filtro de linha de comentário.** Pular linhas cuja forma sem
    espaços à esquerda começa com `//` ou `*`, ou acentuar o exemplo em
    `src/lib/hooks/useToastUndo.tsx:7`. Escolher uma; a segunda é
-   preferida por não abrir um buraco novo no validador.
+   preferida por não abrir um buraco novo no validador. Vale aqui a
+   §Nota de decisão sobre acentuação em comentários: aquele arquivo não
+   declara convenção no cabeçalho, então o default acentuado se aplica, e
+   o que o comentário cita é uma string de UI.
 4. **Entrada no dicionário.** Adicionar `"parametros": "parâmetros"` e
    `"parametro": "parâmetro"` a `scripts/dicionario_ptbr_canonico.json`
    (chave `palavras`), respeitando a regra do `_meta`: apenas tokens

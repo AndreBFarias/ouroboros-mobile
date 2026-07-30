@@ -10,6 +10,10 @@ ORIGEM:     achado [P3-3] da auditoria de 2026-07-28. Partiu do único erro de
             regra que não existe. A investigação da causa mostrou que o pacote
             `eslint-plugin-react-hooks` nunca esteve em `node_modules/` nem em
             `package.json`, e que `eslint.config.js` carrega só `@typescript-eslint`.
+DECISAO:    (dono, 2026-07-29) adoção com `rules-of-hooks` em `error` e
+            `exhaustive-deps` em `warn`, baseline medido e versionado, e sem
+            arquivo de supressões (o padrão de lista de exclusão já falhou no
+            projeto com `.ptbr-violations.txt`).
 ```
 
 ## Problema (a ferramenta padrão para a classe de bug mais cara do projeto está ausente)
@@ -107,17 +111,24 @@ arquivos com ao menos um dos tres: 140
    `files: ['**/*.ts', '**/*.tsx']`, preservando as regras existentes
    (`@typescript-eslint/no-unused-vars` e o `no-restricted-imports` do
    shim de ícones, que tem override próprio para `src/lib/icons.ts`).
-3. **Adotar em dois tempos, não em um.** Nesta sprint:
-   `'react-hooks/rules-of-hooks': 'error'` e
-   `'react-hooks/exhaustive-deps': 'warn'`. Justificativa em §Trabalho
-   de limpeza. Deixar comentário no `eslint.config.js` (sem acento,
-   convenção shell/CI) registrando que `exhaustive-deps` sobe para
-   `error` em sprint própria, com a data e o número de avisos do
-   baseline.
-4. Medir e versionar o baseline: rodar `npx eslint app/ src/ -f json`,
+3. **Adotar em dois tempos, não em um — decisão do dono, 2026-07-29.**
+   Nesta sprint: `'react-hooks/rules-of-hooks': 'error'` e
+   `'react-hooks/exhaustive-deps': 'warn'`. E **sem arquivo de
+   supressões**, em nenhuma forma — nem baseline por arquivo, nem lista
+   de exclusão, nem `eslint-disable` em massa. O padrão de arquivo de
+   exclusões já falhou neste projeto com `.ptbr-violations.txt` e está
+   descartado; a estratégia rejeitada na tabela de §Trabalho de limpeza
+   não volta à mesa no passo 0 da execução. Deixar comentário no
+   `eslint.config.js` (sem acento, convenção shell/CI) registrando que
+   `exhaustive-deps` sobe para `error` em sprint própria, com a data e o
+   número de avisos do baseline.
+4. Medir e **versionar** o baseline: rodar `npx eslint app/ src/ -f json`,
    contar avisos de `exhaustive-deps` por arquivo e registrar o total
-   no próprio spec (linha de `## Resultado`) — sem isso, a sprint de
-   promoção a `error` não tem alvo.
+   no próprio spec (linha de `## Resultado`), commitado junto — sem isso,
+   a sprint de promoção a `error` não tem alvo, e o baseline versionado é
+   o substituto explícito do arquivo de supressões recusado no item 3.
+   Baseline aqui é **medição registrada em documentação**, não lista de
+   arquivos que o lint passa a ignorar.
 5. Auditar os 2 sítios que já mencionam o plugin:
    `src/components/screens/RecapScreen.tsx:121` (diretiva que passa a
    ser válida — confirmar que a supressão é de fato desejada e trocar o
@@ -141,7 +152,8 @@ primeira execução de `exhaustive-deps` costuma acusar dezenas de
 avisos. O número exato só é conhecido depois de instalar — por isso o
 passo 4 é obrigatório e o spec não finge saber o total.
 
-Duas estratégias de adoção foram consideradas:
+Duas estratégias de adoção foram consideradas, e o dono fechou a primeira em
+2026-07-29:
 
 | Estratégia | Prós | Contras |
 |---|---|---|

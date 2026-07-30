@@ -12,6 +12,10 @@ ORIGEM:     achado [P1-1] da auditoria de 2026-07-28, camada nativa. Encontrado 
             confirmado pelo TODO explícito de `:113-121`. As duas saídas sugeridas
             pelo TODO foram checadas contra o classpath real do módulo antes de
             entrarem no escopo.
+DECISAO:    (dono, 2026-07-29) saída escolhida: declarar a dependência
+            `androidx.core:core-remoteviews` e usar
+            `RemoteViewsCompat.setRemoteInputs`. Notification Action fica
+            descartada porque mudaria a UX do widget.
 ```
 
 ## Problema (variável órfã: o input do widget nunca retorna texto)
@@ -121,29 +125,36 @@ ficou como comentário no código desde o `alpha-14`. Esta sprint é a materiali
    se ainda falhar. Sem esse passo, o contorno pode estar resolvendo um problema
    que não existe mais.
 
-2. **Anexar o `RemoteInput` de fato.** Escolher **uma** das saídas abaixo; a
-   escolha é **decisão do dono**, porque muda a experiência na tela inicial. A
-   auditoria recomenda (b) por ser 100% API pública e não exigir dependência nova,
-   e registra (c) como plano de fuga.
+2. **Anexar o `RemoteInput` de fato, pela saída decidida pelo dono em
+   2026-07-29: `androidx.core:core-remoteviews` +
+   `RemoteViewsCompat.setRemoteInputs`.** É a única que mantém o campo inline no
+   próprio widget, sem sair da tela inicial. Notification Action com
+   direct-reply ficou **descartada** porque mudaria a UX do widget (o texto
+   passaria a ser digitado numa notificação, não na tela inicial), e a Activity
+   transparente cai pelo mesmo motivo. Nenhuma das duas volta à mesa no passo 0
+   da execução.
 
-   - **(a) `androidx.core:core-remoteviews` + `RemoteViewsCompat.setRemoteInputs`.**
-     Melhor UX (campo inline no próprio widget, sem sair da tela inicial).
-     Pré-requisitos: adicionar `implementation "androidx.core:core-remoteviews:<versão>"`
-     em `modules/widget-homescreen/android/build.gradle:39-41` e **provar** que a
-     API existe na versão resolvida. Se não existir, cair para (b).
-   - **(b) Notification Action com direct-reply.** O toque no widget dispara o
-     broadcast, que posta uma notificação com
-     `NotificationCompat.Action.Builder(...).addRemoteInput(remoteInput)` apontando
-     de volta para `ACTION_TODO_ADD`. A resposta chega ao mesmo receiver e
-     `extractRemoteInputText` (`:125-128`) funciona **sem alteração**. Custos a
-     declarar: canal de notificação (o app já registra canais em
-     `app/_layout.tsx` via `registrarCategoriasAlarme`; reusar o canal v2 em vez
-     de criar um novo) e permissão `POST_NOTIFICATIONS` no Android 13+ — se
-     negada, a captura falha e o widget precisa dizer isso.
-   - **(c) Activity transparente com campo de texto real.** O `PendingIntent` abre
-     uma Activity leve que coleta o título e escreve na mesma fila
-     (`appendEntry`, `:136-158`). API totalmente pública, zero dependência nova,
-     zero permissão. Custo: sai da tela inicial, que é o ponto da feature.
+   Passos obrigatórios, nesta ordem:
+
+   - adicionar `implementation "androidx.core:core-remoteviews:<versão>"` ao
+     bloco `dependencies` de
+     `modules/widget-homescreen/android/build.gradle:39-41`, que hoje tem
+     exatamente uma linha (`implementation project(":expo-modules-core")`);
+   - **provar** que a versão resolvida expõe de fato
+     `RemoteViewsCompat.setRemoteInputs` — a auditoria não pôde verificar sem o
+     artefato em disco, e `androidx.core:core` não traz a classe. Registrar no
+     PR a versão fixada e a evidência (o `classes.jar` do `.aar` resolvido, ou a
+     compilação passando);
+   - anexar o `RemoteInput` ao `RemoteViews` **real** de `buildViews`, nunca a
+     um descartado — foi exatamente esse o defeito original;
+   - manter a exigência do item 1: compilar contra o compileSdk efetivo (36,
+     vindo de `app.json:122` via `expo-build-properties`), não contra o
+     fallback 35 do `build.gradle:15`.
+
+   Se — e somente se — a API não existir em nenhuma versão publicada de
+   `core-remoteviews` compatível com o projeto, o executor **para e reporta ao
+   dono** em vez de trocar de saída por conta própria. As alternativas já foram
+   avaliadas e recusadas.
 
    **Proibido**: alcançar a assinatura oculta da plataforma por reflexão. É API
    restrita, quebra em atualização de OEM e é exatamente o tipo de fragilidade que
@@ -156,16 +167,19 @@ ficou como comentário no código desde o `alpha-14`. Esta sprint é a materiali
    saída escolhida grava no **mesmo** arquivo, no **mesmo** formato. Nenhuma
    mudança em `FILA_FILENAME` / `COUNT_FILENAME` (`:191-192`).
 
-4. **Remover o TODO e sanear os comentários que descrevem o fluxo como se
-   funcionasse**: cabeçalho do provider (`:12-20`, passos 1 e 2 descrevem o
-   "RemoteInput fill-in") e cabeçalho do bridge
-   (`modules/widget-homescreen/src/index.ts:6-15`). Se a saída escolhida for (b) ou
-   (c), os dois textos passam a estar errados e precisam refletir o fluxo real.
+4. **Remover o TODO** de `:113-121`, incluindo a linha "Removido temporariamente
+   para destravar build alpha-14" e o identificador `R-WIDG-FIX-REMOTEINPUTS`.
+   Com a saída decidida, o cabeçalho do provider (`:12-20`, passos 1 e 2
+   descrevem o "RemoteInput fill-in") e o do bridge
+   (`modules/widget-homescreen/src/index.ts:6-15`) voltam a descrever o fluxo que
+   de fato acontece — conferir os dois textos e ajustar apenas o que ficar
+   impreciso, sem reescrever o que já estava correto.
 
 5. **Atualizar `docs/FEATURES-CANONICAS.md`**, seção 12 (`:1189-1195`). Depende da
    `AUDIT-P1-1A`, que já introduz a descrição do widget de tarefas nessa seção;
-   aqui entra o mecanismo de captura efetivamente escolhido (inline, notificação
-   ou tela) e, no caso (b), a dependência de `POST_NOTIFICATIONS`.
+   aqui entra o mecanismo de captura: campo inline no próprio widget, via
+   `RemoteViewsCompat.setRemoteInputs`, sem permissão nova e sem canal de
+   notificação.
 
 6. **NÃO-objetivo — caso E2E novo no Gauntlet.** A feature é **intestável na web**:
    `getNative()` devolve `null` quando `Platform.OS !== 'android'`
