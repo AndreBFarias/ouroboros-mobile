@@ -1,7 +1,7 @@
 // Glifo Ouroboros animavel (R-BRAND-3-GLIFO). Renderiza a anatomia
-// canonica (43 contas + cabeca + cauda + boca + olho + anel + wordmark)
-// a partir da fonte unica geometria.ts e expoe cada elemento a um
-// DRIVER de shared values. Sem driver -> estatico, byte-identico ao
+// canonica (contas + cabeca + cauda + boca + olho + disco + anel +
+// wordmark) a partir da fonte unica geometria.ts e expoe cada elemento
+// a um DRIVER de shared values. Sem driver -> estatico, identico ao
 // OuroborosLogo. Cada um dos 17 conceitos da marca dirige apenas
 // opacidade/transform/cor sobre este glifo.
 //
@@ -15,6 +15,12 @@
 //     util novo, para nao inflar o escopo desta sprint).
 //   A27 -- em native (Fabric) NUNCA emitir transform string em SVG;
 //     usar prop rotation + originX/originY. Ramifica por Platform.OS.
+//   E2RingOnly em web -- o anel sai cortado no card do bench. Medido:
+//     o CTM do circulo escala 0.1969 onde o viewBox pede 0.2344, ou seja
+//     ha um transform intermediario encolhendo o grupo. NAO e' a rotacao
+//     (bbox identico com rotate(0), rotate(deg) e rotate(deg cx cy)).
+//     So afeta o conceito E2 (dev-only, bench-c2); nenhuma tela de
+//     producao usa. A investigar antes de mexer no transform do anel.
 //   Reduce-motion -- useReduceMotion incondicional; com reducao ativa o
 //     rAF web nao arma (o glifo reflete o estado de repouso que o
 //     consumidor deixou nas shared values).
@@ -27,7 +33,7 @@ import Animated, {
   useAnimatedProps,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, G, Path } from 'react-native-svg';
 import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 import {
   ANEL,
@@ -35,6 +41,7 @@ import {
   CABECA,
   CAUDA,
   CONTAS,
+  DISCO,
   OLHO,
   RAIO_CONTA,
   RING_CENTER,
@@ -62,9 +69,9 @@ function gerarUuidInstancia(): string {
 // Driver de shared values por elemento anatomico. Cada campo e' opcional:
 // ausente -> elemento estatico no valor de repouso da geometria.
 export interface DriverGlifo {
-  // opacidade por conta num unico shared value (indice 0..42, alinhado a
-  // CONTAS) -- evita 43 useSharedValue (regra dos hooks) e mantem 1 escrita
-  // de array por frame no worklet.
+  // opacidade por conta num unico shared value (indice alinhado a
+  // CONTAS) -- evita um useSharedValue por conta (regra dos hooks) e
+  // mantem 1 escrita de array por frame no worklet.
   contas?: SharedValue<number[]>;
   cabeca?: SharedValue<number>;
   cauda?: SharedValue<number>;
@@ -89,7 +96,10 @@ export interface OuroborosGlifoProps {
   hideRosto?: boolean;
   hideRing?: boolean;
   hideWordmark?: boolean;
-  // subset de contas visiveis (ids 'conta-01'..'conta-43'); ausente -> todas
+  // esconde o disco de fundo. Os monomarks (E1/E2/E3) isolam um elemento
+  // sobre o fundo do proprio card e precisam do disco fora.
+  hideDisco?: boolean;
+  // subset de contas visiveis (ids 'conta-01'..'conta-21'); ausente -> todas
   contasVisiveis?: string[];
   // override do viewBox (recorte, ex: E1); ausente -> viewBox canonico
   viewBox?: string;
@@ -138,6 +148,7 @@ export function OuroborosGlifo({
   hideRosto = false,
   hideRing = false,
   hideWordmark = false,
+  hideDisco = false,
   contasVisiveis,
   viewBox,
   driver,
@@ -211,9 +222,9 @@ export function OuroborosGlifo({
 
     let raf = 0;
     const tick = () => {
-      const candidato = refSvg.current as unknown as
-        | { querySelectorAll?: (s: string) => NodeListOf<Element> }
-        | null;
+      const candidato = refSvg.current as unknown as {
+        querySelectorAll?: (s: string) => NodeListOf<Element>;
+      } | null;
       const escopo: Document | Element =
         candidato && typeof candidato.querySelectorAll === 'function'
           ? (candidato as unknown as Element)
@@ -238,13 +249,29 @@ export function OuroborosGlifo({
         });
       }
       if (svCabeca)
-        escreverAttr(`[data-anim-id="${idCabeca}"]`, 'opacity', svCabeca.value.toFixed(3));
+        escreverAttr(
+          `[data-anim-id="${idCabeca}"]`,
+          'opacity',
+          svCabeca.value.toFixed(3)
+        );
       if (svCauda)
-        escreverAttr(`[data-anim-id="${idCauda}"]`, 'opacity', svCauda.value.toFixed(3));
+        escreverAttr(
+          `[data-anim-id="${idCauda}"]`,
+          'opacity',
+          svCauda.value.toFixed(3)
+        );
       if (svBoca)
-        escreverAttr(`[data-anim-id="${idBoca}"]`, 'opacity', svBoca.value.toFixed(3));
+        escreverAttr(
+          `[data-anim-id="${idBoca}"]`,
+          'opacity',
+          svBoca.value.toFixed(3)
+        );
       if (svOlho)
-        escreverAttr(`[data-anim-id="${idOlho}"]`, 'opacity', svOlho.value.toFixed(3));
+        escreverAttr(
+          `[data-anim-id="${idOlho}"]`,
+          'opacity',
+          svOlho.value.toFixed(3)
+        );
       if (svAnel)
         escreverAttr(
           `[data-anim-id="${idAnel}"]`,
@@ -281,7 +308,12 @@ export function OuroborosGlifo({
         height={tamanho}
         viewBox={viewBox ?? VIEWBOX}
       >
-        {/* anel pontilhado interno (rotacao em RING_CENTER, anti-wobble) */}
+        {/* disco de fundo (estatico, atras de tudo) */}
+        {!hideDisco ? (
+          <Circle cx={DISCO.cx} cy={DISCO.cy} r={DISCO.r} fill={DISCO.fill} />
+        ) : null}
+
+        {/* anel pontilhado externo (rotacao em RING_CENTER, anti-wobble) */}
         {!hideRing ? (
           <AnimatedG
             animatedProps={propsAnel}
@@ -289,8 +321,10 @@ export function OuroborosGlifo({
             originY={RING_CENTER.y}
             data-anim-id={idAnel}
           >
-            <Path
-              d={ANEL.d}
+            <Circle
+              cx={ANEL.cx}
+              cy={ANEL.cy}
+              r={ANEL.r}
               fill="none"
               stroke={ANEL.stroke}
               strokeWidth={ANEL.strokeWidth}
@@ -301,7 +335,7 @@ export function OuroborosGlifo({
           </AnimatedG>
         ) : null}
 
-        {/* 43 contas em degrade rosa->roxo */}
+        {/* contas em degrade rosa->roxo */}
         {!hideBeads
           ? contasParaRender.map((c) => (
               <ContaAnim
@@ -355,32 +389,11 @@ export function OuroborosGlifo({
           </>
         ) : null}
 
-        {/* wordmark central (estatico, nao dirigido) */}
+        {/* wordmark central vetorial (estatico, nao dirigido) */}
         {exibeWordmark ? (
           <G>
-            <SvgText
-              x={WORDMARK.centroTexto.x}
-              y={WORDMARK.centroTexto.y + WORDMARK.secundariaOffsetY}
-              textAnchor="middle"
-              fontFamily={WORDMARK.fontFamily}
-              fontSize={WORDMARK.secundariaFontSize}
-              letterSpacing={WORDMARK.secundariaLetterSpacing}
-              fill={WORDMARK.secundariaCor}
-            >
-              {WORDMARK.secundaria}
-            </SvgText>
-            <SvgText
-              x={WORDMARK.centroTexto.x}
-              y={WORDMARK.centroTexto.y + WORDMARK.primariaOffsetY}
-              textAnchor="middle"
-              fontFamily={WORDMARK.fontFamily}
-              fontSize={WORDMARK.primariaFontSize}
-              fontWeight={WORDMARK.primariaFontWeight}
-              letterSpacing={WORDMARK.primariaLetterSpacing}
-              fill={WORDMARK.primariaCor}
-            >
-              {WORDMARK.primaria}
-            </SvgText>
+            <Path d={WORDMARK.secundaria.d} fill={WORDMARK.secundaria.fill} />
+            <Path d={WORDMARK.primaria.d} fill={WORDMARK.primaria.fill} />
           </G>
         ) : null}
       </Svg>

@@ -27,6 +27,12 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 OURO_SVG="${1:-${OURO_SVG:-$HOME/Desktop/assets-ouroboros-loading-logo/ouroboros.svg}}"
+# 2o argumento opcional: SVG SO-SILHUETA para a mascara de notificacao.
+# Necessario quando o SVG canônico tem disco de fundo atras do anel: o
+# passo 7 pinta de branco tudo que tem alpha, e o disco viraria um blob
+# branco ilegivel. Sem este argumento o comportamento e' o antigo
+# (silhueta derivada do próprio canônico), correto para SVG sem fundo.
+OURO_SVG_MONO="${2:-${OURO_SVG_MONO:-}}"
 ASSETS="assets"
 BRAND="$ASSETS/brand"
 BG="#14151a"
@@ -35,6 +41,10 @@ SAFE_PCT="62%"   # glifo dentro da safe-zone do adaptive icon
 if [[ ! -f "$OURO_SVG" ]]; then
   echo "ERRO: SVG canonico nao encontrado em: $OURO_SVG" >&2
   echo "  passe o caminho: ./scripts/gen-brand-assets.sh /caminho/ouroboros.svg" >&2
+  exit 1
+fi
+if [[ -n "$OURO_SVG_MONO" && ! -f "$OURO_SVG_MONO" ]]; then
+  echo "ERRO: SVG mono não encontrado em: $OURO_SVG_MONO" >&2
   exit 1
 fi
 command -v rsvg-convert >/dev/null || { echo "ERRO: rsvg-convert ausente" >&2; exit 1; }
@@ -89,7 +99,8 @@ convert "$TMP/favicon.png" -strip "$ASSETS/favicon.png"
 # set 100% (nao 255): ImageMagick e' Q16 aqui, entao 255 daria ~0.4% (quase
 # preto). O Android usa so' o ALPHA e tinge com plugins.expo-notifications.color,
 # mas a convencao (e outros renderers) esperam RGB branco.
-rsvg-convert -w 96 -h 96 "$TMP/symbol.svg" -o "$TMP/notif-base.png"
+NOTIF_SRC="${OURO_SVG_MONO:-$TMP/symbol.svg}"
+rsvg-convert -w 96 -h 96 "$NOTIF_SRC" -o "$TMP/notif-base.png"
 convert "$TMP/notif-base.png" -channel RGB -evaluate set 100% +channel \
   -strip "$ASSETS/notification-icon.png"
 

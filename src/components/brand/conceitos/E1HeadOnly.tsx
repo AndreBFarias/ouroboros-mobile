@@ -15,7 +15,7 @@ export interface E1HeadOnlyProps {
   tamanho?: number;
 }
 
-const CONTAS_CABECA = ['conta-01', 'conta-02', 'conta-42', 'conta-43'];
+const CONTAS_CABECA = ['conta-01', 'conta-02', 'conta-20', 'conta-21'];
 
 export function E1HeadOnly({ tamanho = 96 }: E1HeadOnlyProps) {
   const reduzir = useReduceMotion();
@@ -44,6 +44,7 @@ export function E1HeadOnly({ tamanho = 96 }: E1HeadOnlyProps) {
       tamanho={tamanho}
       hideRing
       hideWordmark
+      hideDisco
       contasVisiveis={CONTAS_CABECA}
       viewBox="90 30 140 55"
       driver={{ olho }}

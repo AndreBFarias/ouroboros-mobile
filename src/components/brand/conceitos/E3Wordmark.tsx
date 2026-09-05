@@ -45,9 +45,11 @@ export function E3Wordmark({ tamanho = 12 }: E3WordmarkProps) {
             <Circle cx={raio} cy={raio} r={raio} fill={`url(#${grad})`} />
           </Svg>
         </View>
-        <Text style={styles.primaria}>{WORDMARK.primaria.toLowerCase()}</Text>
+        <Text style={styles.primaria}>
+          {WORDMARK.primariaTexto.toLowerCase()}
+        </Text>
       </View>
-      <Text style={styles.secundaria}>{WORDMARK.secundaria}</Text>
+      <Text style={styles.secundaria}>{WORDMARK.secundariaTexto}</Text>
     </View>
   );
 }

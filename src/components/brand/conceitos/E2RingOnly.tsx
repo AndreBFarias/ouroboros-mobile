@@ -44,6 +44,7 @@ export function E2RingOnly({ tamanho = 96 }: E2RingOnlyProps) {
       hideBeads
       hideRosto
       hideWordmark
+      hideDisco
       driver={{ anelRotacao }}
     />
   );
