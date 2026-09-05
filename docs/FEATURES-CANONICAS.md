@@ -370,7 +370,12 @@ pausa e um spec de pivô Skia é redigido antes de qualquer sprint seguinte.
 - App reconhecido em "Conexão Saúde" do Android nativo (Health
   Connect). Listado em "Apps conectados" quando o usuário aceita
   permissões.
-- Pacote: `react-native-health-connect@^3.5.0` via Expo Config Plugin.
+- Bridge nativa própria, não pacote de terceiros: módulo Kotlin em
+  `modules/health-connect/`, sobre a dependência oficial
+  `androidx.health.connect:connect-client:1.1.0`
+  (`modules/health-connect/android/build.gradle`). O plugin local
+  `./modules/health-connect/app.plugin.js` é registrado em `app.json` e
+  cuida das permissões e do intent-filter no build.
 - Permissões declaradas em `app.json android.permissions`:
   - `READ_STEPS`
   - `READ_EXERCISE` + `WRITE_EXERCISE`
@@ -463,7 +468,7 @@ Frase relativa PT-BR ("há 3h", "há 2 dias", "agora mesmo") via helper
 canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
 `haRelativoDeIso`), prefix-free e reutilizável.
 
-### 3.8 Hub de Integrações — R-INT-1 (2026-05-16)
+### 3.8 Hub de Integrações — R-INT-1 (2026-05-16), estendido por R-INT-4 (2026-05-17) e R-INT-5 (Drive)
 
 - Rota canônica `/integracoes` agrega todos os serviços externos
   suportados em uma só tela. Acessível pelo menu lateral seção
@@ -480,11 +485,32 @@ canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
     se qualquer pessoa (`pessoa_a` ou `pessoa_b`) tem
     `accessToken` válido. Última sincronização vem de
     `max(ultimaConexao_a, ultimaConexao_b)`. Tap navega para
-    `/settings/contas-google` (gerencia OAuth detalhado).
-  - **Spotify** (R-INT-4 futura) — placeholder, badge "Em breve",
-    desabilitado.
-  - **YouTube** (R-INT-4 futura) — placeholder, badge "Em breve",
-    desabilitado.
+    `/settings/contas-google` (gerencia OAuth detalhado). O texto de
+    status traz o sufixo `(auto-sync ligado)` ou `(auto-sync
+    desligado)`, espelhando `featureToggles.googleCalendarSync` — mesmo
+    tratamento que os cards de Saúde Física e Google Drive já dão. Esse
+    auto-sync é opt-in e nasce desligado: liga-se em Configurações →
+    Contas Google → seção **Agenda**, no toggle "Sincronizar agenda
+    automaticamente", habilitado apenas quando há conta Google
+    conectada (AUDIT-P2-2, 2026-09-05 — antes dessa sprint a chave
+    existia no store e no gate de boot, mas nenhuma tela a escrevia, e
+    o recurso ficava permanentemente desligado em qualquer instalação).
+    Com o toggle ligado, o app atualiza os próximos compromissos em
+    segundo plano no boot e a cada retorno ao primeiro plano,
+    respeitando janela de 60 minutos desde a última tentativa, e agenda
+    uma notificação local para 15 minutos antes de cada compromisso.
+  - **Spotify** (R-INT-4, 2026-05-17) — card ativo, não é mais
+    placeholder. OAuth PKCE com a Web API em modo somente leitura. O
+    estado sai do store `useSpotifyAuth`: Conectado quando há
+    `accessToken` válido, Desconectado caso contrário, e "Conexão
+    expirada. Toque para reconectar." quando o token foi invalidado.
+    Limitação desta versão: ainda não existe rota dedicada
+    `/settings/spotify`, então o tap abre `/settings/integracoes`, onde
+    a pessoa vê o status.
+  - **YouTube** (R-INT-4, 2026-05-17) — card ativo, mesmo desenho do
+    Spotify. OAuth Google com escopo `youtube.readonly` sobre a YouTube
+    Data API v3, estado lido de `useYouTubeAuth`. Também sem rota
+    dedicada nesta versão: o tap abre `/settings/integracoes`.
   - **Google Drive** (R-INT-5-DRIVE-HUB-ATIVO, ligado em AUDIT-P2-3) —
     card ativo, não é mais placeholder. Aparece como Conectado quando
     qualquer pessoa tem `accessToken` Google válido; caso contrário
@@ -501,12 +527,16 @@ canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
     no Google (R-SEC-1, passo humano fora deste repositório), o card diz
     que está aguardando autorização; assim que houver um envio real, essa
     ressalva some sozinha, porque deriva do estado e não é texto fixo.
-- Decisão técnica R-INT-1: o hub é **read-only sobre stores
-  existentes** (`useGoogleAuth`, `useSettings`, helpers de HC
-  `availability`/`permissions`). Não recria fluxo OAuth nem
-  lógica HC; apenas agrega estado e oferece navegação.
-  Retrocompat com `/settings/integracoes` é total (rota antiga
-  continua entregando o detalhe rico de HC entregue em Q17).
+- Decisão técnica R-INT-1: o hub **não recria fluxo OAuth nem lógica de
+  Health Connect**. Ele lê os stores que já existem — `useGoogleAuth`,
+  `useSettings`, `useSpotifyAuth`, `useYouTubeAuth`, os helpers de HC
+  `availability`/`permissions` e o resumo de backups do Drive — e compõe
+  o estado de cada card a partir deles. A regra original era "read-only,
+  apenas navegação"; R-INT-5 abriu a única exceção: o card Drive expõe
+  duas ações inline que escrevem, **Fazer agora** (envia o ZIP) e
+  **Restaurar** (restaura o ZIP local). Os demais cards só navegam.
+  Retrocompat com `/settings/integracoes` é total — a rota antiga
+  continua entregando o detalhe rico de HC entregue em Q17.
 - Componente: `src/components/screens/IntegracoesScreen.tsx`
   + wrapper em `app/integracoes.tsx`.
 
