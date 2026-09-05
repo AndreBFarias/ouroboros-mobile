@@ -52,7 +52,7 @@
     </LinearLayout>
   </LinearLayout>
 
-  <View
+  <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="1dp"
     android:layout_marginTop="10dp"
@@ -88,16 +88,16 @@
     android:layout_marginTop="6dp"
     android:weightSum="7">
 
-    <View android:id="@+id/widget_heat_0" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
-    <View android:id="@+id/widget_heat_1" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
-    <View android:id="@+id/widget_heat_2" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
-    <View android:id="@+id/widget_heat_3" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
-    <View android:id="@+id/widget_heat_4" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
-    <View android:id="@+id/widget_heat_5" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
-    <View android:id="@+id/widget_heat_6" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_0" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_1" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_2" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_3" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_4" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_5" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:layout_marginEnd="3dp" android:background="@color/dracula_bg_elev" />
+    <FrameLayout android:id="@+id/widget_heat_6" android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1" android:background="@color/dracula_bg_elev" />
   </LinearLayout>
 
-  <View
+  <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="0dp"
     android:layout_weight="1" />
