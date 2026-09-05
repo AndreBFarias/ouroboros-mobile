@@ -541,6 +541,18 @@ resolve. Rode `./scripts/doctor_hooks.sh` para ver o estado do clone: desde
 `./scripts/smoke.sh`, logo antes do `OK`, para não se perder no meio da
 saída. O veredito continua advisory — o gate que obriga é server-side.
 
+**Drift entre integrações e o documento canônico — aviso automático.**
+`docs/FEATURES-CANONICAS.md` se declara fonte de verdade única sobre o que
+o app faz, e a regra manda atualizá-lo no mesmo commit de toda sprint que
+muda feature. Isso era convenção pura até 2026-09-05, e a auditoria de
+2026-07-28 mostrou a convenção falhando três vezes seguidas nas
+integrações. Agora `scripts/check_drift_features.py` roda no smoke e avisa
+quando o diff toca `src/lib/integracoes/`, `modules/health-connect/` ou
+`src/lib/health/` sem tocar o documento. É **advisory**: nunca reprova.
+Refatoração interna que não muda comportamento visível é caso legítimo —
+escreva `features-canonicas-allow: <motivo>` no corpo do commit. Promovê-lo
+a bloqueante depende de `AUDIT-P3-1`, e é decisão separada.
+
 **CI — roda, mas ainda não é obrigatório.** O
 `.github/workflows/ci.yml` executa o job `quality-gate`
 (`./scripts/smoke.sh`, que inclui anonimato, dados de teste, acentuação

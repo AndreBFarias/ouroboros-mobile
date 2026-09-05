@@ -65,6 +65,23 @@ else
   sed 's/^/    /' /tmp/roadmap-fantasmas.log | head -20
 fi
 
+echo ">> drift integracoes x FEATURES-CANONICAS (warning, nao-bloqueante)"
+# AUDIT-P4-10. Mesmo padrão do detector de fantasmas acima, e pelo mesmo
+# motivo: `if` sem `else` faria "sem achados" e "o script quebrou" ficarem
+# indistinguiveis para quem le o log.
+set +e
+python3 scripts/check_drift_features.py > /tmp/drift-features.log 2>&1
+rc_drift=$?
+set -e
+if [[ "$rc_drift" -eq 0 ]]; then
+  if grep -q "^AVISO:" /tmp/drift-features.log; then
+    sed 's/^/  /' /tmp/drift-features.log
+  fi
+else
+  echo "AVISO: o check de drift NÃO RODOU (exit $rc_drift). Saida:"
+  sed 's/^/    /' /tmp/drift-features.log | head -10
+fi
+
 # Typecheck, lint e testes so rodam quando o projeto Expo existir
 if [[ -f package.json ]]; then
   echo ">> typecheck"

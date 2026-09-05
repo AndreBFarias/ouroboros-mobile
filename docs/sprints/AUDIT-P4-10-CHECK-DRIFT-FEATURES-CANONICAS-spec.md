@@ -95,3 +95,39 @@ Sprint de infra, sem código de UI tocado — dispensa caso E2E novo.
 ```
 chore: audit-p4-10 avisa quando integracao muda sem atualizar features canonicas
 ```
+
+## Resultado (executada 2026-09-05)
+
+`scripts/check_drift_features.py` criado e ligado ao `smoke.sh` como aviso
+não-bloqueante, no mesmo padrão do detector de fantasmas — com `else`
+explícito, para que "sem achados" e "o script quebrou" nunca fiquem
+indistinguíveis no log.
+
+Verificado nos três caminhos, contra commits reais desta madrugada:
+
+```
+# toca integração sem tocar o doc → avisa
+$ python3 scripts/check_drift_features.py --base <p2-3>~1 --head <p2-3>
+AVISO: 1 arquivo(s) de integracao mudaram sem tocar docs/FEATURES-CANONICAS.md:
+    src/lib/integracoes/google/driveBackup.ts
+
+# escape hatch → silencia registrando o motivo
+$ ... --allow "refatoracao interna"
+[drift-features] dispensado por --allow: refatoracao interna
+
+# não toca integração → silêncio
+$ python3 scripts/check_drift_features.py --base <p4-6>~1 --head <p4-6>
+(sem saída)
+```
+
+Canário do bloco no smoke, substituindo o script por um `sys.exit(4)`:
+
+```
+AVISO: o check de drift NAO RODOU (exit 4). Saida:
+    falha simulada
+```
+
+NÃO-objetivos respeitados: não bloqueia merge, não valida o conteúdo do
+documento (só a presença de diff), não generaliza para todo `src/` — começa
+pelas três pastas onde o drift foi medido — e não reaproveita
+`check_roadmap_fantasmas.py`, que lê o mesmo arquivo para outro fim.
