@@ -797,8 +797,8 @@ function VaultBootGate() {
       }
     })();
     // toast trocaria identidade entre renders; usamos snapshot via
-    // useEffect uma unica vez na mount do gate. Plugin react-hooks
-    // nao habilitado no eslint config do projeto.
+    // useEffect uma unica vez na mount do gate. exhaustive-deps avisa
+    // sobre este array vazio de proposito (AUDIT-P3-3).
   }, []);
   return null;
 }

@@ -36,10 +36,7 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { calcularSaudeRecap, type SaudeRecap } from '@/lib/recap/saude';
 import { calcularAgendaRecap, type AgendaRecap } from '@/lib/recap/agenda';
-import {
-  calcularInsightSaude,
-  type InsightSaude,
-} from '@/lib/recap/insights';
+import { calcularInsightSaude, type InsightSaude } from '@/lib/recap/insights';
 import {
   useRecap,
   resolverPeriodo,
@@ -118,7 +115,7 @@ export function RecapScreen() {
   const params = useLocalSearchParams<{ periodo?: string }>();
   const periodoInicial = useMemo(
     () => parsePeriodoParam(params.periodo),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- so' o valor inicial do param importa: reagir a params.periodo desfaria a escolha que o usuario acabou de fazer no ChipGroup
     []
   );
   const [periodo, setPeriodo] = useState<PeriodoChave>(periodoInicial);

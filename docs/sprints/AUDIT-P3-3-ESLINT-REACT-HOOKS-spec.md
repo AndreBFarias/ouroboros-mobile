@@ -202,3 +202,47 @@ runtime muda de comportamento — os dois arquivos tocados
 ```
 ci: audit-p3-3 instala eslint-plugin-react-hooks com rules-of-hooks em error e exhaustive-deps em warn
 ```
+
+## Resultado (executada 2026-09-05)
+
+`eslint-plugin-react-hooks@7.1.1` em `devDependencies`. O peer range
+do pacote inclui `^10.0.0`, entao a compatibilidade com o ESLint 10.2.1
+do projeto e real, não mascarada pelo `--legacy-peer-deps`.
+
+`rules-of-hooks: error` e `exhaustive-deps: warn` em `eslint.config.js`.
+
+### rules-of-hooks pegou um bug real na primeira execução
+
+`app/share-receive.tsx` chamava dois `useMemo` DEPOIS do early-return
+de estado degenerado (`if (!intent || !vaultRoot)`). A contagem de
+hooks mudava entre um render com intent e um sem — o caso em que o
+React passa a associar o estado de um hook a outro. Corrigido movendo
+os dois para antes do early-return, devolvendo `null` quando `intent`
+e nulo. Nenhuma tela mudou de comportamento observavel: o render
+degenerado ja descartava esses valores.
+
+### Baseline de exhaustive-deps (alvo da sprint de promocao a error)
+
+**6 avisos em 5 arquivos:**
+
+| Arquivo | Avisos |
+|---|---|
+| `app/_layout.tsx` | 2 |
+| `src/components/brand/glifo/OuroborosGlifo.tsx` | 1 |
+| `src/components/screens/ScannerPreview.tsx` | 1 |
+| `src/components/screens/SheetNovoTreino.tsx` | 1 |
+| `src/components/treino/FormRotina.tsx` | 1 |
+
+Total da suite por regra:
+
+```
+  11  @typescript-eslint/no-unused-vars
+  11  (diretiva sem regra)
+   6  react-hooks/exhaustive-deps
+```
+
+Sem arquivo de supressoes, conforme a decisao do dono de 2026-07-29.
+As duas mencoes antigas ao plugin foram auditadas: a diretiva de
+`RecapScreen.tsx` agora suprime de verdade e carrega a razao em uma
+linha; o comentario de `app/_layout.tsx` que dizia que o plugin não
+estava habilitado foi corrigido.

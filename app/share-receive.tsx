@@ -118,10 +118,38 @@ export default function ShareReceiveRoute() {
     null
   );
 
+  // Path canonico recalculado em todo render quando subtipo muda.
+  // Como a hora vai variar entre cliques, usamos um snapshot fixo
+  // por sessao para que o path display não "mexa" sozinho. Isso
+  // também garante que o save use o mesmo path do display.
+  //
+  // AUDIT-P3-3: estes dois useMemo ficavam DEPOIS do early-return de
+  // estado degenerado, quebrando as regras dos hooks — a contagem de
+  // hooks mudava entre um render com intent e um sem, e o React passa
+  // a ler o estado de um hook no lugar de outro. Agora rodam sempre;
+  // com intent nulo devolvem null e o early-return abaixo descarta.
+  const agora = useMemo(() => new Date(), []);
+  const nomeBase = intent ? nomeAmigavel(intent) : null;
+  const pathCanonico = useMemo(
+    () =>
+      intent
+        ? resolverDestino({
+            subtipo,
+            mimeType: intent.mimeType,
+            agora,
+            nome: intent.nomeSugerido,
+            slug: nomeBase
+              ? nomeBase.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+              : undefined,
+          })
+        : null,
+    [subtipo, intent, agora, nomeBase]
+  );
+
   // Estado degenerado: rota acessada sem uri. Mostra mensagem curta
   // e sai. Não redirecionamos para nada porque a activity de share
   // raramente entra aqui sem uri; melhor falhar suave.
-  if (!intent || !vaultRoot) {
+  if (!intent || !vaultRoot || pathCanonico === null) {
     return (
       <ShareReceiver
         uri=""
@@ -150,32 +178,15 @@ export default function ShareReceiveRoute() {
     );
   }
 
-  const nomeBase = nomeAmigavel(intent);
-
   // Após o early-return acima, vaultRoot e intent estao garantidos
   // como não-nulos. TS não narrowa para closures aninhadas; usamos
   // aliases locais para preservar a tipagem não-nullable.
   const vaultRootSafe: string = vaultRoot;
   const intentSafe: SharedIntentInput = intent;
-
-  // Path canonico recalculado em todo render quando subtipo muda.
-  // Como a hora vai variar entre cliques, usamos um snapshot fixo
-  // por sessao para que o path display não "mexa" sozinho. Isso
-  // também garante que o save use o mesmo path do display.
-  const agora = useMemo(() => new Date(), []);
-  const pathCanonico = useMemo(
-    () =>
-      resolverDestino({
-        subtipo,
-        mimeType: intentSafe.mimeType,
-        agora,
-        nome: intentSafe.nomeSugerido,
-        slug: nomeBase
-          ? nomeBase.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-          : undefined,
-      }),
-    [subtipo, intentSafe.mimeType, intentSafe.nomeSugerido, agora, nomeBase]
-  );
+  const pathCanonicoSafe: string = pathCanonico;
+  // nomeAmigavel e' puro e barato; recalcular aqui com intent ja narrowado
+  // evita carregar o `string | null` da versao de cima ate' o render.
+  const nomeBaseSafe: string = nomeAmigavel(intent);
 
   // V4.0.2: garante pasta-pai do destino antes de qualquer write.
   // share intent persiste em inbox/financeiro/<subtipo>/ que NAO esta
@@ -297,11 +308,11 @@ export default function ShareReceiveRoute() {
     }
     setConflito(null);
     if (acao === 'renomear') {
-      const slot = await acharSlotLivre(pathCanonico);
+      const slot = await acharSlotLivre(pathCanonicoSafe);
       await executarSave(slot);
     } else {
       // substituir: usa o path canonico mesmo (SAF.copyAsync sobrepoe).
-      await executarSave(pathCanonico);
+      await executarSave(pathCanonicoSafe);
     }
   }
 
@@ -327,15 +338,15 @@ export default function ShareReceiveRoute() {
   async function handleSalvar(): Promise<void> {
     if (salvando) return;
     setSalvando(true);
-    const uriCanonico = joinUri(vaultRootSafe, pathCanonico);
+    const uriCanonico = joinUri(vaultRootSafe, pathCanonicoSafe);
     const ja = await pathExiste(uriCanonico);
     if (ja) {
       // Mostra banner. Mantemos `salvando` true para travar o botao;
       // o resolver conflito muda esse estado.
-      setConflito({ pathExistente: pathCanonico });
+      setConflito({ pathExistente: pathCanonicoSafe });
       return;
     }
-    await executarSave(pathCanonico);
+    await executarSave(pathCanonicoSafe);
   }
 
   function handleCancelar(): void {
@@ -347,7 +358,7 @@ export default function ShareReceiveRoute() {
     <ShareReceiver
       uri={intent.uri}
       mimeType={intent.mimeType}
-      nome={nomeBase}
+      nome={nomeBaseSafe}
       subtipo={subtipo}
       onChangeSubtipo={(s) => {
         setSubtipo(s);
@@ -357,7 +368,7 @@ export default function ShareReceiveRoute() {
       }}
       pessoa={pessoa}
       onChangePessoa={setPessoa}
-      pathDisplay={pathCanonico}
+      pathDisplay={pathCanonicoSafe}
       salvando={salvando}
       conflito={conflito}
       onResolverConflito={(a) => {
