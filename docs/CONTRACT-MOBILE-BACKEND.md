@@ -960,7 +960,7 @@ Estado runtime do `useNavegacao`. Utilidade primária: debug. Sibling pode ignor
 | `ultimaAtualizacao` | ISO 8601 | sim | Alias de `atualizadoEm`. |
 | `atualizadoEm` | ISO 8601 | sim | |
 
-Read-model derivado dos 7 últimos dias. Recalculado pelo writer reativo a cada mutação relevante (debounced 30s).
+Read-model derivado dos 7 últimos dias. Recalculado uma vez por boot do app, por um hook de arranque que escreve os quatro períodos em sequência (`statsAgregadasHook`, em `src/lib/boot/reagendamento.ts`). Não há recálculo por mutação: quem registra um humor no meio da sessão só vê o arquivo mudar no próximo boot.
 
 ---
 

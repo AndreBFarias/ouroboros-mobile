@@ -2,10 +2,11 @@
 // idempotente no início do app faz `BOOT_HOOKS.push(suaFuncao)` em
 // seu proprio modulo (CONTRACT seções 1.7 e 5.4).
 //
-// Lista canonica plugada (16 hooks), na ordem real do BOOT_HOOKS.push
-// no fim deste arquivo. Manter esta lista sincronizada com o push: o
-// cabecalho ficou defasado ate a AUDIT-P1-1A (dizia "5 hooks" e
+// Lista canonica dos 17 hooks empurrados NESTE arquivo, na ordem real
+// do BOOT_HOOKS.push no fim dele. Manter esta lista sincronizada com o
+// push: o cabecalho ficou defasado ate a AUDIT-P1-1A (dizia "5 hooks" e
 // enumerava 6, com 15 registrados de fato).
+//
 //   1.  M11 migrarDraftsParaTreinoSessao (sempre, idempotente)
 //   2.  M11 verificarMarcosAuto (uma vez por dia)
 //   3.  M30 migrarLembretesParaAlarmes (uma vez, antes do reagendar)
@@ -21,7 +22,25 @@
 //   13. M38 atualizarDeviceIndex (sempre, idempotente)
 //   14. AUDIT-T1-BUGS B1 limparArquivosWritingOrfaos (sempre)
 //   15. V4.0.2 reconciliarTipoCompanhia (sempre, so stores em memoria)
-//   16. AUDIT-P1-1A sincronizarWidgetTodoBootHook (sempre, idempotente)
+//   16. AUDIT-P2-4 statsAgregadasHook (sempre; escreve os 4 periodos)
+//   17. AUDIT-P1-1A sincronizarWidgetTodoBootHook (sempre, idempotente)
+//
+// ATENCAO (AUDIT-P2-4, 2026-09-05): a lista acima NAO e o conteudo de
+// BOOT_HOOKS em runtime, e nunca foi. Dois hooks se registram de fora
+// deste arquivo e nunca entraram na enumeracao:
+//   18. limparDuplicatasAgendaUmaVez (src/lib/boot/
+//       limparDuplicatasAgenda.ts, no fim do proprio modulo)
+//   19. sanearEstadoTextoPuroUmaVez (src/lib/boot/
+//       sanearEstadoTextoPuro.ts, idem)
+// Os dois modulos entram por import de side-effect em app/_layout.tsx,
+// depois do import deste arquivo -- por isso caem no fim da fila, nessa
+// ordem. Em runtime sao 19 hooks. Os testes que importam somente este
+// modulo enxergam 17, porque o grafo de modulos deles nao carrega os
+// outros dois arquivos. Quem for conferir contagem precisa dizer de
+// qual dos dois numeros esta falando.
+//
+// Sprint que acrescentar hook registra-o na lista acima (se o push for
+// deste arquivo) ou nesta nota (se o modulo dono se registrar sozinho).
 //
 // Em M00.5 a lista comeca vazia. O orquestrador roda cada hook em
 // sequência, isolando erros: falha de um não trava os demais.
@@ -264,6 +283,43 @@ const reconciliarTipoCompanhiaHook: BootHook = async () => {
   }
 };
 
+// AUDIT-P2-4 (2026-09-05): escreve as 4 stats agregadas em
+// vault/_estado/stats-<periodo>-<deviceId>.md.
+//
+// Por que existe: os quatro arquivos sao tipos canonicos do contrato
+// com o repositorio irmao de desktop (docs/CONTRACT-MOBILE-BACKEND.md,
+// secoes 5.28 a 5.31) e src/lib/vault/exportarEstadoCompleto.ts declara
+// "9 arquivos esperados". Mas src/lib/stats/calcular.ts e
+// src/lib/stats/escreverStats.ts eram um par fechado, sem um unico
+// caller externo: nenhum Vault de nenhum usuario jamais teve esses .md,
+// e o ZIP de "Exportar estado completo" saia com 5 de 9 sem erro nem
+// aviso. Este hook e o gatilho que faltava.
+//
+// Por que write direto e nao agendarRecalculoStatsTodos: o debounce de
+// 30s de escreverStats existe para agrupar RAJADA de mutacao. Uma
+// chamada por boot nao tem rajada para agrupar, entao o unico efeito do
+// debounce aqui seria abrir uma janela de 30s em que o app pode ir a
+// background (o Android estrangula timer) ou ser morto sem escrever
+// nada -- e a sprint fecharia verde com zero arquivo produzido. Com
+// await, o trabalho termina dentro da fila de boot, que ja isola erro
+// hook a hook.
+//
+// Sequencial e nao Promise.all: cada periodo varre 6 pastas do Vault;
+// os 4 em paralelo dariam 24 listagens concorrentes disputando SAF no
+// arranque. Custo aceito: e I/O de leitura, e roda depois do arranque
+// interativo.
+//
+// Sem vaultRoot escreverStatsAgregadas devolve cedo (no-op) e o proximo
+// boot tenta de novo. Nao ha estado a perder: stats e read-model
+// derivado, reconstruido inteiro a cada execucao.
+const statsAgregadasHook: BootHook = async () => {
+  const { escreverStatsAgregadas } = await import('@/lib/stats/escreverStats');
+  const { PERIODOS_STATS } = await import('@/lib/schemas/vault_estado');
+  for (const periodo of PERIODOS_STATS) {
+    await escreverStatsAgregadas(periodo);
+  }
+};
+
 // AUDIT-P1-1A (2026-07-28): drena a fila do widget Quick To-do
 // (R-WIDG-1). O widget roda em processo de BroadcastReceiver e so tem
 // permissao para escrever em cacheDir/widget-todo-queue.json; quem
@@ -330,6 +386,16 @@ BOOT_HOOKS.push(
   // Sem dependencia de I/O (so toca stores em memoria), entao roda por
   // ultimo sem afetar arranque. Idempotente.
   reconciliarTipoCompanhiaHook,
+  // AUDIT-P2-4: recalcula e escreve as 4 stats agregadas. Posicao pelo
+  // mesmo criterio do dreno do widget: le o Vault inteiro via listarX,
+  // entao precisa rodar DEPOIS de migrarLayoutVaultHook e de
+  // migrarT2DeviceIdSuffixHook, que definem o layout final que essas
+  // listagens varrem. Fica ANTES do dreno do widget porque o dreno e' o
+  // ultimo por contrato proprio (tests/lib/boot/
+  // reagendamento-widget-todo.test.ts); a tarefa que ele criar nesta
+  // execucao entra nas stats do proximo boot, o que e' aceitavel para
+  // um read-model recalculado inteiro toda vez.
+  statsAgregadasHook,
   // AUDIT-P1-1A: drena a fila do widget Quick To-do. Por ultimo, por
   // tres razoes:
   //   1. Depende do layout final do Vault. drenarFilaTodoWidget grava

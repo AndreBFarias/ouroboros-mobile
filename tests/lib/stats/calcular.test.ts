@@ -15,6 +15,7 @@
 // Comentarios sem acento.
 
 import { calcularStatsAgregadas, diasDoPeriodo } from '@/lib/stats/calcular';
+import { EstadoStatsAgregadasSchema } from '@/lib/schemas/vault_estado';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
 import type { EventoMeta } from '@/lib/schemas/evento';
@@ -427,10 +428,7 @@ describe('stats/calcular: streaksAtuais', () => {
       diarios: [],
       eventos: [],
       marcos: [],
-      contadores: [
-        contador('sem-acucar', 30),
-        contador('sem-fumar', 100),
-      ],
+      contadores: [contador('sem-acucar', 30), contador('sem-fumar', 100)],
       tarefas: [],
       periodo: 'all',
       agora: AGORA,
@@ -512,9 +510,7 @@ describe('stats/calcular: topGatilhosUltimos90d', () => {
       periodo: 'all',
       agora: AGORA,
     });
-    expect(r.topGatilhosUltimos90d).toEqual([
-      { chave: 'ansiedade', n: 1 },
-    ]);
+    expect(r.topGatilhosUltimos90d).toEqual([{ chave: 'ansiedade', n: 1 }]);
   });
 
   it('empate de frequencia: sort estavel por chave ASC', () => {
@@ -543,9 +539,7 @@ describe('stats/calcular: topGatilhosUltimos90d', () => {
   it('limita a top 5', () => {
     const r = calcularStatsAgregadas({
       humor: [],
-      diarios: [
-        diarioGatilho(1, ['a', 'a', 'b', 'b', 'c', 'd', 'e', 'f']),
-      ],
+      diarios: [diarioGatilho(1, ['a', 'a', 'b', 'b', 'c', 'd', 'e', 'f'])],
       eventos: [],
       marcos: [],
       contadores: [],
@@ -648,5 +642,58 @@ describe('stats/calcular: lacunas temporais', () => {
     expect(r.humorMedio30d).toBeNull();
     expect(r.humorMedio90d).toBeNull();
     expect(r.humorMedioAll).toBe(4.5);
+  });
+});
+
+// AUDIT-P2-4 (2026-09-05): blindagem contra no-op silencioso.
+//
+// Ate esta sprint nenhum teste passava a saida de calcularStatsAgregadas
+// pelo schema que o writer usa. Isso importava porque
+// escreverEstadoCanonicoImediato (src/lib/vault/escreverEstado.ts)
+// devolve SEM ESCREVER quando o safeParse falha -- so um console.warn em
+// __DEV__. Com o gatilho de boot ligado, um payload fora do schema
+// deixaria a sprint verde em todos os gates e produziria zero arquivo.
+//
+// Este bloco fixa o contrato entre o calculador e o schema: se um dos
+// dois mudar sozinho, a suite reprova aqui, e nao em silencio no device.
+describe('stats/calcular: saida valida contra EstadoStatsAgregadasSchema', () => {
+  const VAZIO = {
+    humor: [] as HumorMeta[],
+    diarios: [] as DiarioEmocionalMeta[],
+    eventos: [] as EventoMeta[],
+    marcos: [] as Marco[],
+    contadores: [] as Contador[],
+    tarefas: [] as { meta: Tarefa; rel: string }[],
+  };
+
+  const POPULADO = {
+    humor: [humorEmDias(1, 3), humorEmDias(40, 5), humorEmDias(200, 2)],
+    diarios: [diarioGatilho(1, ['medo', 'raiva']), diarioConquista(2)],
+    eventos: [eventoPositivo(3)],
+    marcos: [marco(4)],
+    contadores: [contador('agua', 10), contador('leitura', 5)],
+    tarefas: [tarefaConcluida(1, 'tarefa um')],
+  };
+
+  describe.each(['7d', '30d', '90d', 'all'] as const)('periodo %s', (p) => {
+    it('vault vazio passa no safeParse', () => {
+      const out = calcularStatsAgregadas({
+        ...VAZIO,
+        periodo: p,
+        agora: AGORA,
+      });
+      const r = EstadoStatsAgregadasSchema.safeParse(out);
+      expect(r.success).toBe(true);
+    });
+
+    it('vault populado passa no safeParse', () => {
+      const out = calcularStatsAgregadas({
+        ...POPULADO,
+        periodo: p,
+        agora: AGORA,
+      });
+      const r = EstadoStatsAgregadasSchema.safeParse(out);
+      expect(r.success).toBe(true);
+    });
   });
 });

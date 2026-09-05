@@ -4,12 +4,28 @@
 // persiste em vault/_estado/stats-<periodo>-<deviceId>.md via a
 // infraestrutura R-VAULT-A (escreverEstadoCanonico).
 //
-// Debounce 30s por periodo: subscribers dos stores de dominio
-// (humor, diario, eventos, marcos, contadores, tarefas) chamam
-// agendarRecalculoStats em cada mutacao; o agendamento agrupa em
-// 1 write por periodo a cada 30s.
+// GATILHO REAL (AUDIT-P2-4, 2026-09-05): quem dispara este writer e o
+// BootHook `statsAgregadasHook` de src/lib/boot/reagendamento.ts, que
+// chama escreverStatsAgregadas nos 4 periodos, um por vez, uma vez por
+// boot do app.
 //
-// Por que 30s e nao os 500ms padrao de escreverEstadoCanonico?
+// Ate essa sprint este preambulo dizia que "subscribers dos stores de
+// dominio (humor, diario, eventos, marcos, contadores, tarefas) chamam
+// agendarRecalculoStats em cada mutacao". Nao chamavam: este modulo e o
+// calcular.ts formavam um par fechado, sem nenhum caller fora de
+// src/lib/stats/, e os 4 arquivos _estado/stats-*.md nunca existiram em
+// Vault nenhum. O comentario descrevia um plano, nao o codigo.
+//
+// agendarRecalculoStats / agendarRecalculoStatsTodos seguem exportados
+// como o caminho DEBOUNCED, para quando um subscriber reativo for de
+// fato plugado e a frescura por mutacao passar a importar. Hoje nenhum
+// dos dois tem caller fora deste arquivo e dos testes -- o hook de boot
+// nao os usa de proposito, porque uma unica chamada por boot nao tem
+// rajada para agrupar e o debounce so abriria uma janela de 30s em que
+// o app pode morrer sem escrever nada.
+//
+// Por que 30s e nao os 500ms padrao de escreverEstadoCanonico, no
+// caminho debounced?
 //  - Calcular stats faz I/O pesado (lista 6+ pastas do Vault). 500ms
 //    multiplica em 2+ ms por arquivo no listVaultFolder; em 100
 //    registros vira 200ms+ extras. Agrupar a 30s amortiza.
@@ -47,8 +63,9 @@ type TimerHandle = ReturnType<typeof setTimeout>;
 const timersPorPeriodo = new Map<PeriodoStats, TimerHandle>();
 
 // Le todas as listas do Vault, chama o calculador puro, e escreve via
-// escreverEstadoCanonicoImediato. Exporta para o caller (UI ou test)
-// forcar write sincrono sem aguardar debounce.
+// escreverEstadoCanonicoImediato. Write sincrono, sem debounce.
+// Caller real: o BootHook statsAgregadasHook (AUDIT-P2-4). Tambem
+// serve a UI ou a teste que precise forcar o write na hora.
 export async function escreverStatsAgregadas(
   periodo: PeriodoStats
 ): Promise<void> {
@@ -104,8 +121,11 @@ export async function escreverStatsAgregadas(
   }
 }
 
-// Agenda recalculo debounced. Subscribers dos stores de dominio chamam
-// em cada mutacao. Rajada em 30s agrupa em 1 write trailing-edge.
+// Agenda recalculo debounced: rajada em 30s agrupa em 1 write
+// trailing-edge. Pensado para subscriber reativo de store de dominio,
+// que ainda nao existe -- hoje nao ha caller fora deste arquivo e dos
+// testes (o gatilho de boot usa escreverStatsAgregadas direto, ver
+// preambulo).
 //
 // Nao bloqueante (sem Promise retornada). Caller dispara fire-and-forget.
 //
@@ -134,7 +154,9 @@ export function agendarRecalculoStats(periodo: PeriodoStats): void {
 
 // Agenda recalculo para TODOS os 4 periodos. Util quando uma mutacao
 // pode afetar qualquer horizonte (ex: novo registro de humor afeta
-// todas as 4 medias). Caller comum: subscribers de stores de dominio.
+// todas as 4 medias). Sem caller externo hoje: ficou disponivel para o
+// subscriber reativo que ainda nao foi escrito. O gatilho de boot da
+// AUDIT-P2-4 nao passa por aqui -- ver preambulo do arquivo.
 export function agendarRecalculoStatsTodos(): void {
   for (const p of PERIODOS_STATS) {
     agendarRecalculoStats(p);

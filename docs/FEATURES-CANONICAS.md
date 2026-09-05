@@ -485,8 +485,22 @@ canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
     desabilitado.
   - **YouTube** (R-INT-4 futura) — placeholder, badge "Em breve",
     desabilitado.
-  - **Google Drive** (futura) — placeholder, badge "Em breve",
-    desabilitado.
+  - **Google Drive** (R-INT-5-DRIVE-HUB-ATIVO, ligado em AUDIT-P2-3) —
+    card ativo, não é mais placeholder. Aparece como Conectado quando
+    qualquer pessoa tem `accessToken` Google válido; caso contrário
+    Desconectado, com CTA para `/settings/contas-google`. A linha de
+    status compõe o resumo real dos backups locais (quantidade, tamanho,
+    último envio) com o estado do agendamento semanal. Duas ações
+    inline: **Fazer agora**, que envia o ZIP de backup local mais
+    recente, e **Restaurar**, que restaura o ZIP **local** mais recente —
+    não baixa nada do Drive. O envio automático é opt-in por
+    `featureToggles.backupDriveAutomatico`, ligado em Configurações →
+    Contas Google; com ele ligado, o app tenta o envio no boot e a cada
+    retorno ao primeiro plano, respeitando janela de 7 dias desde a
+    última tentativa. Enquanto o acesso ao Drive não estiver autorizado
+    no Google (R-SEC-1, passo humano fora deste repositório), o card diz
+    que está aguardando autorização; assim que houver um envio real, essa
+    ressalva some sozinha, porque deriva do estado e não é texto fixo.
 - Decisão técnica R-INT-1: o hub é **read-only sobre stores
   existentes** (`useGoogleAuth`, `useSettings`, helpers de HC
   `availability`/`permissions`). Não recria fluxo OAuth nem
@@ -1228,7 +1242,13 @@ data que o usuário não configurou nem data inexistente.
   (`despertar` / `conquista` / `botões`). Geral off silencia tudo.
 - **Pessoa**: vault compartilhado on/off, editar nomes/fotos,
   reinicializar pasta do Vault, adicionar segunda pessoa.
-- **Opcionais**: 6 toggles default ON.
+- **Opcionais**: 5 toggles default ON (Tarefas, Alarmes, Contadores,
+  Ciclo, Widget). Eram 6 até 2026-09-05: o interruptor "Calendário de
+  conquistas" saiu em `AUDIT-P2-5` por ser resíduo da consolidação do §7
+  — continuava na tela sem nenhum código lendo o valor. A chave
+  `calendarioConquistas` segue no schema do estado espelhado do Vault
+  como campo inerte, porque removê-la exigiria migração de arquivo para
+  pagar dívida cosmética.
 - **Acessibilidade** (R-AUDIT-A11Y-MOVIMENTO, 2026-07-13): seção
   dedicada com o toggle **"Reduzir movimento"** (default OFF). Quando
   ligado, desliga o zoom das fotos (Ken Burns), o avanço automático das
