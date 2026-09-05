@@ -20,6 +20,7 @@ import {
 } from '@/lib/schemas/diario_emocional';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
+import { devLog } from '@/lib/util/devLog';
 import { MARKDOWN_FOLDER, matchesFeaturePrefix } from '@/lib/vault/paths';
 import type {
   Conquista,
@@ -112,8 +113,14 @@ async function lerEventosPositivos(vaultRoot: string): Promise<Conquista[]> {
         midias: meta.midia,
         meta,
       });
-    } catch {
-      // Arquivo malformado — descarta silenciosamente.
+    } catch (err) {
+      // AUDIT-P2-12: antes era `catch {}` mudo. Um arquivo que falha no
+      // schema sumia sem deixar rastro, e a tela mostrava o mesmo empty
+      // state de "voce ainda nao tem conquistas" -- o que torna um
+      // defeito de leitura indistinguivel do estado normal de quem
+      // acabou de instalar. O arquivo continua sendo descartado; o que
+      // muda e que agora da para saber qual, e por que.
+      devLog('[conquistas] evento descartado', { arquivoUri, err });
     }
   }
   return out;
@@ -151,8 +158,9 @@ async function lerDiarioConquistas(vaultRoot: string): Promise<Conquista[]> {
         midias: meta.midia,
         meta,
       });
-    } catch {
-      // Arquivo malformado — descarta silenciosamente.
+    } catch (err) {
+      // AUDIT-P2-12: mesmo motivo do lerEventosPositivos acima.
+      devLog('[conquistas] diario descartado', { arquivoUri, err });
     }
   }
   return out;
@@ -169,17 +177,22 @@ export async function lerConquistas(
       totaisPorOrigem: { evento_positivo: 0, diario_vitoria: 0 },
     };
   }
-  // M28-COLAT-01 / M27.1 fix: vault mock em web (web://mock-vault/...)
-  // nao tem reader funcional. Promise nunca resolveria, deixando o
-  // hook preso em loading=true e bloqueando boot. Retorna lista vazia
-  // imediatamente: web e dev-only para layout, dados reais ficam em
-  // emulador/celular.
-  if (vaultRoot.startsWith('web://')) {
-    return {
-      conquistas: [],
-      totaisPorOrigem: { evento_positivo: 0, diario_vitoria: 0 },
-    };
-  }
+  // AUDIT-P2-12 (2026-09-05): aqui havia um early-return para
+  // `web://mock-vault/...`, escrito em M28-COLAT-01 porque o mock web
+  // "nao tem reader funcional" e a Promise nunca resolveria, prendendo
+  // o hook em loading.
+  //
+  // O reader passou a existir em INFRA-VAULT-WEB-MOCK (V4.0,
+  // 2026-05-08): `reader.ts` dispatcha para o `useVaultMock` quando
+  // Platform.OS === 'web' && __DEV__, e resolve normalmente. O guard
+  // sobreviveu a propria justificativa e virou uma cegueira: o Recap
+  // renderizava empty state no Gauntlet com o Vault mock populado, e
+  // empty state e indistinguivel de "sem dados". Foi o que deixou a
+  // FiltrosBar orfa por dois meses sem ninguem notar (AUDIT-P2-11).
+  //
+  // Coberto por tests/lib/conquistas/loader-web-mock.test.ts, que roda
+  // com Platform.OS forcado para 'web' -- o preset de teste reporta
+  // 'ios', entao esse ramo nunca era visitado pela suite.
 
   const [eventos, diarioConquistas] = await Promise.all([
     lerEventosPositivos(vaultRoot),
