@@ -25,6 +25,40 @@
 //
 // Em M00.5 a lista comeca vazia. O orquestrador roda cada hook em
 // sequência, isolando erros: falha de um não trava os demais.
+//
+// -------------------------------------------------------------------
+// MECANISMO CANONICO DE ROTINA ONE-SHOT DE BOOT (AUDIT-P1-9, 2026-09-05)
+// -------------------------------------------------------------------
+//
+// BOOT_HOOKS e' o mecanismo canonico. Rotina nova de arranque entra
+// aqui, nao como useEffect proprio em app/_layout.tsx.
+//
+// Por que: o modulo dono registra a si mesmo, entao o _layout nao
+// precisa conhecer cada sprint; a ordem fica declarada num lugar so' e
+// e' auditavel; e a fila inteira ganha teste de execucao de graca
+// (tests/lib/boot/reagendamento-migrations-vault.test.ts).
+//
+// Ate' esta sprint havia uma diferenca real entre os dois mecanismos: a
+// fila disparava num useEffect de deps vazias, antes da hidratacao das
+// stores, enquanto os efeitos diretos ja' guardavam por appPronto.
+// AUDIT-P1-9 alinhou o disparo da fila ao mesmo guard, e a diferenca
+// funcional deixou de existir.
+//
+// Sobraram tres efeitos diretos em app/_layout.tsx, por acidente
+// historico e nao por criterio: migrarEstadoParaVault,
+// sanearRecordesContadores e avaliarBackupAutomatico. Todos rodam na
+// mesma janela desta fila. Migra-los muda a ordem relativa de execucao
+// das migrations de Vault, o que exige sprint propria com validacao --
+// AUDIT-P1-9 declarou isso NAO-objetivo. Ficam registrados aqui como
+// debito conhecido, nao como padrao a imitar.
+//
+// Criterio para quem for escrever rotina nova:
+//   - depende do Vault ou de store hidratada, roda uma vez por boot ou
+//     por instalacao  -> BOOT_HOOKS, no modulo dono;
+//   - precisa de cleanup no unmount, de estado de componente, ou reage
+//     a mudanca de prop/estado ao longo da sessao -> useEffect no
+//     componente que tem esse ciclo de vida (ex.: o timer de
+//     avaliarBackupAutomatico, que cancela no unmount).
 
 export type BootHook = () => Promise<void>;
 
@@ -182,9 +216,8 @@ const migrarT2DeviceIdSuffixHook: BootHook = async () => {
   const { useVault } = await import('@/lib/stores/vault');
   const vaultRoot = useVault.getState().vaultRoot;
   if (!vaultRoot) return;
-  const { migrarArquivosCanonicosParaDeviceId } = await import(
-    '@/lib/boot/migrarArquivosCanonicosParaDeviceId'
-  );
+  const { migrarArquivosCanonicosParaDeviceId } =
+    await import('@/lib/boot/migrarArquivosCanonicosParaDeviceId');
   await migrarArquivosCanonicosParaDeviceId(vaultRoot);
 };
 

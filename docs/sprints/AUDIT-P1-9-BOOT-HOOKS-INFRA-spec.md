@@ -334,3 +334,79 @@ adb logcat -s ReactNativeJS | grep migrarVaultLayout
 ```
 fix: audit-p1-9 boot hooks executaveis em jest e disparados so apos hidratacao
 ```
+
+## Resultado (executada 2026-09-05)
+
+### (a) O falso-verde acabou
+
+`babel-plugin-dynamic-import-node` habilitado **apenas** em `env.test` de
+`babel.config.js`. Os plugins existentes e a ordem obrigatória de
+`react-native-worklets/plugin` por último (A1) ficaram intactos.
+
+**Impacto medido antes de seguir, como a spec exigia:** 363 suítes passavam
+antes, 363 passam depois — zero quebras, nenhuma suíte dependia de o dynamic
+import falhar. O primeiro run levou 45,6 s contra 27,5 s do baseline, mas a
+segunda execução voltou a 27,2 s: era cache frio do Babel, invalidado pelo
+plugin novo. Custo real ≈ zero, então **não** foi preciso restringir o plugin
+por `overrides` de path.
+
+**Canário** (`tests/lib/boot/dynamic-import-canario.test.ts`): 3 casos.
+Verificado que ele de fato morre sem o plugin — removendo-o do
+`babel.config.js`, dois casos falham com exatamente
+`TypeError: A dynamic import callback was invoked without --experimental-vm-modules`.
+
+**Prova de execução** (`tests/lib/boot/reagendamento-migrations-vault.test.ts`):
+7 casos cobrindo as três migrations de Vault. Cada uma tem um caso provando que
+o hook chama a função certa com o `vaultRoot` corrente, e um provando que sem
+`vaultRoot` é no-op. A técnica é isolar um hook por vez em `BOOT_HOOKS` — rodar
+a fila inteira dispararia os outros 15 e seus efeitos colaterais.
+
+**Verificado à mão o que a spec mandou verificar:** comentar
+`migrarAssetsHook` da lista de `BOOT_HOOKS.push` deixa a suíte vermelha (2
+casos falham). Na primeira tentativa o teste continuou verde porque o `sed`
+procurava `BOOT_HOOKS.push(migrarAssetsHook)` e o registro real é um push
+único com 16 argumentos — vale registrar, porque é o tipo de engano que faz
+uma verificação de canário passar por acidente.
+
+O bloco `LIMITE DO HARNESS` de `reagendamento-widget-todo.test.ts` virou
+`HISTORICO DO HARNESS`: era documentação que passou a estar errada no instante
+em que o passo 1 entrou.
+
+### (b) A fila espera a hidratação
+
+`app/_layout.tsx` passou a `if (!appPronto) return;` com deps `[appPronto]`,
+alinhado aos sete efeitos vizinhos. Os guards `if (!vaultRoot) return` dos
+wrappers **permanecem** — defesa em profundidade, não substituídos.
+
+Regressão em `tests/lib/boot/boot-hooks-espera-hidratacao.test.tsx`: 3 casos —
+sem hidratar não roda; após hidratar roda exatamente uma vez e não repete em
+re-render; o guard é por `appPronto`, não por montagem.
+
+### Padrão unificado (passo 8)
+
+Escolhida a segunda opção permitida pela spec: **documentar o critério**, no
+cabeçalho de `src/lib/boot/reagendamento.ts`. Migrar os dois `useEffect`
+diretos mudaria a ordem relativa de execução das migrations de Vault, e a
+própria sprint declara isso NÃO-objetivo.
+
+Com o passo (b), a diferença funcional entre os dois mecanismos **deixou de
+existir** — ambos rodam na mesma janela. Os três efeitos diretos remanescentes
+(`migrarEstadoParaVault`, `sanearRecordesContadores`,
+`avaliarBackupAutomatico`) ficam registrados como débito conhecido, não como
+padrão a imitar. O critério para rotina nova está escrito: depende de Vault ou
+store hidratada e roda uma vez → `BOOT_HOOKS`; precisa de cleanup no unmount ou
+reage a mudança de estado ao longo da sessão → `useEffect` no componente.
+
+### E2E
+
+`tests/e2e/playwright/audit-p1-9-boot-hooks-infra.e2e.ts` — **PASS**. Dispara
+`__gauntlet.disparaBootHooks()` duas vezes e compara a listagem do Vault mock:
+a segunda passada não altera nada, provando que as rotinas one-shot não
+reexecutam. Assert sobre arquivos, não sobre presença visual.
+
+### Números
+
+Suíte: 363 → **366 suítes**, 3485 → **3498 testes**, todas verdes.
+
+NÃO-objetivos respeitados: nenhuma migration teve o conteúdo alterado, e
+`docs/FEATURES-CANONICAS.md` não foi tocado.

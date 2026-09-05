@@ -191,9 +191,22 @@ export default function RootLayout() {
   // Boot hook: reagenda alarmes/limpeza/marcos auto/widget. M00.5
   // cria o orquestrador vazio; cada sprint dona faz BOOT_HOOKS.push
   // no proprio modulo.
+  //
+  // AUDIT-P1-9 (2026-09-05): este era o UNICO efeito do arquivo com deps
+  // vazias -- os outros sete guardam por appPronto. A fila disparava antes
+  // da hidratacao das stores, e o que a segurava era o `if (!vaultRoot)
+  // return` repetido nos wrappers: protecao acidental, que cobre uma das
+  // tres stores criticas. Com useVault hidratada e useSessao ainda nao, o
+  // guard deixava passar e a rotina one-shot lia a flag com o default de
+  // FLAGS_VAZIAS (false, "ainda nao rodou") mesmo tendo rodado em boots
+  // anteriores -- reexecutando migration de Vault a cada arranque.
+  //
+  // Os guards de vaultRoot ficam onde estao: defesa em profundidade, nao
+  // substituidos por este.
   useEffect(() => {
+    if (!appPronto) return;
     void reagendarTodosBootHooks();
-  }, []);
+  }, [appPronto]);
 
   // M16 categorias de notificação com action buttons (Soneca/Desligar).
   // Idempotente: chamar de novo sobrescreve a categoria com mesmo ID.

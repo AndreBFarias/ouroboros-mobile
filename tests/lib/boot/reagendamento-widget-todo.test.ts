@@ -12,27 +12,27 @@
 // erro, sem log e sem aviso. Este arquivo cobre exatamente essa
 // lacuna: o REGISTRO, nao o comportamento das funcoes.
 //
-// LIMITE DO HARNESS (medido nesta sprint, nao introduzido por ela):
-// nao da para provar o registro invocando reagendarTodosBootHooks() e
-// espiando um mock do modulo. Todos os 16 wrappers usam `await
-// import(...)` lazy (para evitar ciclo entre @/lib/boot/* e os modulos
-// donos), e babel-preset-expo preserva o import dinamico no ambiente
-// CJS do Jest. Chamar qualquer hook em Jest lanca
-// "A dynamic import callback was invoked without
-// --experimental-vm-modules", erro que o try/catch do orquestrador
-// engole — entao TODO mock de modulo registraria zero chamadas e o
-// teste passaria a verde tanto com o hook plugado quanto sem ele
-// (exatamente o falso-verde que esta sprint corrige). Nenhum teste do
-// repo executa a fila hoje pelo mesmo motivo; gauntlet-disparaBootHooks
-// so cobre o guard que impede a fila de rodar em Jest.
+// HISTORICO DO HARNESS (AUDIT-P1-9, 2026-09-05): ate' esta data nao dava
+// para provar o registro invocando reagendarTodosBootHooks() e espiando um
+// mock do modulo. Os 16 wrappers usam `await import(...)` lazy (para evitar
+// ciclo entre @/lib/boot/* e os modulos donos), babel-preset-expo
+// preservava o import dinamico verbatim, e o VM CJS do Jest o rejeitava com
+// "A dynamic import callback was invoked without --experimental-vm-modules".
+// O try/catch do orquestrador engolia esse erro, entao TODO mock de modulo
+// registrava zero chamadas e o teste passava verde tanto com o hook plugado
+// quanto sem ele.
 //
-// A prova aqui e feita, entao, em duas metades que se fecham:
-//   (1) o array BOOT_HOOKS contem o wrapper, por nome e em que indice
-//       (babel preserva Function.prototype.name dos wrappers nomeados,
-//       verificado nesta sprint);
-//   (2) reagendarTodosBootHooks percorre o array em ordem, de forma
-//       sequencial e isolando erros — provado com hooks sinteticos
-//       injetados no proprio array, sem dynamic import envolvido.
+// AUDIT-P1-9 fechou o buraco habilitando babel-plugin-dynamic-import-node em
+// env.test (babel.config.js), com canario em
+// tests/lib/boot/dynamic-import-canario.test.ts. A prova de EXECUCAO das
+// tres migrations de Vault vive agora em
+// tests/lib/boot/reagendamento-migrations-vault.test.ts.
+//
+// Este arquivo continua provando o REGISTRO (nome, indice e ordem relativa),
+// que e' o que ele sempre se propos a cobrir e segue valendo:
+//   (1) o array BOOT_HOOKS contem o wrapper, por nome e em que indice;
+//   (2) reagendarTodosBootHooks percorre o array em ordem, sequencialmente,
+//       isolando erros -- provado com hooks sinteticos.
 // Juntas: estar no indice 15 implica executar depois do indice 10
 // (migrarLayoutVaultHook) e do 11 (migrarT2DeviceIdSuffixHook).
 //
