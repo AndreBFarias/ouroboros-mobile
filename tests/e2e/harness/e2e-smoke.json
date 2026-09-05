@@ -1,0 +1,19 @@
+{
+  "_doc": "AUDIT-P3-4: subconjunto rapido da suite e2e-web, o unico que roda no caminho de PR (.github/workflows/e2e-web.yml). Regra de admissao: so entra caso medido VERDE; um caso vermelho aqui reintroduz o problema que a sprint existe para resolver (CI que ninguem olha). Formato: 'casos' e array de STRINGS (basename dentro de tests/e2e/playwright), diferente de e2e-exceptions.json, que usa objetos {arquivo, razao} porque precisa da razao. O titulo de cada teste do runner e o proprio nome do arquivo (e2e-runner.spec.ts:61), entao o workflow monta o --grep do playwright juntando esta lista com '|'. Composicao: as duas sentinelas de boot + a familia m-save-* (persistencia, o invariante mais caro de quebrar). EXCLUSOES DELIBERADAS da familia m-save-*: m-save-diario-reflexao.e2e.ts, m-save-frase.e2e.ts e m-save-humor.e2e.ts (FAIL ja conhecido) e m-save-ciclo.e2e.ts (FAIL medido em 2026-09-05: 'CicloRegistrar nao montou (botao Salvar ausente)'; o plano da sprint listava este caso como verde, e a medicao desmentiu -- m-q8-ciclo-persistencia.e2e.ts tambem falha em /ciclo no mesmo dia, entao a tela tem problema proprio). Os quatro ficam de fora ate a sprint de triagem dos FAIL pre-existentes (AUDIT-P3-4-spec.md, secao 'Trabalho de limpeza que esta sprint destrava'). Nao usar glob 'm-save-*' no lugar desta lista: os quatro reprovam o run de PR. Manutencao: caso verde novo pode entrar; caso que passar a falhar sai daqui e vira item de triagem, nunca excecao silenciosa. Comentarios sem acento.",
+  "casos": [
+    "00-bootstrap.e2e.ts",
+    "00-harness-sentinel.e2e.ts",
+    "m-save-agenda.e2e.ts",
+    "m-save-alarme.e2e.ts",
+    "m-save-audio.e2e.ts",
+    "m-save-contador.e2e.ts",
+    "m-save-devices-index.e2e.ts",
+    "m-save-diario.e2e.ts",
+    "m-save-evento.e2e.ts",
+    "m-save-exercicio.e2e.ts",
+    "m-save-foto.e2e.ts",
+    "m-save-scanner.e2e.ts",
+    "m-save-tarefa.e2e.ts",
+    "m-save-video.e2e.ts"
+  ]
+}

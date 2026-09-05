@@ -11,7 +11,14 @@
 //   - inconclusivo -> passou com annotation 'inconclusivo' (warn-only).
 //   - pass         -> passou limpo.
 //
+// AUDIT-P3-4: alem do sumario em console.log, grava
+// test-results/e2e-web-sumario.json (mapa arquivo -> classe) para o CI
+// comparar contra tests/e2e/harness/e2e-baseline.json. Aditivo: a
+// politica de status e o texto do console seguem intactos.
+//
 // Comentarios sem acento (convencao shell/CI).
+import fs from 'fs';
+import path from 'path';
 import type {
   Reporter,
   TestCase,
@@ -20,6 +27,12 @@ import type {
 } from '@playwright/test/reporter';
 
 type Classe = 'pass' | 'fail' | 'inconclusivo' | 'excecao' | 'outro';
+
+// RAIZ do repo. playwright.config.ts:27 calcula o mesmo caminho, mas
+// como const de modulo nao exportado -- dai o recalculo aqui em vez do
+// import. Este arquivo vive em tests/e2e/harness/, logo tres niveis.
+const RAIZ = path.resolve(__dirname, '../../..');
+const SUMARIO_PATH = path.join(RAIZ, 'test-results', 'e2e-web-sumario.json');
 
 interface Registro {
   classe: Classe;
@@ -39,8 +52,11 @@ class E2eWebReporter implements Reporter {
   onTestEnd(test: TestCase, result: TestResult): void {
     const nome = test.title;
     const anns = [
-      ...((result as unknown as { annotations?: { type: string; description?: string }[] })
-        .annotations ?? []),
+      ...((
+        result as unknown as {
+          annotations?: { type: string; description?: string }[];
+        }
+      ).annotations ?? []),
       ...(test.annotations ?? []),
     ];
     const excecao = anns.find((a) => a.type === 'excecao');
@@ -117,6 +133,51 @@ class E2eWebReporter implements Reporter {
     linhas.push('=== fim do sumario ===');
     // eslint-disable-next-line no-console
     console.log(linhas.join('\n'));
+
+    this.gravarSumario(entradas, result);
+  }
+
+  // Sumario legivel por maquina. Sem ele o CI nao tem como comparar o run
+  // contra o baseline versionado (e2e-baseline.json) -- console.log nao e
+  // fonte de dado. Nunca derruba o run: falha de escrita so avisa.
+  private gravarSumario(
+    entradas: [string, Registro][],
+    result: FullResult
+  ): void {
+    const casos: Record<string, Classe> = {};
+    for (const [nome, v] of entradas) casos[nome] = v.classe;
+    const conta = (c: Classe) =>
+      entradas.filter(([, v]) => v.classe === c).length;
+
+    const sumario = {
+      _doc:
+        'AUDIT-P3-4: saida do run e2e-web, gerada pelo e2e-reporter. ' +
+        'Nao versionar (test-results/ e gitignored). Comparar contra ' +
+        'tests/e2e/harness/e2e-baseline.json.',
+      gerado_em: new Date().toISOString(),
+      veredicto: result.status,
+      totais: {
+        total: entradas.length,
+        pass: conta('pass'),
+        fail: conta('fail'),
+        inconclusivo: conta('inconclusivo'),
+        excecao: conta('excecao'),
+        outro: conta('outro'),
+      },
+      casos,
+    };
+
+    try {
+      fs.mkdirSync(path.dirname(SUMARIO_PATH), { recursive: true });
+      fs.writeFileSync(SUMARIO_PATH, `${JSON.stringify(sumario, null, 2)}\n`);
+      // eslint-disable-next-line no-console
+      console.log(`sumario json:    ${SUMARIO_PATH}`);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `AVISO: nao consegui gravar ${SUMARIO_PATH}: ${(err as Error).message}`
+      );
+    }
   }
 }
 

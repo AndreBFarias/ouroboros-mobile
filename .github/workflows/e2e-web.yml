@@ -1,0 +1,374 @@
+# e2e-web (AUDIT-P3-4, 2026-09-05) -- liga a suite E2E de browser no CI.
+#
+# O que este arquivo resolve: o repositorio tem 120 casos em
+# tests/e2e/playwright/, obrigatorios pela regra de validacao visual
+# (Gauntlet), e ate aqui NENHUM workflow os executava. O runner existia
+# (scripts/e2e-web.sh, package.json -> test:e2e:web) e so rodava quando
+# alguem digitava o comando -- ou seja, quase nunca. Uma regressao de
+# navegacao mergeava verde e so aparecia no device.
+#
+# DUAS VELOCIDADES (DECISAO do dono, 2026-07-29):
+#   - pull_request -> roda SO o subconjunto de
+#     tests/e2e/harness/e2e-smoke.json, que e verde por construcao. Este
+#     caminho REPROVA o PR: e o unico portao.
+#   - schedule (noturno) + workflow_dispatch -> roda a suite inteira e
+#     NAO reprova por caso vermelho. A suite nasce com ~35 FAIL
+#     pre-existentes (baseline registrado no merge de r-ci-e2e-web);
+#     reprovar por eles daria um job vermelho todo dia, que na pratica e
+#     o mesmo que nao ter job. O sinal do noturno e a comparacao contra
+#     tests/e2e/harness/e2e-baseline.json: o que PIOROU desde o baseline.
+#
+# Rodar a suite inteira em todo PR (texto original de R-CI-E2E-WEB-b)
+# esta descartado: workers=1 e decisao de config (todos os casos dividem
+# um Metro e um estado de Gauntlet) e o custo nao cabe no caminho critico
+# de um PR.
+#
+# Workflow ISOLADO de proposito: ci.yml / quality-gate segue intocado, e
+# um problema aqui nao derruba o gate que ja existe.
+#
+# NAO e required check. Promover a required e acao do dono na config do
+# repositorio, e so depois do primeiro run verde (AUDIT-P3-1).
+#
+# Comentarios sem acento (convencao shell/CI).
+name: e2e-web
+
+on:
+  pull_request:
+    branches: [main]
+  # 06:00 UTC = 03:00 BRT. ATENCAO: cron e workflow_dispatch so existem a
+  # partir do default branch -- os dois ficam inertes ate este arquivo
+  # entrar em main. Nao da para exercitar o caminho noturno de dentro do
+  # PR que o introduz; a primeira execucao completa e pos-merge, via
+  # "Run workflow" na aba Actions. O GitHub tambem desativa cron de repo
+  # publico apos 60 dias sem atividade no repositorio.
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-web:
+    name: e2e-web
+    runs-on: ubuntu-latest
+    # timeout-minutes e chave de JOB, nao de step: para variar por
+    # gatilho tem de sair de uma expressao (a alternativa seria dois jobs
+    # com if:). PR roda 15 casos; o noturno roda 120, com os vermelhos
+    # pagando 90s x 2 tentativas cada.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 20 || 60 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install npm deps
+        run: npm ci --legacy-peer-deps
+
+      # OBRIGATORIO antes de qualquer bundle. env.json e gitignored, e
+      # src/lib/services/googleAuthFlow.ts e
+      # src/lib/integracoes/spotify/oauth.ts o importam ESTATICAMENTE. A
+      # cadeia app/_layout.tsx -> stores/googleAuth -> googleAuthFlow poe
+      # esse import no grafo de TODA rota, entao sem este step o bundle
+      # web nao resolve e a suite inteira morre -- com sintoma enganoso
+      # (tela branca / conexao recusada), nao com erro de modulo. tsc e
+      # jest nao pegam isso: jest.config.js mapeia env.json para
+      # tests/__fixtures__/env.mock.json e src/types/env.d.ts declara o
+      # modulo; o Metro nao tem alias equivalente. Este e o primeiro job
+      # do repo que faz bundle web.
+      #
+      # Deliberadamente SEM o secret ENV_JSON_BASE64 que
+      # build-android-apk.yml usa, por dois motivos:
+      #   1. determinismo -- tests/e2e/harness/e2e-baseline.json foi
+      #      gravado com este mesmo env.json.example. Credencial real no
+      #      CI e stub no baseline fariam todo caso de Google/Spotify
+      #      divergir sistematicamente, e o primeiro diff noturno sairia
+      #      com dezenas de degradacoes falsas.
+      #   2. exposicao -- este job publica artefatos (screenshots, HTML
+      #      de pagina) num repositorio PUBLICO. A suite roda contra o
+      #      Gauntlet, que e mock; credencial de verdade aqui nao compra
+      #      nada e so cria superficie.
+      - name: Provision env.json (stub; a suite roda contra o Gauntlet)
+        run: cp env.json.example env.json
+
+      # O config nao declara `projects`, entao o browser default e o
+      # chromium.
+      - name: Instala o chromium do playwright
+        run: npx playwright install --with-deps chromium
+
+      # Prewarm do bundle web. Sem ele o PRIMEIRO caso paga a compilacao
+      # fria inteira dentro do timeout de 90s por caso
+      # (playwright.config.ts, com actionTimeout: 0), e num runner de
+      # 2 vCPU esse primeiro bundle (600+ deps, nativewind, moti,
+      # react-native-calendars) passa de 90s com folga -- o smoke
+      # nasceria vermelho, exatamente o que esta sprint existe para
+      # evitar. O health-check de scripts/e2e-web.sh nao cobre isso:
+      # `curl -sf localhost:8081` devolve o shell HTML assim que o dev
+      # server binda, e o Metro so compila sob demanda no primeiro GET
+      # de /index.bundle.
+      #
+      # Aqui o curl roda SEM timeout, fora do relogio do playwright. O
+      # que sobrevive ao teardown e o FileStore do metro-cache em
+      # os.tmpdir() -- /tmp/metro-cache, medido em 59 MB / 256 shards
+      # apos um run local -- que persiste entre steps do mesmo job. O
+      # e2e-web.sh sobe um Metro proprio depois e reaproveita as
+      # transformacoes ja cacheadas.
+      #
+      # Nao da para fazer o prewarm dentro do scripts/e2e-web.sh: aquele
+      # arquivo esta fora do escopo desta sprint.
+      - name: Prewarm do bundle web (Metro frio x timeout de 90s por caso)
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          EXPO_PUBLIC_GAUNTLET: '1'
+        run: |
+          setsid nohup ./run.sh --web --port 8081 > /tmp/prewarm-metro.log 2>&1 &
+          PREWARM_PID=$!
+          for _ in $(seq 1 120); do
+            curl -sf http://localhost:8081 > /dev/null 2>&1 && break
+            sleep 1
+          done
+          echo ">> dev server respondeu; compilando o bundle web (sem timeout)"
+          if time curl -sf 'http://localhost:8081/index.bundle?platform=web&dev=true' -o /dev/null; then
+            echo ">> prewarm concluido"
+          else
+            echo ">> AVISO: prewarm nao completou; a suite paga o bundle no 1o caso"
+            tail -n 30 /tmp/prewarm-metro.log || true
+          fi
+          # Teardown explicito: o run.sh recusa subir se algo ja responde
+          # em 8081, e o e2e-web.sh sobe o Metro dele em seguida.
+          kill -- "-$PREWARM_PID" 2>/dev/null || true
+          kill "$PREWARM_PID" 2>/dev/null || true
+          for pid in $(lsof -ti:8081 2>/dev/null || true); do
+            kill -9 "$pid" 2>/dev/null || true
+          done
+          sleep 3
+
+      # Caminho de PR. Os titulos dos testes do runner sao os proprios
+      # nomes de arquivo (e2e-runner.spec.ts, `test(arquivo, ...)`),
+      # entao o filtro sai de graca no --grep do playwright, sem tocar o
+      # runner. Os pontos sao escapados: sem isso `m-save-diario.e2e.ts`
+      # como regex tambem casaria vizinhos com nome mais longo.
+      - name: Suite e2e-web (subconjunto smoke; REPROVA o PR)
+        if: github.event_name == 'pull_request'
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          EXPO_PUBLIC_GAUNTLET: '1'
+        run: |
+          GREP=$(node -e '
+            const casos = require("./tests/e2e/harness/e2e-smoke.json").casos;
+            const escapa = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            console.log(casos.map(escapa).join("|"));
+          ')
+          ESPERADOS=$(node -e '
+            console.log(require("./tests/e2e/harness/e2e-smoke.json").casos.length);
+          ')
+          echo ">> filtro do smoke: $GREP"
+          echo ">> casos esperados: $ESPERADOS"
+          scripts/e2e-web.sh --grep "$GREP"
+
+          # O portao tem de reprovar tambem quando ENCOLHE. Sem esta
+          # conferencia, renomear ou apagar um arquivo listado no
+          # e2e-smoke.json deixa o --grep casar os demais, e o job sai
+          # verde com menos casos do que a lista promete -- o gate
+          # diminui em silencio. So o caso extremo (zero matches) seria
+          # pego, e por acidente, porque o playwright sai 1 com
+          # "no tests found".
+          RODADOS=$(node -e '
+            const s = require("./test-results/e2e-web-sumario.json");
+            console.log(s.totais.total);
+          ')
+          echo ">> casos rodados: $RODADOS"
+          if [ "$RODADOS" -ne "$ESPERADOS" ]; then
+            echo "ERRO: o smoke declara $ESPERADOS casos mas rodou $RODADOS."
+            echo "Algum arquivo de e2e-smoke.json foi renomeado ou removido."
+            exit 1
+          fi
+
+      # Caminho noturno/manual. continue-on-error porque a suite nasce
+      # com um volume grande de FAIL pre-existentes (o spec estima ~35 a
+      # partir do baseline de r-ci-e2e-web; o numero confiavel so sai do
+      # primeiro run completo aqui); quem julga este run e o step de
+      # comparacao contra o baseline, logo abaixo.
+      #
+      # Ao investigar um noturno ruim, olhe primeiro a ASSINATURA das
+      # falhas. Uma cascata de casos com
+      # "page.goto: net::ERR_CONNECTION_REFUSED" NAO e a suite piorando:
+      # e o Metro que morreu no meio do run e levou junto todo caso
+      # posterior. Aconteceu na medicao local desta sprint (OOM killer
+      # na execucao 38 de 122; "Killed" no fim do log do Metro, 57 casos
+      # em cascata). Sintoma de memoria, nao de regressao.
+      - name: Suite e2e-web (completa; avisa, nao reprova)
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          EXPO_PUBLIC_GAUNTLET: '1'
+        run: scripts/e2e-web.sh
+
+      # Sem baseline, um caso que degradou de PASS para INCONCLUSIVO e
+      # indistinguivel de um que sempre foi inconclusivo -- INCONCLUSIVO
+      # e warn-only por decisao documentada em e2e-runner.spec.ts.
+      #
+      # Politica: degradacao AVISA no step summary e NUNCA reprova; o
+      # noturno e um relatorio, nao um portao. A unica coisa que reprova
+      # aqui e sumario ausente ou vazio, que nao e caso vermelho e sim
+      # infra quebrada (Metro nao subiu, bundle nao resolveu) -- um
+      # noturno verde nessa situacao seria pior que nenhum noturno.
+      - name: Compara o run contra o baseline
+        if: always() && github.event_name != 'pull_request'
+        # `shell: bash` e OBRIGATORIO aqui, nao estilo. O shell default do
+        # Actions em Linux e `bash -e {0}`, SEM pipefail: numa pipeline o
+        # exit code e o do ultimo comando, ou seja o do `tee`, que e
+        # sempre 0. Sem esta linha o step NUNCA reprova -- Metro morre por
+        # OOM, nenhum caso roda, o sumario nem e gerado, e o job sai
+        # verde. Exatamente o "pior que nenhum noturno" que o comentario
+        # acima promete evitar. `shell: bash` roda com -eo pipefail.
+        shell: bash
+        run: |
+          node - <<'JS' | tee -a "$GITHUB_STEP_SUMMARY"
+          const fs = require('fs');
+          const SUMARIO = 'test-results/e2e-web-sumario.json';
+          const BASELINE = 'tests/e2e/harness/e2e-baseline.json';
+          const linhas = [];
+          const p = (s) => linhas.push(s);
+          const despejar = (codigo) => {
+            console.log(linhas.join('\n'));
+            // exitCode, nao exit(): escrita em pipe e assincrona no Node
+            // e process.exit() imediato trunca a saida. Com o baseline
+            // cheio isto passa de 100 linhas e o step summary sairia
+            // cortado.
+            process.exitCode = codigo;
+          };
+
+          let sumario;
+          try {
+            sumario = JSON.parse(fs.readFileSync(SUMARIO, 'utf8'));
+          } catch (err) {
+            p('## e2e-web: sumario ausente');
+            p('');
+            p('`' + SUMARIO + '` nao foi gerado: ' + err.message);
+            p('');
+            p('Isso NAO e caso vermelho: e infra quebrada (Metro nao subiu,');
+            p('bundle nao resolveu, job cancelado). Ver o log do step da suite.');
+            despejar(1);
+          }
+
+          const casos = sumario.casos || {};
+          if (Object.keys(casos).length === 0) {
+            p('## e2e-web: sumario vazio');
+            p('');
+            p('O reporter rodou mas nenhum caso foi executado. Mesma leitura:');
+            p('infra quebrada, nao suite vermelha.');
+            despejar(1);
+          }
+
+          const t = sumario.totais || {};
+          p('## e2e-web (suite completa)');
+          p('');
+          p('| total | PASS | FAIL-real | INCONCLUSIVO | excecao |');
+          p('| --- | --- | --- | --- | --- |');
+          p(`| ${t.total} | ${t.pass} | ${t.fail} | ${t.inconclusivo} | ${t.excecao} |`);
+          p('');
+
+          let baseline = null;
+          try {
+            baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8')).casos;
+          } catch (err) {
+            p('Baseline ausente ou ilegivel (' + err.message + ').');
+            p('Sem comparacao nesta execucao.');
+            despejar(0);
+          }
+
+          // Baseline vazio = ainda nao gravado (e o estado em que a
+          // sprint AUDIT-P3-4 entregou o arquivo: so um run do proprio
+          // CI serve de baseline, e este e o primeiro). Comparar aqui
+          // listaria os 120+ casos como "novos" e enterraria o sumario.
+          if (Object.keys(baseline).length === 0) {
+            p('### Baseline ainda nao gravado');
+            p('');
+            p('Use o sumario deste run para grava-lo: baixe o artefato');
+            p('`e2e-web-' + (process.env.GITHUB_RUN_ID || '<run_id>') + '-*`, pegue');
+            p('`test-results/e2e-web-sumario.json` e siga o passo a passo do campo');
+            p('`_doc` de `' + BASELINE + '`.');
+            p('');
+            despejar(0);
+          }
+
+          // pass > inconclusivo > excecao > fail. Sair de PASS para
+          // qualquer coisa e degradacao; virar PASS e melhoria.
+          const posto = { pass: 3, inconclusivo: 2, excecao: 1, fail: 0, outro: 0 };
+          const pioraram = [];
+          const melhoraram = [];
+          const novos = [];
+          const sumidos = [];
+
+          for (const [arquivo, classe] of Object.entries(casos)) {
+            if (!(arquivo in baseline)) {
+              novos.push(`${arquivo} (${classe})`);
+              continue;
+            }
+            const antes = baseline[arquivo];
+            if (posto[classe] < posto[antes]) pioraram.push(`${arquivo}: ${antes} -> ${classe}`);
+            else if (posto[classe] > posto[antes]) melhoraram.push(`${arquivo}: ${antes} -> ${classe}`);
+          }
+          for (const arquivo of Object.keys(baseline)) {
+            if (!(arquivo in casos)) sumidos.push(arquivo);
+          }
+
+          const bloco = (titulo, itens) => {
+            if (itens.length === 0) return;
+            p(`### ${titulo} (${itens.length})`);
+            p('');
+            for (const i of itens) p('- `' + i + '`');
+            p('');
+          };
+
+          bloco('Degradaram desde o baseline', pioraram);
+          bloco('Melhoraram desde o baseline', melhoraram);
+          bloco('Casos novos, fora do baseline', novos);
+          bloco('Casos do baseline que nao rodaram', sumidos);
+
+          if (pioraram.length === 0 && novos.length === 0 && sumidos.length === 0) {
+            p('Nenhuma degradacao em relacao ao baseline.');
+            p('');
+          }
+
+          p('---');
+          p('');
+          p('Para REGRAVAR o baseline depois de triagem (ou quando casos novos');
+          p('entrarem na suite), ver o campo `_doc` de');
+          p('`tests/e2e/harness/e2e-baseline.json`.');
+          despejar(0);
+          JS
+
+      # O comentario de playwright.config.ts sobre os artefatos na raiz
+      # ("Facilita o upload-artifact do CI (sub-sprint b)") preparou estes
+      # dois caminhos e nunca foi consumido -- e aqui que ele fecha.
+      #
+      # Repositorio PUBLICO: artefato de Actions e baixavel por qualquer
+      # um. Decisao consciente, nao herdada -- a suite roda contra o
+      # Gauntlet, que semeia dado ficticio (pessoa_a / pessoa_b, vault
+      # mock), entao screenshot de falha nao carrega dado real. Nenhum
+      # gate cobre isso: ./scripts/check_anonimato.sh varre src/, app/ e
+      # tests/, nunca artefato. retention-days curto limita a janela.
+      - name: Artefatos do run (screenshots de falha + relatorio HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-web-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            test-results/**
+            playwright-report/**
+          retention-days: 7
+          if-no-files-found: warn

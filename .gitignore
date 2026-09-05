@@ -68,6 +68,14 @@ expo-env.d.ts
 # docs/sprints/*-screenshots/ apos curadoria)
 .playwright-artifacts/
 
+# AUDIT-P3-4: artefatos do runner e2e de browser. tests/e2e/harness/
+# playwright.config.ts:40,44 grava os dois na RAIZ do repo de proposito
+# (facilita o upload-artifact do CI), e eles carregam screenshot de falha
+# do Gauntlet. O repositorio e publico: sem estas duas linhas, um
+# `git add -A` depois de rodar a suite publica as capturas.
+test-results/
+playwright-report/
+
 # APKs locais baixados de EAS dev-client / preview / production builds.
 # Cada build sai com timestamp; baixar de novo via expo.dev se precisar.
 builds/
