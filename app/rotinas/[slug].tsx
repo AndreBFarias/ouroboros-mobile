@@ -4,6 +4,12 @@
 // removerRotina (sessoes ja salvas continuam intactas — snapshot
 // imutavel, decisao spec §4.5).
 //
+// AUDIT-P2-8 (R-SF-3): abaixo do banner de sugestao entra o historico
+// da marcacao rapida - timeline das ultimas ocorrencias + aderencia da
+// semana. Os dois useMemo ficam ACIMA dos early returns de carregando /
+// !rotina; esta tela ja quebrou com "Rendered more hooks than during
+// the previous render" por hook declarado depois deles (Q22.C, abaixo).
+//
 // Comentarios sem acento (convencao shell/CI).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -18,12 +24,19 @@ import { SugestaoAlarmeRotina } from '@/components/treino/SugestaoAlarmeRotina';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
+import { usePessoa } from '@/lib/stores/pessoa';
 import {
   escreverRotina,
   lerRotina,
   removerRotina,
   silenciarSugestaoRotina,
 } from '@/lib/vault/rotina';
+import { listarMarcacoesUltimosDias } from '@/lib/vault/rotina_marcacao';
+import {
+  calcularAderenciaSemanal,
+  calcularTimeline,
+} from '@/lib/rotinas/marcacao';
+import type { RotinaMarcacao } from '@/lib/schemas/rotina_marcacao';
 import { listarTreinos } from '@/lib/vault/treinos';
 import { escreverAlarme } from '@/lib/vault/alarmes';
 import { agendarAlarme } from '@/lib/services/alarmesNotificacoes';
@@ -37,11 +50,22 @@ import {
 } from '@/lib/treino/inteligenciaTemporal';
 import { comTimeout } from '@/lib/util/comTimeout';
 
+// AUDIT-P2-8: formata um timestamp de marcacao para exibicao curta
+// ("05/09 às 14:32"). Le os campos da propria string ISO, sem reparse
+// por Date, para exibir exatamente o que esta gravado no .md do Vault.
+function formatarMarcacao(ts: string): string {
+  const mes = ts.slice(5, 7);
+  const dia = ts.slice(8, 10);
+  const hora = ts.slice(11, 16);
+  return `${dia}/${mes} às ${hora}`;
+}
+
 export default function RotinaDetalhe() {
   const router = useRouter();
   const params = useLocalSearchParams<{ slug?: string }>();
   const slugParam = typeof params.slug === 'string' ? params.slug : null;
   const vaultRoot = useVault((s) => s.vaultRoot);
+  const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const toast = useToast();
 
   const [rotina, setRotina] = useState<RotinaMeta | null>(null);
@@ -53,13 +77,16 @@ export default function RotinaDetalhe() {
   const [sessoes, setSessoes] = useState<TreinoSessao[]>([]);
   // R-ROT-1-D: latch para esconder banner localmente apos acao do
   // usuario (aceitar ou rejeitar) sem precisar reler do disco.
-  const [sugestaoDispensada, setSugestaoDispensada] =
-    useState<boolean>(false);
+  const [sugestaoDispensada, setSugestaoDispensada] = useState<boolean>(false);
+  // AUDIT-P2-8: entradas de marcacao rapida dos ultimos 7 dias, filtradas
+  // por autor (mesma privacidade de listarRotinas).
+  const [marcacoes, setMarcacoes] = useState<RotinaMarcacao[]>([]);
 
   const carregar = useCallback(async () => {
     if (!vaultRoot || !slugParam) {
       setRotina(null);
       setSessoes([]);
+      setMarcacoes([]);
       setCarregando(false);
       return;
     }
@@ -71,11 +98,23 @@ export default function RotinaDetalhe() {
       // Pasta inexistente => [] silenciosamente.
       const hist = await listarTreinos(vaultRoot, { rotina_slug: slugParam });
       setSessoes(hist);
+      // AUDIT-P2-8: historico e informacao secundaria. Um .md de
+      // marcacao corrompido faz o reader LANCAR; o catch local impede
+      // que isso derrube o carregamento da rotina inteira.
+      try {
+        const marcs = await listarMarcacoesUltimosDias(vaultRoot, {
+          rotinaSlug: slugParam,
+          autor: pessoaAtiva,
+        });
+        setMarcacoes(marcs);
+      } catch {
+        setMarcacoes([]);
+      }
       setSugestaoDispensada(false);
     } finally {
       setCarregando(false);
     }
-  }, [vaultRoot, slugParam]);
+  }, [vaultRoot, slugParam, pessoaAtiva]);
 
   useEffect(() => {
     void carregar();
@@ -148,6 +187,21 @@ export default function RotinaDetalhe() {
     }
     return calcularSugestaoAlarmeRotina(sessoes, rotina.slug);
   }, [rotina, sessoes]);
+
+  // AUDIT-P2-8: timeline (ultimas ocorrencias, mais recente primeiro) e
+  // aderencia da janela de 7 dias. Declarados aqui, antes dos early
+  // returns de `carregando` e `!rotina` logo abaixo -- ordem de hooks.
+  // AUDIT-P2-8: 3, nao o default de 7. Este bloco e IRMAO do FormRotina
+  // dentro do Screen, entao come altura permanente da tela de edicao --
+  // que ja tem nome, descricao, lista de exercicios e tres botoes. Com 7
+  // ocorrencias seriam 9 linhas fixas empurrando o formulario para fora
+  // da primeira dobra. Tres bastam para responder "marquei recentemente?",
+  // que e a pergunta desta tela; o historico completo e do Recap.
+  const timeline = useMemo(() => calcularTimeline(marcacoes, 3), [marcacoes]);
+  const aderencia = useMemo(
+    () => calcularAderenciaSemanal(marcacoes),
+    [marcacoes]
+  );
 
   // R-ROT-1-D: aceitar -> cria alarme companion via writer canonico.
   // Slug deriva da rotina + sufixo '-alarme' para nao colidir com
@@ -279,7 +333,9 @@ export default function RotinaDetalhe() {
         }
       />
       {sugestao.sugerir && !sugestaoDispensada && sugestao.hora && (
-        <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.sm }}>
+        <View
+          style={{ paddingHorizontal: spacing.base, paddingTop: spacing.sm }}
+        >
           <SugestaoAlarmeRotina
             nomeRotina={rotina.nome}
             motivo={sugestao.motivo ?? ''}
@@ -289,6 +345,63 @@ export default function RotinaDetalhe() {
           />
         </View>
       )}
+      <View
+        style={{
+          paddingHorizontal: spacing.base,
+          paddingTop: spacing.base,
+          gap: spacing.xs,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.fg,
+            fontFamily: 'JetBrainsMono_500Medium',
+            fontSize: 13,
+            lineHeight: 20,
+          }}
+        >
+          Últimas marcações
+        </Text>
+        {timeline.length === 0 ? (
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 12,
+              lineHeight: 18,
+            }}
+          >
+            Sem marcações nos últimos {aderencia.janelaDias} dias.
+          </Text>
+        ) : (
+          <>
+            <Text
+              accessibilityLabel={`aderencia semanal ${aderencia.diasMarcados} de ${aderencia.janelaDias} dias`}
+              style={{
+                color: colors.purple,
+                fontFamily: 'JetBrainsMono_500Medium',
+                fontSize: 12,
+                lineHeight: 18,
+              }}
+            >
+              {`${aderencia.diasMarcados} de ${aderencia.janelaDias} dias · ${aderencia.porcentagem}%`}
+            </Text>
+            {timeline.map((ts) => (
+              <Text
+                key={ts}
+                style={{
+                  color: colors.mutedDecor,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: 11,
+                  lineHeight: 16,
+                }}
+              >
+                {formatarMarcacao(ts)}
+              </Text>
+            ))}
+          </>
+        )}
+      </View>
       <FormRotina
         inicial={{
           nome: rotina.nome,

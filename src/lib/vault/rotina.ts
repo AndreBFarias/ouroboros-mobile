@@ -25,6 +25,33 @@ import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
 import { RotinaSchema, type RotinaMeta } from '@/lib/schemas/rotina';
 
+// AUDIT-P2-8: colisao de prefixo com as marcacoes rapidas de rotina.
+// rotinaMarcacaoPath (src/lib/vault/rotina_marcacao.ts) grava em
+// markdown/rotina-marcacao-<slug>-<YYYY-MM-DD>.md, que tambem comeca
+// com 'rotina-'. Sem esta exclusao, listarRotinas passa a ler e
+// parsear com RotinaSchema todo arquivo de marcacao a cada foco de
+// /rotinas (N rotinas x 7 dias de leitura + excecao engolida pelo
+// catch abaixo). Era latente enquanto nenhuma marcacao era escrita.
+//
+// A exclusao NAO pode ser por prefixo nu: uma rotina legitima chamada
+// "Marcacao de glicemia" tem slug marcacao-de-glicemia e vive em
+// markdown/rotina-marcacao-de-glicemia.md, e seria apagada da lista.
+// Por isso a ancora e o sufixo de data obrigatorio do arquivo de
+// marcacao, que rotina nenhuma tem.
+const RE_ARQUIVO_MARCACAO = /^rotina-marcacao-.+-\d{4}-\d{2}-\d{2}\.md$/;
+
+function ehArquivoDeMarcacao(filenameOrUri: string): boolean {
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(filenameOrUri);
+    } catch {
+      return filenameOrUri;
+    }
+  })();
+  const basename = decoded.split('/').pop() ?? decoded;
+  return RE_ARQUIVO_MARCACAO.test(basename);
+}
+
 // Lista todas as rotinas do autor. Pasta inexistente => []. Ordena
 // asc por nome via localeCompare PT-BR (mesmo padrao de contadores).
 export async function listarRotinas(
@@ -34,7 +61,10 @@ export async function listarRotinas(
   const folderUri = vaultUriJoin(vaultRoot, MARKDOWN_FOLDER);
   const todos = await listVaultFolder(folderUri, '.md');
   const arquivos = todos.filter(
-    (u) => !ehSyncConflict(u) && matchesFeaturePrefix(u, 'rotina-')
+    (u) =>
+      !ehSyncConflict(u) &&
+      matchesFeaturePrefix(u, 'rotina-') &&
+      !ehArquivoDeMarcacao(u)
   );
 
   const lidas: RotinaMeta[] = [];

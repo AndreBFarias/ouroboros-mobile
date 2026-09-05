@@ -29,6 +29,7 @@ import {
   matchesFeaturePrefix,
   vaultUriJoin,
 } from '@/lib/vault/paths';
+import { isoComOffsetLocal } from '@/lib/datetime/local';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -82,7 +83,15 @@ export async function registrarMarcacao(
   }
 ): Promise<RotinaMarcacao> {
   const { rotinaSlug, autor, agora } = args;
-  const tsIso = agora.toISOString().replace('Z', '-03:00').replace('.000', '');
+  // AUDIT-P2-8: antes era `toISOString().replace('Z', '-03:00')`, que
+  // rotula o instante UTC como se fosse -03:00 -- o horario sai 3h
+  // adiantado. O efeito era visivel: a hora exibida na timeline vinha
+  // errada, e uma marcacao feita nas ultimas 3 horas do dia local caia no
+  // dia seguinte, zerando a aderencia que a propria tela mostra.
+  //
+  // offsetMinutos consulta o fuso de verdade via Intl, entao continua
+  // correto se o horario de verao voltar.
+  const tsIso = isoComOffsetLocal(agora);
   const data = formatDateYmd(agora);
 
   const existente = await lerMarcacaoDia(vaultRoot, rotinaSlug, agora);

@@ -57,9 +57,26 @@ export function offsetMinutos(d: Date, tz: string = TZ_DEFAULT): number {
   return sinal * (horas * 60 + mins);
 }
 
+// ISO 8601 com o offset REAL do timezone, em vez de rotular o instante
+// UTC com um offset fixo. `d.toISOString().replace('Z','-03:00')` produz
+// uma string que mente: mantem os digitos de UTC e troca so o rotulo,
+// adiantando tudo em 3 horas.
+export function isoComOffsetLocal(d: Date, tz: string = TZ_DEFAULT): string {
+  const off = offsetMinutos(d, tz);
+  const local = new Date(d.getTime() + off * 60_000);
+  const sinal = off < 0 ? '-' : '+';
+  const abs = Math.abs(off);
+  const hh = String(Math.floor(abs / 60)).padStart(2, '0');
+  const mm = String(abs % 60).padStart(2, '0');
+  return `${local.toISOString().slice(0, 19)}${sinal}${hh}:${mm}`;
+}
+
 // Calcula YYYY-MM-DD no timezone alvo a partir de um ISO datetime
 // (UTC, com offset ou Z). Delega ao formatter Intl.
-export function isoToDataLocalYmd(iso: string, tz: string = TZ_DEFAULT): string {
+export function isoToDataLocalYmd(
+  iso: string,
+  tz: string = TZ_DEFAULT
+): string {
   return dataLocalYmd(new Date(iso), tz);
 }
 
@@ -81,7 +98,7 @@ export function ymdMenosDias(ymd: string, dias: number): string {
 // pelas variantes Ymd-Hm e Ymd-Hms.
 function partesDataHoraLocal(
   d: Date,
-  tz: string,
+  tz: string
 ): { y: string; mo: string; da: string; h: string; mi: string; s: string } {
   const partes = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
@@ -93,7 +110,8 @@ function partesDataHoraLocal(
     second: '2-digit',
     hour12: false,
   }).formatToParts(d);
-  const get = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? '';
+  const get = (tipo: string) =>
+    partes.find((p) => p.type === tipo)?.value ?? '';
   // hour12:false pode emitir "24" para meia-noite em alguns engines;
   // normaliza para "00" preservando paridade com getUTCHours.
   let h = get('hour');

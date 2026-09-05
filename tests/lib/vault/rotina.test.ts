@@ -163,6 +163,56 @@ describe('listarRotinas', () => {
     const out = await listarRotinas(VAULT_ROOT, 'pessoa_a');
     expect(out).toHaveLength(1);
   });
+
+  // AUDIT-P2-8: com o botao de marcacao rapida ligado, o Vault passa a
+  // ter markdown/rotina-marcacao-<slug>-<YYYY-MM-DD>.md, que casa com
+  // o prefixo 'rotina-'. Sem a exclusao, cada foco de /rotinas leria e
+  // parsearia com RotinaSchema um arquivo por rotina por dia.
+  it('ignora arquivos de marcacao rapida (rotina-marcacao-<slug>-<data>.md)', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      `${VAULT_ROOT}/markdown/rotina-venvanse.md`,
+      `${VAULT_ROOT}/markdown/rotina-marcacao-venvanse-2026-09-05.md`,
+      `${VAULT_ROOT}/markdown/rotina-marcacao-venvanse-2026-09-04.md`,
+    ]);
+    mockReadVaultFile.mockImplementation((uri: string) => {
+      if (uri.endsWith('rotina-venvanse.md')) {
+        return Promise.resolve({
+          meta: fixture({ slug: 'venvanse', nome: 'Venvanse' }),
+          body: '',
+        });
+      }
+      return Promise.reject(new Error('schema invalido'));
+    });
+    const out = await listarRotinas(VAULT_ROOT, 'pessoa_a');
+    expect(out).toHaveLength(1);
+    expect(out[0].slug).toBe('venvanse');
+    // O ponto do fix e nao pagar a leitura: o reader nunca deve ser
+    // chamado para arquivo de marcacao.
+    expect(mockReadVaultFile).toHaveBeenCalledTimes(1);
+    const urisLidas = mockReadVaultFile.mock.calls.map((c) => c[0]);
+    expect(urisLidas).not.toContain(
+      `${VAULT_ROOT}/markdown/rotina-marcacao-venvanse-2026-09-05.md`
+    );
+  });
+
+  // AUDIT-P2-8 (contraprova): a exclusao ancora no sufixo de data, nao
+  // no prefixo nu. Rotina chamada "Marcacao de glicemia" tem slug
+  // marcacao-de-glicemia e NAO pode sumir da lista.
+  it('mantem rotina legitima cujo slug comeca com "marcacao-"', async () => {
+    mockListVaultFolder.mockResolvedValueOnce([
+      `${VAULT_ROOT}/markdown/rotina-marcacao-de-glicemia.md`,
+    ]);
+    mockReadVaultFile.mockResolvedValueOnce({
+      meta: fixture({
+        slug: 'marcacao-de-glicemia',
+        nome: 'Marcação de glicemia',
+      }),
+      body: '',
+    });
+    const out = await listarRotinas(VAULT_ROOT, 'pessoa_a');
+    expect(out).toHaveLength(1);
+    expect(out[0].slug).toBe('marcacao-de-glicemia');
+  });
 });
 
 describe('lerRotina', () => {
