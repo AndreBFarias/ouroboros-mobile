@@ -102,7 +102,7 @@ describe('getOembedCached', () => {
       JSON.stringify({ cachedAt: seis, data: DADO_VALIDO })
     );
     const r = await getOembedCached(URL_YT);
-    expect(r).not.toBeNull();
+    expect(r).toEqual(DADO_VALIDO);
   });
 
   it('retorna null para JSON malformado', async () => {
@@ -114,9 +114,7 @@ describe('getOembedCached', () => {
 
   it('retorna null para envelope sem campos obrigatorios', async () => {
     mockGetInfoAsync.mockResolvedValueOnce({ exists: true });
-    mockReadAsStringAsync.mockResolvedValueOnce(
-      JSON.stringify({ foo: 'bar' })
-    );
+    mockReadAsStringAsync.mockResolvedValueOnce(JSON.stringify({ foo: 'bar' }));
     const r = await getOembedCached(URL_YT);
     expect(r).toBeNull();
   });

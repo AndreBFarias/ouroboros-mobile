@@ -176,20 +176,47 @@ describe('MidiaPreviewSpotifyYoutube acessibilidade', () => {
 });
 
 describe('MidiaPreviewSpotifyYoutube cleanup', () => {
-  it('nao atualiza estado apos unmount (cancelado)', async () => {
-    let resolve!: (v: unknown) => void;
-    mockObterOembed.mockReturnValueOnce(
-      new Promise((r) => {
-        resolve = r;
-      })
-    );
-    const { unmount } = render(<MidiaPreviewSpotifyYoutube url={URL_YT} />);
-    unmount();
-    await act(async () => {
-      resolve(DADO_YT);
-      await Promise.resolve();
-    });
-    // Sem assert explicito; o teste passa se nao houver warning de
-    // "state update on unmounted component".
+  it('resolver oembed apos unmount nao produz erro nem aviso', async () => {
+    // LIMITAÇÃO CONHECIDA, declarada de propósito: o guard `cancelado`
+    // do useEffect de MidiaPreviewSpotifyYoutube.tsx não é observável
+    // por asserção neste setup. O React 19 não emite mais o aviso
+    // "state update on unmounted component", e o estado de um
+    // componente desmontado não é alcançável pelo teste. Remover o
+    // guard NÃO reprova este teste — o gap de regressão continua
+    // aberto e está registrado no spec da sprint.
+    //
+    // O que aqui é de fato guardado: (a) o efeito disparou com a URL
+    // certa antes do unmount, e (b) resolver a promise depois do
+    // unmount não estoura erro nem aviso no console, o que capturaria
+    // uma exceção ou rejeição na cadeia pós-unmount.
+    const erroSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const avisoSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    try {
+      let resolve!: (v: unknown) => void;
+      mockObterOembed.mockReturnValueOnce(
+        new Promise((r) => {
+          resolve = r;
+        })
+      );
+      const { unmount } = render(<MidiaPreviewSpotifyYoutube url={URL_YT} />);
+      expect(mockObterOembed).toHaveBeenCalledTimes(1);
+      expect(mockObterOembed).toHaveBeenCalledWith(URL_YT);
+
+      unmount();
+      await act(async () => {
+        resolve(DADO_YT);
+        await Promise.resolve();
+      });
+
+      expect(erroSpy).not.toHaveBeenCalled();
+      expect(avisoSpy).not.toHaveBeenCalled();
+    } finally {
+      erroSpy.mockRestore();
+      avisoSpy.mockRestore();
+    }
   });
 });

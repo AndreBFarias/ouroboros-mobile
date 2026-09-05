@@ -165,3 +165,70 @@ adiciona feature nova).
 ```
 test: audit-p4-7-testes-fracos fortalece 7 assercoes fracas e documenta gap de e2e em 10 sprints
 ```
+
+---
+
+## Fechamento (execução de 2026-09-05)
+
+### Correções de escopo em relação ao Escopo mínimo acima
+
+Dois dos sete itens estavam baseados em leitura incompleta do
+repositório. Registrado aqui para não virar retrabalho na validação.
+
+- **Item 6 (`captureRoutes.test.ts:83`)** pedia afirmar o `pathname`
+  exato por `FABRadialKey`. Isso **já existia** em
+  `tests/lib/navigation/captureRoutes.test.ts:26-59`, um teste por
+  chave, com `params` inclusive. Escrever de novo seria duplicação. O
+  que de fato faltava era a **totalidade** do mapa, e é isso que a
+  asserção nova guarda: `Object.keys(CAPTURE_ROUTES)` contra a lista de
+  chaves. Mutação de prova: uma entrada órfã adicionada a
+  `CAPTURE_ROUTES` reprova só o teste novo (1 falha, 7 passes) — a
+  asserção antiga passava.
+- **Item 7 (`SheetNovaTarefa.test.tsx:192`)** pedia afirmar a cor
+  semântica exata por categoria. Isso **já existia** em
+  `tests/components/todo/SheetNovaTarefa.test.tsx:211-219`
+  (`expect(CATEGORIA_ACCENTS).toEqual({…})`, as 8 cores literais). A
+  asserção fraca foi trocada por paridade de chaves entre
+  `CATEGORIA_ACCENTS` e `TAREFA_CATEGORIAS`, que é a única direção que
+  nenhum dos dois testes cobria (accent órfão após remover categoria).
+
+### Limitação declarada no item 1 (`MidiaPreviewSpotifyYoutube`)
+
+O gap **não foi fechado** e não deve ser lido como fechado. O React 19
+não emite mais o aviso de state update em componente desmontado, e o
+estado de um componente já desmontado não é alcançável pelo teste. Logo
+o guard `cancelado` do `useEffect` não é observável por asserção neste
+setup.
+
+Prova de que a limitação é real: removendo
+`if (cancelado) return;` de
+`src/components/midia/MidiaPreviewSpotifyYoutube.tsx`, a suite continua
+`13 passed, 13 total`.
+
+O que o teste passou a guardar, e que antes não guardava nada: que o
+efeito disparou com a URL certa antes do unmount, e que resolver a
+promise depois do unmount não estoura erro nem aviso no console. A
+limitação está escrita no corpo do próprio teste, não só aqui.
+
+### Item 8 — as 10 NOTAS.md
+
+Escritas, uma por pasta. Duas observações que mudam o resultado em
+relação ao que o spec assumia:
+
+- `M-VAULT-URI-HELPER` **não era gap**: o §5 do spec dela já dizia
+  "Validação Gauntlet: não aplicável (helper puro JS, sem UI)". A
+  justificativa existia, só não estava no diretório.
+- `R-WIDG-1` **não era gap**: o E2E existe com outro nome, escrito
+  depois — `tests/e2e/playwright/audit-p1-1a-widget-todo-dreno.e2e.ts`,
+  da sprint AUDIT-P1-1A. A busca da auditoria procurou pelo
+  identificador `R-WIDG-1` e por isso não achou.
+
+Dos 10, ficam classificados como dívida de teste: `I-DIARIO-REFLEXAO-RECAP`
+(o spec nomeia `m-recap-reflexoes.e2e.ts`, que não existe),
+`M-VAULT-PASTA-NAO-HARDCODED`, `R-CRIT-4` e `R-MEDIA-1`.
+
+### Aviso de commit
+
+As 10 pastas `*-screenshots-gauntlet/` são **untracked** e contêm PNGs.
+Um `git add` de diretório estagia screenshots em repositório público.
+Cada `NOTAS.md` precisa entrar por caminho explícito.

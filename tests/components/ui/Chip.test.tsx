@@ -109,17 +109,48 @@ describe('hexToRgba — helper de borda em rest com accent', () => {
 });
 
 describe('ChipGroup single', () => {
-  function HarnessSingle() {
+  function HarnessSingle({
+    onChange,
+  }: {
+    onChange: (next: string | null) => void;
+  }) {
     const [v, setV] = useState<string | null>(null);
-    return <ChipGroup mode="single" options={OPTS} value={v} onChange={setV} />;
+    return (
+      <ChipGroup
+        mode="single"
+        options={OPTS}
+        value={v}
+        onChange={(next) => {
+          onChange(next);
+          setV(next);
+        }}
+      />
+    );
   }
 
   it('seleciona e desseleciona', () => {
-    const { getByLabelText } = render(<HarnessSingle />);
-    const chipA = getByLabelText('chip a');
-    fireEvent.press(chipA);
-    fireEvent.press(chipA);
-    expect(chipA).toBeTruthy();
+    // O nó é reobtido a cada etapa porque a asserção é sobre o estado
+    // renderizado depois do re-render, não sobre a referência inicial.
+    const onChange = jest.fn();
+    const { getByLabelText } = render(<HarnessSingle onChange={onChange} />);
+
+    expect(getByLabelText('chip a').props.accessibilityState.selected).toBe(
+      false
+    );
+
+    fireEvent.press(getByLabelText('chip a'));
+    expect(onChange).toHaveBeenNthCalledWith(1, 'a');
+    expect(getByLabelText('chip a').props.accessibilityState.selected).toBe(
+      true
+    );
+
+    // Segundo toque no mesmo chip desmarca (modo single alterna para
+    // null); é este contrato que a asserção antiga não guardava.
+    fireEvent.press(getByLabelText('chip a'));
+    expect(onChange).toHaveBeenNthCalledWith(2, null);
+    expect(getByLabelText('chip a').props.accessibilityState.selected).toBe(
+      false
+    );
   });
 });
 

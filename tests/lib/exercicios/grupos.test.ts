@@ -11,9 +11,19 @@ describe('grupos musculares canonicos', () => {
   });
 
   it('cobre todos os slugs no mapa de labels', () => {
-    for (const slug of GRUPOS_MUSCULARES_SLUGS) {
-      expect(GRUPOS_MUSCULARES_LABELS[slug]).toBeTruthy();
-    }
+    // Valor exato, não só presença: o mapa é string de UI e uma troca
+    // silenciosa de label (ou perda de acento) é regressão visível ao
+    // usuário. Os 8 pares abaixo são cópia literal da fonte.
+    expect(GRUPOS_MUSCULARES_LABELS).toEqual({
+      peito: 'Peito',
+      costas: 'Costas',
+      ombros: 'Ombros',
+      biceps: 'Bíceps',
+      triceps: 'Tríceps',
+      pernas: 'Pernas',
+      core: 'Core',
+      cardio: 'Cardio',
+    });
   });
 
   it('labels usam sentence case com acentuacao PT-BR', () => {

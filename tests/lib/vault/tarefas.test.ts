@@ -194,7 +194,9 @@ describe('lerTarefa', () => {
   it('retorna meta quando existe', async () => {
     mockReadVaultFile.mockResolvedValueOnce({ meta: fixture(), body: '' });
     const out = await lerTarefa(VAULT_ROOT, 'markdown/tarefa-qualquer.md');
-    expect(out).not.toBeNull();
+    // lerTarefa devolve `result.meta` (Tarefa), nao o envelope
+    // { meta, body } que readVaultFile entrega.
+    expect(out).toEqual(fixture());
   });
 
   it('retorna null quando nao existe', async () => {

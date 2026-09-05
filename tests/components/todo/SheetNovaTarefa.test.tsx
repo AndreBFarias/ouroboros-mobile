@@ -190,9 +190,13 @@ describe('SheetNovaTarefa - M31 categoria', () => {
 
 describe('SheetNovaTarefa - M-DEBITO-CATEGORIA-CORES', () => {
   it('cobre todas as 8 categorias canonicas no mapping de accents', () => {
-    for (const cat of TAREFA_CATEGORIAS) {
-      expect(CATEGORIA_ACCENTS[cat]).toBeDefined();
-    }
+    // O valor de cada accent e afirmado literalmente no teste
+    // 'mapeamento canonico semantico Dracula', mais abaixo. O que este
+    // guarda e a paridade das CHAVES com TAREFA_CATEGORIAS: categoria
+    // nova sem accent, ou accent orfao apos remover uma categoria.
+    expect(Object.keys(CATEGORIA_ACCENTS).sort()).toEqual(
+      [...TAREFA_CATEGORIAS].sort()
+    );
   });
 
   it('atribui cor semantica distinta a cada categoria (sem todas iguais)', () => {

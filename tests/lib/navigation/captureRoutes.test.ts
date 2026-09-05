@@ -80,10 +80,10 @@ describe('captureRoutes', () => {
     expect(c.params).toEqual({ modo: 'conquista' });
   });
 
-  it('CAPTURE_ROUTES expoe entrada para cada FABRadialKey', () => {
-    for (const key of KEYS) {
-      expect(CAPTURE_ROUTES[key]).toBeDefined();
-      expect(CAPTURE_ROUTES[key].pathname).toBeTruthy();
-    }
+  it('CAPTURE_ROUTES nao perde nem ganha FABRadialKey', () => {
+    // Os pathnames exatos já são afirmados nos testes acima, um a um.
+    // O que faltava guardar é a totalidade do mapa: chave nova sem
+    // rota, ou rota órfã depois de remover uma chave.
+    expect(Object.keys(CAPTURE_ROUTES).sort()).toEqual([...KEYS].sort());
   });
 });
