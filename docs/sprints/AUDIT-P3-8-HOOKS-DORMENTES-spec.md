@@ -1,84 +1,47 @@
-# AUDIT-P3-8-HOOKS-DORMENTES — acordar os hooks locais e fechar a assimetria de quality gate entre os dois builds
+# AUDIT-P3-8-HOOKS-DORMENTES — fechar a assimetria de quality gate entre os dois builds e tornar o veredito de hooks visível
 
 ```
-STATUS:     materializada 2026-07-28 (achado da auditoria de gates de qualidade)
-PRIORIDADE: média (o enforcement líquido de lint na cadeia inteira é zero, mas o
-            caminho server-side existe e é o que de fato obriga)
+STATUS:     executada 2026-09-05 (materializada 2026-07-28, achado da
+            auditoria de gates de qualidade). Escopos 1 e 4 já vinham
+            resolvidos; escopos 2 e 3 fechados nesta sprint. O enunciado
+            original caducou — ver a seção "Correção de rota".
+PRIORIDADE: média
 DEPENDE:    nenhuma
-ORIGEM:     achado [P3-8] da auditoria de 2026-07-28. O `doctor_hooks.sh` roda
-            dentro do próprio smoke e emite o veredito DORMENTE em toda execução,
-            atrás de um `|| true`. A varredura de gates confrontou esse veredito
-            com o `|| true` do ESLint no smoke e fechou o círculo: o único ponto
-            de bloqueio real de lint está desligado.
+ORIGEM:     achado [P3-8] da auditoria de 2026-07-28.
+DECISAO:    o veredito do doctor de hooks continua ADVISORY. Elevar
+            visibilidade, não severidade — o CI não tem hooks locais e é lá
+            que o smoke roda; o gate que obriga é server-side.
 ```
 
-## Problema (a ironia estrutural: onde bloqueia está desligado, onde roda não bloqueia)
+## Correção de rota (2026-09-05)
 
-Diagnóstico literal, executado em 2026-07-28:
+O enunciado original desta sprint **não se sustenta mais**, e o registro
+disso vale mais que o texto que o substituiu. Verificado no clone antes de
+executar:
 
-```
-$ ./scripts/doctor_hooks.sh
-== doctor de hooks (R-AUDIT-CI-GATES) ==
-  repo:            <REPO_ROOT>
-  core.hooksPath:  <HOME>/.config/git/hooks
-  resolve para:    <HOME>/.config/git/hooks
+| Item original | Estado real em 2026-09-05 |
+|---|---|
+| 1. "Rodar `install-hooks.sh`: o clone está DORMENTE" | **Falso.** `./scripts/doctor_hooks.sh` responde `Verdict: PROJETO ATIVO (OK)`; `core.hooksPath` resolve para `<repo>/hooks`. Nada a fazer. |
+| 2. Quality gate ausente em `build-dev-client.yml` | **Confirmado.** Único defeito real. É o entregável desta sprint. |
+| 3. Veredito do doctor se perde na saída do smoke | Mecanismo confirmado, dor atenuada. Entregue mesmo assim. |
+| 4. "Documentar o passo de setup do clone" | **Já satisfeito.** `README.md:41` manda rodar `./install.sh`, e `install.sh:56-60` faz `git config core.hooksPath hooks`. Quem clona já ativa os hooks sem saber que existe `install-hooks.sh`. |
 
-  Verdict: DORMENTE (aviso)
-  O core.hooksPath NAO resolve para <REPO_ROOT>/hooks e o hook global
-  efetivo nao delega para este repo. Logo, os checks do PROJETO
-  (anonimato, PT-BR, test-data, gitleaks, eslint staged) NAO rodam
-  localmente no commit/push deste clone.
+Duas afirmações do texto original também caducaram e foram removidas:
 
-  Remediacao (qualquer uma resolve):
-    (a) ./scripts/install-hooks.sh
-        Passa a rodar os hooks do projeto, que agora ENCADEIAM o
-        hook global de identidade quando presente (rodam OS DOIS).
-    (b) Adicionar uma stanza de delegacao para este repo
-        (<REPO_ROOT>) no hook global de identidade.
+- **"Resultado líquido de enforcement de lint na cadeia inteira: zero."**
+  Falso desde `aadcfd6` (AUDIT-P3-2). O ESLint no `scripts/smoke.sh` não
+  tem mais `|| true`: hoje é `npx --no-install eslint app/ src/ || { echo
+  "ERRO: lint falhou"; exit 1; }`, e é isso que o job `quality-gate` do CI
+  executa. A citação `scripts/smoke.sh:41` do texto antigo já não existia.
+- **A seção "Trabalho de limpeza que esta sprint destrava"**, que dimensionava
+  8 arquivos com problema de lint e pedia ao dono sequenciar esta sprint
+  contra AUDIT-P3-2/P3-3. As duas pousaram (`813fd2f`, `aadcfd6`), os hooks
+  já estão ativos e `npx eslint app/ src/` sai 0. Não há atrito a sequenciar,
+  e a seção foi apagada em vez de anotada.
 
-  Nota: independentemente da remediacao local, o gate que OBRIGA e'
-  server-side (.github/workflows/ci.yml roda ./scripts/smoke.sh em
-  todo PR e push pra main).
+## Problema (o que de fato restou)
 
-doctor_hooks: diagnostico concluido (advisory).
-EXIT=0
-```
-
-O `core.hooksPath` deste clone aponta para o hook global do usuário, que
-não delega para o repositório. Cinco checks do projeto — anonimato,
-PT-BR, dados de teste, gitleaks e ESLint nos arquivos staged — não
-rodam no commit local.
-
-**A ironia a registrar:** o único ponto de toda a cadeia onde o ESLint
-de fato **bloqueia** é `hooks/pre-commit:46`:
-
-```bash
-    npx --no-install eslint $STAGED || { echo "ERRO: eslint falhou nos arquivos staged"; exit 1; }
-```
-
-Padrão correto, `exit 1` explícito — e está desligado neste clone. Do
-outro lado, onde o ESLint efetivamente **roda** em toda a árvore
-(`scripts/smoke.sh:41`, dentro do job `quality-gate` do CI), o
-resultado é descartado:
-
-```bash
-    npx --no-install eslint app/ src/ 2>/dev/null || true
-```
-
-O bloqueio existe onde não roda, e roda onde não bloqueia. **Resultado
-líquido de enforcement de lint na cadeia inteira: zero.** É por isso
-que `main` carrega um erro de lint com CI verde.
-
-Fecha o círculo o fato de o próprio diagnóstico ser advisory:
-`scripts/smoke.sh:15` chama `./scripts/doctor_hooks.sh || true`, e o
-script termina com `EXIT=0` por construção. O aviso DORMENTE é impresso
-em toda execução do smoke, no meio de saída extensa, e nunca reprova
-nada.
-
-### Assimetria menor, no mesmo tema
-
-Dos dois workflows de build, apenas um roda quality gate antes do
-Gradle.
+Dos dois workflows de build, apenas um roda quality gate antes do Gradle.
 
 `.github/workflows/build-android-apk.yml:79-82`:
 
@@ -89,113 +52,106 @@ Gradle.
           npm test --silent
 ```
 
-`.github/workflows/build-dev-client.yml` **não tem esse step**. A
-sequência dele vai de `Install npm deps` (`:66`) direto para
-`Provision env.json` (`:70`) e depois `Expo prebuild Android` (`:92`) e
-`Gradle assembleDebug` (`:142`). Nenhum `tsc`, nenhum `npm test` em
-lugar nenhum do arquivo.
+`.github/workflows/build-dev-client.yml` **não tinha esse step**. A sequência
+ia de `Install npm deps` direto para `Provision env.json`, depois
+`Expo prebuild Android` e `Gradle assembleDebug`. Nenhum `tsc`, nenhum
+`npm test` em lugar nenhum do arquivo — intocado desde `ff45c80`.
 
 Cenário concreto: o dev-client é a ferramenta canônica de validação no
-device (protocolo durável do arquivo de regras da raiz — dev-client mais Metro via
-USB é o método padrão, e o APK release só no fim). Hoje é possível
-disparar `build-dev-client.yml` de um commit com `tsc` vermelho,
-esperar 90 minutos de build, instalar no aparelho e só então descobrir
-o erro de tipo. Nada indica que a assimetria seja intencional: os dois
-workflows são espelhos declarados um do outro
-(`build-dev-client.yml:2` diz "espelha build-android-apk.yml"), e o
-step de quality gate entrou apenas no de release, na sprint
-R-AUDIT-CI-GATES.
+device (protocolo durável — dev-client mais Metro via USB é o método padrão,
+e o APK release só no fim). Era possível disparar `build-dev-client.yml` de
+um commit com `tsc` vermelho, esperar até 90 minutos de build, instalar no
+aparelho e só então descobrir o erro de tipo. Nada indica que a assimetria
+fosse intencional: os dois workflows se declaram espelhos
+(`build-dev-client.yml:2` diz "espelha build-android-apk.yml"), e o step de
+quality gate entrou apenas no de release, na sprint R-AUDIT-CI-GATES.
 
-## Escopo (mínimo)
+Em paralelo, o veredito do `doctor_hooks.sh` era impresso uma vez, no início
+do smoke, no meio de saída extensa. Quem lê o smoke não notava um clone com
+hooks dormentes.
 
-1. **Rodar `./scripts/install-hooks.sh` neste clone.** É configuração
-   local de git (`core.hooksPath` no escopo `--local`), não commit —
-   nenhum arquivo da árvore muda. O script é idempotente e os hooks do
-   projeto já encadeiam o hook global de identidade quando presente
-   (`install-hooks.sh:8-14`), então nada se perde. Confirmar com
-   `./scripts/doctor_hooks.sh` até o veredito deixar de ser DORMENTE.
-2. **Adicionar o step de quality gate a
-   `.github/workflows/build-dev-client.yml`**, idêntico ao de
-   `build-android-apk.yml:79-82`, posicionado depois de
-   `Install npm deps` e antes de `Provision env.json`. Fail-fast: sem
-   sentido gastar 90 minutos de Gradle sobre um commit que não
-   compila.
-3. **Tornar o veredito DORMENTE visível sem torná-lo bloqueante.** O
-   `doctor_hooks.sh` roda no smoke atrás de `|| true` e o aviso se
-   perde na saída. Elevar a visibilidade — por exemplo, reemitir o
-   veredito como última linha antes do `OK: smoke test passou` — sem
-   mudar a natureza advisory. Bloquear seria errado: o CI não tem
-   hooks locais e o smoke roda lá; o gate que obriga é e continua sendo
-   o server-side.
-4. **Documentar o passo de setup do clone.** O arquivo de regras da raiz
-   já explica a condição, mas não a coloca no fluxo de quem clona pela
-   primeira vez.
-   Adicionar `./scripts/install-hooks.sh` ao `HOW_TO_RESUME.md` (ou ao
-   README de setup, o que existir) como passo explícito, com o
-   `doctor_hooks.sh` como verificação.
-5. NÃO-objetivo: mexer no `|| true` do ESLint em `scripts/smoke.sh` (é
-   AUDIT-P3-2, e ordená-lo depois desta sprint importa — ver abaixo);
-   alterar `hooks/pre-commit` ou `hooks/pre-push`, que estão corretos;
-   editar o hook global do usuário, que é ambiente pessoal e fora do
-   repositório; marcar qualquer check como required (é AUDIT-P3-1).
+## Entregue
 
-## Trabalho de limpeza que esta sprint destrava
+1. **`.github/workflows/build-dev-client.yml`** — step `Quality gate (tsc +
+   jest)` inserido entre `Install npm deps` e `Provision env.json`, idêntico
+   ao de `build-android-apk.yml`. Sem o `if:` de cache do step de install: o
+   gate tem de rodar sempre, e `node_modules` já está presente pelo cache ou
+   pelo install.
 
-Esta sprint **torna o commit local vermelho antes de tornar o CI
-vermelho** — e essa ordem é o ponto.
+   O gate roda **antes** do `Provision env.json` de propósito. É seguro
+   porque `jest.config.js:76` mapeia `(\.\./)+env\.json$` para
+   `tests/__fixtures__/env.mock.json`, e porque `src/types/env.d.ts:14`
+   declara `module '*/env.json'` — é essa declaração, não o arquivo, que
+   sustenta o `tsc` com `env.json` ausente no runner. Não inverter a ordem
+   nem remover nenhum dos dois sem entender o acoplamento.
 
-Com os hooks acordados, `hooks/pre-commit:46` passa a rodar o ESLint
-sobre os arquivos staged de cada commit. Enquanto os 23 problemas
-medidos em `main` não forem zerados (ver AUDIT-P3-2, que dimensiona: 1
-erro, 22 warnings, 11 auto-corrigíveis), **qualquer commit que toque um
-dos arquivos afetados será bloqueado localmente**. Os arquivos com
-problema hoje são `src/components/screens/RecapScreen.tsx`,
-`app/todo.tsx`, `src/lib/integracoes/google/driveBackup.ts`,
-`driveResumo.ts`, `src/lib/health/autopullBackgroundTask.ts`,
-`src/lib/util/devLog.ts`, `src/lib/services/alarmesNotificacoes.ts` e
-`src/lib/stats/calcular.ts`.
+2. **`scripts/smoke.sh`** — a saída do doctor passa a ser capturada uma única
+   vez na chamada que já existia, e a linha do veredito é reemitida logo
+   antes do `OK: smoke test passou`. O doctor não é reexecutado (duplicaria
+   ~15 linhas e o custo). Toda captura tem guarda contra o `set -euo
+   pipefail` da linha 5 — `grep`/`sed` sem match sai 1 e abortaria o smoke
+   inteiro, transformando um aviso em falso vermelho no CI. Nenhum `exit 1`
+   novo.
 
-Duas consequências práticas para o dono sequenciar:
+3. **`docs/CONTEXTO.md`** — o parágrafo "Hooks locais — dormentes por padrão"
+   apontava para esta sprint como ação pendente e descrevia o estado errado.
+   Reescrito: os hooks são ativados pelo `./install.sh` do setup canônico, o
+   caso dormente é a exceção, e o veredito agora aparece no fim do smoke.
 
-- Se o objetivo é sentir o atrito e limpar, ligar os hooks **antes** de
-  AUDIT-P3-2 é o caminho: o bloqueio aparece só nos arquivos tocados,
-  de forma incremental, em vez de um CI vermelho de uma vez.
-- Se há trabalho urgente nesses 8 arquivos, ligar os hooks vai
-  interromper esse trabalho. Nesse caso, mergear AUDIT-P3-3 e
-  AUDIT-P3-2 primeiro, e esta sprint depois.
+## Não-objetivos (mantidos)
 
-O passo 2 (quality gate no dev-client) não destrava fila nenhuma: `tsc`
-e jest estão verdes hoje, então o step nasce passando.
+- Mexer no ESLint de `scripts/smoke.sh` (é AUDIT-P3-2, já entregue).
+- Alterar `hooks/pre-commit` ou `hooks/pre-push`, que estão corretos.
+- Editar o hook global do usuário — ambiente pessoal, fora do repositório.
+- Marcar qualquer check como required (é AUDIT-P3-1, depende do dono).
+- Tornar o `doctor_hooks.sh` bloqueante.
+- Tocar código de app (`src/`, `app/`, `modules/`). Sem device, sem E2E, sem
+  Gauntlet.
+- Zerar os 17 warnings de lint. Não bloqueiam nada hoje.
+
+`HOW_TO_RESUME.md` saiu do escopo: é **gitignored** (`.gitignore:89`), não
+chega a quem clona, e escrever o passo de setup lá anularia o próprio
+objetivo do item 4. O alvo versionado correto já estava coberto pelo
+`README.md`; o que faltava era o `docs/CONTEXTO.md`.
 
 ## Proof-of-work
 
 ```bash
-# ANTES (verificado em 2026-07-28)
-./scripts/doctor_hooks.sh | grep Verdict          # Verdict: DORMENTE (aviso)
-grep -n "Quality gate" .github/workflows/build-dev-client.yml ; echo "exit=$?"   # exit=1
-grep -n "Quality gate" .github/workflows/build-android-apk.yml                   # 79: Quality gate (tsc + jest)
+# ANTES
+./scripts/doctor_hooks.sh | grep Verdict     # Verdict: PROJETO ATIVO (OK)
+grep -n "Quality gate" .github/workflows/build-dev-client.yml ; echo $?   # 1
+grep -n "Quality gate" .github/workflows/build-android-apk.yml            # 79
+npx --no-install tsc --noEmit ; echo $?      # 0
+npx --no-install eslint app/ src/ ; echo $?  # 0 (17 warnings, 0 errors)
 
-# DEPOIS - hooks (acao local, fora de commit)
-./scripts/install-hooks.sh
-./scripts/doctor_hooks.sh | grep Verdict          # deixa de ser DORMENTE
-
-# prova de que o hook bloqueia de fato: staged com erro de lint sintetico
-# nao commita; reverter em seguida
-#   (ex.: adicionar uma diretiva eslint-disable inutil num arquivo de src/,
-#    git add, git commit -> ERRO: eslint falhou nos arquivos staged)
-
-# DEPOIS - workflow
+# DEPOIS
 grep -n "Quality gate" .github/workflows/build-dev-client.yml   # step presente
-#   run de build-dev-client.yml (workflow_dispatch): o step de quality
-#   gate aparece antes do prebuild e passa
-
-./scripts/smoke.sh                                # exit 0; veredito de hooks visivel no fim
-npx tsc --noEmit                                  # exit 0
-npm test                                          # 356 suites, 3351 passed
+python3 -c "import yaml;yaml.safe_load(open('.github/workflows/build-dev-client.yml'))"
+diff <(sed -n '/Quality gate/,+3p' .github/workflows/build-dev-client.yml) \
+     <(sed -n '/Quality gate/,+3p' .github/workflows/build-android-apk.yml)  # vazio
+bash -n scripts/smoke.sh
+./scripts/smoke.sh                           # exit 0, veredito antes do OK
+npx tsc --noEmit                             # exit 0
 ```
 
-Sem device, sem E2E, sem Gauntlet: a sprint toca um workflow de CI, um
-script de diagnóstico e documentação de setup. Nenhum código de app.
+Prova de que a mudança do smoke é advisory: **não** basta forçar o doctor a
+sair != 0 (ele sai 0 por construção, o veredito é string) nem rodar numa
+worktree (`core.hooksPath` é config `--local`, por repositório; worktrees
+ligadas herdam `PROJETO ATIVO`). O único jeito é um clone novo ou desfazer
+temporariamente a config local — foi o caminho usado.
+
+**Pendente de ação do dono, não bloqueia merge:** disparar
+`build-dev-client.yml` por `workflow_dispatch` e confirmar que o step
+`Quality gate (tsc + jest)` roda e passa antes do `Expo prebuild Android`.
+O workflow só dispara por `workflow_dispatch` ou tag `devclient-*`, então
+só esse run prova o item 1 em CI real.
+
+## Achado separado (fora do escopo, para o dono)
+
+`HOW_TO_RESUME.md:397` e `:403` documentam um `hooks/post-checkout` que
+**não existe** — `ls -1 hooks/` devolve apenas `pre-commit` e `pre-push`. Não
+foi criado nem corrigido aqui: o arquivo é local e o hook não é entregável
+desta sprint.
 
 ## Commit
 

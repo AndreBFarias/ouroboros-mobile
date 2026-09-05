@@ -67,6 +67,17 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --legacy-peer-deps
 
+      # AUDIT-P3-8 (2026-09-05): gate de qualidade fail-fast ANTES do
+      # prebuild/gradle (parte cara, ate 90min). Barra dev-client com tsc ou
+      # jest vermelho sem queimar cota/tempo de build. Roda sempre (sem
+      # 'if' de cache): node_modules ja esta presente via cache ou install.
+      # Espelha build-android-apk.yml, onde o step entrou em R-AUDIT-CI-GATES
+      # e nunca foi replicado aqui.
+      - name: Quality gate (tsc + jest)
+        run: |
+          npx --no-install tsc --noEmit
+          npm test --silent
+
       - name: Provision env.json
         env:
           ENV_JSON_BASE64: ${{ secrets.ENV_JSON_BASE64 }}

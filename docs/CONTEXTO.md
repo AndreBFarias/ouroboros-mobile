@@ -530,12 +530,16 @@ Sprint nova sem o caso E2E correspondente é recusada na validação.
 Registro do estado real, apurado na auditoria de 2026-07-28. Vale mais que
 a intenção declarada em qualquer outro lugar deste documento.
 
-**Hooks locais — dormentes por padrão.** O `hooks/pre-commit` só bloqueia
-**se** `scripts/install-hooks.sh` tiver rodado neste clone, apontando
-`core.hooksPath` para `hooks`. Sem isso os hooks do projeto ficam
-dormentes e o commit local não é barrado. Rode `scripts/doctor_hooks.sh`
-para ver o estado do clone. Reduzir esse atrito é ação pendente registrada
-na sprint `AUDIT-P3-8`.
+**Hooks locais — ativos quando o setup canônico roda.** O `hooks/pre-commit`
+só bloqueia **se** `core.hooksPath` apontar para `hooks` neste clone. Quem
+segue o "Setup rápido" do `README.md` já recebe isso: o `./install.sh` roda
+`git config core.hooksPath hooks`. Em clone onde esse setup não rodou — ou
+onde um `core.hooksPath` global tomou a frente — os hooks do projeto ficam
+dormentes e o commit local não é barrado; `./scripts/install-hooks.sh`
+resolve. Rode `./scripts/doctor_hooks.sh` para ver o estado do clone: desde
+`AUDIT-P3-8` (2026-09-05) o veredito também é reemitido como última linha do
+`./scripts/smoke.sh`, logo antes do `OK`, para não se perder no meio da
+saída. O veredito continua advisory — o gate que obriga é server-side.
 
 **CI — roda, mas ainda não é obrigatório.** O
 `.github/workflows/ci.yml` executa o job `quality-gate`

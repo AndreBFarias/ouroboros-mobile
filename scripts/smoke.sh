@@ -13,7 +13,28 @@ echo ">> anonimato (Regra -1)"
 # Diagnostica core.hooksPath e a delegacao hook-projeto vs hook-global.
 # Nunca reprova aqui (advisory): o gate que OBRIGA e' o ci.yml server-side.
 echo ">> doctor de hooks (advisory)"
-./scripts/doctor_hooks.sh || true
+# AUDIT-P3-8 (2026-09-05): o veredito do doctor era impresso so aqui, no meio
+# de saida extensa, e se perdia -- quem le o smoke nunca notava que os hooks do
+# projeto estavam DORMENTES neste clone. Agora a saida e' capturada UMA vez
+# (sem reexecutar o doctor no fim, que duplicaria ~15 linhas e o custo) e a
+# linha do veredito e' reemitida logo antes do "OK: smoke test passou".
+# Continua advisory: nenhum exit 1 novo. O gate que OBRIGA e' o ci.yml
+# server-side, e o CI não tem hooks locais.
+set +e
+doctor_out=$(./scripts/doctor_hooks.sh 2>&1)
+rc_doctor=$?
+set -e
+if [[ -n "$doctor_out" ]]; then
+  printf '%s\n' "$doctor_out"
+fi
+# As duas guardas (o `set +e` acima e o `|| true` abaixo) sao obrigatorias:
+# com `set -euo pipefail` (linha 5), um doctor que sai != 0 ou um pipeline de
+# extracao sem match abortariam o smoke inteiro num check que e' so aviso.
+veredito_hooks=$(printf '%s\n' "$doctor_out" \
+  | sed -n 's/^[[:space:]]*Verdict:[[:space:]]*/Verdict: /p' | head -1 || true)
+if [[ -z "$veredito_hooks" ]]; then
+  veredito_hooks="Verdict: INDETERMINADO (doctor_hooks.sh saiu $rc_doctor sem emitir veredito)"
+fi
 
 echo ">> dados de teste"
 ./scripts/check_test_data.sh
@@ -67,5 +88,9 @@ if [[ -f package.json ]]; then
 else
   echo ">> typecheck/lint/tests pulados (package.json ainda nao existe)"
 fi
+
+# AUDIT-P3-8 (2026-09-05): veredito de hooks reemitido como última linha antes
+# do OK. Elevar visibilidade, não severidade -- este echo nunca reprova.
+echo ">> hooks locais deste clone -- $veredito_hooks"
 
 echo "OK: smoke test passou"
