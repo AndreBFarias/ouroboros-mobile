@@ -366,3 +366,38 @@ npx --no-install eslint app/ src/                    # sem import quebrado
 ```
 refactor: audit-p2-10 remove fotodetalhe timeline e em-construcao orfaos confirmados
 ```
+
+## Resultado (executada 2026-09-05)
+
+Removidos os três órfãos com substituto nomeado, conforme a decisão do dono
+de 2026-07-29 — **222 linhas**, o número previsto na materialização:
+
+| Arquivo | Linhas |
+|---|---|
+| `src/components/screens/FotoDetalhe.tsx` | 120 |
+| `src/components/calendario/Timeline.tsx` | 57 |
+| `app/em-construcao.tsx` | 45 |
+
+Órfandade reverificada antes de remover, não assumida da spec:
+
+- `FotoDetalhe` e `em-construcao`: zero ocorrências fora do próprio arquivo.
+- `calendario/Timeline`: os hits de "Timeline" em `EvolucaoCorporalTab.tsx`,
+  `RecapContador.tsx` e `app/contadores/[slug].tsx` são de um `ItemTimeline`
+  local e de comentários — nenhum é import deste módulo. Confirmado por busca
+  de import real (`from '.../calendario/Timeline'`): nenhum. Não há barril em
+  `src/components/calendario/`.
+- Nenhum dos três tinha teste em `tests/`.
+
+`app/em-construcao.tsx` era uma rota; as únicas menções restantes a
+`/em-construcao` estão em documentos históricos (`M00.5-checkpoint-visual.md`
+e `INTEGRATION-CONTRACT.md`) que descrevem a arquitetura de abas
+`app/(tabs)/` — que não existe mais no repositório. Nenhum código navega
+para ela.
+
+Pós-remoção: `tsc` limpo, `eslint` exit 0, smoke verde (363 suites, 3479
+testes).
+
+Preservados como NÃO-objetivo, sem alteração: `OuroborosLogo` (trabalho em
+curso) e os 4 componentes de Finanças (preservação declarada em spec).
+`FiltrosBar.tsx` saiu desta sprint por decisão do dono e é escopo de
+`AUDIT-P2-11`.
