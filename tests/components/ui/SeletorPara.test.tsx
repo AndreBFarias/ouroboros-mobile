@@ -22,11 +22,22 @@ let mockNomes: Record<PessoaAutor, string> = {
   pessoa_b: 'Pessoa B',
 };
 
+// AUDIT-P4-4: `featureToggles.reduzirMovimento` entrou no estado falso
+// porque SeletorPara -> ChipGroup -> Chip agora chama useReduceMotion,
+// que le esse ramo do store. Sem ele o seletor do hook estoura em
+// "Cannot read properties of undefined".
 jest.mock('@/lib/stores/settings', () => ({
   __esModule: true,
   useSettings: <T,>(
-    sel: (s: { pessoa: { tipoCompanhia: 'sozinho' | 'duo' } }) => T
-  ): T => sel({ pessoa: { tipoCompanhia: mockTipoCompanhia } }),
+    sel: (s: {
+      pessoa: { tipoCompanhia: 'sozinho' | 'duo' };
+      featureToggles: { reduzirMovimento: boolean };
+    }) => T
+  ): T =>
+    sel({
+      pessoa: { tipoCompanhia: mockTipoCompanhia },
+      featureToggles: { reduzirMovimento: false },
+    }),
 }));
 
 jest.mock('@/lib/stores/pessoa', () => ({
