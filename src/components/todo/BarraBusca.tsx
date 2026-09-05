@@ -69,9 +69,20 @@ export function BarraBusca({
         accessibilityLabel="campo de busca de tarefas"
       />
       {value.length > 0 ? (
+        // AUDIT-P4-5: 44x44dp de area de toque (WCAG 2.5.5) sem mexer
+        // em um pixel renderizado. O slop e assimetrico de proposito:
+        // no React Native "the touch area never extends past the parent
+        // view bounds", entao cada lado so pode crescer ate a folga que
+        // existe de fato ate a borda da linha.
+        //   vertical: minHeight 44 com o botao de 22 centralizado
+        //     => 11dp de folga em cima e embaixo (11 + 22 + 11 = 44).
+        //   direita: paddingHorizontal 12 + borderWidth 1 = 13dp.
+        //   esquerda: o que falta (9dp). Invade 1dp do campo de texto,
+        //     que fica a spacing.sm (8dp) de distancia -- o Pressable e
+        //     irmao posterior, entao ganha o hit-test nesse 1dp.
         <Pressable
           onPress={() => onChangeText('')}
-          hitSlop={8}
+          hitSlop={{ top: 11, bottom: 11, left: 9, right: 13 }}
           accessibilityRole="button"
           accessibilityLabel="limpar busca"
         >

@@ -5,7 +5,15 @@
 //   - adicionar e remover item via interacao com a tab Spotify
 //     (mais simples: regex + onAdd; sem mocks de filesystem).
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import type { Insets, ViewStyle } from 'react-native';
 import { useState } from 'react';
+import {
+  ALVO_DP,
+  areaEfetiva,
+  tileQueRecorta,
+  type NoDaArvore,
+} from '../../helpers/areaToque';
 import { ToastProvider } from '@/components/ui';
 import { MidiaPicker } from '@/components/midia/MidiaPicker';
 import type { Midia } from '@/lib/schemas/midia';
@@ -14,16 +22,24 @@ import type { Midia } from '@/lib/schemas/midia';
 // global mockada por teste. Evita dependencia de SecureStore real.
 let mockPermitirAudio = true;
 let mockCapPorRegistro = 4;
+// AUDIT-P4-4: `featureToggles.reduzirMovimento` entrou no estado falso
+// porque Button, Chip e ToastProvider agora chamam useReduceMotion, que
+// le esse ramo do store. Sem ele o seletor do hook estoura em "Cannot
+// read properties of undefined".
 jest.mock('@/lib/stores/settings', () => ({
   __esModule: true,
   useSettings: <T,>(
-    sel: (s: { midia: { capPorRegistro: number; permitirAudio: boolean } }) => T
+    sel: (s: {
+      midia: { capPorRegistro: number; permitirAudio: boolean };
+      featureToggles: { reduzirMovimento: boolean };
+    }) => T
   ): T =>
     sel({
       midia: {
         capPorRegistro: mockCapPorRegistro,
         permitirAudio: mockPermitirAudio,
       },
+      featureToggles: { reduzirMovimento: false },
     }),
 }));
 
@@ -135,6 +151,25 @@ describe('MidiaPicker interacao', () => {
     fireEvent.press(getByText('Adicionar'));
     expect(getByLabelText('erro link youtube')).toBeTruthy();
     expect(queryByLabelText('grid midias adicionadas')).toBeNull();
+  });
+
+  // AUDIT-P4-5. Nao compara o hitSlop com o literal que a sprint
+  // escreveu (seria tautologia): compoe hitSlop + geometria do botao +
+  // folga real ate a borda do tile que recorta, e so entao cobra os
+  // 44dp. Reprova tanto um hitSlop menor quanto um hitSlop simetrico
+  // grande, cuja expansao para fora do tile o React Native descarta.
+  it('botao remover tem 44x44dp de area de toque dentro do tile', () => {
+    const inicial: Midia[] = [{ tipo: 'youtube', video_id: 'dQw4w9WgXcQ' }];
+    const { getByLabelText } = render(<Wrapper inicial={inicial} />);
+    const botao = getByLabelText('remover midia');
+    const slop = botao.props.hitSlop as Insets | number;
+    const estilo = StyleSheet.flatten(botao.props.style) as ViewStyle;
+    const tile = tileQueRecorta(botao as unknown as NoDaArvore);
+    expect(tile).not.toBeNull();
+
+    const medida = areaEfetiva(slop, estilo, tile as ViewStyle);
+    expect(medida.altura).toBeGreaterThanOrEqual(ALVO_DP);
+    expect(medida.largura).toBeGreaterThanOrEqual(ALVO_DP);
   });
 
   it('remove midia ao tocar no botao X', async () => {

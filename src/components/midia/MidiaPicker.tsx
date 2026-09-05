@@ -143,11 +143,18 @@ function TilePreview({
       }}
     >
       {conteudo}
+      // AUDIT-P4-5: 44x44dp de área de toque (WCAG 2.5.5) sem mover o // botão
+      nem mudar seu tamanho. O slop precisa ser assimétrico: o // tile pai tem
+      overflow 'hidden' e o React Native descarta toque // fora dos limites de
+      um pai que recorta, então os 4dp de folga // acima e à direita são o teto
+      daqueles lados. A expansão que // falta vai para dentro do tile (18dp),
+      que não é tocável — não // há toque roubado. 4 + 22 + 18 = 44 nos dois
+      eixos.
       <Pressable
         onPress={onRemove}
         accessibilityRole="button"
         accessibilityLabel="remover midia"
-        hitSlop={6}
+        hitSlop={{ top: 4, right: 4, bottom: 18, left: 18 }}
         style={{
           position: 'absolute',
           top: 4,
