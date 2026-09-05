@@ -7,10 +7,11 @@ check_strings_ui_ptbr.py
 Auditor de strings UI em PT-BR para o Protocolo-Mob-Ouroboros.
 
 Varre `src/` e `app/` por arquivos `.ts`/`.tsx`. Detecta strings literais
-em contextos UI (JSX text node, props label/placeholder/title/message/frase)
-e checa cada token contra `scripts/dicionario_ptbr_canonico.json`.
-Tokens que aparecem sem acento e tem versao canonica acentuada no
-dicionario sao reportados como violacao.
+em contextos UI (JSX text node, props label/placeholder/title/message/frase,
+propriedade de objeto literal e primeiro argumento posicional das funções
+imperativas de UI listadas em FUNCS_UI) e checa cada token contra
+`scripts/dicionario_ptbr_canonico.json`. Tokens que aparecem sem acento e
+tem versao canonica acentuada no dicionario sao reportados como violacao.
 
 Regras:
 - `accessibilityLabel` e ignorado (convencao screen reader, sempre sem
@@ -100,6 +101,21 @@ PROPS_IGNORADAS = {
     "style",
 }
 
+# Funções imperativas de UI cujo PRIMEIRO argumento posicional e texto
+# visivel na tela (toast, setter de mensagem de erro, alerta). Sem esta
+# allowlist o padrão RE_FUNC_ARG_STRING dispararia em toda chamada com
+# string literal do projeto (require de asset, chave de store, id de
+# rota, nome de arquivo do Vault) e o auditor viraria ruido.
+#
+# O conjunto CRESCE quando nasce uma API imperativa de UI nova: se voce
+# criou uma função que recebe o texto da tela como primeiro argumento,
+# adicione o nome dela aqui, senao a string dela nunca sera auditada.
+FUNCS_UI = {
+    "mostrarUndo",
+    "setErro",
+    "alert",
+}
+
 # Marker de override por linha
 ALLOW_MARKER = re.compile(r"//\s*ptbr-allow\s*:")
 
@@ -133,6 +149,24 @@ RE_OBJ_LITERAL_PROP = re.compile(
     r"""
     (?:^|[\{,(\[]|\s)\s*
     (?P<prop>[a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*
+    (?:
+        "(?P<dq>(?:[^"\\]|\\.)*)" |
+        '(?P<sq>(?:[^'\\]|\\.)*)'
+    )
+    """,
+    re.VERBOSE,
+)
+
+# 4. Argumento posicional de função: fn('Texto') ou fn("Texto").
+# Quarta forma canonica de uma string chegar a tela num app React
+# Native: API imperativa (toast, alerta, setter de erro) recebe o texto
+# como PRIMEIRO argumento -- sem nome de prop e sem tag JSX ao redor,
+# entao nenhum dos tres padrões acima o enxerga. So o primeiro argumento
+# e casado, que e onde a mensagem vive por convencao nessas APIs, e so
+# para as funções de FUNCS_UI.
+RE_FUNC_ARG_STRING = re.compile(
+    r"""
+    (?P<fn>\b[a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(\s*
     (?:
         "(?P<dq>(?:[^"\\]|\\.)*)" |
         '(?P<sq>(?:[^'\\]|\\.)*)'
@@ -313,6 +347,30 @@ def auditar_arquivo(
                         coluna=col,
                         contexto="jsx-text",
                         string_original=txt,
+                        token_problema=tok,
+                        sugestao=sugestao,
+                    )
+                )
+
+        # 4. Primeiro argumento posicional de função imperativa de UI
+        for m in RE_FUNC_ARG_STRING.finditer(linha):
+            fn = m.group("fn")
+            if fn not in FUNCS_UI:
+                continue
+            valor = m.group("dq") or m.group("sq") or ""
+            if not valor.strip():
+                continue
+            res = checar_string(valor, dicionario)
+            if res:
+                tok, sugestao = res
+                col = m.start() + 1
+                violacoes.append(
+                    Violacao(
+                        arquivo=rel,
+                        linha=nlinha,
+                        coluna=col,
+                        contexto=f"func-arg:{fn}",
+                        string_original=valor,
                         token_problema=tok,
                         sugestao=sugestao,
                     )

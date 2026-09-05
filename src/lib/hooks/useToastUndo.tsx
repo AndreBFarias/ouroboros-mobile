@@ -4,7 +4,7 @@
 // Uso:
 //   // nas secoes que disparam o toast (sem prop-drilling, R-HOME-4a):
 //   const mostrarUndo = useToastUndoStore((s) => s.mostrarUndo);
-//   mostrarUndo('Tarefa concluida', () => reverter(), 5000);
+//   mostrarUndo('Tarefa concluída', () => reverter(), 5000);
 //
 //   // uma unica vez, no root da Tela Hoje, FORA do ScrollView:
 //   <UndoOverlayHost />

@@ -96,25 +96,22 @@ export function SecaoAindaDeOntem() {
 
   // Atualiza estado otimista da lista local. Compartilhado entre toggle
   // inicial e reversao via Desfazer.
-  const aplicarOtimista = useCallback(
-    (rel: string, novoFeito: boolean) => {
-      setTarefas((cur) =>
-        cur.map((t) =>
-          t.rel === rel
-            ? {
-                ...t,
-                meta: {
-                  ...t.meta,
-                  feito: novoFeito,
-                  feito_em: novoFeito ? new Date().toISOString() : null,
-                },
-              }
-            : t
-        )
-      );
-    },
-    []
-  );
+  const aplicarOtimista = useCallback((rel: string, novoFeito: boolean) => {
+    setTarefas((cur) =>
+      cur.map((t) =>
+        t.rel === rel
+          ? {
+              ...t,
+              meta: {
+                ...t.meta,
+                feito: novoFeito,
+                feito_em: novoFeito ? new Date().toISOString() : null,
+              },
+            }
+          : t
+      )
+    );
+  }, []);
 
   // Persistencia + toast undo + rollback em erro. Ao marcar feito, o
   // selecionarRollover deixa de incluir o item (filtra !feito), entao
@@ -130,7 +127,7 @@ export function SecaoAindaDeOntem() {
         try {
           await marcarFeito(vaultRoot, rel, novoEstado);
           if (novoEstado) {
-            mostrarUndo('Tarefa concluida', () => {
+            mostrarUndo('Tarefa concluída', () => {
               aplicarOtimista(rel, estadoOriginal);
               void marcarFeito(vaultRoot, rel, estadoOriginal).catch(() => {
                 haptics.error();

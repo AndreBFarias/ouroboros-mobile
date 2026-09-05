@@ -104,25 +104,22 @@ export function SecaoTodoHoje() {
 
   // Atualiza estado otimista da lista local. Helper compartilhado entre
   // toggle inicial e reversao via Desfazer.
-  const aplicarOtimista = useCallback(
-    (rel: string, novoFeito: boolean) => {
-      setTarefas((cur) =>
-        cur.map((t) =>
-          t.rel === rel
-            ? {
-                ...t,
-                meta: {
-                  ...t.meta,
-                  feito: novoFeito,
-                  feito_em: novoFeito ? new Date().toISOString() : null,
-                },
-              }
-            : t
-        )
-      );
-    },
-    []
-  );
+  const aplicarOtimista = useCallback((rel: string, novoFeito: boolean) => {
+    setTarefas((cur) =>
+      cur.map((t) =>
+        t.rel === rel
+          ? {
+              ...t,
+              meta: {
+                ...t.meta,
+                feito: novoFeito,
+                feito_em: novoFeito ? new Date().toISOString() : null,
+              },
+            }
+          : t
+      )
+    );
+  }, []);
 
   // Persistencia + toast undo + rollback em erro. Usuario marca um item
   // pendente como feito; a UI ja atualizou (CheckboxTarefaInline otimista).
@@ -145,7 +142,7 @@ export function SecaoTodoHoje() {
           // So oferece "Desfazer" quando o usuario marcou como feito.
           // Reabrir manual (feito -> pendente) nao precisa de undo.
           if (novoEstado) {
-            mostrarUndo('Tarefa concluida', () => {
+            mostrarUndo('Tarefa concluída', () => {
               // Reversao explicita: roda novo save com estado original
               // e atualiza UI. Falha do save de reversao deixa estado
               // local "intencional usuario" mesmo se vault discrepar

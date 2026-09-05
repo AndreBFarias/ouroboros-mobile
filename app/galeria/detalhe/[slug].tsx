@@ -77,7 +77,7 @@ export default function GaleriaDetalhe() {
   useEffect(() => {
     const uri = params.uri;
     if (typeof uri !== 'string' || uri.length === 0) {
-      setErro('URI ausente nos parametros.');
+      setErro('URI ausente nos parâmetros.');
       setCarregando(false);
       return;
     }
@@ -87,7 +87,7 @@ export default function GaleriaDetalhe() {
         const result = await readVaultFile(uri, GenericoSchema);
         if (cancelado) return;
         if (!result) {
-          setErro('Arquivo nao encontrado.');
+          setErro('Arquivo não encontrado.');
         } else {
           setCarregado({
             meta: result.meta as Record<string, unknown>,
