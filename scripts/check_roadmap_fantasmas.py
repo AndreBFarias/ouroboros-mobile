@@ -4,13 +4,13 @@
 check_roadmap_fantasmas.py
 ==========================
 
-Detector de sprints fantasmas no ROADMAP.md. Sprint fantasma e linha
+Detector de sprints fantasmas em docs/sprints/. Sprint fantasma e spec
 marcada como `[todo]`, `[backlog]`, `[spec]` ou `[wip]` mas cuja
 entrega ja existe no codigo, no git ou em FEATURES-CANONICAS.
 
 Cruza 3 fontes de evidencia:
 
-1. **Intra-ROADMAP**: se o mesmo Sprint ID aparece em linha `[ok]`
+1. **Intra-specs**: se o mesmo Sprint ID aparece com status `[ok]`
    em algum lugar do proprio arquivo, a linha `[todo]` da mesma ID
    e fantasma direto.
 2. **Git log**: `git log --all --oneline --grep="<id>"`.
@@ -49,7 +49,13 @@ from pathlib import Path
 from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ROADMAP_PATH = REPO_ROOT / "ROADMAP.md"
+# AUDIT-P3-5 (2026-09-05): o alvo era ROADMAP.md, apagado no scrub de
+# 2026-07-12. O detector ficou apontando para arquivo morto e saia com
+# exit 2 antes de chegar ao caminho --warn-only; o smoke chamava dentro
+# de um `if` sem `else`, entao o exit 2 sumia. Resultado: o gate não
+# reportava zero fantasmas, não reportava nada -- e foi sob ele que 44
+# sprints fantasma se acumularam. O rastreamento vive em docs/sprints/.
+SPRINTS_DIR = REPO_ROOT / "docs" / "sprints"
 FEATURES_PATH = REPO_ROOT / "docs" / "FEATURES-CANONICAS.md"
 
 # Diretorios alvo para cross-reference de codigo
@@ -143,12 +149,19 @@ STATUS_REGEX = re.compile(r"\[([a-z][a-z0-9 ]*)\]")
 
 @dataclass
 class LinhaSprint:
-    """Linha de ROADMAP com tabela contendo sprint."""
+    """Uma sprint com status declarado, vinda de um spec de docs/sprints/.
+
+    `numero_linha` e' um indice sequencial global, único entre arquivos --
+    serve de chave opaca para o resultado da auditoria. A posicao real
+    para reescrita fica em `arquivo` + `linha_no_arquivo`.
+    """
 
     numero_linha: int
     texto: str
     sprint_ids: list[str]
     statuses: list[str]
+    arquivo: Path | None = None
+    linha_no_arquivo: int = 0
 
     @property
     def tem_pendente(self) -> bool:
@@ -236,6 +249,46 @@ def extrair_celulas(linha: str) -> list[str]:
     if stripped.endswith("|"):
         stripped = stripped[:-1]
     return [c.strip() for c in stripped.split("|")]
+
+
+def parse_specs(diretorio: Path) -> list[LinhaSprint]:
+    """
+    Varre docs/sprints/*-spec.md e devolve uma LinhaSprint por spec.
+
+    ID: basename sem o sufixo `-spec.md`.
+    Status: primeiro `[...]` da linha que comeca com `STATUS:`.
+
+    Specs cujo STATUS não usa colchetes (ex.: `STATUS: materializada ...`)
+    não entram: sem status declarado no vocabulario de
+    STATUS_PENDENTE/STATUS_OK não ha o que auditar.
+    """
+    linhas: list[LinhaSprint] = []
+    seq = 0
+    for spec in sorted(diretorio.glob("*-spec.md")):
+        sprint_id = spec.name[: -len("-spec.md")]
+        try:
+            conteudo = spec.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for i, texto in enumerate(conteudo, start=1):
+            if not texto.lstrip().startswith("STATUS:"):
+                continue
+            m = STATUS_REGEX.search(texto)
+            if not m:
+                break
+            seq += 1
+            linhas.append(
+                LinhaSprint(
+                    numero_linha=seq,
+                    texto=texto.strip(),
+                    sprint_ids=[sprint_id],
+                    statuses=[m.group(1).lower()],
+                    arquivo=spec,
+                    linha_no_arquivo=i,
+                )
+            )
+            break
+    return linhas
 
 
 def parse_roadmap(path: Path) -> list[LinhaSprint]:
@@ -452,7 +505,7 @@ def formatar_relatorio(
         grupos[classificacao].append((num_linha, sid, evid))
 
     out: list[str] = []
-    titulo = "Auditoria de fantasmas no ROADMAP.md"
+    titulo = "Auditoria de sprints fantasma em docs/sprints/"
     out.append(titulo)
     out.append("=" * len(titulo))
     out.append("")
@@ -498,14 +551,14 @@ def formatar_relatorio(
             if evid.mencoes_features > 0:
                 out.append(f"    features: {evid.mencoes_features} mencao(oes)")
             if nivel == "FANTASMA":
-                out.append("    acao: marcar [ok] no ROADMAP")
+                out.append("    ação: marcar [ok] no STATUS do spec")
             elif nivel == "SUSPEITO":
                 out.append("    acao: revisao manual")
             else:
                 out.append("    acao: manter [todo]")
             out.append("")
     if not any(grupos.values()):
-        out.append("Nenhuma pendencia detectada — ROADMAP sem fantasmas.")
+        out.append("Nenhuma pendencia detectada — sem fantasmas.")
     return "\n".join(out)
 
 
@@ -551,12 +604,24 @@ def aplicar_fix(
     if not linhas_alvo:
         return (0, [])
 
-    textos = roadmap_path.read_text(encoding="utf-8").splitlines(keepends=False)
+    # AUDIT-P3-5: o alvo virou um spec por sprint, entao a reescrita e' por
+    # arquivo. `numero_linha` e' indice global (chave do resultado); a
+    # posicao real vem de linha.arquivo + linha.linha_no_arquivo.
     data_hoje = date.today().isoformat()
     modificadas: list[int] = []
+    cache_textos: dict[Path, list[str]] = {}
+    sujos: set[Path] = set()
 
     for num_linha, evid in linhas_alvo.items():
-        idx = num_linha - 1
+        linha = indexado_por_linha.get(num_linha)
+        if linha is None or linha.arquivo is None:
+            continue
+        if linha.arquivo not in cache_textos:
+            cache_textos[linha.arquivo] = linha.arquivo.read_text(
+                encoding="utf-8"
+            ).splitlines(keepends=False)
+        textos = cache_textos[linha.arquivo]
+        idx = linha.linha_no_arquivo - 1
         if idx < 0 or idx >= len(textos):
             continue
         texto_original = textos[idx]
@@ -595,25 +660,31 @@ def aplicar_fix(
         comentario = f" <!-- auto-marcado [ok] {data_hoje}: {resumo} -->"
         novo_texto = novo_texto + comentario
         textos[idx] = novo_texto
+        sujos.add(linha.arquivo)
         modificadas.append(num_linha)
 
     if not modificadas:
         return (0, [])
 
     if not dry_run:
-        roadmap_path.write_text("\n".join(textos) + "\n", encoding="utf-8")
+        for caminho in sujos:
+            caminho.write_text(
+                "\n".join(cache_textos[caminho]) + "\n", encoding="utf-8"
+            )
     return (len(modificadas), modificadas)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Detecta sprints fantasmas no ROADMAP.md."
+        description="Detecta sprints fantasmas em docs/sprints/*-spec.md."
     )
     parser.add_argument(
-        "--roadmap",
+        "--sprints-dir",
+        "--roadmap",  # alias retrocompativel: chamadas antigas não quebram
+        dest="sprints_dir",
         type=Path,
-        default=ROADMAP_PATH,
-        help=f"Caminho do ROADMAP.md (default: {ROADMAP_PATH})",
+        default=SPRINTS_DIR,
+        help=f"Diretorio dos specs (default: {SPRINTS_DIR})",
     )
     parser.add_argument(
         "--features",
@@ -649,11 +720,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not args.roadmap.exists():
-        print(f"ERRO: {args.roadmap} nao existe.", file=sys.stderr)
+    # AUDIT-P3-5: a checagem de existencia ficava ANTES e devolvia 2 sempre,
+    # 36 linhas acima do `return 0` do --warn-only -- que assim nunca era
+    # alcancado. Sob --warn-only, alvo ausente e' aviso visivel e exit 0;
+    # sem a flag, segue exit 2 (erro de invocacao legitimo).
+    if not args.sprints_dir.exists():
+        if args.warn_only:
+            print(
+                f"AVISO: {args.sprints_dir} nao existe -- detector de "
+                "fantasmas não rodou.",
+                file=sys.stderr,
+            )
+            return 0
+        print(f"ERRO: {args.sprints_dir} nao existe.", file=sys.stderr)
         return 2
 
-    linhas = parse_roadmap(args.roadmap)
+    linhas = parse_specs(args.sprints_dir)
     if args.code_root is not None:
         # Override de roots: usa apenas o code_root passado.
         arquivos_codigo = []
@@ -675,7 +757,7 @@ def main() -> int:
     )
 
     if args.fix:
-        n_alteradas, linhas_modificadas = aplicar_fix(resultado, linhas, args.roadmap)
+        n_alteradas, linhas_modificadas = aplicar_fix(resultado, linhas, args.sprints_dir)
         print(f"Linhas modificadas: {n_alteradas}")
         if linhas_modificadas:
             print(f"  Numeros: {linhas_modificadas}")

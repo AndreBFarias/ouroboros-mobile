@@ -196,3 +196,68 @@ Python de auditoria e o orquestrador shell. Nenhum código de app.
 ```
 fix: audit-p3-5 detector de fantasmas le docs sprints e o smoke deixa de engolir exit nao-zero
 ```
+
+## Resultado (executada 2026-09-05)
+
+Adotada a opção **(b)**: o detector passa a ler `docs/sprints/*-spec.md`,
+que é onde o rastreamento vive. `ROADMAP.md` não foi recriado.
+
+### Os dois defeitos que se cancelavam
+
+1. `scripts/smoke.sh` chamava o detector dentro de um `if` sem `else`.
+   Agora o exit code é capturado (`set +e` / `rc_fantasmas`) e, quando
+   diferente de 0, o smoke imprime as primeiras 20 linhas da saída no
+   console. Segue não-bloqueante — mas "sem fantasmas" e "o detector não
+   rodou" deixaram de ser indistinguíveis.
+2. A checagem de existência do alvo ficava antes do parse e devolvia 2
+   sempre, 36 linhas acima do `return 0` do `--warn-only`. Movida para
+   depois do parse de argumentos e condicionada à flag.
+
+Ambos verificados com canário, substituindo o script por um `sys.exit(3)`:
+
+```
+--- smoke com detector quebrado ---
+AVISO: o detector de fantasmas NAO RODOU (exit 3). Saida:
+    falha simulada
+
+$ python3 scripts/check_roadmap_fantasmas.py --sprints-dir /tmp/nao-existe --warn-only; echo $?
+AVISO: /tmp/nao-existe nao existe -- detector de fantasmas nao rodou.
+0
+$ python3 scripts/check_roadmap_fantasmas.py --sprints-dir /tmp/nao-existe; echo $?
+2
+```
+
+### Primeira execução real desde 2026-07-12
+
+```
+Pendentes auditados: 108 | FANTASMA: 0 | SUSPEITO: 61 | REAL: 47
+```
+
+**0 fantasmas de alta confiança** — a classificação `FANTASMA` exige
+convergência de evidências (commit + código + menção em FEATURES). Os 61
+`SUSPEITO` têm código correlato mas não fecham o critério, e são o material
+de triagem da fila de reconciliação; os 47 `REAL` seguem `[todo]` com razão.
+
+O número não bate com as "44 sprints fantasma" da auditoria de 2026-07-28
+porque aquele levantamento foi manual e sobre outro universo (linhas do
+ROADMAP, não specs). O que esta sprint garante é que a medição volta a
+existir e a aparecer.
+
+### Mudanças estruturais
+
+- `SPRINTS_DIR` substitui `ROADMAP_PATH`; flag `--sprints-dir` com alias
+  `--roadmap` preservado para não quebrar chamadas existentes.
+- `parse_specs()` novo: ID do basename, status do primeiro `[...]` da linha
+  `STATUS:`. Specs com `STATUS: materializada ...` (sem colchetes) ficam de
+  fora — não têm status no vocabulário auditável.
+- `LinhaSprint` ganha `arquivo` e `linha_no_arquivo`; `numero_linha` vira
+  índice sequencial global, que é a chave do resultado.
+- `aplicar_fix()` passa a reescrever por arquivo de spec, agrupando as
+  edições — antes escrevia um arquivo único por número de linha.
+- Toda a lógica de valor (`coletar_commits_git`, `coletar_arquivos_codigo`,
+  `coletar_mencoes_features`) e os conjuntos `STATUS_PENDENTE`/`STATUS_OK`
+  ficaram intactos, como previa a spec.
+
+Custo: o detector leva **12,4 s** e roda a cada `smoke.sh`.
+
+NÃO-objetivo respeitado: nenhuma das sprints pendentes foi marcada `[ok]`.

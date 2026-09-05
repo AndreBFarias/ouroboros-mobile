@@ -24,12 +24,24 @@ python3 scripts/check_strings_ui_ptbr.py
 echo ">> contract drift (Mobile <-> Backend Python)"
 ./scripts/test_contract_drift.sh || true
 
-echo ">> auditoria fantasmas ROADMAP (warning, nao-bloqueante)"
-if python3 scripts/check_roadmap_fantasmas.py --warn-only > /tmp/roadmap-fantasmas.log 2>&1; then
+echo ">> auditoria fantasmas (warning, nao-bloqueante)"
+# AUDIT-P3-5 (2026-09-05): antes este bloco era um `if` sem `else`. Quando o
+# script saia != 0 -- que era o caso desde que o ROADMAP.md sumiu no scrub --
+# o bloco inteiro era pulado, o stderr ia para o log e nada chegava ao
+# console. "sem fantasmas" e "o detector não rodou" ficavam indistinguiveis
+# para quem le o smoke. Segue nao-bloqueante, mas agora e' visivel.
+set +e
+python3 scripts/check_roadmap_fantasmas.py --warn-only > /tmp/roadmap-fantasmas.log 2>&1
+rc_fantasmas=$?
+set -e
+if [[ "$rc_fantasmas" -eq 0 ]]; then
   n=$(grep -cE "^  FANTASMA: [A-Z]" /tmp/roadmap-fantasmas.log || true)
   if [[ "$n" -gt 0 ]]; then
-    echo "AVISO: ROADMAP pode ter $n fantasma(s) - rode 'python3 scripts/check_roadmap_fantasmas.py' pra auditar"
+    echo "AVISO: $n sprint(s) fantasma - rode 'python3 scripts/check_roadmap_fantasmas.py' pra auditar"
   fi
+else
+  echo "AVISO: o detector de fantasmas NÃO RODOU (exit $rc_fantasmas). Saida:"
+  sed 's/^/    /' /tmp/roadmap-fantasmas.log | head -20
 fi
 
 # Typecheck, lint e testes so rodam quando o projeto Expo existir
