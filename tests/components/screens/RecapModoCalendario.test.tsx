@@ -145,7 +145,7 @@ describe('RecapModoCalendario — controle de filtros', () => {
   });
 
   it('com filtro aplicado, o contador e o Limpar aparecem', async () => {
-    const { getByLabelText, getByText } = await montar();
+    const { getByLabelText } = await montar();
     fireEvent.press(getByLabelText('chip Spotify'));
     await waitFor(() =>
       expect(getByLabelText('limpar filtros de conquistas')).toBeTruthy()
