@@ -596,14 +596,31 @@ export function IntegracoesScreen() {
         icone: Cloud,
         corIcone: colors.yellow,
         estado: 'conectado',
-        // Resumo real (N backups, MB, ultimo envio) quando carregado;
-        // fallback no texto do toggle enquanto o resumo nao resolveu.
-        statusTexto:
-          driveResumo !== null
-            ? driveResumo.texto
-            : driveBackupToggle
-              ? 'Backup automático ligado. Envia o ZIP do Vault toda semana.'
-              : 'Backup automático desligado. Ligue em Contas Google.',
+        // AUDIT-P2-3: linha composta -- resumo real (N backups, MB,
+        // ultimo envio) MAIS o estado do agendamento semanal. Antes o
+        // ramo do toggle so aparecia quando driveResumo era null, e
+        // carregarDriveResumo sempre resolve (o catch devolve resumo
+        // vazio honesto): na pratica o estado do automatico nunca
+        // chegava a tela. Enquanto R-SEC-1 nao fecha, o texto do estado
+        // ligado nao pode afirmar que o envio acontece.
+        statusTexto: [
+          driveResumo?.texto,
+          // AUDIT-P2-3: a frase do estado ligado deriva do runtime, nao e
+          // fixa. "aguardando autorizacao" so vale enquanto NENHUM upload
+          // aconteceu; assim que houver um, driveResumo.ultimoUploadMs
+          // deixa de ser null e a linha para de se contradizer com o
+          // proprio resumo ao lado ("Ultimo envio: ha 2 dias · ...
+          // aguardando autorizacao"). Sem esta condicao, fechar o
+          // bloqueio do Google exigiria lembrar de voltar aqui trocar a
+          // string -- e ninguem lembraria.
+          driveBackupToggle
+            ? !driveResumo?.ultimoUploadMs
+              ? 'Automático semanal ligado, aguardando autorização no Google.'
+              : 'Automático semanal ligado.'
+            : 'Automático semanal desligado. Ligue em Contas Google.',
+        ]
+          .filter((p): p is string => typeof p === 'string' && p.length > 0)
+          .join(' · '),
         rota: '/settings/contas-google',
         acoes: [
           {

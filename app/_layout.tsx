@@ -47,6 +47,14 @@ import { puxadorSono } from '@/lib/health/puxadores/sleep';
 // (refreshIfNeeded, listarEventos, sincronizarSnapshotAgenda) injetadas.
 import { orquestrarIntegracoes } from '@/lib/integracoes/scheduler';
 import { criarIntegracaoCalendar } from '@/lib/integracoes/calendarSync';
+// AUDIT-P2-3-DRIVE-BACKUP-AUTOMATICO (2026-07-29): backup semanal do ZIP
+// do Vault no Drive. Gate e escolha de conta sao funcoes puras do proprio
+// modulo (testaveis em Jest; o RootLayout nao e' montavel la).
+import {
+  criarIntegracaoDriveBackup,
+  escolherPessoaDrive,
+  podeDispararBackupDriveAuto,
+} from '@/lib/integracoes/google/driveBackup';
 import { agendarNotifsPreEvento } from '@/lib/notifications/calendarPreEvent';
 import { listarEventos } from '@/lib/services/calendarApi';
 import { sincronizarSnapshotAgenda } from '@/lib/vault/agenda';
@@ -417,6 +425,108 @@ export default function RootLayout() {
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         devLog('[integracoes]', 'wiring erro', msg);
+      }
+    }
+
+    // Disparo 1: boot apos appPronto.
+    void disparar();
+
+    // Disparo 2: cada vez que o app volta para 'active' (foreground).
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void disparar();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [appPronto]);
+
+  // AUDIT-P2-3-DRIVE-BACKUP-AUTOMATICO (2026-07-29): liga o agendamento
+  // semanal que a UI ja prometia. criarIntegracaoDriveBackup existia sem
+  // caller de producao -- o toggle backupDriveAutomatico gravava a chave
+  // e nada era enviado.
+  //
+  // Efeito IRMAO do wiring do Calendar acima, nunca aninhado nele: o gate
+  // do Drive nao pode herdar o early-return de googleCalendarSync, ou o
+  // achado [P2-2] (toggle do Calendar) passaria a bloquear tambem o
+  // backup. Dois efeitos separados e' escolha de desenho desta sprint; o
+  // requisito literal do spec e' apenas a independencia dos gates.
+  //
+  // Throttle: driveBackupUltimaSync so avanca quando houve upload
+  // (novos > 0) OU quando o ZIP identico ja estava no Drive (jaExistia,
+  // via callback do adapter). Os no-ops graciosos -- conta nao conectada,
+  // sem backup local, web -- tambem chegam com erro null, e marcar
+  // sucesso neles adiaria o primeiro upload real em 7 dias. Ja incluir
+  // jaExistia evita reler e hashear o ZIP inteiro a cada foreground
+  // depois do primeiro envio.
+  //
+  // Reentrancia: boot e AppState 'active' podem se sobrepor, e a leitura
+  // do ZIP + sha256 em JS puro bloqueia a thread; a flag `rodando`
+  // serializa os disparos. Cleanup remove o listener (A26).
+  useEffect(() => {
+    if (!appPronto) return;
+
+    let rodando = false;
+
+    async function disparar(): Promise<void> {
+      if (rodando) return;
+      const s = useSettings.getState();
+      const vaultRoot = useVault.getState().vaultRoot;
+      const liberado = podeDispararBackupDriveAuto({
+        ligado: s.featureToggles.backupDriveAutomatico,
+        ultimaSyncIso: s.driveBackupUltimaSync,
+        agoraMs: Date.now(),
+        vaultRoot,
+      });
+      if (!liberado) return;
+      // Sem conta Google conectada nao ha de onde sair o upload; o
+      // default 'pessoa_a' do adapter viraria no-op permanente no casal
+      // em que so pessoa_b conectou.
+      const pessoa = escolherPessoaDrive(useGoogleAuth.getState().contas);
+      if (pessoa === null) return;
+
+      rodando = true;
+      try {
+        let concluido = false;
+        const integracao = criarIntegracaoDriveBackup(
+          vaultRoot ?? '',
+          new Date(),
+          pessoa,
+          (resultado) => {
+            concluido = resultado.uploadado || resultado.jaExistia === true;
+          }
+        );
+        const r = await orquestrarIntegracoes([integracao]);
+        const driveOk = r.integracoes.some(
+          (i) =>
+            i.nome === 'drive_backup' &&
+            i.erro === null &&
+            (i.novos > 0 || concluido)
+        );
+        devLog('[integracoes]', 'wiring drive backup', {
+          rodadoEm: r.rodadoEm,
+          driveOk,
+        });
+        // AUDIT-P2-3: a marca avanca tambem quando a tentativa FALHOU.
+        //
+        // Sem isto nao ha backoff: enquanto o acesso ao Drive nao estiver
+        // autorizado (R-SEC-1, bloqueio externo e sem data), a marca nunca
+        // avanca e a rotina se repete em TODO boot e TODO retorno ao
+        // foreground. E cara: executarBackupDrive le o ZIP inteiro em
+        // base64 e calcula SHA-256 em JS puro ANTES da primeira chamada ao
+        // Drive -- src/lib/crypto/sha256.ts diz no cabecalho que esse
+        // calculo "so roda no momento do export/restore (raro)". Repetir
+        // isso a cada foreground bloqueia a thread JS e e candidato a ANR.
+        //
+        // Antes desta sprint o toggle nao fazia nada, entao o custo seria
+        // introduzido por ela. Marcar a tentativa faz a proxima esperar a
+        // mesma semana, com ou sem sucesso.
+        useSettings.getState().setDriveBackupUltimaSync(r.rodadoEm);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        devLog('[integracoes]', 'wiring drive backup erro', msg);
+      } finally {
+        rodando = false;
       }
     }
 

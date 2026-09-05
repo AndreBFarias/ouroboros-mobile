@@ -339,10 +339,82 @@ describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-A
 
     const { getByText } = render(<IntegracoesScreen />);
 
+    // AUDIT-P2-3: o statusTexto agora compoe resumo + estado do
+    // agendamento semanal, entao a asserção e' por conteudo e nao por
+    // igualdade exata.
     await waitFor(() => {
       expect(
-        getByText('3 backups · 3.0 MB · Último envio: agora mesmo.')
+        getByText(/3 backups · 3\.0 MB · Último envio: agora mesmo\./)
       ).toBeTruthy();
+    });
+  });
+
+  // AUDIT-P2-3: a copy do card precisa descrever o agendamento semanal
+  // sem afirmar que o envio ja acontece (R-SEC-1 pendente).
+  it('card Drive mostra o estado do automatico semanal junto do resumo', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+    mockStateSettings.current = {
+      featureToggles: { healthConnectSync: false, backupDriveAutomatico: true },
+    };
+    mockCarregarDriveResumo.mockResolvedValueOnce({
+      totalBackups: 1,
+      bytesTotais: 1024 * 1024,
+      ultimoUploadMs: 0,
+      texto: '1 backup · 1.0 MB · Nenhum envio ainda.',
+    });
+
+    const { getByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(
+        getByText(
+          /Automático semanal ligado, aguardando autorização no Google\./
+        )
+      ).toBeTruthy();
+    });
+  });
+
+  // AUDIT-P2-3: a frase deriva do runtime. Depois do primeiro upload a
+  // linha nao pode continuar dizendo "aguardando autorizacao" ao lado de
+  // "Ultimo envio: ha 2 dias" -- seria o card se contradizendo na mesma
+  // frase. Sem este caso, fechar o bloqueio do Google dependeria de
+  // alguem lembrar de voltar aqui e trocar a string.
+  it('depois de um upload real a copy para de dizer que aguarda autorizacao', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+    mockStateSettings.current = {
+      featureToggles: { healthConnectSync: false, backupDriveAutomatico: true },
+    };
+    mockCarregarDriveResumo.mockResolvedValueOnce({
+      totalBackups: 3,
+      bytesTotais: 5 * 1024 * 1024,
+      ultimoUploadMs: Date.parse('2026-09-03T12:00:00-03:00'),
+      texto: '3 backups · 5.0 MB · Último envio: há 2 dias.',
+    });
+
+    const { getByText, queryByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/Automático semanal ligado\./)).toBeTruthy();
+    });
+    expect(queryByText(/aguardando autorização no Google/)).toBeNull();
+  });
+
+  it('card Drive mostra automatico desligado quando o toggle esta off', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    comContaGoogle();
+    mockStateSettings.current = {
+      featureToggles: {
+        healthConnectSync: false,
+        backupDriveAutomatico: false,
+      },
+    };
+
+    const { getByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/Automático semanal desligado\./)).toBeTruthy();
     });
   });
 
@@ -353,9 +425,7 @@ describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-A
     const { getByLabelText } = render(<IntegracoesScreen />);
 
     await waitFor(() => {
-      expect(
-        getByLabelText('acao google_drive fazer_agora')
-      ).toBeTruthy();
+      expect(getByLabelText('acao google_drive fazer_agora')).toBeTruthy();
       expect(getByLabelText('acao google_drive restaurar')).toBeTruthy();
     });
   });
@@ -387,7 +457,13 @@ describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-A
     mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
     comContaGoogle();
     mockListarBackupsArquivados.mockResolvedValueOnce([
-      { uri: '/tmp/auto/backup-recente.zip', nome: 'backup-recente.zip', modificadoEmMs: 1, bytes: 10, snapshot: null },
+      {
+        uri: '/tmp/auto/backup-recente.zip',
+        nome: 'backup-recente.zip',
+        modificadoEmMs: 1,
+        bytes: 10,
+        snapshot: null,
+      },
     ]);
 
     const { getByLabelText } = render(<IntegracoesScreen />);
@@ -442,9 +518,7 @@ describe('IntegracoesScreen — estado Health Connect', () => {
     const { getByLabelText } = render(<IntegracoesScreen />);
 
     await waitFor(() => {
-      expect(
-        getByLabelText('estado health_connect desconectado')
-      ).toBeTruthy();
+      expect(getByLabelText('estado health_connect desconectado')).toBeTruthy();
     });
 
     // Tap dispara push para /settings/integracoes.

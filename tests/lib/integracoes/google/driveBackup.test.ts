@@ -14,11 +14,17 @@
 //   6. Excecao no http -> { uploadado: false, erro } sem rethrow.
 //   7. Adapter criarIntegracaoDriveBackup mapeia resultado para o
 //      contrato Integracao do scheduler.
+//   8. AUDIT-P2-3: gate puro do agendamento semanal
+//      (podeDispararBackupDriveAuto), escolha da conta de origem
+//      (escolherPessoaDrive) e o callback onResultado que o wiring usa
+//      para nao avancar o throttle em no-op gracioso.
 //
 // Comentarios sem acento (convencao shell/CI).
 import {
   executarBackupDrive,
   criarIntegracaoDriveBackup,
+  escolherPessoaDrive,
+  podeDispararBackupDriveAuto,
   DRIVE_PASTA_NOME,
   DRIVE_PROP_SHA256,
   type DriveHttp,
@@ -263,5 +269,142 @@ describe('criarIntegracaoDriveBackup (adapter scheduler)', () => {
     expect(integracao.nome).toBe('drive_backup');
     const r = await integracao.sincronizar();
     expect(r).toEqual({ novos: 0, erro: null });
+  });
+
+  // AUDIT-P2-3: o wiring precisa distinguir no-op gracioso de
+  // upload/jaExistia para decidir o throttle; o contrato Integracao
+  // colapsa os tres em { novos: 0, erro: null }. O callback entrega o
+  // resultado cru.
+  it('entrega o resultado cru via onResultado antes do mapeamento', async () => {
+    const vistos: Array<{ uploadado: boolean; erro?: string }> = [];
+    const integracao = criarIntegracaoDriveBackup(
+      'file:///vault',
+      new Date(),
+      'pessoa_b',
+      (resultado) => {
+        vistos.push({ uploadado: resultado.uploadado, erro: resultado.erro });
+      }
+    );
+    await integracao.sincronizar();
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0].uploadado).toBe(false);
+    // Em web o no-op gracioso traz mensagem, mas o adapter mapeia para
+    // erro null -- e' exatamente essa diferenca que o wiring precisa.
+    expect(vistos[0].erro).toBe('Backup Drive não disponível em web.');
+  });
+});
+
+// AUDIT-P2-3-DRIVE-BACKUP-AUTOMATICO (2026-07-29): gate do agendamento
+// semanal. Funcao pura -- sem store, sem rede, sem FileSystem.
+describe('podeDispararBackupDriveAuto (throttle semanal)', () => {
+  const agoraMs = Date.parse('2026-07-29T12:00:00.000Z');
+  const vaultRoot = 'file:///vault';
+
+  it('toggle desligado nunca dispara, mesmo sem marca anterior', () => {
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: false,
+        ultimaSyncIso: null,
+        agoraMs,
+        vaultRoot,
+      })
+    ).toBe(false);
+  });
+
+  it('toggle ligado sem marca anterior dispara (primeira sync)', () => {
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: true,
+        ultimaSyncIso: null,
+        agoraMs,
+        vaultRoot,
+      })
+    ).toBe(true);
+  });
+
+  it('nao dispara com 6 dias desde o ultimo envio', () => {
+    const seisDias = new Date(agoraMs - 6 * 24 * 3600_000).toISOString();
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: true,
+        ultimaSyncIso: seisDias,
+        agoraMs,
+        vaultRoot,
+      })
+    ).toBe(false);
+  });
+
+  it('dispara com 7 dias e 1 minuto desde o ultimo envio', () => {
+    const seteDias = new Date(
+      agoraMs - (7 * 24 * 3600_000 + 60_000)
+    ).toISOString();
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: true,
+        ultimaSyncIso: seteDias,
+        agoraMs,
+        vaultRoot,
+      })
+    ).toBe(true);
+  });
+
+  it('marca ilegivel e tratada como primeira sync', () => {
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: true,
+        ultimaSyncIso: 'nao-e-um-iso',
+        agoraMs,
+        vaultRoot,
+      })
+    ).toBe(true);
+  });
+
+  it('nao dispara sem vaultRoot (onboarding / pre-vault)', () => {
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: true,
+        ultimaSyncIso: null,
+        agoraMs,
+        vaultRoot: null,
+      })
+    ).toBe(false);
+    expect(
+      podeDispararBackupDriveAuto({
+        ligado: true,
+        ultimaSyncIso: null,
+        agoraMs,
+        vaultRoot: '',
+      })
+    ).toBe(false);
+  });
+});
+
+describe('escolherPessoaDrive (conta de origem do upload)', () => {
+  function conta(accessToken: string | null): { accessToken: string | null } {
+    return { accessToken };
+  }
+
+  it('escolhe pessoa_b quando so ela conectou', () => {
+    expect(
+      escolherPessoaDrive({
+        pessoa_a: conta(null),
+        pessoa_b: conta('token-b'),
+      })
+    ).toBe('pessoa_b');
+  });
+
+  it('devolve null quando nenhuma conta conectou', () => {
+    expect(
+      escolherPessoaDrive({ pessoa_a: conta(null), pessoa_b: conta('') })
+    ).toBe(null);
+  });
+
+  it('prefere pessoa_a quando as duas conectaram', () => {
+    expect(
+      escolherPessoaDrive({
+        pessoa_a: conta('token-a'),
+        pessoa_b: conta('token-b'),
+      })
+    ).toBe('pessoa_a');
   });
 });

@@ -259,8 +259,7 @@ export default function ContasGoogleScreen() {
                   color: colors.fg,
                   fontFamily: 'JetBrainsMono_400Regular',
                   fontSize: typography.body.size,
-                  lineHeight:
-                    typography.body.size * typography.body.lineHeight,
+                  lineHeight: typography.body.size * typography.body.lineHeight,
                 }}
               >
                 Backup automático no Drive
@@ -275,14 +274,14 @@ export default function ContasGoogleScreen() {
                   marginTop: 2,
                 }}
               >
-                Envia o ZIP do Vault para o seu Drive uma vez por semana.
+                Envia o ZIP do Vault para o seu Drive uma vez por semana. O
+                envio começa quando o acesso ao Drive for autorizado na sua
+                conta Google.
               </Text>
             </View>
             <Toggle
               value={driveBackupToggle}
-              onChange={(v) =>
-                setFeatureToggle('backupDriveAutomatico', v)
-              }
+              onChange={(v) => setFeatureToggle('backupDriveAutomatico', v)}
               disabled={!algumGoogleConectado}
               accessibilityLabel="toggle backup automatico drive"
             />

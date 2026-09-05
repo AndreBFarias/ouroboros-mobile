@@ -11,9 +11,15 @@
 // PASSO HUMANO PENDENTE (R-SEC-1): o upload so funciona em runtime real
 // DEPOIS que o dono registrar o scope drive.file no OAuth consent screen
 // do Google Cloud Console (e, se Google exigir, passar pela verificacao).
-// Ate la este modulo fica DORMENTE: o toggle backupDriveAutomatico nasce
-// OFF e nada chama fazerBackupDrive sem opt-in explicito. Sem rede de
-// saida por default (principio do projeto).
+// Ate la a rodada automatica termina em no-op gracioso. Sem rede de
+// saida por default (principio do projeto): o toggle
+// backupDriveAutomatico nasce OFF e nada chama fazerBackupDrive sem
+// opt-in explicito.
+//
+// AUDIT-P2-3-DRIVE-BACKUP-AUTOMATICO (2026-07-29): o agendamento semanal
+// deixou de ser dormente. app/_layout.tsx injeta
+// criarIntegracaoDriveBackup no orquestrador no boot e a cada
+// foreground, guardado pelo toggle e por podeDispararBackupDriveAuto.
 //
 // Arquitetura de testabilidade: a funcao publica fazerBackupDrive monta
 // as dependencias reais (token via store, listagem via FileSystem, fetch
@@ -328,27 +334,94 @@ export async function fazerBackupDrive(
   });
 }
 
+// Janela do agendamento semanal prometido pela UI (Contas Google e hub
+// /integracoes). AUDIT-P2-3-DRIVE-BACKUP-AUTOMATICO (2026-07-29).
+export const DRIVE_BACKUP_THROTTLE_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Gate puro do agendamento semanal, consumido pelo wiring em
+// app/_layout.tsx. Fica neste modulo (e nao no wiring) porque o
+// RootLayout nao e' montavel em Jest -- vide
+// tests/lib/boot/boot-hooks-espera-hidratacao.test.tsx, que replica o
+// guard em vez de renderizar o componente. Como funcao pura, a regra dos
+// 7 dias ganha prova automatizada.
+//
+// Regras:
+//   - toggle OFF                 -> nunca dispara (opt-in explicito).
+//   - sem vaultRoot              -> nunca dispara. Durante onboarding
+//     nao existe ZIP local; disparar so pagaria um refresh de token por
+//     foreground para terminar em no-op.
+//   - sem marca (ou marca ilegivel) -> dispara (primeira sync).
+//   - senao                      -> so apos DRIVE_BACKUP_THROTTLE_MS.
+export function podeDispararBackupDriveAuto(deps: {
+  ligado: boolean;
+  ultimaSyncIso: string | null;
+  agoraMs: number;
+  vaultRoot: string | null;
+}): boolean {
+  if (!deps.ligado) return false;
+  if (typeof deps.vaultRoot !== 'string' || deps.vaultRoot.length === 0) {
+    return false;
+  }
+  if (
+    typeof deps.ultimaSyncIso !== 'string' ||
+    deps.ultimaSyncIso.length === 0
+  ) {
+    return true;
+  }
+  const ultimaMs = Date.parse(deps.ultimaSyncIso);
+  if (!Number.isFinite(ultimaMs)) return true;
+  return deps.agoraMs - ultimaMs >= DRIVE_BACKUP_THROTTLE_MS;
+}
+
+// Escolhe de qual conta Google sai o upload automatico. Sem isto o
+// wiring herdaria o default `pessoa: PessoaAutor = 'pessoa_a'` do
+// adapter abaixo e viraria no-op silencioso para sempre no casal em que
+// so pessoa_b conectou. Espelha a leitura ja feita em
+// app/settings/contas-google.tsx (algumGoogleConectado). Assinatura
+// estrutural: este modulo nao importa o store (vide nota do topo).
+export function escolherPessoaDrive(contas: {
+  pessoa_a: { accessToken: string | null };
+  pessoa_b: { accessToken: string | null };
+}): PessoaAutor | null {
+  const tokenA = contas.pessoa_a.accessToken;
+  if (typeof tokenA === 'string' && tokenA.length > 0) return 'pessoa_a';
+  const tokenB = contas.pessoa_b.accessToken;
+  if (typeof tokenB === 'string' && tokenB.length > 0) return 'pessoa_b';
+  return null;
+}
+
 // Adapter para o orquestrador puro de integracoes (scheduler.ts). O
 // contrato Integracao espera sincronizar(): { novos, erro }. Mapeamos:
 //   - uploadado=true     -> novos: 1 (1 backup enviado).
 //   - jaExistia / no-op  -> novos: 0, erro: null (nada a fazer, sucesso).
 //   - falha real         -> novos: 0, erro: <mensagem>.
 //
-// DORMENTE por design: o wiring (app/_layout.tsx) so injeta esta
-// integracao no array do scheduler quando featureToggles
-// .backupDriveAutomatico === true E o throttle semanal
-// (driveBackupUltimaSync) permitir. Enquanto o toggle nasce OFF e o
-// scope drive.file aguarda registro no Cloud Console (R-SEC-1), nenhum
-// upload ocorre. Pronto para plug sem alterar o scheduler.
+// ATIVO desde AUDIT-P2-3-DRIVE-BACKUP-AUTOMATICO (2026-07-29): o wiring
+// em app/_layout.tsx injeta esta integracao no array do scheduler quando
+// featureToggles.backupDriveAutomatico === true E
+// podeDispararBackupDriveAuto permitir (throttle semanal contra
+// driveBackupUltimaSync). O upload efetivo continua aguardando o
+// registro do scope drive.file no Cloud Console (passo humano R-SEC-1):
+// ate la a rodada termina em no-op gracioso, sem erro e sem envio.
+//
+// onResultado existe porque o contrato Integracao colapsa em
+// { novos, erro } tres desfechos que o wiring precisa distinguir para o
+// throttle: upload feito, ZIP identico ja no Drive (jaExistia) e no-op
+// gracioso. Avancar a marca semanal no no-op adiaria o primeiro upload
+// real em 7 dias; nao avancar no jaExistia faria cada foreground reler e
+// hashear o ZIP inteiro. O callback entrega o resultado cru antes do
+// mapeamento, sem alargar o contrato do scheduler.
 export function criarIntegracaoDriveBackup(
   vaultRoot: string,
   agora: Date,
-  pessoa: PessoaAutor = 'pessoa_a'
+  pessoa: PessoaAutor = 'pessoa_a',
+  onResultado?: (resultado: DriveBackupResultado) => void
 ): Integracao {
   return {
     nome: 'drive_backup',
     async sincronizar() {
       const r = await fazerBackupDrive(vaultRoot, agora, pessoa);
+      if (onResultado) onResultado(r);
       if (r.uploadado) return { novos: 1, erro: null };
       // jaExistia ou no-op gracioso (sem token/sem backup) sao sucessos
       // silenciosos: nada a enviar nao e' erro. So propagamos erro quando
