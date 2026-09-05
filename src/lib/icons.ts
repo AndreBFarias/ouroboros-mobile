@@ -60,6 +60,7 @@ export { default as Scale } from 'lucide-react-native/dist/esm/icons/scale.mjs';
 export { default as ScanLine } from 'lucide-react-native/dist/esm/icons/scan-line.mjs';
 export { default as Search } from 'lucide-react-native/dist/esm/icons/search.mjs';
 export { default as Settings } from 'lucide-react-native/dist/esm/icons/settings.mjs';
+export { default as SlidersHorizontal } from 'lucide-react-native/dist/esm/icons/sliders-horizontal.mjs';
 export { default as Share2 } from 'lucide-react-native/dist/esm/icons/share-2.mjs';
 export { default as Sigma } from 'lucide-react-native/dist/esm/icons/sigma.mjs';
 export { default as Sparkles } from 'lucide-react-native/dist/esm/icons/sparkles.mjs';

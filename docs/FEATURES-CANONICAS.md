@@ -738,8 +738,18 @@ malformados são silenciosamente ignorados (mesmo padrão de
   M37.1.1) com dots roxos nos dias que têm conquistas. Tap em um
   dia mostra a lista vertical de `<ConquistaCard>` daquele dia
   abaixo do calendário. Reusa `useConquistas` (loader do Vault +
-  filtros — os 5 filtros M11.5 ficam no estado, exposição visual
-  embutida volta em sprint subsequente).
+  filtros).
+- **Filtros de conquista** (AUDIT-P2-11, 2026-09-05) — um controle
+  **Filtros** no topo do modo Calendário abre um bottom sheet com
+  **quatro** dos cinco filtros de M11.5: **pessoa** (chips; a opção
+  "ambos" some quando o Vault não é compartilhado), **mídia** (Tudo /
+  Foto / YouTube / Spotify / Áudio), **intensidade** (dois sliders 1–5
+  com clamp cruzado) e **bairro** (campo livre com debounce de 300 ms).
+  O controle mostra a contagem de filtros ativos e, quando há algum,
+  um **Limpar** ao lado. O quinto filtro — **mês** — é deliberadamente
+  omitido aqui: o calendário mensal já navega por mês, e o chip ao lado
+  dele criaria a pergunta "o mês do chip ou o mês que estou vendo?". O
+  campo continua no estado do hook, no default `'tudo'`.
 - Períodos selecionáveis (modo Lista) via `<ChipGroup mode="single">`:
   **Dia** (00:00–23:59:59 do dia local atual), **Semana** (últimos 7
   dias), **Mês** (últimos 30 dias), **Ano** (últimos 365 dias) e
@@ -927,6 +937,18 @@ intactos: `destinoConquista` segue roteando pelo prefixo.
 > `CalendarioConquistasScreen` foi removido. A `<Timeline>`
 > horizontal foi substituída pela visão calendário mensal +
 > lista vertical do dia selecionado.
+>
+> **Os filtros voltaram em 2026-09-05 (AUDIT-P2-11).** O ADR-0021
+> deixou os cinco filtros de M11.5 no estado do hook e prometeu por
+> escrito que a exposição visual voltaria "em sprint subsequente" —
+> promessa repetida aqui e em `docs/ADRs/0021`. A sprint nunca foi
+> materializada, e a barra ficou dois meses implementada, testada e
+> inalcançável: nenhum dos setters de `useConquistas` tinha chamador.
+> A auditoria de 2026-07-28 achou o órfão; a decisão do dono em
+> 2026-07-29 foi religar em vez de remover. Quatro dos cinco filtros
+> voltaram, num bottom sheet dentro do modo Calendário (§7). O quinto,
+> **mês**, foi descartado por redundância com a navegação mensal do
+> próprio calendário — o campo segue no estado, no default.
 
 ## 9. Tela Hoje — M02 → M40 (Tela 01)
 

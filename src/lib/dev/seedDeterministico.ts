@@ -19,6 +19,7 @@ import { GAUNTLET_ATIVO, gauntlet, type SeedOpcoes } from '@/lib/dev/gauntlet';
 import { useHumorMock } from '@/lib/dev/humorMock';
 import { useDiarioMock, type DiarioMockEntrada } from '@/lib/dev/diarioMock';
 import { useEventosMock, type EventoMockEntrada } from '@/lib/dev/eventosMock';
+import type { Midia } from '@/lib/schemas/midia';
 import {
   formatDateYmd,
   diarioPath,
@@ -75,6 +76,10 @@ interface EventoFixtureEntrada {
   autor: 'pessoa_a' | 'pessoa_b';
   modo: 'positivo' | 'negativo';
   lugar: string;
+  // AUDIT-P2-11: opcional na fixture -- alimenta o filtro de bairro
+  // das conquistas. Nem todo evento tem bairro, e o null e' um caso
+  // que o filtro precisa saber tratar.
+  bairro?: string;
   categoria: string;
   com: string[];
   intensidade: number;
@@ -285,6 +290,23 @@ export function seedDiarios(qtd: number = 3, agora?: Date): void {
   }
 }
 
+// AUDIT-P2-11: deriva o tipo canonico da midia a partir da string da
+// fixture. Ate 2026-09-05 o seed marcava TODA midia como
+// { tipo: 'foto' }, entao o Gauntlet so conseguia produzir conquistas
+// de um tipo so -- e o filtro de midia do Recap nao tinha o que
+// distinguir. Spotify e YouTube usam `url`; foto e audio usam `path`
+// (ver MidiaSchema).
+function midiaCanonicaDaFixture(fonte: string): Midia {
+  if (fonte.includes('spotify.com')) {
+    return { tipo: 'spotify', track_id: fonte.split('/').pop() ?? fonte };
+  }
+  if (fonte.includes('youtube.com') || fonte.includes('youtu.be')) {
+    return { tipo: 'youtube', video_id: fonte.split('=').pop() ?? fonte };
+  }
+  if (fonte.startsWith('media/audios/')) return { tipo: 'audio', path: fonte };
+  return { tipo: 'foto', path: fonte };
+}
+
 // seedEventos: gera eventos a partir do fixture eventos-7.json.
 // qtd controla quantos (1..7); default 7.
 //
@@ -321,11 +343,8 @@ export function seedEventos(qtd: number = 7, hoje?: Date): void {
     const dataYmd = formatDateYmd(date);
     const dataIso = `${dataYmd}T12:00:00-03:00`;
     const rel = eventoPath(date, e.slug);
-    const midiaCanonica = (e.midia ?? []).map((path) => ({
-      tipo: 'foto' as const,
-      path,
-    }));
-    const meta = {
+    const midiaCanonica = (e.midia ?? []).map(midiaCanonicaDaFixture);
+    const meta: Record<string, unknown> = {
       tipo: 'evento' as const,
       data: dataIso,
       autor: comoAutor(e.autor),
@@ -338,6 +357,9 @@ export function seedEventos(qtd: number = 7, hoje?: Date): void {
       midia: midiaCanonica,
       para: { tipo: 'mim' as const },
     };
+    // Campo opcional do EventoSchema; e o que alimenta o filtro de
+    // bairro das conquistas (loader le meta.bairro).
+    if (typeof e.bairro === 'string') meta.bairro = e.bairro;
     const conteudo = stringifyFrontmatter(meta, e.descricao);
     espelharNoVaultMock(rel, conteudo);
   }
@@ -388,7 +410,7 @@ export function seedSaude(dias: number = 7, hoje?: Date): void {
     const date = dataDeOffset(-i, hoje);
     const dataYmd = formatDateYmd(date);
     // Passos do dia: base 6000 + variacao deterministica por dia (0..3500).
-    const variacao = ((i * 1373) % 3500);
+    const variacao = (i * 1373) % 3500;
     const passos = 6000 + variacao;
     const meta = {
       tipo: 'passos' as const,

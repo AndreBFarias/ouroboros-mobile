@@ -35,6 +35,11 @@ interface FiltrosBarProps {
   onTipoMidia: (t: FiltroTipoMidia) => void;
   onIntensidade: (i: FiltroIntensidade) => void;
   onBairro: (q: string) => void;
+  // AUDIT-P2-11: o Recap monta a barra sem o bloco de mes -- o
+  // calendario mensal ja navega por mes, e o chip ao lado dele criaria
+  // a pergunta "o mes do chip ou o mes que estou vendo?". Default true
+  // preserva o comportamento de quem ja consumia a barra inteira.
+  mostrarMes?: boolean;
 }
 
 const OPCOES_MES: { id: FiltroMes; label: string }[] = [
@@ -64,6 +69,7 @@ export function FiltrosBar({
   onTipoMidia,
   onIntensidade,
   onBairro,
+  mostrarMes = true,
 }: FiltrosBarProps) {
   // Estado local do input de bairro com debounce 300ms — evita
   // re-filtrar a lista a cada caractere digitado.
@@ -139,22 +145,26 @@ export function FiltrosBar({
         }}
       />
 
-      <Rotulo>Filtrar por mês</Rotulo>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8 }}
-      >
-        {OPCOES_MES.map((o) => (
-          <Chip
-            key={String(o.id)}
-            label={o.label}
-            selected={mesIgual(filtros.mes, o.id)}
-            onPress={() => onMes(o.id)}
-            accent="cyan"
-          />
-        ))}
-      </ScrollView>
+      {mostrarMes ? (
+        <>
+          <Rotulo>Filtrar por mês</Rotulo>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8 }}
+          >
+            {OPCOES_MES.map((o) => (
+              <Chip
+                key={String(o.id)}
+                label={o.label}
+                selected={mesIgual(filtros.mes, o.id)}
+                onPress={() => onMes(o.id)}
+                accent="cyan"
+              />
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
 
       <Rotulo>Filtrar por mídia</Rotulo>
       <ScrollView

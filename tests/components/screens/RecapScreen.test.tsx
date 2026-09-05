@@ -95,13 +95,13 @@ jest.mock('@/lib/hooks/useConquistas', () => ({
     totaisPorOrigem: { evento_positivo: 0, diario_vitoria: 0 },
     loading: false,
     error: null,
-    filtros: {
-      pessoa: 'ambos',
-      mes: null,
-      tipoMidia: 'todos',
-      intensidade: null,
-      bairro: '',
-    },
+    // AUDIT-P2-11: usa o FILTROS_DEFAULT real em vez de um objeto
+    // escrito a mao. O anterior inventava valores que o hook nunca
+    // produz -- `mes: null` (real: 'tudo'), `tipoMidia: 'todos'`
+    // (real: 'tudo') e `intensidade: null` (real: {min:1,max:5}) --
+    // e passava porque nada os lia. O controle de filtros passou a
+    // ler, e o desalinhamento virou TypeError.
+    filtros: jest.requireActual('@/lib/conquistas/filtros').FILTROS_DEFAULT,
     setFiltroPessoa: jest.fn(),
     setFiltroMes: jest.fn(),
     setFiltroTipoMidia: jest.fn(),
