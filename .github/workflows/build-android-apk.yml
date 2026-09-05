@@ -236,7 +236,26 @@ jobs:
             # R-OPS-5 (2026-05-17): notas auto-geradas a partir dos commits
             # desde a tag anterior, anexadas abaixo das curadas. O checkout
             # com fetch-depth=1 nao tem historico — unshallow primeiro.
-            git fetch --unshallow --tags 2>/dev/null || git fetch --tags
+            #
+            # AUDIT-P3-1 (2026-09-05): `--force` e `|| true` sao obrigatorios
+            # aqui, e a razao so aparece quando o step de fato roda. O
+            # actions/checkout ja trouxe a tag que disparou este build; sem
+            # --force o fetch tenta rebusca-la e o git recusa com
+            # "would clobber existing tag", exit 1. O fallback antigo
+            # (`|| git fetch --tags`) nao salvava, porque falhava pelo mesmo
+            # motivo, e o shell roda com `bash -e`: o step inteiro abortava.
+            #
+            # Isto ficou escondido por dois meses atras de OUTRO defeito do
+            # mesmo step (a leitura do CHANGELOG.md apagado pelo scrub),
+            # corrigido em 2026-07-13. Como nenhuma tag foi criada entre
+            # aquele conserto e hoje, o caminho nunca foi exercitado e o
+            # segundo defeito so apareceu na primeira release real depois.
+            #
+            # Falha de fetch nao deve derrubar a release: no pior caso as
+            # notas saem sem o historico, e isso e' melhor que nao publicar.
+            git fetch --unshallow --tags --force 2>/dev/null \
+              || git fetch --tags --force 2>/dev/null \
+              || true
             {
               echo ""
               echo "---"
