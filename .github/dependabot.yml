@@ -6,8 +6,10 @@
 # - gradle mensal (modulo Android nativo widget-homescreen, baixa rotatividade).
 #
 # Exclusoes (ignore):
-# - react-native e expo nao recebem major bumps automaticos. Major destes
-#   pacotes costuma quebrar New Arch, polyfills, ou bridge nativa em
+# - react-native e a familia expo inteira (o pacote `expo`, mais os padroes
+#   `expo-*` e `@expo/*`) nao recebem major bumps automaticos. O projeto esta
+#   fixo no canal SDK 54: major de qualquer pacote da familia vem alinhado a
+#   um SDK novo (55/56/57) e quebra New Arch, polyfills ou bridge nativa em
 #   producao. Patch e minor seguem normalmente. Major bumps entram via
 #   sprint manual com regressao completa (smoke + Gauntlet + dev-client).
 
@@ -38,6 +40,12 @@ updates:
         update-types:
           - "version-update:semver-major"
       - dependency-name: "expo"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "expo-*"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@expo/*"
         update-types:
           - "version-update:semver-major"
 
