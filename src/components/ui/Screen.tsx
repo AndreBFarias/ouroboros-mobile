@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import { View, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '@/theme/tokens';
 
 interface ScreenProps {
   children: ReactNode;
@@ -16,7 +17,7 @@ export function Screen({ children, padded = true }: ScreenProps) {
       className="flex-1 bg-bg-page"
       edges={['top', 'left', 'right']}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#14151a" />
+      <StatusBar barStyle="light-content" backgroundColor={colors.bgPage} />
       <View
         className={`flex-1 ${padded ? 'px-5 pt-6' : ''}`}
         accessibilityRole="none"

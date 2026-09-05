@@ -113,3 +113,61 @@ confirmando paridade.
 ```
 refactor: audit-p4-6-hex-hardcoded substitui hex literais por colors.bg colors.bgpage e colorsmemorias
 ```
+
+---
+
+## Adendo de execução (2026-09-05)
+
+Registrado na execução, para que o próximo leitor não repita a
+investigação. **O corpo do spec acima tem números de linha obsoletos** —
+não use nenhum deles; ancore por conteúdo.
+
+### 1. Números de linha do corpo estão errados
+
+`app/_layout.tsx` deslocou ~+145 linhas desde a materialização
+(AUDIT-P4-2, fase 1 da auditoria, AUDIT-P3-3, AUDIT-P1-9 e as sprints
+paralelas do lote 2). Mapa real no momento da execução:
+
+| Corpo do spec diz | Real (pré-execução) | O que é |
+|---|---|---|
+| 464 | 609 | `contentStyle` do Stack raiz (`#282a36`) |
+| 489, 497, 505, 513, 526, 539 | 634, 642, 650, 658, 671, 684 | as 6 rotas modais (`#14151a`) |
+| 480, 481, 532 | 625, 626, 677 | os 3 comentários (NÃO-objetivo, intocados) |
+| 435, 581 (`colors.bgPage` já em uso) | 468, 614, 617 | usos pré-existentes do token |
+
+As 6 linhas das rotas modais são textualmente idênticas (mesma
+indentação): edição por string única falha, e trocar só uma e declarar
+pronto é o erro clássico aqui. A contagem do corpo (7 de código + 3 de
+comentário) está correta; só os números não estavam.
+
+### 2. Micro-extensão deliberada: `app/recap-memorias.tsx` (styles.container)
+
+O escopo do corpo cita só o early-return de loading, mas o
+proof-of-work exige `grep -n "#1a0d2e" app/recap-memorias.tsx` sem
+literal sobrando — impossível de satisfazer sem também trocar
+`container: { flex: 1, backgroundColor: '#1a0d2e' }` no
+`StyleSheet.create`. As duas linhas foram trocadas por
+`colorsMemorias.bgGradient[0]`. Não colide com NÃO-objetivo nenhum,
+não muda valor de cor e não remove o override redundante do
+early-return (que já herdava o mesmo valor de `styles.container`).
+
+### 3. O passo de paridade byte-a-byte no Gauntlet foi substituído
+
+O corpo pede comparar PNGs antes/depois com `cmp`/hash nas rotas
+afetadas. Isso é insatisfazível justamente nas telas nomeadas:
+`OuroborosLoader` roda loops Reanimated `withRepeat`, e
+`/recap-memorias` anima o gradiente em ciclo de 8s — duas capturas
+nunca batem em hash. O `gauntlet.sh` também não tem maquinaria de
+comparação de imagem. A paridade foi provada estaticamente, que é
+mais forte que o pixel: `src/theme/tokens.ts:5-6` dá
+`bgPage: '#14151a'` e `bg: '#282a36'`, `:33` dá
+`bgGradient[0] === '#1a0d2e'`, e o snapshot
+`tests/components/recap/__snapshots__/ShareCardMemoria.test.tsx.snap`
+(que já serializa o token como `"#1a0d2e"`) passou sem `-u`.
+
+### 4. `npm test -- Screen` é gate válido
+
+`tests/components/ui/Screen.test.tsx` existe e renderiza justamente o
+componente que ganha o import novo. Executado junto com
+`ShareCardMemoria` e `recap-memorias`: 27 suítes / 188 testes /
+1 snapshot, todos verdes.

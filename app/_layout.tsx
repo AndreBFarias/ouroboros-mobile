@@ -606,7 +606,7 @@ export default function RootLayout() {
               screenOptions={{
                 headerShown: false,
                 animation: 'slide_from_right',
-                contentStyle: { backgroundColor: '#282a36' },
+                contentStyle: { backgroundColor: colors.bg },
               }}
             >
               {/* Rota modal raiz para o share intent receiver (M08). A
@@ -631,7 +631,7 @@ export default function RootLayout() {
                 name="humor-rapido"
                 options={{
                   presentation: 'transparentModal',
-                  contentStyle: { backgroundColor: '#14151a' },
+                  contentStyle: { backgroundColor: colors.bgPage },
                   animation: 'fade_from_bottom',
                 }}
               />
@@ -639,7 +639,7 @@ export default function RootLayout() {
                 name="diario-emocional"
                 options={{
                   presentation: 'transparentModal',
-                  contentStyle: { backgroundColor: '#14151a' },
+                  contentStyle: { backgroundColor: colors.bgPage },
                   animation: 'fade_from_bottom',
                 }}
               />
@@ -647,7 +647,7 @@ export default function RootLayout() {
                 name="eventos"
                 options={{
                   presentation: 'transparentModal',
-                  contentStyle: { backgroundColor: '#14151a' },
+                  contentStyle: { backgroundColor: colors.bgPage },
                   animation: 'fade_from_bottom',
                 }}
               />
@@ -655,7 +655,7 @@ export default function RootLayout() {
                 name="scanner"
                 options={{
                   presentation: 'transparentModal',
-                  contentStyle: { backgroundColor: '#14151a' },
+                  contentStyle: { backgroundColor: colors.bgPage },
                   animation: 'fade_from_bottom',
                 }}
               />
@@ -668,7 +668,7 @@ export default function RootLayout() {
                 name="captura"
                 options={{
                   presentation: 'transparentModal',
-                  contentStyle: { backgroundColor: '#14151a' },
+                  contentStyle: { backgroundColor: colors.bgPage },
                   animation: 'fade_from_bottom',
                 }}
               />
@@ -681,7 +681,7 @@ export default function RootLayout() {
                 options={{
                   presentation: 'modal',
                   animation: 'slide_from_bottom',
-                  contentStyle: { backgroundColor: '#14151a' },
+                  contentStyle: { backgroundColor: colors.bgPage },
                 }}
               />
             </Stack>

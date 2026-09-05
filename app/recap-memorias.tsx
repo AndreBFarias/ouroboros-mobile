@@ -167,9 +167,7 @@ export default function RecapMemoriasTela() {
   const ateString = Array.isArray(params.ate) ? params.ate[0] : params.ate;
   const range: PeriodoRange = useMemo(() => {
     const hoje = new Date();
-    const seteDiasAtras = new Date(
-      hoje.getTime() - 7 * 24 * 60 * 60 * 1000
-    );
+    const seteDiasAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
     return {
       de: parseDate(deString, seteDiasAtras),
       ate: parseDate(ateString, hoje),
@@ -245,7 +243,7 @@ export default function RecapMemoriasTela() {
   const slideAtualRef = slides[index] ?? null;
   const audioAnexadoUri =
     slideAtualRef && 'audioPath' in slideAtualRef
-      ? slideAtualRef.audioPath ?? null
+      ? (slideAtualRef.audioPath ?? null)
       : null;
 
   // Audio ambient: instancia uma vez quando toggle ligado. Loop +
@@ -284,9 +282,7 @@ export default function RecapMemoriasTela() {
       const volIni = AUDIO_ANEXADO_VOLUME_ALVO;
       // Fade-out linear em 5 passos (500ms total) espelhando ambient.
       for (let i = passos - 1; i >= 0; i -= 1) {
-        await s
-          .setVolumeAsync((volIni * i) / passos)
-          .catch(() => undefined);
+        await s.setVolumeAsync((volIni * i) / passos).catch(() => undefined);
         await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / passos));
       }
       await s.stopAsync().catch(() => undefined);
@@ -326,9 +322,7 @@ export default function RecapMemoriasTela() {
         // Fade-in em 5 passos.
         for (let i = 1; i <= 5; i += 1) {
           if (cancelado) break;
-          await sound
-            .setVolumeAsync(i * 0.05)
-            .catch(() => undefined);
+          await sound.setVolumeAsync(i * 0.05).catch(() => undefined);
           await new Promise((r) => setTimeout(r, AUDIO_FADE_MS / 5));
         }
       } catch {
@@ -602,7 +596,12 @@ export default function RecapMemoriasTela() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: '#1a0d2e' }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colorsMemorias.bgGradient[0] },
+        ]}
+      >
         <OuroborosLoader compacto />
       </View>
     );
@@ -653,9 +652,7 @@ export default function RecapMemoriasTela() {
       <Pressable
         onPress={() => setPausado((p) => !p)}
         accessibilityRole="button"
-        accessibilityLabel={
-          pausado ? 'retomar memorias' : 'pausar memorias'
-        }
+        accessibilityLabel={pausado ? 'retomar memorias' : 'pausar memorias'}
         style={styles.pausar}
         hitSlop={12}
       >
@@ -702,7 +699,9 @@ export default function RecapMemoriasTela() {
 
       {/* Frase de transicao sobre o slide. Pequena, opacity baixa,
           rotativa por slide id. */}
-      {slideAtual && slideAtual.id !== 'abertura' && slideAtual.id !== 'encerramento' ? (
+      {slideAtual &&
+      slideAtual.id !== 'abertura' &&
+      slideAtual.id !== 'encerramento' ? (
         <Text
           style={styles.fraseTransicao}
           accessibilityLabel={`transicao ${fraseTransicao}`}
@@ -964,7 +963,7 @@ function SlideRender({ slide }: { slide: Slide }) {
 const SCREEN = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a0d2e' },
+  container: { flex: 1, backgroundColor: colorsMemorias.bgGradient[0] },
   // R-RECAP-8: container off-screen dos cards de share. left negativo
   // tira da area visivel; width fixa (SCREEN.width) para o aspectRatio
   // dos cards resolver o layout. captureRef desenha a view pelo ref,
