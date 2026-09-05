@@ -42,7 +42,6 @@ interface Registro {
 
 function limparAnsi(s: string): string {
   // Remove sequencias de escape ANSI para o sumario ficar legivel.
-  // eslint-disable-next-line no-control-regex
   return s.replace(/\[[0-9;]*m/g, '');
 }
 
@@ -131,7 +130,6 @@ class E2eWebReporter implements Reporter {
       }
     }
     linhas.push('=== fim do sumario ===');
-    // eslint-disable-next-line no-console
     console.log(linhas.join('\n'));
 
     this.gravarSumario(entradas, result);
@@ -170,10 +168,8 @@ class E2eWebReporter implements Reporter {
     try {
       fs.mkdirSync(path.dirname(SUMARIO_PATH), { recursive: true });
       fs.writeFileSync(SUMARIO_PATH, `${JSON.stringify(sumario, null, 2)}\n`);
-      // eslint-disable-next-line no-console
       console.log(`sumario json:    ${SUMARIO_PATH}`);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.log(
         `AVISO: nao consegui gravar ${SUMARIO_PATH}: ${(err as Error).message}`
       );
