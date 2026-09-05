@@ -101,9 +101,23 @@ function joinUri(root: string, rel: string): string {
 // perpetuando o conflito no layout-por-tipo. Filtro defensivo, nao
 // destrutivo: arquivos sync-conflict permanecem no path original para
 // reconciliacao manual via Obsidian/Syncthing.
-async function listarBasenames(folderUri: string): Promise<string[]> {
+// AUDIT-P1-5B: tres estados, no mesmo vocabulario de MovimentoResultado.
+//
+// O `catch { return [] }` anterior era ambiguo do mesmo jeito que o
+// boolean que a AUDIT-P1-5 desfez em MovimentoResultado: "pasta nao
+// existe" (benigno, esperado num Vault novo) e "nao consegui ler"
+// (perda real) viravam a mesma lista vazia, e a migracao seguia como se
+// tivesse terminado. Pasta ilegivel ficava para tras em silencio e a
+// flag subia dizendo que o layout estava migrado.
+export type ListagemResultado =
+  | { estado: 'listada'; basenames: string[] }
+  | { estado: 'inexistente' }
+  | { estado: 'falhou' };
+
+async function listarBasenames(folderUri: string): Promise<ListagemResultado> {
+  const ehContent = folderUri.startsWith('content://');
   try {
-    if (folderUri.startsWith('content://')) {
+    if (ehContent) {
       const uris = await StorageAccessFramework.readDirectoryAsync(folderUri);
       const out: string[] = [];
       for (const u of uris) {
@@ -111,13 +125,56 @@ async function listarBasenames(folderUri: string): Promise<string[]> {
         const last = decoded.split('/').pop() ?? '';
         if (last.length > 0 && !ehSyncConflict(last)) out.push(last);
       }
-      return out;
+      return { estado: 'listada', basenames: out };
     }
     const nomes = await FileSystem.readDirectoryAsync(folderUri);
-    return nomes.filter((n) => !ehSyncConflict(n));
+    return {
+      estado: 'listada',
+      basenames: nomes.filter((n) => !ehSyncConflict(n)),
+    };
   } catch {
-    return [];
+    // Distinguir os dois casos so' e' possivel em file://.
+    //
+    // Em content:// (SAF) getInfoAsync NAO serve como discriminador, e o
+    // resultado seria INVERTIDO: para esse scheme ele so devolve
+    // exists:true quando consegue abrir um InputStream, coisa que um
+    // DIRETORIO nunca faz -- pasta existente e legivel devolveria
+    // exists:false. E pasta ausente nem chega la, porque a checagem de
+    // permissao levanta antes. Mapear isso daria "inexistente" para
+    // pasta boa e "falhou" para pasta ausente: exatamente o contrario do
+    // que a sprint quer, e travaria a flag one-shot para sempre --
+    // transformando a migracao num fan-out de 22 listagens SAF por boot.
+    //
+    // Entao em content:// mantemos o comportamento historico
+    // (fail-open, tratado como inexistente) e a melhoria vale para
+    // file://, que e' o caminho do Vault em armazenamento primario.
+    if (ehContent) return { estado: 'inexistente' };
+    try {
+      const info = await FileSystem.getInfoAsync(folderUri);
+      return info.exists ? { estado: 'falhou' } : { estado: 'inexistente' };
+    } catch {
+      // Nem listar nem sondar: nao da para afirmar que sumiu.
+      return { estado: 'falhou' };
+    }
   }
+}
+
+// AUDIT-P1-5B: traduz o resultado da listagem para os call sites.
+// Devolve os basenames quando deu para listar; null quando nao ha o que
+// iterar. 'falhou' conta como UMA falha da pasta inteira -- sem isso a
+// flag one-shot subiria com a pasta ilegivel para tras, e o proximo boot
+// nao tentaria de novo.
+function basenamesOuFalha(
+  r: ListagemResultado,
+  resultado: MigracaoLayoutResultado,
+  relPasta: string
+): string[] | null {
+  if (r.estado === 'listada') return r.basenames;
+  if (r.estado === 'falhou') {
+    resultado.falhas += 1;
+    resultado.pathsFalhos.push(relPasta);
+  }
+  return null;
 }
 
 // Resultado de um movimento individual. Os tres estados existem para
@@ -212,7 +269,12 @@ async function migrarMarkdownFolder(
   dropDate: boolean
 ): Promise<void> {
   const folderUri = joinUri(vaultRoot, folderLegado);
-  const basenames = await listarBasenames(folderUri);
+  const basenames = basenamesOuFalha(
+    await listarBasenames(folderUri),
+    resultado,
+    folderLegado
+  );
+  if (basenames === null) return;
   for (const basename of basenames) {
     if (!basename.endsWith('.md')) continue;
     const stemSemExt = basename.replace(/\.md$/i, '');
@@ -240,7 +302,12 @@ async function migrarBinariosFolder(
   filtroBinario: (basename: string) => boolean
 ): Promise<void> {
   const folderUri = joinUri(vaultRoot, folderLegado);
-  const basenames = await listarBasenames(folderUri);
+  const basenames = basenamesOuFalha(
+    await listarBasenames(folderUri),
+    resultado,
+    folderLegado
+  );
+  if (basenames === null) return;
   for (const basename of basenames) {
     if (basename.endsWith('.md')) {
       // companion: vai para markdown/<prefix><stem>.md.
@@ -269,8 +336,14 @@ async function migrarAgenda(
   vaultRoot: string,
   pessoa: 'pessoa_a' | 'pessoa_b'
 ): Promise<void> {
-  const folderUri = joinUri(vaultRoot, `agenda/${pessoa}`);
-  const basenames = await listarBasenames(folderUri);
+  const relPasta = `agenda/${pessoa}`;
+  const folderUri = joinUri(vaultRoot, relPasta);
+  const basenames = basenamesOuFalha(
+    await listarBasenames(folderUri),
+    resultado,
+    relPasta
+  );
+  if (basenames === null) return;
   for (const basename of basenames) {
     if (!basename.endsWith('.md')) continue;
     const stem = basename.replace(/\.md$/i, '');
@@ -291,7 +364,12 @@ async function migrarMedidasFotos(
   vaultRoot: string
 ): Promise<void> {
   const folderUri = joinUri(vaultRoot, 'media/fotos');
-  const basenames = await listarBasenames(folderUri);
+  const basenames = basenamesOuFalha(
+    await listarBasenames(folderUri),
+    resultado,
+    'media/fotos'
+  );
+  if (basenames === null) return;
   for (const basename of basenames) {
     if (!basename.startsWith('medidas-')) continue;
     if (basename.endsWith('.md')) {
@@ -370,7 +448,13 @@ async function executarPassosMigracao(
   await migrarMarkdownFolder(resultado, vaultRoot, 'daily', 'humor-', false);
   await migrarMarkdownFolder(resultado, vaultRoot, 'eventos', 'evento-', false);
   await migrarMarkdownFolder(resultado, vaultRoot, 'marcos', 'marco-', false);
-  await migrarMarkdownFolder(resultado, vaultRoot, 'medidas', 'medidas-', false);
+  await migrarMarkdownFolder(
+    resultado,
+    vaultRoot,
+    'medidas',
+    'medidas-',
+    false
+  );
   await migrarMarkdownFolder(
     resultado,
     vaultRoot,
@@ -475,8 +559,12 @@ async function executarPassosMigracao(
   // 7. avatares: media/avatares/<pessoa>-<ts>.jpg -> jpg/avatar-<pessoa>-<ts>.jpg
   {
     const folderUri = joinUri(vaultRoot, 'media/avatares');
-    const basenames = await listarBasenames(folderUri);
-    for (const basename of basenames) {
+    const basenames = basenamesOuFalha(
+      await listarBasenames(folderUri),
+      resultado,
+      'media/avatares'
+    );
+    for (const basename of basenames ?? []) {
       if (!/\.(jpg|jpeg|png)$/i.test(basename)) continue;
       await moverEContabilizar(
         resultado,
@@ -490,8 +578,12 @@ async function executarPassosMigracao(
   // 8. exercicios GIFs: assets/exercicios/<slug>.gif -> gif/exercicio-<slug>.gif
   {
     const folderUri = joinUri(vaultRoot, 'assets/exercicios');
-    const basenames = await listarBasenames(folderUri);
-    for (const basename of basenames) {
+    const basenames = basenamesOuFalha(
+      await listarBasenames(folderUri),
+      resultado,
+      'assets/exercicios'
+    );
+    for (const basename of basenames ?? []) {
       if (!/\.gif$/i.test(basename)) continue;
       await moverEContabilizar(
         resultado,
@@ -513,7 +605,7 @@ function logarFalhas(origem: string, resultado: MigracaoLayoutResultado): void {
     migrados: resultado.migrados,
     paths: resultado.pathsFalhos,
     aviso:
-      'arquivos seguem no layout legado e nenhum leitor os enxerga; ' +
+      'arquivos ou pastas inteiras seguem no layout legado e nenhum leitor os enxerga; ' +
       'flag nao marcada, proximo boot re-tenta',
   });
 }

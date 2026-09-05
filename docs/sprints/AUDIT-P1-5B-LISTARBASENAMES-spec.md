@@ -228,3 +228,55 @@ falhou.
 ```
 fix: audit-p1-5b listagem de pasta que falha conta como falha da migracao
 ```
+
+## Resultado (executada 2026-09-05)
+
+`listarBasenames` devolve três estados — `listada` / `inexistente` / `falhou` —
+no mesmo vocabulário que a `AUDIT-P1-5` deu a `MovimentoResultado`. Pasta que
+existe e não lista passa a contar como falha da pasta inteira, entra em
+`pathsFalhos` e segura a flag `vaultLayoutMigrado`, então o próximo boot tenta
+de novo.
+
+### O erro que a revisão evitou, e que teria sido invisível no Jest
+
+O plano original mandava usar `FileSystem.getInfoAsync` como discriminador,
+sem distinguir o scheme. **Em `content://` o resultado é invertido.** Lendo o
+módulo nativo (`expo-file-system`, `FileSystemLegacyModule.kt`): para esse
+scheme, `getInfoAsync` só devolve `exists: true` quando consegue abrir um
+`InputStream` — coisa que um **diretório nunca faz**, porque um
+`DocumentsProvider` não abre stream de `vnd.android.document/directory`. O
+`FileNotFoundException` é capturado e vira `{ exists: false }`.
+
+Consequência da versão ingênua, num Vault em volume secundário (modo
+`saf-fallback`):
+
+- pasta SAF **existente e legível** → `exists:false` → classificada como
+  "inexistente" → o bug que a sprint existe para matar sobreviveria;
+- pasta SAF **ausente** → a checagem de permissão levanta antes → classificada
+  como "falhou".
+
+Ou seja, exatamente ao contrário. E como `falhas > 0` impede a flag de subir,
+a migração one-shot viraria um fan-out de **22 listagens SAF a cada boot, para
+sempre**.
+
+Nada disso apareceria nos testes: as 26 asserções rodam sobre `file:///vault`,
+onde `getInfoAsync` usa `file.exists()` e o mapeamento está correto. Verde no
+Jest, errado no aparelho.
+
+**Decisão:** a sonda só é usada em `file://`. Em `content://` mantém-se o
+comportamento histórico (fail-open, tratado como inexistente), documentado no
+próprio `catch`. A melhoria vale para o armazenamento primário, que é o caminho
+do Vault na instalação padrão.
+
+### Testes
+
+Três casos novos em `migrarVaultLayoutPorTipo-audit-p1-5.test.ts` (15 → 18):
+pasta ilegível conta falha e segura a flag; pasta ausente segue no-op silencioso
+(o caso comum do Vault novo, em que 19 pastas legadas não existem); e
+`content://` não consulta a sonda, mesmo que ela dissesse "existe" — é esse
+caso que trava a regressão no aparelho.
+
+### Pendente
+
+Validação Nível C num Vault em volume secundário (`content://`), para confirmar
+em runtime que o fan-out não voltou. Exige aparelho e permissão do dono.

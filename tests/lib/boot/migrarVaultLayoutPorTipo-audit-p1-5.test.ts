@@ -114,7 +114,9 @@ describe('migrarVaultLayoutPorTipo — falha parcial (AUDIT-P1-5)', () => {
 
     const resultado = await migrarVaultLayoutPorTipo(VAULT_ROOT);
 
-    expect(resultado.pathsFalhos).toEqual(['assets/exercicios/agachamento.gif']);
+    expect(resultado.pathsFalhos).toEqual([
+      'assets/exercicios/agachamento.gif',
+    ]);
     expect(useSessao.getState().flags.vaultLayoutMigrado).toBe(false);
   });
 
@@ -297,5 +299,65 @@ describe('recuperarOrfaosVaultLayout — Vaults ja afetados (AUDIT-P1-5)', () =>
 
     expect(mockReadDirectoryAsync).not.toHaveBeenCalled();
     expect(resultado).toEqual({ migrados: 0, falhas: 0, pathsFalhos: [] });
+  });
+});
+
+// AUDIT-P1-5B: listarBasenames devolve tres estados em vez de sempre [].
+//
+// O `catch { return [] }` anterior era ambiguo do mesmo jeito que o
+// boolean que a AUDIT-P1-5 desfez: "pasta nao existe" (benigno, esperado
+// num Vault novo) e "nao consegui ler" (perda real) viravam a mesma lista
+// vazia. A migracao seguia como se tivesse terminado, a flag one-shot
+// subia, e a pasta ilegivel nunca mais era tentada.
+describe('migrarVaultLayoutPorTipo — listagem ilegivel (AUDIT-P1-5B)', () => {
+  it('pasta que existe mas nao lista conta como falha e segura a flag', async () => {
+    // readDirectory levanta E a pasta existe: perda real.
+    mockReadDirectoryAsync.mockImplementation((uri: string) => {
+      if (uri.endsWith('daily')) {
+        return Promise.reject(new Error('EACCES: permissao negada'));
+      }
+      return Promise.resolve([]);
+    });
+    mockGetInfoAsync.mockImplementation((uri: string) =>
+      Promise.resolve({ exists: uri.endsWith('daily') })
+    );
+
+    const r = await migrarVaultLayoutPorTipo(VAULT_ROOT);
+
+    expect(r.falhas).toBeGreaterThanOrEqual(1);
+    expect(r.pathsFalhos).toContain('daily');
+    expect(useSessao.getState().flags.vaultLayoutMigrado).toBe(false);
+  });
+
+  it('pasta ausente segue sendo no-op silencioso (Vault novo nao acusa falha)', async () => {
+    // readDirectory levanta porque a pasta nao existe -- o caso comum
+    // num Vault recem-criado, em que as 19 pastas legadas nao existem.
+    mockReadDirectoryAsync.mockRejectedValue(new Error('ENOENT'));
+    mockGetInfoAsync.mockResolvedValue({ exists: false });
+
+    const r = await migrarVaultLayoutPorTipo(VAULT_ROOT);
+
+    expect(r.falhas).toBe(0);
+    expect(r.pathsFalhos).toEqual([]);
+    expect(useSessao.getState().flags.vaultLayoutMigrado).toBe(true);
+  });
+
+  it('em content:// mantem o comportamento historico (fail-open)', async () => {
+    // getInfoAsync NAO discrimina em SAF: para content:// ele so devolve
+    // exists:true quando consegue abrir um InputStream, coisa que um
+    // DIRETORIO nunca faz. Usa-lo ali daria "inexistente" para pasta boa
+    // e "falhou" para pasta ausente -- o inverso do desejado, travando a
+    // flag para sempre e transformando a migracao one-shot num fan-out
+    // de listagens SAF a cada boot. Por isso content:// nao usa a sonda.
+    const RAIZ_SAF =
+      'content://com.android.externalstorage/tree/primary%3AOuroboros';
+    mockReadDirectoryAsync.mockRejectedValue(new Error('falha SAF'));
+    // Mesmo que a sonda dissesse "existe", content:// nao deve consultar.
+    mockGetInfoAsync.mockResolvedValue({ exists: true });
+
+    const r = await migrarVaultLayoutPorTipo(RAIZ_SAF);
+
+    expect(r.falhas).toBe(0);
+    expect(useSessao.getState().flags.vaultLayoutMigrado).toBe(true);
   });
 });
