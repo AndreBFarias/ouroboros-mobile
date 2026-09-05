@@ -22,6 +22,17 @@
 # Meta: 11min para menos de 6min em run com cache hit (Onda 3g.4).
 name: Build Android APK
 
+# AUDIT-P3-1 (2026-09-05): este workflow CRIA release e anexa o APK, entao
+# precisa de `contents: write`. Ele nao declarava permissions nenhuma e
+# herdava o default do repositorio, hoje read-only -- por isso o step
+# "Ensure release exists" morria em `HTTP 403: Resource not accessible by
+# integration` DEPOIS de compilar e assinar o APK.
+#
+# Escopo minimo de proposito: so contents, e so neste workflow. O ci.yml e o
+# e2e-web.yml continuam read-only, porque nenhum dos dois escreve nada.
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
