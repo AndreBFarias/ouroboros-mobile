@@ -284,9 +284,7 @@ describe('criarTarefa T2-LOCK-VAULT', () => {
     // T2: tarefa final tem slug_vinculado canonico (<slug>-alarme) e
     // path com suffix de deviceId.
     expect(mockWriteVaultFile).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /markdown\/tarefa-foo-1234-ouro-[a-z0-9]{6}\.md$/
-      ),
+      expect.stringMatching(/markdown\/tarefa-foo-1234-ouro-[a-z0-9]{6}\.md$/),
       expect.objectContaining({
         alarme: expect.objectContaining({
           slug_vinculado: 'foo-1234-alarme',
@@ -826,5 +824,149 @@ describe('silenciarSugestaoTarefa (R-ROT-1-B)', () => {
       expect.objectContaining({ silenciar_sugestao_ate: novaAte }),
       ''
     );
+  });
+});
+
+// AUDIT-P1-3B: apagar a tarefa desmonta o alarme companion.
+//
+// Cabeamento proprio de proposito. jest.clearAllMocks() zera registros de
+// chamada mas NAO remove implementacoes (isso seria resetAllMocks, e
+// jest.config.js nao define resetMocks), entao as implementacoes do
+// describe da AUDIT-P1-3 vazam para ca. Depender delas faria estes casos
+// passarem so quando o arquivo roda inteiro e em ordem -- coincidencia,
+// nao contrato.
+describe('excluirTarefa - alarme companion (AUDIT-P1-3B)', () => {
+  const REL = 'markdown/tarefa-tomar-remedio-9911.md';
+  const SLUG = 'tomar-remedio-9911-alarme';
+
+  function companion(over: Partial<Alarme> = {}): Alarme {
+    return {
+      tipo: 'alarme',
+      slug: SLUG,
+      titulo: 'Tomar remédio',
+      horario: '08:00',
+      dias_semana: [],
+      recorrencia: 'diaria',
+      data_unica: '2026-04-29T08:00:00-03:00',
+      tag: 'outro',
+      som: 'gentle',
+      ativo: true,
+      snooze_minutos: 5,
+      criado_em: '2026-04-29T07:00:00+00:00',
+      ultimo_disparo: null,
+      notification_ids: [],
+      snooze_id: null,
+      historico_snoozes: [],
+      silenciar_sugestao_ate: null,
+      ...over,
+    };
+  }
+
+  function cabearTarefa(t: Tarefa | null): void {
+    mockReadVaultFile.mockImplementation((uri: string) =>
+      Promise.resolve(
+        uri.includes('/markdown/tarefa-') && t ? { meta: t, body: '' } : null
+      )
+    );
+  }
+
+  beforeEach(() => {
+    // O move precisa passar para o desmonte ser alcancado: ele roda DEPOIS
+    // do try/catch. Cabear explicitamente em vez de contar com jest.fn()
+    // sem implementacao devolvendo undefined.
+    mockMakeDir.mockResolvedValue(undefined);
+    mockReadAsString.mockResolvedValue('conteudo bruto');
+    mockWriteAsString.mockResolvedValue(undefined);
+    mockDeleteAsync.mockResolvedValue(undefined);
+    mockCancelarAlarme.mockResolvedValue(undefined);
+    mockLerAlarme.mockResolvedValue(companion());
+    mockEscreverAlarme.mockResolvedValue({
+      uri: `${VAULT_ROOT}/markdown/alarme-${SLUG}.md`,
+      rel: `markdown/alarme-${SLUG}.md`,
+    });
+  });
+
+  it('tarefa com alarme vinculado: cancela o schedule e grava ativo:false', async () => {
+    cabearTarefa(
+      fixture({
+        titulo: 'Tomar remédio',
+        alarme: {
+          ativo: true,
+          data_hora_iso: '2026-04-29T08:00:00-03:00',
+          recorrencia: 'diaria',
+          slug_vinculado: SLUG,
+        },
+      })
+    );
+
+    await excluirTarefa(VAULT_ROOT, REL);
+
+    expect(mockCancelarAlarme).toHaveBeenCalledWith(SLUG);
+    expect(mockEscreverAlarme).toHaveBeenCalledWith(
+      VAULT_ROOT,
+      expect.objectContaining({ slug: SLUG, ativo: false }),
+      ''
+    );
+  });
+
+  it('tarefa sem alarme: nao toca em nada de alarme', async () => {
+    cabearTarefa(fixture({ titulo: 'Comprar pão' }));
+
+    await excluirTarefa(VAULT_ROOT, REL);
+
+    expect(mockCancelarAlarme).not.toHaveBeenCalled();
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('falha ao cancelar o schedule nao impede a exclusao', async () => {
+    cabearTarefa(
+      fixture({
+        alarme: {
+          ativo: true,
+          data_hora_iso: '2026-04-29T08:00:00-03:00',
+          recorrencia: 'diaria',
+          slug_vinculado: SLUG,
+        },
+      })
+    );
+    mockCancelarAlarme.mockRejectedValue(new Error('sem permissao'));
+
+    await expect(excluirTarefa(VAULT_ROOT, REL)).resolves.toEqual({
+      lixeiraPath: expect.stringContaining('lixeira/tarefas/'),
+    });
+  });
+
+  it('companion ja inativo nao e regravado (idempotencia)', async () => {
+    cabearTarefa(
+      fixture({
+        alarme: {
+          ativo: true,
+          data_hora_iso: '2026-04-29T08:00:00-03:00',
+          recorrencia: 'diaria',
+          slug_vinculado: SLUG,
+        },
+      })
+    );
+    mockLerAlarme.mockResolvedValue(companion({ ativo: false }));
+
+    await excluirTarefa(VAULT_ROOT, REL);
+
+    expect(mockCancelarAlarme).toHaveBeenCalledWith(SLUG);
+    expect(mockEscreverAlarme).not.toHaveBeenCalled();
+  });
+
+  it('tarefa ilegivel continua APAGAVEL (regressao de parse)', async () => {
+    // parseFrontmatter lanca em bloco --- ausente, yaml invalido e schema
+    // falho. Antes do try esta excecao viria ANTES do move e o item ficaria
+    // preso para sempre, com "Falha ao excluir." a cada tentativa.
+    mockReadVaultFile.mockImplementation(() =>
+      Promise.reject(new Error('frontmatter invalido'))
+    );
+
+    await expect(excluirTarefa(VAULT_ROOT, REL)).resolves.toEqual({
+      lixeiraPath: expect.stringContaining('lixeira/tarefas/'),
+    });
+    expect(mockDeleteAsync).toHaveBeenCalled();
+    expect(mockCancelarAlarme).not.toHaveBeenCalled();
   });
 });

@@ -238,3 +238,70 @@ adb shell dumpsys alarm | grep -i ouroboros        # sem schedule do slug apagad
 ```
 fix: audit-p1-3b excluir tarefa desmonta o alarme companion vinculado
 ```
+
+## Resultado (executada 2026-09-05)
+
+`excluirTarefa` passa a desmontar o alarme companion, como `marcarFeito` já
+fazia. Reusa `desativarAlarmeCompanion` (AUDIT-P1-3), sem helper novo.
+
+**Ordem:** move canônico primeiro, desmonte depois. O desmonte é silencioso nas
+duas metades, então uma exclusão bem-sucedida nunca vira erro para o caller — o
+toast "Tarefa movida para a lixeira." continua verdadeiro.
+
+**Não chama `excluirAlarme`,** por três razões verificáveis: `alarmesNotificacoes`
+só olha `alarme.ativo`, então companion inativo já é inerte no boot; o companion
+segue listado em `/alarmes`, dando o caminho de UI que hoje não existe; e importar
+`excluirAlarme` em `tarefas.ts` quebraria o mock parcial da suíte.
+
+### Regressão que o plano original teria criado
+
+A leitura da tarefa ficou **dentro de `try`**. O plano dizia que não era preciso,
+porque `lerTarefa` devolve `null` para arquivo ausente — mas isso cobre só esse
+caso. `parseFrontmatter` **lança** em três pontos (bloco `---` ausente, YAML
+inválido, schema falho) e o erro propaga. Sem o `try`, um `tarefa-*.md`
+corrompido por conflito de sync ou escrita truncada deixaria de ser **apagável
+para sempre**: o throw viria antes do move, que hoje é byte a byte e funciona com
+qualquer conteúdo, e a pessoa veria "Falha ao excluir." em toda tentativa. Há
+teste dedicado para isso.
+
+### Testes
+
+`tests/lib/vault/tarefas.test.ts`: 43 → **48 casos**. Os 5 novos cobrem alarme
+vinculado, tarefa sem alarme, falha ao cancelar, idempotência e a regressão de
+parse acima.
+
+Cabeamento próprio no `describe` novo, de propósito: `jest.clearAllMocks()` zera
+registros de chamada mas **não** remove implementações (`resetMocks` não está
+ligado em `jest.config.js`), então os mocks do describe da AUDIT-P1-3 vazam para
+cá. Depender deles faria os casos passarem apenas com o arquivo rodando inteiro e
+em ordem — coincidência, não contrato.
+
+### Prova ancorada
+
+O proof-of-work do spec (`rg -c 'desativarAlarmeCompanion' src/lib/vault/tarefas.ts`
+esperando 3) **já dava 3 antes de qualquer mudança** — as linhas 383, 409 e 433
+são definição, comentário e a chamada de `marcarFeito`. Não servia como critério.
+Substituído por um grep ancorado no corpo da função, imune a deslocamento de linha:
+
+```bash
+awk '/export async function excluirTarefa/,/^\}/' src/lib/vault/tarefas.ts \
+  | grep -c desativarAlarmeCompanion    # 1
+```
+
+### E2E não criado, com razão registrada
+
+O passo 6 do spec parte de uma premissa falsa: que "o move para a lixeira não é
+observável em web". Ele não é silencioso — ele **lança**. O shim web do
+`expo-file-system` não expõe `readAsStringAsync`, então `tarefas.ts` cai no
+`UnavailabilityError`, o catch converte em "falha ao mover para lixeira", e o
+desmonte (que vem depois do move) nunca é alcançado no Gauntlet.
+
+Um caso E2E aqui retornaria `INCONCLUSIVO` por construção, em toda execução, sem
+proteger contra regressão alguma. Preferi não criar e registrar o motivo. A prova
+é Jest, mais Nível C em aparelho: criar tarefa com alarme, apagar, conferir
+`adb shell dumpsys alarm | grep -i ouroboros` sem o schedule do slug, reabrir o
+app e confirmar que `reagendarAlarmes` não ressuscita.
+
+Desbloquear o E2E depende de infra de mock de lixeira para web — achado colateral
+que toca `excluirTarefa`, `excluirMarco` e `excluirExercicio`, e não pertence a
+esta sprint.

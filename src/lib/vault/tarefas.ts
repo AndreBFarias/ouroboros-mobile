@@ -491,11 +491,38 @@ export async function silenciarSugestaoTarefa(
 // Em ambiente web FileSystem.cacheDirectory pode ser null; usamos
 // prefixo mock para não quebrar testes; caller real depende de
 // ambiente nativo.
+//
+// AUDIT-P1-3B: apagar a tarefa tambem desmonta o alarme companion, como
+// marcarFeito ja fazia. Sem isto a notificacao sobrevivia a exclusao e o
+// reagendarAlarmes do proximo boot a ressuscitava -- alarme tocando para
+// uma tarefa que nao existe mais, e sem tela onde desliga-lo.
+//
+// Ordem obrigatoria: o move canonico primeiro, o desmonte depois. O
+// desmonte e silencioso (desativarAlarmeCompanion engole as duas metades),
+// entao nunca transforma exclusao bem-sucedida em erro para o caller --
+// o toast "Tarefa movida para a lixeira." continua verdadeiro.
 export async function excluirTarefa(
   vaultRoot: string,
   rel: string
 ): Promise<{ lixeiraPath: string }> {
   const origemUri = vaultUriJoin(vaultRoot, rel);
+
+  // Le o slug do companion ANTES do move, enquanto o .md ainda existe.
+  //
+  // Dentro de try por um motivo concreto: lerTarefa devolve null para
+  // arquivo ausente, mas parseFrontmatter LANCA em bloco --- ausente,
+  // yaml invalido e schema falho. Sem o try, um tarefa-*.md corrompido
+  // (conflito de sync, escrita truncada, bump de schema) deixaria de ser
+  // APAGAVEL para sempre: o throw viria antes do move, que hoje e byte a
+  // byte e funciona em qualquer conteudo. Falha de parse aqui significa
+  // apenas "sem slug vinculado" -- a exclusao segue.
+  let slugVinculado: string | undefined;
+  try {
+    const atual = await lerTarefa(vaultRoot, rel);
+    slugVinculado = atual?.alarme?.slug_vinculado;
+  } catch {
+    // Tarefa ilegivel: segue a exclusao sem desmontar companion.
+  }
   const cacheBase = FileSystem.cacheDirectory ?? 'cache://';
   const lixeiraDir = `${cacheBase}lixeira/tarefas/`;
   try {
@@ -516,6 +543,19 @@ export async function excluirTarefa(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(`falha ao mover para lixeira: ${msg}`);
+  }
+
+  // Depois do move: o dado canonico ja esta salvo, entao um companion
+  // teimoso nunca custa a exclusao. Reusa o helper da AUDIT-P1-3, que e
+  // idempotente e silencioso nas duas metades.
+  //
+  // Nao chama excluirAlarme de proposito: alarmesNotificacoes so olha
+  // `alarme.ativo`, entao companion inativo ja e inerte no boot, e ele
+  // continua listado em /alarmes -- dando ao usuario o caminho de UI para
+  // apagar de vez, que hoje nao existe. A exclusao definitiva fica sendo
+  // decisao dele, nao efeito colateral.
+  if (slugVinculado) {
+    await desativarAlarmeCompanion(vaultRoot, slugVinculado);
   }
   return { lixeiraPath };
 }

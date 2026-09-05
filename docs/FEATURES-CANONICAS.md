@@ -1182,6 +1182,11 @@ data que o usuário não configurou nem data inexistente.
   reagendamento de boot não o ressuscita. O bloco `alarme` da tarefa
   fica intacto (o vínculo continua válido para reedição); reativar
   exige editar o alarme explicitamente (decisão S2).
+  **Apagar a tarefa faz o mesmo desmonte** (AUDIT-P1-3B, 2026-09-05):
+  antes disso o alarme sobrevivia à exclusão e voltava a tocar no boot
+  seguinte, para uma tarefa que não existia mais. O companion continua
+  listado em Alarmes, agora inativo — apagá-lo de vez segue sendo
+  escolha da pessoa, não efeito colateral.
 - Drag & drop reordering.
 - Busca por título.
 - **Aba Concluídas** collapsable (default colapsada se >5 itens).
