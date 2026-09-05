@@ -28,7 +28,9 @@ jest.mock('@/lib/vault/escreverEstado', () => ({
     mockEscreverDebounced(...args),
 }));
 
-const mockUseVaultState = { vaultRoot: 'content://test/vault' as string | null };
+const mockUseVaultState = {
+  vaultRoot: 'content://test/vault' as string | null,
+};
 jest.mock('@/lib/stores/vault', () => ({
   __esModule: true,
   useVault: {
@@ -102,9 +104,13 @@ describe('migrarEstadoParaVault', () => {
     expect(payload.somVibracao).toMatchObject({ geral: false });
   });
 
+  // AUDIT-P4-8: o snapshot de pessoa leva so os identificadores
+  // canonicos. `nomes` (nome real) e `fotos` (URI) saem do espelho e
+  // ficam apenas no SecureStore.
   it('snapshots refletem estado atual dos stores (pessoa)', async () => {
     usePessoa.setState((s) => ({
       nomes: { ...s.nomes, pessoa_a: 'Teste_A' },
+      filtroPessoa: 'ambos',
     }));
     await migrarEstadoParaVault();
     const pessoaCall = mockEscreverImediato.mock.calls.find(
@@ -112,7 +118,13 @@ describe('migrarEstadoParaVault', () => {
     );
     expect(pessoaCall).toBeDefined();
     const payload = pessoaCall![1] as Record<string, unknown>;
-    expect(payload.nomes).toMatchObject({ pessoa_a: 'Teste_A' });
+    expect(payload).toMatchObject({
+      pessoaAtiva: 'pessoa_a',
+      filtroPessoa: 'ambos',
+    });
+    expect(payload).not.toHaveProperty('nomes');
+    expect(payload).not.toHaveProperty('fotos');
+    expect(JSON.stringify(payload)).not.toContain('Teste_A');
   });
 
   it('snapshots refletem estado atual dos stores (navegacao)', async () => {

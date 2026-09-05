@@ -868,9 +868,9 @@ Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem est
 | `_schema_version` | inteiro | sim (escrita) | |
 | `version` | literal `1` | sim | |
 | `ultimaRota` | string \| null | sim | Path da última tela visitada. |
-| `rascunhos` | object | sim | 7 keys (humorRapido, diarioEmocional, eventos, cicloRegistrar, alarmesNovo, contadoresNovo, tarefasNova); cada uma `record` ou `null`. |
+| ~~`rascunhos`~~ | — | **removido** | **AUDIT-P4-8 (2026-09-05):** carregava o corpo do rascunho — inclusive o texto do diário emocional ainda não confirmado — em texto puro no espelho do Vault. Deixou de ser escrito. Consumidor externo que dependia de saber da existência de um rascunho precisa de campo próprio, decidido em sprint com o dono; não foi inventado aqui. |
 | `permissoesPedidas` | object | sim | 4 booleans (storage, notif, camera, mic). |
-| `flags` | object | sim | 5 booleans de migração. |
+| `flags` | object | sim | 9 booleans de migração (a tabela dizia 5 desde antes da AUDIT-P4-8; a contagem já estava defasada). O mais recente é `estadoTextoPuroSaneado`, da própria AUDIT-P4-8. |
 | `atualizadoEm` | ISO 8601 | sim | |
 
 ---
@@ -909,8 +909,8 @@ Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem est
 | `version` | literal `1` | sim | |
 | `pessoaAtiva` | `pessoa_a` \| `pessoa_b` | sim | |
 | `filtroPessoa` | `pessoa_a` \| `pessoa_b` \| `ambos` | sim | |
-| `nomes` | object | sim | `{ pessoa_a: string, pessoa_b: string }` (nomes reais). |
-| `fotos` | object | sim | `{ pessoa_a: string\|null, pessoa_b: string\|null }` (URIs locais). |
+| ~~`nomes`~~ | — | **removido** | **AUDIT-P4-8 (2026-09-05):** gravava os nomes reais do casal em texto puro no espelho. Deixou de ser escrito; a identidade no Vault continua sendo `pessoa_a` / `pessoa_b`, e os nomes vivem só em runtime (`src/lib/stores/pessoa.ts`). |
+| ~~`fotos`~~ | — | **removido** | **AUDIT-P4-8 (2026-09-05):** URIs locais das fotos de perfil, em texto puro no espelho. Deixou de ser escrito. |
 | `atualizadoEm` | ISO 8601 | sim | |
 
 ---

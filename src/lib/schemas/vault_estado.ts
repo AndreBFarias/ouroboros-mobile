@@ -127,23 +127,17 @@ export type EstadoSettings = z.infer<typeof EstadoSettingsSchema>;
 
 // ===== Sessao (useSessao) =====
 //
-// Rascunhos sao snapshots em construcao (Partial<*Meta>). Para o
-// vault canonico, persistimos um JSON serializavel; o schema valida
-// que cada chave existe e que rascunhos sao record (ou null).
-const Rascunho = z.union([z.record(z.string(), z.unknown()), z.null()]);
-
+// AUDIT-P4-8 (2026-09-05): NAO espelha rascunhos (esses ficam em
+// SecureStore; bug de privacidade colocar texto de diario, humor ou
+// ciclo que o usuario ainda nao confirmou num .md que o Syncthing
+// sincroniza e que a exportacao empacota). Mesmo raciocinio ja
+// aplicado aos tokens em EstadoIntegracoesSchema. Persiste apenas
+// rota, permissoes pedidas e flags de boot -- o que serve de
+// diagnostico para o sibling Python. Chave `rascunhos` que chegue de
+// um caller antigo e strippada por Zod antes do write.
 export const EstadoSessaoSchema = z.object({
   version: z.literal(ESTADO_SCHEMA_VERSION),
   ultimaRota: z.string().nullable(),
-  rascunhos: z.object({
-    humorRapido: Rascunho,
-    diarioEmocional: Rascunho,
-    eventos: Rascunho,
-    cicloRegistrar: Rascunho,
-    alarmesNovo: Rascunho,
-    contadoresNovo: Rascunho,
-    tarefasNova: Rascunho,
-  }),
   permissoesPedidas: z.object({
     storage: z.boolean(),
     notif: z.boolean(),
@@ -166,6 +160,11 @@ export const EstadoSessaoSchema = z.object({
     // sessoes espelhadas antes desta sprint nao carregam a chave, e
     // ausente equivale a false.
     duplicatasAgendaLimpas: z.boolean().optional(),
+    // AUDIT-P4-8 (2026-09-05): sanitizacao one-shot que reescreve os
+    // .md de _estado deste device sem os campos sensiveis que versoes
+    // anteriores espelhavam. Optional pelo mesmo motivo das duas
+    // acima; ausente equivale a false.
+    estadoTextoPuroSaneado: z.boolean().optional(),
   }),
   atualizadoEm: IsoDatetime,
 });
@@ -197,21 +196,18 @@ export type EstadoOnboarding = z.infer<typeof EstadoOnboardingSchema>;
 
 // ===== Pessoa (usePessoa) =====
 //
-// Nomes reais e fotos sao runtime; o vault canonico precisa do
-// snapshot pra que sibling Python saiba mapear pessoa_a -> exibicao.
-// fotos podem ser file:// URI (mobile real) ou null.
+// AUDIT-P4-8 (2026-09-05): NAO espelha nomes nem fotos (esses ficam
+// em SecureStore; bug de privacidade colocar nome real e URI de foto
+// num .md que o Syncthing sincroniza e que a exportacao empacota).
+// Mesmo raciocinio ja aplicado aos tokens em EstadoIntegracoesSchema.
+// Persiste apenas os identificadores canonicos pessoa_a/pessoa_b/
+// ambos; o nome de exibicao se resolve em runtime via usePessoa, que
+// le do SecureStore. Chave `nomes` ou `fotos` que chegue de um caller
+// antigo e strippada por Zod antes do write.
 export const EstadoPessoaSchema = z.object({
   version: z.literal(ESTADO_SCHEMA_VERSION),
   pessoaAtiva: PessoaAutorSchema,
   filtroPessoa: PessoaIdSchema,
-  nomes: z.object({
-    pessoa_a: z.string(),
-    pessoa_b: z.string(),
-  }),
-  fotos: z.object({
-    pessoa_a: z.string().nullable(),
-    pessoa_b: z.string().nullable(),
-  }),
   atualizadoEm: IsoDatetime,
 });
 export type EstadoPessoa = z.infer<typeof EstadoPessoaSchema>;

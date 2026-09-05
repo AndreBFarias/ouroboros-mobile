@@ -115,6 +115,14 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //     e idempotente por construcao (reaplicar subtrairia mais um dia de
 //     um recorde ja correto), entao a flag e o unico guarda -- por isso
 //     ela sobe mesmo quando nenhum arquivo precisou de correcao.
+//   - estadoTextoPuroSaneado (AUDIT-P4-8 2026-09-05): indica se a
+//     rotina one-shot ja reescreveu os .md de _estado deste device sem
+//     os campos sensiveis que versoes anteriores espelhavam (nomes e
+//     fotos em pessoa, corpo dos rascunhos em sessao). Default false DE
+//     PROPOSITO: sao exatamente as instalacoes que podem carregar o
+//     arquivo sujo. Reescrever de novo nao faz mal (a escrita e o mesmo
+//     snapshot que o subscriber faria), mas a flag evita I/O de boot
+//     inutil em quem ja saneou.
 export interface FlagsBootState {
   canalV1Deletado: boolean;
   cacheAgendaMigrado: boolean;
@@ -124,6 +132,7 @@ export interface FlagsBootState {
   vaultLayoutOrfaosVarridos: boolean;
   recordesContadoresSaneados: boolean;
   duplicatasAgendaLimpas: boolean;
+  estadoTextoPuroSaneado: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -171,6 +180,7 @@ const FLAGS_VAZIAS: FlagsBootState = {
   vaultLayoutOrfaosVarridos: false,
   recordesContadoresSaneados: false,
   duplicatasAgendaLimpas: false,
+  estadoTextoPuroSaneado: false,
 };
 
 const DEFAULT_STATE: Omit<
@@ -463,10 +473,15 @@ export function mergeSessaoPersistido(
 // R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
 // que espelha o estado em vault/_estado/sessao-<deviceId>.md. Debounced
 // 500ms por key dentro de escreverEstadoCanonico. Side-effect do module.
+//
+// AUDIT-P4-8 (2026-09-05): `rascunhos` saiu do payload. O corpo de um
+// rascunho e texto que o usuario ainda nao confirmou (diario, humor,
+// ciclo) e o .md vive num Vault que o Syncthing propaga e que a
+// exportacao empacota. O rascunho continua no SecureStore, que e a
+// verdade efetiva do store.
 useSessao.subscribe((state) => {
   escreverEstadoCanonico('sessao', {
     ultimaRota: state.ultimaRota,
-    rascunhos: { ...state.rascunhos },
     permissoesPedidas: { ...state.permissoesPedidas },
     flags: { ...state.flags },
   });

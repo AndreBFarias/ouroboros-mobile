@@ -61,6 +61,8 @@ import { reagendarTodosBootHooks } from '@/lib/boot/reagendamento';
 // (padrao do cabecalho de reagendamento.ts) e precisa ser carregado
 // antes do RootLayout montar para entrar na rodada de boot.
 import '@/lib/boot/limparDuplicatasAgenda';
+// AUDIT-P4-8: mesmo padrao de side-effect do import acima.
+import '@/lib/boot/sanearEstadoTextoPuro';
 import { useAppPronto } from '@/lib/boot/useAppPronto';
 import { registrarCategoriasAlarme } from '@/lib/services/notificationActions';
 import { pedirPermissao as pedirPermissaoNotificacao } from '@/lib/services/alarmesNotificacoes';

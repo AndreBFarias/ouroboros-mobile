@@ -122,12 +122,15 @@ export function mergePessoaPersistido(
 // R-VAULT-CANONICAL-COMPLETE-A (2026-05-16): subscriber nao-mutativo
 // que espelha o estado em vault/_estado/pessoa-<deviceId>.md. Debounced
 // 500ms por key dentro de escreverEstadoCanonico.
+//
+// AUDIT-P4-8 (2026-09-05): `nomes` e `fotos` saíram do payload. O .md
+// vive num Vault que o Syncthing propaga e que a exportação empacota;
+// nome real e URI de foto ficam só no SecureStore. Só os
+// identificadores canônicos vão para o espelho.
 usePessoa.subscribe((state) => {
   escreverEstadoCanonico('pessoa', {
     pessoaAtiva: state.pessoaAtiva,
     filtroPessoa: state.filtroPessoa,
-    nomes: { ...state.nomes },
-    fotos: { ...state.fotos },
   });
 });
 

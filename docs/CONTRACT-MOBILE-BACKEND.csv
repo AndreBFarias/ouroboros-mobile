@@ -185,9 +185,9 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.24,estado_sessao,1,_schema_version,inteiro,sim (escrita),
 5.24,estado_sessao,1,version,literal `1,sim,
 5.24,estado_sessao,1,ultimaRota,string | null,sim,Path da última tela visitada.
-5.24,estado_sessao,1,rascunhos,object,sim,"7 keys (humorRapido, diarioEmocional, eventos, cicloRegistrar, alarmesNovo, contadoresNovo, tarefasNova); cada uma `record` ou `null`."
+5.24,estado_sessao,1,~~`rascunhos`~~,—,**removido**,"**AUDIT-P4-8 (2026-09-05):** carregava o corpo do rascunho — inclusive o texto do diário emocional ainda não confirmado — em texto puro no espelho do Vault. Deixou de ser escrito. Consumidor externo que dependia de saber da existência de um rascunho precisa de campo próprio, decidido em sprint com o dono; não foi inventado aqui."
 5.24,estado_sessao,1,permissoesPedidas,object,sim,"4 booleans (storage, notif, camera, mic)."
-5.24,estado_sessao,1,flags,object,sim,5 booleans de migração.
+5.24,estado_sessao,1,flags,object,sim,"9 booleans de migração (a tabela dizia 5 desde antes da AUDIT-P4-8; a contagem já estava defasada). O mais recente é `estadoTextoPuroSaneado`, da própria AUDIT-P4-8."
 5.24,estado_sessao,1,atualizadoEm,ISO 8601,sim,
 5.25,estado_onboarding,1,_schema_version,inteiro,sim (escrita),
 5.25,estado_onboarding,1,version,literal `1,sim,
@@ -200,8 +200,8 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.26,estado_pessoa,1,version,literal `1,sim,
 5.26,estado_pessoa,1,pessoaAtiva,pessoa_a` | `pessoa_b,sim,
 5.26,estado_pessoa,1,filtroPessoa,pessoa_a` | `pessoa_b` | `ambos,sim,
-5.26,estado_pessoa,1,nomes,object,sim,"{ pessoa_a: string, pessoa_b: string }` (nomes reais)."
-5.26,estado_pessoa,1,fotos,object,sim,"{ pessoa_a: string|null, pessoa_b: string|null }` (URIs locais)."
+5.26,estado_pessoa,1,~~`nomes`~~,—,**removido**,"**AUDIT-P4-8 (2026-09-05):** gravava os nomes reais do casal em texto puro no espelho. Deixou de ser escrito; a identidade no Vault continua sendo `pessoa_a` / `pessoa_b`, e os nomes vivem só em runtime (`src/lib/stores/pessoa.ts`)."
+5.26,estado_pessoa,1,~~`fotos`~~,—,**removido**,"**AUDIT-P4-8 (2026-09-05):** URIs locais das fotos de perfil, em texto puro no espelho. Deixou de ser escrito."
 5.26,estado_pessoa,1,atualizadoEm,ISO 8601,sim,
 5.27,estado_navegacao,1,_schema_version,inteiro,sim (escrita),
 5.27,estado_navegacao,1,version,literal `1,sim,

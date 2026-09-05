@@ -51,11 +51,12 @@ function snapshotSettings(): Record<string, unknown> {
   };
 }
 
+// AUDIT-P4-8 (2026-09-05): sem `rascunhos` (corpo de texto nao
+// confirmado). Mesmo corte do subscriber de useSessao.
 function snapshotSessao(): Record<string, unknown> {
   const s = useSessao.getState();
   return {
     ultimaRota: s.ultimaRota,
-    rascunhos: { ...s.rascunhos },
     permissoesPedidas: { ...s.permissoesPedidas },
     // Inclui a flag estadoMigradoParaVault. Como rodamos ANTES de
     // marcarFlagBoot, o snapshot reflete false; o proximo subscriber
@@ -75,13 +76,13 @@ function snapshotOnboarding(): Record<string, unknown> {
   };
 }
 
+// AUDIT-P4-8 (2026-09-05): sem `nomes` nem `fotos` (nome real e URI de
+// foto). Mesmo corte do subscriber de usePessoa.
 function snapshotPessoa(): Record<string, unknown> {
   const s = usePessoa.getState();
   return {
     pessoaAtiva: s.pessoaAtiva,
     filtroPessoa: s.filtroPessoa,
-    nomes: { ...s.nomes },
-    fotos: { ...s.fotos },
   };
 }
 
@@ -97,7 +98,9 @@ function snapshotNavegacao(): Record<string, unknown> {
 // Pares (key, snapshot) na ordem canonica de execucao. Ordem
 // preserva legibilidade no log de __DEV__ e e estavel; nenhum
 // snapshot depende de outro.
-const SNAPSHOTS: ReadonlyArray<readonly [EstadoKey, () => Record<string, unknown>]> = [
+const SNAPSHOTS: ReadonlyArray<
+  readonly [EstadoKey, () => Record<string, unknown>]
+> = [
   ['settings', snapshotSettings],
   ['sessao', snapshotSessao],
   ['onboarding', snapshotOnboarding],
