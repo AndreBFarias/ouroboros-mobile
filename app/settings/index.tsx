@@ -3,9 +3,9 @@
 //      + botoes; quando geral off, demais ficam disabled visualmente).
 //   2. Pessoa (radio + Vault compartilhado + sub-rotas + reinicializar
 //      pasta do Vault).
-//   3. Features opcionais (6 toggles: Tarefas, Alarmes, Contadores,
-//      Ciclo, Calendario, Widget; defaults TRUE para o app nascer
-//      cheio e o usuario desligar o que nao quer).
+//   3. Features opcionais (5 toggles: Tarefas, Alarmes, Contadores,
+//      Ciclo, Widget; defaults TRUE para o app nascer cheio e o
+//      usuario desligar o que nao quer).
 //   4. Privacidade (biometria + ocultar transcricoes + export + limpar
 //      cache).
 //   5. Sobre (bloco compartilhado com versao, build, hash do
@@ -303,8 +303,8 @@ function RadioPessoa({ label, ativa, onPress, cor }: RadioPessoaProps) {
 }
 
 // === Secao 3: Features opcionais (sprint M29) ===
-// Reordenada: Tarefas / Alarmes / Contadores / Ciclo / Calendario /
-// Widget. Defaults TRUE para o app nascer cheio.
+// Reordenada: Tarefas / Alarmes / Contadores / Ciclo / Widget.
+// Defaults TRUE para o app nascer cheio.
 
 function SecaoFeatures() {
   const router = useRouter();
@@ -339,12 +339,6 @@ function SecaoFeatures() {
         valor={featureToggles.cicloMenstrual}
         onChange={(v) => setFeatureToggle('cicloMenstrual', v)}
         a11y="toggle ciclo menstrual"
-      />
-      <ToggleRow
-        label="Calendário de conquistas"
-        valor={featureToggles.calendarioConquistas}
-        onChange={(v) => setFeatureToggle('calendarioConquistas', v)}
-        a11y="toggle calendario conquistas"
       />
       <ToggleRow
         label="Widget na tela inicial"

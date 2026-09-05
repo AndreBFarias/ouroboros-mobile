@@ -217,3 +217,120 @@ prova de que remover só a UI não mexeu no contrato de arquivo.
 ```
 refactor: audit-p2-5 remove togglerow calendarioconquistas de settings chave fica no schema
 ```
+
+---
+
+## Resultado (executada 2026-09-05)
+
+**Status: IMPLEMENTADA** (falta só a captura visual do Gauntlet — ver "Pendência" no fim).
+
+### O que mudou
+
+| Arquivo | Mudança |
+|---|---|
+| `app/settings/index.tsx` | Removido o `<ToggleRow>` "Calendário de conquistas" (era `:343-348`). Corrigidos os **dois** comentários que ainda anunciavam 6 toggles: o cabeçalho do arquivo (`:6-8`) e o comentário da Seção 3 (`:305-307`). |
+| `src/lib/stores/settings.ts` | Comentário de inércia acima da declaração da chave (`:49`). A chave e o default `true` seguem intactos. |
+| `src/lib/schemas/vault_estado.ts` | Mesmo comentário, versão curta, acima do campo (`:65`). Campo segue `z.boolean()` não-opcional. |
+| `tests/components/chrome/MenuLateral.test.tsx` | Removida a escrita sem assert em `:108`. Nenhuma outra linha tocada. |
+| `tests/e2e/playwright/audit-p2-5-toggle-morto-conquistas.e2e.ts` | **Novo.** Caso E2E do item 6 do escopo. |
+
+Nenhum arquivo fora dessa lista foi tocado. Não houve migração, mudança de default nem
+mudança de versão de schema.
+
+### Correções sobre o plano original
+
+1. **Cabeçalho do arquivo também estava desatualizado.** O plano só previa corrigir o
+   comentário da Seção 3. O cabeçalho de `app/settings/index.tsx:6-8` dizia, literalmente,
+   `3. Features opcionais (6 toggles: Tarefas, Alarmes, Contadores, / Ciclo, Calendario,
+   Widget; ...)`. Deixá-lo intacto recriaria exatamente o resíduo que a sprint remove.
+   Os dois foram corrigidos.
+
+2. **A justificativa do plano para a edição de `FEATURES-CANONICAS.md:1226` estava errada.**
+   O plano dizia que os defaults `true` de `featureToggles` caíam de 6 para 5. Não caem — o
+   próprio escopo manda **não** mexer em `src/lib/stores/settings.ts:291`, e
+   `DEFAULT_STATE_V2.featureToggles` tem 9 chaves com default `true`, não 6. A troca de
+   "6 toggles" por "5 toggles" continua **correta**, mas pela outra razão: a linha descreve
+   a *seção "Features opcionais" da tela de Configurações*, que renderizava 6 `ToggleRow`
+   e passa a renderizar 5. O default da store não mudou, e
+   `tests/lib/stores/settings.test.ts:30` (`expect(...calendarioConquistas).toBe(true)`)
+   segue verde como guarda disso.
+
+3. **O E2E hidrata a chave pela API que já existe.** O plano supunha que o checkpoint dos
+   dois estados exigiria `useSettings.setState` dentro do caso. Não exige:
+   `src/lib/dev/gauntlet.ts:778-786` já expõe `setFeatureToggle(chave: string, valor:
+   boolean)` — genérico sobre `string` justamente para o caller E2E — no objeto de
+   `window.__gauntlet`. O caso usa essa API.
+
+4. **Não foi adicionado comentário de remoção em `app/settings/index.tsx`.** Chegou a ser
+   escrito e depois retirado: a nota de inércia mora na store e no schema (item 3 do
+   escopo), e mantê-la também na tela quebraria a guarda
+   `grep -n "Calendario" app/settings/index.tsx` → 0 sem acrescentar informação.
+
+### Provas executadas
+
+```
+$ grep -rn "calendarioConquistas" app/settings/
+(0 hits)
+
+$ grep -rn "Calendário de conquistas" app/
+(0 hits)
+
+$ grep -n "Calendario\|Calendário" app/settings/index.tsx
+(0 hits — nenhum comentário desatualizado sobrou)
+
+$ grep -rn "calendarioConquistas" --include="*.ts" --include="*.tsx" src app
+src/lib/stores/settings.ts:55:    calendarioConquistas: boolean;
+src/lib/stores/settings.ts:297:    calendarioConquistas: true,
+src/lib/schemas/vault_estado.ts:68:    calendarioConquistas: z.boolean(),
+(3 hits — contrato de Vault preservado; as linhas deslocaram por causa dos comentários novos)
+
+$ grep -c "calendarioConquistas" src/lib/schemas/vault_estado.ts
+1
+$ grep -c "calendarioConquistas" tests/components/chrome/MenuLateral.test.tsx
+0
+$ grep -c "calendarioConquistas" tests/lib/stores/settings.test.ts
+3   (fixtures intocadas)
+
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npx eslint app/settings/index.tsx src/lib/stores/settings.ts \
+    src/lib/schemas/vault_estado.ts tests/components/chrome/MenuLateral.test.tsx \
+    tests/e2e/playwright/audit-p2-5-toggle-morto-conquistas.e2e.ts
+ESLINT_EXIT=0
+
+$ npx jest tests/app/settings/index.test.tsx tests/components/chrome/MenuLateral.test.tsx \
+    tests/lib/stores/settings.test.ts tests/lib/vault/escreverEstado.test.ts \
+    tests/lib/services/restaurarVault.test.ts tests/lib/stores/settings-merge-backfill.test.ts
+PASS tests/app/settings/index.test.tsx
+PASS tests/components/chrome/MenuLateral.test.tsx
+PASS tests/lib/services/restaurarVault.test.ts
+PASS tests/lib/stores/settings.test.ts
+PASS tests/lib/stores/settings-merge-backfill.test.ts
+PASS tests/lib/vault/escreverEstado.test.ts
+Test Suites: 6 passed, 6 total
+Tests:       94 passed, 94 total
+
+$ ./scripts/check_anonimato.sh
+OK: anonimato preservado (Regra -1)
+
+$ python3 scripts/check_strings_ui_ptbr.py
+(sem violações)
+```
+
+As cinco suítes que o spec nomeia como rede de segurança do contrato de Vault
+(`settings.test.ts`, `escreverEstado.test.ts`, `restaurarVault.test.ts`,
+`settings-merge-backfill.test.ts`, `MenuLateral.test.tsx`) passam — o schema não foi mexido.
+
+### Pendência
+
+**Captura visual do Gauntlet não foi feita nesta execução.** A sprint rodou em working tree
+compartilhado com outros executores, e subir `EXPO_PUBLIC_GAUNTLET=1 ./run.sh --web` sobre
+uma árvore em edição produziria bundle instável e evidência não confiável. O caso E2E
+`tests/e2e/playwright/audit-p2-5-toggle-morto-conquistas.e2e.ts` está escrito e pronto; falta
+executá-lo e depositar os PNGs em
+`docs/sprints/AUDIT-P2-5-TOGGLE-MORTO-CONQUISTAS-screenshots-gauntlet/`.
+
+`docs/FEATURES-CANONICAS.md` também não foi editado por esta execução — oito sprints
+disputavam o arquivo em paralelo, e o texto proposto foi entregue ao orquestrador para
+aplicação.

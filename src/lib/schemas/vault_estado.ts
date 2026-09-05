@@ -62,6 +62,9 @@ export const EstadoSettingsSchema = z.object({
     alarmePessoal: z.boolean(),
     todoLeve: z.boolean(),
     contadorDiasSem: z.boolean(),
+    // AUDIT-P2-5 (2026-09-05): chave inerte, sem leitor no app desde o
+    // ADR-0021. Fica nao-opcional por contrato de Vault; tirar daqui
+    // quebraria a validacao do estado espelhado ja gravado em disco.
     calendarioConquistas: z.boolean(),
     widgetHomescreen: z.boolean(),
     widgetMostraNome: z.boolean(),

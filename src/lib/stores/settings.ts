@@ -46,6 +46,12 @@ export interface SettingsState {
     alarmePessoal: boolean;
     todoLeve: boolean;
     contadorDiasSem: boolean;
+    // AUDIT-P2-5 (2026-09-05): chave inerte. Nenhum codigo ramifica
+    // nela desde o ADR-0021 (Recap absorveu o Calendario), e o
+    // ToggleRow que a escrevia saiu de app/settings/index.tsx. Ela
+    // sobrevive por contrato de Vault: e' campo nao-opcional em
+    // src/lib/schemas/vault_estado.ts, e remove-la exigiria migracao
+    // do estado espelhado. Nao remover sem migracao.
     calendarioConquistas: boolean;
     widgetHomescreen: boolean;
     // Sub-toggle aninhado de privacidade do widget. Quando o usuario

@@ -105,7 +105,6 @@ describe('MenuLateral', () => {
     useSettings.getState().setFeatureToggle('alarmePessoal', false);
     useSettings.getState().setFeatureToggle('contadorDiasSem', false);
     useSettings.getState().setFeatureToggle('cicloMenstrual', false);
-    useSettings.getState().setFeatureToggle('calendarioConquistas', false);
     useNavegacao.setState({ menuAberto: true });
     const { queryByLabelText } = render(<MenuLateral />);
     expect(queryByLabelText('item tarefas')).toBeNull();

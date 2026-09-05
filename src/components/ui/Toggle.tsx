@@ -77,6 +77,13 @@ export function Toggle({
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel ?? 'alternar'}
       accessibilityState={{ checked: value, disabled }}
+      // AUDIT-P2-5: em web, react-native-web NAO converte
+      // accessibilityState.checked em aria-checked -- verificado no DOM:
+      // o elemento sai com role="switch" e sem atributo de estado. Um
+      // switch sem aria-checked e ARIA invalido, e o leitor de tela nao
+      // consegue dizer se esta ligado ou desligado. Em native o
+      // accessibilityState acima e que vale; a prop abaixo e ignorada.
+      aria-checked={value}
       hitSlop={10}
     >
       <View
