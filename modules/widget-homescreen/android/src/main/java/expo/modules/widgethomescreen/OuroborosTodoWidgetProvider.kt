@@ -112,13 +112,32 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
     )
     // TODO(R-WIDG-FIX-REMOTEINPUTS): a chamada original
     //   RemoteViews(...).setRemoteInputs(R.id.widget_todo_btn_add, arrayOf(remoteInput))
-    // era dead code (RemoteViews descartado, sem anexar ao views real
-    // de updateAppWidget) e nao compila em compileSdk 35 (assinatura
-    // setRemoteInputs nao publica em RemoteViews; precisa
-    // RemoteViewsCompat.setRemoteInputs ou Notification Action).
-    // Removido temporariamente para destravar build alpha-14. Efeito
-    // funcional: input inline do widget pode nao retornar texto via
-    // RemoteInput.getResultsFromIntent ate o fix definitivo.
+    // era dead code -- o RemoteViews era descartado, nunca anexado ao
+    // views real de updateAppWidget.
+    //
+    // AUDIT-P1-1B (2026-09-05) CORRIGE A PREMISSA QUE ESTAVA AQUI. O
+    // texto anterior dizia "precisa RemoteViewsCompat.setRemoteInputs",
+    // mandando o proximo leitor atras de uma API que NAO EXISTE.
+    // Verificado:
+    //   - androidx.core:core-remoteviews para em 1.1.0 (group-index.xml
+    //     do maven do Google), e `javap androidx.core.widget.RemoteViewsCompat`
+    //     no classes.jar desse AAR nao lista nenhum setRemoteInputs;
+    //   - `javap android.widget.RemoteViews` do android.jar da API 36
+    //     tambem nao expoe a assinatura.
+    // Ou seja: nao ha caminho publico de RemoteInput direto no widget,
+    // em nenhum nivel de SDK. Adicionar core-remoteviews so engordaria
+    // o APK sem entregar a API.
+    //
+    // A divida segue aberta e agora DEPENDE DE DECISAO DO DONO entre
+    // tres saidas, todas com custo de UX: (A) direct-reply via
+    // Notification.Action.addRemoteInput -- o unico caminho publico
+    // real, mas a digitacao sai da tela inicial e vai para a
+    // notificacao; (B) activity dialog-themed disparada pelo toque, com
+    // EditText de verdade, gravando na mesma fila; (C) assumir o widget
+    // como somente-contador e trocar o alvo do toque.
+    //
+    // Efeito funcional hoje: a digitacao no widget nao chega a fila via
+    // RemoteInput.getResultsFromIntent.
     return pi
   }
 

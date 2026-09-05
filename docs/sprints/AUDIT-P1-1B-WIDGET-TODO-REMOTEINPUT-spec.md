@@ -16,7 +16,43 @@ DECISAO:    (dono, 2026-07-29) saída escolhida: declarar a dependência
             `androidx.core:core-remoteviews` e usar
             `RemoteViewsCompat.setRemoteInputs`. Notification Action fica
             descartada porque mudaria a UX do widget.
+BLOQUEIO:   (2026-09-05) **A premissa desta DECISÃO é falsa — a API não
+            existe.** Não é opinião: `androidx.core:core-remoteviews` para
+            em 1.1.0 e `javap androidx.core.widget.RemoteViewsCompat` no
+            classes.jar desse AAR não lista `setRemoteInputs`; `javap
+            android.widget.RemoteViews` do android.jar da API 36 também
+            não. Declarar a dependência engordaria o APK sem entregar
+            nada. O próprio spec (§ linhas 155-157) manda parar e
+            reportar exatamente neste caso, em vez de trocar de saída por
+            conta própria — foi o que se fez. **Aguardando nova decisão
+            do dono** entre as três saídas listadas em "Saídas possíveis"
+            abaixo. Nenhuma linha de produção foi alterada além da
+            correção do comentário que mandava buscar a API inexistente.
 ```
+
+## Saídas possíveis (2026-09-05) — decisão do dono
+
+A decisão de 2026-07-29 escolheu um caminho que não existe. Estas são as
+três que sobrevivem à verificação, todas com custo de UX:
+
+**(A) Direct-reply por notificação.** `Notification.Action.Builder.addRemoteInput`
+é o único caminho público real de RemoteInput no Android. Funciona, é
+estável e não depende de dependência nova. Custo: a pessoa digita numa
+notificação, não na tela inicial. Foi descartada em 2026-07-29 — mas
+descartada sem saber que era a única viável.
+
+**(B) Activity dialog-themed.** O toque no widget abre uma janelinha com
+`EditText` de verdade, que grava na mesma fila. Custo: sai da tela inicial
+por cerca de um segundo. Mantém a digitação "no widget" do ponto de vista
+de quem usa.
+
+**(C) Widget somente-contador.** Aceitar que o widget mostra e não recebe
+texto, e trocar o alvo do toque para abrir o app na tela de tarefas. Custo:
+perde a promessa de captura rápida; ganho: zero código novo e zero dívida.
+
+Enquanto não houver decisão, o widget continua funcionando como contador —
+a digitação simplesmente não chega à fila, o que já está documentado em
+`docs/FEATURES-CANONICAS.md` §12.2.
 
 ## Problema (variável órfã: o input do widget nunca retorna texto)
 

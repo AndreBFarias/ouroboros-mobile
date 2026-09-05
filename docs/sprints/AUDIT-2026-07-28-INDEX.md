@@ -47,7 +47,7 @@ Ordem interna livre; todas são independentes exceto o par do widget.
 |---|---|
 | `AUDIT-P1-2-DIASENTRE-FUSO` | Dano **permanente** (recorde inflado por `Math.max`). Corrigir antes que mais instalações acumulem. |
 | `AUDIT-P1-1A-WIDGET-TODO-DRENO` | Para a perda de dado da fila. Mergeável sem device. |
-| `AUDIT-P1-1B-WIDGET-TODO-REMOTEINPUT` | Depende da 1A. Exige rebuild de dev-client e validação Nível C. |
+| `AUDIT-P1-1B-WIDGET-TODO-REMOTEINPUT` | **Bloqueada (2026-09-05): aguarda decisão do dono.** A API escolhida na decisão de 2026-07-29 (`RemoteViewsCompat.setRemoteInputs`) **não existe** em nenhuma versão publicada — verificado com `javap` contra o AAR de `core-remoteviews` 1.1.0 e o `android.jar` da API 36. Três saídas alternativas estão no spec. O device continua sendo pré-requisito, mas vem depois desta decisão. |
 | `AUDIT-P1-5-MIGRACAO-FLAG-INCONDICIONAL` | Registro do usuário some sem erro nem log. |
 | `AUDIT-P1-4-AGENDA-EVENTO-DUPLICADO` | Duplicata permanente; inclui limpeza do que já foi criado. |
 | `AUDIT-P1-3-ALARME-TAREFA-CONCLUIDA` | `cancelarAlarme` já está importada no arquivo. |
