@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Smoke test: anonimato + dados de teste + (quando existir) typecheck +
-# lint + tests. Roda no pre-push e no CI.
+# Smoke test: anonimato + dados de teste + typecheck + lint + tests.
+# Roda no pre-push e no CI. Os tres checks de codigo sao BLOQUEANTES:
+# qualquer um deles reprovando aborta o script com exit 1.
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
@@ -37,8 +38,14 @@ if [[ -f package.json ]]; then
   npx --no-install tsc --noEmit || { echo "ERRO: typecheck falhou"; exit 1; }
 
   echo ">> lint"
+  # AUDIT-P3-2 (2026-09-05): esta linha tinha DOIS amortecedores --
+  # `2>/dev/null` escondia a saida e `|| true` descartava o exit code.
+  # Nasceu defensiva, antes de existir eslint.config.js, e ficou. Enquanto
+  # existiu, nenhum erro de ESLint jamais reprovou um PR, porque este
+  # script e' exatamente o que o job quality-gate do CI executa.
+  # Avisos não reprovam: o ESLint so sai != 0 quando ha erro.
   if [[ -d src || -d app ]]; then
-    npx --no-install eslint app/ src/ 2>/dev/null || true
+    npx --no-install eslint app/ src/ || { echo "ERRO: lint falhou"; exit 1; }
   fi
 
   echo ">> testes"

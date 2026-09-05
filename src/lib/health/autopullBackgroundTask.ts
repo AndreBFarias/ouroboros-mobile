@@ -43,10 +43,7 @@ const INTERVALO_MINIMO_S = 6 * 60 * 60;
 // Shape minimo do modulo expo-task-manager que consumimos. Declarado local
 // para nao depender de @types da lib (ausente no bundle atual).
 interface TaskManagerLike {
-  defineTask(
-    nome: string,
-    executor: () => Promise<unknown> | unknown
-  ): void;
+  defineTask(nome: string, executor: () => Promise<unknown> | unknown): void;
   isTaskRegisteredAsync(nome: string): Promise<boolean>;
 }
 
@@ -64,7 +61,6 @@ interface BackgroundTaskLike {
 // o bundler/tsc exija a dependencia em build time.
 function carregarTaskManager(): TaskManagerLike | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require('expo-task-manager') as TaskManagerLike;
   } catch {
     return null;
@@ -75,7 +71,6 @@ function carregarTaskManager(): TaskManagerLike | null {
 // lib nativa esta ausente.
 function carregarBackgroundTask(): BackgroundTaskLike | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require('expo-background-task') as BackgroundTaskLike;
   } catch {
     return null;

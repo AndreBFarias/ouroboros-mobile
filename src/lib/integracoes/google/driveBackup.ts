@@ -290,21 +290,26 @@ export async function fazerBackupDrive(
   // em vez de import() dinamico porque o ambiente Jest do projeto nao
   // habilita ESM modules (--experimental-vm-modules); babel-jest resolve
   // require com os mocks normalmente.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   const { Platform } = require('react-native') as typeof import('react-native');
   if (Platform.OS === 'web') {
     return { uploadado: false, erro: 'Backup Drive não disponível em web.' };
   }
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const FileSystem = require('expo-file-system/legacy') as typeof import('expo-file-system/legacy');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useGoogleAuth } = require('@/lib/stores/googleAuth') as typeof import('@/lib/stores/googleAuth');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { listarBackupsArquivados } = require('@/lib/backup/executarBackup') as typeof import('@/lib/backup/executarBackup');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { sha256Base64 } = require('@/lib/crypto/sha256') as typeof import('@/lib/crypto/sha256');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { notificarBackupDrive } = require('@/lib/notifications/driveBackup') as typeof import('@/lib/notifications/driveBackup');
+
+  const FileSystem =
+    require('expo-file-system/legacy') as typeof import('expo-file-system/legacy');
+
+  const { useGoogleAuth } =
+    require('@/lib/stores/googleAuth') as typeof import('@/lib/stores/googleAuth');
+
+  const { listarBackupsArquivados } =
+    require('@/lib/backup/executarBackup') as typeof import('@/lib/backup/executarBackup');
+
+  const { sha256Base64 } =
+    require('@/lib/crypto/sha256') as typeof import('@/lib/crypto/sha256');
+
+  const { notificarBackupDrive } =
+    require('@/lib/notifications/driveBackup') as typeof import('@/lib/notifications/driveBackup');
   return executarBackupDrive({
     refreshToken: () => useGoogleAuth.getState().refreshIfNeeded(pessoa),
     acharBackupLocal: async () => {

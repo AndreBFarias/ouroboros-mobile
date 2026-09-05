@@ -164,3 +164,50 @@ que altere comportamento visível está fora do escopo declarado.
 ```
 ci: audit-p3-2 smoke aborta quando eslint reprova e zera os 23 problemas de app e src
 ```
+
+## Resultado (executada 2026-09-05)
+
+`scripts/smoke.sh` passa a abortar quando o ESLint reprova, no mesmo
+padrão do `tsc` e do `jest`. Os dois amortecedores saíram juntos: o
+`2>/dev/null` escondia a lista de arquivos que o operador precisa para
+corrigir, e o `|| true` descartava o exit code.
+
+Gate verificado com canário, não por leitura do script:
+
+```
+# com um import proibido por no-restricted-imports em src/
+$ ./scripts/smoke.sh; echo $?
+  1:1  error  'lucide-react-native' import is restricted from being used...
+ERRO: lint falhou
+1
+
+# removido o arquivo do canário
+$ ./scripts/smoke.sh; echo $?
+OK: smoke test passou
+0
+```
+
+Como o `smoke.sh` é o que o job `quality-gate` executa, o efeito vale
+para todo PR — com a ressalva de que esse job ainda **não é required
+status check** na proteção de branch, o que é `AUDIT-P3-1` e depende de
+ação do dono na configuração do repositório.
+
+### Estado do lint depois da limpeza
+
+`npx eslint app/ src/` sai com **exit 0**: 0 erros, 17 avisos. Avisos não
+reprovam — o ESLint só sai diferente de zero quando há erro.
+
+- O erro único caiu com `AUDIT-P3-3` (o plugin ausente).
+- Os 11 `Unused eslint-disable directive` saíram por `npx eslint --fix`
+  (`driveBackup.ts` 6, `driveResumo.ts` 2, `autopullBackgroundTask.ts` 2,
+  `devLog.ts` 1) — todos apontavam para `@typescript-eslint/no-var-requires`
+  e `no-console`, regras que não estão configuradas.
+- Sobram 11 avisos de variável não usada e 6 de `exhaustive-deps`.
+
+### Código morto mencionado, não deletado (GUIDE)
+
+Os 6 símbolos de `app/todo.tsx` seguem intocados: `silenciarSugestaoTarefa`,
+`SugestaoAlarmeTarefa`, `calcularSilenciarAte`, `calcularSugestaoAlarme`,
+`estaSilenciado`, `normalizarTituloFamilia`. Formam uma feature de sugestão
+de alarme escrita na camada de lógica e nunca plugada na UI. **Decisão do
+dono:** religar ou remover.

@@ -123,10 +123,11 @@ export function montarDriveResumo(deps: DriveResumoDeps): DriveResumo {
 // modulo importavel em testes sem a cadeia nativa do Expo, espelhando
 // driveBackup.ts.
 export async function carregarDriveResumo(): Promise<DriveResumo> {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { listarBackupsArquivados } = require('@/lib/backup/executarBackup') as typeof import('@/lib/backup/executarBackup');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useSettings } = require('@/lib/stores/settings') as typeof import('@/lib/stores/settings');
+  const { listarBackupsArquivados } =
+    require('@/lib/backup/executarBackup') as typeof import('@/lib/backup/executarBackup');
+
+  const { useSettings } =
+    require('@/lib/stores/settings') as typeof import('@/lib/stores/settings');
   let backupsLocais: BackupArquivado[] = [];
   try {
     backupsLocais = await listarBackupsArquivados();
