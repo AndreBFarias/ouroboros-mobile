@@ -46,3 +46,41 @@ jobs:
 
       - name: Smoke (anonimato + PT-BR + test-data + tsc + eslint + jest + doctor de hooks)
         run: ./scripts/smoke.sh
+
+  # AUDIT-P3-7 (2026-09-05). Piso de cobertura contra regressao, cobrado em
+  # JOB SEPARADO -- nao como step do quality-gate, e nao dentro do
+  # scripts/smoke.sh.
+  #
+  # Por que job separado: a AUDIT-P3-1 pretende promover `quality-gate` a
+  # required status check da protecao de branch. O piso e' rente ao medido
+  # (ver o bloco coverageThreshold em jest.config.js), entao uma queda de
+  # decimo de ponto reprova. Dentro do gate obrigatorio isso viraria merge
+  # bloqueado por ruido; num job proprio, ele acusa em vermelho sem travar
+  # o merge enquanto o numero nao for recalibrado. Fora do smoke tambem
+  # mantem o piso fora do caminho do pre-push local.
+  #
+  # Custo aceito: a suite roda uma segunda vez (~37s com coverage). A
+  # alternativa -- trocar o `npm test` do smoke por uma unica execucao com
+  # coverage -- foi considerada e descartada: colocaria o piso de volta
+  # dentro do quality-gate e do pre-push, que e' exatamente o que este
+  # arranjo evita.
+  coverage-floor:
+    name: coverage-floor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install npm deps
+        run: npm ci --legacy-peer-deps
+
+      - name: Piso de cobertura (coverageThreshold de jest.config.js)
+        run: npm run test:coverage

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint app/ src/",
     "test": "jest --watchAll=false",
+    "test:coverage": "jest --coverage --watchAll=false",
     "test:e2e": "maestro test tests/e2e/",
     "test:e2e:web": "scripts/e2e-web.sh",
     "build:dev": "eas build --profile development --platform android",

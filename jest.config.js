@@ -52,10 +52,60 @@ module.exports = {
     // afterEach trava 15s quando fakeTimers vaza cross-suite.
     doNotFake: ['queueMicrotask', 'setImmediate', 'nextTick'],
   },
-  testMatch: [
-    '<rootDir>/tests/**/*.test.ts',
-    '<rootDir>/tests/**/*.test.tsx',
-  ],
+  // AUDIT-P3-7 (2026-09-05): piso de cobertura contra REGRESSAO. Nao e'
+  // piso aspiracional -- a decisao do dono (2026-07-29) fixou "patamar
+  // atual medido, arredondado para baixo", justamente para que qualquer
+  // queda apareca sem que o piso nasca vermelho.
+  //
+  // Medicao desta sprint (`npx jest --coverage --ci`, duas execucoes,
+  // 374 suites / 3567 testes, ~37s cada). Vale a MENOR das leituras:
+  //
+  //   leitura 1: 74.53 stmts | 63.43 branch | 74.12 funcs | 76.25 lines
+  //   leitura 2: 74.56 stmts | 63.44 branch | 74.18 funcs | 76.29 lines
+  //   piso      = floor(menor) = 74 / 63 / 74 / 76
+  //
+  // Divergencia registrada: a decisao do dono cita 62 em branches, medido
+  // sobre 2026-07-28 (62.83%). Hoje branches mede 63.43% e a REGRA da
+  // propria decisao (floor do medido) da 63. A regra e' o arredondamento
+  // para baixo, nao uma folga escolhida caso a caso, entao o valor segue
+  // a regra. Os outros tres numeros batem com os literais da decisao.
+  //
+  // ONDE O PISO E' COBRADO: apenas no job `coverage-floor` do
+  // .github/workflows/ci.yml, que e' um job SEPARADO do `quality-gate`.
+  // Fora do `npm test` (package.json nao passa --coverage), fora do
+  // scripts/smoke.sh e fora do pre-push. Motivo: a AUDIT-P3-1 pretende
+  // promover `quality-gate` a required status check, e piso rente ao
+  // medido dentro de um gate obrigatorio bloqueia merge por ruido
+  // decimal. Para coletar localmente: `npm run test:coverage`.
+  //
+  // DUAS ARMADILHAS de quem for mexer aqui:
+  //
+  //   1. Nao existe `collectCoverageFrom` (deliberado). O Jest so
+  //      instrumenta os arquivos EFETIVAMENTE carregados, entao o
+  //      denominador e' dinamico: um PR que so acrescenta um teste
+  //      importando um modulo grande e pouco coberto AUMENTA o
+  //      denominador e pode derrubar o percentual global. A folga mais
+  //      apertada e' `functions` (74.12% medido contra piso 74, ~4
+  //      funcoes em 2964). Se isso reprovar um PR que so' somou teste,
+  //      o certo e' remedir e reaplicar a regra do floor -- nao afrouxar
+  //      o piso a olho.
+  //
+  //   2. Threshold global vale para QUALQUER invocacao com --coverage.
+  //      Depois desta config, `npx jest <subconjunto> --coverage` sem
+  //      `--collectCoverageFrom` reprova por threshold, porque o
+  //      subconjunto carrega poucos arquivos. Ao medir um arquivo so',
+  //      restrinja o escopo:
+  //      `npx jest tests/lib/stores/persist.test.ts --coverage \
+  //         --collectCoverageFrom='src/lib/stores/persist.ts'`
+  coverageThreshold: {
+    global: {
+      statements: 74,
+      branches: 63,
+      functions: 74,
+      lines: 76,
+    },
+  },
+  testMatch: ['<rootDir>/tests/**/*.test.ts', '<rootDir>/tests/**/*.test.tsx'],
   // testEnvironment custom: estende react-native-env (node + RN export
   // conditions) e restaura realTimers antes do super.teardown como
   // defesa em profundidade. NAO usa jsdom — setImmediate de jsdom e
