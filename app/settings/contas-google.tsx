@@ -153,6 +153,14 @@ export default function ContasGoogleScreen() {
   const setDriveBackupUltimaSync = useSettings(
     (s) => s.setDriveBackupUltimaSync
   );
+  // AUDIT-P2-2: toggle do auto-sync periodico do Google Calendar. A chave
+  // ja existia no store e no gate de app/_layout.tsx, mas nenhuma tela a
+  // escrevia -- o auto-sync e a notificacao pre-evento nasciam e morriam
+  // desligados. Mesmo gate de habilitacao do backup Drive: depende de
+  // conta Google conectada.
+  const calendarSyncToggle = useSettings(
+    (s) => s.featureToggles.googleCalendarSync
+  );
   const vaultRoot = useVault((s) => s.vaultRoot);
   const [enviandoDrive, setEnviandoDrive] = useState(false);
   // Pelo menos uma conta Google conectada habilita o backup Drive.
@@ -239,6 +247,63 @@ export default function ContasGoogleScreen() {
                 if (revogando === null) void handleRevogar('pessoa_b');
               }}
             />
+          ) : null}
+        </SecaoLista>
+
+        <SecaoLista titulo="Agenda">
+          <View
+            accessibilityLabel="linha toggle calendar sync"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              minHeight: 56,
+              paddingHorizontal: spacing.base,
+            }}
+          >
+            <View style={{ flex: 1, paddingRight: spacing.md }}>
+              <Text
+                style={{
+                  color: colors.fg,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: typography.body.size,
+                  lineHeight: typography.body.size * typography.body.lineHeight,
+                }}
+              >
+                Sincronizar agenda automaticamente
+              </Text>
+              <Text
+                style={{
+                  color: colors.muted,
+                  fontFamily: 'JetBrainsMono_400Regular',
+                  fontSize: typography.caption.size,
+                  lineHeight:
+                    typography.caption.size * typography.caption.lineHeight,
+                  marginTop: 2,
+                }}
+              >
+                Atualiza os próximos compromissos em segundo plano e avisa 15
+                minutos antes de cada um.
+              </Text>
+            </View>
+            <Toggle
+              value={calendarSyncToggle}
+              onChange={(v) => setFeatureToggle('googleCalendarSync', v)}
+              disabled={!algumGoogleConectado}
+              accessibilityLabel="toggle sincronizar agenda automaticamente"
+            />
+          </View>
+          {!algumGoogleConectado ? (
+            <Text
+              style={{
+                color: colors.mutedDecor,
+                fontSize: typography.caption.size,
+                paddingHorizontal: spacing.base,
+                marginTop: spacing.xs,
+              }}
+            >
+              Conecte uma conta Google acima para sincronizar a agenda.
+            </Text>
           ) : null}
         </SecaoLista>
 

@@ -162,3 +162,60 @@ npm test -- settings                                                         # v
 ```
 feat: audit-p2-2 expoe toggle googlecalendarsync em contas google e libera auto-sync
 ```
+
+---
+
+## Execução (2026-09-05)
+
+Executada. O que saiu diferente do escopo escrito acima, e por quê:
+
+1. **Seção própria, não dentro do Drive.** O escopo §1 mandava inserir o
+   toggle "imediatamente acima do bloco Backup automático no Drive". Esse
+   bloco vive *dentro* de `<SecaoLista titulo="Backup no Google Drive">`;
+   seguir a letra colocaria um controle de Google Calendar sob um título que
+   fala de Drive. Criada uma `<SecaoLista titulo="Agenda">` nova, imediatamente
+   acima da seção do Drive — mesma tela, mesmo padrão visual, rótulo honesto.
+2. **Sem o bloco `else` do Drive.** Quando não há conta Google conectada, a
+   seção mostra só a caption "Conecte uma conta Google acima para sincronizar
+   a agenda."; não existe ação manual equivalente a "Fazer backup agora" para
+   o Calendar, e inventá-la seria escopo novo.
+3. **Estado no card Agenda.** `IntegracoesScreen` passou a compor
+   " (auto-sync ligado)" / " (auto-sync desligado)" no `statusTexto` do card
+   conectado. Como `textoUltimaSync` já fecha a frase com ponto, o sufixo
+   entra *antes* do ponto — o resultado fica no mesmo molde do card HC
+   ("Sincronizado agora mesmo (auto-sync ligado)."), não como fragmento solto.
+4. **Assert do E2E não usa `__gauntlet.estado()`.** `lerEstado()` em
+   `src/lib/dev/gauntlet.ts` não devolve `featureToggles`; o caso
+   `m-backup-automatico.e2e.ts` sai INCONCLUSIVO em toda execução por depender
+   disso. O caso novo lê `localStorage['ouroboros.settings.v2']`, com
+   `waitForTimeout` entre o toque e a leitura (o `secureStorage` web é
+   assíncrono e o flush do zustand persist cai em microtask).
+5. **Mock do teste.** `StateSettingsMock` ganhou `googleCalendarSync` e os
+   sete literais que o constroem foram atualizados. A justificativa do plano
+   ("senão `tsc` reprova") é falsa — o tipo é local do arquivo de teste e não
+   tem vínculo estrutural com o store. A razão real é outra: sem o campo, o
+   seletor devolve `undefined` (falsy) e a suíte exercitaria apenas o ramo
+   desligado, verde e sem cobrir o caso novo.
+
+Não-objetivos respeitados: `app/_layout.tsx`, `calendarSync.ts`,
+`scheduler.ts` e `calendarPreEvent.ts` sem uma linha alterada; default segue
+`googleCalendarSync: false`; nada tocado em `app/settings/integracoes.tsx`.
+
+### Prova executada
+
+```
+grep -rn "setFeatureToggle('googleCalendarSync'" --include="*.tsx" src app
+  -> app/settings/contas-google.tsx:291  (antes: 0 hits)
+grep -n "googleCalendarSync: false" src/lib/stores/settings.ts   -> :332
+grep -n "featureToggles.googleCalendarSync" app/_layout.tsx      -> :378 (gate intacto)
+npx tsc --noEmit                                                 -> exit 0
+npx jest tests/components/screens/IntegracoesScreen.test.tsx     -> 23 passed / 23
+npx eslint <5 arquivos tocados>                                  -> exit 0, 0 warnings
+python3 scripts/check_strings_ui_ptbr.py                         -> exit 0
+./scripts/check_anonimato.sh                                     -> OK
+```
+
+Pendente: execução do Gauntlet Nível A (`EXPO_PUBLIC_GAUNTLET=1 ./run.sh --web`
++ `tests/e2e/playwright/audit-p2-2-calendar-autosync-toggle.e2e.ts`) e as três
+capturas em `docs/sprints/AUDIT-P2-2-CALENDAR-AUTOSYNC-TOGGLE-screenshots-gauntlet/`.
+O caso E2E está escrito e tipado; falta rodá-lo com o servidor de pé.

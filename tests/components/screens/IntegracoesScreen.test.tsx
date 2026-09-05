@@ -67,6 +67,10 @@ type StateSettingsMock = {
     healthConnectSync: boolean;
     // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: o card Drive le este toggle.
     backupDriveAutomatico: boolean;
+    // AUDIT-P2-2: o card Agenda le este toggle. Campo OBRIGATORIO no
+    // mock -- ausente, o seletor devolveria undefined (falsy) e a suite
+    // exercitaria so o ramo desligado, verde e sem cobrir o caso novo.
+    googleCalendarSync: boolean;
   };
 };
 
@@ -83,7 +87,11 @@ const mockStateGoogle: { current: StateGoogleMock } = {
 };
 const mockStateSettings: { current: StateSettingsMock } = {
   current: {
-    featureToggles: { healthConnectSync: false, backupDriveAutomatico: false },
+    featureToggles: {
+      healthConnectSync: false,
+      backupDriveAutomatico: false,
+      googleCalendarSync: false,
+    },
   },
 };
 
@@ -171,7 +179,11 @@ beforeEach(() => {
     },
   };
   mockStateSettings.current = {
-    featureToggles: { healthConnectSync: false, backupDriveAutomatico: false },
+    featureToggles: {
+      healthConnectSync: false,
+      backupDriveAutomatico: false,
+      googleCalendarSync: false,
+    },
   };
   mockStateSpotify.current = {
     conta: { accessToken: null, ultimaConexao: 0, invalido: false },
@@ -247,7 +259,11 @@ describe('IntegracoesScreen — render dos 5 cards', () => {
       },
     };
     mockStateSettings.current = {
-      featureToggles: { healthConnectSync: false, backupDriveAutomatico: true },
+      featureToggles: {
+        healthConnectSync: false,
+        backupDriveAutomatico: true,
+        googleCalendarSync: false,
+      },
     };
 
     const { getByLabelText } = render(<IntegracoesScreen />);
@@ -355,7 +371,11 @@ describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-A
     mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
     comContaGoogle();
     mockStateSettings.current = {
-      featureToggles: { healthConnectSync: false, backupDriveAutomatico: true },
+      featureToggles: {
+        healthConnectSync: false,
+        backupDriveAutomatico: true,
+        googleCalendarSync: false,
+      },
     };
     mockCarregarDriveResumo.mockResolvedValueOnce({
       totalBackups: 1,
@@ -384,7 +404,11 @@ describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-A
     mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
     comContaGoogle();
     mockStateSettings.current = {
-      featureToggles: { healthConnectSync: false, backupDriveAutomatico: true },
+      featureToggles: {
+        healthConnectSync: false,
+        backupDriveAutomatico: true,
+        googleCalendarSync: false,
+      },
     };
     mockCarregarDriveResumo.mockResolvedValueOnce({
       totalBackups: 3,
@@ -408,6 +432,7 @@ describe('IntegracoesScreen — Drive ativo: resumo + acoes (R-INT-5-DRIVE-HUB-A
       featureToggles: {
         healthConnectSync: false,
         backupDriveAutomatico: false,
+        googleCalendarSync: false,
       },
     };
 
@@ -533,7 +558,11 @@ describe('IntegracoesScreen — estado Health Connect', () => {
       { recordType: 'Weight', accessType: 'write' },
     ]);
     mockStateSettings.current = {
-      featureToggles: { healthConnectSync: true, backupDriveAutomatico: false },
+      featureToggles: {
+        healthConnectSync: true,
+        backupDriveAutomatico: false,
+        googleCalendarSync: false,
+      },
     };
 
     const { getByLabelText, getByText } = render(<IntegracoesScreen />);
@@ -576,6 +605,45 @@ describe('IntegracoesScreen — estado Google Calendar', () => {
       expect(
         getByLabelText('estado google_calendar desconectado')
       ).toBeTruthy();
+    });
+  });
+
+  it('card Agenda mostra auto-sync ligado quando o toggle esta on (AUDIT-P2-2)', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    mockStateGoogle.current = {
+      contas: {
+        pessoa_a: { accessToken: 'token-a-valido', ultimaConexao: Date.now() },
+        pessoa_b: { accessToken: null, ultimaConexao: 0 },
+      },
+    };
+    mockStateSettings.current = {
+      featureToggles: {
+        healthConnectSync: false,
+        backupDriveAutomatico: false,
+        googleCalendarSync: true,
+      },
+    };
+
+    const { getByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/\(auto-sync ligado\)/)).toBeTruthy();
+    });
+  });
+
+  it('card Agenda mostra auto-sync desligado no default (AUDIT-P2-2)', async () => {
+    mockVerificarDisponibilidade.mockResolvedValueOnce('unavailable');
+    mockStateGoogle.current = {
+      contas: {
+        pessoa_a: { accessToken: 'token-a-valido', ultimaConexao: Date.now() },
+        pessoa_b: { accessToken: null, ultimaConexao: 0 },
+      },
+    };
+
+    const { getByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/\(auto-sync desligado\)/)).toBeTruthy();
     });
   });
 });

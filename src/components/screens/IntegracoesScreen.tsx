@@ -15,14 +15,22 @@
 //      detalhe /settings/integracoes.
 //   4. YouTube -- R-INT-4 (2026-05-17): Google OAuth scope
 //      youtube.readonly + YouTube Data API v3. Estados como Spotify.
-//   5. Google Drive (placeholder) -- futura, "Em breve".
+//   5. Google Drive -- R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO (2026-05-25) e
+//      R-INT-5-DRIVE-HUB-ATIVO: nao e' mais placeholder. Reusa o OAuth
+//      Google do Calendar; card ativo com acoes inline "Fazer agora" e
+//      "Restaurar". O upload real so acontece depois que o dono registrar
+//      o scope drive.file no Cloud Console (passo humano R-SEC-1).
 //
 // Cada card mostra:
 //   - Icone e nome canonico (PT-BR com acento)
-//   - Estado: Conectado / Desconectado / Em breve
+//   - Estado: Conectado / Desconectado / Indisponivel. 'em_breve' segue
+//     no type union EstadoIntegracao (e nos mapas de rotulo, cor e
+//     disabled), mas nenhum descritor o emite hoje. 'indisponivel' e'
+//     emitido pelo card de Saude Fisica quando o SDK do Health Connect
+//     nao esta disponivel neste dispositivo.
 //   - Ultima sincronizacao em texto humano (reusa descreverDelta)
 //   - Tap navega para a tela de detalhe (HC, Google) ou e desabilitado
-//     com badge "Em breve" para placeholders.
+//     quando o estado e' 'indisponivel' ou 'em_breve'.
 //
 // Decisao R-INT-1: NAO recriamos a logica OAuth nem o flow HC aqui.
 // Hub e read-only sobre os stores existentes; navegacao para detalhe
@@ -30,6 +38,12 @@
 // R-INT-4 estendeu Spotify/YouTube com a mesma filosofia: stores
 // proprios (useSpotifyAuth, useYouTubeAuth), Hub apenas le state e
 // reflete estado.
+// R-INT-5 abriu a UNICA excecao ao read-only: o card Drive expoe acoes
+// inline (tipo CardAcao) que escrevem -- "Fazer agora" sobe o ZIP de
+// backup local e "Restaurar" restaura o ZIP local mais recente. Os
+// stores lidos hoje sao useGoogleAuth, useSettings, useSpotifyAuth,
+// useYouTubeAuth e os helpers de HC availability/permissions, mais o
+// modulo de Drive (driveResumo/driveBackup).
 //
 // Comentarios sem acento (convencao shell/CI). Strings PT-BR sentence
 // case com acentuacao. accessibilityLabel sem acento.
@@ -304,6 +318,12 @@ export function IntegracoesScreen() {
   const driveBackupToggle = useSettings(
     (s) => s.featureToggles.backupDriveAutomatico
   );
+  // AUDIT-P2-2: toggle do auto-sync periodico do Calendar. Reflete
+  // " (auto-sync ligado/desligado)" no card Agenda para o estado nao
+  // ficar silencioso -- liga-se em /settings/contas-google. Default OFF.
+  const calendarSyncToggle = useSettings(
+    (s) => s.featureToggles.googleCalendarSync
+  );
   // Estado das contas Google: pega max ultimaConexao das duas pessoas
   // para o "Última sincronizacao" do Calendar.
   const contas = useGoogleAuth((s) => s.contas);
@@ -505,6 +525,21 @@ export function IntegracoesScreen() {
 
   // Descritor Google Calendar.
   // Ultima sync = max(ultimaConexao_a, ultimaConexao_b).
+  // AUDIT-P2-2: a linha do card conectado carrega tambem o estado do
+  // auto-sync periodico, no mesmo molde do card HC ("... (sync ligado).").
+  // textoUltimaSync ja fecha a frase com ponto, entao o sufixo entra antes
+  // dele em vez de virar um fragmento solto depois.
+  const textoSyncCalendar = ((): string => {
+    const base = textoUltimaSync(
+      ultimaConexaoGoogle > 0 ? ultimaConexaoGoogle : null
+    );
+    const sufixo = calendarSyncToggle
+      ? ' (auto-sync ligado)'
+      : ' (auto-sync desligado)';
+    return base.endsWith('.')
+      ? `${base.slice(0, -1)}${sufixo}.`
+      : `${base}${sufixo}`;
+  })();
   const descritorCalendar: IntegracaoDescritor = algumGoogleConectado
     ? {
         slug: 'google_calendar',
@@ -512,9 +547,7 @@ export function IntegracoesScreen() {
         icone: Calendar,
         corIcone: colors.cyan,
         estado: 'conectado',
-        statusTexto: textoUltimaSync(
-          ultimaConexaoGoogle > 0 ? ultimaConexaoGoogle : null
-        ),
+        statusTexto: textoSyncCalendar,
         rota: '/settings/contas-google',
       }
     : {

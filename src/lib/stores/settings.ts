@@ -326,7 +326,9 @@ export const DEFAULT_STATE_V2: Omit<
     recapMusicaFundo: true,
     // R-INT-2-CALENDAR-SYNC-EVENTOS: default OFF (opt-in). O auto-sync
     // periodico do Calendar so dispara quando o usuario liga em
-    // Configuracoes; ate la, a agenda atualiza apenas ao abrir /agenda.
+    // Configuracoes > Contas Google > Agenda; ate la, a agenda atualiza
+    // apenas ao abrir /agenda. (AUDIT-P2-2 criou esse ponto de liga;
+    // antes o comentario prometia uma UI que nao existia.)
     googleCalendarSync: false,
     // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: default OFF (opt-in). Sem rede de
     // saida sem consentimento; o upload Drive so acontece quando o dono
