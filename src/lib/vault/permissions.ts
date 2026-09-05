@@ -144,10 +144,14 @@ async function deleteKey(name: string): Promise<void> {
   await SecureStore.deleteItemAsync(name);
 }
 
-// Probe rapido de MANAGE_EXTERNAL_STORAGE: tenta escrever um arquivo
-// efemero em /sdcard/Documents/. Se sucesso, permissao esta ativa
-// (Android 11+) ou WRITE_EXTERNAL_STORAGE concedido (Android <11).
-// Idempotente, deleta o probe ao final.
+// Sonda de gravabilidade do diretório privado do app -- não de
+// MANAGE_EXTERNAL_STORAGE, apesar do nome, que é herança do fluxo
+// pré-V4.0.2. Escreve e apaga um arquivo efêmero em
+// FileSystem.documentDirectory, que é sempre gravável sem permissão
+// especial. No Android, portanto, só retorna false sob falha de I/O no
+// próprio diretório privado (disco cheio, sistema de arquivos
+// corrompido), nunca por ausência de permissão. Idempotente, deleta o
+// probe ao final.
 async function probeManagePermission(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
   // V4.0.2: probe no app's external files dir, que sempre e gravavel
@@ -190,19 +194,35 @@ function waitForAppForeground(timeoutMs: number): Promise<boolean> {
   });
 }
 
-// Fluxo de pedido de permissao de armazenamento. Diferente da versao
-// pre-V4.0.2: agora ESPERA o usuario retornar da tela de configuracoes
-// e re-probea ate confirmar grant ou esgotar timeout. Resolve com true
-// se permissao concedida, false caso contrario. Caller deve mostrar
-// toast acionavel se false.
+// Fluxo de pedido de permissão de armazenamento. Resolve com true se
+// há permissão, false caso contrário; o caller deve mostrar toast
+// acionável quando false.
 //
+// Leia antes de mexer: no Android o early-return abaixo dispara em
+// praticamente toda chamada real, porque probeManagePermission() sonda
+// o diretório privado do app, que é sempre gravável. Os três
+// call-sites (app/_layout.tsx e os dois de app/onboarding.tsx) recebem
+// true sem que nenhuma tela de sistema apareça.
+//
+// Isso é decisão consciente da V4.0.2, não bug: o vault default vive
+// em documentDirectory (ver sugestaoVaultUriDefault acima) e não
+// precisa de MANAGE_EXTERNAL_STORAGE. A contrapartida é que, quando o
+// vault aponta para pasta arbitrária sob /sdcard -- o tree URI do
+// picker SAF vira file:// em safTreeUriToFileUri --, a escrita depende
+// de MANAGE_EXTERNAL_STORAGE já concedida, e esta sonda não detecta a
+// ausência dela. Contexto em ADR-0016; registrado em AUDIT-P4-9.
+//
+// O fallback abaixo só é alcançado quando a sonda falha por I/O:
 // Android <11 (API <30): WRITE_EXTERNAL_STORAGE via PermissionsAndroid.
 // Android >=11 (API >=30): Intent MANAGE_EXTERNAL_STORAGE leva o
-// usuario para tela de configuracao; AppState detecta retorno; probe
-// confirma grant.
+// usuário para tela de configuração; AppState detecta retorno; probe
+// confirma grant. Não remova o bloco por parecer morto: ele continua
+// sendo o caminho de recuperação. Cobertura de teste: só o ramo de
+// API <30 (permissions-init.test.ts força a falha da sonda com API
+// 28); o ramo do Intent não é exercitado por nenhum teste da suíte.
 export async function pedirPermissaoStorage(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
-  // Caminho rapido: ja concedida.
+  // Caminho rápido: diretório privado gravável (ver bloco acima).
   if (await probeManagePermission()) return true;
   const apiLevel =
     typeof Platform.Version === 'number'

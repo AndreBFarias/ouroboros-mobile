@@ -12,6 +12,49 @@ ORIGEM:     achado [P4-12]/[P4-11]/[IN-05]/[SE-06] da auditoria de
             public/privacy.html:68-69.
 ```
 
+## Execução de 2026-09-05 — itens 1 e 2 entregues, 3 e 4 viram continuação
+
+Fechada pelo item 5 do Escopo: os itens 1 e 2 (comentários de
+`src/lib/vault/permissions.ts`) foram aplicados e fecham a sprint
+sozinhos. Os itens 3 e 4 **não** foram executados e ficam registrados
+aqui como continuação, com o que a execução apurou sobre cada um.
+
+**Item 4 (remover as permissões de `app.json:43-45`) colide com uma ADR
+aceita.** `docs/ADRs/0016-vault-auto-criado-sem-saf.md:51-56` registra:
+"Como o APK é distribuído fora da Play Store (GitHub Releases direto),
+`MANAGE_EXTERNAL_STORAGE` é aceitável. A Play Store rejeitaria essa
+permissão ... mas o canal de distribuição manual não tem essa
+restrição." Ou seja, o argumento "publicação na loja seria rejeitada",
+usado na seção (b) como se fosse achado novo, é decisão já tomada e
+aceita. Executar o item 4 exige `DECISAO:` do dono ou uma ADR que
+supersede a 0016 — não é trabalho de executor. O que continua de pé na
+seção (b), independentemente disso, é a contradição com
+`public/privacy.html:68-69`: ou a permissão sai, ou a política é
+reescrita para descrever o que o app de fato declara.
+
+**Item 3 (migrar "Outra pasta" para SAF nativo) é migração
+arquitetural, não troca de duas chamadas.** Medido nesta execução:
+
+- `StorageAccessFramework.writeAsStringAsync` é apenas um alias de
+  `FileSystem.writeAsStringAsync`
+  (`node_modules/expo-file-system/src/legacy/FileSystem.ts:743`). O que
+  obriga a reescrita não é a chamada de escrita em si — o módulo nativo
+  aceita `content://` de documento SAF —, e sim `createFileAsync`, que
+  passa a ser obrigatório para **criar** o documento antes de escrever.
+  Some o "abre e escreve" que o código usa hoje em todo lugar.
+- O scheme persistido em `VAULT_ROOT_KEY` deixaria de ser `file://`,
+  o que reativa o ramo `saf-fallback`
+  (`src/lib/vault/permissions.ts:376`, `:428`) e o dispatch por scheme
+  de `src/lib/vault/reader.ts:69` e `src/lib/vault/writer.ts:73` no app
+  inteiro.
+- `vaultUriJoin` (`src/lib/vault/paths.ts:39`) é concatenação de path;
+  com `content://` ela deixa de valer. São **140 usos em 33 arquivos**
+  de `src/` e `app/` (`grep -rn vaultUriJoin src app`).
+
+Recomendação: materializar o item 3 como sprint própria, com validação
+Nível C em device, em vez de arrastá-lo dentro de P4-9. Sem device não
+há como provar nenhuma das três consequências acima.
+
 ## Problema (duas partes ligadas: comentário que mente sobre o próprio código, e permissão mais ampla do que o uso exige)
 
 ### (a) O comentário de cabeçalho descreve um fluxo hoje inalcançável — documentação mentindo, não lógica quebrada
@@ -76,7 +119,7 @@ primeiro, e as linhas 207-238 — o intent
 `MANAGE_APP_ALL_FILES_ACCESS_PERMISSION`, a espera de
 `AppState` e os 5 retries com backoff — são **código morto**,
 inalcançável em qualquer chamada real. Os 3 call-sites confirmados
-(`app/_layout.tsx:763`, `app/onboarding.tsx:178` e `:218`) sempre
+(`app/_layout.tsx:796`, `app/onboarding.tsx:178` e `:218`) sempre
 recebem `true` incondicionalmente.
 
 O defeito real desta parte (a) **não é lógica quebrada** — o
@@ -89,7 +132,7 @@ incorretamente que o app pede a permissão de forma interativa.
 
 ### (b) MANAGE_EXTERNAL_STORAGE declarada onde SAF bastaria
 
-`app.json:42-44` declara as três permissões de armazenamento:
+`app.json:43-45` declara as três permissões de armazenamento:
 
 ```json
 "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -137,16 +180,23 @@ rejeitada** com o app atual.
 2. Corrigir o comentário de `pedirPermissaoStorage()` (linhas 193-202)
    para deixar explícito que o early-return da linha 206 torna o fluxo
    de intent (linhas 207-238) inalcançável na prática hoje, e que essa
-   é uma decisão consciente (vault em diretório privado não precisa de
-   `MANAGE_EXTERNAL_STORAGE`; caller que escolher pasta arbitrária via
-   SAF já tem a concessão daquela pasta pelo próprio picker).
+   é uma decisão consciente (o vault default vive em diretório privado
+   e não precisa de `MANAGE_EXTERNAL_STORAGE`). **Correção de 2026-09-05:**
+   a justificativa original deste item — "caller que escolher pasta
+   arbitrária via SAF já tem a concessão daquela pasta pelo próprio
+   picker" — é **falsa** neste codebase e não foi escrita no código.
+   `safTreeUriToFileUri` (`src/lib/vault/permissions.ts:274`) converte o
+   tree URI para `file://`, e escrita em `file://` sob `/sdcard` não é
+   coberta pela concessão do picker: é exatamente o caso que exige
+   `MANAGE_EXTERNAL_STORAGE`, como o próprio cabeçalho do arquivo já
+   dizia em `src/lib/vault/permissions.ts:36-40`.
 3. Migrar o caminho "Outra pasta" para operar via SAF nativo
    (`StorageAccessFramework.createFileAsync`/`writeAsStringAsync` sobre
    o tree URI) em vez de `safTreeUriToFileUri` + `file://`. Requer
    validação em device real (Nível C) — mudança de storage nativo não é
    verificável só no Gauntlet web.
 4. Após o item 3 validado em device, remover as três permissões de
-   armazenamento de `app.json:42-44`.
+   armazenamento de `app.json:43-45`.
 5. NÃO-objetivo: não mudar o default do Vault (continua
    `documentDirectory`); não remover ou reescrever o código morto das
    linhas 207-238 nesta sprint se o item 3 não puder ser validado a
