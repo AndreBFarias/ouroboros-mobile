@@ -13,6 +13,16 @@
 // não acessa filesystem real do desktop.
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+// AUDIT-P2-7-SYNCSTATUS-M15: os cortes de 30min / 6h (e os de 1min / 1h
+// usados na frase) vivem em src/lib/datetime/haRelativo.ts, o modulo
+// canonico de tempo relativo. IntegracoesScreen.textoUltimaSync le as
+// mesmas constantes de la, entao os dois textos nao podem mais divergir.
+import {
+  SEIS_HORAS_MS,
+  TRINTA_MIN_MS,
+  UMA_HORA_MS,
+  UM_MIN_MS,
+} from '@/lib/datetime/haRelativo';
 
 export type SyncCor = 'verde' | 'amarelo' | 'vermelho' | 'desconhecido';
 
@@ -23,9 +33,6 @@ export interface SyncStatus {
   // Path inspecionado (debug). Vazio quando rodando em web ou sem URI.
   alvo: string;
 }
-
-const TRINTA_MIN_MS = 30 * 60 * 1000;
-const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
 
 // Calcula cor a partir de delta-ms (separavel para teste).
 export function classificar(deltaMs: number): SyncCor {
@@ -110,15 +117,15 @@ export async function verificarSyncStatus(
 export function descreverDelta(date: Date | null): string {
   if (!date) return 'Sem registro de sincronização.';
   const delta = Date.now() - date.getTime();
-  if (delta < 60 * 1000) return 'Atualizado agora mesmo.';
+  if (delta < UM_MIN_MS) return 'Atualizado agora mesmo.';
   if (delta < TRINTA_MIN_MS) {
-    const min = Math.floor(delta / (60 * 1000));
+    const min = Math.floor(delta / UM_MIN_MS);
     return `Atualizado há ${min} min.`;
   }
   if (delta < SEIS_HORAS_MS) {
-    const h = Math.floor(delta / (60 * 60 * 1000));
+    const h = Math.floor(delta / UMA_HORA_MS);
     return `Atualizado há ${h}h.`;
   }
-  const h = Math.floor(delta / (60 * 60 * 1000));
+  const h = Math.floor(delta / UMA_HORA_MS);
   return `Última atualização há ${h}h.`;
 }

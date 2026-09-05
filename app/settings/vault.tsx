@@ -14,11 +14,17 @@
 //
 // Comentarios sem acento (convencao shell/CI). Strings UI em
 // Sentence case com acentuacao PT-BR completa.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Header, Screen, useToast } from '@/components/ui';
 import { SecaoLista } from '@/components/settings/SecaoLista';
+import { CardStatus } from '@/components/settings/CardStatus';
+import {
+  descreverDelta,
+  verificarSyncStatus,
+  type SyncStatus,
+} from '@/lib/services/syncStatus';
 import {
   inicializarVaultEscolhido,
   requestVaultPermission,
@@ -91,6 +97,7 @@ export default function VaultTela() {
       >
         <SecaoLista titulo="Pasta atual" accessibilityLabel="secao pasta atual">
           <BlocoPathAtual vaultRoot={vaultRoot} />
+          <BlocoStatusSync vaultRoot={vaultRoot} />
         </SecaoLista>
 
         <SecaoLista titulo="Ações" accessibilityLabel="secao acoes vault">
@@ -164,6 +171,121 @@ function BlocoPathAtual({ vaultRoot }: { vaultRoot: string | null }) {
     </View>
   );
 }
+
+// AUDIT-P2-7-SYNCSTATUS-M15 (2026-09-05): o servico
+// lib/services/syncStatus.ts e o componente settings/CardStatus.tsx
+// existiam desde o M15 e nunca tinham sido renderizados -- nenhum
+// import, nenhum caller. Este bloco liga os dois. E o unico lugar do
+// app onde da' pra saber se o Vault sincronizou (ADR-0002: o mobile
+// "so observa status e mostra na UI").
+//
+// Os quatro estados sao derivados de vaultRoot E de status, nao so da
+// cor: em web verificarSyncStatus devolve 'desconhecido' tanto com
+// pasta quanto sem pasta (syncStatus.ts:43), e as duas situacoes
+// merecem copy diferente.
+//
+// RESSALVA conhecida (nao resolvida nesta sprint, ver NAO-objetivo 8):
+// a heuristica de conflito olha .stversions/, que e a pasta de FILE
+// VERSIONING do Syncthing, nao um marcador de conflito. Quem usa
+// versioning tem .stversions/ populada em operacao normal e veria o
+// aviso para sempre. O detector real de conflito deste repo e
+// ehSyncConflict de src/lib/vault/syncConflict.ts (prefixo
+// .sync-conflict- no nome do arquivo). Por isso o subtitulo aqui
+// relata o fato observado ("ha arquivos em .stversions") em vez de
+// afirmar que existe conflito. Trocar o detector exige decisao do dono.
+function BlocoStatusSync({ vaultRoot }: { vaultRoot: string | null }) {
+  // null = ainda verificando. Reinicia a cada troca de pasta.
+  const [status, setStatus] = useState<SyncStatus | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    setStatus(null);
+    void verificarSyncStatus(vaultRoot).then((s) => {
+      if (ativo) setStatus(s);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [vaultRoot]);
+
+  if (!vaultRoot) {
+    return (
+      <CardStatus
+        cor="desconhecido"
+        titulo="Sem pasta para verificar."
+        subtitulo="Escolha uma pasta para o app conseguir verificar a sincronização."
+        accessibilityLabel="card status sync sem pasta"
+      />
+    );
+  }
+
+  if (!status) {
+    return (
+      <CardStatus
+        cor="desconhecido"
+        titulo="Verificando sincronização…"
+        accessibilityLabel="card status sync verificando"
+      />
+    );
+  }
+
+  if (status.cor === 'desconhecido') {
+    return (
+      <CardStatus
+        cor="desconhecido"
+        titulo="Sincronização indisponível nesta plataforma."
+        subtitulo="A verificação depende do sistema de arquivos do aparelho."
+        accessibilityLabel="card status sync indisponivel"
+      />
+    );
+  }
+
+  // AUDIT-P2-7: pasta inacessivel tem render proprio, e nao o mesmo do
+  // Vault desatualizado.
+  //
+  // Os tres caminhos que produzem {vermelho, ultimaModificacao: null} --
+  // diretorio inexistente, getInfoAsync que lanca, info sem
+  // modificationTime -- significam "nao consegui ler a pasta", nao "faz
+  // muito tempo que nao sincroniza". Mostrar "Vault desatualizado" ali
+  // manda a pessoa esperar sincronizacao quando a acao correta e
+  // reconceder permissao ou trocar de pasta -- os dois botoes que estao
+  // logo abaixo, nesta mesma tela.
+  //
+  // O cenario nao e hipotetico: apagar ou mover a pasta pelo gerenciador
+  // de arquivos entre sessoes e o que o VaultBootGate ja trata no boot.
+  if (status.cor === 'vermelho' && status.ultimaModificacao === null) {
+    return (
+      <CardStatus
+        cor="vermelho"
+        titulo="Não foi possível ler a pasta do Vault."
+        subtitulo="Reconceda a permissão ou escolha a pasta de novo abaixo."
+        accessibilityLabel="card status sync inacessivel"
+      />
+    );
+  }
+
+  return (
+    <CardStatus
+      cor={status.cor}
+      titulo={TITULO_POR_COR[status.cor]}
+      subtitulo={
+        status.conflito
+          ? 'Há arquivos em .stversions. Verifique o Syncthing.'
+          : descreverDelta(status.ultimaModificacao)
+      }
+      accessibilityLabel={`card status sync ${status.cor}`}
+    />
+  );
+}
+
+// Titulo por cor, no contrato do cabecalho de syncStatus.ts: verde =
+// mtime < 30min, amarelo = 30min a 6h, vermelho = > 6h ou pasta
+// inacessivel ou .stversions com arquivos.
+const TITULO_POR_COR: Record<'verde' | 'amarelo' | 'vermelho', string> = {
+  verde: 'Vault atualizado.',
+  amarelo: 'Vault pode estar atrasado.',
+  vermelho: 'Vault desatualizado.',
+};
 
 interface BlocoConfirmacaoTrocaProps {
   ocupado: boolean;

@@ -14,9 +14,19 @@
 // retornado vai direto para <Text>. Comentarios sem acento (convencao
 // shell/CI).
 
-const UM_MIN_MS = 60 * 1000;
-const UMA_HORA_MS = 60 * UM_MIN_MS;
-const UM_DIA_MS = 24 * UMA_HORA_MS;
+// AUDIT-P2-7-SYNCSTATUS-M15 (2026-09-05): estas constantes deixaram de
+// ser privadas. Sao os cortes visuais compartilhados entre o card de
+// status de sync do Vault (syncStatus.descreverDelta / classificar) e o
+// texto de ultima sincronizacao das integracoes
+// (IntegracoesScreen.textoUltimaSync). Os dois textos precisam concordar
+// visualmente, mas as copies continuam distintas de proposito
+// ("Atualizado" para o Vault, "Sincronizado" para integracao):
+// consolidamos os numeros, nao as frases.
+export const UM_MIN_MS = 60 * 1000;
+export const UMA_HORA_MS = 60 * UM_MIN_MS;
+export const UM_DIA_MS = 24 * UMA_HORA_MS;
+export const TRINTA_MIN_MS = 30 * UM_MIN_MS;
+export const SEIS_HORAS_MS = 6 * UMA_HORA_MS;
 
 // Converte um delta em milissegundos numa frase relativa PT-BR sem
 // prefixo. Thresholds:

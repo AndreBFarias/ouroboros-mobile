@@ -37,6 +37,13 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { ScrollView, Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
+  SEIS_HORAS_MS,
+  TRINTA_MIN_MS,
+  UMA_HORA_MS,
+  UM_DIA_MS,
+  UM_MIN_MS,
+} from '@/lib/datetime/haRelativo';
+import {
   Activity,
   Calendar,
   Cloud,
@@ -240,29 +247,32 @@ function CardIntegracao({ descritor, onPress }: CardIntegracaoProps) {
   );
 }
 
-// Texto humano para "Última sincronizacao". Calculo manual em
-// thresholds proximos a descreverDelta de syncStatus.ts (60s, 30min,
-// 6h) pra manter consistencia visual com o CardStatus do Settings.
-// Independente daquele util porque a copy ali diz "Atualizado" e
-// aqui dizemos "Sincronizado".
+// Texto humano para "Última sincronizacao". AUDIT-P2-7-SYNCSTATUS-M15
+// (2026-09-05): os cortes (60s, 30min, 6h, 24h) deixaram de ser
+// literais aqui e vem de src/lib/datetime/haRelativo.ts, as mesmas
+// constantes que descreverDelta de syncStatus.ts consome -- os dois
+// textos precisam concordar visualmente e agora nao podem divergir.
+// A independencia preservada e a das FRASES: a copy do Settings diz
+// "Atualizado" (mtime da pasta do Vault) e aqui dizemos "Sincronizado"
+// (epoch de sync da integracao). Sao medidas de coisas diferentes.
 function textoUltimaSync(epochMs: number | null): string {
   if (epochMs === null || epochMs <= 0) return 'Nunca sincronizado.';
   const d = new Date(epochMs);
   const delta = Date.now() - d.getTime();
-  if (delta < 60 * 1000) return 'Sincronizado agora mesmo.';
-  if (delta < 30 * 60 * 1000) {
-    const min = Math.floor(delta / (60 * 1000));
+  if (delta < UM_MIN_MS) return 'Sincronizado agora mesmo.';
+  if (delta < TRINTA_MIN_MS) {
+    const min = Math.floor(delta / UM_MIN_MS);
     return `Sincronizado há ${min} min.`;
   }
-  if (delta < 6 * 60 * 60 * 1000) {
-    const h = Math.floor(delta / (60 * 60 * 1000));
+  if (delta < SEIS_HORAS_MS) {
+    const h = Math.floor(delta / UMA_HORA_MS);
     return `Sincronizado há ${h}h.`;
   }
-  if (delta < 24 * 60 * 60 * 1000) {
-    const h = Math.floor(delta / (60 * 60 * 1000));
+  if (delta < UM_DIA_MS) {
+    const h = Math.floor(delta / UMA_HORA_MS);
     return `Última sincronização há ${h}h.`;
   }
-  const dias = Math.floor(delta / (24 * 60 * 60 * 1000));
+  const dias = Math.floor(delta / UM_DIA_MS);
   if (dias === 1) return 'Última sincronização ontem.';
   return `Última sincronização há ${dias} dias.`;
 }
@@ -663,8 +673,8 @@ export function IntegracoesScreen() {
             paddingBottom: spacing.sm,
           }}
         >
-          Conecte serviços externos para enriquecer o Recap e o
-          acompanhamento de saúde física.
+          Conecte serviços externos para enriquecer o Recap e o acompanhamento
+          de saúde física.
         </Text>
 
         {descritores.map((d) => (
