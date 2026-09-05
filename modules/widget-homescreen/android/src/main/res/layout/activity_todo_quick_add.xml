@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AUDIT-P1-1B: janela de captura rapida do widget Quick To-do.
+     Mesma paleta e mesma tipografia do widget_todo_4x2 para a janela
+     parecer continuacao do widget, nao outra tela.
+     Comentarios sem acentuacao. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:background="@color/dracula_bg"
+  android:padding="20dp">
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textColor="@color/dracula_muted"
+    android:fontFamily="monospace"
+    android:textSize="12sp"
+    android:text="@string/widget_todo_dialog_titulo" />
+
+  <!-- maxLength espelha o cap de 200 caracteres de appendEntry: melhor a
+       pessoa ver o limite do que o titulo ser cortado depois, em silencio. -->
+  <EditText
+    android:id="@+id/todo_quick_add_campo"
+    android:layout_width="match_parent"
+    android:layout_height="52dp"
+    android:layout_marginTop="12dp"
+    android:background="@color/dracula_bg_elev"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:gravity="center_vertical"
+    android:textColor="@color/dracula_fg"
+    android:textColorHint="@color/dracula_muted"
+    android:fontFamily="monospace"
+    android:textSize="15sp"
+    android:inputType="textCapSentences"
+    android:imeOptions="actionDone"
+    android:maxLength="200"
+    android:freezesText="true"
+    android:hint="@string/widget_todo_dialog_campo_hint">
+    <requestFocus />
+  </EditText>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="end"
+    android:layout_marginTop="18dp">
+
+    <Button
+      android:id="@+id/todo_quick_add_cancelar"
+      android:layout_width="wrap_content"
+      android:layout_height="52dp"
+      android:minWidth="112dp"
+      android:background="@color/dracula_bg_elev"
+      android:textColor="@color/dracula_fg"
+      android:fontFamily="monospace"
+      android:textSize="14sp"
+      android:textAllCaps="false"
+      android:text="@string/widget_todo_dialog_cancelar" />
+
+    <Button
+      android:id="@+id/todo_quick_add_confirmar"
+      android:layout_width="wrap_content"
+      android:layout_height="52dp"
+      android:minWidth="112dp"
+      android:layout_marginStart="10dp"
+      android:background="@color/dracula_purple"
+      android:textColor="@color/dracula_bg"
+      android:fontFamily="monospace"
+      android:textSize="14sp"
+      android:textAllCaps="false"
+      android:text="@string/widget_todo_dialog_confirmar" />
+  </LinearLayout>
+</LinearLayout>

@@ -1344,8 +1344,8 @@ São **dois** widgets independentes, no mesmo módulo Expo nativo
 
 ### 12.2 Widget Quick To-do — R-WIDG-1 (dreno plugado na AUDIT-P1-1A)
 
-- Widget 4×2 separado, "Ouroboros tarefas": campo de texto para
-  escrever uma tarefa direto da tela inicial mais o **contador de
+- Widget 4×2 separado, "Ouroboros tarefas": um toque abre uma janela
+  sobre a tela inicial para escrever a tarefa, mais o **contador de
   tarefas pendentes**.
 - **Fila de entrada**: o widget roda em processo de
   `BroadcastReceiver` e não tem permissão SAF para escrever no Vault.
@@ -1368,11 +1368,26 @@ São **dois** widgets independentes, no mesmo módulo Expo nativo
 - **Como chegar nela**: Settings → seção "Features opcionais" → linha
   "Widget tarefas" (visível enquanto o toggle "Widget na tela
   inicial" estiver ligado).
-- **Limite conhecido**: o `RemoteInput` do provider Kotlin é
-  construído e ainda não anexado ao `PendingIntent`, então em device
-  real a digitação no widget ainda não chega à fila — escopo da
-  sprint AUDIT-P1-1B. A drenagem já está garantida para tudo que
-  chegue à fila por qualquer caminho.
+- **Captura** (AUDIT-P1-1B, 2026-09-05): tocar no campo ou no botão
+  "+" abre a `TodoQuickAddActivity`, uma janela com tema de diálogo
+  sobre a tela inicial — campo de texto de verdade, "Adicionar" e
+  "Cancelar". Confirmar dispara o broadcast `ACTION_TODO_ADD` para o
+  próprio provider, que anexa a entry na mesma fila de sempre, e a
+  janela fecha. Ela **não** abre o app: roda em tarefa própria, fora
+  da Stack. Tocar fora da janela, "Cancelar" ou texto em branco não
+  gravam nada; o campo aceita até 200 caracteres, o mesmo teto que a
+  fila aplica. O contador do widget soma a fila ainda não drenada, então
+  a tarefa recém-capturada aparece na hora — sem isso, gravar e falhar
+  ficariam idênticos na tela.
+  **Validação Nível C pendente:** o código nativo desta captura não foi
+  compilado nem executado em aparelho na sessão em que foi escrito. O
+  roteiro está no spec `AUDIT-P1-1B`.
+- **Por que uma janela e não um campo dentro do widget**: o
+  `RemoteInput` inline não tem API pública. `RemoteViewsCompat.setRemoteInputs`
+  não existe em nenhuma versão publicada de `androidx.core:core-remoteviews`,
+  e `RemoteViews` também não expõe a assinatura no `android.jar` da
+  API 36. As alternativas eram digitar numa notificação (tira a
+  captura da tela inicial) ou aceitar o widget como somente-contador.
 
 ## 13. Calendário Google — M37.1 (entregue 2026-05-05) + M37.2 (entregue 2026-07-11)
 

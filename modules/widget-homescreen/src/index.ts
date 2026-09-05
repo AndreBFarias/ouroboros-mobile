@@ -3,9 +3,10 @@
 // ambiente sem expo-modules, todas as funcoes sao no-op silenciosos para
 // preservar smoke do Chrome (ADR-0007 zero rede + Nivel A).
 //
-// R-WIDG-1 (2026-05-17): adicionado widget Quick To-do 4x2 com
-// EditText + botao "+" + count de pendentes. Fluxo:
-//   1. Usuario digita texto no widget e tapa "+".
+// R-WIDG-1 (2026-05-17): adicionado widget Quick To-do 4x2 com campo +
+// botao "+" + count de pendentes. Fluxo:
+//   1. Usuario tapa o widget, digita na janela de captura
+//      (TodoQuickAddActivity, AUDIT-P1-1B) e confirma.
 //   2. WidgetProvider grava entry em cacheDir/widget-todo-queue.json.
 //   3. Quando o app abre (boot hook) ou app esta em foreground, JS
 //      chama drenarFilaTodoWidget() que le a queue, cria Tarefa real

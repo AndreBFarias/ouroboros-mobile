@@ -29,18 +29,47 @@
     </receiver>
 
     <!-- R-WIDG-1: widget Quick To-do 4x2. Receiver dedicado para
-         responder ao broadcast ACTION_TODO_ADD com RemoteInput. -->
+         responder ao broadcast ACTION_TODO_ADD, que carrega o titulo da
+         tarefa enviado pela TodoQuickAddActivity (AUDIT-P1-1B). -->
     <receiver
       android:name=".OuroborosTodoWidgetProvider"
       android:exported="true"
       android:label="@string/widget_label_todo">
+      <!-- AUDIT-P1-1B: ACTION_TODO_ADD SAIU deste intent-filter. O
+           receiver precisa de exported=true por causa do APPWIDGET_UPDATE
+           do sistema, mas anunciar a action de captura aqui deixava
+           qualquer app instalado enfileirar tarefa no Vault com um
+           sendBroadcast, e o boot hook converte a fila em Tarefa real.
+           A TodoQuickAddActivity manda intent EXPLICITO
+           (Intent(this, OuroborosTodoWidgetProvider::class.java)), que e
+           entregue sem depender de filtro. Tirar a linha nao fecha o
+           buraco por completo (broadcast explicito para receiver
+           exportado ainda chega), mas remove o anuncio publico e custa
+           zero. -->
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-        <action android:name="expo.modules.widgethomescreen.ACTION_TODO_ADD" />
       </intent-filter>
       <meta-data
         android:name="android.appwidget.provider"
         android:resource="@xml/widget_info_todo_4x2" />
     </receiver>
+
+    <!-- AUDIT-P1-1B: janela de captura do widget Quick To-do.
+         exported=false porque quem dispara e o proprio app, pelo
+         PendingIntent embutido no widget.
+         taskAffinity="" + singleTask: task propria, entao abrir a janela
+         nunca traz a Stack principal do app para a frente
+         e reabrir pelo widget reaproveita a instancia que ja tem o texto
+         digitado, em vez de criar uma vazia.
+         excludeFromRecents: e uma janela de um gesto so, nao uma tela. -->
+    <activity
+      android:name=".TodoQuickAddActivity"
+      android:exported="false"
+      android:excludeFromRecents="true"
+      android:launchMode="singleTask"
+      android:taskAffinity=""
+      android:theme="@style/TemaWidgetTodoQuickAdd"
+      android:windowSoftInputMode="stateVisible|adjustResize"
+      android:label="@string/widget_todo_dialog_titulo" />
   </application>
 </manifest>

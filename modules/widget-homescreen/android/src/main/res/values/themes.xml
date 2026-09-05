@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AUDIT-P1-1B: tema de dialogo da TodoQuickAddActivity.
+     Parent DeviceDefault (nao AppCompat) porque a Activity estende
+     android.app.Activity e o modulo nao declara appcompat, igual ao que
+     a PermissionsRationaleActivity do modulo health-connect ja faz.
+     Comentarios sem acentuacao. -->
+<resources>
+  <style name="TemaWidgetTodoQuickAdd" parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar">
+    <!-- Fundo chapado da paleta do widget, sem a moldura do dialogo. -->
+    <item name="android:windowBackground">@color/dracula_bg</item>
+    <item name="android:windowIsFloating">true</item>
+    <item name="android:backgroundDimEnabled">true</item>
+    <item name="android:windowMinWidthMajor">70%</item>
+    <item name="android:windowMinWidthMinor">92%</item>
+  </style>
+</resources>

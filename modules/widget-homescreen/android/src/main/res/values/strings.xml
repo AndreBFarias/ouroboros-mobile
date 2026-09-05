@@ -22,4 +22,10 @@
     <item quantity="one">%1$d pendente</item>
     <item quantity="other">%1$d pendentes</item>
   </plurals>
+  <!-- AUDIT-P1-1B: janela de captura rapida aberta pelo toque no widget. -->
+  <string name="widget_todo_dialog_titulo">Nova tarefa</string>
+  <string name="widget_todo_dialog_campo_hint">Escreva a tarefa</string>
+  <string name="widget_todo_dialog_confirmar">Adicionar</string>
+  <string name="widget_todo_dialog_cancelar">Cancelar</string>
+  <string name="widget_todo_dialog_vazio">Escreva a tarefa antes de adicionar.</string>
 </resources>

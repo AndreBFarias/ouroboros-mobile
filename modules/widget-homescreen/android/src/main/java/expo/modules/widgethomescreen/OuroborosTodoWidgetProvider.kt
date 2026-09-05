@@ -1,21 +1,24 @@
 package expo.modules.widgethomescreen
 
-// AppWidgetProvider do widget Quick To-do (R-WIDG-1, 2026-05-17).
+// AppWidgetProvider do widget Quick To-do (R-WIDG-1, 2026-05-17;
+// captura reescrita na AUDIT-P1-1B, 2026-09-05).
 // Layout 4x2 com:
-//   - EditText para o usuario digitar titulo da tarefa.
-//   - Botao "+" que envia broadcast ACTION_TODO_ADD com texto via
-//     RemoteInput (modal sutil; o EditText em RemoteViews nao
-//     responde a input fora de RemoteInput).
+//   - TextView com cara de campo, que abre a janela de captura ao toque.
+//   - Botao "+" que abre a mesma janela.
 //   - TextView com count de tarefas pendentes (lido de
 //     cacheDir/widget-todo-count.json gravado pelo JS).
 //
 // Fluxo:
-//   1. Usuario tapa botao "+" -> Android abre input nativo (RemoteInput
-//      fill-in).
-//   2. Usuario confirma -> Android envia broadcast ACTION_TODO_ADD para
-//      este provider com texto no extra ACTION_TODO_INPUT_KEY.
+//   1. Usuario tapa o campo ou o "+" -> PendingIntent.getActivity abre a
+//      TodoQuickAddActivity, uma janela com tema de dialogo sobre a tela
+//      inicial. Nao ha campo de digitacao dentro do widget: RemoteInput
+//      inline nao tem API publica (ver TodoQuickAddActivity).
+//   2. Usuario confirma na janela -> ela envia broadcast ACTION_TODO_ADD
+//      para este provider com o titulo em EXTRA_TODO_TITULO.
 //   3. onReceive le o texto, anexa entry em cacheDir/widget-todo-queue.json
-//      e renderiza widget com count atualizado (ainda nao processado).
+//      e re-renderiza. O count exibido soma o que o JS ja drenou com o
+//      tamanho da fila nativa, entao a captura aparece na hora -- sem
+//      isso, sucesso e falha ficariam identicos na tela.
 //   4. Quando o app abre (boot hook sincronizarWidgetTodoBootHook), JS
 //      le a fila e cria Tarefa real no Vault.
 //
@@ -60,7 +63,12 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
   override fun onReceive(context: Context, intent: Intent) {
     super.onReceive(context, intent)
     if (intent.action == ACTION_TODO_ADD) {
-      val titulo = extractRemoteInputText(intent)
+      // Dois caminhos, uma fila so. EXTRA_TODO_TITULO e o caminho vivo,
+      // vindo da TodoQuickAddActivity. O RemoteInput fica como fallback
+      // para nao quebrar um PendingIntent antigo que ainda esteja
+      // pendurado num widget do sistema.
+      val titulo = intent.getStringExtra(EXTRA_TODO_TITULO)
+        ?: extractRemoteInputText(intent)
       if (!titulo.isNullOrBlank()) {
         appendEntry(context, titulo.trim())
         refreshAllInstances(context)
@@ -71,9 +79,9 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
   private fun buildViews(context: Context, count: Int): RemoteViews {
     val views = RemoteViews(context.packageName, R.layout.widget_todo_4x2)
 
-    // Campo "input" do widget: TextView que abre input nativo
-    // (RemoteInput) quando tocado. Botao "+" reusa o mesmo
-    // PendingIntent para ergonomia: tocar em qualquer lugar abre input.
+    // Campo "input" do widget: TextView que abre a janela de captura
+    // quando tocado. Botao "+" reusa o mesmo PendingIntent para
+    // ergonomia: tocar em qualquer lugar abre a janela.
     val pi = buildAddPendingIntent(context)
     views.setOnClickPendingIntent(R.id.widget_todo_input, pi)
     views.setOnClickPendingIntent(R.id.widget_todo_btn_add, pi)
@@ -94,53 +102,39 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
     return views
   }
 
-  // Constroi PendingIntent que dispara ACTION_TODO_ADD com RemoteInput.
-  // Caller adiciona resultado em extra ACTION_TODO_INPUT_KEY via
-  // RemoteInput.addResultsToIntent.
+  // Constroi o PendingIntent do toque no widget: abre a
+  // TodoQuickAddActivity, a janela onde a pessoa digita de fato.
+  //
+  // Historico (AUDIT-P1-1B, 2026-09-05): aqui existia um broadcast com um
+  // RemoteInput construido e descartado, e um TODO mandando o proximo
+  // leitor usar RemoteViewsCompat.setRemoteInputs. Essa API nao existe --
+  // nem em androidx.core:core-remoteviews (para em 1.1.0), nem em
+  // RemoteViews no android.jar da API 36. Sem caminho publico de
+  // RemoteInput inline, o dono escolheu a saida (B): activity com tema de
+  // dialogo, gravando na mesma fila. A (A), direct-reply por notificacao,
+  // tiraria a digitacao da tela inicial.
+  //
+  // FLAG_IMMUTABLE: nada precisa ser preenchido por quem dispara -- o
+  // texto so passa a existir depois que a Activity roda.
   private fun buildAddPendingIntent(context: Context): PendingIntent {
-    val intent = Intent(context, OuroborosTodoWidgetProvider::class.java).apply {
-      action = ACTION_TODO_ADD
+    val intent = Intent(context, TodoQuickAddActivity::class.java).apply {
+      // Obrigatorio para iniciar Activity fora de um contexto de
+      // Activity. A task e propria (taskAffinity="" no manifest), entao
+      // isso nao traz a Stack do app para a frente.
+      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    val remoteInput = RemoteInput.Builder(ACTION_TODO_INPUT_KEY)
-      .setLabel(context.getString(R.string.widget_todo_input_hint))
-      .build()
-    val pi = PendingIntent.getBroadcast(
+    return PendingIntent.getActivity(
       context,
       0,
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
-    // TODO(R-WIDG-FIX-REMOTEINPUTS): a chamada original
-    //   RemoteViews(...).setRemoteInputs(R.id.widget_todo_btn_add, arrayOf(remoteInput))
-    // era dead code -- o RemoteViews era descartado, nunca anexado ao
-    // views real de updateAppWidget.
-    //
-    // AUDIT-P1-1B (2026-09-05) CORRIGE A PREMISSA QUE ESTAVA AQUI. O
-    // texto anterior dizia "precisa RemoteViewsCompat.setRemoteInputs",
-    // mandando o proximo leitor atras de uma API que NAO EXISTE.
-    // Verificado:
-    //   - androidx.core:core-remoteviews para em 1.1.0 (group-index.xml
-    //     do maven do Google), e `javap androidx.core.widget.RemoteViewsCompat`
-    //     no classes.jar desse AAR nao lista nenhum setRemoteInputs;
-    //   - `javap android.widget.RemoteViews` do android.jar da API 36
-    //     tambem nao expoe a assinatura.
-    // Ou seja: nao ha caminho publico de RemoteInput direto no widget,
-    // em nenhum nivel de SDK. Adicionar core-remoteviews so engordaria
-    // o APK sem entregar a API.
-    //
-    // A divida segue aberta e agora DEPENDE DE DECISAO DO DONO entre
-    // tres saidas, todas com custo de UX: (A) direct-reply via
-    // Notification.Action.addRemoteInput -- o unico caminho publico
-    // real, mas a digitacao sai da tela inicial e vai para a
-    // notificacao; (B) activity dialog-themed disparada pelo toque, com
-    // EditText de verdade, gravando na mesma fila; (C) assumir o widget
-    // como somente-contador e trocar o alvo do toque.
-    //
-    // Efeito funcional hoje: a digitacao no widget nao chega a fila via
-    // RemoteInput.getResultsFromIntent.
-    return pi
   }
 
+  // Caminho antigo, mantido como fallback: le o texto de um RemoteInput
+  // anexado ao intent. Nenhum PendingIntent novo carrega RemoteInput
+  // desde a AUDIT-P1-1B, mas um widget ja colocado na tela inicial pode
+  // ter um intent velho pendurado ate o proximo update.
   private fun extractRemoteInputText(intent: Intent): String? {
     val bundle: Bundle = RemoteInput.getResultsFromIntent(intent) ?: return null
     return bundle.getCharSequence(ACTION_TODO_INPUT_KEY)?.toString()
@@ -176,14 +170,44 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
     }
   }
 
-  // Le count pendente do cache gravado pelo JS. Ausente -> 0.
-  // Malformado -> 0 (defesa em profundidade).
+  // Le count pendente: o que o JS ja drenou MAIS o que ainda esta na fila
+  // nativa.
+  //
+  // AUDIT-P1-1B: antes somava so' o COUNT_FILENAME, gravado pelo JS em
+  // atualizarCountTodo -- que so' roda com o app aberto. Enquanto o
+  // caminho de escrita nativo estava morto (o RemoteInput nunca entregava
+  // texto) isso nao era observavel. Com a janela de captura funcionando,
+  // viraria o primeiro defeito visivel: a pessoa digita, confirma, a
+  // janela fecha e o widget continua exibindo o MESMO numero ate abrir o
+  // app. Sucesso e falha ficariam indistinguiveis na tela.
+  //
+  // Somar a fila resolve sem duplicar contagem: drenarFilaTodoWidget
+  // esvazia o arquivo da fila no mesmo boot em que atualiza o count, entao
+  // uma entry conta de um lado ou do outro, nunca dos dois.
   private fun readPendingCount(context: Context): Int {
+    return readCountDoJs(context) + readTamanhoFila(context)
+  }
+
+  // Count gravado pelo JS. Ausente -> 0. Malformado -> 0 (defesa em
+  // profundidade: cache cheio ou escrita truncada nao pode crashar o
+  // widget).
+  private fun readCountDoJs(context: Context): Int {
     val file = File(context.cacheDir, COUNT_FILENAME)
     if (!file.exists()) return 0
     return try {
       val raw = file.readText(Charsets.UTF_8)
       JSONObject(raw).optInt("count", 0)
+    } catch (_: Throwable) {
+      0
+    }
+  }
+
+  // Entries capturadas pelo widget e ainda nao drenadas pelo app.
+  private fun readTamanhoFila(context: Context): Int {
+    val file = File(context.cacheDir, FILA_FILENAME)
+    if (!file.exists()) return 0
+    return try {
+      JSONArray(file.readText(Charsets.UTF_8)).length()
     } catch (_: Throwable) {
       0
     }
@@ -207,6 +231,8 @@ class OuroborosTodoWidgetProvider : AppWidgetProvider() {
   companion object {
     const val ACTION_TODO_ADD = "expo.modules.widgethomescreen.ACTION_TODO_ADD"
     const val ACTION_TODO_INPUT_KEY = "todo_input"
+    // AUDIT-P1-1B: titulo enviado pela TodoQuickAddActivity.
+    const val EXTRA_TODO_TITULO = "expo.modules.widgethomescreen.EXTRA_TODO_TITULO"
     const val FILA_FILENAME = "widget-todo-queue.json"
     const val COUNT_FILENAME = "widget-todo-count.json"
   }

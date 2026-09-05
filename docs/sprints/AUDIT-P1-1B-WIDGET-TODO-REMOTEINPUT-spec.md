@@ -28,6 +28,11 @@ BLOQUEIO:   (2026-09-05) **A premissa desta DECISÃO é falsa — a API não
             do dono** entre as três saídas listadas em "Saídas possíveis"
             abaixo. Nenhuma linha de produção foi alterada além da
             correção do comentário que mandava buscar a API inexistente.
+DESBLOQUEIO: (dono, 2026-09-05) escolhida a saída **(B) activity
+            dialog-themed**. Implementada no mesmo dia — ver "Resultado"
+            no fim deste arquivo. Falta a validação Nível C no aparelho:
+            nada de Kotlin foi compilado ou executado na sessão de
+            implementação.
 ```
 
 ## Saídas possíveis (2026-09-05) — decisão do dono
@@ -276,14 +281,29 @@ npm test -- sincronizarWidget          # 7 casos verdes (formato da fila intacto
 adb reverse tcp:8081 tcp:8081
 npx expo start --dev-client
 
-#    a) adicionar o widget "Ouroboros tarefas" na tela inicial
+#    a) REMOVER da tela inicial o widget "Ouroboros tarefas" que ja
+#       estiver la, e adiciona-lo de novo. ESTE PASSO NAO E' OPCIONAL:
+#       um widget ja posicionado guarda o PendingIntent ANTIGO (o
+#       broadcast que nunca entregava texto) ate o proximo onUpdate, e
+#       updatePeriodMillis e' 0. Sem re-adicionar, o toque nao faz nada
+#       e a leitura obvia e' "o fix falhou" -- falso negativo garantido.
 #    b) tocar no campo, digitar "pessoa_a comprar pao", confirmar
+#    b2) o contador do widget deve subir NA HORA, antes de abrir o app
+#        (o count soma a fila ainda nao drenada). Se nao subir, o
+#        broadcast nao chegou -- e o defeito esta antes da fila.
 #    c) a fila deve ganhar a entry:
 adb shell run-as com.ouroboros.mobile cat cache/widget-todo-queue.json
 #       -> [{"titulo":"pessoa_a comprar pao","criadoEmMs":<epoch>}]
 #    d) abrir o app; o boot hook da AUDIT-P1-1A drena a fila:
 adb shell run-as com.ouroboros.mobile cat cache/widget-todo-queue.json
 #       -> []  (fila zerada por limparFilaTodoWidget)
+#    d2) a janela NAO pode ter aberto o app: com a janela na tela,
+#        `adb shell dumpsys activity activities | grep -A2 mResumedActivity`
+#        deve mostrar TodoQuickAddActivity, e a Stack principal do app
+#        deve seguir fora do topo.
+#    d3) sair pelo Home com texto digitado e tocar o widget de novo:
+#        o campo deve vir VAZIO (onStop finaliza a janela; rascunho nao
+#        ressuscita).
 #    e) a tarefa aparece em /todo e o contador do widget sobe:
 adb shell run-as com.ouroboros.mobile cat cache/widget-todo-count.json
 adb exec-out screencap -p > /tmp/widget-todo-depois.png
@@ -298,3 +318,113 @@ Evidência obrigatória no PR: os dois `cat` da fila (antes/depois do drain), o
 ```
 fix: audit-p1-1b anexa remoteinput ao pendingintent do widget de tarefas
 ```
+
+---
+
+## Resultado (executada 2026-09-05 — saída (B), decidida pelo dono)
+
+O dono escolheu a **saída (B), activity dialog-themed**. As saídas (A)
+notificação e (C) somente-contador ficam descartadas. A mensagem de commit
+do bloco acima está obsoleta pela mesma razão que a `DECISAO:` de
+2026-07-29 estava: não há `RemoteInput` a anexar. A mensagem real é
+`fix: audit-p1-1b troca remoteinput inexistente por activity de captura no widget`.
+
+### 1. A janela de captura
+
+`TodoQuickAddActivity` (novo, mesmo pacote do provider). Estende
+`android.app.Activity` — não `AppCompatActivity` —, pelo mesmo motivo que a
+`PermissionsRationaleActivity` do módulo `health-connect`: o módulo não
+declara `appcompat` e não precisa dele. Nenhuma dependência nova no
+`build.gradle`.
+
+Layout `res/layout/activity_todo_quick_add.xml` e tema
+`TemaWidgetTodoQuickAdd` (`res/values/themes.xml`, parent
+`@android:style/Theme.DeviceDefault.Dialog.NoActionBar`) reusam a paleta
+`dracula_*` e a tipografia monoespaçada do `widget_todo_4x2`, para a janela
+parecer continuação do widget.
+
+Strings novas em `res/values/strings.xml`, PT-BR Sentence case:
+"Nova tarefa", "Escreva a tarefa", "Adicionar", "Cancelar" e
+"Escreva a tarefa antes de adicionar." Os dois botões levam
+`android:textAllCaps="false"` — sem isso o tema `DeviceDefault` renderizaria
+"ADICIONAR" e "CANCELAR", quebrando a regra de Sentence case.
+
+### 2. A fila continua sendo uma só
+
+A Activity **não** grava na fila. Ao confirmar, ela envia o broadcast
+`ACTION_TODO_ADD` para o próprio `OuroborosTodoWidgetProvider` com o título
+em `EXTRA_TODO_TITULO`; quem escreve segue sendo `appendEntry`, no provider,
+como antes. A Activity não conhece o nome do arquivo nem o formato
+`{ titulo, criadoEmMs }`. O contrato do escopo 3 do spec fica intacto por
+construção, não por disciplina.
+
+`onReceive` passou a ler `EXTRA_TODO_TITULO` **e**, como fallback, o
+`RemoteInput` de antes:
+
+```kotlin
+val titulo = intent.getStringExtra(EXTRA_TODO_TITULO)
+  ?: extractRemoteInputText(intent)
+```
+
+O fallback existe porque um widget já posicionado na tela inicial pode ter um
+`PendingIntent` antigo pendurado até o primeiro `onUpdate` depois da
+atualização.
+
+### 3. Não abre a Stack do app
+
+`android:taskAffinity=""` + `android:launchMode="singleTask"` +
+`android:excludeFromRecents="true"`, com `FLAG_ACTIVITY_NEW_TASK` no intent.
+A janela sobe numa tarefa própria: abrir a captura nunca traz a tarefa
+principal do app para frente. O `singleTask` também resolve o caso de
+reabrir pelo widget — reaproveita a instância que já tem o texto digitado,
+em vez de criar uma vazia por cima.
+
+`android:exported="false"`: quem dispara é o próprio app, pelo
+`PendingIntent` embutido no widget, então a identidade que inicia a Activity
+é a do app.
+
+### 4. Os quatro cuidados pedidos
+
+- **`FLAG_IMMUTABLE`**: o `PendingIntent` passou de
+  `getBroadcast(..., FLAG_UPDATE_CURRENT or FLAG_MUTABLE)` para
+  `getActivity(..., FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)`. A
+  mutabilidade existia só para o `RemoteInput` preencher o fill-in; sem
+  ele, nada precisa ser preenchido por quem dispara.
+- **Rotação e morte de processo**: o `EditText` tem `android:id` e
+  `android:freezesText="true"`, então o texto entra no
+  `onSaveInstanceState` automático da view hierarchy — que é o mecanismo
+  documentado para as duas situações. Não há restauração manual: reescrever
+  o campo no `onCreate` sobrescreveria o que o sistema já devolveu.
+- **Toque fora cancela**: `setFinishOnTouchOutside(true)` explícito no
+  `onCreate`, sem depender do default herdado do tema. Botão físico "voltar"
+  e "Cancelar" seguem o mesmo caminho — `finish()` sem broadcast.
+- **Vazio não enfileira**: `campo.text.trim().isEmpty()` mostra um Toast
+  ("Escreva a tarefa antes de adicionar.") e mantém a janela aberta. Fechar
+  em silêncio pareceria que a tarefa foi gravada.
+
+Extra não pedido, de uma linha: `android:maxLength="200"` no campo, espelhando
+o `titulo.take(200)` de `appendEntry`. Sem isso o título seria cortado depois,
+sem a pessoa ver.
+
+### 5. Prova
+
+Rodados nesta sessão: `npx tsc --noEmit` e `npx eslint app/ src/`, ambos
+exit 0 — cobrem só o comentário de cabeçalho ajustado em
+`modules/widget-homescreen/src/index.ts`, que é a única linha TS tocada.
+`rg "R-WIDG-FIX-REMOTEINPUTS|Removido temporariamente" modules/` sai vazio.
+
+**Sem prova de runtime.** Kotlin, XML de layout, tema e manifest **não foram
+compilados nem executados**: a sessão não tinha device nem toolchain Android
+disponível. Continua valendo, na íntegra, o "Protocolo obrigatório de
+validação (código nativo)" acima — incluindo o rebuild do dev-client, que é
+obrigatório porque o módulo nativo mudou. O passo 1 do proof-of-work
+(`gradlew :widget-homescreen:assembleDebug`) é o primeiro a rodar quando
+houver aparelho, e o roteiro do item 4 (Nível C) é o que fecha a sprint.
+
+### 6. O que mudou no proof-of-work
+
+O passo 1 do proof-of-work acima ("restaurar a chamada direta
+`views.setRemoteInputs`") **não se aplica mais**: a decisão do dono já
+substituiu a premissa. O que permanece: compilar o módulo, os checks de
+resíduo, o `npx tsc --noEmit`, o `npm test -- sincronizarWidget` e a
+validação Nível C.
