@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { colors } from '@/theme/tokens';
 
 // Subset suportado de autoCapitalize. O TextInput nativo aceita os 4
@@ -42,6 +44,7 @@ export function Input({
   keyboardType = 'default',
   maxLength,
 }: InputProps) {
+  const reduzirMovimento = useReduceMotion();
   const [focused, setFocused] = useState(false);
   const a11y = accessibilityLabel ?? label ?? placeholder ?? 'campo de texto';
 
@@ -54,7 +57,7 @@ export function Input({
         animate={{
           borderColor: focused ? colors.purple : colors.bgElev,
         }}
-        transition={springs.subtle}
+        transition={transicaoMovimento(reduzirMovimento, springs.subtle)}
         className="bg-bg-alt rounded-[10px]"
         style={{ borderWidth: 1 }}
       >

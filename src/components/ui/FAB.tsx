@@ -15,6 +15,8 @@ import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus } from '@/lib/icons';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { useSafeBottomMargin } from '@/components/chrome/safeBottom';
@@ -39,6 +41,7 @@ export function FAB({
   disabled = false,
   background = colors.purple,
 }: FABProps) {
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const insets = useSafeAreaInsets();
   // Q22.D: bottom canonico igual ao FABMenu e MenuCapturaVerde
@@ -80,7 +83,7 @@ export function FAB({
     >
       <MotiView
         animate={{ scale: pressed ? 0.97 : 1 }}
-        transition={springs.snappy}
+        transition={transicaoMovimento(reduzirMovimento, springs.snappy)}
         style={{
           width: SIZE,
           height: SIZE,

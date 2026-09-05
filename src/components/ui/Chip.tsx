@@ -6,6 +6,8 @@ import { ReactNode, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors, hitSlop as hitSlopToken } from '@/theme/tokens';
 import { hexToRgba } from '@/lib/a11y/contraste';
@@ -51,6 +53,7 @@ export function Chip({
   accent = 'purple',
   disabled = false,
 }: ChipProps) {
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const accentHex = ACCENT_HEX[accent];
 
@@ -80,7 +83,7 @@ export function Chip({
         animate={{
           scale: pressed ? 0.97 : 1,
         }}
-        transition={springs.subtle}
+        transition={transicaoMovimento(reduzirMovimento, springs.subtle)}
         style={{
           borderRadius: 20,
           borderWidth: 1,

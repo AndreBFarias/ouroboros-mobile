@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { colors } from '@/theme/tokens';
 
 export interface TextareaProps {
@@ -25,6 +27,7 @@ export function Textarea({
   maxHeight = 240,
   accessibilityLabel,
 }: TextareaProps) {
+  const reduzirMovimento = useReduceMotion();
   const [focused, setFocused] = useState(false);
   const [contentHeight, setContentHeight] = useState(minHeight);
   const a11y =
@@ -41,7 +44,7 @@ export function Textarea({
         animate={{
           borderColor: focused ? colors.purple : colors.bgElev,
         }}
-        transition={springs.subtle}
+        transition={transicaoMovimento(reduzirMovimento, springs.subtle)}
         className="bg-bg-alt rounded-[10px]"
         style={{ borderWidth: 1 }}
       >

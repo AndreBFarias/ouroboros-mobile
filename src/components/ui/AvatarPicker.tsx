@@ -12,6 +12,8 @@ import { Camera } from '@/lib/icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
 import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
@@ -29,6 +31,7 @@ interface AvatarPickerProps {
 export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
   const fotoAtual = usePessoa((s) => s.fotos[pessoa]);
   const setFoto = usePessoa((s) => s.setFoto);
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const toast = useOptionalToast();
@@ -94,7 +97,7 @@ export function AvatarPicker({ pessoa, size = 96 }: AvatarPickerProps) {
       >
         <MotiView
           animate={{ scale: pressed ? 0.97 : 1 }}
-          transition={springs.snappy}
+          transition={transicaoMovimento(reduzirMovimento, springs.snappy)}
         >
           {fotoAtual ? (
             <PersonAvatarBig pessoa={pessoa} photoUri={fotoAtual} size={size} />

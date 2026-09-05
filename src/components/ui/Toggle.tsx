@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
 
@@ -32,6 +34,7 @@ export function Toggle({
   disabled = false,
   accessibilityLabel,
 }: ToggleProps) {
+  const reduzirMovimento = useReduceMotion();
   const [dragging, setDragging] = useState(false);
   const startValue = useRef(value);
 
@@ -86,7 +89,7 @@ export function Toggle({
       >
         <MotiView
           animate={{ backgroundColor: value ? colors.purple : colors.bgElev }}
-          transition={springs.subtle}
+          transition={transicaoMovimento(reduzirMovimento, springs.subtle)}
           style={{
             width: TRACK_W,
             height: TRACK_H,
@@ -99,7 +102,7 @@ export function Toggle({
               translateX: value ? TRAVEL : 0,
               backgroundColor: value ? colors.fg : colors.muted,
             }}
-            transition={springs.default}
+            transition={transicaoMovimento(reduzirMovimento, springs.default)}
             style={{
               width: THUMB,
               height: THUMB,

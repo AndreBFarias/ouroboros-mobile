@@ -5,6 +5,8 @@ import { ReactNode, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 
 export type CardVariant = 'default' | 'active';
@@ -22,6 +24,7 @@ export function Card({
   onPress,
   accessibilityLabel,
 }: CardProps) {
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const borderClass =
     variant === 'active' ? 'border-[1.5px] border-purple' : '';
@@ -29,7 +32,7 @@ export function Card({
   const inner = (
     <MotiView
       animate={{ scale: pressed ? 0.99 : 1 }}
-      transition={springs.snappy}
+      transition={transicaoMovimento(reduzirMovimento, springs.snappy)}
       className={`bg-bg-alt rounded-xl p-4 ${borderClass}`}
     >
       {children}

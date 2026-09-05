@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { Image, Pressable, Text } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import type { PessoaId } from '@/lib/schemas/pessoa';
 import { inicialDe, corDe } from '@/config/pessoas.config';
@@ -35,6 +37,7 @@ export function PersonAvatar({
   size = 'md',
   photoUri,
 }: PersonAvatarProps) {
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const px = SIZE_PX[size];
 
@@ -57,7 +60,7 @@ export function PersonAvatar({
     >
       <MotiView
         animate={{ scale: pressed ? 0.96 : 1 }}
-        transition={springs.snappy}
+        transition={transicaoMovimento(reduzirMovimento, springs.snappy)}
         style={{
           width: px,
           height: px,

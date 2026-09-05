@@ -12,6 +12,8 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, Text } from 'react-native';
 import { MotiView } from 'moti';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
 
@@ -80,6 +82,7 @@ export function Button({
   accessibilityLabel,
   fullWidth = false,
 }: ButtonProps) {
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const v = VARIANT_CLASSES[variant];
   // Prioriza prop explicita; se ausente e label e string, deriva.
@@ -107,7 +110,7 @@ export function Button({
     >
       <MotiView
         animate={{ scale: pressed ? 0.97 : 1 }}
-        transition={springs.snappy}
+        transition={transicaoMovimento(reduzirMovimento, springs.snappy)}
         className={`${v.bg} rounded-xl py-4 items-center justify-center`}
         style={{
           minHeight: 56,

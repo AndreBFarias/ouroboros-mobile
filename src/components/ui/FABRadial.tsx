@@ -24,6 +24,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Camera, Dumbbell, Heart, Plus, Trophy, Zap } from '@/lib/icons';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
 
@@ -126,6 +128,7 @@ export function FABRadial({
   open: openProp,
   onOpenChange,
 }: FABRadialProps) {
+  const reduzirMovimento = useReduceMotion();
   const [openInternal, setOpenInternal] = useState(false);
   const open = openProp ?? openInternal;
 
@@ -161,7 +164,7 @@ export function FABRadial({
       {/* overlay escuro tap-to-close */}
       <MotiView
         animate={{ opacity: open ? 0.5 : 0 }}
-        transition={springs.default}
+        transition={transicaoMovimento(reduzirMovimento, springs.default)}
         pointerEvents={open ? 'auto' : 'none'}
         style={{
           position: 'absolute',
@@ -193,6 +196,7 @@ export function FABRadial({
       >
         {ACTIONS.map((action, idx) => (
           <ActionRadial
+            reduzirMovimento={reduzirMovimento}
             key={action.key}
             action={action}
             idx={idx}
@@ -213,7 +217,7 @@ export function FABRadial({
           bottom: spacing.xl,
         }}
       >
-        <FabPrincipalRotate open={open} />
+        <FabPrincipalRotate open={open} reduzirMovimento={reduzirMovimento} />
       </Pressable>
     </View>
   );
@@ -229,9 +233,20 @@ interface ActionRadialProps {
   idx: number;
   open: boolean;
   onSelect: (key: FABRadialKey) => void;
+  // AUDIT-P4-4: a preferencia desce do pai. Este e' o movimento
+  // DOMINANTE do componente -- 6 acoes voando em arco com stagger --,
+  // entao guardar so o fade do overlay deixaria "Reduzir movimento"
+  // praticamente sem efeito aqui.
+  reduzirMovimento: boolean;
 }
 
-function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
+function ActionRadial({
+  action,
+  idx,
+  open,
+  onSelect,
+  reduzirMovimento,
+}: ActionRadialProps) {
   const { dx, dy } = offsetFor(action.angleDeg);
 
   const opacity = useSharedValue(0);
@@ -240,6 +255,17 @@ function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
   const scale = useSharedValue(0.4);
 
   useEffect(() => {
+    // AUDIT-P4-4: com a preferencia ligada as acoes assumem a posicao
+    // final de imediato -- sem stagger e sem mola. O leque continua
+    // aparecendo e sumindo (a informacao nao se perde), so' deixa de
+    // voar em arco.
+    if (reduzirMovimento) {
+      opacity.value = open ? 1 : 0;
+      translateX.value = open ? dx : 0;
+      translateY.value = open ? dy : 0;
+      scale.value = open ? 1 : 0.4;
+      return;
+    }
     const cfg = { damping: 12, stiffness: 180 };
     if (open) {
       const d = idx * 60;
@@ -253,7 +279,17 @@ function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
       translateY.value = withSpring(0, cfg);
       scale.value = withSpring(0.4, cfg);
     }
-  }, [open, idx, dx, dy, opacity, translateX, translateY, scale]);
+  }, [
+    open,
+    idx,
+    dx,
+    dy,
+    opacity,
+    translateX,
+    translateY,
+    scale,
+    reduzirMovimento,
+  ]);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -347,15 +383,27 @@ function ActionRadial({ action, idx, open, onSelect }: ActionRadialProps) {
 // Rotate como string e' o caso classico A28 que crashava no New Arch
 // com moti+Reanimated 4. Reanimated puro evita ao gerar string apenas
 // no useAnimatedStyle (worklet, pre-formado pelo runtime).
-function FabPrincipalRotate({ open }: { open: boolean }) {
+function FabPrincipalRotate({
+  open,
+  reduzirMovimento,
+}: {
+  open: boolean;
+  reduzirMovimento: boolean;
+}) {
   const rotation = useSharedValue(0);
 
   useEffect(() => {
+    // AUDIT-P4-4: o giro de 45 graus do icone tambem responde a
+    // preferencia -- vira troca de estado, sem mola.
+    if (reduzirMovimento) {
+      rotation.value = open ? 45 : 0;
+      return;
+    }
     rotation.value = withSpring(open ? 45 : 0, {
       damping: 18,
       stiffness: 200,
     });
-  }, [open, rotation]);
+  }, [open, rotation, reduzirMovimento]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],

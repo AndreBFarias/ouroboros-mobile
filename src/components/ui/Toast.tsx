@@ -19,6 +19,7 @@ import { Text, View } from 'react-native';
 // fadeOut + slide de 20dp.
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warn';
@@ -57,6 +58,7 @@ interface ToastProviderProps {
 }
 
 export function ToastProvider({ children }: ToastProviderProps) {
+  const reduzirMovimento = useReduceMotion();
   const [toast, setToast] = useState<ToastState | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -113,8 +115,18 @@ export function ToastProvider({ children }: ToastProviderProps) {
         {toast && (
           <Animated.View
             key={toast.id}
-            entering={SlideInDown.springify().damping(20).stiffness(250)}
-            exiting={SlideOutDown.duration(180)}
+            // AUDIT-P4-4: com "Reduzir movimento" ligado o toast aparece
+            // e some sem deslizar. `undefined` em entering/exiting é o
+            // que a Reanimated entende por "monte e desmonte direto" —
+            // diferente de omitir a prop no MotiView, aqui a ausência
+            // não cai em nenhuma animação padrão. O conteúdo continua
+            // anunciado pelo accessibilityRole="alert".
+            entering={
+              reduzirMovimento
+                ? undefined
+                : SlideInDown.springify().damping(20).stiffness(250)
+            }
+            exiting={reduzirMovimento ? undefined : SlideOutDown.duration(180)}
             accessibilityRole="alert"
             accessibilityLabel={`toast ${toast.type}`}
             style={{

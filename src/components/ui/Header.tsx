@@ -5,6 +5,8 @@ import { Pressable, Text, View } from 'react-native';
 import { MotiView } from 'moti';
 import { ChevronLeft } from '@/lib/icons';
 import { springs } from '@/lib/motion';
+import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
+import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
 
@@ -15,6 +17,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, onBack, right }: HeaderProps) {
+  const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
 
   const handleBack = () => {
@@ -40,7 +43,7 @@ export function Header({ title, onBack, right }: HeaderProps) {
           >
             <MotiView
               animate={{ scale: pressed ? 0.92 : 1 }}
-              transition={springs.snappy}
+              transition={transicaoMovimento(reduzirMovimento, springs.snappy)}
               style={{ width: 32, height: 32, justifyContent: 'center' }}
             >
               <ChevronLeft size={28} color={colors.fg} strokeWidth={1.5} />
