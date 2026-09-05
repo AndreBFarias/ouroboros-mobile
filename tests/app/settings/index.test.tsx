@@ -13,12 +13,20 @@ jest.mock('expo-router', () => ({
 }));
 
 // expo-constants: versao + extras fake estavel para a secao Sobre.
+// AUDIT-P2-9: android.versionCode e extra.commitHash entram porque o
+// bloco Sobre passou a ser o componente compartilhado, que renderiza
+// tambem as linhas Build e Commit.
 jest.mock('expo-constants', () => ({
   __esModule: true,
   default: {
     expoConfig: {
       version: '0.1.0',
-      extra: { repoUrl: 'https://example.test/repo', license: 'GPL-3.0' },
+      android: { versionCode: 24 },
+      extra: {
+        repoUrl: 'https://example.test/repo',
+        license: 'GPL-3.0',
+        commitHash: 'abcdef1234567',
+      },
     },
   },
 }));
@@ -210,7 +218,29 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
       </ToastProvider>
     );
     expect(tree.getByText('Ver no GitHub')).toBeTruthy();
-    expect(tree.getByLabelText('abrir github')).toBeTruthy();
+    // AUDIT-P2-9: o label mudou de 'abrir github' para o do componente
+    // compartilhado. O botao so existe quando extra.repoUrl esta
+    // preenchido (o mock preenche); em app.json real ele nao esta, e a
+    // linha simplesmente nao renderiza em vez de abrir uma URL vazia.
+    expect(tree.getByLabelText('abrir repositorio no github')).toBeTruthy();
+  });
+
+  // AUDIT-P2-9: prova do ganho. A copia local antiga so tinha Versao,
+  // GitHub e Licenca; o compartilhado soma Build e Commit, e o link
+  // "Detalhes e creditos" da entrada de usuario a /settings/sobre, que
+  // antes so era alcancavel por bypass de desenvolvimento.
+  it('secao Sobre usa o componente compartilhado (Build e Commit) e linka a tela dedicada', () => {
+    const tree = render(
+      <ToastProvider>
+        <SettingsTela />
+      </ToastProvider>
+    );
+    expect(tree.getByText('Build')).toBeTruthy();
+    expect(tree.getByText('24')).toBeTruthy();
+    expect(tree.getByText('Commit')).toBeTruthy();
+    expect(tree.getByText('abcdef1')).toBeTruthy();
+    expect(tree.getByText('Detalhes e créditos')).toBeTruthy();
+    expect(tree.getByLabelText('abrir tela sobre')).toBeTruthy();
   });
 
   it('botao "Exportar todos os meus dados" renderiza com label canonico', () => {

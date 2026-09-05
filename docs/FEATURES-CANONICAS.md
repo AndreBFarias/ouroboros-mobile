@@ -1259,7 +1259,21 @@ data que o usuário não configurou nem data inexistente.
     (`EXPORT_SCHEMA_VERSION = 1`).
   - **Limpar cache local**: remove `ouroboros-export-*.zip` do
     cacheDirectory (M15).
-- **Sobre**: versão, contribuidores anônimos, ADRs.
+- **Sobre** (AUDIT-P2-9): bloco no rodapé de Configurações com **Versão**,
+  **Build** (`versionCode` do binário) e **Commit** (hash curto, `dev` em
+  desenvolvimento) — os três dados que identificam exatamente qual binário está
+  rodando quando alguém vai relatar um problema — mais a **Licença**. A linha
+  **Ver no GitHub** só aparece quando `expo.extra.repoUrl` está configurado em
+  `app.json`; hoje não está, e a linha não é exibida.
+  - **Detalhes e créditos**: abre a tela `/settings/sobre`, que repete o bloco
+    acima e acrescenta:
+    - **O que mudou**: mini-changelog amigável lido de `RELEASE_NOTES`
+      (`src/lib/release/changelog.ts`), uma seção por versão publicada.
+    - **Créditos**: o projeto é comunitário e de código aberto, sem crédito de
+      autoria individual (Regra −1). Inclui a atribuição obrigatória
+      **CC BY 4.0** das trilhas do Recap, com link para a licença — a obrigação
+      de licença passa a ser satisfeita dentro do app, e não só no
+      `assets/sounds/recap-musicas/CREDITS.md`.
 
 ## 12. Widgets Homescreen Android
 

@@ -30,7 +30,12 @@ export default function SobreTela() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <SecaoSobre />
+        {/* AUDIT-P2-9: semTituloDeSecao evita repetir "Sobre" logo
+            abaixo do Header homonimo. A View reproduz o marginTop
+            que a SecaoLista dava, para o bloco nao colar no Header. */}
+        <View style={{ marginTop: spacing.xl }}>
+          <SecaoSobre semTituloDeSecao />
+        </View>
         <SecaoMiniChangelog />
         <SecaoCreditos />
       </ScrollView>

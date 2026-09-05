@@ -8,7 +8,9 @@
 //      cheio e o usuario desligar o que nao quer).
 //   4. Privacidade (biometria + ocultar transcricoes + export + limpar
 //      cache).
-//   5. Sobre (versao, GitHub, licenca).
+//   5. Sobre (bloco compartilhado com versao, build, hash do
+//      commit e licenca, mais o link para a tela dedicada
+//      /settings/sobre, que traz o mini-changelog e os creditos).
 //
 // Removidos vs v1:
 //   - SecaoLembretes (M30 absorve em alarmes pre-cadastrados).
@@ -18,10 +20,9 @@
 // Toda a UI e reativa ao useSettings (zustand). Persistencia via
 // SecureStore (web cai em localStorage).
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -37,6 +38,7 @@ import {
 import { useSafeBottomMargin } from '@/components/chrome/safeBottom';
 import { SecaoLista } from '@/components/settings/SecaoLista';
 import { LinkSubTela } from '@/components/settings/LinkSubTela';
+import { SecaoSobre } from '@/components/settings/SecaoSobre';
 import { SecaoBackupAutomatico } from '@/components/settings/SecaoBackupAutomatico';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
@@ -46,11 +48,6 @@ import { exportarVaultZip } from '@/lib/services/exportarVault';
 import { restaurarVaultZip } from '@/lib/services/restaurarVault';
 import { limparCache } from '@/lib/services/limparCache';
 import { exportarEstadoCompletoZip } from '@/lib/vault/exportarEstadoCompleto';
-import {
-  APP_GITHUB_LABEL,
-  APP_LICENSE,
-  APP_REPO_URL,
-} from '@/config/app.config';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 export default function SettingsTela() {
@@ -79,7 +76,7 @@ export default function SettingsTela() {
         <SecaoBackupAutomatico />
         <SecaoAcessibilidade />
         <SecaoPrivacidade />
-        <SecaoSobre />
+        <SecaoSobreSettings />
         {__DEV__ ? <SecaoDev /> : null}
       </ScrollView>
     </Screen>
@@ -711,39 +708,26 @@ function SecaoPrivacidade() {
 }
 
 // === Secao 5: Sobre ===
+//
+// AUDIT-P2-9: antes existia aqui uma copia local homonima de SecaoSobre
+// que so mostrava Versao/GitHub/Licenca. Ela saiu; este wrapper usa o
+// componente compartilhado (@/components/settings/SecaoSobre, que soma
+// Build e hash do commit) e acrescenta o link para a tela dedicada
+// /settings/sobre, que antes so era alcancavel por bypass de dev.
+// O titulo do link nao pode ser "Sobre": colidiria com o titulo da
+// propria SecaoLista em buscas por texto.
 
-function SecaoSobre() {
-  const versao =
-    (Constants.expoConfig?.version as string | undefined) ?? '0.0.0';
+function SecaoSobreSettings() {
+  const router = useRouter();
   return (
     <SecaoLista titulo="Sobre" accessibilityLabel="secao sobre">
-      <LinhaInfo titulo="Versão" valor={versao} />
-      <Pressable
-        onPress={() => {
-          haptics.light();
-          void Linking.openURL(APP_REPO_URL);
-        }}
-        accessibilityRole="link"
-        accessibilityLabel="abrir github"
-        style={{
-          backgroundColor: colors.bgAlt,
-          borderRadius: radius.card,
-          padding: spacing.base,
-          minHeight: 56,
-          justifyContent: 'center',
-        }}
-      >
-        <Text
-          style={{
-            color: colors.purple,
-            fontFamily: 'JetBrainsMono_500Medium',
-            fontSize: typography.body.size,
-          }}
-        >
-          {APP_GITHUB_LABEL}
-        </Text>
-      </Pressable>
-      <LinhaInfo titulo="Licença" valor={APP_LICENSE} />
+      <SecaoSobre semTituloDeSecao />
+      <LinkSubTela
+        titulo="Detalhes e créditos"
+        subtitulo="O que mudou em cada versão e atribuições de licença."
+        onPress={() => router.push('/settings/sobre')}
+        accessibilityLabel="abrir tela sobre"
+      />
     </SecaoLista>
   );
 }
@@ -767,47 +751,6 @@ function SecaoDev() {
         accessibilityLabel="storybook de componentes"
       />
     </SecaoLista>
-  );
-}
-
-interface LinhaInfoProps {
-  titulo: string;
-  valor: string;
-}
-
-function LinhaInfo({ titulo, valor }: LinhaInfoProps) {
-  return (
-    <View
-      accessibilityLabel={`linha info ${titulo.toLowerCase()}`}
-      style={{
-        backgroundColor: colors.bgAlt,
-        borderRadius: radius.card,
-        padding: spacing.base,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        minHeight: 56,
-      }}
-    >
-      <Text
-        style={{
-          color: colors.fg,
-          fontFamily: 'JetBrainsMono_400Regular',
-          fontSize: typography.body.size,
-        }}
-      >
-        {titulo}
-      </Text>
-      <Text
-        style={{
-          color: colors.muted,
-          fontFamily: 'JetBrainsMono_500Medium',
-          fontSize: typography.body.size,
-        }}
-      >
-        {valor}
-      </Text>
-    </View>
   );
 }
 
