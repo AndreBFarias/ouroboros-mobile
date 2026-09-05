@@ -48,9 +48,26 @@ fi
 # R-AUDIT-CI-GATES (2026-07-11):
 #   - ci.yml -> job name "quality-gate" -> check name "quality-gate"
 #     (roda ./scripts/smoke.sh: anonimato, PT-BR, test-data, tsc, jest).
-#     O check precisa rodar 1x num PR/push antes de ficar selecionavel como
-#     required; ligar a protecao (rodar este script) e' passo do dono.
-CONTEXTS_JSON='{"strict":true,"contexts":["scan-commits","Build APK Android","quality-gate"]}'
+#
+# AUDIT-P3-1 (2026-09-05): "Build APK Android" SAIU da lista, e sair era
+# obrigatório. Aquele workflow só dispara em `workflow_dispatch` e em push
+# de tag `v*-alpha-*` -- nunca em pull_request. Um required check que não
+# roda no PR fica eternamente pendente, e o botão de merge não libera
+# NUNCA. Rodar este script como estava travava todos os merges do repo,
+# que é o oposto do que ele existe para fazer.
+#
+# `coverage-floor` entrou: é o outro job do mesmo ci.yml, com os mesmos
+# gatilhos (pull_request + push em main), então tem a mesma garantia de
+# reportar em todo PR.
+#
+# `e2e-web` NÃO entrou de propósito. Roda em pull_request, mas nasceu em
+# 2026-09-05 e ainda não foi exercitado num PR real; leva ~20 min e depende
+# de Metro + Playwright. Promovê-lo antes de medir a estabilidade repetiria
+# o erro do "Build APK Android". Candidato natural depois de alguns PRs.
+#
+# Estado aplicado em 2026-09-05 via API: scan-commits, quality-gate e
+# coverage-floor, com strict=true.
+CONTEXTS_JSON='{"strict":true,"contexts":["scan-commits","quality-gate","coverage-floor"]}'
 
 case "$ACTION" in
   --show)

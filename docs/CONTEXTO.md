@@ -553,22 +553,25 @@ Refatoração interna que não muda comportamento visível é caso legítimo —
 escreva `features-canonicas-allow: <motivo>` no corpo do commit. Promovê-lo
 a bloqueante depende de `AUDIT-P3-1`, e é decisão separada.
 
-**CI — roda, mas ainda não é obrigatório.** O
-`.github/workflows/ci.yml` executa o job `quality-gate`
-(`./scripts/smoke.sh`, que inclui anonimato, dados de teste, acentuação
-PT-BR, `tsc`, lint e Jest) em todo PR e em todo push para `main`. Porém, na
-proteção de branch da `main`, o **único** required status check hoje é
-`scan-commits` (de `.github/workflows/anonymity-check.yml`). Consequência
-prática: um PR pode mergear com o `quality-gate` vermelho, porque o botão
-de merge não consulta esse job.
+**CI — obrigatório desde 2026-09-05 (`AUDIT-P3-1`).** O
+`.github/workflows/ci.yml` executa `quality-gate` (`./scripts/smoke.sh`:
+anonimato, dados de teste, acentuação PT-BR, `tsc`, lint e Jest) e
+`coverage-floor` em todo PR e em todo push para `main`. Os dois, mais o
+`scan-commits` de `anonymity-check.yml`, são **required status checks** na
+proteção da `main`, com `strict: true` (a branch precisa estar atualizada
+antes do merge). Um PR com o `quality-gate` vermelho **não mergeia mais**.
 
-Ou seja: **hoje o gate é informativo, não impeditivo.** Ler o resultado do
-`quality-gate` antes de mergear é responsabilidade de quem mergeia.
-Promover o `quality-gate` a required check é ação pendente na sprint
-`AUDIT-P3-1` — e é ação na configuração do repositório, não commit, por
-isso depende do dono. Atenção: `scripts/setup-branch-protection.sh`, se
-rodado como está hoje, **trava todos os merges**, porque inclui na lista
-de required um check que só dispara em tag.
+`enforce_admins` segue `false`, de propósito: push direto do dono continua
+funcionando, e é assim que este repo trabalha hoje.
+
+**`e2e-web` ficou de fora, por ora.** Roda em `pull_request`, mas nasceu em
+2026-09-05, ainda não foi exercitado num PR real e leva cerca de 20 minutos
+dependendo de Metro e Playwright. Promovê-lo antes de medir estabilidade
+repetiria o erro que `scripts/setup-branch-protection.sh` cometia: ele
+listava `Build APK Android` como required, e aquele workflow **nunca**
+dispara em `pull_request` — só em `workflow_dispatch` e em tag. Required
+check que não roda no PR fica pendente para sempre e o merge nunca libera.
+O script foi corrigido na mesma sprint e hoje reflete o estado aplicado.
 
 ### Onde Cada Documento Vive
 

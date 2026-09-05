@@ -163,3 +163,43 @@ documentos.
 ```
 ci: audit-p3-1 corrige contexts do setup-branch-protection e alinha regras da raiz e contexto.md ao estado real do gate
 ```
+
+## Resultado (executada 2026-09-05)
+
+Aplicado via API do GitHub, com autorização explícita do dono nesta sessão.
+
+**Antes:** `required_status_checks.contexts = ["scan-commits"]`.
+**Depois:** `["scan-commits", "quality-gate", "coverage-floor"]`, `strict: true`.
+
+`enforce_admins` mantido em `false` de propósito — push direto do dono é o
+fluxo real deste repositório, e ligá-lo quebraria o modo de trabalho sem
+ganho de segurança, já que o dono é o único com acesso de escrita.
+
+### Por que `Build APK Android` saiu da lista
+
+O `scripts/setup-branch-protection.sh` listava esse check como required. Aquele
+workflow **nunca** dispara em `pull_request` — só em `workflow_dispatch` e em
+push de tag `v*-alpha-*`. Required check que não roda no PR fica pendente para
+sempre, e o botão de merge não libera nunca. Rodar o script como estava
+travaria todos os merges do repositório, que é o oposto do que ele existe para
+fazer. O script foi corrigido nesta sprint e agora reflete o estado aplicado.
+
+### Por que `e2e-web` ficou de fora
+
+Roda em `pull_request`, então tecnicamente seria elegível. Mas nasceu em
+2026-09-05 (`AUDIT-P3-4`), ainda não foi exercitado num PR real e leva cerca de
+20 minutos dependendo de Metro e Playwright. Promovê-lo sem medir a
+estabilidade repetiria exatamente o erro do `Build APK Android` — só que por
+flakiness em vez de gatilho. É o candidato natural depois de alguns PRs com
+histórico verde.
+
+### Verificação
+
+```
+$ gh api repos/:owner/:repo/branches/main/protection --jq '.required_status_checks.contexts'
+["scan-commits","quality-gate","coverage-floor"]
+```
+
+Backup do estado anterior em `/tmp/protecao-antes.json` no momento da execução.
+Para reverter: `gh api -X PUT repos/:owner/:repo/branches/main/protection` com
+`contexts` de volta em `["scan-commits"]`.
