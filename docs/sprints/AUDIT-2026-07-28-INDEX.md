@@ -65,7 +65,11 @@ Sequência importa. Cada spec declara o tamanho do buraco que abre.
 2. `AUDIT-P3-3-ESLINT-REACT-HOOKS` — remove o erro único; 492 sítios nunca analisados
    entram como `warn`.
 3. `AUDIT-P3-2-SMOKE-ESLINT-BLOQUEIA` — **este é o que fica vermelho** (23 problemas).
-4. `AUDIT-P3-9-TEMPLATE-E2E-INEXISTENTE` — barato, e destrava quem for escrever E2E.
+4. `AUDIT-P3-9-TEMPLATE-E2E-INEXISTENTE` — **Resolvida (2026-09-05).** A referência
+   da fonte da verdade já tinha sido corrigida em `52b69b1`; esta passada fechou o
+   resíduo versionado (`R-BRAND-8-RITUAIS`), constatou que o `VALIDATOR_BRIEF.md` do
+   escopo 3 não existe neste repositório e registrou no spec por que os 17 specs não
+   versionados que ainda citam o caminho morto ficaram fora.
 5. `AUDIT-P3-8-HOOKS-DORMENTES` — atrito local incremental.
 6. `AUDIT-P3-5-FANTASMAS-GATE`, `AUDIT-P3-6-VALIDADOR-PTBR-ARG-POSICIONAL`,
    `AUDIT-P3-7-COVERAGE-E-PERSIST` — independentes entre si.

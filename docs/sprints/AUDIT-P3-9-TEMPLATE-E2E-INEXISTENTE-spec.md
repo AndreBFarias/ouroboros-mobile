@@ -1,7 +1,10 @@
 # AUDIT-P3-9-TEMPLATE-E2E-INEXISTENTE — a regra de E2E aponta para um arquivo que não existe
 
 ```
-STATUS:     materializada 2026-07-28 (achado da auditoria de 2026-07-28)
+STATUS:     executada 2026-09-05 (materializada 2026-07-28, achado da
+            auditoria de 2026-07-28). Escopo 1 já vinha resolvido pelo
+            commit 52b69b1; escopo 2 fechado na árvore versionada nesta
+            sprint; escopo 3 inaplicável. Ver a seção Execução.
 PRIORIDADE: média (regra de processo mais citada do projeto aponta para o vazio;
             explica parte da erosão da cobertura E2E)
 DEPENDE:    nenhuma
@@ -71,20 +74,88 @@ no arquivo de regras da raiz ficou pendurada.
 4. NÃO-objetivo: escrever casos E2E novos, consertar os casos existentes que
    falham, ou ligar E2E no CI — são AUDIT-P3-4 e sprints próprias.
 
+## Execução (2026-09-05)
+
+Os três itens do escopo foram reconciliados assim:
+
+**Escopo 1 — já resolvido antes desta sprint.** A opção (a) foi aplicada pelo
+commit `52b69b1` (2026-07-29), cuja mensagem declara: "o template de caso e2e
+vive em tests/e2e/playwright/e2e-template.ts, não no caminho inexistente que a
+copia citava". Hoje `docs/CONTEXTO.md` §5 já aponta para o caminho real, no
+item 2 da entrega obrigatória de sprint de UI, e o arquivo de regras da raiz
+não carrega mais essa regra: a mesma reorganização o reduziu a um ponteiro de
+99 linhas, e ele é ignorado pelo Git (consta no `.gitignore`). Nada a editar em
+`docs/CONTEXTO.md` nem na raiz.
+
+**Escopo 2 — fechado aqui, na árvore versionada.** A varredura mostrou que
+`docs/sprints/R-BRAND-8-RITUAIS-spec.md` (linhas 111 e 409) era o único spec
+**versionado e ainda pendente** que mandava copiar do caminho morto; as duas
+citações foram apontadas para `tests/e2e/playwright/e2e-template.ts`. As outras
+duas ocorrências versionadas ficaram de propósito, porque citam o caminho para
+**negá-lo**, e reescrevê-las inverteria o sentido do texto:
+
+- `docs/sprints/R-BRAND-3-ESTADOS-VIVOS-spec.md:460` — "que não existe mais";
+- `docs/sprints/AUDIT-P3-6-VALIDADOR-PTBR-ARG-POSICIONAL-spec.md:197` — descreve
+  o mesmo defeito e delega a correção a esta sprint.
+
+Este próprio arquivo cita o caminho dez vezes ao descrever o defeito; essas
+menções também permanecem.
+
+**Escopo 3 — inaplicável.** `VALIDATOR_BRIEF.md` não existe neste repositório
+(`find` na árvore inteira retorna vazio) e é declarado ignorado no
+`.gitignore`. Não há §1.9 a corrigir.
+
+### Decisão registrada: material de processo não versionado ficou fora
+
+Dezessete specs **não versionados** de `docs/sprints/` ainda citam
+`docs/templates/e2e-template.e2e.ts`. Eles não foram tocados nesta sprint, e
+isso é decisão, não esquecimento: `docs/sprints/` tem 460+ arquivos locais
+contra 57 versionados, e mexer neles em lote tenta o `git add docs/sprints/`
+que já vazou 883 specs internos para um remoto público uma vez.
+
+O passivo não é pequeno e fica registrado aqui em vez de virar surpresa:
+treze desses arquivos declaram `STATUS: [todo]` ou "em execução" no cabeçalho
+— `R-HOME-4a` a `R-HOME-4e`, `R-AUDIT-HARDENING-MENOR`,
+`R-AUDIT-PRIVACIDADE-LOC`, `R-AUDIT-RECAP-TECIDO`, `R-AUDIT-VAULT-PERF`,
+`M-GAUNTLET-AUDITORIA`, `M-AUDIT-E2E-AMIGOS-LABEL`,
+`M-AUDIT-MIGUE-FRASE-WEB-MOCK` e `FASE1-INTEGRACAO-POS-SCRUB` — e outros três
+(`M-REVALIDACAO-M20-M28`, `R-DX-GAUNTLET-ONBOARDING-BYPASS`,
+`R-RECAP-13-MENSAGENS-PROGRESSO`) não declaram status nenhum. Quem executar
+qualquer um deles reencontra o caminho morto.
+
+A mitigação é a fonte da verdade, que hoje está correta: o executor que
+consultar `docs/CONTEXTO.md` §5 encontra o caminho certo, e é ela que manda.
+Corrigir a citação local é trabalho de quem for executar cada uma dessas
+sprints, com `git add` de lista explícita de arquivos se alguma delas for
+versionada na ocasião.
+
 ## Proof-of-work
 
+A proof-of-work original desta spec é **inexecutável** e foi substituída. O
+bloco antigo resolvia o arquivo de regras da raiz por
+`grep -ln 'Cópia das regras do' ./*.md`, que retorna vazio desde a
+reorganização de 2026-07-29 (o cabeçalho mudou), e daí caía num `test -f ""`
+que reprova onde não há defeito. O grep global também nunca zera: as menções
+descritivas e as de negação sobrevivem por desenho. A prova correta é por
+arquivo.
+
 ```bash
-# nenhuma referencia pendurada sobra
-grep -rn "docs/templates" --include='*.md' --include='*.sh' --include='*.py' . \
-  | grep -v node_modules                        # 0 linhas, ou so caminhos que existem
+# 1. a fonte da verdade aponta para o caminho real, e o caminho existe
+# (por grep, e nao por numero de linha: o CONTEXTO.md muda de tamanho)
+grep -n 'e2e-template' docs/CONTEXTO.md     # tests/e2e/playwright/e2e-template.ts
+test -f tests/e2e/playwright/e2e-template.ts && echo OK    # OK
 
-# o caminho citado pela regra existe de fato
-# (o arquivo de regras da raiz e resolvido pelo cabecalho que o declara copia)
-REGRAS_RAIZ=$(grep -ln 'Cópia das regras do' ./*.md)
-test -f "$(grep -oP '(?<=template `)[^`]+' "$REGRAS_RAIZ" | head -1)" && echo OK   # OK
+# 2. o spec versionado e pendente nao manda mais copiar do caminho morto
+grep -c 'docs/templates' docs/sprints/R-BRAND-8-RITUAIS-spec.md    # 0
 
-# gates do projeto seguem verdes (mudanca e so de documentacao)
-./scripts/smoke.sh                              # exit 0
+# 3. o que sobra no tracked tree e so mencao descritiva ou de negacao
+git grep -c 'docs/templates' -- '*.md'
+# AUDIT-P3-6-...-spec.md:1   (nega o caminho)
+# AUDIT-P3-9-...-spec.md:N   (descreve o defeito)
+# R-BRAND-3-ESTADOS-VIVOS-spec.md:1  (nega o caminho)
+
+# 4. nenhum codigo depende do caminho morto
+grep -rnE 'docs/templates|e2e-template\.e2e' tests/ scripts/ src/ app/ .github/   # 0 linhas
 ```
 
 ## Commit

@@ -108,7 +108,7 @@ pontuação calma da passagem do tempo, não recompensa (Regra de Tom,
 - `tests/rituais/store.test.ts` — Jest de persistência/hidratação da
   store.
 - `tests/e2e/playwright/r-brand-8-rituais.e2e.ts` — E2E Gauntlet com
-  relógio controlado (copiado de `docs/templates/e2e-template.e2e.ts`).
+  relógio controlado (copiado de `tests/e2e/playwright/e2e-template.ts`).
 - `docs/sprints/R-BRAND-8-RITUAIS-screenshots-gauntlet/` — mínimo 1 PNG
   real por ritual (F1, F2, G1) + variantes reduce-motion.
 
@@ -406,7 +406,7 @@ não precisa de fake timers para a decisão):
 ### E2E Gauntlet (relógio controlado)
 
 `tests/e2e/playwright/r-brand-8-rituais.e2e.ts` (copiado do template
-`docs/templates/e2e-template.e2e.ts`), rodado via playwright MCP:
+`tests/e2e/playwright/e2e-template.ts`), rodado via playwright MCP:
 
 - **F1:** `setUltimoRitual('2026-07-13', '2026-07')` (ontem) →
   `dispararRituais('2026-07-14T00:01:00-03:00')` → assert overlay
