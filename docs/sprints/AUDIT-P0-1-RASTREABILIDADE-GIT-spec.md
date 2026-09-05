@@ -1,7 +1,7 @@
 # AUDIT-P0-1-RASTREABILIDADE-GIT — histórico do projeto vive só neste disco, recuperar branches e versionar specs
 
 ```
-STATUS:     materializada 2026-07-28 (achado [P0-1] da auditoria de 2026-07-28)
+STATUS:     itens 1, 3 e 4 EXECUTADOS; item 2 REVERTIDO pelo dono (ver aviso abaixo) (achado [P0-1] da auditoria de 2026-07-28)
 PRIORIDADE: alta (risco de perda irreversível de histórico e de 406 specs; um
             único `git gc`, `git clean -xfd` ou falha de disco neste checkout
             leva embora tudo que não está no remoto)
@@ -17,6 +17,32 @@ DECISAO:    (dono, 2026-07-29) `ROADMAP.md` e `CHANGELOG.md` ficam
             privado — não por push ao remoto público — e isso já foi executado.
 ```
 
+> ## AVISO — NÃO EXECUTE O ITEM 2 DESTE SPEC
+>
+> **Revisado em 2026-09-05.** O item 2 do Escopo mandava `git add docs/sprints/`
+> e commitar 418 specs. Isso hoje e **proibicao inviolavel** do projeto.
+>
+> Em 2026-07-28 exatamente esse comando vazou 883 specs internos ao repositorio
+> **publico**, e custou reescrita de histórico e ticket ao suporte do GitHub. A
+> prova do incidente esta no branch local `backup-antes-rewrite-2026-07-28`
+> (373eddc): *"chore: remove do publico os 872 specs internos publicados por
+> engano"*.
+>
+> A regra vigente esta em `docs/CONTEXTO.md` §5, no `CLAUDE.md` da raiz e em
+> `STATE.md`: **`docs/sprints/` e parcialmente versionado por decisao de
+> compliance** — 464 no disco, 59 versionados. Sempre lista explicita de
+> arquivos, nunca o diretório.
+>
+> As instrucoes abaixo que só passam violando a regra foram **neutralizadas**
+> nesta revisao: o item 2 do Escopo, e as verificacoes de Proof-of-work que
+> exigiam paridade entre disco e index. Ficam marcadas como REVERTIDO, e não
+> removidas, para que a decisao continue auditavel.
+>
+> Estado dos demais itens, verificado em 2026-09-05: item 1 entregue (bundle
+> `ouroboros-arquivo-2026-07-28.bundle`, 111.321.707 bytes, com as 4 branches
+> nos hashes 820cce5 / 5c1cfdb / d8e40a5 / 944dce0, anexado a release
+> `arquivo-2026-07-28` do repositorio privado); itens 3 e 4 entregues.
+
 ## Problema (rastreabilidade quebrada em três frentes)
 
 O scrub de 12/07/2026 recomeçou `main` do zero: o primeiro commit alcançável
@@ -27,6 +53,10 @@ problema — foi uma decisão deliberada de limpeza (ver a série de commits
 três rastros soltos que nenhum commit posterior fechou.
 
 **1. `docs/sprints/` está 97% fora de controle de versão.**
+
+> Diagnostico de 2026-07-28, mantido como registro. **Hoje isto não e um
+> defeito**: a divergencia entre disco e index e' politica de compliance
+> decidida em 2026-07-28. Ver o aviso no topo.
 
 ```
 ls docs/sprints/*.md | wc -l                    -> 418
@@ -121,13 +151,11 @@ os dois ausentes.
    mesmo motivo. Objetivo cumprido: nenhum commit fica acessível só neste
    disco. O executor desta sprint não repete o passo — apenas confirma que o
    bundle está anexado à release privada antes de seguir para o item 2.
-2. `git add docs/sprints/` (caminho explícito, não `-A` global) e commit dos
-   418 specs, incluindo os 406 soltos. Antes de commitar, confirmar que
-   nenhum arquivo novo carrega dado sensível — a auditoria já confirmou zero
-   segredos versionados no projeto inteiro, mas o executor desta sprint
-   confere de novo especificamente em `docs/sprints/` (`git diff --cached
-   docs/sprints/ | grep -iE "client_secret|AIza|senha|password"` como
-   sanity-check antes do commit).
+2. ~~`git add docs/sprints/` e commit dos 418 specs.~~ **REVERTIDO pelo dono
+   em 2026-07-28, apos o vazamento.** Não versionar o diretório. `docs/sprints/`
+   e parcialmente versionado por decisao de compliance: so o conjunto aprovado
+   vai ao publico, e sempre por lista explicita de arquivos. Ver o aviso no topo
+   deste documento.
 3. Corrigir `STATE.md:188-189`: a frase "preservadas no remoto" está errada e
    passa a descrever o estado real — as duas branches citadas ali, e as outras
    duas, estão preservadas em bundle git anexado a release de repositório
@@ -163,12 +191,15 @@ os dois ausentes.
 git ls-remote --heads origin | grep -cE "backup-pre-sdk56|r-audit-ci-gates|scrub-staging|sdk56-experiment"
 # 0 esperado no remoto publico — resultado correto, nao falha
 
-git ls-files docs/sprints/ | grep -c '\.md$'      # 418
+# REVERTIDO: as tres verificacoes abaixo so' passam violando a proibicao de
+# versionar docs/sprints/. Mantidas comentadas para a decisao ficar auditavel.
+#   git ls-files docs/sprints/ | grep -c '\.md$'      # 418
 
 ls ROADMAP.md CHANGELOG.md 2>&1                   # segue ausente (descontinuados)
 grep -rn "ROADMAP.md\|CHANGELOG.md" HOW_TO_RESUME.md   # so' em texto que explica a descontinuacao
-diff <(ls docs/sprints/*.md | sort) <(git ls-files docs/sprints/ | grep '\.md$' | sort)   # vazio
-git status --short docs/sprints/                  # nada untracked remanescente
+#   diff <(ls docs/sprints/*.md | sort) <(git ls-files docs/sprints/ | grep '\.md$' | sort)
+#   git status --short docs/sprints/
+# A divergencia entre disco e index e' o estado CORRETO, nao um defeito.
 
 grep -n "preservadas no remoto\|preservadas só localmente" STATE.md   # texto batendo com o remoto real
 
@@ -178,5 +209,37 @@ grep -n "preservadas no remoto\|preservadas só localmente" STATE.md   # texto b
 ## Commit
 
 ```
-docs: versiona 406 specs soltos e recupera branches de arquivo do scrub de 12/07
+docs: audit-p0-1 reconcilia rastreabilidade e desarma a instrucao de versionar docs/sprints
 ```
+
+## Resultado (revisada 2026-09-05)
+
+Nenhum executor deve rodar o escopo original. Verificação item a item:
+
+| Item | Estado |
+|---|---|
+| 1. Preservar as 4 branches | **Entregue.** Bundle `ouroboros-arquivo-2026-07-28.bundle` (111.321.707 bytes) na release `arquivo-2026-07-28` do repositório privado, com `backup-pre-sdk56` (820cce5), `r-audit-ci-gates` (5c1cfdb), `scrub-staging` (d8e40a5) e `sdk56-experiment` (944dce0). |
+| 2. Versionar `docs/sprints/` | **REVERTIDO pelo dono**, após o vazamento de 883 specs em 2026-07-28. |
+| 3. Corrigir `STATE.md` | **Entregue** (`STATE.md:240-244`). |
+| 4. Descontinuar ROADMAP/CHANGELOG | **Entregue.** Ambos ausentes; decisão registrada em `docs/RELEASE.md:328-330`. |
+
+### O que esta revisão fez
+
+O spec continha **quatro** instruções que só passam violando a proibição de
+versionar `docs/sprints/`: o item 2 do Escopo, duas verificações de Proof-of-work
+(`git ls-files docs/sprints/ | grep -c` esperando 418, e o `diff` disco-vs-index
+esperando vazio) e a mensagem de commit sugerida. Todas neutralizadas — marcadas
+como revertidas, não apagadas, para a decisão seguir auditável. Aviso no topo do
+documento, antes de qualquer instrução.
+
+Reconciliado também `AUDIT-2026-07-28-INDEX.md` (versionado), em 4 trechos que
+descreviam como defeito o que hoje é política, e o `CLAUDE.md` da raiz, que ainda
+afirmava que o smoke não reprova lint — falso desde `AUDIT-P3-2`.
+
+### Ressalva sobre o gate
+
+`scripts/check_anonimato.sh` **não lê `docs/`** por padrão (`ANONIMATO_SCAN_DIRS`
+cobre `src/ app/ tests/`), então o smoke não protege edições em spec versionado.
+Rodado explicitamente aqui: `ANONIMATO_SCAN_DIRS="docs/" ./scripts/check_anonimato.sh`.
+Os arquivos commitados estão limpos. O único nome real em `docs/` está em
+`M36-spec.md`, que é **untracked** e permanece local.

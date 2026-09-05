@@ -35,7 +35,7 @@ Duas evidências de que isso não é desleixo:
 
 | Sprint | Por quê agora |
 |---|---|
-| `AUDIT-P0-1-RASTREABILIDADE-GIT` | 599 commits e 406 specs existem **só neste disco**. Todo o resto da fila pressupõe que o trabalho sobreviva. |
+| `AUDIT-P0-1-RASTREABILIDADE-GIT` | **Resolvida (2026-07-29).** Os 599 commits estão num bundle git anexado à release `arquivo-2026-07-28` do repositório privado. Os specs seguem parcialmente versionados **por decisão de compliance**, não por descuido. |
 | `AUDIT-P0-2-BRAND-3-COMMIT` | Sprint pronta e não commitada; um `git clean` a apaga e o `FEATURES-CANONICAS` seguiria afirmando que existe. |
 | `AUDIT-P0-3-ALLOWBACKUP` | Uma linha em `app.json`. Maior retorno por caractere de toda a fila. |
 
@@ -96,8 +96,9 @@ Seis recomendam **LIGAR**, duas **REMOVER**, uma é mista.
 
 Nenhuma destas pode ser resolvida no código:
 
-1. **`ROADMAP.md`/`CHANGELOG.md`** — restaurar de `r-audit-ci-gates` (onde sobrevivem,
-   1.188 e 7.347 linhas) ou declarar descontinuados. `AUDIT-P0-1`.
+1. ~~**`ROADMAP.md`/`CHANGELOG.md`**~~ — **decidido em 2026-07-29: descontinuados.**
+   Não recriar; o rastreamento vive em `docs/sprints/`. As versões antigas seguem no
+   bundle da release privada. `AUDIT-P0-1`.
 2. **Branch protection** — ligar `quality-gate` como required é ação no GitHub, não commit.
    `AUDIT-P3-1`.
 3. **Credencial do Spotify** — a chave não existe nem no `env.json.example`. `AUDIT-P2-1`.
@@ -121,7 +122,7 @@ Registradas porque contradizem afirmações anteriores e não devem ser reintrod
   declarado com o repositório irmão (`CONTRACT-MOBILE-BACKEND.md` §5.28–5.31).
 - **`OuroborosLogo` é trabalho ativo**, não órfão — `R-BRAND-9-MIGRACAO-spec.md:165-175`
   já é dona da decisão.
-- **`ROADMAP.md`/`CHANGELOG.md` não estão perdidos** — sobrevivem em branch local.
+- **`ROADMAP.md`/`CHANGELOG.md` não estão perdidos** — sobrevivem no bundle git da release privada `arquivo-2026-07-28` (antes: branch local).
 - **`r-ci-e2e-web` está 0 commits à frente** — não há código a recuperar ali, só a spec.
 - **Reduce-motion cobre 1 de 45 arquivos com `MotiView`**, não 11 — dos 11 "cobertos",
   10 usam primitivos Reanimated crus.
@@ -138,6 +139,9 @@ Relatórios de origem, por frente, fora do repositório (diretório de trabalho 
 `04-integracoes`, `05-roadmap-fantasma`, `06-bugs`, `07-testes`, `08-seguranca`,
 `09-ui-conformidade`, `CATALOGO-CONSOLIDADO`.
 
-> Estes 39 specs nascem **fora do controle de versão**, como os outros 406 em
-> `docs/sprints/`. É o achado `AUDIT-P0-1` aplicando-se a si mesmo. Enquanto ele não
-> for executado, esta onda existe apenas neste disco.
+> **Atualizado em 2026-09-05.** Os specs desta onda **estão versionados** — 46
+> arquivos `AUDIT-*.md`, incluindo este índice, aparecem em `git ls-files
+> docs/sprints/`. O restante de `docs/sprints/` segue fora do controle de versão
+> **por decisão de compliance** (só o conjunto aprovado vai ao público), e não por
+> falta de execução. Nunca use `git add docs/sprints/`: em 2026-07-28 esse comando
+> vazou 883 specs internos ao repositório público.
