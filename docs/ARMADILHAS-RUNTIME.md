@@ -1311,3 +1311,60 @@ rg -n "merge:" src/lib/stores/ src/lib/integracoes/   # 7
 **Estado:** verificado em 2026-07-29 — 8 `persist(` e 7 `merge:`, com
 `src/lib/stores/vault.ts` como única store persistida sem `merge`.
 Confere com o documentado.
+
+---
+
+## A48 — `<View>` cru não é inflável por `RemoteViews`
+
+**Área:** widget de home screen / layouts nativos
+
+**Sintoma:** os três widgets do app mostravam **"Não é possível
+carregar o widget"** na home screen, no lugar da peça inteira. Nenhum
+deles jamais funcionou num aparelho real. Medido em 2026-09-05 num
+Redmi Note 13 5G (HyperOS V816 / Android 15).
+
+**Causa raiz:** o layout de widget não é inflado pelo app — quem infla é
+o launcher, num processo alheio, através de `RemoteViews`. E o
+`RemoteViews` aplica um filtro no `LayoutInflater`:
+
+```java
+private static final LayoutInflater.Filter INFLATER_FILTER =
+        (clazz) -> clazz.isAnnotationPresent(RemoteViews.RemoteView.class);
+```
+
+`android.view.View` **não tem** a anotação `@RemoteView`. Usá-lo — que é
+o idioma mais comum para divisor de 1 dp e para espaçador com
+`layout_weight` — faz o launcher levantar:
+
+```
+InflateException: Binary XML file line #58 in layout/widget_todo_4x2:
+Class not allowed to be inflated android.view.View
+```
+
+**Por que passou por todos os gates:** o defeito é invisível em tudo o
+que roda antes do launcher. Compila, empacota, o `AppWidgetProvider`
+entrega o `RemoteViews` **sem exceção**, e o `dumpsys appwidget` mostra
+o binding saudável, com `views=android.widget.RemoteViews@…` não-nulo. O
+único lugar em que a falha aparece é o logcat do processo do launcher:
+
+```bash
+adb logcat -c && adb shell am force-stop com.miui.home && sleep 6
+adb logcat -d | grep -iE "Error inflating RemoteViews|Class not allowed"
+```
+
+Reiniciar o launcher é o gatilho confiável para forçar a reinflação —
+`am broadcast -a android.appwidget.action.APPWIDGET_UPDATE` é broadcast
+protegido e é recusado com *Permission Denial*.
+
+**Correção canônica:** usar `FrameLayout`, que é anotado e aceita
+`background`, `layout_weight`, margens e `id` do mesmo jeito. A troca é
+drop-in.
+
+**Gate:** `tests/config/widget-remoteviews-layouts.test.ts` trava a
+allowlist de classes por layout `widget_*.xml`. As classes anotadas com
+`@RemoteView` são as nove de layout (`AdapterViewFlipper`,
+`FrameLayout`, `GridLayout`, `GridView`, `LinearLayout`, `ListView`,
+`RelativeLayout`, `StackView`, `ViewFlipper`), as oito de widget
+(`AnalogClock`, `Button`, `Chronometer`, `ImageButton`, `ImageView`,
+`ProgressBar`, `TextClock`, `TextView`) e, a partir da API 31,
+`CheckBox`, `RadioButton`, `RadioGroup` e `Switch`.
