@@ -24,8 +24,8 @@
 // montar; quando autenticado=true, children renderiza a rota
 // correta sem desvio extra. O gate trata o caso de forma
 // transparente -- nenhum bypass necessario.
-import { ReactNode, useEffect, useState, useCallback } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { ReactNode, useEffect, useRef, useState, useCallback } from 'react';
+import { AppState, Platform, Pressable, Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Fingerprint } from '@/lib/icons';
 // N2 (M-MOTI-FIX-CRITICOS): substitui MotiView por Animated.View do
@@ -59,6 +59,9 @@ export function BiometriaGate({
   const bypassReal =
     bypass && (typeof __DEV__ !== 'undefined' ? __DEV__ : false);
   const ativa = useSettings((s) => s.privacidade.biometriaAbrir);
+  const timeoutSegundos = useSettings(
+    (s) => s.privacidade.biometriaTimeoutSegundos
+  );
   const [autenticado, setAutenticado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [tentando, setTentando] = useState(false);
@@ -112,6 +115,41 @@ export function BiometriaGate({
     setAutenticado(false);
     void tentar();
   }, [ativa, bypassReal, tentar]);
+
+  // AUDIT-P1-6: re-tranca ao voltar do background.
+  //
+  // Sem isto a tranca so' fechava em cold start: `autenticado` e' useState
+  // local e o efeito acima depende de [ativa, bypassReal, tentar], todas
+  // estaveis durante a sessao. Depois do primeiro sucesso ele nunca mais
+  // rodava. O cenario que a feature existe para cobrir -- entregar o
+  // celular destravado para outra pessoa, que reabre o app pelos recentes
+  // -- passava direto, sem prompt.
+  //
+  // O instante de saida vive em useRef, nao useState: ele nao deve
+  // provocar render.
+  const saidaEmMs = useRef<number | null>(null);
+  useEffect(() => {
+    // Sai cedo nos tres casos, sem nem registrar o listener. O bypass do
+    // Gauntlet (validacao visual do projeto) depende disto.
+    if (!ativa || bypassReal || Platform.OS === 'web') return;
+
+    const sub = AppState.addEventListener('change', (proximo) => {
+      if (proximo === 'active') {
+        const saida = saidaEmMs.current;
+        saidaEmMs.current = null;
+        if (saida === null) return;
+        if (Date.now() - saida < timeoutSegundos * 1000) return;
+        setAutenticado(false);
+        void tentar();
+        return;
+      }
+      // Primeira transicao para fora de active manda; as seguintes
+      // (background -> inactive) nao devem reiniciar a contagem.
+      if (saidaEmMs.current === null) saidaEmMs.current = Date.now();
+    });
+    // A26: sem remove() o listener vaza entre montagens do gate.
+    return () => sub.remove();
+  }, [ativa, bypassReal, timeoutSegundos, tentar]);
 
   if (!ativa || bypassReal || autenticado) {
     return <>{children}</>;

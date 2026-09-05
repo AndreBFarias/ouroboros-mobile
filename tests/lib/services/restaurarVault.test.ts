@@ -118,10 +118,7 @@ import {
   EXPORT_SCHEMA_VERSION,
   type SnapshotSettings,
 } from '@/lib/services/exportarVault';
-import {
-  useSettings,
-  type SettingsExportShape,
-} from '@/lib/stores/settings';
+import { useSettings, type SettingsExportShape } from '@/lib/stores/settings';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { usePessoa } from '@/lib/stores/pessoa';
 import { PESSOAS_CONFIG } from '@/config/pessoas.config';
@@ -171,6 +168,7 @@ function snapshotValido(): SnapshotSettings {
     privacidade: {
       biometriaAbrir: true,
       ocultarTranscricoes: true,
+      biometriaTimeoutSegundos: 60,
     },
     midia: {
       capPorRegistro: 8,
@@ -325,9 +323,8 @@ describe('aplicarSnapshot (M-AUDIT-MIGUE-RESTORE-SNAPSHOT)', () => {
     // Escolha organica do usuario no backup: cicloMenstrual desligado.
     snap.settings.featureToggles.cicloMenstrual = false;
     // Simula backup pre-R-RECAP-9: a chave nova nao existia no shape exportado.
-    delete (
-      snap.settings.featureToggles as unknown as Record<string, unknown>
-    ).recapMusicaFundo;
+    delete (snap.settings.featureToggles as unknown as Record<string, unknown>)
+      .recapMusicaFundo;
     expect(snap.settings.featureToggles.recapMusicaFundo).toBeUndefined();
 
     const r = aplicarSnapshot(snap, { confirmado: true });

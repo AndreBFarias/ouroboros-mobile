@@ -264,3 +264,80 @@ seção Privacidade com o toggle desligado (sem o controle de timeout) e ligado
 ```
 feat: audit-p1-6 re-tranca gate de biometria ao voltar do background com timeout configuravel
 ```
+
+## Resultado (executada 2026-09-05)
+
+### 1. Re-lock ao voltar do background
+
+`AppState.addEventListener` dentro do próprio `BiometriaGate`. O instante de
+saída vive em `useRef` (não provoca render). Sai cedo — sem nem registrar o
+listener — quando `!ativa || bypassReal || Platform.OS === 'web'`, e faz
+`sub.remove()` no cleanup (A26).
+
+Detalhe de implementação além do que a spec pedia: só a **primeira**
+transição para fora de `active` grava o instante. Sem isso, a sequência
+`active → inactive → background` reiniciaria a contagem no meio da saída.
+
+### 2. Timeout configurável
+
+Chave `privacidade.biometriaTimeoutSegundos`, **default 60** (decisão do dono).
+Os riscos que a spec mapeou foram todos tratados:
+
+- `setPrivacidade` passou de `valor: boolean` para
+  `valor: SettingsState['privacidade'][K]`, no formato de `setMidia`.
+- `filtrarBooleansConhecidos` virou `filtrarPrimitivosConhecidos`: aceita o
+  mesmo tipo primitivo do default (boolean **ou** number). Antes, a primeira
+  chave numérica de um slice seria descartada em silêncio na migração v1→v2.
+- Schema do espelho canônico recebeu `z.number().int().min(0).optional()`,
+  seguindo o precedente de `recapAudioAnexadoAutoplay`.
+- Dos testes que a spec previa quebrar, só `restaurarVault.test.ts:171`
+  precisou de ajuste.
+
+**Cenário de migração verificado no Gauntlet, não presumido:** removida a
+chave do `localStorage` de uma instalação existente e recarregado o app, o
+valor cai corretamente no default de 60 s — o chip "1 minuto" renderiza
+selecionado. `mesclarDefaults` cobre o caso.
+
+### 3. Controle na UI
+
+`ChipGroup` com 30 s / 1 minuto / 2 minutos / 5 minutos, visível **apenas**
+com `biometriaAbrir` ligado. O `0` ("imediato") ficou de fora de propósito,
+pelo mesmo argumento que a spec usa para não adotá-lo como default: o app vai
+ao background em fluxos legítimos e frequentes, e um prompt a cada ida e volta
+faz o usuário desligar a feature.
+
+### 4. Falha-aberto comunicado
+
+Comportamento **inalterado** — sem hardware ou sem cadastro o app continua
+liberando, e o teste que trava isso segue passando. O que mudou é a honestidade:
+o toggle agora exibe subtítulo dizendo que aquele aparelho não tem biometria
+cadastrada e que o app abrirá sem bloqueio. Confirmado no Gauntlet, onde a
+condição é real (o navegador não tem biometria).
+
+### 5. Testes
+
+`tests/lib/boot/biometriaGate.test.tsx` foi de 5 para **11 casos**. Os 6 novos
+cobrem exatamente o que a spec pediu: volta dentro do timeout não re-autentica;
+volta além re-tranca e chama `authenticateAsync`; `bypass` em `__DEV__` nunca
+re-tranca; `web` não registra listener; toggle desligado não registra listener;
+desmontar chama `sub.remove()`.
+
+### 6. E2E
+
+`tests/e2e/playwright/audit-p1-6-biometria-relock.e2e.ts` — **PASS**. Prova a
+superfície de Settings: o controle só aparece com o toggle ligado, a escolha
+sobrevive a um reload da página, e o app segue navegável (o bypass do Gauntlet
+continua de pé).
+
+Duas notas de implementação do caso, para quem for escrever asserção parecida:
+o `Chip` **não** emite `aria-selected` (`accessibilityState={{selected}}` não
+vira atributo para `role=button` no RN Web), e o `backgroundColor` do chip fica
+no **filho** do `<button>`, não nele.
+
+### 7. Pendente: validação Nível C
+
+O relock em si é inobservável na web — o gate roda com `bypass={MODO_DEV_WEB}` e
+`LocalAuthentication` não tem implementação web útil. A prova de runtime exige
+aparelho físico e **permissão explícita do dono**. Roteiro: ligar o toggle,
+autenticar, mandar o app para o background, esperar mais que o timeout
+escolhido, voltar pelos recentes e confirmar que o prompt reaparece.

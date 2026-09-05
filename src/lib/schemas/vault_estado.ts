@@ -84,6 +84,11 @@ export const EstadoSettingsSchema = z.object({
   privacidade: z.object({
     biometriaAbrir: z.boolean(),
     ocultarTranscricoes: z.boolean(),
+    // AUDIT-P1-6 (2026-09-05): optional pelo mesmo motivo de
+    // recapAudioAnexadoAutoplay e reduzirMovimento -- settings ja
+    // persistido em devices reais nao tem a chave. Ausente, cai no
+    // default de 60s ao reler do Vault.
+    biometriaTimeoutSegundos: z.number().int().min(0).optional(),
   }),
   midia: z.object({
     capPorRegistro: z.number().int().min(1),

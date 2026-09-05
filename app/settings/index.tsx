@@ -17,14 +17,17 @@
 //
 // Toda a UI e reativa ao useSettings (zustand). Persistencia via
 // SecureStore (web cai em localStorage).
+import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import * as LocalAuthentication from 'expo-local-authentication';
 import {
   Button,
+  ChipGroup,
   Header,
   Screen,
   Slider,
@@ -480,7 +483,10 @@ function SecaoAcessibilidade() {
   const setFeatureToggle = useSettings((s) => s.setFeatureToggle);
 
   return (
-    <SecaoLista titulo="Acessibilidade" accessibilityLabel="secao acessibilidade">
+    <SecaoLista
+      titulo="Acessibilidade"
+      accessibilityLabel="secao acessibilidade"
+    >
       <ToggleRow
         label="Reduzir movimento"
         subtitulo="Desliga o zoom das fotos, o avanço automático das memórias e as animações contínuas. Segue também a configuração do sistema."
@@ -494,11 +500,45 @@ function SecaoAcessibilidade() {
 
 // === Secao 4: Privacidade ===
 
+// AUDIT-P1-6: opcoes de re-lock. O 0 ("imediato") fica de fora de
+// proposito: o app vai para o background em fluxos legitimos e frequentes
+// (picker do Vault, camera, share intent), e um prompt de digital a cada
+// ida e volta faz o usuario desligar a feature.
+const OPCOES_TIMEOUT_BIOMETRIA = [
+  { value: '30', label: '30 segundos' },
+  { value: '60', label: '1 minuto' },
+  { value: '120', label: '2 minutos' },
+  { value: '300', label: '5 minutos' },
+];
+
 function SecaoPrivacidade() {
   const router = useRouter();
   const privacidade = useSettings((s) => s.privacidade);
   const setPrivacidade = useSettings((s) => s.setPrivacidade);
   const toast = useToast();
+
+  // AUDIT-P1-6: o gate libera o app quando o aparelho nao tem hardware ou
+  // nao tem digital cadastrada -- decisao deliberada, para nao trancar a
+  // pessoa fora do proprio diario. O que faltava era contar isso: o toggle
+  // ficava ligado sugerindo uma protecao que ali nao existe.
+  const [biometriaIndisponivel, setBiometriaIndisponivel] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    void (async () => {
+      try {
+        const [temHardware, temCadastro] = await Promise.all([
+          LocalAuthentication.hasHardwareAsync(),
+          LocalAuthentication.isEnrolledAsync(),
+        ]);
+        if (vivo) setBiometriaIndisponivel(!temHardware || !temCadastro);
+      } catch {
+        // Falha de sondagem nao vira aviso: sem certeza, nao alarma.
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   const exportar = async () => {
     haptics.light();
@@ -609,10 +649,36 @@ function SecaoPrivacidade() {
     <SecaoLista titulo="Privacidade" accessibilityLabel="secao privacidade">
       <ToggleRow
         label="Biometria pra abrir"
+        subtitulo={
+          biometriaIndisponivel
+            ? 'Este aparelho não tem biometria cadastrada. O app vai abrir sem bloqueio.'
+            : undefined
+        }
         valor={privacidade.biometriaAbrir}
         onChange={(v) => setPrivacidade('biometriaAbrir', v)}
         a11y="toggle biometria abrir"
       />
+      {privacidade.biometriaAbrir ? (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>
+          <Text
+            style={{
+              color: colors.muted,
+              fontSize: typography.caption.size,
+            }}
+          >
+            Pedir de novo depois de
+          </Text>
+          <ChipGroup
+            mode="single"
+            options={OPCOES_TIMEOUT_BIOMETRIA}
+            value={String(privacidade.biometriaTimeoutSegundos)}
+            onChange={(v) => {
+              if (v === null) return;
+              setPrivacidade('biometriaTimeoutSegundos', Number(v));
+            }}
+          />
+        </View>
+      ) : null}
       <ToggleRow
         label="Ocultar transcrições na lista"
         valor={privacidade.ocultarTranscricoes}

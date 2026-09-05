@@ -119,6 +119,10 @@ export interface SettingsState {
   privacidade: {
     biometriaAbrir: boolean;
     ocultarTranscricoes: boolean;
+    // AUDIT-P1-6: segundos em background antes de re-trancar o gate de
+    // biometria. Primeira chave nao-booleana deste slice -- ver
+    // filtrarPrimitivosConhecidos, que antes descartava nao-booleanos.
+    biometriaTimeoutSegundos: number;
   };
   midia: {
     capPorRegistro: number;
@@ -183,7 +187,7 @@ export interface SettingsState {
   ) => void;
   setPrivacidade: <K extends keyof SettingsState['privacidade']>(
     chave: K,
-    valor: boolean
+    valor: SettingsState['privacidade'][K]
   ) => void;
   setMidia: <K extends keyof SettingsState['midia']>(
     chave: K,
@@ -337,6 +341,7 @@ export const DEFAULT_STATE_V2: Omit<
   privacidade: {
     biometriaAbrir: false,
     ocultarTranscricoes: false,
+    biometriaTimeoutSegundos: 60,
   },
   midia: {
     capPorRegistro: 4,
@@ -508,14 +513,14 @@ export const useSettings = create<SettingsState>()(
           } as SettingsState['pessoa'],
           featureToggles: {
             ...DEFAULT_STATE_V2.featureToggles,
-            ...filtrarBooleansConhecidos(
+            ...filtrarPrimitivosConhecidos(
               featureTogglesAntigo,
               DEFAULT_STATE_V2.featureToggles
             ),
           },
           privacidade: {
             ...DEFAULT_STATE_V2.privacidade,
-            ...filtrarBooleansConhecidos(
+            ...filtrarPrimitivosConhecidos(
               (ps.privacidade ?? {}) as Record<string, unknown>,
               DEFAULT_STATE_V2.privacidade
             ),
@@ -654,14 +659,21 @@ function lerUltimaRodada(
 // Helper: filtra apenas chaves do alvo que estao presentes no antigo
 // e cuja valor e boolean. Evita propagar lixo (chaves removidas como
 // `widgetMostraNome` legado em outro shape) e mantem tipagem segura.
-function filtrarBooleansConhecidos<T extends Record<string, boolean>>(
-  antigo: Record<string, unknown>,
-  alvo: T
-): Partial<T> {
-  const out: Record<string, boolean> = {};
+function filtrarPrimitivosConhecidos<
+  T extends Record<string, boolean | number>,
+>(antigo: Record<string, unknown>, alvo: T): Partial<T> {
+  const out: Record<string, boolean | number> = {};
   for (const k of Object.keys(alvo)) {
     const v = antigo[k];
-    if (typeof v === 'boolean') out[k] = v;
+    // AUDIT-P1-6: aceita o MESMO tipo primitivo do default. Antes so'
+    // aceitava boolean, entao a primeira chave numerica de um slice seria
+    // descartada em silencio em toda instalacao que migra da v1.
+    if (
+      typeof v === typeof alvo[k] &&
+      (typeof v === 'boolean' || typeof v === 'number')
+    ) {
+      out[k] = v as boolean | number;
+    }
   }
   return out as Partial<T>;
 }
