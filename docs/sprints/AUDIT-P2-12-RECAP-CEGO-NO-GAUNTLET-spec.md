@@ -1,7 +1,7 @@
 # AUDIT-P2-12-RECAP-CEGO-NO-GAUNTLET — o Recap não enxerga o seed do Gauntlet
 
 ```
-STATUS:     materializada 2026-09-05 (achado colateral da execução de AUDIT-P2-11)
+STATUS:     FECHADA 2026-09-05, no mesmo dia (achado colateral de AUDIT-P2-11)
 PRIORIDADE: alta para o processo, nenhuma para o usuário — não há defeito em
             aparelho; o que está quebrado é a capacidade de VALIDAR o Recap
             antes de chegar ao aparelho
@@ -57,34 +57,55 @@ de "funcionando, mas sem dados".
 Vale para todo E2E que dependa de conquistas: ele devolve `INCONCLUSIVO`, e
 `INCONCLUSIVO` é warn-only no runner. Ou seja, passa verde sem ter medido.
 
-## Onde procurar
+## Causa — nenhum dos três suspeitos
 
-Não investigado a fundo — o escopo de P2-11 era outro. Os candidatos, em
-ordem de suspeita:
+A hipótese original apontava três camadas: `listVaultFolder` no mock web,
+`readVaultFile` devolvendo `null`, e `matchesFeaturePrefix` contra URIs
+`web://`. **As três estavam erradas.** Instrumentadas uma a uma com
+`Platform.OS` forçado para `'web'`, as três funcionam: a listagem devolve o
+arquivo, a leitura devolve `modo: positivo`, o prefixo casa.
 
-1. **`listVaultFolder` no mock web** — o loader chama
-   `listVaultFolder(joinUri(vaultRoot, 'markdown'), '.md')`. O
-   `listarVaultMock` do Gauntlet lista os arquivos por outro caminho; os dois
-   podem não estar olhando o mesmo lugar.
-2. **`readVaultFile(uri, EventoSchema)`** devolvendo `null` no mock web. O
-   `catch {}` do loop em `lerEventosPositivos` engole a exceção sem log, então
-   uma falha de leitura é silenciosa por construção.
-3. **`matchesFeaturePrefix(u, 'evento-')`** contra URIs `web://`.
+A causa estava oito linhas acima delas, em `lerConquistas`, e era explícita:
 
-## Escopo
+```ts
+// M28-COLAT-01 / M27.1 fix: vault mock em web (web://mock-vault/...)
+// nao tem reader funcional. Promise nunca resolveria, deixando o
+// hook preso em loading=true e bloqueando boot.
+if (vaultRoot.startsWith('web://')) {
+  return { conquistas: [], totaisPorOrigem: { ... } };
+}
+```
 
-1. Descobrir em qual das três camadas a lista se perde, com log — não com
-   inspeção de código.
-2. Corrigir.
-3. **Trocar o `catch {}` silencioso** de `lerEventosPositivos` por um
-   `devLog` que nomeie o arquivo e o motivo. Um erro de parse hoje é
-   indistinguível de "não há conquistas", que é exatamente o que tornou este
-   defeito invisível.
-4. Caso E2E que semeia `eventos-7` e exige `brutas.length === 7` — o gate que
-   faltava. Sem ele, o próximo bug do Recap volta a ficar escondido atrás de
-   um empty state.
-5. Depois disso, rodar `tests/e2e/playwright/audit-p2-11-filtrosbar-recap.e2e.ts`,
-   que já existe e hoje devolve `INCONCLUSIVO` por falta de conquistas.
+Um early-return deliberado, escrito quando a premissa era verdadeira — o
+mock web realmente não tinha reader. O `INFRA-VAULT-WEB-MOCK` (V4.0,
+2026-05-08) criou esse reader, e o guard **sobreviveu à própria
+justificativa**. Ninguém o removeu porque nada reprovava: a tela mostrava
+empty state, e empty state é indistinguível de "sem dados".
+
+**Por que a suíte não pegava:** o ramo web de `reader.ts` só roda com
+`Platform.OS === 'web'`, e o preset de teste do React Native reporta
+`'ios'`. As 379 suítes passavam sem nunca visitar esse caminho. O defeito
+morava exatamente no galho que os testes não visitam.
+
+## Entregue
+
+1. **Guard removido**, com o histórico registrado em comentário no lugar dele
+   — para que a próxima pessoa não o reintroduza "por segurança".
+2. **`tests/lib/conquistas/loader-web-mock.test.ts`** — roda com `Platform.OS`
+   forçado para `'web'` e reprova sem o fix. É a primeira cobertura desse
+   ramo.
+3. **Os dois `catch {}` mudos** de `lerEventosPositivos` e
+   `lerDiarioConquistas` agora chamam `devLog` nomeando arquivo e erro.
+4. **`tests/e2e/playwright/audit-p2-12-recap-le-o-seed.e2e.ts`** — o gate.
+   Semeia `eventos-7`, confere que os sete chegaram ao vault mock (separando
+   falha de seed de falha de leitura) e exige que o Recap saia do empty state.
+
+## Validado no Gauntlet
+
+Calendário com dots nos dias semeados, sheet com os quatro filtros de
+`AUDIT-P2-11`, contador indo a "1 ativo" ao filtrar por Spotify e voltando ao
+repouso no Limpar. Screenshots em
+`AUDIT-P2-12-RECAP-CEGO-NO-GAUNTLET-screenshots-gauntlet/`.
 
 ## NÃO-objetivo
 
