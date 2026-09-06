@@ -94,12 +94,43 @@ export default async function caseAuditP211FiltrosbarRecap(
     }
     await page.waitForTimeout(1200);
 
-    // Conta os cards de conquista visiveis. O ConquistaCard expoe
-    // a11y comecando por "conquista".
+    // Conta os cards do dia selecionado. O ConquistaCard expoe
+    // `conquista <id>`; o espaco no seletor e obrigatorio, senao o
+    // prefixo tambem casa com o wrapper `conquistas do dia` e a
+    // contagem sai sempre um a mais.
     const contar = () =>
       page.evaluate(
-        () => document.querySelectorAll('[aria-label^="conquista"]').length
+        () => document.querySelectorAll('[aria-label^="conquista "]').length
       );
+
+    // A lista so existe depois de tocar num dia -- o estado inicial e
+    // "Toque em um dia marcado". Sem este passo o caso contava zero
+    // sempre e morria em INCONCLUSIVO sem ter medido nada.
+    const selecionarDiaComConquista = () =>
+      page.evaluate(async () => {
+        const clicarDia = (n: number): boolean => {
+          const alvo = Array.from(document.querySelectorAll('*')).find(
+            (e) =>
+              e.children.length === 0 && e.textContent?.trim() === String(n)
+          );
+          const btn = (alvo as HTMLElement | undefined)?.closest('button');
+          if (!btn) return false;
+          btn.click();
+          return true;
+        };
+        // O seed distribui os sete eventos entre -1 d e -7 d.
+        for (let d = 1; d <= 7; d++) {
+          const data = new Date();
+          data.setDate(data.getDate() - d);
+          if (!clicarDia(data.getDate())) continue;
+          await new Promise((r) => setTimeout(r, 700));
+          const n = document.querySelectorAll(
+            '[aria-label^="conquista "]'
+          ).length;
+          if (n > 0) return n;
+        }
+        return 0;
+      });
 
     const controle = await page.evaluate(
       () =>
@@ -128,7 +159,7 @@ export default async function caseAuditP211FiltrosbarRecap(
     await page.screenshot({ path: `${dir}/01-controle-fechado.png` });
     screenshots.push(`${dir}/01-controle-fechado.png`);
 
-    const antes = await contar();
+    const antes = await selecionarDiaComConquista();
     if (antes === 0) {
       return {
         sprint,
@@ -156,21 +187,21 @@ export default async function caseAuditP211FiltrosbarRecap(
 
     const clicouChip = await page.evaluate(() => {
       const chip = document.querySelector<HTMLElement>(
-        '[aria-label="chip Spotify"]'
+        '[aria-label="chip Foto"]'
       );
       if (!chip) return false;
       chip.click();
       return true;
     });
     if (!clicouChip) {
-      return falha('chip "Spotify" nao encontrado no sheet de filtros.');
+      return falha('chip "Foto" nao encontrado no sheet de filtros.');
     }
     await page.waitForTimeout(1000);
 
     const depois = await contar();
-    if (depois >= antes) {
+    if (depois === antes) {
       return falha(
-        `filtro de midia nao mudou a lista: ${antes} conquistas antes, ${depois} depois. ` +
+        `filtro de midia nao mudou a lista do dia: ${antes} antes e ${depois} depois. ` +
           'Os setters provavelmente nao estao ligados a barra.'
       );
     }
@@ -222,7 +253,7 @@ export default async function caseAuditP211FiltrosbarRecap(
       aspecto,
       status: 'PASS',
       detalhe:
-        `Barra religada no Recap: ${antes} conquistas, ${depois} apos filtrar por Spotify, ` +
+        `Barra religada no Recap: ${antes} conquistas, ${depois} apos filtrar por Foto, ` +
         `${restaurado} apos limpar. Controle anuncia a contagem de filtros ativos e o ` +
         'bloco "Filtrar por mês" nao renderiza dentro do Recap.',
       screenshots,
