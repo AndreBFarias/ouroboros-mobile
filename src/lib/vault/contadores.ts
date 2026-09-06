@@ -19,7 +19,7 @@
 // que SAF aplicava em runtime real (sintoma A29 em OEMs MIUI/OneUI).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 // Imports apontam para modulos finais (não para o barrel @/lib/vault)
 // para evitar ciclo de carregamento.
 import {
@@ -128,7 +128,7 @@ export async function excluirContador(
   for (const rel of [relComSuffix, relCanonico]) {
     const uri = vaultUriJoin(vaultRoot, rel);
     try {
-      await StorageAccessFramework.deleteAsync(uri);
+      await deleteVaultFile(uri);
     } catch {
       // Sem arquivo previo ou plataforma sem SAF; ok.
     }

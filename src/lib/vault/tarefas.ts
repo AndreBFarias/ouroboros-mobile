@@ -28,7 +28,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { moverArquivoParaLixeira } from '@/lib/vault/remover';
 // Imports apontam diretamente para os modulos finais (não para o
 // barrel @/lib/vault) para evitar ciclo de carregamento.
 import {
@@ -535,15 +535,7 @@ export async function excluirTarefa(
   const nomeArquivo = rel.split('/').pop() ?? 'tarefa.md';
   const lixeiraPath = `${lixeiraDir}${ts}-${nomeArquivo}`;
 
-  let raw: string;
-  try {
-    raw = await StorageAccessFramework.readAsStringAsync(origemUri);
-    await FileSystem.writeAsStringAsync(lixeiraPath, raw);
-    await StorageAccessFramework.deleteAsync(origemUri);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`falha ao mover para lixeira: ${msg}`);
-  }
+  await moverArquivoParaLixeira(origemUri, lixeiraPath);
 
   // Depois do move: o dado canonico ja esta salvo, entao um companion
   // teimoso nunca custa a exclusao. Reusa o helper da AUDIT-P1-3, que e

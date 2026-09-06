@@ -13,7 +13,7 @@
 // whitespace + %20 ofensivo em URIs SAF (A29 do BRIEF).
 //
 // Comentarios sem acento (convencao shell/CI).
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 import {
   rotinaPath,
   MARKDOWN_FOLDER,
@@ -133,10 +133,16 @@ export async function silenciarSugestaoRotina(
 }
 
 // Apaga arquivo de rotina. Idempotente: nao falha se nao existe.
-// SAF.deleteAsync no nativo; em web cai em no-op silencioso (writer
-// usa mock store que nao tem delete explicito; o efeito e equivalente
-// para a UI porque listarRotinas para de retornar o arquivo apos
-// reload do mock root).
+// Delega a deleteVaultFile, que despacha SAF.deleteAsync no nativo e
+// useVaultMock.apagarArquivo em web/dev.
+//
+// AUDIT-INFRA-VAULT-MOCK-DELETE (2026-09-05): ate esta sprint o
+// comentario daqui afirmava que em web a exclusao era "no-op
+// silencioso" com efeito equivalente para a UI, porque listarRotinas
+// pararia de retornar o arquivo apos reload do mock root. Nao era
+// verdade: listarRotinas le do mesmo mapa em que o arquivo continuava,
+// e o unico "reload" existente era o limpar() do reset, que zera tudo.
+// A remocao de UM item so passou a ser observavel com apagarArquivo.
 export async function removerRotina(
   vaultRoot: string,
   slug: string
@@ -144,7 +150,7 @@ export async function removerRotina(
   const rel = rotinaPath(slug);
   const uri = vaultUriJoin(vaultRoot, rel);
   try {
-    await StorageAccessFramework.deleteAsync(uri);
+    await deleteVaultFile(uri);
   } catch {
     // Sem arquivo previo ou plataforma sem SAF; ok.
   }

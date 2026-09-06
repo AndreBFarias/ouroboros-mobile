@@ -42,6 +42,35 @@ describe('useVaultMock (V4.0 INFRA-VAULT-WEB-MOCK)', () => {
     ]);
   });
 
+  it('apagarArquivo remove uma unica uri e devolve true', () => {
+    useVaultMock.getState().setArquivo('a/a.md', 'a');
+    useVaultMock.getState().setArquivo('a/b.md', 'b');
+    expect(useVaultMock.getState().apagarArquivo('a/a.md')).toBe(true);
+    expect(useVaultMock.getState().getArquivo('a/a.md')).toBeUndefined();
+    // A vizinha nao pode ser afetada: limpar() zera tudo, apagarArquivo
+    // nao.
+    expect(useVaultMock.getState().getArquivo('a/b.md')).toBe('b');
+    expect(useVaultMock.getState().listar()).toEqual(['a/b.md']);
+  });
+
+  it('apagarArquivo e idempotente: a segunda chamada devolve false', () => {
+    useVaultMock.getState().setArquivo('a/a.md', 'a');
+    expect(useVaultMock.getState().apagarArquivo('a/a.md')).toBe(true);
+    expect(useVaultMock.getState().apagarArquivo('a/a.md')).toBe(false);
+    expect(useVaultMock.getState().listar()).toEqual([]);
+  });
+
+  it('apagarArquivo troca a referencia do Map para zustand notificar', () => {
+    useVaultMock.getState().setArquivo('a/a.md', 'a');
+    const antes = useVaultMock.getState().arquivos;
+    useVaultMock.getState().apagarArquivo('a/a.md');
+    expect(useVaultMock.getState().arquivos).not.toBe(antes);
+    // Uri ausente nao mexe no estado: sem set, sem re-render inutil.
+    const depois = useVaultMock.getState().arquivos;
+    expect(useVaultMock.getState().apagarArquivo('a/a.md')).toBe(false);
+    expect(useVaultMock.getState().arquivos).toBe(depois);
+  });
+
   it('gauntlet.lerVaultMock e listarVaultMock expoem o store', () => {
     const uri = 'web://mock-vault/Ouroboros/markdown/_devices.md';
     useVaultMock.getState().setArquivo(uri, 'conteudo-teste');
@@ -86,11 +115,15 @@ describe('useVaultMock.setEventos (R-INFRA-GAUNTLET-AGENDA-MOCK)', () => {
   });
 
   it('grava 2 eventos em arquivos separados', () => {
-    useVaultMock.getState().setEventos(VAULT, 'pessoa_a', [
-      evt({ id: 'ev-a' }),
-      evt({ id: 'ev-b', inicio: '2026-05-17T15:00:00-03:00' }),
-    ]);
-    const uris = useVaultMock.getState().listarPasta(`${VAULT}/markdown/`, '.md');
+    useVaultMock
+      .getState()
+      .setEventos(VAULT, 'pessoa_a', [
+        evt({ id: 'ev-a' }),
+        evt({ id: 'ev-b', inicio: '2026-05-17T15:00:00-03:00' }),
+      ]);
+    const uris = useVaultMock
+      .getState()
+      .listarPasta(`${VAULT}/markdown/`, '.md');
     expect(uris.length).toBe(2);
     expect(uris).toContain(
       `${VAULT}/markdown/agenda-pessoa_a-2026-05-17-ev-a.md`
@@ -107,7 +140,9 @@ describe('useVaultMock.setEventos (R-INFRA-GAUNTLET-AGENDA-MOCK)', () => {
     useVaultMock
       .getState()
       .setEventos(VAULT, 'pessoa_a', [evt({ titulo: 'Atualizado' })]);
-    const uris = useVaultMock.getState().listarPasta(`${VAULT}/markdown/`, '.md');
+    const uris = useVaultMock
+      .getState()
+      .listarPasta(`${VAULT}/markdown/`, '.md');
     expect(uris.length).toBe(1);
     const raw = useVaultMock.getState().getArquivo(uris[0]);
     expect(raw).toContain('titulo: Atualizado');
@@ -120,12 +155,12 @@ describe('useVaultMock.setEventos (R-INFRA-GAUNTLET-AGENDA-MOCK)', () => {
   });
 
   it('separa eventos por pessoa em paths distintos', () => {
-    useVaultMock.getState().setEventos(VAULT, 'pessoa_a', [
-      evt({ id: 'ev-1', pessoa: 'pessoa_a' }),
-    ]);
-    useVaultMock.getState().setEventos(VAULT, 'pessoa_b', [
-      evt({ id: 'ev-1', pessoa: 'pessoa_b' }),
-    ]);
+    useVaultMock
+      .getState()
+      .setEventos(VAULT, 'pessoa_a', [evt({ id: 'ev-1', pessoa: 'pessoa_a' })]);
+    useVaultMock
+      .getState()
+      .setEventos(VAULT, 'pessoa_b', [evt({ id: 'ev-1', pessoa: 'pessoa_b' })]);
     const uris = useVaultMock.getState().listar();
     expect(uris).toContain(
       `${VAULT}/markdown/agenda-pessoa_a-2026-05-17-ev-1.md`
@@ -136,9 +171,9 @@ describe('useVaultMock.setEventos (R-INFRA-GAUNTLET-AGENDA-MOCK)', () => {
   });
 
   it('sanitiza id com caracteres proibidos', () => {
-    useVaultMock.getState().setEventos(VAULT, 'pessoa_a', [
-      evt({ id: 'ev:com/slash.dot' }),
-    ]);
+    useVaultMock
+      .getState()
+      .setEventos(VAULT, 'pessoa_a', [evt({ id: 'ev:com/slash.dot' })]);
     const uris = useVaultMock.getState().listar();
     // sanitizarEventoId substitui : / . por _. Verifica somente
     // o basename do path (URI base contem :// e markdown/).

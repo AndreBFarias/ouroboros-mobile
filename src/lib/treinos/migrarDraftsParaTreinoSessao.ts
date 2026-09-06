@@ -18,7 +18,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 import { useVault } from '@/lib/stores/vault';
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { writeVaultFile } from '@/lib/vault/writer';
@@ -139,7 +139,7 @@ export async function migrarDraftsParaTreinoSessao(
       // Tenta apagar o draft. Falha aqui não reverte a migracao - o
       // draft fica como artefato e o usuario pode limpar manualmente.
       try {
-        await StorageAccessFramework.deleteAsync(draftUri);
+        await deleteVaultFile(draftUri);
       } catch {
         // ok.
       }

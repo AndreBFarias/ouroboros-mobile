@@ -3,7 +3,7 @@
 // path canonico H2, vaultUriJoin para tolerancia a SAF/file ofensivo.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 import {
   grupoPath,
   MARKDOWN_FOLDER,
@@ -76,7 +76,7 @@ export async function removerGrupo(
   const rel = grupoPath(slug);
   const uri = vaultUriJoin(vaultRoot, rel);
   try {
-    await StorageAccessFramework.deleteAsync(uri);
+    await deleteVaultFile(uri);
   } catch {
     // ok se nao existe ou plataforma sem SAF.
   }

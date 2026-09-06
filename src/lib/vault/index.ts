@@ -81,6 +81,7 @@ export type { ParsedFrontmatter } from './frontmatter';
 
 export { readVaultFile, listVaultFolder } from './reader';
 export { writeVaultFile } from './writer';
+export { deleteVaultFile } from './remover';
 export { ehSyncConflict, SYNC_CONFLICT_REGEX } from './syncConflict';
 
 export {

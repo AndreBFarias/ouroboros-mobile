@@ -16,6 +16,11 @@
 // release Android). Idempotencia garantida por igualdade estrutural
 // no parse + comparacao de sincronizado_em.
 //
+// AUDIT-INFRA-VAULT-MOCK-DELETE (2026-09-05): apagarEventoAgenda passa
+// por deleteVaultFile em vez de chamar o SAF direto. Em web/dev isso
+// remove o .md do useVaultMock -- antes a chamada lancava, o catch
+// engolia, e o evento apagado continuava aparecendo no Gauntlet.
+//
 // Concatenacao de URI usa vaultUriJoin canonico (paths.ts) — trim
 // agressivo de trailing whitespace, %20 ofensivo e barras duplas
 // que vinham contaminando saves em OEMs MIUI/OneUI/HyperOS
@@ -25,7 +30,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 import * as FileSystem from 'expo-file-system/legacy';
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 import {
   agendaEventoPath,
   MARKDOWN_FOLDER,
@@ -178,7 +183,7 @@ export async function apagarEventoAgenda(
   for (const arquivoUri of arquivos) {
     if (arquivoUri.endsWith(sufixo)) {
       try {
-        await StorageAccessFramework.deleteAsync(arquivoUri);
+        await deleteVaultFile(arquivoUri);
       } catch {
         // Tolera falha (arquivo ja removido por sync concorrente).
       }

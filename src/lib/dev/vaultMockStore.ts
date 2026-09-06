@@ -14,6 +14,15 @@
 // para isolar casos E2E. Reload da pagina perde o estado -- por design,
 // igual aos outros mocks (frasesMock, galeriaMock, etc).
 //
+// AUDIT-INFRA-VAULT-MOCK-DELETE (2026-09-05): a enumeracao
+// {read,write,readDirectory} acima era literalmente o escopo entregue
+// em 2026-05-08 -- delete ficou de fora, e os onze modulos que apagam
+// arquivo chamavam StorageAccessFramework.deleteAsync direto. Em web
+// isso lancava, o caller engolia, e o arquivo nunca saia do mapa: no
+// Gauntlet nenhuma remocao era observavel. apagarArquivo fecha a
+// lacuna, e src/lib/vault/remover.ts passou a ser o unico caminho de
+// exclusao do Vault.
+//
 // R-INFRA-GAUNTLET-AGENDA-MOCK (2026-05-17): setEventos popula
 // markdown/agenda-<pessoa>-YYYY-MM-DD-<id>.md em massa para que
 // listarEventosAgenda devolva eventos sem precisar de OAuth sync real.
@@ -59,6 +68,11 @@ interface VaultMockState {
     pessoa: 'pessoa_a' | 'pessoa_b',
     eventos: AgendaEvento[]
   ) => void;
+  // AUDIT-INFRA-VAULT-MOCK-DELETE: remove UMA uri. Devolve se havia
+  // algo. Idempotente: apagar duas vezes nao quebra, a segunda devolve
+  // false. Nao confundir com limpar(), que zera o mapa inteiro e serve
+  // ao reset entre casos E2E -- limpar nao simula exclusao pelo app.
+  apagarArquivo: (uri: string) => boolean;
   // Zera o mapa. Chamado por aplicarReset do gauntlet.
   limpar: () => void;
 }
@@ -116,5 +130,17 @@ export const useVaultMock = create<VaultMockState>((set, get) => ({
       }
       return { arquivos: novo };
     }),
+  apagarArquivo: (uri) => {
+    const existia = get().arquivos.has(uri);
+    if (!existia) return false;
+    // Copia o Map antes de mutar, igual as demais acoes: zustand so
+    // notifica assinantes quando a referencia muda.
+    set((s) => {
+      const novo = new Map(s.arquivos);
+      novo.delete(uri);
+      return { arquivos: novo };
+    });
+    return true;
+  },
   limpar: () => set({ arquivos: new Map() }),
 }));

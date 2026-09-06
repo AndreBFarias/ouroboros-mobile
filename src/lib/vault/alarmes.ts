@@ -19,7 +19,7 @@ import {
 import { listVaultFolder, readVaultFile } from '@/lib/vault/reader';
 import { ehSyncConflict } from '@/lib/vault/syncConflict';
 import { writeVaultFile } from '@/lib/vault/writer';
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 import { AlarmeSchema, type Alarme } from '@/lib/schemas/alarme';
 import { forceDeviceIdSuffix, getDeviceId } from '@/lib/util/deviceId';
 
@@ -163,7 +163,7 @@ export async function excluirAlarme(
   for (const rel of [relComSuffix, relCanonico]) {
     const uri = vaultUriJoin(vaultRoot, rel);
     try {
-      await StorageAccessFramework.deleteAsync(uri);
+      await deleteVaultFile(uri);
     } catch {
       // Sem arquivo previo ou plataforma sem SAF; ok.
     }

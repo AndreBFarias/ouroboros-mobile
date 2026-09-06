@@ -12,7 +12,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { moverArquivoParaLixeira } from '@/lib/vault/remover';
 import { treinosPath } from '@/lib/vault/paths';
 import { listVaultFolder } from '@/lib/vault/reader';
 import { readVaultFiles } from '@/lib/vault/leituraLote';
@@ -128,15 +128,7 @@ export async function excluirTreino(
   const nomeArquivo = rel.split('/').pop() ?? 'treino.md';
   const lixeiraPath = `${lixeiraDir}${ts}-${nomeArquivo}`;
 
-  let raw: string;
-  try {
-    raw = await StorageAccessFramework.readAsStringAsync(origemUri);
-    await FileSystem.writeAsStringAsync(lixeiraPath, raw);
-    await StorageAccessFramework.deleteAsync(origemUri);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`falha ao mover para lixeira: ${msg}`);
-  }
+  await moverArquivoParaLixeira(origemUri, lixeiraPath);
   return { lixeiraPath };
 }
 

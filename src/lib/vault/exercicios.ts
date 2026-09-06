@@ -24,7 +24,7 @@
 //
 // Comentarios sem acento (convencao shell/CI).
 import * as FileSystem from 'expo-file-system/legacy';
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { moverArquivoParaLixeira } from '@/lib/vault/remover';
 // Imports apontam diretamente para os modulos finais (não para o
 // barrel @/lib/vault) para evitar ciclo de carregamento. O barrel
 // re-exporta este arquivo, e tests que fazem
@@ -149,18 +149,11 @@ export async function excluirExercicio(
   const ts = formatTimestampLixeira(new Date());
   const lixeiraPath = `${lixeiraDir}${ts}-${slug}.md`;
 
-  // Le o conteudo original via SAF e regrava em cache (filesystem
-  // local). Em seguida apaga o original. Não usamos copyAsync direto
-  // porque SAF -> cacheDirectory pode falhar com URIs content://.
-  let raw: string;
-  try {
-    raw = await StorageAccessFramework.readAsStringAsync(origemUri);
-    await FileSystem.writeAsStringAsync(lixeiraPath, raw);
-    await StorageAccessFramework.deleteAsync(origemUri);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`falha ao mover para lixeira: ${msg}`);
-  }
+  // Le o original, regrava em cache (filesystem local) e apaga a
+  // origem. Não usamos copyAsync direto porque SAF -> cacheDirectory
+  // pode falhar com URIs content://. A primitiva tem branch web/dev,
+  // sem o qual a remocao seria invisivel no Gauntlet.
+  await moverArquivoParaLixeira(origemUri, lixeiraPath);
   return { lixeiraPath };
 }
 

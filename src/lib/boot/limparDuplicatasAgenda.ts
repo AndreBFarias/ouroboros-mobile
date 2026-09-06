@@ -33,7 +33,7 @@
 // hook do CONTRACT 7.9: idempotente, nao-bloqueante, falha silenciavel.
 //
 // Comentarios sem acento (convencao shell/CI).
-import { StorageAccessFramework } from 'expo-file-system/legacy';
+import { deleteVaultFile } from '@/lib/vault/remover';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { AgendaEventoSchema, type AgendaEvento } from '@/lib/vault/agenda';
 import {
@@ -96,7 +96,7 @@ async function limparPessoa(
     // Todos menos o ultimo (mais recente) saem.
     for (const perdedor of ordenado.slice(0, -1)) {
       try {
-        await StorageAccessFramework.deleteAsync(perdedor.uri);
+        await deleteVaultFile(perdedor.uri);
         apagados += 1;
       } catch {
         // Tolera falha (arquivo ja removido por sync concorrente, OEM
