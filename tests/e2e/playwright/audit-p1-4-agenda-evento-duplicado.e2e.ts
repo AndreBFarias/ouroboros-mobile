@@ -19,13 +19,27 @@
 // duplicatasAgendaLimpas persiste (em web, zustand persist cai em
 // localStorage) e bloquearia a limpeza numa segunda execucao do caso.
 //
-// LIMITE CONHECIDO (achado colateral desta sprint): useVaultMock ainda
-// nao implementa delete -- reader/writer tem branch web mock, o caminho
-// de exclusao (StorageAccessFramework.deleteAsync) nao. Enquanto essa
-// lacuna de infra nao for fechada, o passo 4 nao consegue remover nada
-// em web e o caso devolve INCONCLUSIVO com o motivo literal, em vez de
-// FAIL. A regressao esta coberta em unidade
-// (tests/lib/vault/agenda.test.ts e tests/lib/boot/limparDuplicatasAgenda.test.ts).
+// A metade de infra do limite que este cabecalho declarava ate
+// 2026-09-05 -- "useVaultMock nao implementa delete" -- foi fechada por
+// AUDIT-INFRA-VAULT-MOCK-DELETE: o caminho de exclusao ganhou branch
+// web/dev em src/lib/vault/remover.ts.
+//
+// MAS O CASO SEGUE INSTAVEL, por outra causa. Medido em 2026-09-05,
+// tres execucoes consecutivas do runner sem limpar nada entre elas:
+// INCONCLUSIVO, PASS, INCONCLUSIVO. Ou seja, ele as vezes mede.
+//
+// Causa provavel, apurada mas nao corrigida: `autoSeedDev()` em
+// app/_layout.tsx seta o vaultRoot em todo boot dev-web, entao
+// `limparDuplicatasAgendaUmaVez` roda no mount com o Vault mock ainda
+// vazio, nao acha duplicata nenhuma e marca a flag one-shot
+// `duplicatasAgendaLimpas`. Quando o passo 4 chama
+// `disparaBootHooks()`, o hook ja queimou. O `localStorage.clear()` do
+// passo 0 tenta contornar, e a corrida decide quem chega primeiro.
+//
+// Enquanto isso nao for resolvido, NAO admitir este caso ao
+// e2e-smoke.json: a regra de admissao exige verde medido, e verde
+// intermitente e pior que vermelho -- ensina a ignorar o gate.
+// Rastreado em AUDIT-P2-13.
 //
 // Como executar (automacao de browser):
 //   1. ./gauntlet.sh
@@ -44,7 +58,8 @@ export default async function caseAuditP1_4(
   const sprint = 'AUDIT-P1-4';
   const aspecto = 'agenda-evento-duplicado';
   const screenshots: string[] = [];
-  const dir = 'docs/sprints/AUDIT-P1-4-AGENDA-EVENTO-DUPLICADO-screenshots-gauntlet';
+  const dir =
+    'docs/sprints/AUDIT-P1-4-AGENDA-EVENTO-DUPLICADO-screenshots-gauntlet';
 
   try {
     await page.goto('http://localhost:8081/_dev/gauntlet');

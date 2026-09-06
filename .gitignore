@@ -120,3 +120,7 @@ STATE.md
 # Contem mesmo client_id que ja esta em env.json; nao usado em Android.
 client_*.plist
 Checkpoint.md
+
+# Saida da automacao de browser (playwright MCP): snapshots e logs
+# de sessao, nao artefato de sprint.
+.playwright-mcp/
