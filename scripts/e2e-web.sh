@@ -17,6 +17,15 @@
 #     cinto de seguranca caso o ambiente sobrescreva.
 #   - EXPO_PUBLIC_GAUNTLET=1: pede o Gauntlet ativo (alem de dev web).
 #   - health-check com poll (ate 90s): o primeiro bundle web fresh e' lento.
+#   - limpeza previa de test-results/ e playwright-report/
+#     (AUDIT-DX-E2E-WEB-WATCHER): o Playwright apaga o outputDir ao iniciar
+#     o run. Com o diretório ja no disco de uma execução anterior, o
+#     watcher do Metro registrava um fs.watch sobre ele no crawl inicial e
+#     morria com ENOENT quando o Playwright o apagava -- so na SEGUNDA
+#     execução seguida, e o sintoma aparecia como ERR_CONNECTION_REFUSED
+#     dentro do caso e2e, não no bundler. O metro.config.js ja subtrai
+#     esses caminhos da observacao via resolver.blockList; esta limpeza e'
+#     o cinto de seguranca, independente da versao do Metro.
 #
 # Comentarios sem acento (convencao shell/CI).
 set -euo pipefail
@@ -44,7 +53,7 @@ teardown() {
   fi
   # Garante que a porta fica livre (sem processo orfao node/expo/metro).
   local pids
-  pids=$(lsof -ti:"$PORT" 2>/dev/null || true)
+  pids=$(lsof -ti:"$PORT" -sTCP:LISTEN 2>/dev/null || true)
   if [[ -n "$pids" ]]; then
     for pid in $pids; do
       local cmd
@@ -59,7 +68,13 @@ trap teardown EXIT INT TERM
 
 # 1. Limpa orfao node/expo/metro na porta antes de subir (run.sh recusa
 #    subir se algo ja responde em 8081).
-PIDS=$(lsof -ti:"$PORT" 2>/dev/null || true)
+#
+#    -sTCP:LISTEN e obrigatorio: sem ele o lsof devolve tambem os
+#    CLIENTES com socket na porta. Medido em 2026-09-05 -- o Chrome
+#    deixa conexoes em CLOSE_WAIT depois de uma sessão de automacao, o
+#    script as lia como "porta ocupada por 'chrome'" e abortava com
+#    ERRO, sem que nada estivesse escutando em 8081.
+PIDS=$(lsof -ti:"$PORT" -sTCP:LISTEN 2>/dev/null || true)
 if [[ -n "$PIDS" ]]; then
   for PID in $PIDS; do
     CMD=$(ps -p "$PID" -o comm= 2>/dev/null | tr -d ' ' || echo '?')
@@ -77,14 +92,20 @@ if [[ -n "$PIDS" ]]; then
   sleep 1
 fi
 
-# 2. Sobe o Metro web detached, com process group proprio (setsid) para o
+# 2. Apaga os artefatos do run anterior ANTES de subir o Metro (ver
+#    a seção de descobertas no cabecalho). Os dois diretórios sao
+#    recriados pelo próprio Playwright durante o run, e ambos estao no
+#    .gitignore.
+rm -rf test-results playwright-report
+
+# 3. Sobe o Metro web detached, com process group próprio (setsid) para o
 #    teardown poder matar todo o grupo.
 [[ -f "$LOG_FILE" ]] && mv "$LOG_FILE" "${LOG_FILE}.prev" 2>/dev/null || true
 echo ">> subindo Metro web (EXPO_PUBLIC_GAUNTLET=1) -> $LOG_FILE"
 setsid nohup ./run.sh --web --port "$PORT" > "$LOG_FILE" 2>&1 &
 METRO_PID=$!
 
-# 3. Health-check: poll ate HEALTH_TIMEOUT segundos. Aborta cedo se o
+# 4. Health-check: poll ate HEALTH_TIMEOUT segundos. Aborta cedo se o
 #    Metro morrer.
 PRONTO=0
 for ((i = 1; i <= HEALTH_TIMEOUT; i++)); do
@@ -110,7 +131,7 @@ fi
 
 echo "OK: Metro web pronto em $URL/_dev/gauntlet"
 
-# 4. Roda a suite. --config aponta para o harness; flags extras passam.
+# 5. Roda a suite. --config aponta para o harness; flags extras passam.
 echo ">> rodando runner e2e (playwright)"
 set +e
 npx playwright test --config "$CONFIG" "$@"

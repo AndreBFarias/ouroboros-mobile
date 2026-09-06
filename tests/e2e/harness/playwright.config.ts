@@ -24,6 +24,14 @@ import { defineConfig } from '@playwright/test';
 // repo (test-results/, playwright-report/), nao para dentro do dir-fonte
 // do harness. Facilita o upload-artifact do CI (sub-sprint b) e mantem
 // tests/e2e/harness limpo.
+//
+// AUDIT-DX-E2E-WEB-WATCHER: como os dois ficam DENTRO da arvore que o
+// Metro observa, `resolver.blockList` em metro.config.js subtrai esses
+// nomes do watcher -- sem isso o bundler morre com ENOENT quando o
+// Playwright apaga o outputDir no inicio do run. Os nomes estao repetidos
+// la; renomear ou mover qualquer um dos dois exige atualizar aquele
+// padrao, e tests/config/metro-watcher-artefatos-e2e.test.ts reprova se
+// os dois arquivos sairem de sincronia.
 const RAIZ = path.resolve(__dirname, '../../..');
 
 export default defineConfig({
@@ -37,7 +45,10 @@ export default defineConfig({
   // Aqui so exigimos que localhost:8081 esteja respondendo.
   reporter: [
     ['list'],
-    ['html', { open: 'never', outputFolder: path.join(RAIZ, 'playwright-report') }],
+    [
+      'html',
+      { open: 'never', outputFolder: path.join(RAIZ, 'playwright-report') },
+    ],
     // Sumario agregado (total/PASS/FAIL/INCONCLUSIVO/excecoes) no main.
     ['./e2e-reporter.ts'],
   ],

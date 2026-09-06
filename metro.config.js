@@ -8,7 +8,11 @@ const config = getDefaultConfig(__dirname);
 // alguns pacotes (ex: zustand) que usam `import.meta.env`, sintaxe
 // que o Metro/Hermes nao trata. Resultado anterior: tela branca com
 // SyntaxError "Cannot use 'import.meta' outside a module".
-config.resolver.unstable_conditionNames = ['require', 'react-native', 'default'];
+config.resolver.unstable_conditionNames = [
+  'require',
+  'react-native',
+  'default',
+];
 config.resolver.unstable_enablePackageExports = true;
 
 // M37.1: react-native-calendars usa imports relativos sem extensao
@@ -83,5 +87,40 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
   return context.resolveRequest(context, moduleName, platform);
 };
+
+// AUDIT-DX-E2E-WEB-WATCHER: subtrai os artefatos do runner e2e web da
+// observacao do Metro.
+//
+// tests/e2e/harness/playwright.config.ts grava em <raiz>/test-results/ e
+// <raiz>/playwright-report/ -- dentro da arvore que o Metro observa. Sem
+// watchman instalado, o metro-file-map cai no FallbackWatcher, que faz
+// fs.watch() diretorio a diretorio. O Playwright apaga o outputDir ao
+// iniciar o run; quando isso acontece durante o crawl inicial do watcher,
+// o fs.watch() sincrono sobre um diretorio que acabou de sumir lanca
+// ENOENT nao tratado e mata o bundler:
+//
+//   Error: ENOENT: no such file or directory, watch '.../test-results/e2e-web'
+//       at FallbackWatcher._watchdir (metro-file-map/.../FallbackWatcher.js:119)
+//
+// A partir dai todo caso devolve ERR_CONNECTION_REFUSED, e o sintoma
+// aponta para o caso e2e em vez do bundler morto. So acontecia na SEGUNDA
+// execucao seguida, porque na primeira o diretorio ainda nao existia
+// quando o Metro subiu.
+//
+// A blockList chega ao watcher nesta versao do Metro (0.83.x): o
+// createFileMap combina resolver.blockList em ignorePattern e o repassa
+// como ignorePatternForWatch ao FallbackWatcher, que usa o padrao no
+// filterDir do walker -- o diretorio nem chega a ser visitado, entao
+// nunca entra em fs.watch.
+//
+// O padrao casa o SEGMENTO em qualquer profundidade porque o watcher
+// testa o caminho nas duas formas: absoluto (filterDir, ignoreForCrawl) e
+// relativo a raiz (doIgnore). Nao ha nenhum outro diretorio com esses
+// nomes em app/, src/ ou node_modules/ -- se um dia houver, ele tambem
+// sera ignorado pelo bundler.
+config.resolver.blockList = [
+  ...[].concat(config.resolver.blockList ?? []),
+  /(^|[\\/])(test-results|playwright-report)([\\/]|$)/,
+];
 
 module.exports = withNativeWind(config, { input: './global.css' });
