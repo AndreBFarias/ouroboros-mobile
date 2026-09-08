@@ -42,6 +42,16 @@ echo ">> dados de teste"
 echo ">> strings UI PT-BR (acentuacao canonica)"
 python3 scripts/check_strings_ui_ptbr.py
 
+# Decisao P8 (2026-09-08): a Regra de Tom era a unica da Seção 5 do
+# CONTEXTO que se declarava "enforced via revisao manual". BLOQUEANTE de
+# proposito, sem `|| true`: avisar sem abortar e exatamente o defeito que a
+# AUDIT-P3-2 corrigiu no ESLint, onde `2>/dev/null || true` fez com que
+# nenhum erro jamais reprovasse um PR. Cobre emoji e exclamacao; comparativo
+# negativo e gamificacao seguem em revisao humana, e o cabecalho do script
+# diz isso em vez de prometer o que não cumpre.
+echo ">> tom (emoji e exclamacao em string de UI)"
+python3 scripts/check_tom.py
+
 echo ">> contract drift (Mobile <-> Backend Python)"
 ./scripts/test_contract_drift.sh || true
 
