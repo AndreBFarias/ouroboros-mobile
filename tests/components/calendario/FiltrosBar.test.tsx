@@ -52,6 +52,7 @@ jest.mock('@/components/ui', () => {
 
 import { FiltrosBar } from '@/components/calendario/FiltrosBar';
 import { FILTROS_DEFAULT } from '@/lib/conquistas/filtros';
+import { useSettings } from '@/lib/stores/settings';
 
 function montar(over: Record<string, unknown> = {}) {
   const spies = {
@@ -70,6 +71,15 @@ function montar(over: Record<string, unknown> = {}) {
 beforeEach(() => {
   mockVaultCompartilhado = true;
   mockValorSlider = 4;
+  // P2 (2026-09-08): o bloco "Pessoa" passou a existir so' quando ha
+  // uma segunda pessoa. `vaultCompartilhado` responde outra pergunta
+  // -- ele governa se as duas pessoas se veem, nao se a segunda
+  // existe -- e por isso os casos abaixo declaram a companhia.
+  useSettings.getState().setPessoa('tipoCompanhia', 'casal');
+});
+
+afterAll(() => {
+  useSettings.getState().setPessoa('tipoCompanhia', 'sozinho');
 });
 
 describe('FiltrosBar — os quatro filtros religados', () => {
@@ -144,6 +154,30 @@ describe('FiltrosBar — debounce do bairro', () => {
       jest.advanceTimersByTime(600);
     });
     expect(onBairro).not.toHaveBeenCalled();
+  });
+});
+
+describe('FiltrosBar — modo sozinho', () => {
+  it('sem segunda pessoa, o bloco Pessoa inteiro sai', () => {
+    useSettings.getState().setPessoa('tipoCompanhia', 'sozinho');
+    const { queryByText } = montar();
+    expect(queryByText('Pessoa B')).toBeNull();
+    expect(queryByText('Ambos')).toBeNull();
+    // O rotulo da secao tambem sai: um filtro de uma opcao so' e' ruido.
+    expect(queryByText('Pessoa')).toBeNull();
+  });
+
+  it('os demais filtros continuam inteiros em modo sozinho', () => {
+    useSettings.getState().setPessoa('tipoCompanhia', 'sozinho');
+    const { getByText, getByLabelText } = montar();
+    expect(getByText('Foto')).toBeTruthy();
+    expect(getByLabelText('filtro bairro')).toBeTruthy();
+  });
+
+  it('entre amigos o bloco Pessoa continua existindo', () => {
+    useSettings.getState().setPessoa('tipoCompanhia', 'amigos');
+    const { getByText } = montar();
+    expect(getByText('Pessoa B')).toBeTruthy();
   });
 });
 

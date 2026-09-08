@@ -148,11 +148,19 @@ describe('MenuLateral', () => {
   // I-CICLO (M-SAVE-CICLO-VALIDA): item Ciclo segue feature toggle
   // E o sexoDeclarado das duas pessoas. Ambos masculino esconde
   // mesmo com toggle on.
+  //
+  // P2 (2026-09-08): a decisao passou a considerar tipoCompanhia. Em
+  // modo sozinho o onboarding nunca pergunta o sexo da segunda pessoa,
+  // entao sexoB e' sempre null e a regra antiga ("esconde so' quando
+  // AS DUAS sao masculinas") nunca fechava: um homem que usa o app
+  // sozinho via Ciclo no menu. Os casos de duas pessoas agora declaram
+  // tipoCompanhia explicitamente.
   describe('I-CICLO visibilidade do item Ciclo', () => {
     beforeEach(() => {
       // Garante toggle on para isolar o efeito de sexoDeclarado.
       useSettings.getState().setFeatureToggle('cicloMenstrual', true);
       useNavegacao.setState({ menuAberto: true });
+      useOnboarding.getState().setTipoCompanhia('casal');
     });
 
     it('esconde Ciclo quando ambos masculino', () => {
@@ -177,6 +185,26 @@ describe('MenuLateral', () => {
     });
 
     it('mostra Ciclo quando ainda nao declarou (default null)', () => {
+      const { getByLabelText } = render(<MenuLateral />);
+      expect(getByLabelText('item ciclo')).toBeTruthy();
+    });
+
+    it('esconde Ciclo para homem que usa o app sozinho', () => {
+      useOnboarding.getState().setTipoCompanhia('sozinho');
+      useOnboarding.getState().setSexoDeclarado('pessoa_a', 'masculino');
+      const { queryByLabelText } = render(<MenuLateral />);
+      expect(queryByLabelText('item ciclo')).toBeNull();
+    });
+
+    it('mostra Ciclo para mulher que usa o app sozinha', () => {
+      useOnboarding.getState().setTipoCompanhia('sozinho');
+      useOnboarding.getState().setSexoDeclarado('pessoa_a', 'feminino');
+      const { getByLabelText } = render(<MenuLateral />);
+      expect(getByLabelText('item ciclo')).toBeTruthy();
+    });
+
+    it('mostra Ciclo em sozinho sem declaracao (nao presume)', () => {
+      useOnboarding.getState().setTipoCompanhia('sozinho');
       const { getByLabelText } = render(<MenuLateral />);
       expect(getByLabelText('item ciclo')).toBeTruthy();
     });

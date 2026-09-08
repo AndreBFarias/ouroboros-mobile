@@ -108,7 +108,8 @@ export interface GauntletAPI {
   setUltimaRota(rota: string | null): void;
   // G4 (INFRA-GAUNTLET-AMIGOS-API): muda useOnboarding.tipoCompanhia
   // em runtime para o E2E exercer ramificacao de useNomeDe('ambos')
-  // (retorna 'Casal' / 'Todos' / 'Ambos' conforme modo).
+  // (retorna 'Casal' / 'Todos' / 'Ambos' conforme modo). P3: espelha
+  // tambem em useSettings, de onde os chips leem.
   setTipoCompanhia(modo: 'sozinho' | 'casal' | 'amigos'): void;
   abrir(rota: string): Promise<void>;
   abrirMenu(): void;
@@ -307,9 +308,9 @@ function aplicarSeed(opts?: SeedOpcoes): void {
   // M-GAUNTLET-SEED-DUO: useSettings.pessoa.tipoCompanhia e o canonico
   // atual (M29). Componentes M31/M33 leem dele -- sem isto, modo casal
   // do seed nao reflete em UI nova (chips ficam ocultos).
-  // Valores: 'sozinho' | 'duo' (canonico M29, distinto de useOnboarding
-  // legado que ainda aceita 'casal'/'amigos').
-  const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
+  // P3 (2026-09-08): os dois stores passaram a guardar o MESMO valor
+  // ('sozinho' | 'casal' | 'amigos'); o literal 'duo' saiu de cena.
+  const tipoCompanhiaSettings = tipoCompanhia;
   const settingsAtual = useSettings.getState();
   useSettings.setState({
     pessoa: {
@@ -398,8 +399,9 @@ function aplicarSetNomes(nomeA: string, nomeB?: string | null): void {
     nomes: { pessoa_a: nomeA, pessoa_b: nomeB ?? 'Nome_B' },
   });
   useOnboarding.setState({ tipoCompanhia });
-  // M-GAUNTLET-SEED-DUO: espelha em useSettings (canonico M29).
-  const tipoCompanhiaSettings = nomeB ? 'duo' : 'sozinho';
+  // M-GAUNTLET-SEED-DUO: espelha em useSettings (canonico M29). P3: o
+  // espelho e' identidade, nao mais um colapso para 'duo'.
+  const tipoCompanhiaSettings = tipoCompanhia;
   const settingsAtual = useSettings.getState();
   useSettings.setState({
     pessoa: {
@@ -671,8 +673,12 @@ const api: GauntletAPI = {
     undefined as void
   ),
   setTipoCompanhia: comGuard(
+    // P3: usa a ACAO do store (nao setState cru) para que o espelho em
+    // useSettings ande junto -- sem isso o E2E de amigos mudaria o
+    // rotulo de useNomeDe('ambos') e nao o chip do SeletorPara, que le
+    // useSettings.
     (modo: 'sozinho' | 'casal' | 'amigos') =>
-      useOnboarding.setState({ tipoCompanhia: modo }),
+      useOnboarding.getState().setTipoCompanhia(modo),
     undefined as void
   ),
   abrir: async (rota) => {

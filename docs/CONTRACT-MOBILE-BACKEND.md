@@ -844,7 +844,7 @@ Container que agrupa até 10 rotinas existentes para o ciclo de treino do usuár
 | `_schema_version` | inteiro | sim (escrita) | |
 | `version` | literal `1` | sim | Versão interna do schema de estado. |
 | `somVibracao` | object | sim | `{ geral, despertar, conquista, botoes }` booleans. |
-| `pessoa` | object | sim | `{ ativa, vaultCompartilhado, tipoCompanhia }`. |
+| `pessoa` | object | sim | `{ ativa, vaultCompartilhado, tipoCompanhia }`. `tipoCompanhia` é `sozinho` \| `casal` \| `amigos` desde a P3 (2026-09-08); era `sozinho` \| `duo`. **Leitura tolerante:** arquivo já gravado com `duo` continua válido e é lido como `casal` (`TipoCompanhiaSchema` em `src/lib/schemas/companhia.ts` faz o preprocess). Consumidor externo deve aceitar os quatro valores na leitura e escrever apenas os três canônicos. |
 | `featureToggles` | object | sim | 11 booleans cobrindo features opcionais. |
 | `privacidade` | object | sim | `{ biometriaAbrir, ocultarTranscricoes }`. |
 | `midia` | object | sim | `{ capPorRegistro >= 1, permitirAudio }`. |
@@ -888,7 +888,7 @@ Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem est
 | `_schema_version` | inteiro | sim (escrita) | |
 | `version` | literal `1` | sim | |
 | `done` | boolean | sim | |
-| `tipoCompanhia` | `sozinho` \| `casal` \| `amigos` | sim | |
+| `tipoCompanhia` | `sozinho` \| `casal` \| `amigos` | sim | Sempre teve os três valores aqui; era o espelho de `settings` que os colapsava (corrigido na P3). Aceita o legado `duo` na leitura, normalizado para `casal`. |
 | `sexoDeclarado` | object | sim | `{ pessoa_a: enum\|null, pessoa_b: enum\|null }`. |
 | `permissoes` | object | sim | 5 booleans (storage, camera, microfone, notificacoes, localizacao). |
 | `atualizadoEm` | ISO 8601 | sim | |

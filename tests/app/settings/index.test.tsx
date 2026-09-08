@@ -173,7 +173,7 @@ describe('Tela 23 — Settings v2 (sprint M29)', () => {
   });
 
   it('linha "Adicionar segunda pessoa" so aparece se sozinho', () => {
-    useSettings.getState().setPessoa('tipoCompanhia', 'duo');
+    useSettings.getState().setPessoa('tipoCompanhia', 'casal');
     const tree = render(
       <ToastProvider>
         <SettingsTela />

@@ -40,6 +40,8 @@ import {
 import { colors, spacing } from '@/theme/tokens';
 import { useHumorHeatmap } from '@/lib/hooks/useHumorHeatmap';
 import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
+import { useSettings } from '@/lib/stores/settings';
+import { temSegundaPessoa } from '@/lib/schemas/companhia';
 import {
   useFiltroPessoaEfetivo,
   useVaultCompartilhado,
@@ -97,6 +99,14 @@ export function MiniHumorScreen(): ReactNode {
     ],
     [nomeA, nomeB]
   );
+  // P2 (2026-09-08): a tela ramificava por vaultCompartilhado, que
+  // responde "o vault e' de duas pessoas?", e nao por tipoCompanhia,
+  // que responde "existe uma segunda pessoa?". Quem usa sozinho tem
+  // vault compartilhado por default e via um chip com o nome de
+  // pessoa_b. Com uma opcao so, o grupo inteiro sai -- mesmo padrao do
+  // SeletorPara.
+  const tipoCompanhia = useSettings((s) => s.pessoa.tipoCompanhia);
+  const temOutraPessoa = temSegundaPessoa(tipoCompanhia);
   const [modo, setModo] = useState<ModoFiltroHumor>(() => {
     // Inicializa com a pessoa ativa do filtro global; 'ambos' do
     // store mapeia para 'sobreposto' aqui (apenas se vault
@@ -191,14 +201,16 @@ export function MiniHumorScreen(): ReactNode {
           onPress={handleRegistrar}
         />
 
-        <ChipGroup
-          mode="single"
-          options={
-            vaultCompartilhado ? chipOptionsCompartilhado : chipOptionsPrivado
-          }
-          value={modo}
-          onChange={handleModoChange}
-        />
+        {temOutraPessoa ? (
+          <ChipGroup
+            mode="single"
+            options={
+              vaultCompartilhado ? chipOptionsCompartilhado : chipOptionsPrivado
+            }
+            value={modo}
+            onChange={handleModoChange}
+          />
+        ) : null}
 
         {loading ? (
           <Text

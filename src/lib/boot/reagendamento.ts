@@ -284,14 +284,19 @@ const limparOrfaosWritingHook: BootHook = async () => {
 // com useOnboarding.tipoCompanhia. Cobre usuarios v3 que onboardaram
 // antes do espelhamento automatico (ficaram presos em settings='sozinho'
 // mesmo escolhendo casal/amigos). Idempotente.
+//
+// P3 (2026-09-08): useSettings passou a guardar os tres valores, entao
+// o esperado e' a copia exata do onboarding. Este hook e' tambem o que
+// termina a migracao do legado: quem tinha 'duo' persistido hidrata
+// como 'casal' e, se a resposta do onboarding era 'amigos', volta a
+// 'amigos' aqui -- sem perguntar nada de novo ao usuario.
 const reconciliarTipoCompanhiaHook: BootHook = async () => {
   const { useOnboarding } = await import('@/lib/stores/onboarding');
   const { useSettings } = await import('@/lib/stores/settings');
-  const ob = useOnboarding.getState().tipoCompanhia;
-  const expected: 'sozinho' | 'duo' = ob === 'sozinho' ? 'sozinho' : 'duo';
+  const esperado = useOnboarding.getState().tipoCompanhia;
   const atual = useSettings.getState().pessoa.tipoCompanhia;
-  if (atual !== expected) {
-    useSettings.getState().setPessoa('tipoCompanhia', expected);
+  if (atual !== esperado) {
+    useSettings.getState().setPessoa('tipoCompanhia', esperado);
   }
 };
 

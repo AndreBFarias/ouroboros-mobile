@@ -3,10 +3,12 @@
 //
 // Comportamento:
 //  - "Para mim" sempre presente (autor === dono, default v1 compat).
-//  - "Para [nome do parceiro]" so aparece quando tipoCompanhia === 'duo'
-//    em useSettings (M28). Nome vem de useNomeDe(autor parceiro).
-//  - "Para o casal" so aparece em duo. Marca tarefa de responsabilidade
-//    compartilhada.
+//  - "Para [nome da outra pessoa]" so aparece quando ha uma segunda
+//    pessoa em useSettings (M28). Nome vem de useNomeDe(autor parceiro).
+//  - Chip do destino compartilhado so aparece quando ha segunda pessoa.
+//    Marca tarefa de responsabilidade compartilhada. P2/P3: o rotulo
+//    ramifica por tipoCompanhia -- "Para o casal" para casal, "Para
+//    todos" para amigos. Nao existe em modo sozinho.
 //  - "Para outro" sempre presente. Quando selecionado, expande input
 //    abaixo dos chips para o usuario digitar nome livre (1-60 chars).
 //
@@ -22,6 +24,8 @@ import { useNomeDe, usePessoa } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { TarefaPessoaDestino } from '@/lib/schemas/tarefa';
+import { temSegundaPessoa } from '@/lib/schemas/companhia';
+import { rotuloParaCompartilhado } from '@/lib/copy/companhia';
 
 export interface SeletorPessoaDestinoProps {
   value: TarefaPessoaDestino;
@@ -66,13 +70,17 @@ export function SeletorPessoaDestino({
     const out: ChipOption[] = [
       { value: 'mim', label: 'Para mim', accent: 'purple' },
     ];
-    if (tipoCompanhia === 'duo') {
+    if (temSegundaPessoa(tipoCompanhia)) {
       out.push({
         value: `outra:${pessoaParceiro}`,
         label: `Para ${nomeParceiro}`,
         accent: 'pink',
       });
-      out.push({ value: 'casal', label: 'Para o casal', accent: 'cyan' });
+      out.push({
+        value: 'casal',
+        label: rotuloParaCompartilhado(tipoCompanhia),
+        accent: 'cyan',
+      });
     }
     out.push({ value: 'terceiro', label: 'Para outro', accent: 'orange' });
     return out;

@@ -39,6 +39,7 @@ import {
   SEXO_DEFAULT,
 } from '@/lib/stores/onboarding';
 import { usePessoa, NOMES_DEFAULT, FOTOS_DEFAULT } from '@/lib/stores/pessoa';
+import { normalizarTipoCompanhia } from '@/lib/schemas/companhia';
 
 export interface RestauracaoFalha {
   path: string;
@@ -322,7 +323,18 @@ export function aplicarSnapshot(
   // snapshot corrompido/parcial (sub-objeto ausente cai no default limpo).
   useSettings.setState({
     somVibracao: { ...DEFAULT_STATE_V2.somVibracao, ...snap.settings.somVibracao },
-    pessoa: { ...DEFAULT_STATE_V2.pessoa, ...snap.settings.pessoa },
+    // P3: o snapshot JSON nao passa por zod (JSON.parse direto), entao
+    // a normalizacao do legado 'duo' acontece aqui. Backup exportado
+    // antes desta sprint restaura como 'casal' em vez de injetar um
+    // valor fora do dominio no store.
+    pessoa: {
+      ...DEFAULT_STATE_V2.pessoa,
+      ...snap.settings.pessoa,
+      tipoCompanhia: normalizarTipoCompanhia(
+        snap.settings.pessoa?.tipoCompanhia,
+        DEFAULT_STATE_V2.pessoa.tipoCompanhia
+      ),
+    },
     featureToggles: {
       ...DEFAULT_STATE_V2.featureToggles,
       ...snap.settings.featureToggles,
@@ -345,7 +357,7 @@ export function aplicarSnapshot(
   // ja esta no store em vez de zerar.
   const onboardingPatch: Partial<ReturnType<typeof useOnboarding.getState>> = {
     done: snap.onboarding.done,
-    tipoCompanhia: snap.onboarding.tipoCompanhia,
+    tipoCompanhia: normalizarTipoCompanhia(snap.onboarding.tipoCompanhia),
   };
   //
   // AUDIT-P1-8 (2026-07-28): o guard `if (...)` cobre o sub-objeto

@@ -23,6 +23,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import { secureStorage } from '@/lib/stores/persist';
+import { ehSemCredencial } from '@/lib/stores/credenciais';
 import {
   refreshAccessToken,
   revogarToken,
@@ -156,7 +157,9 @@ export const useYouTubeAuth = create<YouTubeAuthState>()(
           });
           return { ok: true };
         } catch (e) {
-          if (e instanceof Error && e.message.includes('env.json')) {
+          // P4 (2026-09-08): decidido pelo TIPO do erro, nao pela
+          // substring da mensagem (ver credenciais.ts).
+          if (ehSemCredencial(e)) {
             return { ok: false, motivo: 'sem_client_id' };
           }
           return { ok: false, motivo: 'erro' };

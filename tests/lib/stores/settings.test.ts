@@ -1,4 +1,4 @@
-import { useSettings } from '@/lib/stores/settings';
+import { useSettings, mergeSettingsPersistido } from '@/lib/stores/settings';
 
 describe('useSettings (shape v2 - sprint M29)', () => {
   beforeEach(() => {
@@ -102,9 +102,15 @@ describe('useSettings (shape v2 - sprint M29)', () => {
       expect(sv.conquista).toBe(true);
     });
 
-    it('setPessoa.tipoCompanhia aceita duo', () => {
-      useSettings.getState().setPessoa('tipoCompanhia', 'duo');
-      expect(useSettings.getState().pessoa.tipoCompanhia).toBe('duo');
+    // P3 (2026-09-08): o store guardava 'sozinho' | 'duo' e perdia a
+    // distincao casal/amigos que o onboarding acabara de coletar.
+    it('setPessoa.tipoCompanhia aceita os tres valores do onboarding', () => {
+      useSettings.getState().setPessoa('tipoCompanhia', 'casal');
+      expect(useSettings.getState().pessoa.tipoCompanhia).toBe('casal');
+      useSettings.getState().setPessoa('tipoCompanhia', 'amigos');
+      expect(useSettings.getState().pessoa.tipoCompanhia).toBe('amigos');
+      useSettings.getState().setPessoa('tipoCompanhia', 'sozinho');
+      expect(useSettings.getState().pessoa.tipoCompanhia).toBe('sozinho');
     });
 
     it('setMidia.capPorRegistro aceita numero arbitrario', () => {
@@ -335,5 +341,44 @@ describe('migracao v1 -> v2', () => {
     };
     const v2Out = migrarV1ParaV2(v2In, 2);
     expect(v2Out.somVibracao.geral).toBe(false);
+  });
+});
+
+// P3 (2026-09-08): leitura tolerante do legado. Instalacao anterior a
+// esta sprint tem 'duo' persistido no SecureStore. O merge roda em
+// TODA hidratacao, entao e' o ponto onde o valor antigo entra. Exercita
+// mergeSettingsPersistido, que e' a funcao cabeada em `merge` no
+// persist -- nao uma replica.
+describe('hidratacao tolerante de tipoCompanhia (P3)', () => {
+  it('le o legado duo como casal, sem virar sozinho', () => {
+    const atual = useSettings.getState();
+    const merged = mergeSettingsPersistido(
+      { pessoa: { ativa: 'pessoa_b', vaultCompartilhado: false, tipoCompanhia: 'duo' } },
+      atual
+    );
+    expect(merged.pessoa.tipoCompanhia).toBe('casal');
+    // O resto do sub-objeto persistido continua vencendo o default.
+    expect(merged.pessoa.ativa).toBe('pessoa_b');
+    expect(merged.pessoa.vaultCompartilhado).toBe(false);
+  });
+
+  it('preserva os tres valores canonicos', () => {
+    const atual = useSettings.getState();
+    for (const tipo of ['sozinho', 'casal', 'amigos'] as const) {
+      const merged = mergeSettingsPersistido(
+        { pessoa: { ...atual.pessoa, tipoCompanhia: tipo } },
+        atual
+      );
+      expect(merged.pessoa.tipoCompanhia).toBe(tipo);
+    }
+  });
+
+  it('valor corrompido cai no default sozinho em vez de vazar', () => {
+    const atual = useSettings.getState();
+    const merged = mergeSettingsPersistido(
+      { pessoa: { ...atual.pessoa, tipoCompanhia: 'trio' } },
+      atual
+    );
+    expect(merged.pessoa.tipoCompanhia).toBe('sozinho');
   });
 });

@@ -22,8 +22,17 @@ import { secureStorage } from '@/lib/stores/persist';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { TipoHC } from '@/lib/health/tipos';
 import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
+import {
+  normalizarTipoCompanhia,
+  type TipoCompanhia,
+} from '@/lib/schemas/companhia';
 
-export type TipoCompanhia = 'sozinho' | 'duo';
+// P3 (2026-09-08): este arquivo declarava `type TipoCompanhia =
+// 'sozinho' | 'duo'`, homonimo do tipo de useOnboarding e com dominio
+// diferente. Era a razao estrutural do colapso: o store que a UI le
+// nao tinha como representar 'amigos'. Agora ha um tipo so, em
+// @/lib/schemas/companhia, e a hidratacao converte o 'duo' persistido.
+export type { TipoCompanhia } from '@/lib/schemas/companhia';
 
 export interface SettingsState {
   somVibracao: {
@@ -558,9 +567,21 @@ function mesclarDefaults(ps: Record<string, unknown>): SettingsState {
       ...DEFAULT_STATE_V2.somVibracao,
       ...((ps.somVibracao as Record<string, unknown>) ?? {}),
     } as SettingsState['somVibracao'],
+    // P3: `tipoCompanhia` reescrito DEPOIS do spread. Instalacao
+    // anterior a esta sprint tem 'duo' persistido no SecureStore;
+    // normalizarTipoCompanhia le como 'casal' em vez de deixar um
+    // valor fora do dominio entrar no store. O BootHook
+    // reconciliarTipoCompanhiaHook ajusta para 'amigos' logo em
+    // seguida quando essa era a resposta do onboarding.
     pessoa: {
-      ...DEFAULT_STATE_V2.pessoa,
-      ...((ps.pessoa as Record<string, unknown>) ?? {}),
+      ...({
+        ...DEFAULT_STATE_V2.pessoa,
+        ...((ps.pessoa as Record<string, unknown>) ?? {}),
+      } as SettingsState['pessoa']),
+      tipoCompanhia: normalizarTipoCompanhia(
+        (ps.pessoa as Record<string, unknown> | undefined)?.tipoCompanhia,
+        DEFAULT_STATE_V2.pessoa.tipoCompanhia
+      ),
     } as SettingsState['pessoa'],
     featureToggles: {
       ...DEFAULT_STATE_V2.featureToggles,

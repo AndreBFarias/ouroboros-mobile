@@ -10,6 +10,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { PersonAvatar } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 import type { HumorHeatmapCell } from '@/lib/schemas/humor_heatmap_cache';
 
 interface SliderReadonlyProps {
@@ -84,6 +85,7 @@ function BlocoRegistro({
   registro,
   nomeExibicao,
 }: BlocoRegistroProps): ReactNode {
+  const corAutor = useCorPessoa(registro.autor);
   return (
     <View style={{ gap: spacing.md }}>
       <View
@@ -96,7 +98,7 @@ function BlocoRegistro({
         <PersonAvatar pessoa={registro.autor} size="sm" />
         <Text
           style={{
-            color: registro.autor === 'pessoa_a' ? colors.purple : colors.pink,
+            color: corAutor,
             fontFamily: 'JetBrainsMono_500Medium',
             fontSize: 14,
             lineHeight: 20,

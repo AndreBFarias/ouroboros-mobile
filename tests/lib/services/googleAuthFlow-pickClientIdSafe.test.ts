@@ -1,83 +1,72 @@
 // Cobre o wrap defensivo pickClientIdSafe (B2 da sprint AUDIT-T1-BUGS).
 // Cenarios:
-//  - env.json valido: devolve ClientIdInfo (clientId + redirectUri + ambiente)
-//  - env.json sem android.client_id: devolve { erro: '<mensagem>' }
-//  - env.json com client_id vazio: devolve { erro }
+//  - credencial cadastrada: devolve ClientIdInfo (clientId + redirectUri
+//    + ambiente)
+//  - sem credencial: devolve { erro: '<mensagem>' }
+//  - credencial em branco: devolve { erro }
 //
-// Estrategia: mockar o modulo env.json diretamente via jest.mock no path
-// resolvido relativo ao googleAuthFlow.ts. Quando o teste roda, o
-// require('../../../env.json') interno resolve pro mock.
+// P4 (2026-09-08): a fonte do client_id deixou de ser o import estatico
+// de env.json e passou a ser o store de credenciais (SecureStore),
+// alimentado pela tela /settings/credenciais. Duas consequencias para
+// este arquivo:
+//
+//  1. Nao ha mais o que mockar: o teste semeia o store, que e' o mesmo
+//     caminho que a pessoa exercita ao colar o codigo na tela. Some com
+//     ele o risco de cache contamination via jest.doMock + symlink que
+//     o cabecalho anterior descrevia (armadilhas A39 e A43).
+//  2. O caso "fallback legado installed.client_id" foi removido junto
+//     com o shape de env.json que o justificava. Nao ha fallback: ou a
+//     pessoa cadastrou a credencial neste aparelho, ou nao ha
+//     credencial.
 //
 // Comentarios sem acento (convencao shell/CI).
-//
-// R-INFRA-GOOGLE-AUTH-FLOW-TEST-FIX (Onda 3K, 2026-05-21): suite passou
-// 10/10 em runs isolados apos R-INFRA-JEST-LEAK-HUNT-5 (fix global de
-// fakeTimers.doNotFake em jest.config.js). Flakiness reportada como
-// suspeita ("jest.mock + require.cache poluido") nao se manifesta mais.
-// O padrao deste arquivo ja era defensivo: jest.resetModules() em
-// beforeEach + jest.doMock + require('@/lib/services/googleAuthFlow')
-// dentro de cada it(). Manter este shape — alterar para jest.mock
-// estatico re-introduziria o risco de cache contamination cross-suite.
-
-// Default mock para o caminho exato usado pelo source. Cada teste
-// que precisa de outro shape sobrescreve via jest.resetModules + setMock.
-jest.mock('../../../env.json', () => ({
-  android: {
-    client_id: '1234567890-abcdef.apps.googleusercontent.com',
-    project_id: 'mock-project',
-  },
-}));
+import { useCredenciais } from '@/lib/stores/credenciais';
+import { pickClientIdSafe } from '@/lib/services/googleAuthFlow';
 
 describe('pickClientIdSafe', () => {
-  // jest.resetModules() em beforeEach garante modulo fresco por teste,
-  // entao jest.doMock dentro do it() consegue sobrescrever o default
-  // acima sem contaminar runs subsequentes (mesmo worker reuso).
   beforeEach(() => {
-    jest.resetModules();
+    useCredenciais.setState({ google: null, spotify: null });
   });
 
-  it('devolve ClientIdInfo quando env.json e valido', () => {
-    jest.doMock('../../../env.json', () => ({
-      android: {
-        client_id: '1234567890-abcdef.apps.googleusercontent.com',
-      },
-    }));
-    const { pickClientIdSafe } = require('@/lib/services/googleAuthFlow');
+  it('devolve ClientIdInfo quando ha credencial cadastrada', () => {
+    useCredenciais
+      .getState()
+      .definir('google', '1234567890-abcdef.apps.googleusercontent.com');
     const r = pickClientIdSafe();
     expect('erro' in r).toBe(false);
-    expect(r.clientId).toBe('1234567890-abcdef.apps.googleusercontent.com');
-    expect(typeof r.redirectUri).toBe('string');
-  });
-
-  it('devolve { erro } quando env.json sem android nem installed', () => {
-    jest.doMock('../../../env.json', () => ({}));
-    const { pickClientIdSafe } = require('@/lib/services/googleAuthFlow');
-    const r = pickClientIdSafe();
-    expect('erro' in r).toBe(true);
-    if ('erro' in r) {
-      expect(r.erro).toMatch(/env\.json/);
+    if (!('erro' in r)) {
+      expect(r.clientId).toBe('1234567890-abcdef.apps.googleusercontent.com');
+      expect(typeof r.redirectUri).toBe('string');
     }
   });
 
-  it('devolve { erro } quando client_id e vazio', () => {
-    jest.doMock('../../../env.json', () => ({
-      android: { client_id: '' },
-    }));
-    const { pickClientIdSafe } = require('@/lib/services/googleAuthFlow');
+  it('devolve { erro } quando nao ha credencial neste aparelho', () => {
     const r = pickClientIdSafe();
     expect('erro' in r).toBe(true);
     if ('erro' in r) {
-      expect(r.erro).toMatch(/env\.json/);
+      expect(r.erro).toMatch(/credencial do Google/);
     }
   });
 
-  it('aceita fallback legado installed.client_id', () => {
-    jest.doMock('../../../env.json', () => ({
-      installed: { client_id: '99.apps.googleusercontent.com' },
-    }));
-    const { pickClientIdSafe } = require('@/lib/services/googleAuthFlow');
+  it('devolve { erro } quando a credencial e string vazia', () => {
+    // Campo apagado e confirmado equivale a remover: a store normaliza
+    // para null, e o resultado precisa ser o mesmo da ausencia.
+    useCredenciais.getState().definir('google', '   ');
     const r = pickClientIdSafe();
-    expect('erro' in r).toBe(false);
-    expect(r.clientId).toBe('99.apps.googleusercontent.com');
+    expect('erro' in r).toBe(true);
+  });
+
+  it('a mensagem de ausencia nao trata a escolha pendente como defeito', () => {
+    // Regra de tom (ADR-0005 e decisao P4): a frase que pode chegar a
+    // interface descreve o que falta e onde resolver. Nao usa "erro",
+    // "falha" nem exclamacao, porque nao ha defeito -- ha uma escolha
+    // que a pessoa ainda nao fez.
+    const r = pickClientIdSafe();
+    expect('erro' in r).toBe(true);
+    if ('erro' in r) {
+      expect(r.erro).not.toMatch(/\bfalha|\bfalhou|\berro\b/i);
+      expect(r.erro).not.toContain('!');
+      expect(r.erro).toMatch(/Credenciais próprias/);
+    }
   });
 });

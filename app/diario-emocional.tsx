@@ -55,6 +55,8 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
+import { temSegundaPessoa } from '@/lib/schemas/companhia';
+import { rodapePrivacidade } from '@/lib/copy/companhia';
 import { useSessao } from '@/lib/stores/sessao';
 import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
@@ -82,6 +84,11 @@ type ModoParam = DiarioEmocionalModo | 'audio';
 // "Com quem" inclui PessoaIds validos no schema (pessoa_a, pessoa_b)
 // e dois flags de contexto social (amigos, sozinho). Os flags não
 // passam no PessoaIdSchema; são anotados no corpo do .md.
+//
+// P2 (2026-09-08): a lista era fixa e o chip de pessoa_b aparecia para
+// quem usa o app sozinho -- um botão escrito com o nome de uma segunda
+// pessoa que não existe. Agora `comQuemDisponiveis` ramifica por
+// tipoCompanhia; nada é removido para quem tem companhia.
 type ComQuem = PessoaAutor | 'amigos' | 'sozinho';
 const COM_QUEM_FLAGS: readonly ComQuem[] = [
   'pessoa_a',
@@ -89,6 +96,11 @@ const COM_QUEM_FLAGS: readonly ComQuem[] = [
   'amigos',
   'sozinho',
 ] as const;
+
+function comQuemDisponiveis(temOutraPessoa: boolean): readonly ComQuem[] {
+  if (temOutraPessoa) return COM_QUEM_FLAGS;
+  return COM_QUEM_FLAGS.filter((c) => c !== 'pessoa_b');
+}
 
 // Type-guard: separa PessoaAutor dos flags sociais.
 function ehPessoaAutor(c: ComQuem): c is PessoaAutor {
@@ -212,6 +224,11 @@ export default function DiarioEmocional() {
   // (M15) sem afetar o resto do form. Se off, o MicrofoneButton
   // some inteiro - nao basta desabilitar.
   const permitirAudio = useSettings((s) => s.midia.permitirAudio);
+  // P2/P3: superfície de segunda pessoa ramifica por tipoCompanhia. O
+  // valor vem de useSettings, canônico desde a M29 e, desde a P3, com
+  // os três valores do onboarding (sozinho / casal / amigos).
+  const tipoCompanhia = useSettings((s) => s.pessoa.tipoCompanhia);
+  const temOutraPessoa = temSegundaPessoa(tipoCompanhia);
   // M24: rascunho previo (caso exista). Seed dos useState abaixo;
   // ComQuem extra fica fora porque o rascunho persiste apenas
   // PessoaAutor[] do schema (contexto social fica em contexto_social).
@@ -313,12 +330,12 @@ export default function DiarioEmocional() {
   // Memoizado antes do early return para não quebrar regra dos hooks.
   const opcoesComQuem = useMemo<ChipOption[]>(
     () =>
-      COM_QUEM_FLAGS.map((c) => ({
+      comQuemDisponiveis(temOutraPessoa).map((c) => ({
         value: c,
         label: labelComQuem(c),
         accent: 'cyan',
       })),
-    []
+    [temOutraPessoa]
   );
 
   // Caso de borda: sem onboarding concluido. Fluxo equivalente ao
@@ -686,7 +703,7 @@ export default function DiarioEmocional() {
             }}
             accessibilityLabel="rodape privacidade"
           >
-            Salvo localmente. Ninguém vê além de vocês dois.
+            {rodapePrivacidade(tipoCompanhia)}
           </Text>
 
           <Button

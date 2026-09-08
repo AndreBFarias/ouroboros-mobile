@@ -16,11 +16,14 @@
 // client_secret no app). Padrao identico ao Google: code_verifier
 // 43-128 chars URL-safe + code_challenge SHA-256.
 //
-// Client ID: vem de env.json sob chave `spotify.client_id` (gitignored,
-// configurado pelo usuario via Spotify Developer Dashboard em
-// https://developer.spotify.com/dashboard). Quando ausente,
-// getClientIdFromEnv lanca erro claro e UI mostra fallback "Configure
-// env.json".
+// Client ID: decisao P4 de 2026-09-08 (credencial por usuario). Vem em
+// RUNTIME do store de credenciais, alimentado pela tela
+// /settings/credenciais; nada de import estatico de env.json. Isso
+// importa mais aqui que no Google: o Development mode do Spotify tem
+// teto de 5 contas, entao distribuir a credencial do dono no APK
+// deixaria o sexto usuario para tras sem explicacao. Quando nao ha
+// credencial, getClientIdSpotify lanca e a interface mostra o texto de
+// ausencia em vez de tentar conectar.
 //
 // Redirect URI: scheme custom `ouroboros://oauth-spotify-callback`
 // (registrado em app.json scheme[]). Em Expo Go, expo-auth-session
@@ -30,17 +33,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import Constants from 'expo-constants';
 import { makeRedirectUri } from 'expo-auth-session';
-import envJson from '../../../../env.json';
-
-interface EnvOAuth {
-  // Reusa o shape canonico de env.json existente (Google) e estende
-  // com a chave `spotify`. Quando ausente, fallback para erro claro.
-  spotify?: {
-    client_id?: string;
-  };
-}
-
-const env = envJson as unknown as EnvOAuth;
+import { clientIdDe, SemCredencialError } from '@/lib/stores/credenciais';
 
 export const SPOTIFY_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.spotify.com/authorize',
@@ -68,13 +61,16 @@ export interface SpotifyClientIdInfo {
   ambiente: 'expo-go' | 'standalone';
 }
 
-// Le client_id do env.json sob chave `spotify`. Lanca erro claro quando
-// ausente (UI captura via pickClientIdSafe e mostra fallback).
-export function getClientIdFromEnv(): string {
-  const cid = env.spotify?.client_id;
-  if (typeof cid !== 'string' || cid.length === 0) {
-    throw new Error(
-      'env.json sem spotify.client_id. Cadastre em https://developer.spotify.com/dashboard.'
+// Le o client_id do Spotify cadastrado neste aparelho. Lanca quando nao
+// ha nenhum; a UI captura via pickClientIdSafe, ou o store devolve
+// `motivo: 'sem_client_id'`. A mensagem descreve uma ausencia e aponta
+// o caminho -- nao e' relato de defeito.
+export function getClientIdSpotify(): string {
+  const cid = clientIdDe('spotify');
+  if (cid === null) {
+    throw new SemCredencialError(
+      'spotify',
+      'Sem credencial do Spotify neste aparelho. Cadastre em Configurações, Credenciais próprias.'
     );
   }
   return cid;
@@ -84,9 +80,9 @@ export function getClientIdFromEnv(): string {
 //   'expo'                    -> Expo Go (proxy auth.expo.io)
 //   'standalone' / 'guest'    -> dev-client ou release (custom scheme)
 //
-// Lanca quando env.json esta ausente ou sem spotify.client_id.
+// Lanca quando nao ha credencial do Spotify salva.
 export function pickClientId(): SpotifyClientIdInfo {
-  const clientId = getClientIdFromEnv();
+  const clientId = getClientIdSpotify();
   const ambiente: SpotifyClientIdInfo['ambiente'] =
     Constants.appOwnership === 'expo' ? 'expo-go' : 'standalone';
 
@@ -109,10 +105,10 @@ export function pickClientId(): SpotifyClientIdInfo {
   };
 }
 
-// Resultado defensivo de pickClientId. Quando env.json esta ausente
-// ou sem spotify.client_id, retorna { erro } em vez de lancar. Permite
-// que callers em boot / render inicial mostrem fallback de UI sem
-// precisar wrap try/catch local.
+// Resultado defensivo de pickClientId. Quando nao ha credencial do
+// Spotify salva, retorna { erro } em vez de lancar. Permite que callers
+// em boot / render inicial mostrem o texto de ausencia sem precisar
+// wrap try/catch local.
 export type PickSpotifyClientIdResultado =
   | SpotifyClientIdInfo
   | { erro: string };

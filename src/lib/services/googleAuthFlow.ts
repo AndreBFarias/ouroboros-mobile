@@ -2,43 +2,27 @@
 // permitir testes determinísticos via fetch mockado e isolar
 // detalhes do split clientId (vide A21 do BRIEF).
 //
-// Decisao durol 2026-05-05: client_id vem de env.json (raiz do
-// projeto, gitignored) em vez de env vars EXPO_PUBLIC_*. O
-// arquivo env.json contem o JSON OAuth original gerado pelo
-// Google Cloud Console; nada hardcoded em codigo versionado. ADR-0018
-// adaptado: split por ambiente continua valido conceitualmente,
-// mas para a v1.0 o dono usa um unico clientId tipo "OAuth desktop"
-// (env.installed.client_id) que serve tanto para Expo Go (proxy)
-// quanto para dev-client/release (custom-scheme), porque o
-// expo-auth-session ainda usa o mesmo client_id em ambos os fluxos
-// quando configurado com makeRedirectUri por ambiente. M37.2 ou
-// sprint posterior decide se split via env vars retorna.
+// Decisao P4 de 2026-09-08 (credencial por usuario): o client_id
+// deixou de vir de um import ESTATICO de env.json e passa a ser lido em
+// RUNTIME do store de credenciais, alimentado pela tela
+// /settings/credenciais. Consequencias, na ordem em que importam:
+//
+//   - o aplicativo empacota e sobe SEM env.json nenhum;
+//   - quem instala o APK usa a propria credencial, em vez de herdar a
+//     de outra pessoa e esbarrar na allowlist do consent screen;
+//   - as armadilhas A39 e A43 perdem a origem, porque nenhum arquivo
+//     de src/ resolve mais o modulo env.json.
+//
+// A decisao anterior (2026-05-05, client_id em env.json em vez de
+// EXPO_PUBLIC_*) fica registrada aqui porque explica o formato do
+// valor: e' o mesmo client_id tipo `android` do Google Cloud Console,
+// que serve tanto ao Expo Go (proxy) quanto ao dev-client e release
+// (custom-scheme). O que mudou foi de onde ele vem, nao o que ele e'.
 //
 // Comentarios sem acento (convencao shell/CI).
 import Constants from 'expo-constants';
 import { makeRedirectUri } from 'expo-auth-session';
-import envJson from '../../../env.json';
-
-interface EnvOAuth {
-  // Q0 (Onda Q, 2026-05-12): chave canonica e' `android` pra refletir
-  // o tipo do OAuth client no Google Cloud (com.ouroboros.mobile +
-  // SHA-1). Mantemos `installed` como fallback para compat com env.json
-  // exportados em versoes anteriores do projeto.
-  android?: {
-    client_id?: string;
-    project_id?: string;
-    auth_uri?: string;
-    token_uri?: string;
-  };
-  installed?: {
-    client_id?: string;
-    project_id?: string;
-    auth_uri?: string;
-    token_uri?: string;
-  };
-}
-
-const env = envJson as EnvOAuth;
+import { clientIdDe, SemCredencialError } from '@/lib/stores/credenciais';
 
 export const GOOGLE_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -68,8 +52,7 @@ export const SCOPE_CALENDAR_EVENTS =
 // funcionar em release (passo humano R-SEC-1). Ate la, o codigo fica
 // dormente: o toggle backupDriveAutomatico nasce OFF e o cliente Drive so
 // e' chamado quando o usuario liga explicitamente.
-export const SCOPE_DRIVE_FILE =
-  'https://www.googleapis.com/auth/drive.file';
+export const SCOPE_DRIVE_FILE = 'https://www.googleapis.com/auth/drive.file';
 
 export interface ClientIdInfo {
   clientId: string;
@@ -77,15 +60,17 @@ export interface ClientIdInfo {
   ambiente: 'expo-go' | 'standalone';
 }
 
-// Le o client_id do env.json. Prefere `android` (canonico pos-Q0
-// 2026-05-12); cai em `installed` legado se necessario. Lanca erro
-// claro se ambos ausentes para que a UI possa mostrar fallback
-// "Configure env.json" em vez de crash generico.
-export function getClientIdFromEnv(): string {
-  const cid = env.android?.client_id ?? env.installed?.client_id;
-  if (typeof cid !== 'string' || cid.length === 0) {
-    throw new Error(
-      'env.json ausente ou sem android.client_id. Veja docs/SETUP-OAUTH-GOOGLE.md.'
+// Le o client_id do Google que a pessoa cadastrou neste aparelho.
+// Lanca quando nao ha nenhum, para que o caller decida entre o ramo
+// defensivo (pickClientIdSafe) e o try/catch que vira
+// `motivo: 'sem_client_id'` nos stores. A mensagem descreve uma
+// ausencia e aponta o caminho -- nao e' relato de defeito.
+export function getClientIdGoogle(): string {
+  const cid = clientIdDe('google');
+  if (cid === null) {
+    throw new SemCredencialError(
+      'google',
+      'Sem credencial do Google neste aparelho. Cadastre em Configurações, Credenciais próprias.'
     );
   }
   return cid;
@@ -96,12 +81,12 @@ export function getClientIdFromEnv(): string {
 //   'standalone' / 'guest'    -> dev-client ou release (custom scheme)
 //   undefined em web          -> tratamos como standalone (mock)
 //
-// Lanca quando env.json esta ausente ou sem android.client_id (via
-// getClientIdFromEnv). Callers que querem fluxo throw-then-catch usam
+// Lanca quando nao ha credencial do Google salva (via
+// getClientIdGoogle). Callers que querem fluxo throw-then-catch usam
 // esta funcao; callers que preferem ramo defensivo (boot, render
 // inicial) usam pickClientIdSafe abaixo.
 export function pickClientId(): ClientIdInfo {
-  const clientId = getClientIdFromEnv();
+  const clientId = getClientIdGoogle();
   const ambiente: ClientIdInfo['ambiente'] =
     Constants.appOwnership === 'expo' ? 'expo-go' : 'standalone';
 
@@ -139,17 +124,17 @@ export function pickClientId(): ClientIdInfo {
   };
 }
 
-// Resultado defensivo de pickClientId. Quando env.json esta ausente ou
-// sem android.client_id, retorna { erro } em vez de lancar; permite que
-// callers em boot / render inicial mostrem fallback de UI ("OAuth
-// indisponivel: env.json ausente") sem precisar wrap try/catch local.
+// Resultado defensivo de pickClientId. Quando nao ha credencial do
+// Google salva, retorna { erro } em vez de lancar; permite que callers
+// em boot / render inicial mostrem o texto de ausencia sem precisar
+// wrap try/catch local.
 //
 // Discriminado por presenca da chave `erro` para narrowing TypeScript.
 export type PickClientIdResultado = ClientIdInfo | { erro: string };
 
 // Wrap defensivo de pickClientId. Captura QUALQUER erro de
-// getClientIdFromEnv (env.json ausente, json malformado, client_id vazio)
-// e devolve { erro: <mensagem> }. Callers diferenciam pelo discriminante:
+// getClientIdGoogle (credencial ausente ou em branco) e devolve
+// { erro: <mensagem> }. Callers diferenciam pelo discriminante:
 //
 //   const r = pickClientIdSafe();
 //   if ('erro' in r) { /* renderiza fallback */ } else { /* usa r.clientId */ }

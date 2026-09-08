@@ -19,7 +19,8 @@ import { colors } from '@/theme/tokens';
 import { textPropsDecor } from '@/lib/a11y/textPropsDecor';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { usePessoa } from '@/lib/stores/pessoa';
-import { corDe, inicialDe } from '@/config/pessoas.config';
+import { inicialDe } from '@/config/pessoas.config';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 import { PersonAvatar } from './PersonAvatar';
 import { useOptionalToast } from './Toast';
 
@@ -127,13 +128,14 @@ interface PersonAvatarBigProps {
 }
 
 function PersonAvatarBig({ pessoa, photoUri, size }: PersonAvatarBigProps) {
+  const cor = useCorPessoa(pessoa);
   return (
     <View
       style={{
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: corDe(pessoa),
+        backgroundColor: cor,
         overflow: 'hidden',
       }}
     >
@@ -158,6 +160,7 @@ interface PlaceholderProps {
 }
 
 function PlaceholderCamera({ pessoa, size }: PlaceholderProps) {
+  const cor = useCorPessoa(pessoa);
   return (
     <View
       style={{
@@ -166,7 +169,7 @@ function PlaceholderCamera({ pessoa, size }: PlaceholderProps) {
         borderRadius: size / 2,
         backgroundColor: colors.bgElev,
         borderWidth: 2,
-        borderColor: corDe(pessoa),
+        borderColor: cor,
         borderStyle: 'dashed',
         alignItems: 'center',
         justifyContent: 'center',

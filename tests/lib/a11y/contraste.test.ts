@@ -2,6 +2,16 @@
 // ratio e shortcuts. Casos canonicos derivados das cores Dracula
 // definidas em src/theme/tokens.ts contra superficies bg, bgAlt, bgElev.
 //
+// P7 (2026-09-08): ate esta data o snapshot da tabela era a UNICA prova
+// de contraste da cor de pessoa -- e ele so' funcionava porque a cor era
+// fixa em codigo. Com a cor escolhida por quem instala, um snapshot de
+// tokens nao pode mais responder pela cor que esta na tela: os tokens
+// continuam congelados (nada aqui mudou), e a cor em vigor passou a ser
+// medida EM RUNTIME, no bloco do fim deste arquivo. Os dois convivem de
+// proposito: o snapshot pega regressao de paleta e de formula, o bloco
+// de runtime pega regressao do piso que o aplicativo aplica na hora da
+// troca.
+//
 // Comentarios sem acento.
 import {
   parseCor,
@@ -13,6 +23,12 @@ import {
   WCAG_AA_TEXTO_GRANDE,
 } from '../../../src/lib/a11y/contraste';
 import { colors } from '../../../src/theme/tokens';
+import { avaliarCorPessoa } from '../../../src/lib/a11y/corPessoa';
+import {
+  useCoresPessoa,
+  corPessoa,
+  CORES_PESSOA_DEFAULT,
+} from '../../../src/lib/stores/coresPessoa';
 
 describe('parseCor', () => {
   it('parseia hex curto #fff', () => {
@@ -189,5 +205,67 @@ describe('passaWcagAa* helpers', () => {
   it('thresholds publicos coerentes com WCAG 2.1', () => {
     expect(WCAG_AA_TEXTO_NORMAL).toBe(4.5);
     expect(WCAG_AA_TEXTO_GRANDE).toBe(3.0);
+  });
+});
+
+// === P7: a cor ESCOLHIDA, medida em runtime ===
+//
+// A decisao de 2026-09-08 rebaixou #bd93f9 e #ff79c6 de Regra
+// Inviolavel para default trocavel em Configuracoes, com uma condicao
+// escrita: a validacao de contraste entra junto, e a interface recusa
+// cor que reprove. Este bloco e a prova do lado do teste -- ele mede o
+// que o store devolve, e nao um literal, para que a suite continue
+// dizendo a verdade depois que alguem trocar a cor no aparelho.
+describe('cor de pessoa escolhida em runtime (P7)', () => {
+  beforeEach(() => {
+    useCoresPessoa.setState({ cores: { ...CORES_PESSOA_DEFAULT } });
+  });
+
+  it('a cor em vigor passa no piso, e o piso confere com a tabela', () => {
+    // Instalacao que nunca trocou: a cor em vigor E' o default, e o
+    // numero medido aqui e' o mesmo da linha congelada no snapshot.
+    const emVigor = corPessoa('pessoa_a');
+    expect(emVigor).toBe(colors.purple);
+    expect(avaliarCorPessoa(emVigor).ok).toBe(true);
+    expect(ratioContraste(emVigor, colors.bg)).toBeCloseTo(
+      ratioContraste(colors.purple, colors.bg),
+      5
+    );
+  });
+
+  it('depois da troca, a medida acompanha a cor nova', () => {
+    useCoresPessoa.getState().definirCor('pessoa_a', '#ffb86c');
+    const emVigor = corPessoa('pessoa_a');
+    expect(emVigor).toBe('#ffb86c');
+    expect(avaliarCorPessoa(emVigor).ok).toBe(true);
+    expect(ratioContraste(emVigor, colors.bg)).toBeGreaterThanOrEqual(
+      WCAG_AA_TEXTO_NORMAL
+    );
+  });
+
+  it('cor que reprova nunca chega a ser a cor em vigor', () => {
+    useCoresPessoa.getState().definirCor('pessoa_b', '#2b2b33');
+    const emVigor = corPessoa('pessoa_b');
+    expect(emVigor).toBe(colors.pink);
+    expect(avaliarCorPessoa(emVigor).ok).toBe(true);
+  });
+
+  it('qualquer cor que o store aceite passa AA texto normal sobre bg', () => {
+    // Varre a faixa cinza inteira: toda cor aceita fica acima do piso,
+    // e toda cor recusada fica abaixo em pelo menos uma medida. Sem
+    // esta varredura, o piso poderia ser furado por um caso isolado
+    // sem que teste nenhum percebesse.
+    for (let n = 0; n <= 255; n += 15) {
+      const hex = '#' + n.toString(16).padStart(2, '0').repeat(3);
+      const aceitou = useCoresPessoa.getState().definirCor('pessoa_a', hex).ok;
+      if (aceitou) {
+        expect(ratioContraste(hex, colors.bg)).toBeGreaterThanOrEqual(
+          WCAG_AA_TEXTO_NORMAL
+        );
+        expect(corPessoa('pessoa_a')).toBe(hex);
+      } else {
+        expect(corPessoa('pessoa_a')).not.toBe(hex);
+      }
+    }
   });
 });

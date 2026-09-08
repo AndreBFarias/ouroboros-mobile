@@ -19,6 +19,8 @@ import { ScrollView, Text, View } from 'react-native';
 import { Chip, ChipGroup, Input, Slider } from '@/components/ui';
 import { useVaultCompartilhado } from '@/lib/stores/filtroEfetivo';
 import { useNomeDe } from '@/lib/stores/pessoa';
+import { useSettings } from '@/lib/stores/settings';
+import { temSegundaPessoa } from '@/lib/schemas/companhia';
 import { colors } from '@/theme/tokens';
 import type { PessoaId } from '@/lib/schemas/pessoa';
 import type {
@@ -81,6 +83,8 @@ export function FiltrosBar({
   const nomeA = useNomeDe('pessoa_a');
   const nomeB = useNomeDe('pessoa_b');
   const nomeAmbos = useNomeDe('ambos');
+  const tipoCompanhia = useSettings((s) => s.pessoa.tipoCompanhia);
+  const temOutraPessoa = temSegundaPessoa(tipoCompanhia);
 
   const pessoasOptionsCompartilhado = useMemo(
     () => [
@@ -124,6 +128,12 @@ export function FiltrosBar({
 
   return (
     <View style={{ gap: 12 }}>
+      {/* P2 (2026-09-08): o filtro por pessoa ramificava so' por
+        vaultCompartilhado, que responde outra pergunta. Em modo
+        sozinho havia um chip com o nome de pessoa_b e nada para
+        filtrar; o bloco inteiro sai, como no SeletorPara. */}
+      {temOutraPessoa ? (
+        <>
       <Rotulo>Pessoa</Rotulo>
       <ChipGroup
         mode="single"
@@ -144,6 +154,8 @@ export function FiltrosBar({
           onPessoa(next as PessoaId);
         }}
       />
+        </>
+      ) : null}
 
       {mostrarMes ? (
         <>

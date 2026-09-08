@@ -15,6 +15,7 @@
 // (ex: "oauth-callback") sem renomear o arquivo correspondente
 // retorna o bug original.
 import { pickClientId } from '@/lib/services/googleAuthFlow';
+import { useCredenciais } from '@/lib/stores/credenciais';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -28,19 +29,17 @@ jest.mock('expo-auth-session', () => ({
   makeRedirectUri: jest.fn(() => 'mock://callback'),
 }));
 
-// env.json mockado com client_id realistico para os tests de
-// shape do redirectUri (reverso-DNS terminando em /oauthredirect).
-jest.mock('../../../env.json', () => ({
-  __esModule: true,
-  default: {
-    android: {
-      client_id: '691237256846-tl2edd8uvb6bbn6men478c0agq7ea91p.apps.googleusercontent.com',
-    },
-  },
-  android: {
-    client_id: '691237256846-tl2edd8uvb6bbn6men478c0agq7ea91p.apps.googleusercontent.com',
-  },
-}), { virtual: true });
+// P4 (2026-09-08): o client_id vem do store de credenciais, nao mais de
+// um import estatico de env.json. Semeamos um valor com o formato real
+// do Cloud Console porque o redirectUri reverso-DNS e' derivado dele.
+beforeEach(() => {
+  useCredenciais
+    .getState()
+    .definir(
+      'google',
+      '691237256846-tl2edd8uvb6bbn6men478c0agq7ea91p.apps.googleusercontent.com'
+    );
+});
 
 describe('OAuth deep link handler contract (R-CRIT-1)', () => {
   it('redirectUri termina em ":/oauthredirect" (path canonico)', () => {
@@ -77,10 +76,7 @@ describe('OAuth deep link handler contract (R-CRIT-1)', () => {
   it('existe fallback declarativo em app/+not-found.tsx', () => {
     // Garantia de sub-sprint R-CRIT-1.a: qualquer deep link nao
     // reconhecido cai num handler sobrio (que NAO imprime URL).
-    const notFoundPath = path.resolve(
-      __dirname,
-      '../../../app/+not-found.tsx'
-    );
+    const notFoundPath = path.resolve(__dirname, '../../../app/+not-found.tsx');
     expect(fs.existsSync(notFoundPath)).toBe(true);
   });
 
@@ -92,10 +88,7 @@ describe('OAuth deep link handler contract (R-CRIT-1)', () => {
     // Verifica imports reais (nao comentarios) via match de
     // declaracao `import { ... } from 'expo-router'`. Comentarios
     // que mencionam os identificadores ficam livres.
-    const notFoundPath = path.resolve(
-      __dirname,
-      '../../../app/+not-found.tsx'
-    );
+    const notFoundPath = path.resolve(__dirname, '../../../app/+not-found.tsx');
     const contents = fs.readFileSync(notFoundPath, 'utf-8');
     // Pega cada import line e checa se algum traz os hooks
     // proibidos no escopo do componente.

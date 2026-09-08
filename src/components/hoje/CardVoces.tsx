@@ -29,6 +29,7 @@ import { ChevronRight } from '@/lib/icons';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useNomeDe } from '@/lib/stores/pessoa';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 import { useOnboarding } from '@/lib/stores/onboarding';
 import { useHumorCasal, type HumorPessoa } from '@/lib/hooks/useHumorCasal';
 import { rotuloNivelHumor, rotuloTempoDia } from '@/lib/humor/rotuloHumor';
@@ -51,7 +52,7 @@ function LinhaPessoa({
   onPress,
 }: LinhaPessoaProps) {
   const nome = useNomeDe(pessoa);
-  const cor = pessoa === 'pessoa_a' ? colors.purple : colors.pink;
+  const cor = useCorPessoa(pessoa);
   const registrouHoje = dados?.registrouHoje ?? false;
 
   // accessibilityLabel sem acento (screen reader). Estado condensado.

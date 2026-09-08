@@ -10,8 +10,12 @@
 //
 // Comportamento:
 //  - tipoCompanhia === 'sozinho'  -> return null (campo invisivel).
-//  - tipoCompanhia === 'duo'      -> 3 chips: "Para mim" / "Para [Nome]"
-//                                    / "Para o casal".
+//  - casal ou amigos              -> 3 chips: "Para mim" / "Para [Nome]"
+//                                    / destino compartilhado.
+//
+// P2/P3 (2026-09-08): o rotulo do terceiro chip deixou de ser o literal
+// "Para o casal" e passa por rotuloParaCompartilhado(tipoCompanhia),
+// que devolve "Para todos" a quem respondeu amigos no onboarding.
 //
 // Saida: callback onChange recebe um Para discriminado conforme
 // schema em '@/lib/schemas/para'. Caller passa o valor atual em
@@ -26,6 +30,7 @@ import { useNomeDe, usePessoa } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import type { Para } from '@/lib/schemas/para';
+import { rotuloParaCompartilhado } from '@/lib/copy/companhia';
 
 export interface SeletorParaProps {
   value: Para;
@@ -68,9 +73,13 @@ export function SeletorPara({
         label: `Para ${nomeParceiro}`,
         accent: 'pink',
       },
-      { value: 'casal', label: 'Para o casal', accent: 'cyan' },
+      {
+        value: 'casal',
+        label: rotuloParaCompartilhado(tipoCompanhia),
+        accent: 'cyan',
+      },
     ],
-    [pessoaParceiro, nomeParceiro]
+    [pessoaParceiro, nomeParceiro, tipoCompanhia]
   );
 
   const handleChipChange = useCallback(

@@ -24,6 +24,7 @@
 // Comentarios sem acento (convencao shell/CI).
 import { z } from 'zod';
 import { PessoaAutorSchema, PessoaIdSchema } from '@/lib/schemas/pessoa';
+import { TipoCompanhiaSchema } from '@/lib/schemas/companhia';
 
 // ===== Helpers genericos =====
 
@@ -55,7 +56,11 @@ export const EstadoSettingsSchema = z.object({
   pessoa: z.object({
     ativa: PessoaAutorSchema,
     vaultCompartilhado: z.boolean(),
-    tipoCompanhia: z.enum(['sozinho', 'duo']),
+    // P3 (2026-09-08): passou a aceitar os tres valores do onboarding.
+    // TipoCompanhiaSchema tem preprocess que le o legado 'duo' como
+    // 'casal', entao _estado/settings-<device>.md ja gravado continua
+    // validando -- e o parse nunca reprova um arquivo que existia.
+    tipoCompanhia: TipoCompanhiaSchema,
   }),
   featureToggles: z.object({
     cicloMenstrual: z.boolean(),
@@ -182,7 +187,7 @@ export type EstadoSessao = z.infer<typeof EstadoSessaoSchema>;
 export const EstadoOnboardingSchema = z.object({
   version: z.literal(ESTADO_SCHEMA_VERSION),
   done: z.boolean(),
-  tipoCompanhia: z.enum(['sozinho', 'casal', 'amigos']),
+  tipoCompanhia: TipoCompanhiaSchema,
   sexoDeclarado: z.object({
     pessoa_a: z
       .enum(['masculino', 'feminino', 'nao-binario', 'prefiro-nao-dizer'])

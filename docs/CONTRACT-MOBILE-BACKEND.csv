@@ -176,7 +176,7 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.23,estado_settings,1,_schema_version,inteiro,sim (escrita),
 5.23,estado_settings,1,version,literal `1,sim,Versão interna do schema de estado.
 5.23,estado_settings,1,somVibracao,object,sim,"{ geral, despertar, conquista, botoes }` booleans."
-5.23,estado_settings,1,pessoa,object,sim,"{ ativa, vaultCompartilhado, tipoCompanhia }`."
+5.23,estado_settings,1,pessoa,object,sim,"{ ativa, vaultCompartilhado, tipoCompanhia }`. `tipoCompanhia` é `sozinho` | `casal` | `amigos` desde a P3 (2026-09-08); era `sozinho` | `duo`. **Leitura tolerante:** arquivo já gravado com `duo` continua válido e é lido como `casal` (`TipoCompanhiaSchema` em `src/lib/schemas/companhia.ts` faz o preprocess). Consumidor externo deve aceitar os quatro valores na leitura e escrever apenas os três canônicos."
 5.23,estado_settings,1,featureToggles,object,sim,11 booleans cobrindo features opcionais.
 5.23,estado_settings,1,privacidade,object,sim,"{ biometriaAbrir, ocultarTranscricoes }`."
 5.23,estado_settings,1,midia,object,sim,"{ capPorRegistro >= 1, permitirAudio }`."
@@ -192,7 +192,7 @@ schema_idx,schema_nome,schema_versao,campo,tipo,obrigatorio,notas
 5.25,estado_onboarding,1,_schema_version,inteiro,sim (escrita),
 5.25,estado_onboarding,1,version,literal `1,sim,
 5.25,estado_onboarding,1,done,boolean,sim,
-5.25,estado_onboarding,1,tipoCompanhia,sozinho` | `casal` | `amigos,sim,
+5.25,estado_onboarding,1,tipoCompanhia,sozinho` | `casal` | `amigos,sim,"Sempre teve os três valores aqui; era o espelho de `settings` que os colapsava (corrigido na P3). Aceita o legado `duo` na leitura, normalizado para `casal`."
 5.25,estado_onboarding,1,sexoDeclarado,object,sim,"{ pessoa_a: enum|null, pessoa_b: enum|null }`."
 5.25,estado_onboarding,1,permissoes,object,sim,"5 booleans (storage, camera, microfone, notificacoes, localizacao)."
 5.25,estado_onboarding,1,atualizadoEm,ISO 8601,sim,

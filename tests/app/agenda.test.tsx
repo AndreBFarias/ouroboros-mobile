@@ -35,6 +35,7 @@ jest.mock('@/components/brand', () => {
 import AgendaScreen from '../../app/agenda';
 import { ToastProvider } from '@/components/ui';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
+import { useCredenciais } from '@/lib/stores/credenciais';
 import { useVault } from '@/lib/stores/vault';
 
 function renderComToast(ui: React.ReactElement) {
@@ -58,6 +59,14 @@ beforeEach(() => {
     },
   });
   useVault.setState({ vaultRoot: null });
+  // P4 (2026-09-08): o convite "Conectar conta Google" so aparece quando
+  // ha um codigo do Google cadastrado neste aparelho. Os casos abaixo
+  // medem o fluxo de conexao, entao semeiam a credencial; o describe
+  // proprio da ausencia zera o store.
+  useCredenciais.setState({
+    google: '123-abc.apps.googleusercontent.com',
+    spotify: null,
+  });
 });
 
 describe('AgendaScreen', () => {
@@ -157,5 +166,38 @@ describe('AgendaScreen', () => {
 
     // restore
     (global as any).fetch = fetchOriginal;
+  });
+});
+
+// P4 (2026-09-08): sem credencial propria, a Agenda nao convida a uma
+// conexao que o Google recusaria. O convite muda de lugar -- vai para a
+// tela onde a pessoa resolve --, e o texto explica o motivo sem tratar
+// a ausencia como defeito dela.
+describe('AgendaScreen sem credencial do Google (P4)', () => {
+  beforeEach(() => {
+    useCredenciais.setState({ google: null, spotify: null });
+  });
+
+  test('nao oferece conectar, e sim o caminho para criar o codigo', async () => {
+    const { getByLabelText, queryByLabelText } = renderComToast(
+      <AgendaScreen />
+    );
+    await waitFor(() => {
+      expect(getByLabelText('ver como criar o codigo do google')).toBeTruthy();
+    });
+    // O botao antigo some: apertar ele levaria a uma recusa opaca.
+    expect(queryByLabelText('conectar conta google')).toBeNull();
+  });
+
+  test('a frase explica o motivo sem vocabulario de defeito', async () => {
+    const { getByText, queryByText } = renderComToast(<AgendaScreen />);
+    await waitFor(() => {
+      expect(
+        getByText(/o Google pede que cada aplicativo se identifique/)
+      ).toBeTruthy();
+    });
+    expect(queryByText(/\berro\b/i)).toBeNull();
+    expect(queryByText(/\bfalha\b/i)).toBeNull();
+    expect(queryByText(/!/)).toBeNull();
   });
 });

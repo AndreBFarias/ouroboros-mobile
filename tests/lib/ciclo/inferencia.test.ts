@@ -79,35 +79,78 @@ describe('autorPadrao - amigos', () => {
   });
 });
 
-describe('deveMostrarItemCiclo', () => {
+describe('deveMostrarItemCiclo - com segunda pessoa', () => {
   it('esconde quando ambos masculino', () => {
-    expect(deveMostrarItemCiclo('masculino', 'masculino')).toBe(false);
+    expect(deveMostrarItemCiclo('masculino', 'masculino', 'casal')).toBe(false);
+    expect(deveMostrarItemCiclo('masculino', 'masculino', 'amigos')).toBe(
+      false
+    );
   });
 
   it('mostra quando uma e feminina', () => {
-    expect(deveMostrarItemCiclo('masculino', 'feminino')).toBe(true);
-    expect(deveMostrarItemCiclo('feminino', 'masculino')).toBe(true);
+    expect(deveMostrarItemCiclo('masculino', 'feminino', 'casal')).toBe(true);
+    expect(deveMostrarItemCiclo('feminino', 'masculino', 'casal')).toBe(true);
   });
 
   it('mostra quando ambas femininas', () => {
-    expect(deveMostrarItemCiclo('feminino', 'feminino')).toBe(true);
+    expect(deveMostrarItemCiclo('feminino', 'feminino', 'casal')).toBe(true);
   });
 
   it('mostra quando ao menos uma e nao-binaria', () => {
-    expect(deveMostrarItemCiclo('masculino', 'nao-binario')).toBe(true);
-    expect(deveMostrarItemCiclo('nao-binario', 'masculino')).toBe(true);
+    expect(deveMostrarItemCiclo('masculino', 'nao-binario', 'casal')).toBe(
+      true
+    );
+    expect(deveMostrarItemCiclo('nao-binario', 'masculino', 'casal')).toBe(
+      true
+    );
   });
 
   it('mostra quando ao menos uma ainda nao declarou (null)', () => {
-    expect(deveMostrarItemCiclo(null, null)).toBe(true);
-    expect(deveMostrarItemCiclo('masculino', null)).toBe(true);
-    expect(deveMostrarItemCiclo(null, 'masculino')).toBe(true);
+    expect(deveMostrarItemCiclo(null, null, 'casal')).toBe(true);
+    expect(deveMostrarItemCiclo('masculino', null, 'casal')).toBe(true);
+    expect(deveMostrarItemCiclo(null, 'masculino', 'casal')).toBe(true);
   });
 
   it('mostra quando prefere-nao-dizer (autonomia)', () => {
-    expect(deveMostrarItemCiclo('prefiro-nao-dizer', 'prefiro-nao-dizer')).toBe(
+    expect(
+      deveMostrarItemCiclo('prefiro-nao-dizer', 'prefiro-nao-dizer', 'casal')
+    ).toBe(true);
+    expect(deveMostrarItemCiclo('masculino', 'prefiro-nao-dizer', 'casal')).toBe(
       true
     );
-    expect(deveMostrarItemCiclo('masculino', 'prefiro-nao-dizer')).toBe(true);
+  });
+});
+
+// P2 (2026-09-08): em modo sozinho o sexo de pessoa_b e' sempre null,
+// porque o onboarding nunca o pergunta. A regra antiga exigia que AS
+// DUAS pessoas fossem masculinas para esconder o item, entao um homem
+// que usa o app sozinho via "Ciclo" no menu. Estes casos travam a
+// regra nova; sem eles, a proxima sprint que mexer no menu regride.
+describe('deveMostrarItemCiclo - sozinho', () => {
+  it('esconde para homem sozinho, mesmo com sexoB null', () => {
+    expect(deveMostrarItemCiclo('masculino', null, 'sozinho')).toBe(false);
+  });
+
+  it('mostra para mulher sozinha', () => {
+    expect(deveMostrarItemCiclo('feminino', null, 'sozinho')).toBe(true);
+  });
+
+  it('mostra para pessoa nao-binaria sozinha (autonomia)', () => {
+    expect(deveMostrarItemCiclo('nao-binario', null, 'sozinho')).toBe(true);
+  });
+
+  it('mostra quem nao declarou ou preferiu nao dizer (nao presume)', () => {
+    expect(deveMostrarItemCiclo(null, null, 'sozinho')).toBe(true);
+    expect(deveMostrarItemCiclo('prefiro-nao-dizer', null, 'sozinho')).toBe(
+      true
+    );
+  });
+
+  it('ignora sexoB residual de um modo anterior', () => {
+    // Quem foi casal e voltou a sozinho pode ter sexoB gravado; em
+    // sozinho ele nao pode decidir nada.
+    expect(deveMostrarItemCiclo('masculino', 'feminino', 'sozinho')).toBe(
+      false
+    );
   });
 });
