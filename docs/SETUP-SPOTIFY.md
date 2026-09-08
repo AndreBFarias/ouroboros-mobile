@@ -1,7 +1,15 @@
-# Setup da credencial do Spotify
+# Setup da Credencial do Spotify
 
-Passo a passo para o dono. O código do cliente já está pronto e testado — falta
-apenas a credencial, que só você pode criar porque exige login na sua conta.
+Passo a passo para qualquer pessoa que use o aplicativo, não só para quem o
+escreveu. O código está pronto e testado; falta a credencial, que só você pode
+criar porque exige login na sua conta.
+
+Você precisa da sua própria porque o Spotify limita a cinco contas quem usa um
+mesmo código em Development mode. Uma credencial emprestada seria recusada por
+eles, sem dizer o motivo.
+
+Enquanto você não fizer isso, o aplicativo funciona por inteiro — a integração
+do Spotify fica desligada, e diz na tela que está desligada.
 
 Tudo verificado em `src/lib/integracoes/spotify/oauth.ts` nesta data.
 
@@ -11,7 +19,7 @@ Tudo verificado em `src/lib/integracoes/spotify/oauth.ts` nesta data.
 
 | Item | Valor exato | Onde é lido |
 |---|---|---|
-| Chave no `env.json` | `spotify.client_id` | `getClientIdFromEnv()` |
+| Onde você cola o código | Configurações → Credenciais próprias | `getClientIdSpotify()` |
 | Redirect URI (dev-client e release) | `ouroboros://oauth-spotify-callback` | `pickClientId()` |
 | Client secret | **nenhum** — o fluxo é PKCE | — |
 
@@ -55,54 +63,30 @@ caracteres.
 **Não** copie o Client Secret. O fluxo é PKCE e o app não usa secret — guardar um
 secret num aplicativo distribuído seria expô-lo, e o código não tem onde recebê-lo.
 
-## Passo 3 — colocar no `env.json`
+## Passo 3 — colar o código no aplicativo
 
-O `env.json` fica na raiz do projeto e é **gitignored** (nunca vai para o
-repositório). Hoje ele tem só o bloco `android`. Acrescente o bloco `spotify`
-irmão dele:
+Desde a decisão P4 (2026-09-08) o código entra pelo próprio aplicativo, e não
+mais por arquivo no repositório:
 
-```json
-{
-  "android": {
-    "client_id": "... o que já está aí, não mexer ...",
-    "project_id": "...",
-    "auth_uri": "...",
-    "token_uri": "...",
-    "auth_provider_x509_cert_url": "..."
-  },
-  "spotify": {
-    "client_id": "COLE_O_CLIENT_ID_AQUI"
-  }
-}
-```
+1. Abra **Configurações**.
+2. Na seção Pessoa, toque em **Credenciais próprias**.
+3. Cole o Client ID no campo do bloco **Spotify** e toque em **Guardar**.
 
-Atenção à vírgula depois do `}` que fecha o bloco `android` — sem ela o JSON
-fica inválido e o app não sobe.
+O valor fica no armazenamento protegido do aparelho. Não entra no pacote do
+aplicativo, não vai para o repositório, não vai para o Vault e sai junto se você
+desinstalar.
 
-Se preferir, me avise depois de criar o app e eu faço a edição do `env.json`
-a partir do valor que você colar aqui — mas lembre que o Client ID não é
-segredo crítico (ele aparece na URL de autorização de qualquer forma), então
-colar no chat é aceitável se for prático para você.
+A tela avisa, sem bloquear, quando o código colado não tem a forma esperada de
+32 caracteres — costuma significar que a cópia veio pela metade.
 
-## Passo 4 — atualizar o exemplo versionado
+## Passo 4 — validar
 
-Isto eu faço, é só me avisar: o `env.json.example` também não tem o bloco
-`spotify`, e ele é o arquivo que documenta o formato para quem clonar o
-repositório. Vou adicionar com placeholder.
-
-## Passo 5 — validar
-
-Depois do `env.json` preenchido:
-
-```bash
-# o app deve parar de reportar 'sem_client_id'
-node -e "const e=require('./env.json'); console.log('client_id presente:', !!e.spotify?.client_id, '| tamanho:', e.spotify?.client_id?.length)"
-```
+Volte a **Integrações**. O card do Spotify sai de "Sem código" e passa a
+convidar a conectar a conta.
 
 A validação de ponta a ponta (autorizar de verdade e ver a conta conectada)
 precisa de dev-client no celular, porque o redirect por scheme custom não
-funciona no navegador. Faz parte do checkpoint da sprint
-`AUDIT-P2-1-SPOTIFY-YOUTUBE-ENTRADA`.
+funciona no navegador.
 
 ---
 
@@ -111,7 +95,7 @@ funciona no navegador. Faz parte do checkpoint da sprint
 | Sintoma | Causa provável |
 |---|---|
 | `INVALID_CLIENT: Invalid redirect URI` | Redirect URI do Dashboard difere de `ouroboros://oauth-spotify-callback` |
-| App reporta `sem_client_id` | `env.json` sem o bloco `spotify`, ou JSON inválido |
+| Card do Spotify segue em "Sem código" | O campo em Configurações → Credenciais próprias está vazio |
 | `invalid_grant` no refresh | Autorização revogada em <https://www.spotify.com/account/apps/> — reconectar no app |
 | Navegador abre e não volta ao app | Esperado no navegador; o scheme custom só resolve em dev-client ou release |
 
@@ -119,6 +103,8 @@ funciona no navegador. Faz parte do checkpoint da sprint
 
 ## Nota sobre o YouTube
 
-O ramo YouTube da mesma sprint **não** precisa de credencial nova: ele reusa o
-`client_id` do Google que já está no `env.json`. A quebra dele é só de wiring, e
-eu resolvo sem depender de você.
+O YouTube **não** precisa de credencial nova do Spotify: ele reusa a credencial
+do Google, que você cadastra no bloco vizinho da mesma tela, seguindo
+[`OAUTH-SETUP.md`](OAUTH-SETUP.md). Um código do Google atende Agenda, backup no
+Drive e YouTube de uma vez, porque os três vivem no mesmo projeto do Cloud
+Console.

@@ -11,6 +11,11 @@
 // foto: a copia de fotos e responsabilidade do caller (Tela 12),
 // porque o picker pode rodar antes ou depois do submit.
 //
+// listarMedidas e lerUltimaMedida devolvem so' o frontmatter. Quem vai
+// REGRAVAR um dia usa lerMedidaDoDia, que devolve tambem o corpo do
+// markdown: writeVaultFile grava o arquivo inteiro, entao regravar com
+// corpo vazio apaga a prosa que a pessoa digitou no .md.
+//
 // Comentarios sem acento (convencao shell/CI).
 import {
   medidasPath,
@@ -105,6 +110,32 @@ export async function lerUltimaMedida(
 ): Promise<Medida | null> {
   const lista = await listarMedidas(vaultRoot, { periodo: 'tudo' });
   return lista.length > 0 ? lista[0] : null;
+}
+
+// Le o registro de medidas de um dia especifico, pelo MESMO caminho
+// que escreverMedida vai regravar (medidasPath + joinUri deste modulo).
+// Mora aqui, e nao no chamador, porque leitura e escrita precisam
+// derivar o path da mesma fonte: um joinUri local no puxador
+// desalinharia em silencio se a derivacao daqui mudasse.
+//
+// Devolve meta E corpo. O corpo importa porque writeVaultFile grava o
+// arquivo inteiro: quem regrava um dia ja existente precisa devolver o
+// corpo lido, ou apaga a prosa que a pessoa digitou no .md.
+//
+// Ausente, ilegivel ou malformado => null (mesma tolerancia de
+// listarMedidas, que ignora arquivo malformado em silencio).
+export async function lerMedidaDoDia(
+  vaultRoot: string,
+  data: string
+): Promise<{ meta: Medida; body: string } | null> {
+  try {
+    const dataDate = new Date(`${data}T12:00:00Z`);
+    if (Number.isNaN(dataDate.getTime())) return null;
+    const uri = joinUri(vaultRoot, medidasPath(dataDate));
+    return await readVaultFile(uri, MedidasSchema);
+  } catch {
+    return null;
+  }
 }
 
 // Persiste um registro de medidas. Caller fornece meta já validado

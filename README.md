@@ -1,10 +1,23 @@
 # Ouroboros Mobile
 
-App Android pessoal para captura ativa em Vault Obsidian compartilhado
-entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
+Aplicativo Android para registrar humor, diário, tarefas, treinos, marcos
+e memórias em um Vault de arquivos Markdown que fica no seu aparelho.
+Nasceu para um casal neurodivergente e hoje é comunitário: software livre
+sob GPL-3.0, sem custo, sem telemetria e sem conta obrigatória. Usar
+sozinho é o padrão; usar em dupla é escolha feita no onboarding.
+
+O eixo de acessibilidade é **controle** — quanto o aplicativo deixa você
+decidir sobre estímulo, previsibilidade e linguagem. O que já está
+cumprido e o que ainda não está estão em
+[`docs/ACESSIBILIDADE.md`](docs/ACESSIBILIDADE.md); o público e a forma de
+distribuição, na
+[ADR-0029](docs/ADRs/0029-publico-alvo-e-distribuicao.md).
+
+O aplicativo escreve `.md`; o pipeline desktop
 [`protocolo-ouroboros`](https://github.com/[REDACTED]/protocolo-ouroboros)
-processa. Construído com Expo + React Native, sem rede de saída,
-estética premium nativa desde o dia um.
+processa depois, para quem quiser essa ponta. Construído com Expo +
+React Native, sem rede de saída no núcleo, estética premium nativa desde o
+dia um.
 
 ## Marca
 
@@ -23,8 +36,9 @@ um único SVG-fonte. "Protocolo Ouroboros" é o nome do produto.
 ## Status
 
 Pré-1.0 em desenvolvimento. Distribuição manual: APK assinado instalado
-diretamente nos celulares, sem Play Store e sem auto-update. Cada release
-é distribuição deliberada. Veja [`docs/RELEASE.md`](docs/RELEASE.md) para o
+diretamente no aparelho, sem Play Store e sem auto-update — estado
+corrente, e não postura: retomar o registro em loja é decisão separada,
+posterior à fila técnica. Cada release é distribuição deliberada. Veja [`docs/RELEASE.md`](docs/RELEASE.md) para o
 pipeline completo (build EAS production → AAB → APK universal → tag git).
 
 ## Stack
@@ -60,12 +74,12 @@ refresh em menos de 1 segundo, sem build de Android Studio.
 | `./install.sh` | Setup do projeto: confere Node 20+, instala deps com `--legacy-peer-deps`, configura hooks, cria `pessoas.config.ts`, valida com smoke. |
 | `./install-dev.sh` | Setup do desktop em uma passada: pede sudo só uma vez, instala ADB, scrcpy, Android cmdline-tools, system image e emulador. Configura `~/.zshrc` com `ANDROID_HOME` e PATH. Cria AVD `ouroboros-test` otimizado por hardware (cores, RAM, GPU host, KVM) e snapshot inicial pra boot <10s. Default sem flags instala tudo. `--skip-emulator` para só ADB+scrcpy. |
 | `./run.sh` | Inicia Metro com QR. Flags: `--clear` (limpa cache), `--tunnel` (ngrok), `--web` (Chrome desktop, zero conflito com celular), `--emulator` (sobe AVD `ouroboros-test` antes do Metro), `--mirror` (abre janela scrcpy do device conectado em paralelo). |
-| `./scripts/start-emulator.sh` | Inicia emulador `ouroboros-test` com flags de performance (`-gpu host`, `-accel auto`, snapshot). `--headless` para sem janela, `--cold` para ignorar snapshot. |
+| `./scripts/start-emulator.sh` | Inicia emulador `ouroboros-test` com flags de performance (`-accel auto`, snapshot) e GPU adaptativa: `host` com janela, `swiftshader_indirect` em headless, que sobrevive melhor ao snapshot. Espera o boot por até 180s. `--headless` para sem janela, `--cold` para ignorar snapshot. |
 | `./scripts/mirror-device.sh` | Abre `scrcpy` espelhando celular físico ou emulador. Latência <50ms. |
 | `./uninstall.sh` | Apaga `node_modules`, `.expo`, caches. Não toca em `.git`, código, `pessoas.config.ts` nem no Vault. |
 | `./scripts/smoke.sh` | Roda anonimato + dados de teste + typecheck + lint + tests. Usado pelo pre-push. |
 | `./scripts/check_anonimato.sh` | Valida Regra −1: zero atribuição de autoria, zero nomes reais hardcoded. Roda no pre-commit. |
-| `./scripts/adb-wireless.sh` | Habilita ADB sem cabo após pareamento USB inicial. Gerado pelo `install-dev.sh`. |
+| `./scripts/adb-wireless.sh` | Habilita ADB sem cabo após pareamento USB inicial. Versionado no repositório; o `install-dev.sh` apenas garante a permissão de execução. |
 
 ## Política de validação visual (3 níveis)
 

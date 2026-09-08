@@ -1,5 +1,9 @@
-// Avatar circular tipado por PessoaId. Cor e inicial vem de
-// pessoas.config (corDe, inicialDe). Sizes sm 28 / md 32 / lg 56.
+// Avatar circular tipado por PessoaId. A inicial vem de
+// pessoas.config (inicialDe); a cor vem do store de cores de pessoa
+// (P7, 2026-09-08), que nasce no default do config e pode ser trocada
+// em Configuracoes -- por isso useCorPessoa, e nao corDe: o avatar
+// repinta quando a pessoa escolhe outra cor, sem reabrir a tela.
+// Sizes sm 28 / md 32 / lg 56.
 // Quando onPress fornecido, comporta-se como botao com scale 0.96 e
 // haptic selection. Quando photoUri fornecido, renderiza Image
 // cobrindo o circulo (override do fallback colorido).
@@ -11,7 +15,8 @@ import { useReduceMotion } from '@/lib/hooks/useReduceMotion';
 import { transicaoMovimento } from '@/lib/a11y/transicaoMovimento';
 import { haptics } from '@/lib/haptics';
 import type { PessoaId } from '@/lib/schemas/pessoa';
-import { inicialDe, corDe } from '@/config/pessoas.config';
+import { inicialDe } from '@/config/pessoas.config';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 
 export type AvatarSize = 'sm' | 'md' | 'lg';
 
@@ -40,6 +45,7 @@ export function PersonAvatar({
   const reduzirMovimento = useReduceMotion();
   const [pressed, setPressed] = useState(false);
   const px = SIZE_PX[size];
+  const cor = useCorPessoa(pessoa);
 
   const handle = () => {
     if (!onPress) return;
@@ -65,7 +71,7 @@ export function PersonAvatar({
           width: px,
           height: px,
           borderRadius: px / 2,
-          backgroundColor: corDe(pessoa),
+          backgroundColor: cor,
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',

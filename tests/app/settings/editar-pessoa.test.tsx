@@ -4,7 +4,7 @@
 //   - Editar nome A + Salvar chama usePessoa.setNome com o novo valor
 //     e dispara router.back().
 //   - Em tipoCompanhia 'sozinho', o BlocoPessoa B nao aparece.
-//   - Em tipoCompanhia 'duo', ambos os BlocoPessoa aparecem.
+//   - Em tipoCompanhia 'casal' ou 'amigos', ambos aparecem.
 //
 // Mocks: expo-router (router.back spiavel), AvatarPicker stub leve
 // para nao tocar expo-image-picker, expo-haptics no-op.
@@ -86,14 +86,19 @@ describe('app/settings/editar-pessoa (K3)', () => {
     expect(queryByLabelText('avatar picker pessoa_b')).toBeNull();
   });
 
-  it('em tipoCompanhia duo, ambos os BlocoPessoa aparecem', () => {
-    useSettings.setState((state) => ({
-      pessoa: { ...state.pessoa, tipoCompanhia: 'duo' },
-    }));
-    const { getByLabelText } = render(<EditarPessoa />);
-    expect(getByLabelText('avatar picker pessoa_a')).toBeTruthy();
-    expect(getByLabelText('avatar picker pessoa_b')).toBeTruthy();
-  });
+  // P3: 'duo' virou casal/amigos. Os dois valores mostram pessoa_b --
+  // a segunda pessoa existe nos dois casos.
+  it.each(['casal', 'amigos'] as const)(
+    'em tipoCompanhia %s, ambos os BlocoPessoa aparecem',
+    (tipo) => {
+      useSettings.setState((state) => ({
+        pessoa: { ...state.pessoa, tipoCompanhia: tipo },
+      }));
+      const { getByLabelText } = render(<EditarPessoa />);
+      expect(getByLabelText('avatar picker pessoa_a')).toBeTruthy();
+      expect(getByLabelText('avatar picker pessoa_b')).toBeTruthy();
+    }
+  );
 
   it('nome A vazio dispara toast e nao chama setNome', () => {
     const setNomeSpy = jest.spyOn(usePessoa.getState(), 'setNome');

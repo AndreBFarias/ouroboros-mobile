@@ -52,6 +52,7 @@ import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useOnboarding } from '@/lib/stores/onboarding';
+import { rodapePrivacidade } from '@/lib/copy/companhia';
 import { useSessao } from '@/lib/stores/sessao';
 import { useAutoSaveRascunho } from '@/lib/hooks/useAutoSaveRascunho';
 import {
@@ -176,10 +177,20 @@ export default function Eventos() {
 
   // Opcoes do chip group "Com quem". Usa nomes runtime via nomeDe
   // para o label visivel; o slug interno e o PessoaAutor.
+  //
+  // P2 (2026-09-08): em modo sozinho o chip de pessoa_b some. Antes,
+  // quem instalava o app sozinho via um botao com o nome de uma
+  // segunda pessoa que nunca existiu.
   const opcoesCom: ChipOption[] = [
     { value: 'pessoa_a', label: nomeDe('pessoa_a'), accent: 'purple' },
-    { value: 'pessoa_b', label: nomeDe('pessoa_b'), accent: 'pink' },
   ];
+  if (tipoCompanhia !== 'sozinho') {
+    opcoesCom.push({
+      value: 'pessoa_b',
+      label: nomeDe('pessoa_b'),
+      accent: 'pink',
+    });
+  }
 
   const corBordaModo = modo === 'positivo' ? colors.green : colors.red;
   const variantBotao = modo === 'positivo' ? 'success' : 'destructive';
@@ -398,15 +409,20 @@ export default function Eventos() {
               onChangeDataCustom={setDataCustom}
             />
 
-            <View style={{ gap: spacing.sm }}>
-              {tituloSecao('Com quem')}
-              <ChipGroup
-                mode="multi"
-                value={com}
-                onChange={(next) => setCom(next as PessoaAutor[])}
-                options={opcoesCom}
-              />
-            </View>
+            {/* P2: mesmo padrao do SeletorPara -- em modo sozinho o
+              bloco inteiro sai, em vez de sobrar um unico chip com o
+              proprio nome. */}
+            {tipoCompanhia === 'sozinho' ? null : (
+              <View style={{ gap: spacing.sm }}>
+                {tituloSecao('Com quem')}
+                <ChipGroup
+                  mode="multi"
+                  value={com}
+                  onChange={(next) => setCom(next as PessoaAutor[])}
+                  options={opcoesCom}
+                />
+              </View>
+            )}
 
             <View style={{ gap: spacing.sm }}>
               {tituloSecao('Categoria')}
@@ -456,7 +472,7 @@ export default function Eventos() {
             }}
             accessibilityLabel="rodape privacidade"
           >
-            Salvo localmente. Ninguém vê além de vocês dois.
+            {rodapePrivacidade(tipoCompanhia)}
           </Text>
 
           <Button

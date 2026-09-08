@@ -50,14 +50,29 @@ export function autorPadrao(
   return null;
 }
 
-// Heuristica de visibilidade do item "Ciclo" no menu lateral. Esconde
-// quando ambos sao explicitamente masculinos. Em qualquer outro caso
-// (pelo menos uma pessoa feminina, nao-binaria, prefere-nao-dizer ou
-// null), o item permanece visivel - autonomia do usuario decide
-// registrar mesmo sem inferencia automatica.
+// Heuristica de visibilidade do item "Ciclo" no menu lateral.
+//
+// P2 (2026-09-08): `tipoCompanhia` passou a ser parametro obrigatorio.
+// A regra antiga escondia o item apenas quando as DUAS pessoas eram
+// masculinas; em modo sozinho o onboarding nunca preenche
+// sexoDeclarado.pessoa_b, entao sexoB e' sempre null, a condicao nunca
+// fechava e um homem que usa o app sozinho via um item de ciclo
+// menstrual que nao pediu. Sem o parametro nao ha como distinguir "a
+// segunda pessoa nao declarou" de "nao existe segunda pessoa".
+//
+// Regra:
+//   - sozinho: decide so por sexoA. Esconde quando masculino; mostra
+//     em qualquer outro caso, inclusive null e prefiro-nao-dizer --
+//     nao declarar nao autoriza o app a presumir.
+//   - casal/amigos: inalterado. Esconde apenas quando as duas pessoas
+//     se declararam masculino.
 export function deveMostrarItemCiclo(
   sexoA: SexoDeclarado,
-  sexoB: SexoDeclarado
+  sexoB: SexoDeclarado,
+  tipoCompanhia: TipoCompanhia
 ): boolean {
+  if (tipoCompanhia === 'sozinho') {
+    return sexoA !== 'masculino';
+  }
   return !(sexoA === 'masculino' && sexoB === 'masculino');
 }

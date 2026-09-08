@@ -13,7 +13,9 @@
 - Uma conta Google autorizada como Test User, com acesso ao Google
   Cloud Console.
 - Projeto Cloud `protocolo-ouroboros` (ou similar) criado.
-- Repositório clonado, `env.json` na raiz (gitignored).
+- O aplicativo instalado. Desde a decisão P4 (2026-09-08) o código do
+  cliente entra por **Configurações → Credenciais próprias**, dentro do
+  aplicativo, e não por arquivo no repositório.
 - `app.json` com `expo.android.package = "com.ouroboros.mobile"`.
 - Keystore EAS canônico com SHA-1
   `E4:49:C8:B3:B4:89:F9:26:69:AA:31:1C:38:81:43:44:D3:7D:B3:8C`.
@@ -51,33 +53,30 @@ durável da Onda Q22.B descrita no Troubleshooting abaixo.
      `<numero>-<hash>.apps.googleusercontent.com`.
 6. Baixar o JSON do client (botão "Download").
 
-## Passo 2 — env.json
+## Passo 2 — Colar o Código no Aplicativo
 
-Renomear o JSON baixado para `env.json` na **raiz** do repositório
-(gitignored). Estrutura esperada:
+Do JSON baixado interessa uma linha só: o `client_id`, no formato
+`<numero>-<hash>.apps.googleusercontent.com`.
 
-```json
-{
-  "installed": {
-    "client_id": "<numero>-<hash>.apps.googleusercontent.com",
-    "project_id": "protocolo-ouroboros",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
-  }
-}
-```
+1. Abra **Configurações** no aplicativo.
+2. Na seção Pessoa, toque em **Credenciais próprias**.
+3. Cole o valor no campo do bloco **Google** e toque em **Guardar**.
 
-Validar:
+Um código só atende **Agenda, backup no Drive e YouTube**, porque os três
+vivem no mesmo projeto do Cloud Console.
 
-```bash
-cat env.json | grep client_id
-# saida: "client_id": "<numero>-<hash>.apps.googleusercontent.com",
-```
+O valor fica no armazenamento protegido do aparelho (`SecureStore`, pela
+store `src/lib/stores/credenciais.ts`). Não entra no pacote do aplicativo,
+não vai para o repositório, não vai para o Vault e sai junto na
+desinstalação. Não existe `client_secret` a guardar: o fluxo é PKCE, e nele
+o `client_id` é público por desenho.
 
-Conferir `.gitignore` lista `env.json` (verificado em M37.1). Se
-vazar em commit, revogar imediatamente no Cloud Console e gerar
-novo client.
+**O que mudou em 2026-09-08.** Antes, o arquivo `env.json` na raiz era
+importado de forma estática por `src/lib/services/googleAuthFlow.ts`, o que
+tinha duas consequências ruins: clone sem esse arquivo nem empacotava, e
+quem instalava o pacote herdava a credencial de outra pessoa — batendo na
+allowlist do consent screen sem entender o motivo. Hoje `env.json` não é
+lido por nenhum módulo de `src/`, e o aplicativo sobe sem ele.
 
 ## Passo 3 — app.json scheme
 
@@ -210,8 +209,8 @@ https://developers.google.com/identity/sign-in/android/start-integrating
 **Fix**: criar **novo OAuth client tipo iOS** com Bundle ID
 `com.ouroboros.mobile`. Apesar do nome "iOS", o `expo-auth-session`
 PKCE via custom scheme funciona em Android com esse tipo (Google
-trata como "client nativo genérico"). Atualizar `env.json` com o
-novo `client_id`.
+trata como "client nativo genérico"). Cadastrar o novo `client_id`
+em Configurações → Credenciais próprias.
 
 ### Camada 3 — Redirect URI custom scheme rejeitado
 
@@ -228,7 +227,7 @@ não o scheme do app (`ouroboros://oauth-callback`).
    `["ouroboros", "com.googleusercontent.apps.<id>"]`.
 2. `src/lib/services/googleAuthFlow.ts:pickClientId()` deriva
    redirect URI reverso-DNS automaticamente do `client_id`. Não
-   hardcoda; lê de `env.json` em runtime.
+   hardcoda; lê a credencial cadastrada, em runtime.
 
 ### Camada 4 — `maybeCompleteAuthSession` faltando
 
@@ -250,7 +249,7 @@ de qualquer hook ou guard, antes de qualquer
 |---|---|---|
 | `Access blocked: ouroboros has not completed verification` | E-mail não está em Test Users do consent screen. | Adicionar em `OAuth consent screen → Test users`. |
 | `Service disabled` | Calendar API não habilitada no projeto. | `APIs & Services → Library → Google Calendar API → Enable`. |
-| `invalid_client` | `client_id` em `env.json` não bate com cliente cadastrado. | Comparar `cat env.json` com `Credentials → OAuth 2.0 Client IDs`. Re-baixar JSON. |
+| `invalid_client` | O código cadastrado não bate com o cliente do Cloud Console. | Comparar o valor em Configurações → Credenciais próprias com `Credentials → OAuth 2.0 Client IDs`. |
 | `redirect_uri_mismatch` | Scheme errado em `app.json` ou client tipo errado. | Conferir Camada 2 e 3 acima. |
 
 ## Custos
@@ -281,12 +280,13 @@ Após OAuth bem-sucedido:
 
 ## Rotacionar credenciais
 
-Se `env.json` vazar (commit acidental, push de fork):
+Se o `client_id` precisar ser trocado:
 
 1. Revogar imediatamente no Cloud Console
    (`Credentials → clica no client → Delete`).
 2. Criar novo OAuth client iOS (Passo 1) com novo `client_id`.
-3. Re-baixar JSON, substituir `env.json` local.
+3. Cadastrar o novo valor em Configurações → Credenciais próprias
+   (o botão **Apagar** remove o anterior do aparelho).
 4. Atualizar `app.json` `scheme` com novo reverso-DNS (Passo 3).
 5. Não precisa mudar keystore nem SHA-1 (são do APK, não do client).
 6. Re-build APK ou re-deploy via workflow CI.

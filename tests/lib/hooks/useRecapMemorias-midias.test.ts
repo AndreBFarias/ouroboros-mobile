@@ -19,6 +19,10 @@ function dadosBase(over: Partial<RecapData>): RecapData {
     reflexoes: [],
     evolucoes: [],
     tarefasConcluidas: [],
+    // EXE-3: RecapData ganhou a lista de sessoes de treino que alimenta
+    // o drill-down de /recap-lista?tipo=treinos. Vazia aqui: nao e' o
+    // assunto deste arquivo.
+    sessoesTreino: [],
     numeros: {
       registros: 0,
       treinos: 0,

@@ -144,7 +144,7 @@ function snapshotValido(): SnapshotSettings {
     pessoa: {
       ativa: 'pessoa_b',
       vaultCompartilhado: false,
-      tipoCompanhia: 'duo',
+      tipoCompanhia: 'casal',
     },
     featureToggles: {
       cicloMenstrual: false,
@@ -303,6 +303,40 @@ describe('aplicarSnapshot (M-AUDIT-MIGUE-RESTORE-SNAPSHOT)', () => {
     expect(usePessoa.getState().filtroPessoa).toBe('ambos');
     expect(usePessoa.getState().nomes).toEqual(snap.pessoa.nomes);
     expect(usePessoa.getState().fotos).toEqual(snap.pessoa.fotos);
+  });
+
+  // P3 (2026-09-08): backup exportado antes da sprint gravou o literal
+  // 'duo' em settings.pessoa.tipoCompanhia. O snapshot e' lido com
+  // JSON.parse direto (sem zod), entao a normalizacao mora no
+  // aplicarSnapshot. O arquivo antigo precisa continuar restaurando --
+  // e nunca virar 'sozinho', que esconderia a segunda pessoa de quem
+  // tem uma.
+  it('le o legado duo de um backup antigo como casal, sem quebrar', () => {
+    const snap = snapshotValido();
+    // Cast deliberado: 'duo' saiu do tipo canonico nesta sprint, mas
+    // continua existindo em arquivo ja gravado no disco de quem usa.
+    (snap.settings.pessoa as { tipoCompanhia: string }).tipoCompanhia = 'duo';
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    expect(useSettings.getState().pessoa.tipoCompanhia).toBe('casal');
+    // O resto do sub-objeto pessoa continua vindo do snapshot.
+    expect(useSettings.getState().pessoa.ativa).toBe('pessoa_b');
+    expect(useSettings.getState().pessoa.vaultCompartilhado).toBe(false);
+  });
+
+  it('preserva os tres valores de companhia no restore (nao colapsa)', () => {
+    const snap = snapshotValido();
+    (snap.settings.pessoa as { tipoCompanhia: string }).tipoCompanhia =
+      'amigos';
+    snap.onboarding.tipoCompanhia = 'amigos';
+
+    const r = aplicarSnapshot(snap, { confirmado: true });
+
+    expect(r.ok).toBe(true);
+    expect(useSettings.getState().pessoa.tipoCompanhia).toBe('amigos');
+    expect(useOnboarding.getState().tipoCompanhia).toBe('amigos');
   });
 
   it('rejeita snapshot sem chaves obrigatorias', () => {

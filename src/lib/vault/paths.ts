@@ -11,7 +11,8 @@
 // - 'Slug' e o sufixo livre escolhido pelo usuario (kebab-case).
 // - Todos os paths são relativos ao root do Vault (URI SAF resolvido
 //   em runtime). O caller concatena com a base via vaultUriJoin.
-// - Helpers legados (treinosPath, inboxFinanceiroPath, assetsPath etc.)
+// - Helpers legados (treinosPath, treinosPathLegado,
+//   inboxFinanceiroPath, assetsPath etc.)
 //   permanecem para nao quebrar features fora do escopo da H2 (share
 //   intent receiver M08, treinos M11). Migracao formal dessas features
 //   fica para sprints derivadas (registradas como achado colateral em
@@ -418,8 +419,30 @@ export function treinosDraftPath(date: Date, slug: string): string {
   return `treinos/draft/${formatDateYmd(date)}-${slug}.md`;
 }
 
-// treinos/YYYY-MM-DD-<slug>.md (legado M11).
+// treinos/YYYY-MM-DD-HHmm-<slug>.md (legado M11, com hora desde a EXE-1).
+//
+// EXE-1 (2026-09-08): a hora entrou no nome porque a identidade de uma
+// sessao era so' (dia, slug-da-rotina) -- duas execucoes da mesma rotina
+// no mesmo dia resolviam para o mesmo arquivo e a segunda truncava a
+// primeira, sem erro e sem lixeira. A resolucao e' de MINUTO: o campo
+// `data` do TreinoSessaoSchema e' sempre escrito com segundos ':00'
+// (SheetNovoTreino.tsx e app/treinos/executar/[slug].tsx), entao HHmmss
+// nao daria resolucao real. Duas sessoes da mesma rotina gravadas no
+// mesmo minuto continuam colidindo -- residual aceito e documentado na
+// decisao 3.4 do spec da EXE-1.
 export function treinosPath(date: Date, slug: string): string {
+  return `treinos/${formatDateYmdHm(date)}-${slug}.md`;
+}
+
+// treinos/YYYY-MM-DD-<slug>.md (formato anterior a EXE-1).
+//
+// Quem consome, hoje: os testes de regressao que provam que a listagem
+// continua tolerando o formato antigo. A migracao one-shot
+// (src/lib/boot/migrarTreinosParaPathComHora.ts) NAO chama esta funcao
+// -- ela le os nomes que ja estao na pasta e deriva o slug dali, para
+// nao renomear arquivo que o usuario editou a mao no Obsidian. Caller de
+// producao novo usa treinosPath.
+export function treinosPathLegado(date: Date, slug: string): string {
   return `treinos/${formatDateYmd(date)}-${slug}.md`;
 }
 

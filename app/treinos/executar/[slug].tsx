@@ -31,11 +31,46 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { lerRotina } from '@/lib/vault/rotina';
 import { sessaoFromRotina } from '@/lib/treino/sessaoFromRotina';
 import { saveTreino } from '@/lib/treinos/saveTreino';
-import { comTimeout } from '@/lib/util/comTimeout';
+import { comTimeout, SAVE_TIMEOUT_DEFAULT_MS } from '@/lib/util/comTimeout';
 import type { RotinaMeta, ExercicioRotina } from '@/lib/schemas/rotina';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
 type Estado = 'executando' | 'descansando' | 'concluido';
+
+// Orcamento do timeout do save (2026-09-08). O default de 10s do helper
+// foi calibrado para UM write de .md (cabecalho de
+// src/lib/util/comTimeout.ts), e ate a EXE-3B era isso que a promise
+// fazia. Desde a EXE-3B o mesmo `saveTreino` pendura, depois da sessao,
+// uma leitura mais uma escrita por exercicio cadastrado que a sessao
+// cita -- e em file:// cada escrita sao tres chamadas de FS
+// (makeDirectory, write do .writing, move). Uma sessao de dez
+// exercicios estoura 10s no aparelho lento, e o que aparece na tela e'
+// "Nao foi possivel salvar: timeout salvando" para uma sessao que ja
+// esta no disco: o write da sessao acontece ANTES do laco do historico.
+// Aqui isso e' pior que em outras telas, porque o executor nao tem
+// botao de tentar de novo -- depois do erro so' resta "Voltar".
+//
+// O helper preve o caso ("Caller pode passar ms diferente se conhecer o
+// caso", :20-21) e este caller conhece: o custo extra e' proporcional ao
+// numero de exercicios da sessao. Mesmo padrao de app/exercicios/novo.tsx,
+// que passa 30s por causa da copia do GIF.
+//
+// O teto existe porque comTimeout esta ali para impedir loader infinito
+// (A29); um orcamento que cresce sem limite adia o sintoma em vez de
+// respeitar o contrato.
+const SALVAR_SESSAO_POR_EXERCICIO_MS = 2_000;
+const SALVAR_SESSAO_TETO_MS = 40_000;
+
+// `qtd` e' o total de itens da sessao, nao o de exercicios cadastrados
+// que casam por slug: o orcamento fica por cima do custo real, nunca por
+// baixo, e a tela nao precisa conhecer as regras de casamento do
+// registrarHistoricoDaSessao.
+function orcamentoSalvarSessaoMs(qtd: number): number {
+  return Math.min(
+    SAVE_TIMEOUT_DEFAULT_MS + qtd * SALVAR_SESSAO_POR_EXERCICIO_MS,
+    SALVAR_SESSAO_TETO_MS
+  );
+}
 
 function formatarTempo(seg: number): string {
   const m = Math.floor(seg / 60);
@@ -150,7 +185,10 @@ export default function ExecutarTreino() {
           exercicios: snap.exercicios ?? [],
         };
 
-        await comTimeout(saveTreino({ meta, vaultRoot }));
+        await comTimeout(
+          saveTreino({ meta, vaultRoot }),
+          orcamentoSalvarSessaoMs(meta.exercicios.length)
+        );
         void haptics.vitoria();
         toast.show('Treino registrado.', 'success');
       } catch (e) {

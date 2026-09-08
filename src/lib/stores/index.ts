@@ -36,6 +36,25 @@ export {
   type ContadorParcial,
   type TarefaParcial,
 } from './sessao';
+// adicionado por P7 (2026-09-08), cor de pessoa editavel:
+export {
+  useCoresPessoa,
+  corPessoa,
+  useCorPessoa,
+  CORES_PESSOA_DEFAULT,
+  CORES_SUGERIDAS,
+  type CoresPessoaState,
+} from './coresPessoa';
+// adicionado por P4 (2026-09-08), credencial por usuario:
+export {
+  useCredenciais,
+  clientIdDe,
+  temCredencial,
+  ehSemCredencial,
+  SemCredencialError,
+  type CredenciaisState,
+  type ServicoCredencial,
+} from './credenciais';
 // adicionado por M37.1:
 export {
   useGoogleAuth,

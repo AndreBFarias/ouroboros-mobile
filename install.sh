@@ -5,7 +5,7 @@
 #   1. Confere pre-requisitos (node 20+, npm, git)
 #   2. Instala dependencias com --legacy-peer-deps (Armadilha A10)
 #   3. Configura hooks de git (pre-commit, pre-push)
-#   4. Cria pessoas.config.ts a partir do .example se nao existir
+#   4. Cria env.json e pessoas.config.ts a partir dos .example se faltarem
 #   5. Roda smoke test para validar instalacao
 #
 # Uso: ./install.sh
@@ -60,6 +60,25 @@ chmod +x scripts/*.sh 2>/dev/null || true
 echo "OK: hooks ativos via core.hooksPath=hooks"
 
 echo ""
+echo ">> verificando env.json"
+if [[ ! -f env.json ]]; then
+  if [[ -f env.json.example ]]; then
+    cp env.json.example env.json
+    echo "OK: env.json criado a partir do example"
+    echo "    o app compila e roda assim. As integracoes que usam conta"
+    echo "    de terceiro (Google e Spotify) ficam desligadas ate voce"
+    echo "    trocar os valores CHANGE_ME. Veja docs/SETUP-SPOTIFY.md."
+  else
+    echo "ERRO: env.json.example não encontrado. O bundle vai falhar em"
+    echo "      resolver o modulo env.json (import estatico em"
+    echo "      src/lib/services/googleAuthFlow.ts e"
+    echo "      src/lib/integracoes/spotify/oauth.ts)."
+    exit 1
+  fi
+else
+  echo "OK: env.json ja existe"
+fi
+
 echo ">> verificando pessoas.config.ts"
 if [[ ! -f src/config/pessoas.config.ts ]]; then
   if [[ -f src/config/pessoas.config.example.ts ]]; then

@@ -10,10 +10,15 @@
 // onboarding e refeito quando done=false.
 //
 // V4.0.2 (2026-05-08): setTipoCompanhia agora ESPELHA a escolha em
-// useSettings.pessoa.tipoCompanhia (mapeia casal/amigos -> 'duo',
-// sozinho -> 'sozinho'). Sem isso, SeletorPara, SeletorPessoaDestino,
-// ItemTarefa e editar-pessoa.tsx (que leem de useSettings) ficavam
-// presos em modo 'sozinho' independente da escolha do usuario.
+// useSettings.pessoa.tipoCompanhia. Sem isso, SeletorPara,
+// SeletorPessoaDestino, ItemTarefa e editar-pessoa.tsx (que leem de
+// useSettings) ficavam presos em modo 'sozinho' independente da
+// escolha do usuario.
+//
+// P3 (2026-09-08): o espelho deixou de colapsar casal/amigos em 'duo'.
+// A distincao que o onboarding coleta chega inteira a useSettings e,
+// dali, a superficie. O tipo passou a morar em @/lib/schemas/companhia,
+// que tambem guarda a leitura tolerante do legado 'duo'.
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { secureStorage } from '@/lib/stores/persist';
@@ -21,7 +26,8 @@ import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { useSettings } from '@/lib/stores/settings';
 import { escreverEstadoCanonico } from '@/lib/vault/escreverEstado';
 
-export type TipoCompanhia = 'sozinho' | 'casal' | 'amigos';
+export type { TipoCompanhia } from '@/lib/schemas/companhia';
+import type { TipoCompanhia } from '@/lib/schemas/companhia';
 
 export type SexoDeclarado =
   | 'masculino'
@@ -102,11 +108,10 @@ export const useOnboarding = create<OnboardingStore>()(
       ...DEFAULT_STATE,
       setTipoCompanhia: (tipoCompanhia) => {
         set({ tipoCompanhia });
-        // Espelha em useSettings (canonico para componentes pos-M29)
-        // mapeando: casal/amigos -> 'duo', sozinho -> 'sozinho'.
-        const settingsValue: 'sozinho' | 'duo' =
-          tipoCompanhia === 'sozinho' ? 'sozinho' : 'duo';
-        useSettings.getState().setPessoa('tipoCompanhia', settingsValue);
+        // Espelha em useSettings (canonico para componentes pos-M29).
+        // P3: espelho identidade, sem colapso. Era aqui que 'amigos'
+        // virava 'casal' na tela seguinte.
+        useSettings.getState().setPessoa('tipoCompanhia', tipoCompanhia);
       },
       setSexoDeclarado: (pessoa, sexo) =>
         set((s) => ({

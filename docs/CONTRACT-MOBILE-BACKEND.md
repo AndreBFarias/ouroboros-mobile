@@ -844,7 +844,7 @@ Container que agrupa até 10 rotinas existentes para o ciclo de treino do usuár
 | `_schema_version` | inteiro | sim (escrita) | |
 | `version` | literal `1` | sim | Versão interna do schema de estado. |
 | `somVibracao` | object | sim | `{ geral, despertar, conquista, botoes }` booleans. |
-| `pessoa` | object | sim | `{ ativa, vaultCompartilhado, tipoCompanhia }`. |
+| `pessoa` | object | sim | `{ ativa, vaultCompartilhado, tipoCompanhia }`. `tipoCompanhia` é `sozinho` \| `casal` \| `amigos` desde a P3 (2026-09-08); era `sozinho` \| `duo`. **Leitura tolerante:** arquivo já gravado com `duo` continua válido e é lido como `casal` (`TipoCompanhiaSchema` em `src/lib/schemas/companhia.ts` faz o preprocess). Consumidor externo deve aceitar os quatro valores na leitura e escrever apenas os três canônicos. |
 | `featureToggles` | object | sim | 11 booleans cobrindo features opcionais. |
 | `privacidade` | object | sim | `{ biometriaAbrir, ocultarTranscricoes }`. |
 | `midia` | object | sim | `{ capPorRegistro >= 1, permitirAudio }`. |
@@ -870,7 +870,7 @@ Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem est
 | `ultimaRota` | string \| null | sim | Path da última tela visitada. |
 | ~~`rascunhos`~~ | — | **removido** | **AUDIT-P4-8 (2026-09-05):** carregava o corpo do rascunho — inclusive o texto do diário emocional ainda não confirmado — em texto puro no espelho do Vault. Deixou de ser escrito. Consumidor externo que dependia de saber da existência de um rascunho precisa de campo próprio, decidido em sprint com o dono; não foi inventado aqui. |
 | `permissoesPedidas` | object | sim | 4 booleans (storage, notif, camera, mic). |
-| `flags` | object | sim | 9 booleans de migração (a tabela dizia 5 desde antes da AUDIT-P4-8; a contagem já estava defasada). O mais recente é `estadoTextoPuroSaneado`, da própria AUDIT-P4-8. |
+| `flags` | object | sim | 10 booleans de migração (a tabela dizia 5 desde antes da AUDIT-P4-8; a contagem já estava defasada). O mais recente é `treinosPathHoraMigrado`, da EXE-1: marca o rename one-shot das sessões de treino para o path com hora. |
 | `atualizadoEm` | ISO 8601 | sim | |
 
 ---
@@ -888,7 +888,7 @@ Estado canônico do `useSettings` (R-VAULT-A). Subscribers do store escrevem est
 | `_schema_version` | inteiro | sim (escrita) | |
 | `version` | literal `1` | sim | |
 | `done` | boolean | sim | |
-| `tipoCompanhia` | `sozinho` \| `casal` \| `amigos` | sim | |
+| `tipoCompanhia` | `sozinho` \| `casal` \| `amigos` | sim | Sempre teve os três valores aqui; era o espelho de `settings` que os colapsava (corrigido na P3). Aceita o legado `duo` na leitura, normalizado para `casal`. |
 | `sexoDeclarado` | object | sim | `{ pessoa_a: enum\|null, pessoa_b: enum\|null }`. |
 | `permissoes` | object | sim | 5 booleans (storage, camera, microfone, notificacoes, localizacao). |
 | `atualizadoEm` | ISO 8601 | sim | |
@@ -953,7 +953,7 @@ Estado runtime do `useNavegacao`. Utilidade primária: debug. Sibling pode ignor
 | `humorMedio30d` | number 0..5 \| null | sim | |
 | `humorMedio90d` | number 0..5 \| null | sim | |
 | `humorMedioAll` | number 0..5 \| null | sim | |
-| `countPorTipo` | record `string -> int >= 0` | sim | 9 chaves canônicas: `humor`, `diario_gatilho`, `diario_conquista`, `diario_reflexao`, `marco`, `evento_positivo`, `evento_negativo`, `contador`, `tarefa_concluida`. |
+| `countPorTipo` | record `string -> int >= 0` | sim | 11 chaves canônicas: `humor`, `diario_gatilho`, `diario_conquista`, `diario_reflexao`, `marco`, `evento_positivo`, `evento_negativo`, `contador`, `tarefa_concluida`, `treino_sessao`, `treino_minutos`. As duas últimas entraram em 2026-09-08 (`EXE-3`) e são aditivas: arquivo escrito por versão anterior não as tem, e o record é aberto. Atenção à semântica — `treino_sessao` é cardinalidade (quantas sessões no período), mas `treino_minutos` é a **soma de `duracao_min`**, não uma contagem, apesar de morar num campo chamado `countPorTipo`. Campo de topo próprio seria mais honesto e exigiria subir a versão do schema; a escolha foi registrar a semântica aqui. |
 | `streaksAtuais` | record `slug -> int >= 0` | sim | Apenas contadores com dias >= 1; sort slug ASC. |
 | `topGatilhosUltimos90d` | array max 5 `{ chave, n >= 1 }` | sim | Sort n desc; empate chave ASC. |
 | `topConquistas` | array max 5 `{ chave, n >= 1 }` | sim | Chaves: `diario_vitoria`, `evento_positivo`, `marco`, `tarefa_concluida`. |

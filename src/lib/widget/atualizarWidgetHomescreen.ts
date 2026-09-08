@@ -25,7 +25,8 @@ import { usePessoa } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
 import { readVaultFile, humorPath } from '@/lib/vault';
 import { HumorSchema } from '@/lib/schemas/humor';
-import { inicialDe, corDe } from '@/config/pessoas.config';
+import { inicialDe } from '@/config/pessoas.config';
+import { corPessoa } from '@/lib/stores/coresPessoa';
 
 const RATE_LIMIT_MS = 60 * 1000;
 
@@ -142,7 +143,10 @@ export async function atualizarWidgetHomescreen(
     const pessoa = usePessoa.getState();
     const pessoaAtiva = pessoa.pessoaAtiva;
     const inicial = inicialDe(pessoaAtiva);
-    const cor = corDe(pessoaAtiva);
+    // P7 (2026-09-08): a cor sai do store, nao mais do config direto.
+    // O default do store E' o do config, entao o payload nao muda para
+    // quem nunca trocou a cor.
+    const cor = corPessoa(pessoaAtiva);
 
     const vaultRoot = useVault.getState().vaultRoot;
     const humorDoDia = await lerHumorDoDia(vaultRoot, pessoaAtiva);

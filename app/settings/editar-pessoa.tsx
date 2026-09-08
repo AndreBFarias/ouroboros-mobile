@@ -1,7 +1,8 @@
 // Sub-tela: edicao de nomes e fotos das pessoas. Reusa <AvatarPicker>
 // e <Input> do M03. Salva via usePessoa.setNome (foto e tratada
 // dentro do AvatarPicker que já persiste em fotos[pessoa]).
-// Mostra pessoa B somente quando tipoCompanhia === 'duo'.
+// Mostra pessoa B somente quando ha uma segunda pessoa declarada
+// (casal ou amigos); em modo sozinho o bloco inteiro fica de fora.
 import { useState, useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui';
 import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
 import { useSettings } from '@/lib/stores/settings';
+import { temSegundaPessoa } from '@/lib/schemas/companhia';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeBottomContentPadding } from '@/components/chrome/safeBottom';
 import { colors, spacing, typography } from '@/theme/tokens';
@@ -29,7 +31,7 @@ export default function EditarPessoa() {
   const nomes = usePessoa((s) => s.nomes);
   const setNome = usePessoa((s) => s.setNome);
   const tipoCompanhia = useSettings((s) => s.pessoa.tipoCompanhia);
-  const ehDuo = tipoCompanhia === 'duo';
+  const ehDuo = temSegundaPessoa(tipoCompanhia);
   const tituloA = useNomeDe('pessoa_a');
   const tituloB = useNomeDe('pessoa_b');
 

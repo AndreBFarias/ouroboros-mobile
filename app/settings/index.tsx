@@ -42,6 +42,7 @@ import { SecaoSobre } from '@/components/settings/SecaoSobre';
 import { SecaoBackupAutomatico } from '@/components/settings/SecaoBackupAutomatico';
 import { useSettings } from '@/lib/stores/settings';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 import { haptics } from '@/lib/haptics';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { exportarVaultZip } from '@/lib/services/exportarVault';
@@ -134,6 +135,8 @@ function SecaoPessoa() {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const setPessoaAtiva = usePessoa((s) => s.setPessoaAtiva);
   const nomes = usePessoa((s) => s.nomes);
+  const corA = useCorPessoa('pessoa_a');
+  const corB = useCorPessoa('pessoa_b');
   const ehSozinho = pessoa.tipoCompanhia === 'sozinho';
 
   const trocar = (next: PessoaAutor) => {
@@ -167,13 +170,13 @@ function SecaoPessoa() {
               label={nomes.pessoa_a}
               ativa={pessoaAtiva === 'pessoa_a'}
               onPress={() => trocar('pessoa_a')}
-              cor={colors.purple}
+              cor={corA}
             />
             <RadioPessoa
               label={nomes.pessoa_b}
               ativa={pessoaAtiva === 'pessoa_b'}
               onPress={() => trocar('pessoa_b')}
-              cor={colors.pink}
+              cor={corB}
             />
           </View>
         </View>
@@ -191,6 +194,17 @@ function SecaoPessoa() {
         titulo="Editar nomes e fotos"
         onPress={() => router.push('/settings/editar-pessoa')}
         accessibilityLabel="editar nomes e fotos"
+      />
+
+      <LinkSubTela
+        titulo="Cores das pessoas"
+        subtitulo="Troque a cor que identifica cada pessoa nas telas."
+        onPress={() =>
+          router.push(
+            '/settings/cores-pessoa' as Parameters<typeof router.push>[0]
+          )
+        }
+        accessibilityLabel="item cores das pessoas"
       />
 
       <LinkSubTela
@@ -223,6 +237,17 @@ function SecaoPessoa() {
           )
         }
         accessibilityLabel="item integracoes"
+      />
+
+      <LinkSubTela
+        titulo="Credenciais próprias"
+        subtitulo="Agenda, Drive, YouTube e Spotify pedem um código seu."
+        onPress={() =>
+          router.push(
+            '/settings/credenciais' as Parameters<typeof router.push>[0]
+          )
+        }
+        accessibilityLabel="item credenciais proprias"
       />
 
       {ehSozinho ? (

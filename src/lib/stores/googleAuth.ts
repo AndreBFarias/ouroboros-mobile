@@ -19,6 +19,7 @@ import { Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 import { secureStorage } from '@/lib/stores/persist';
+import { ehSemCredencial } from '@/lib/stores/credenciais';
 import {
   GOOGLE_DISCOVERY,
   InvalidGrantError,
@@ -181,7 +182,10 @@ async function executarFlowOAuth(
     });
     return { ok: true, tokens };
   } catch (e) {
-    if (e instanceof Error && e.message.includes('env.json')) {
+    // P4 (2026-09-08): o ramo honesto passa a ser decidido pelo TIPO do
+    // erro, nao pela substring 'env.json' na mensagem. Ver
+    // SemCredencialError em src/lib/stores/credenciais.ts.
+    if (ehSemCredencial(e)) {
       return { ok: false, motivo: 'sem_client_id' };
     }
     return { ok: false, motivo: 'erro' };
@@ -292,7 +296,8 @@ export const useGoogleAuth = create<GoogleAuthState>()(
             [pessoa]: {
               ...s.contas[pessoa],
               accessToken: tokens.access_token,
-              refreshToken: tokens.refresh_token ?? s.contas[pessoa].refreshToken,
+              refreshToken:
+                tokens.refresh_token ?? s.contas[pessoa].refreshToken,
               expiraEm: Date.now() + tokens.expires_in * 1000,
               email: email ?? s.contas[pessoa].email,
               ultimaConexao: Date.now(),

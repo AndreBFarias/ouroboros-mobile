@@ -42,6 +42,7 @@ import DiarioEmocional from '../../app/diario-emocional';
 import { ToastProvider } from '@/components/ui';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa } from '@/lib/stores/pessoa';
+import { useSettings } from '@/lib/stores/settings';
 import { DiarioEmocionalSchema } from '@/lib/schemas/diario_emocional';
 
 const VAULT_ROOT = 'content://mock/Vault';
@@ -81,6 +82,9 @@ beforeEach(() => {
   }
   useVault.getState().setVaultRoot(VAULT_ROOT);
   usePessoa.getState().setPessoaAtiva('pessoa_a');
+  // P2: baseline explicito. A tela ramifica por tipoCompanhia, e o
+  // caso default do produto -- quem instala e usa sozinho -- e' este.
+  useSettings.getState().setPessoa('tipoCompanhia', 'sozinho');
   mockSaveDiario.mockResolvedValue({
     uri: `${VAULT_ROOT}/inbox/mente/diario/2026-04-29-1000-alegria.md`,
   });
@@ -324,7 +328,12 @@ describe('Tela 18 — com quem', () => {
     expect(m.com).not.toContain('sozinho');
   });
 
+  // P2 (2026-09-08): o chip de pessoa_b so' existe quando ha uma
+  // segunda pessoa. Antes desta sprint a lista era fixa e este teste
+  // canonizava o vazamento: um botao escrito "Nome_B" na tela de quem
+  // usa o app sozinho.
   it('PessoaIds em "com quem" entram no payload validado', async () => {
+    useSettings.getState().setPessoa('tipoCompanhia', 'casal');
     const utils = renderTela();
     const { getByLabelText } = utils;
     fireEvent.changeText(

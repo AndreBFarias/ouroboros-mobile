@@ -43,12 +43,12 @@ import { colors, spacing } from '@/theme/tokens';
 import { useTreinos } from '@/lib/hooks/useTreinos';
 import { SheetNovoTreino } from './SheetNovoTreino';
 import { DetalheDiaTreinoModal } from './DetalheDiaTreinoModal';
-import { treinosPath, formatDateYmd } from '@/lib/vault/paths';
-import { slugifyTreino } from '@/lib/treinos/slug';
+import { formatDateYmd } from '@/lib/vault/paths';
 import { SeletorRotina } from '@/components/treino/SeletorRotina';
 import { sessaoFromRotina } from '@/lib/treino/sessaoFromRotina';
 import { usePessoa } from '@/lib/stores/pessoa';
 import type { RotinaMeta } from '@/lib/schemas/rotina';
+import type { TreinoListado } from '@/lib/vault/treinos';
 import type { AcaoExtraCaptura } from '@/components/chrome/MenuCapturaVerde';
 import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 
@@ -83,9 +83,12 @@ export function MemoriasTreinosTab({
     router.push('/exercicios');
   }, [router]);
 
+  // EXE-1: a selecao carrega o item listado inteiro (meta + rel). O
+  // `rel` e' o path real do arquivo, entao excluir e editar deixam de
+  // remontar o nome a partir do conteudo.
   const [sessaoSelecionada, setSessaoSelecionada] =
-    useState<TreinoSessao | null>(null);
-  const [editandoSessao, setEditandoSessao] = useState<TreinoSessao | null>(
+    useState<TreinoListado | null>(null);
+  const [editandoSessao, setEditandoSessao] = useState<TreinoListado | null>(
     null
   );
 
@@ -93,9 +96,9 @@ export function MemoriasTreinosTab({
   // tap em uma celula do heatmap.
   const { celulas, sessoesPorDia, total } = useMemo(() => {
     const contagens: Record<string, number> = {};
-    const porDia: Record<string, TreinoSessao[]> = {};
+    const porDia: Record<string, TreinoListado[]> = {};
     for (const s of sessoes) {
-      const ymd = s.data.slice(0, 10);
+      const ymd = s.meta.data.slice(0, 10);
       contagens[ymd] = (contagens[ymd] ?? 0) + 1;
       // Imutavel: evita mutar acumulador entre renders se React
       // reaproveitar o cache do useMemo em concorrente.
@@ -205,12 +208,9 @@ export function MemoriasTreinosTab({
     void recarregar();
   }, [recarregar]);
 
-  const sessaoPathRel = useMemo(() => {
-    if (!sessaoSelecionada) return '';
-    const dataDate = new Date(sessaoSelecionada.data);
-    const slug = slugifyTreino(sessaoSelecionada.rotina ?? 'treino');
-    return treinosPath(dataDate, slug);
-  }, [sessaoSelecionada]);
+  // EXE-1: o path vem da listagem, nao de uma remontagem a partir de
+  // (data, slug da rotina). Sessao em formato legado tambem resolve.
+  const sessaoPathRel = sessaoSelecionada?.rel ?? '';
 
   return (
     <View style={{ flex: 1 }}>
@@ -306,7 +306,7 @@ export function MemoriasTreinosTab({
       <BottomSheet ref={detalheRef} snapPoints={SHEET_60} index={-1}>
         {sessaoSelecionada ? (
           <DetalheDiaTreinoModal
-            sessao={sessaoSelecionada}
+            sessao={sessaoSelecionada.meta}
             pathRelativo={sessaoPathRel}
             onEditar={handleEditar}
             onExcluido={handleExcluido}
@@ -339,12 +339,8 @@ export function MemoriasTreinosTab({
       <BottomSheet ref={editarRef} snapPoints={SHEET_90} index={-1}>
         {editandoSessao ? (
           <SheetNovoTreino
-            inicial={editandoSessao}
-            slugOriginal={(() => {
-              const d = new Date(editandoSessao.data);
-              const slug = slugifyTreino(editandoSessao.rotina ?? 'treino');
-              return treinosPath(d, slug);
-            })()}
+            inicial={editandoSessao.meta}
+            relOriginal={editandoSessao.rel}
             onSalvo={handleSalvoEdicao}
             onCancelar={() => {
               editarRef.current?.close();

@@ -6,8 +6,14 @@
 // Reusa useRecap pra carregar o periodo (sem cache, consistente com
 // o resto do Recap) e filtra pela chave canonica. Cada item renderiza
 // como Pressable que navega pra rota de edicao existente quando
-// disponivel; senao mostra toast "Em breve" (Q24.a.b/c cobrem rotas
-// que ainda nao existem: treinos detalhe, eventos detalhe).
+// disponivel; senao mostra toast "Em breve" (Q24.a.c cobre a rota de
+// detalhe de evento, que ainda nao existe).
+//
+// EXE-3 (2026-09-08): tipo='treinos' deixou de devolver lista vazia. O
+// card do grid dizia "5 treinos" e o toque abria "Nenhum item neste
+// periodo" -- numero sem lista atras. As sessoes agora vem de
+// data.sessoesTreino (useRecap), derivado do mesmo filtro que produz o
+// numero do card.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { useEffect, useMemo } from 'react';
@@ -19,6 +25,7 @@ import { useRecap, type PeriodoRange } from '@/lib/hooks/useRecap';
 import { OuroborosLoader } from '@/components/brand';
 import { colors, spacing } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
+import { isoToDataLocalYmd } from '@/lib/datetime/local';
 
 type RecapListaTipo =
   | 'registros'
@@ -64,10 +71,26 @@ const MESES_ABREV = [
   'dez',
 ];
 
+// A4 (2026-09-08): lia getUTCDate/getUTCMonth/getUTCFullYear sobre um
+// ISO que carrega hora e offset -03:00, entao sessao gravada as 21h30
+// do dia 23 aparecia como 24 na tela. Nao era novidade da EXE-3: a
+// linha de `tarefas` ja entregava `t.feito_em` (IsoDatetime) ao mesmo
+// helper, entao tarefa concluida a noite ja mostrava o dia seguinte.
+// Agora o dia sai do YMD LOCAL via o helper canonico do projeto
+// (America/Sao_Paulo, o mesmo fuso que paths.ts usa para nomear
+// arquivo), e as duas chamadas ficam certas de uma vez.
+//
+// O sufixo T12:00:00Z sobrevive so para entrada que ja e' data pura --
+// `contador.inicio` e' DataYmd, e cai aqui pelo ramo de conquistas.
+// Meio-dia UTC resolve para o mesmo dia civil em qualquer fuso
+// habitado (mesmo truque de src/lib/vault/passos.ts).
 function formatarData(iso: string): string {
-  const d = new Date(iso.includes('T') ? iso : `${iso}T12:00:00Z`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return `${d.getUTCDate()} ${MESES_ABREV[d.getUTCMonth()] ?? ''} ${d.getUTCFullYear()}`;
+  const ymd = isoToDataLocalYmd(iso.includes('T') ? iso : `${iso}T12:00:00Z`);
+  // dataLocalYmd devolve '' para Date invalido; preserva o fallback
+  // anterior de ecoar a entrada crua.
+  if (ymd === '') return iso;
+  const [ano, mes, dia] = ymd.split('-');
+  return `${Number(dia)} ${MESES_ABREV[Number(mes) - 1] ?? ''} ${ano}`;
 }
 
 function parseTipo(raw: string | string[] | undefined): RecapListaTipo {
@@ -166,8 +189,22 @@ export default function RecapListaTela() {
     }
 
     if (tipo === 'treinos') {
-      // numeros.treinos e' contagem; Q24.a.b puxa via listarTreinos.
-      return [];
+      // EXE-3: consome data.sessoesTreino, que agregarRecap derivou do
+      // MESMO treinosFiltrados de numeros.treinos -- o numero do card e a
+      // contagem de linhas daqui sao o mesmo valor por construcao. Nada
+      // de chamar listarTreinos por conta propria: periodo, filtro e
+      // ordenacao ja foram resolvidos uma vez.
+      //
+      // Destino /saude-fisica sem parametro: a tela ja abre na aba
+      // Treinos (useState<TabKey>('treinos')). Foco na sessao especifica
+      // e' nao-objetivo desta sprint.
+      return data.sessoesTreino.map((sessao) => ({
+        id: sessao.id,
+        titulo: sessao.rotulo,
+        subtitulo: `${sessao.duracao_min} min`,
+        data: sessao.data,
+        destino: { pathname: '/saude-fisica' },
+      }));
     }
 
     if (tipo === 'fotos' || tipo === 'audios' || tipo === 'videos') {

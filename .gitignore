@@ -124,3 +124,7 @@ Checkpoint.md
 # Saida da automacao de browser (playwright MCP): snapshots e logs
 # de sessao, nao artefato de sprint.
 .playwright-mcp/
+
+# Bytecode do Python dos gates em scripts/. Nunca versionar.
+__pycache__/
+*.pyc

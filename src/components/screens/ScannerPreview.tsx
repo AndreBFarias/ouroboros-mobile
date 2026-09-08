@@ -26,6 +26,8 @@ import { colors } from '@/theme/tokens';
 import { haptics } from '@/lib/haptics';
 import { useVault } from '@/lib/stores/vault';
 import { usePessoa, useNomeDe } from '@/lib/stores/pessoa';
+import { useSettings } from '@/lib/stores/settings';
+import { temSegundaPessoa } from '@/lib/schemas/companhia';
 import { extrairTexto } from '@/lib/scanner/text-recognition';
 import {
   extrairValor,
@@ -67,14 +69,23 @@ export function ScannerPreview() {
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
   const nomeA = useNomeDe('pessoa_a');
   const nomeB = useNomeDe('pessoa_b');
+  // P2 (2026-09-08): em modo sozinho a lista tinha um botao com o nome
+  // de pessoa_b. Sem segunda pessoa nao ha o que escolher, entao a
+  // lista fica so com quem esta usando -- e o seletor some da tela
+  // (mesmo padrao do SeletorPara).
+  const tipoCompanhia = useSettings((s) => s.pessoa.tipoCompanhia);
+  const temOutraPessoa = temSegundaPessoa(tipoCompanhia);
   const opcoesPessoa = useMemo<
     ReadonlyArray<{ value: PessoaAutor; label: string }>
   >(
-    () => [
-      { value: 'pessoa_a', label: nomeA },
-      { value: 'pessoa_b', label: nomeB },
-    ],
-    [nomeA, nomeB]
+    () =>
+      temOutraPessoa
+        ? [
+            { value: 'pessoa_a', label: nomeA },
+            { value: 'pessoa_b', label: nomeB },
+          ]
+        : [{ value: 'pessoa_a', label: nomeA }],
+    [nomeA, nomeB, temOutraPessoa]
   );
 
   const uris: string[] =
@@ -339,21 +350,23 @@ export function ScannerPreview() {
           />
         </View>
 
-        <View>
-          <Text className="font-mono text-muted text-xs mb-2">Pessoa</Text>
-          <ChipGroup
-            mode="single"
-            options={opcoesPessoa.map((p) => ({
-              value: p.value,
-              label: p.label,
-              accent: 'purple',
-            }))}
-            value={pessoa}
-            onChange={(v) => {
-              if (v === 'pessoa_a' || v === 'pessoa_b') setPessoa(v);
-            }}
-          />
-        </View>
+        {temOutraPessoa ? (
+          <View>
+            <Text className="font-mono text-muted text-xs mb-2">Pessoa</Text>
+            <ChipGroup
+              mode="single"
+              options={opcoesPessoa.map((p) => ({
+                value: p.value,
+                label: p.label,
+                accent: 'purple',
+              }))}
+              value={pessoa}
+              onChange={(v) => {
+                if (v === 'pessoa_a' || v === 'pessoa_b') setPessoa(v);
+              }}
+            />
+          </View>
+        ) : null}
 
         {bairroDetectado !== null ? (
           <View>

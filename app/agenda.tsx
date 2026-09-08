@@ -39,6 +39,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeBottomContentPadding } from '@/components/chrome/safeBottom';
 import { colors, spacing, typography } from '@/theme/tokens';
 import { useGoogleAuth } from '@/lib/stores/googleAuth';
+import { useCredenciais } from '@/lib/stores/credenciais';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
 import { useVault } from '@/lib/stores/vault';
 import {
@@ -101,6 +102,11 @@ export default function AgendaScreen() {
   const paddingBottomFab = useSafeBottomContentPadding(insets.bottom);
   const toast = useToast();
   const pessoaAtiva = usePessoa((s) => s.pessoaAtiva);
+  // P4 (2026-09-08): a Agenda depende de um codigo do Google que so a
+  // pessoa pode criar. Sem ele, o convite a conectar levaria a uma
+  // recusa do servidor -- entao o convite muda, em vez de a recusa
+  // chegar depois sem explicacao.
+  const temCredencialGoogle = useCredenciais((s) => s.google !== null);
   const conta = useGoogleAuth((s) => s.contas[pessoaAtiva]);
   const contas = useGoogleAuth((s) => s.contas);
   const autenticar = useGoogleAuth((s) => s.autenticar);
@@ -239,7 +245,10 @@ export default function AgendaScreen() {
         return;
       }
       if (r.motivo === 'sem_client_id') {
-        toast.show('Configuração OAuth ausente. Veja a documentação.', 'error');
+        toast.show(
+          'A Agenda depende de um código seu do Google. Cadastre em Configurações.',
+          'info'
+        );
       } else {
         toast.show('Não foi possível conectar. Tente novamente.', 'error');
       }
@@ -264,7 +273,13 @@ export default function AgendaScreen() {
     }
     toast.show('Pronto. Você já pode criar eventos.', 'success');
     await sincronizar();
-  }, [autenticarComEscopoEscrita, pessoaAtiva, reautorizando, sincronizar, toast]);
+  }, [
+    autenticarComEscopoEscrita,
+    pessoaAtiva,
+    reautorizando,
+    sincronizar,
+    toast,
+  ]);
 
   // Abre o sheet de novo evento. Sem rede, o FAB nao cria (decisao M37.2
   // secao 9: sem fila offline) -- avisa e mantem fechado.
@@ -415,7 +430,14 @@ export default function AgendaScreen() {
       setApagando(false);
       setEventoParaApagar(null);
     }
-  }, [apagando, eventoParaApagar, pessoaAtiva, refreshIfNeeded, toast, vaultRoot]);
+  }, [
+    apagando,
+    eventoParaApagar,
+    pessoaAtiva,
+    refreshIfNeeded,
+    toast,
+    vaultRoot,
+  ]);
 
   const eventosDia = useMemo(
     () => eventosDoDia(eventos, diaSelecionado),
@@ -433,7 +455,28 @@ export default function AgendaScreen() {
         }}
         accessibilityLabel="agenda root"
       >
-        {estado === 'nao-conectado' ? (
+        {estado === 'nao-conectado' && !temCredencialGoogle ? (
+          <View style={{ paddingTop: spacing.huge }}>
+            <EmptyState
+              Icon={CalendarIcon}
+              frase="A Agenda usa a sua conta Google, e o Google pede que cada aplicativo se identifique com um código próprio. Criar o seu é gratuito e leva alguns minutos."
+            />
+            <View style={{ marginTop: spacing.xl, alignItems: 'center' }}>
+              <Button
+                label="Ver como criar o código"
+                onPress={() => {
+                  router.push(
+                    '/settings/credenciais' as Parameters<typeof router.push>[0]
+                  );
+                }}
+                accessibilityLabel="ver como criar o codigo do google"
+                fullWidth
+              />
+            </View>
+          </View>
+        ) : null}
+
+        {estado === 'nao-conectado' && temCredencialGoogle ? (
           <View style={{ paddingTop: spacing.huge }}>
             <EmptyState
               Icon={CalendarIcon}
@@ -554,7 +597,9 @@ export default function AgendaScreen() {
                 >
                   Reautorize para criar eventos direto na sua agenda.
                 </Text>
-                <View style={{ marginTop: spacing.base, alignSelf: 'flex-start' }}>
+                <View
+                  style={{ marginTop: spacing.base, alignSelf: 'flex-start' }}
+                >
                   <Button
                     label={reautorizando ? 'Abrindo…' : 'Reautorizar'}
                     onPress={() => {

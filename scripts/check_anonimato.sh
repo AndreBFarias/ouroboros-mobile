@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Valida Regra -1 (CONTEXTO.md Secao 5): zero referencia a IA ou pessoas
 # reais em codigo. Excecoes legitimas: pessoas.config.ts (default
-# generico), proprio script, docs/ historicos.
+# generico), próprio script, docs/ historicos, e o aviso de copyright do
+# LICENSE da raiz (excecao NOMEADA, ver bloco no fim deste arquivo).
 #
 # R-AUDIT-CI-GATES (2026-07-11): a exclusao antiga por substring larga
 # (api_key|provider|model|config|client|engine) era um blind-spot no
@@ -106,9 +107,23 @@ fi
 # Nomes reais: codigo + testes, exceto pessoas.config (seed) e
 # pessoas.config.example (template). Tambem exclui linhas com marker
 # 'anonimato-allow:' (palavras comuns como 'Vitoria' = sucesso, conquista).
+#
+# EXCECAO NOMEADA (decisao P5 do dono, 2026-09-08): a linha de copyright do
+# LICENSE da raiz identifica o titular pelo nome real, porque copyleft sem
+# titular declarado não e' exercivel -- justificativa em CONTEXTO.md Seção
+# 5, subsecao "A Excecao do LICENSE, Por Extenso". A isencao esta escrita
+# aqui de proposito, e não herdada do fato de NOMES_DIRS (src/ app/ tests/)
+# não alcancar a raiz: ampliar esse escopo e' correcao desejavel por outros
+# motivos, e no dia em que alguem ampliar, o repositorio reprovaria por um
+# arquivo que esta' certo. O --include='LICENSE' abaixo faz o scan enxergar
+# o arquivo quando ele estiver no escopo; a isencao e' por LINHA (so a que
+# tem 'Copyright (C)'), entao qualquer OUTRO nome dentro do LICENSE segue
+# reprovando. Para exercitar:
+#   ANONIMATO_SCAN_DIRS=<dir-com-LICENSE> ./scripts/check_anonimato.sh
 VIOLACOES_NOMES=$(grep -rE "$NOMES_REAIS" $NOMES_DIRS 2>/dev/null \
-  --include='*.ts' --include='*.tsx' --include='*.md' \
+  --include='*.ts' --include='*.tsx' --include='*.md' --include='LICENSE' \
   | grep -v 'pessoas.config' \
+  | grep -vE '(^|/)LICENSE:.*Copyright \(C\)' \
   | grep -v 'anonimato-allow' || true)
 
 if [[ -n "$VIOLACOES_NOMES" ]]; then

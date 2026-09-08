@@ -11,8 +11,9 @@
 #   4. Adiciona variaveis de ambiente ao ~/.zshrc se faltarem
 #   5. Cria AVD ouroboros-test com config otimizada por hardware
 #   6. Faz cold boot inicial e salva snapshot para boots seguintes <10s
-#   7. Cria scripts auxiliares (adb-wireless.sh, start-emulator.sh,
-#      mirror-device.sh)
+#   7. Garante permissão de execução dos scripts auxiliares, que são
+#      versionados no repo (adb-wireless.sh, adb-wifi-pair.sh,
+#      start-emulator.sh, mirror-device.sh); não reescreve nenhum deles
 #
 # Uso:
 #   ./install-dev.sh              # tudo em uma passada (default)
@@ -209,117 +210,19 @@ fi
 echo ""
 
 # -------- 5. Helpers em scripts/ --------
-mkdir -p scripts
-
-# 5.1 adb-wireless.sh
-cat > scripts/adb-wireless.sh <<'EOF'
-#!/usr/bin/env bash
-# adb-wireless.sh — habilita ADB sem cabo apos pareamento USB inicial.
-# Uso: ./scripts/adb-wireless.sh                 # com celular USB conectado
-#      ./scripts/adb-wireless.sh 192.168.x.y     # se ja sabe o IP
-set -euo pipefail
-IP="${1:-}"
-if [[ -z "$IP" ]]; then
-  IP=$(adb shell ip -4 addr show wlan0 2>/dev/null | awk '/inet/{print $2}' | cut -d/ -f1 | head -1)
-  if [[ -z "$IP" ]]; then
-    echo "ERRO: sem IP. Conecte cabo USB ou passe IP do celular."
-    exit 1
+# Os helpers são VERSIONADOS no repositório; este bloco não os cria.
+# Até 2026-09-08 três deles eram reescritos aqui por heredoc, a partir de
+# cópias atrasadas: cada execução desfazia conserto já commitado e sujava
+# arquivo rastreado. O arquivo versionado é a fonte da verdade; aqui só se
+# garante a permissão de execução.
+for helper in adb-wireless.sh adb-wifi-pair.sh start-emulator.sh mirror-device.sh; do
+  if [[ -f "scripts/$helper" ]]; then
+    chmod +x "scripts/$helper"
+  else
+    echo "AVISO: scripts/$helper ausente (esperado no repo)."
   fi
-fi
-adb tcpip 5555
-sleep 1
-adb connect "$IP:5555"
-echo "OK: ADB wireless em $IP:5555. Pode desconectar o cabo."
-EOF
-
-# 5.1b adb-wifi-pair.sh — pareamento por codigo SEM cabo (Android 11+).
-# Versionado no repo (nao gerado aqui); so garante permissao de execucao.
-if [[ -f scripts/adb-wifi-pair.sh ]]; then
-  chmod +x scripts/adb-wifi-pair.sh
-else
-  echo "AVISO: scripts/adb-wifi-pair.sh ausente (esperado no repo)."
-fi
-
-# 5.2 start-emulator.sh
-cat > scripts/start-emulator.sh <<'EOF'
-#!/usr/bin/env bash
-# start-emulator.sh — inicia o emulador ouroboros-test com flags
-# de performance e mantem em background. Cria snapshot na primeira
-# vez, reusa nas seguintes (boot <10s).
-#
-# Uso:
-#   ./scripts/start-emulator.sh           # janela visivel (default)
-#   ./scripts/start-emulator.sh --headless  # sem janela
-#   ./scripts/start-emulator.sh --cold      # ignora snapshot
-set -euo pipefail
-export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
-EMU="$ANDROID_HOME/emulator/emulator"
-ADB="$ANDROID_HOME/platform-tools/adb"
-
-HEADLESS=""
-COLD=""
-for arg in "$@"; do
-  case "$arg" in
-    --headless|-no-window) HEADLESS="-no-window" ;;
-    --cold|-no-snapshot-load) COLD="-no-snapshot-load" ;;
-  esac
 done
-
-# Mata emulador antigo se houver, evitando conflito de porta.
-if "$ADB" devices | grep -q "emulator-"; then
-  echo "Emulador ja rodando, parando antes de iniciar novo..."
-  "$ADB" -s emulator-5554 emu kill 2>/dev/null || true
-  sleep 2
-fi
-
-echo ">> iniciando ouroboros-test (cores host, GPU host, KVM)"
-"$EMU" -avd ouroboros-test \
-  -gpu host \
-  -accel auto \
-  -no-boot-anim \
-  -no-audio \
-  $COLD \
-  $HEADLESS \
-  > /tmp/emulator-ouroboros.log 2>&1 &
-
-EMU_PID=$!
-echo "PID: $EMU_PID. Log: /tmp/emulator-ouroboros.log"
-echo "Aguardando boot completo (boot.completed=1)..."
-"$ADB" wait-for-device
-for i in $(seq 1 60); do
-  BOOT=$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-  if [[ "$BOOT" == "1" ]]; then
-    echo "OK: emulador pronto em ${i}s. Veja em 'adb devices'."
-    exit 0
-  fi
-  sleep 1
-done
-echo "AVISO: timeout aguardando boot. Veja /tmp/emulator-ouroboros.log"
-EOF
-
-# 5.3 mirror-device.sh
-cat > scripts/mirror-device.sh <<'EOF'
-#!/usr/bin/env bash
-# mirror-device.sh — abre janela espelhando o celular fisico ou
-# emulador via scrcpy. Latencia <50ms.
-#
-# Uso: ./scripts/mirror-device.sh                  # primeiro device
-#      ./scripts/mirror-device.sh emulator-5554    # device especifico
-set -euo pipefail
-DEVICE="${1:-}"
-if [[ -z "$DEVICE" ]]; then
-  DEVICE=$(adb devices | awk 'NR>1 && /device$/{print $1; exit}')
-fi
-if [[ -z "$DEVICE" ]]; then
-  echo "ERRO: nenhum device ADB. Conecte celular ou inicie emulador."
-  exit 1
-fi
-echo "Espelhando $DEVICE..."
-exec scrcpy -s "$DEVICE" --window-title="Ouroboros Mobile - $DEVICE"
-EOF
-
-chmod +x scripts/adb-wireless.sh scripts/start-emulator.sh scripts/mirror-device.sh
-echo "OK: helpers criados em scripts/"
+echo "OK: helpers de scripts/ com permissão de execução"
 echo ""
 
 # -------- 6. Cold boot inicial + snapshot --------

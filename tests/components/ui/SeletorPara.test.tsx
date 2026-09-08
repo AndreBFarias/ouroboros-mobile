@@ -1,6 +1,6 @@
 // Testes do SeletorPara (M33). Cobre:
-//   - render dinamico em modo duo (3 chips com nome runtime do
-//     parceiro).
+//   - render dinamico quando ha segunda pessoa (3 chips com nome
+//     runtime do parceiro).
 //   - hide em modo sozinho (return null).
 //   - callback onChange para cada opcao (mim / outra / casal).
 //   - troca de selecao mantendo discriminador.
@@ -15,7 +15,10 @@ import type { Para } from '@/lib/schemas/para';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 // Mocks configuraveis por teste via vars do escopo.
-let mockTipoCompanhia: 'sozinho' | 'duo' = 'duo';
+// P3 (2026-09-08): o mock passou a carregar os tres valores reais do
+// onboarding. O componente le useSettings, que antes so' sabia dizer
+// 'duo' -- e por isso oferecia "Para o casal" a quem respondeu amigos.
+let mockTipoCompanhia: 'sozinho' | 'casal' | 'amigos' = 'casal';
 let mockPessoaAtiva: PessoaAutor = 'pessoa_a';
 let mockNomes: Record<PessoaAutor, string> = {
   pessoa_a: 'Pessoa A',
@@ -30,7 +33,7 @@ jest.mock('@/lib/stores/settings', () => ({
   __esModule: true,
   useSettings: <T,>(
     sel: (s: {
-      pessoa: { tipoCompanhia: 'sozinho' | 'duo' };
+      pessoa: { tipoCompanhia: 'sozinho' | 'casal' | 'amigos' };
       featureToggles: { reduzirMovimento: boolean };
     }) => T
   ): T =>
@@ -57,7 +60,7 @@ jest.mock('@/lib/stores/pessoa', () => ({
 }));
 
 beforeEach(() => {
-  mockTipoCompanhia = 'duo';
+  mockTipoCompanhia = 'casal';
   mockPessoaAtiva = 'pessoa_a';
   mockNomes = { pessoa_a: 'Pessoa A', pessoa_b: 'Pessoa B' };
 });
@@ -83,7 +86,7 @@ function Harness({
 }
 
 describe('SeletorPara render', () => {
-  it('renderiza 3 chips em modo duo', () => {
+  it('renderiza 3 chips em modo casal', () => {
     const { getByLabelText } = render(<Harness />);
     expect(getByLabelText('chip Para mim')).toBeTruthy();
     expect(getByLabelText('chip Para Pessoa B')).toBeTruthy();
@@ -104,6 +107,25 @@ describe('SeletorPara render', () => {
     const { getByLabelText, queryByLabelText } = render(<Harness />);
     expect(getByLabelText('chip Para Nome A')).toBeTruthy();
     expect(queryByLabelText('chip Para Nome B')).toBeNull();
+  });
+
+  // P3: o terceiro chip deixou de ser o literal "Para o casal". Quem
+  // respondeu amigos no onboarding le "Para todos"; oferecer "casal" a
+  // esse usuario era o app contradizendo a pergunta que acabou de
+  // fazer. O onChange continua emitindo {tipo:'casal'} -- o
+  // discriminador do frontmatter nao mudou nesta sprint.
+  it('rotula o destino compartilhado como "Para todos" em modo amigos', () => {
+    mockTipoCompanhia = 'amigos';
+    const { getByLabelText, queryByLabelText } = render(<Harness />);
+    expect(getByLabelText('chip Para todos')).toBeTruthy();
+    expect(queryByLabelText('chip Para o casal')).toBeNull();
+  });
+
+  it('mantem "Para o casal" em modo casal', () => {
+    mockTipoCompanhia = 'casal';
+    const { getByLabelText, queryByLabelText } = render(<Harness />);
+    expect(getByLabelText('chip Para o casal')).toBeTruthy();
+    expect(queryByLabelText('chip Para todos')).toBeNull();
   });
 
   it('retorna null em modo sozinho (campo invisivel)', () => {

@@ -48,13 +48,14 @@ const nomes = () => BOOT_HOOKS.map((h) => h.name);
 
 describe('BOOT_HOOKS: registro do dreno do widget de tarefas', () => {
   // AUDIT-P2-4 (2026-09-05): 16 -> 17 com a entrada do
-  // statsAgregadasHook. O numero vale para o grafo de modulos DESTE
-  // arquivo, que carrega so' @/lib/boot/reagendamento. Em runtime o app
-  // tem 19: limparDuplicatasAgenda.ts e sanearEstadoTextoPuro.ts fazem
-  // seus proprios BOOT_HOOKS.push e app/_layout.tsx os importa por
+  // statsAgregadasHook. EXE-1 (2026-09-08): 17 -> 18 com a entrada do
+  // migrarTreinosPathHoraHook. O numero vale para o grafo de modulos
+  // DESTE arquivo, que carrega so' @/lib/boot/reagendamento. Em runtime
+  // o app tem 20: limparDuplicatasAgenda.ts e sanearEstadoTextoPuro.ts
+  // fazem seus proprios BOOT_HOOKS.push e app/_layout.tsx os importa por
   // side-effect. Por isso este caso nao serve para auditar a fila real.
-  it('registra 17 hooks (16 pre-sprint + o dreno do widget de tarefas)', () => {
-    expect(BOOT_HOOKS).toHaveLength(17);
+  it('registra 18 hooks (17 pre-sprint + o rename de path de treino)', () => {
+    expect(BOOT_HOOKS).toHaveLength(18);
   });
 
   it('inclui o wrapper do dreno exatamente uma vez', () => {

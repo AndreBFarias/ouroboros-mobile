@@ -62,6 +62,7 @@ export {
   exerciciosGifPath,
   treinosDraftPath,
   treinosPath,
+  treinosPathLegado,
   marcosPath,
   alarmesPath,
   tarefasPath,

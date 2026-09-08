@@ -7,8 +7,12 @@
 //
 //   1. 3 puxadores OK -> totalNovos somado, todos ultimaSync atualizados.
 //   2. 1 puxador erro -> 2 ultimaSync atualizados, 1 preservado.
-//   3. Primeira sync (ultimaSync null) -> since passado e ~7d atras.
-//   4. Sync subsequente -> since passado e o ISO armazenado.
+//   3. Primeira sync (ultimaSync null) -> since passado e a meia-noite
+//      local de ~7d atras.
+//   4. Sync subsequente -> since passado e a meia-noite local de 48h
+//      antes do ISO armazenado (INT-HC-2; antes desta sprint o teste
+//      afirmava `since === isoArmazenado`, ou seja, travava o bug da
+//      janela sem sobreposicao como se fosse contrato).
 //   5. pageSize cap = 1000 passado a cada puxador.
 //
 // Cenario extra (6): puxador lancando excecao em vez de retornar
@@ -22,6 +26,7 @@ import {
   type TipoHC,
 } from '@/lib/health/autopullScheduler';
 import { useSettings } from '@/lib/stores/settings';
+import { startOfTodayLocal } from '@/lib/datetime/local';
 
 // Helper: cria puxador fake com tipo + comportamento deterministico.
 function fakePuxador(
@@ -103,7 +108,7 @@ describe('orquestrarHCAutopull', () => {
     expect(ultimaSync.Weight).toBe(isoAntigo);
   });
 
-  it('primeira sync (ultimaSync null): since passado ~ 7 dias atras', async () => {
+  it('primeira sync (ultimaSync null): since e a meia-noite local de 7 dias atras', async () => {
     const p1 = fakePuxador('Steps', { novos: 0, erro: null });
     const antesMs = Date.now();
 
@@ -114,14 +119,19 @@ describe('orquestrarHCAutopull', () => {
       since: string;
       pageSize: number;
     };
-    const sinceMs = new Date(callArg.since).getTime();
-    const esperadoMs = antesMs - 7 * 24 * 60 * 60 * 1000;
-    // Tolerancia 2s para diferenca de relogio entre antesMs e new Date()
-    // dentro do orquestrador.
-    expect(Math.abs(sinceMs - esperadoMs)).toBeLessThan(2000);
+    // INT-HC-2: a janela default tambem encosta na meia-noite local. O
+    // encaixe so aumenta a janela; o dia mais antigo entra inteiro em vez
+    // de entrar pela metade, o que importa porque escreverPassos regrava
+    // o arquivo do dia todo.
+    const esperado = startOfTodayLocal(
+      new Date(antesMs - 7 * 24 * 60 * 60 * 1000)
+    ).toISOString();
+    expect(callArg.since).toBe(esperado);
   });
 
-  it('sync subsequente (ultimaSync = ISO recente): since passado e o ISO armazenado', async () => {
+  it('sync subsequente: since recua 48h da marca e encosta na meia-noite local', async () => {
+    // 2026-05-20T08:30Z = 05:30 BRT. Menos 48h = 2026-05-18T08:30Z;
+    // meia-noite local desse dia = 2026-05-18T03:00Z.
     const isoArmazenado = '2026-05-20T08:30:00.000Z';
     useSettings.setState({
       hcAutopullUltimaSync: {
@@ -137,7 +147,11 @@ describe('orquestrarHCAutopull', () => {
       since: string;
       pageSize: number;
     };
-    expect(callArg.since).toBe(isoArmazenado);
+    expect(callArg.since).toBe('2026-05-18T03:00:00.000Z');
+    // A marca crua NAO e' mais o inicio da janela: era exatamente isso
+    // que deixava cair entre duas rodadas o registro descartado pela
+    // barreira do dia em curso e o registro publicado com atraso.
+    expect(callArg.since).not.toBe(isoArmazenado);
   });
 
   it('pageSize fixado em 1000 para todos os puxadores', async () => {

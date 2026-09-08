@@ -1,8 +1,9 @@
 // Calculador puro de stats agregadas (R-VAULT-CANONICAL-COMPLETE-B).
 //
 // Le listas brutas do Vault (humor, diario, eventos, marcos, contadores,
-// tarefas) ja deserializadas e devolve um snapshot EstadoStatsAgregadas
-// pronto para escrita em vault/_estado/stats-<periodo>-<deviceId>.md.
+// tarefas, treinos) ja deserializadas e devolve um snapshot
+// EstadoStatsAgregadas pronto para escrita em
+// vault/_estado/stats-<periodo>-<deviceId>.md.
 //
 // Tudo aqui e funcao pura testavel em isolamento (sem I/O, sem
 // global state). Caller (escreverStats) faz a leitura e injeta as
@@ -34,6 +35,7 @@ import type { EventoMeta } from '@/lib/schemas/evento';
 import type { Marco } from '@/lib/schemas/marco';
 import type { Contador } from '@/lib/schemas/contador';
 import type { Tarefa } from '@/lib/schemas/tarefa';
+import type { TreinoSessao } from '@/lib/schemas/treino_sessao';
 import { diasEntre } from '@/lib/util/diasEntre';
 
 // Predicado helper: ISO datetime ou data YYYY-MM-DD esta dentro do
@@ -153,6 +155,18 @@ export interface CalcularInput {
   marcos: Marco[];
   contadores: Contador[];
   tarefas: { meta: Tarefa; rel: string }[];
+  // EXE-3: sessoes formais de treino (treinos/*.md). Opcional de
+  // proposito, pelo mesmo motivo que `midiasStandalone` e' opcional em
+  // agregarRecap (useRecap.ts): campo obrigatorio quebraria todas as
+  // chamadas legadas de tests/lib/stats/calcular.test.ts num diff que
+  // nao e' o assunto. Ausente => conta zero.
+  //
+  // O preco disso esta registrado no risco R1 da spec: caller que
+  // esquecer de passar recebe zero em silencio, que e' exatamente o
+  // defeito que esta sprint conserta. A trava e' o teste do unico
+  // caller de producao (escreverStatsAgregadas), em
+  // tests/lib/stats/escreverStats.test.ts.
+  treinos?: TreinoSessao[];
   periodo: PeriodoStats;
   agora?: Date;
 }
@@ -193,7 +207,14 @@ export function calcularStatsAgregadas(
   // Chaves canonicas declaradas no contrato (vault_estado.ts):
   //   'humor', 'diario_gatilho', 'diario_conquista', 'diario_reflexao',
   //   'marco', 'evento_positivo', 'evento_negativo', 'contador',
-  //   'tarefa_concluida'.
+  //   'tarefa_concluida', 'treino_sessao', 'treino_minutos'.
+  //
+  // EXE-3: 'treino_minutos' e' soma de duracao_min, nao cardinalidade --
+  // a excecao semantica dentro de uma estrutura chamada "count". Vive
+  // aqui, e nao num campo de topo, porque campo de topo obrigaria subir
+  // ESTADO_SCHEMA_VERSION e migrar os stats-*.md ja escritos. A semantica
+  // esta registrada tambem no comentario do schema (vault_estado.ts) e em
+  // docs/CONTRACT-MOBILE-BACKEND.md, que e' o que o sibling Python le.
   const humorFiltrado =
     dias === null ? input.humor : filtrarHumor(input.humor, dias, agora);
   const diarioCount = contarDiariosPorModo(input.diarios, dias, agora);
@@ -211,6 +232,17 @@ export function calcularStatsAgregadas(
             meta.feito_em != null &&
             dentroUltimosDias(meta.feito_em, dias, agora)
         );
+  // Mesmo recorte temporal dos marcos: TreinoSessao.data e' ISO com
+  // hora, entao dentroUltimosDias resolve sem o fallback de meio-dia.
+  const treinos = input.treinos ?? [];
+  const treinosFiltrados =
+    dias === null
+      ? treinos
+      : treinos.filter((t) => dentroUltimosDias(t.data, dias, agora));
+  const treinoMinutos = treinosFiltrados.reduce(
+    (acc, t) => acc + t.duracao_min,
+    0
+  );
 
   const countPorTipo: Record<string, number> = {
     humor: humorFiltrado.length,
@@ -222,6 +254,10 @@ export function calcularStatsAgregadas(
     evento_negativo: eventoCount.negativo,
     contador: input.contadores.length,
     tarefa_concluida: tarefasFiltradas.length,
+    // Duas chaves, nao uma: contar sessao sem contar minuto repetiria a
+    // cegueira que deixou "sessoes e minutos" fora do agregado por meses.
+    treino_sessao: treinosFiltrados.length,
+    treino_minutos: treinoMinutos,
   };
 
   // ===== streaksAtuais =====

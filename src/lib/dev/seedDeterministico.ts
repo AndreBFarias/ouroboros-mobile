@@ -452,7 +452,7 @@ export function seedSaude(dias: number = 7, hoje?: Date): void {
 
   // Treinos: 2 sessoes no periodo (dias -2 e -5, ou clamp se total < 5).
   // Cada uma com fonte_hc_id (sessao importada do HC) e 1 exercicio
-  // (schema exige min 1). Path em treinos/YYYY-MM-DD-<slug>.md.
+  // (schema exige min 1). Path em treinos/YYYY-MM-DD-HHmm-<slug>.md.
   const offsetsTreino = [2, 5].filter((o) => o <= total);
   const offsetsFinal =
     offsetsTreino.length > 0 ? offsetsTreino : [Math.min(1, total)];
@@ -482,7 +482,12 @@ export function seedSaude(dias: number = 7, hoje?: Date): void {
       fonte_hc_origin: 'Conexão Saúde',
     };
     const conteudo = stringifyFrontmatter(meta, '');
-    espelharNoVaultMock(treinosPath(date, slug), conteudo);
+    // EXE-1: o path carrega a hora, entao derivamos de `dt` (o mesmo
+    // instante do campo `data` do meta) e nao de `date` (meio-dia UTC).
+    // Assim o nome do arquivo semeado bate com o conteudo, como
+    // acontece em producao. Os dois offsets (-2 e -5) caem em dias
+    // diferentes, entao continuam com nomes distintos.
+    espelharNoVaultMock(treinosPath(dt, slug), conteudo);
   }
 
   // Medida: 1 registro recente com peso (offset -1, ou o dia mais antigo

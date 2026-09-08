@@ -17,18 +17,19 @@
 //     puros que ja existem e funcionam para qualquer escopo Google.
 //   - InvalidGrantError: classe de erro reutilizada.
 //
-// Client ID: mesmo env.json.android.client_id usado pelo Calendar.
-// Spotify tem chave separada, mas YouTube partilha o client_id Google
-// porque ambos vivem no mesmo projeto Cloud (com.ouroboros.mobile).
-// O usuario precisa apenas habilitar YouTube Data API v3 no Console
-// do mesmo projeto.
+// Client ID: a mesma credencial Google que a pessoa cadastrou em
+// /settings/credenciais e que o Calendar usa (P4, 2026-09-08). O
+// Spotify tem credencial separada, mas o YouTube partilha a do Google
+// porque os dois vivem no mesmo projeto do Cloud Console
+// (com.ouroboros.mobile). Do lado da pessoa basta habilitar a YouTube
+// Data API v3 no mesmo projeto.
 //
 // Comentarios sem acento (convencao shell/CI).
 import Constants from 'expo-constants';
 import { makeRedirectUri } from 'expo-auth-session';
 import {
   GOOGLE_DISCOVERY,
-  getClientIdFromEnv,
+  getClientIdGoogle,
 } from '@/lib/services/googleAuthFlow';
 
 // Escopo unico: youtube.readonly. Acessa:
@@ -37,8 +38,7 @@ import {
 //     "Watch later" como playlist `WL`).
 //   - GET /youtube/v3/playlistItems: items de playlist (Liked = LL).
 // Nao permite modificar nada na conta.
-export const YOUTUBE_SCOPE =
-  'https://www.googleapis.com/auth/youtube.readonly';
+export const YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';
 
 // Re-export do discovery Google. YouTube usa os mesmos endpoints.
 export { GOOGLE_DISCOVERY as YOUTUBE_DISCOVERY };
@@ -55,7 +55,7 @@ export interface YouTubeClientIdInfo {
 // importamos pickClientId direto porque a logica de redirect_uri pode
 // divergir no futuro se YouTube precisar de scheme distinto).
 export function pickClientId(): YouTubeClientIdInfo {
-  const clientId = getClientIdFromEnv();
+  const clientId = getClientIdGoogle();
   const ambiente: YouTubeClientIdInfo['ambiente'] =
     Constants.appOwnership === 'expo' ? 'expo-go' : 'standalone';
 

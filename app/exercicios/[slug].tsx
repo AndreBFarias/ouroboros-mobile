@@ -108,10 +108,7 @@ export default function DetalheExercicio() {
         autor: pessoaAtiva,
       });
       haptics.success();
-      toast.show(
-        'Salvo em treino livre. Aparece quando a M11 chegar.',
-        'success'
-      );
+      toast.show('Adicionado ao treino de hoje.', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'falha desconhecida';
       haptics.error();

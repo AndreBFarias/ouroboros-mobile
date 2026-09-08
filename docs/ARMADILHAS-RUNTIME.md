@@ -19,7 +19,7 @@ exemplo, `babel.config.js` cita "Armadilha A1"), portanto:
 
 ## Como acrescentar uma armadilha nova
 
-1. Use o **próximo número livre** (hoje, `A48`).
+1. Use o **próximo número livre** (hoje, `A51`).
 2. Copie a estrutura das entradas existentes: heading `## A<N> — <título
    curto>`, linha `**Área:**`, e depois `**Sintoma:**`, `**Causa
    raiz:**`, `**Correção:**` e, quando útil, `**Diagnóstico rápido:**`,
@@ -32,7 +32,7 @@ exemplo, `babel.config.js` cita "Armadilha A1"), portanto:
 
 ## Nota sobre a origem e a integridade da numeração
 
-A faixa `A1`–`A47` está **completa**: não há lacuna de numeração. No
+A faixa `A1`–`A50` está **completa**: não há lacuna de numeração. No
 material de origem duas entradas apareciam fora de ordem (`A29` depois
 de `A31`, e `A39` depois de `A40`), provável artefato de sprints
 paralelas. Aqui elas estão em ordem crescente, com os números
@@ -96,6 +96,9 @@ conteúdo técnico foi perdido nessa reescrita.
 | [A45](#a45--ci-verde-não-prova-que-o-app-sobe-no-device) | CI verde não prova boot no device | CI / release |
 | [A46](#a46--captureref-lança-nullpointerexception-em-árvore-com-reanimated-no-fabric) | `captureRef` lança NPE no Fabric | Mídia / New Arch |
 | [A47](#a47--zustand-persist-com-merge-shallow-não-back-filla-chave-nested-nova) | `persist` shallow não back-filla chave nested | Stores / persistência |
+| [A48](#a48--view-cru-não-é-inflável-por-remoteviews) | `<View>` cru não é inflável por `RemoteViews` | Widget / layouts nativos |
+| [A49](#a49--janela-incremental-sem-sobreposição-perde-o-que-a-barreira-descarta-e-o-que-chega-atrasado) | Janela incremental sem sobreposição perde dado | Health Connect / autopull |
+| [A50](#a50--identidade-de-arquivo-derivada-do-conteúdo-colide-em-silêncio) | Identidade de arquivo derivada do conteúdo colide em silêncio | Vault / escrita |
 
 ---
 
@@ -1368,3 +1371,159 @@ allowlist de classes por layout `widget_*.xml`. As classes anotadas com
 (`AnalogClock`, `Button`, `Chronometer`, `ImageButton`, `ImageView`,
 `ProgressBar`, `TextClock`, `TextView`) e, a partir da API 31,
 `CheckBox`, `RadioButton`, `RadioGroup` e `Switch`.
+
+---
+
+## A49 — Janela incremental sem sobreposição perde o que a barreira descarta e o que chega atrasado
+
+**Área:** Health Connect / autopull
+
+**Sintoma:** dado que existe no Health Connect nunca aparece no Vault, e
+nada falha. A pesagem das 07h com o app aberto às 08h não é gravada
+nunca. O total diário de passos sai truncado — em uma medição de mesa,
+7.000 de 10.000 passos, erro de 30% — sem erro em log, sem toast, com o
+painel de sincronização exibindo "Última sync" recente e verde. A noite
+de sono que a pulseira publicou às 10h some se a rodada foi às 08h.
+
+**Causa raiz:** três mecanismos corretos isoladamente que, somados,
+abrem um buraco entre duas rodadas.
+
+1. O scheduler avança `hcAutopullUltimaSync[tipo]` sempre que
+   `erro === null`, **inclusive com `novos === 0`**
+   (`src/lib/health/autopullScheduler.ts`, laço final de
+   `orquestrarHCAutopull`).
+2. Os puxadores de passos e de medidas descartam de propósito tudo do
+   **dia em curso** (`src/lib/health/puxadores/passos.ts`,
+   `puxadores/medidas.ts`), porque o agregado do dia ainda vai mudar e
+   `escreverPassos` regrava o arquivo do dia inteiro sem merge.
+3. `TimeRangeFilter.between` filtra pelo **tempo do registro**, nunca
+   pelo tempo de inserção. Pulseira sincroniza em rajada: em 2026-09-08
+   o aparelho ainda tinha 23 a 26 de agosto como registros mais recentes.
+
+Até 2026-09-08 a janela da rodada seguinte começava exatamente na marca
+avançada, sem sobreposição nenhuma. O que o item 2 descartou e o que o
+item 3 publicou tarde ficava **antes** do início da janela seguinte, e
+saía do alcance para sempre.
+
+**Por que a suíte não pegava:** todo teste da frente rodava **uma vez**,
+com `since` injetado à mão. O defeito só existe **entre duas rodadas**,
+quando o estado avança pelo caminho real. Pior:
+`tests/lib/health/autopullScheduler.test.ts` afirmava
+`callArg.since === isoArmazenado` — o teste **codificava o bug como
+contrato**, então corrigir o código deixaria a suíte vermelha e pareceria
+regressão.
+
+**Correção canônica:** sobreposição fixa no scheduler, não em cada
+puxador — `janelaDeLeitura(sinceRaw, agora)` recua `LOOKBACK_MS = 48h` da
+marca e **encosta o resultado na meia-noite local** com
+`startOfTodayLocal`. O encaixe não é estético: como o writer regrava o
+dia inteiro, um dia coberto pela metade seria gravado pela metade. 48h
+cobre o pior caso da barreira (até 24h descartadas, recuperáveis a
+qualquer hora do dia seguinte) com um dia de margem.
+
+A barreira do dia em curso **fica de pé**: com a sobreposição ela deixa
+de causar perda, e removê-la faria o app substituir dado parcial por dado
+parcial várias vezes ao dia.
+
+**Efeito colateral obrigatório:** janela maior relê mais, e reler não
+pode duplicar nem apagar. O dedup de cada puxador (por `fonte_hc_id`, por
+id no nome do arquivo, por data) passa a ser carga real, não teoria. E o
+puxador de medidas passou a **mesclar** sobre o registro do dia: ele só
+conhece peso e gordura, e `escreverMedida` grava o objeto inteiro, então
+sem merge um registro do HC apagaria cintura, quadril, fotos e reflexão
+digitados à mão.
+
+**Diagnóstico rápido:**
+
+```bash
+rg -n "lookback|LOOKBACK|sobreposi" src/lib/health
+adb logcat -d -v threadtime | grep -Ei 'hc-autopull'
+```
+
+**Não-fix:** remover a barreira do dia em curso (troca perda por
+regravação parcial repetida) e confiar em janela default maior (só
+adia o problema para o segundo dia).
+
+**Gate:** `tests/lib/health/autopull-duas-rodadas.test.ts` chama
+`orquestrarHCAutopull` **duas vezes** com o relógio avançado entre elas e
+o `since` avançando pelo store real, contra uma bridge falsa que filtra
+por tempo como a verdadeira. Teste de rodada única não detecta esta
+classe de defeito — qualquer sprint que toque autopull precisa provar
+duas rodadas.
+
+**Origem:** `INT-HC-2-JANELA-RETROATIVA` (2026-09-08), a partir de
+`_AUDIT-2026-09-08-SAUDE-RELATORIO.md` §1.6.
+
+**Não confundir com o caso do peso.** A sonda do aparelho de 2026-09-08
+provou que o Mi Fitness **não declara** `WRITE_WEIGHT`, e que o único
+registro de peso do Health Connect é órfão, do Google Fit, de 14 de maio.
+Esta armadilha não é a causa do peso ausente e corrigi-la não faz peso
+aparecer: o ganho real é sobre sono, passos, exercícios, distância e
+calorias, que têm dado vivo.
+
+---
+
+## A50 — Identidade de arquivo derivada do conteúdo colide em silêncio
+
+**Área:** Vault / escrita.
+
+**Sintoma:** o usuário registra duas coisas do mesmo tipo no mesmo dia e
+só uma sobrevive. Nada falha: o save mostra o toast de sucesso, a
+listagem devolve um item, a contagem diz 1, e o segundo registro não
+está na lixeira, nem em versão anterior, nem em campo de frontmatter. A
+suíte continua verde porque o teste do wrapper mocka o writer, então
+duas escritas no mesmo caminho aparecem como dois sucessos.
+
+**Causa raiz:** o nome do arquivo é derivado **inteiramente do
+conteúdo** — tipicamente `(data sem hora, slug de um campo de texto)` — e
+o writer sobrescreve por contrato (`StorageAccessFramework.writeAsStringAsync`
+trunca; o rename atômico do `file://` garante que o arquivo nunca fique
+meio escrito, não que o conteúdo anterior sobreviva). Quando dois
+registros do mesmo dia resolvem para o mesmo nome, o segundo apaga o
+primeiro. O caso medido foi sessão de treino:
+`treinos/${formatDateYmd(date)}-${slug}.md`, com fallback fixo `treino`
+para sessão sem rotina — três sessões livres num dia colapsavam em uma
+(`src/lib/vault/paths.ts`, `src/lib/treinos/saveTreino.ts`). O mesmo
+desenho está em `passosPath` e `medidasPath`, que não têm componente de
+pessoa e colidem entre dois devices pareados por Syncthing.
+
+**Consequência que agrava:** onde a identidade é derivável do conteúdo,
+a UI tende a **remontar** o caminho para editar e excluir. Aí basta o
+usuário renomear o campo de origem do slug para a exclusão passar a
+mirar um arquivo que não existe — ou, pior, o arquivo errado.
+
+**Correção:** dar ao arquivo identidade própria antes de qualquer
+listagem contar. Na EXE-1 (2026-09-08) isso foi hora no nome
+(`treinos/YYYY-MM-DD-HHmm-<slug>.md`, via `formatDateYmdHm`) mais
+`listarTreinosComRel`, que devolve o `rel` real do arquivo para a UI
+usar em edição e exclusão — molde de `TarefaListada`
+(`src/lib/vault/tarefas.ts`). Onde houver dois devices, o componente
+que falta costuma ser pessoa ou `forceDeviceIdSuffix`.
+
+**Diagnóstico rápido:**
+
+```bash
+# Helper de path que so tem data, sem hora nem pessoa nem deviceId.
+rg -n 'formatDateYmd\(date\)}-\$\{slug\}' src/lib/vault/paths.ts
+# Tela que remonta o caminho a partir do conteudo.
+rg -n 'Path\((new Date|dataDate)' src/components src/lib/hooks
+```
+
+**Não-fix:** filtrar a listagem por padrão de nome para "limpar" o
+formato antigo. A listagem tem de continuar sendo **por pasta** — quem
+troca isso por regex faz o histórico do usuário sumir da tela sem erro
+nenhum, o mesmo sintoma que `migrarVaultLayoutPorTipo.ts:59` já pagou.
+
+**Gate:** `tests/lib/vault/treinos.test.ts` (duas escritas do mesmo dia
+contra um vault em memória, contagem 2), `tests/lib/vault/treinos-rel.test.ts`
+(o `rel` da listagem localiza o arquivo na exclusão, inclusive em formato
+legado) e `tests/lib/boot/migrarTreinosParaPathComHora.test.ts` (rename
+one-shot com contagem idêntica antes e depois). Teste que mocka o writer
+não detecta esta classe de defeito.
+
+**Estado:** o que foi sobrescrito antes da correção **não é
+recuperável** — não há lixeira nesse caminho nem cópia anterior. A
+migração renomeia o que existe; não inventa dado.
+
+**Origem:** `EXE-1-IDENTIDADE-SESSAO-TREINO` (2026-09-08), a partir de
+`_AUDIT-2026-09-08-HOME-EXERCICIOS-RELATORIO.md` §4.1.

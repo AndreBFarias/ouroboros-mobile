@@ -374,7 +374,7 @@ describe('feature marco (M11)', () => {
 // 8. TREINO (M11) - treinos/YYYY-MM-DD-<slug>.md
 // ============================================================
 describe('feature treino sessao (M11)', () => {
-  it('grava treinos/<data>-<slug>.md zod-valido', () => {
+  it('grava treinos/<data>-<hora>-<slug>.md zod-valido', () => {
     const vault = tmpVault();
     const meta: TreinoSessao = {
       tipo: 'treino_sessao',
@@ -384,8 +384,10 @@ describe('feature treino sessao (M11)', () => {
       duracao_min: 45,
       exercicios: [{ nome: 'Agachamento', series: 3, reps: 12, carga_kg: 40 }],
     };
+    // EXE-1 (2026-09-08): o path da sessao carrega a hora. DATA_FIXA e'
+    // 2026-05-04T15:00:00Z, que em Sao Paulo e' 12:00.
     const rel = treinosPath(DATA_FIXA, 'rotina-a');
-    expect(rel).toBe('treinos/2026-05-04-rotina-a.md');
+    expect(rel).toBe('treinos/2026-05-04-1200-rotina-a.md');
     checarCaracteres(rel);
     const full = escreverMd(vault, rel, meta, '');
 

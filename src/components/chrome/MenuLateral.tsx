@@ -123,9 +123,12 @@ export function MenuLateral() {
   // declararam masculino no onboarding (J1). Em qualquer outro caso
   // (ao menos uma feminina, nao-binaria, prefere-nao-dizer ou null
   // ainda nao declarado) o item permanece. Mantem autonomia.
+  // P2: em modo sozinho o sexo da segunda pessoa e' irrelevante --
+  // ela nao existe -- e a decisao passa a ser so' por sexoA.
   const sexoA = useOnboarding((s) => s.sexoDeclarado.pessoa_a);
   const sexoB = useOnboarding((s) => s.sexoDeclarado.pessoa_b);
-  const mostrarCiclo = deveMostrarItemCiclo(sexoA, sexoB);
+  const tipoCompanhia = useOnboarding((s) => s.tipoCompanhia);
+  const mostrarCiclo = deveMostrarItemCiclo(sexoA, sexoB, tipoCompanhia);
 
   const secoes: SecaoMenu[] = useMemo(() => {
     // Secao "Registrar" reusa routeForCapture para garantir paridade

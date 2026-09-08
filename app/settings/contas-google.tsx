@@ -18,6 +18,7 @@ import { useSettings } from '@/lib/stores/settings';
 import { useVault } from '@/lib/stores/vault';
 import { fazerBackupDrive } from '@/lib/integracoes/google/driveBackup';
 import { usePessoa, nomeDe } from '@/lib/stores/pessoa';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 import type { PessoaAutor } from '@/lib/schemas/pessoa';
 
 function diasDesde(epochMs: number): number {
@@ -42,7 +43,7 @@ function CartaoConta({ pessoa, conta, onRevogar }: CartaoContaProps) {
   const nome = nomeDe(pessoa);
   const conectado =
     typeof conta.accessToken === 'string' && conta.accessToken.length > 0;
-  const corBorda = pessoa === 'pessoa_a' ? colors.purple : colors.pink;
+  const corBorda = useCorPessoa(pessoa);
 
   return (
     <View

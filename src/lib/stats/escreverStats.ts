@@ -4,6 +4,12 @@
 // persiste em vault/_estado/stats-<periodo>-<deviceId>.md via a
 // infraestrutura R-VAULT-A (escreverEstadoCanonico).
 //
+// EXE-3 (2026-09-08): passou a ler tambem 'treinos/'. Ate aqui este
+// writer importava seis listadores e nenhum deles era listarTreinos, e
+// como countPorTipo e' record aberto de string para numero, a ausencia
+// nao produzia erro de compilacao nem de schema: o numero de treinos
+// simplesmente nunca existia no arquivo que o sibling Python le.
+//
 // GATILHO REAL (AUDIT-P2-4, 2026-09-05): quem dispara este writer e o
 // BootHook `statsAgregadasHook` de src/lib/boot/reagendamento.ts, que
 // chama escreverStatsAgregadas nos 4 periodos, um por vez, uma vez por
@@ -45,6 +51,7 @@ import { listarEventos } from '@/lib/vault/eventos';
 import { listarMarcos } from '@/lib/vault/marcos';
 import { listarContadores } from '@/lib/vault/contadores';
 import { listarTarefas } from '@/lib/vault/tarefas';
+import { listarTreinos } from '@/lib/vault/treinos';
 import { escreverEstadoCanonicoImediato } from '@/lib/vault/escreverEstado';
 import {
   PERIODOS_STATS,
@@ -83,7 +90,10 @@ export async function escreverStatsAgregadas(
   try {
     // Le tudo em paralelo. Promise.all tolera empty (pasta inexistente
     // => []) sem erro.
-    const [humor, diarios, eventos, marcos, contadores, tarefas] =
+    // EXE-3: listarTreinos entra aqui, e nao no colapso de listagem que
+    // o useRecap faz, porque sessao de treino vive em 'treinos/' e nao em
+    // 'markdown/' -- e' uma listagem de pasta a mais, por construcao.
+    const [humor, diarios, eventos, marcos, contadores, tarefas, treinos] =
       await Promise.all([
         listarHumor(vaultRoot),
         listarDiarios(vaultRoot),
@@ -91,6 +101,7 @@ export async function escreverStatsAgregadas(
         listarMarcos(vaultRoot),
         listarContadores(vaultRoot),
         listarTarefas(vaultRoot),
+        listarTreinos(vaultRoot),
       ]);
 
     const stats = calcularStatsAgregadas({
@@ -100,6 +111,7 @@ export async function escreverStatsAgregadas(
       marcos,
       contadores,
       tarefas,
+      treinos,
       periodo,
     });
 

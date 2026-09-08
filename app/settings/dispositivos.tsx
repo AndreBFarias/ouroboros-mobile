@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSafeBottomContentPadding } from '@/components/chrome/safeBottom';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { useCorPessoa } from '@/lib/stores/coresPessoa';
 
 interface ItemDispositivo {
   deviceId: string;
@@ -202,8 +203,7 @@ function DispositivoCard({
   onSalvar,
 }: DispositivoCardProps) {
   const inativo = item.registro.substituido_por !== null;
-  const corPessoa =
-    item.registro.pessoa === 'pessoa_a' ? colors.purple : colors.pink;
+  const corPessoa = useCorPessoa(item.registro.pessoa);
   const ultima = formatarUltimaAtividade(item.registro.ultima_atividade);
 
   return (

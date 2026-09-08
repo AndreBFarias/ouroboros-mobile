@@ -12,16 +12,27 @@ USO: Leia este arquivo PRIMEIRO antes de tocar em qualquer código do
 
 ## 1. Quem Usa Isso
 
-Duas pessoas. Casadas. Ambas neurodivergentes (TEA + TDAH + episódios de
-depressão), ambas medicadas, ambas saindo de um período difícil que
-envolveu burnout, débito acumulado e perda significativa em 2025.
+O aplicativo nasceu para duas pessoas. Um casal, ambas neurodivergentes
+(TEA + TDAH + episódios de depressão), saindo de um período difícil que
+envolveu burnout, débito acumulado e perda significativa em 2025. Essa
+origem explica quase toda decisão registrada neste documento, e continua
+válida: as duas seguem usando.
 
-O App **não é produto** para um mercado. É ferramenta pessoal, construída
-sob medida para essas duas pessoas específicas. Todo trade-off é tomado
-com a pergunta "isso ajuda ou atrapalha quem já se cobra demais?". Não é
-opcional, é o critério dominante.
+O que mudou é o resto da frase. O código é software livre sob GPL-3.0,
+publicado sem custo no GitHub, e uma associação de pessoas autistas
+manifestou interesse em distribuí-lo. Quem instala não é convidado nem
+beneficiário de caridade: é usuário, com as mesmas prerrogativas de quem
+escreveu o código — estudar, modificar e redistribuir, que é o que a
+licença garante. Não presuma do que essa pessoa precisa; devolva a ela a
+escolha.
 
-Isso significa:
+A consequência prática, e é por ela que esta seção foi reescrita em
+2026-09-08: **decidir "para o casal" e decidir "para quem baixar" deixaram
+de ser a mesma decisão.** Quando divergirem, a divergência é explícita, não
+resolvida no silêncio de um trade-off. O registro da decisão está na
+[ADR-0029](ADRs/0029-publico-alvo-e-distribuicao.md).
+
+### O Que Isso Significa na Prática
 
 - **Fricção zero é existencial**, não decorativo. Quem já desistiu de
   versões manuais (Markdown hardcoded com GIFs) por excesso de burocracia
@@ -29,12 +40,47 @@ Isso significa:
 - **Estética é essencial**, não adorno. Um App bonito e fluido reduz a
   resistência de abrir. Um App feio e lento é descartado mesmo que
   funcione.
-- **Tom sóbrio.** Sem motivação falsa, sem "você consegue!", sem streaks
-  punitivos.
+- **Tom sóbrio.** Sem motivação falsa, sem "você consegue", sem streaks
+  punitivos. A regra completa está na Seção 5; o porquê, na
+  [ADR-0005](ADRs/0005-sem-gamificacao.md).
 - **Dados pessoais sensíveis** (humor, diário emocional, conflitos, exames
-  médicos) não saem do device. Zero rede.
-- **Vault compartilhado:** as duas pessoas compartilham acesso a tudo. Não
-  há privacidade entre elas, há entre elas e o resto do mundo.
+  médicos) não saem do aparelho. O núcleo não tem rede de saída; toda
+  integração de nuvem é opcional e nasce desligada.
+- **Uma ou duas pessoas, por escolha de quem instala.** Usar sozinho é o
+  default (`src/lib/stores/onboarding.ts`), e o onboarding pergunta antes
+  de assumir companhia. Quando há duas, o Vault é compartilhado por
+  desenho: não há privacidade entre elas, há entre elas e o resto do mundo.
+
+### O Eixo de Acessibilidade É Controle, Não Conformidade
+
+A pergunta que decide uma feature não é "isto atende a um critério de
+acessibilidade", é **quanto o aplicativo deixa a pessoa decidir sobre
+estímulo, previsibilidade e linguagem**. Onde ele decide sozinho algo que
+deveria ser escolha, isso é o defeito — e um controle que existe mas não é
+obedecido em toda parte é pior que controle nenhum, porque ensina que o
+controle não funciona.
+
+O público, os cinco princípios inegociáveis derivados dele e o que já está
+cumprido versus o que ainda não está vivem em
+[`ACESSIBILIDADE.md`](ACESSIBILIDADE.md). Leia antes de projetar tela,
+animação ou copy.
+
+### Limites Honestos, Hoje
+
+Registro do que o projeto **não** faz, para que nem a documentação nem
+quem chega de fora prometa o que não existe:
+
+- Não está em loja de aplicativos. Distribuição é APK direto, o que traz o
+  aviso do Play Protect e nenhuma atualização automática.
+- As integrações de nuvem (Agenda, Drive, YouTube, Spotify) exigem
+  credencial própria de quem instala. Sem ela, ficam desligadas — o núcleo
+  inteiro funciona sem nenhuma delas.
+- Interface só em PT-BR, e datas serializadas em fuso fixo de São Paulo
+  (`src/lib/datetime/local.ts`). Fora desse fuso, o nome do arquivo `.md`
+  pode registrar um dia diferente do dia vivido.
+- Sem tema claro e sem controle de tamanho de texto no aplicativo: a
+  paleta é escura e fixa (ADR-0008, ADR-0010) e a escala de fonte é a que
+  o sistema mandar, sem teste que prove que os layouts aguentam.
 
 ### Perfil do Dev
 
@@ -127,8 +173,12 @@ quiser adaptar, ninguém precisa fazer find-and-replace dos nomes.
 
 No código, usa-se duas variáveis:
 
-- `PESSOA_A`: cor `--purple` (`#bd93f9`), avatar "A"
-- `PESSOA_B`: cor `--pink` (`#ff79c6`), avatar "B"
+- `PESSOA_A`: cor de partida `--purple` (`#bd93f9`), avatar "A"
+- `PESSOA_B`: cor de partida `--pink` (`#ff79c6`), avatar "B"
+
+As duas cores são **default, não regra**, desde 2026-09-08: quem instala
+troca em Configurações, e a validação de contraste decide o que entra. A
+regra está na Seção 5, em "Regra das Cores de Pessoa".
 
 Aparece como:
 
@@ -142,24 +192,46 @@ interface Pessoa {
 }
 ```
 
-### Único Arquivo com Nomes Reais
+### O Config Só Tem Defaults Genéricos
 
-`src/config/pessoas.config.ts`:
+`src/config/pessoas.config.ts` é versionado e **não** contém nome real
+nenhum. Guarda o default genérico, a inicial e a cor de cada identidade:
 
 ```ts
-import type { PessoaId } from '@/lib/schemas/pessoa';
-
-// Único arquivo onde nomes reais aparecem.
-// Editar aqui se trocar de usuário ou adaptar o app para outras pessoas.
-export const PESSOAS_CONFIG: Record<PessoaId, { nome: string; inicial: string }> = {
-  pessoa_a: { nome: 'Nome_A', inicial: 'A' },
-  pessoa_b: { nome: 'Nome_B', inicial: 'B' },
-  ambos:    { nome: 'Ambos', inicial: 'AB' },
+export const PESSOAS_CONFIG: Record<PessoaId, PessoaConfig> = {
+  pessoa_a: { nome: 'Nome_A', inicial: 'A', cor: '#bd93f9' },
+  pessoa_b: { nome: 'Nome_B', inicial: 'B', cor: '#ff79c6' },
+  ambos: { nome: 'Casal', inicial: 'AB', cor: '#bd93f9' },
 };
 ```
 
-Esse arquivo pode entrar no `.gitignore` se preferir, com um
-`pessoas.config.example.ts` versionado servindo de template.
+**Não edite esse arquivo para "adaptar o app para outras pessoas".** Essa
+instrução esteve aqui até 2026-09-08 e é falsa desde a
+[ADR-0015](ADRs/0015-pessoas-runtime-foto.md), de abril de 2026, que
+decidiu textualmente que exigir edição de arquivo seria inviável e que o
+aplicativo deve funcionar para qualquer pessoa sem trocar código. Quem
+seguiu a instrução antiga recompilou à toa.
+
+Como a identidade entra de fato, hoje:
+
+1. O onboarding pede o nome no Frame 0 e, havendo segunda pessoa, no
+   Frame 1 (`app/onboarding.tsx`, nas chamadas a `setNome`).
+2. `setNome` grava em `usePessoa` (`src/lib/stores/pessoa.ts`), cujo
+   `persist` usa `secureStorage` — SecureStore do aparelho, fora do git e
+   fora do Vault.
+3. Toda leitura passa por `nomeDe()` (síncrona, para logging e util) ou
+   `useNomeDe()` (reativa, dentro de componente). As duas caem no default
+   genérico quando não há nome gravado.
+4. Trocar depois é em Configurações, não em código.
+
+A **cor** segue exatamente o mesmo caminho desde 2026-09-08: o hex daqui é
+o ponto de partida, a escolha de quem instala vive em
+`src/lib/stores/coresPessoa.ts` (SecureStore) e a leitura é `corPessoa()`
+ou `useCorPessoa()`. `corDe()` continua existindo e devolve o **default** —
+use-a para saber de onde se parte, nunca para pintar uma tela.
+
+`pessoas.config.example.ts` existe como template estável para regenerar o
+arquivo, e carrega exatamente o mesmo conteúdo genérico.
 
 ### Frontmatter dos `.md` no Vault
 
@@ -182,8 +254,10 @@ grep -rE "$NOMES_REAIS" src/ app/ tests/ \
 # Deve retornar VAZIO. Se aparecer, refatorar para PESSOA_A/PESSOA_B.
 ```
 
-A única exceção autorizada é `src/config/pessoas.config.ts`, que o script
-ignora explicitamente.
+A única exceção dentro do escopo desse gate é
+`src/config/pessoas.config.ts`, que o script ignora explicitamente. Existe
+uma segunda exceção, fora desse escopo, criada em 2026-09-08: o aviso de
+copyright do `LICENSE`, registrado na Seção 5.
 
 ### No Backend Desktop (protocolo-ouroboros)
 
@@ -286,6 +360,33 @@ autoria. Não existe nome de IA em lugar nenhum.
   reais entram em runtime via `src/lib/stores/pessoa.ts` (SecureStore),
   preenchidos no onboarding (tela 24, frame 1) e editáveis em Settings
   (tela 23) — nunca em código versionado
+- `LICENSE`, na raiz: o aviso de copyright da GPL-3.0 nomeia o titular.
+  **Exceção nomeada**, decidida em 2026-09-08 — por extenso logo abaixo
+
+#### A Exceção do `LICENSE`, Por Extenso
+
+O `LICENSE` do repositório é a GPL-3.0 e, até 2026-09-08, não havia aviso
+de copyright em lugar nenhum do projeto: nem na raiz, nem em `src/`, nem no
+`package.json`. Esse era o pior dos estados possíveis, e não o mais seguro.
+Copyleft é um direito que alguém exerce; sem titular declarado, não há quem
+o exerça, e a licença vira texto sem força — inclusive contra quem fechasse
+o código de um fork.
+
+A decisão do dono foi **nomear**, e a emenda a esta regra é parte da
+decisão, não um efeito colateral dela:
+
+- **Escopo mínimo, e literal:** a linha de copyright do arquivo `LICENSE`
+  na raiz. Não autoriza nome real em `src/`, `app/`, `scripts/`, `tests/`,
+  `docs/`, mensagem de commit, string de UI ou frontmatter do Vault. Ali,
+  a Regra -1 continua absoluta.
+- **A isenção é explícita no gate**, em `scripts/check_anonimato.sh`, e não
+  herdada do fato de o escopo atual do scan (`src/ app/ tests/`) não
+  alcançar a raiz. Depender desse buraco seria frágil: ampliar o escopo é
+  correção desejável por outros motivos, e no dia em que acontecer o
+  repositório reprovaria por um arquivo que está certo.
+- **Não cria exposição nova.** A conta que hospeda o repositório público já
+  é pessoal, por construção. O que a Regra -1 protege é o código e a
+  documentação, e isso segue intacto.
 
 ### Regra do Mapa Funcional
 
@@ -417,6 +518,101 @@ Detalhado em `BRIEFING.md`. Enforced via revisão manual e checklist de PR.
 - `test@example.com`
 
 Validação: `scripts/check_test_data.sh`.
+
+### Regra do Padrão Congelado: O Ternário de Duas Pessoas
+
+Padrão **proibido em código novo** desde 2026-09-08:
+
+```ts
+pessoaAtiva === 'pessoa_a' ? 'pessoa_b' : 'pessoa_a'
+```
+
+Decisão do dono na mesma data: o teto de duas pessoas continua valendo por
+ora, e o padrão que o assume fica congelado a partir de agora. Congelar não
+conserta o que já existe; impede que piore.
+
+**Por quê.** O ternário deduz "a outra pessoa" por eliminação. Só funciona
+porque o conjunto tem exatamente dois elementos, e falha em silêncio no dia
+em que tiver três: nenhum erro de tipo, nenhum teste vermelho, apenas uma
+pessoa que some da interface. Cada sprint nova que o assume acrescenta um
+ponto de migração à conta de abrir o aplicativo para mais gente.
+
+Medido em 2026-09-08, antes de o congelamento entrar em vigor:
+
+```bash
+# O ternario literal: 3 ocorrencias (app/index.tsx,
+# src/components/ui/SeletorPara.tsx, src/components/todo/SeletorPessoaDestino.tsx).
+git grep -n "'pessoa_a' ? 'pessoa_b' : 'pessoa_a'" -- src app | wc -l   # 3
+
+# A premissa binaria inteira, que e' o custo real da abertura futura:
+git grep -n "pessoa_b" -- src app | wc -l   # 224 ocorrencias
+git grep -l "pessoa_b" -- src app | wc -l   # 88 arquivos
+```
+
+Nota de método, para quem reencontrar números diferentes: a vistoria de
+2026-09-08 registrou "212 ocorrências em 86 arquivos" atribuindo-as ao
+ternário. Remedido acima, esse número descreve a **premissa binária como um
+todo**, não o ternário literal, que são 3. Os dois fatos sustentam a mesma
+decisão, e os números reproduzíveis são os de cima.
+
+**O que fazer no lugar.** Receba a pessoa alvo como parâmetro ou estado
+explícito, ou derive-a de uma lista de identidades — nunca por eliminação.
+Enquanto a lista dinâmica não existir (a abertura para N pessoas é onda
+futura, ainda não materializada), código novo que precise do inverso deve
+isolá-lo atrás de uma função nomeada, em um módulo só, para que a migração
+toque um ponto e não oitenta e oito.
+
+**Enforcement.** Hoje é revisão, não script: a regra de lint que a torna
+verificável é sprint separada. Enquanto ela não existir, esta seção é o que
+autoriza recusar um diff em revisão — e recusar é o comportamento esperado.
+
+### Regra das Cores de Pessoa: Default Editável, Com Piso de Contraste
+
+`#bd93f9` (`pessoa_a`) e `#ff79c6` (`pessoa_b`) **deixaram de ser regra
+inviolável em 2026-09-08** (decisão P7). Continuam sendo o default, e
+continuam declarados em `src/config/pessoas.config.ts`; o que mudou é que
+quem instala pode trocá-las em Configurações › Cores das pessoas.
+
+**Por quê.** Cor fixa em código fazia sentido para as duas pessoas que
+originaram o aplicativo. Para um produto distribuído a um público sensível
+a estímulo visual, é o aplicativo decidindo sozinho algo que deveria ser
+escolha — exatamente o que a Seção 1 chama de defeito. Rebaixar mantém a
+identidade visual para quem não mexe e devolve a decisão a quem precisa.
+
+**A validação de contraste é parte da regra, não um extra.** Cor de pessoa
+não é decoração: ela diz de quem é cada registro. Cor que some no fundo
+escuro não deixa a interface mais discreta, deixa a informação inacessível.
+Portanto:
+
+- `src/lib/a11y/corPessoa.ts` mede a cor escolhida em três frentes — contra
+  as superfícies de tela (4,5:1, WCAG 2.1 SC 1.4.3, porque a cor é usada
+  como texto), contra `bgElev` (3:1, SC 1.4.11, porque ali ela é borda e
+  ícone) e a inicial escura escrita dentro do avatar sobre ela (4,5:1).
+- **A interface recusa** cor que reprove, e a recusa mora no store
+  (`definirCor`), não só na tela: a segunda tela que oferecer a troca herda
+  o piso sem precisar lembrar de medir.
+- Ao recusar, o texto diz **a razão obtida, a razão mínima e o que ficaria
+  difícil de ler**, e sugere um caminho. "Cor inválida" seco está proibido:
+  não há erro de quem escolheu, há uma medida que não fecha.
+- O valor que vem do armazenamento é **remedido na hidratação**. Cor que
+  não passa mais volta ao default em vez de entrar na tela.
+
+**O que isso exige de código novo.** Consuma `corPessoa()` (síncrono) ou
+`useCorPessoa()` (reativo, dentro de componente). Hardcodar `colors.purple`
+para significar `pessoa_a` volta a decidir pela pessoa e não repinta quando
+ela troca — é recusa em revisão.
+
+**O que NÃO mudou.** A paleta Dracula continua sendo identidade e não tema
+selecionável (ADR-0008, ADR-0010): não há light mode, e os 14 tokens de
+`src/theme/tokens.ts` seguem fixos. O que virou escolha é a cor que
+identifica cada pessoa, e só ela.
+
+**Enforcement.** `tests/lib/a11y/corPessoa.test.ts` (o piso, e a prova de
+que os próprios defaults passam nele), `tests/lib/stores/coresPessoa.test.ts`
+(a recusa e a higienização da hidratação), `tests/app/settings/cores-pessoa.test.tsx`
+(a tela recusa de fato, e o texto da recusa) e o bloco de runtime em
+`tests/lib/a11y/contraste.test.ts`. O snapshot da paleta continua lá, agora
+respondendo só pelos tokens.
 
 ### Regra de Estética (ADR-010)
 
@@ -583,6 +779,7 @@ manda:
 | `docs/CONTEXTO.md` (este arquivo) | Regras de processo e restrições invioláveis | **Canônico.** Em divergência com qualquer outra cópia de regras, este vence |
 | `docs/FEATURES-CANONICAS.md` | O que o app faz (mapa funcional) | **Canônico.** Atualização obrigatória no mesmo commit da sprint |
 | `docs/BRIEFING.md` | Design system, princípios estéticos, telas, schemas | Canônico para decisão visual (ver Seção 7) |
+| `docs/ACESSIBILIDADE.md` | Público, os cinco princípios inegociáveis e o estado medido de cada controle | **Canônico** para decisão de estímulo, previsibilidade e linguagem |
 | `docs/ADRs/` | Decisões arquiteturais, uma por arquivo | Canônico para o "por quê" de cada escolha; índice em `docs/ADRs/INDEX.md` |
 | `docs/sprints/` | Planos de sprint e specs de auditoria | Histórico de execução. **Só um subconjunto é versionado**, por decisão de compliance — a maioria dos specs existe apenas no disco de trabalho |
 | Arquivo de regras da raiz | Cópia de conveniência das regras desta seção | **Não versionado.** Espelho para leitura automática por ferramenta que abra o repositório; nunca fonte |

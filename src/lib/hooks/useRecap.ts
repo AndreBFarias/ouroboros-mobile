@@ -29,6 +29,7 @@ import {
 } from '@/lib/vault/midiaCompanion';
 import { diasEntre } from '@/lib/util/diasEntre';
 import { hashMarcoConteudo } from '@/lib/marcos/hash';
+import { slugifyTreino } from '@/lib/treinos/slug';
 import { startOfTodayLocal } from '@/lib/datetime/local';
 import type { HumorMeta } from '@/lib/schemas/humor';
 import type { DiarioEmocionalMeta } from '@/lib/schemas/diario_emocional';
@@ -173,12 +174,29 @@ export interface NumerosRecap {
   tarefas_concluidas: number;
 }
 
+// Detalhe de sessao de treino no periodo (EXE-3). Existe para que o
+// card "Treinos" do grid Numeros tenha lista atras do numero: ate aqui
+// /recap-lista?tipo=treinos devolvia [] com um comentario prometendo
+// uma sprint que nunca veio, e o toque no card abria "Nenhum item neste
+// periodo" em cima de um numero maior que zero.
+//
+// `rotulo` cai para 'Treino' quando a sessao nao tem rotina -- o mesmo
+// fallback que DetalheDiaTreinoModal ja mostra, e nao 'Treino livre',
+// que e' nome de rotina REAL gravado pela EXE-2 (treinoLivre.ts).
+export interface SessaoTreinoItem {
+  id: string;
+  rotulo: string;
+  duracao_min: number;
+  data: string;
+}
+
 export interface RecapData {
   conquistas: ConquistaItem[];
   crises: CriseItem[];
   reflexoes: ReflexaoItem[];
   evolucoes: EvolucaoItem[];
   tarefasConcluidas: TarefaConcluidaItem[];
+  sessoesTreino: SessaoTreinoItem[];
   numeros: NumerosRecap;
 }
 
@@ -475,6 +493,30 @@ export function agregarRecap(input: {
   );
   tarefasConcluidas.sort((a, b) => (a.feito_em < b.feito_em ? 1 : -1));
 
+  // Sessoes de treino (detalhe). EXE-3: sai do MESMO `treinosFiltrados`
+  // que produz numeros.treinos, entao o numero do card e o tamanho da
+  // lista sao iguais por construcao, e nao por coincidencia de dois
+  // filtros parecidos escritos em lugares diferentes -- que foi como os
+  // cinco leitores de treino do app divergiram entre si.
+  //
+  // `id` deterministico: data (ISO, ja carrega a hora) + slug da rotina,
+  // o mesmo par que saveTreino usa para nomear o arquivo. Nao usamos o
+  // `rel` do arquivo porque agregarRecap recebe TreinoSessao[], nao a
+  // listagem com rel -- e o id aqui so precisa ser estavel como key de
+  // lista. Duas sessoes da mesma rotina no MESMO instante ainda
+  // colidiriam; e' a mesma limitacao ja anotada em tarefasConcluidas.
+  const sessoesTreino: SessaoTreinoItem[] = treinosFiltrados.map((t) => ({
+    id: `treino:${t.data}:${slugifyTreino(t.rotina ?? 'treino')}`,
+    // Fallback 'Treino', e nao 'Treino livre': ROTINA_TREINO_LIVRE e' um
+    // nome de rotina real (treinoLivre.ts), entao rotular sessao SEM
+    // rotina de 'Treino livre' misturaria na mesma lista duas coisas
+    // diferentes. Mesmo fallback que DetalheDiaTreinoModal ja mostra.
+    rotulo: t.rotina ?? 'Treino',
+    duracao_min: t.duracao_min,
+    data: t.data,
+  }));
+  sessoesTreino.sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+
   // Numeros agregados.
   const eventosPositivos = eventosFiltrados.filter(
     (e) => e.modo === 'positivo'
@@ -525,6 +567,7 @@ export function agregarRecap(input: {
     reflexoes,
     evolucoes,
     tarefasConcluidas,
+    sessoesTreino,
     numeros,
   };
 }
@@ -610,6 +653,7 @@ export function useRecap(range: PeriodoRange): UseRecapResult {
             reflexoes: [],
             evolucoes: [],
             tarefasConcluidas: [],
+            sessoesTreino: [],
             numeros: {
               registros: 0,
               treinos: 0,

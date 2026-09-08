@@ -165,6 +165,14 @@ jest.mock('@/lib/services/restaurarVault', () => ({
   restaurarVaultZip: (...args: unknown[]) => mockRestaurarVaultZip(...args),
 }));
 
+// P4 (2026-09-08): o store de credenciais NAO e' mockado -- usamos o
+// real (SecureStore ja e' in-memory no jest.setup) porque o estado
+// 'sem_credencial' e' justamente o que esta suite precisa medir. O
+// beforeEach semeia as duas credenciais, de modo que os casos
+// historicos continuem exercitando o que sempre exercitaram: conta nao
+// conectada com credencial presente -> 'desconectado'. O describe do
+// final zera o store para cobrir o caso novo.
+import { useCredenciais } from '@/lib/stores/credenciais';
 import { IntegracoesScreen } from '@/components/screens/IntegracoesScreen';
 
 beforeEach(() => {
@@ -211,6 +219,10 @@ beforeEach(() => {
     totalEscritos: 3,
     totalIgnorados: 0,
     falhas: [],
+  });
+  useCredenciais.setState({
+    google: '123-abc.apps.googleusercontent.com',
+    spotify: '0123456789abcdef0123456789abcdef',
   });
 });
 
@@ -718,5 +730,104 @@ describe('IntegracoesScreen — mountedRef anti use-after-unmount', () => {
     expect(chamadasComWarning).toEqual([]);
 
     errSpy.mockRestore();
+  });
+});
+
+// P4 (2026-09-08) — credencial por usuario, com degradacao graciosa e
+// visivel. Sem credencial propria, os quatro cards que dependem de
+// servidor de terceiro dizem o que falta e levam a tela onde a pessoa
+// resolve, em vez de convidarem a uma conexao que o servidor recusaria.
+//
+// Health Connect fica de fora de proposito: ele nao fala com servidor
+// de terceiro, e por isso nao pode herdar o aviso.
+describe('IntegracoesScreen — sem credencial propria (P4)', () => {
+  beforeEach(() => {
+    useCredenciais.setState({ google: null, spotify: null });
+    mockVerificarDisponibilidade.mockResolvedValue('available');
+    mockListarPermissoesConcedidas.mockResolvedValue([]);
+  });
+
+  it('Agenda, YouTube e Drive ficam em sem_credencial sem codigo Google', async () => {
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(
+        getByLabelText('estado google_calendar sem_credencial')
+      ).toBeTruthy();
+      expect(getByLabelText('estado youtube sem_credencial')).toBeTruthy();
+      expect(getByLabelText('estado google_drive sem_credencial')).toBeTruthy();
+    });
+  });
+
+  it('Spotify fica em sem_credencial sem codigo do Spotify', async () => {
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado spotify sem_credencial')).toBeTruthy();
+    });
+  });
+
+  it('Saude Fisica nao herda o estado de credencial', async () => {
+    // HC nao depende de credencial nenhuma: conversa com o provedor do
+    // proprio Android. Se este teste cair, o aviso vazou para uma
+    // integracao que funciona sem codigo.
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado health_connect desconectado')).toBeTruthy();
+    });
+  });
+
+  it('tocar num card sem credencial leva a tela de credenciais', async () => {
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('card integracao spotify')).toBeTruthy();
+    });
+    fireEvent.press(getByLabelText('card integracao spotify'));
+
+    expect(mockPush).toHaveBeenCalledWith('/settings/credenciais');
+  });
+
+  it('o card explica o que falta sem tratar a ausencia como defeito', async () => {
+    const { getByLabelText, queryByText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('aviso credencial propria')).toBeTruthy();
+    });
+
+    // O texto do card nomeia o que falta e o proximo passo.
+    expect(
+      queryByText(
+        'Depende de um código seu do Spotify. Toque para ver como criar.'
+      )
+    ).toBeTruthy();
+
+    // E nao usa vocabulario de defeito nem exclamacao (ADR-0005).
+    const proibidos: RegExp[] = [
+      /\berro\b/i,
+      /\bfalha\b/i,
+      /\bfalhou\b/i,
+      /não configurado/i,
+      /!/,
+    ];
+    for (const padrao of proibidos) {
+      expect(queryByText(padrao)).toBeNull();
+    }
+  });
+
+  it('com credencial salva o card volta a convidar a conectar', async () => {
+    // Fecha o circuito: o estado novo e' consequencia da ausencia, nao
+    // um rotulo permanente. Salvar o codigo devolve o card ao caminho
+    // antigo, que e' o que a pessoa espera depois de cadastrar.
+    useCredenciais
+      .getState()
+      .definir('spotify', '0123456789abcdef0123456789abcdef');
+
+    const { getByLabelText } = render(<IntegracoesScreen />);
+
+    await waitFor(() => {
+      expect(getByLabelText('estado spotify desconectado')).toBeTruthy();
+    });
   });
 });

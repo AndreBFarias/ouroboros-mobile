@@ -80,7 +80,12 @@ fi
 
 # --- Modo --emulator: garante emulador rodando antes do Metro ---
 if flag --emulator; then
-  export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+  # Caixa canônica: 'sdk' minúsculo (ext4 distingue; install-dev.sh:92-105).
+  export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/sdk}"
+  if [[ ! -d "$ANDROID_HOME" ]]; then
+    echo "AVISO: ANDROID_HOME=$ANDROID_HOME não existe. Rode ./install-dev.sh"
+    echo "       ou exporte ANDROID_HOME apontando para o SDK."
+  fi
   ADB_BIN="$ANDROID_HOME/platform-tools/adb"
   [[ -x "$ADB_BIN" ]] || ADB_BIN="adb"
 

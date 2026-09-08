@@ -77,6 +77,7 @@ import {
 import { fazerBackupDrive } from '@/lib/integracoes/google/driveBackup';
 import { listarBackupsArquivados } from '@/lib/backup/executarBackup';
 import { restaurarVaultZip } from '@/lib/services/restaurarVault';
+import { useCredenciais } from '@/lib/stores/credenciais';
 import { useSpotifyAuth } from '@/lib/integracoes/spotify/store';
 import { useYouTubeAuth } from '@/lib/integracoes/youtube/store';
 import { verificarDisponibilidade } from '@/lib/health/availability';
@@ -86,6 +87,12 @@ import type { ComponentType } from 'react';
 export type EstadoIntegracao =
   | 'conectado'
   | 'desconectado'
+  // P4 (2026-09-08): a integracao existe e funciona, mas depende de uma
+  // credencial que so a pessoa pode criar. Nao e' indisponivel (o
+  // aparelho suporta) nem desconectado (nao ha o que conectar ainda):
+  // e' uma escolha que ela ainda nao fez. O card segue tocavel e leva a
+  // /settings/credenciais.
+  | 'sem_credencial'
   | 'indisponivel'
   | 'em_breve';
 
@@ -134,17 +141,21 @@ function CardIntegracao({ descritor, onPress }: CardIntegracaoProps) {
   const rotuloEstado: Record<EstadoIntegracao, string> = {
     conectado: 'Conectado',
     desconectado: 'Desconectado',
+    sem_credencial: 'Sem código',
     indisponivel: 'Indisponível',
     em_breve: 'Em breve',
   };
   // Cor do rotulo de estado:
-  // - conectado    -> verde
-  // - desconectado -> muted (neutro, evita alarmismo)
-  // - indisponivel -> mutedDecor
-  // - em_breve     -> mutedDecor
+  // - conectado      -> verde
+  // - desconectado   -> muted (neutro, evita alarmismo)
+  // - sem_credencial -> muted, pelo mesmo motivo: e' escolha pendente,
+  //   nao defeito. Vermelho ou amarelo aqui leria como problema.
+  // - indisponivel   -> mutedDecor
+  // - em_breve       -> mutedDecor
   const corEstado: Record<EstadoIntegracao, string> = {
     conectado: colors.green,
     desconectado: colors.muted,
+    sem_credencial: colors.muted,
     indisponivel: colors.mutedDecor,
     em_breve: colors.mutedDecor,
   };
@@ -339,6 +350,12 @@ export function IntegracoesScreen() {
     pessoaB.ultimaConexao ?? 0
   );
 
+  // P4 (2026-09-08): a pessoa cadastrou a propria credencial? Leitura
+  // reativa: salvar em /settings/credenciais reflete aqui sem remount.
+  // Um unico client_id do Google atende Agenda, Drive e YouTube.
+  const temCredencialGoogle = useCredenciais((s) => s.google !== null);
+  const temCredencialSpotify = useCredenciais((s) => s.spotify !== null);
+
   // R-INT-4 (2026-05-17): estado das contas Spotify e YouTube.
   // Cada store expoe `conta` unica (sem split pessoa); v1 nao tenta
   // gerenciar 2 contas Spotify por device.
@@ -458,6 +475,9 @@ export function IntegracoesScreen() {
     }
   }, [driveRestaurando, toast]);
 
+  // P4: rota unica da tela onde a pessoa cadastra o proprio codigo.
+  const ROTA_CREDENCIAIS = '/settings/credenciais';
+
   // Descritor Health Connect.
   // - estado:
   //   - permissoes > 0 -> conectado
@@ -540,25 +560,37 @@ export function IntegracoesScreen() {
       ? `${base.slice(0, -1)}${sufixo}.`
       : `${base}${sufixo}`;
   })();
-  const descritorCalendar: IntegracaoDescritor = algumGoogleConectado
-    ? {
-        slug: 'google_calendar',
-        nome: 'Agenda',
-        icone: Calendar,
-        corIcone: colors.cyan,
-        estado: 'conectado',
-        statusTexto: textoSyncCalendar,
-        rota: '/settings/contas-google',
-      }
-    : {
-        slug: 'google_calendar',
-        nome: 'Agenda',
-        icone: Calendar,
-        corIcone: colors.cyan,
-        estado: 'desconectado',
-        statusTexto: 'Toque para conectar uma conta Google.',
-        rota: '/settings/contas-google',
-      };
+  const descritorCalendar: IntegracaoDescritor =
+    !algumGoogleConectado && !temCredencialGoogle
+      ? {
+          slug: 'google_calendar',
+          nome: 'Agenda',
+          icone: Calendar,
+          corIcone: colors.cyan,
+          estado: 'sem_credencial',
+          statusTexto:
+            'Depende de um código seu do Google. Toque para ver como criar.',
+          rota: ROTA_CREDENCIAIS,
+        }
+      : algumGoogleConectado
+        ? {
+            slug: 'google_calendar',
+            nome: 'Agenda',
+            icone: Calendar,
+            corIcone: colors.cyan,
+            estado: 'conectado',
+            statusTexto: textoSyncCalendar,
+            rota: '/settings/contas-google',
+          }
+        : {
+            slug: 'google_calendar',
+            nome: 'Agenda',
+            icone: Calendar,
+            corIcone: colors.cyan,
+            estado: 'desconectado',
+            statusTexto: 'Toque para conectar uma conta Google.',
+            rota: '/settings/contas-google',
+          };
 
   // Spotify e YouTube: R-INT-4 (2026-05-17) entregou OAuth read-only.
   // Estado real ja consumido dos stores; texto reflete "Conectado /
@@ -568,52 +600,76 @@ export function IntegracoesScreen() {
   // como ainda nao existe rota dedicada Spotify/YouTube, a v1 abre
   // /settings/integracoes onde o usuario ve o status. Subspec
   // R-INT-4.B podera criar /settings/spotify e /settings/youtube.
-  const descritorSpotify: IntegracaoDescritor = spotifyConectado
-    ? {
-        slug: 'spotify',
-        nome: 'Spotify',
-        icone: Music,
-        corIcone: colors.green,
-        estado: 'conectado',
-        statusTexto: textoUltimaSync(
-          contaSpotify.ultimaConexao > 0 ? contaSpotify.ultimaConexao : null
-        ),
-        rota: '/settings/integracoes',
-      }
-    : {
-        slug: 'spotify',
-        nome: 'Spotify',
-        icone: Music,
-        corIcone: colors.green,
-        estado: 'desconectado',
-        statusTexto: contaSpotify.invalido
-          ? 'Conexão expirada. Toque para reconectar.'
-          : 'Toque para conectar sua conta Spotify.',
-        rota: '/settings/integracoes',
-      };
-  const descritorYoutube: IntegracaoDescritor = youtubeConectado
-    ? {
-        slug: 'youtube',
-        nome: 'YouTube',
-        icone: Video,
-        corIcone: colors.red,
-        estado: 'conectado',
-        statusTexto: textoUltimaSync(
-          contaYoutube.ultimaConexao > 0 ? contaYoutube.ultimaConexao : null
-        ),
-        rota: '/settings/integracoes',
-      }
-    : {
-        slug: 'youtube',
-        nome: 'YouTube',
-        icone: Video,
-        corIcone: colors.red,
-        estado: 'desconectado',
-        statusTexto: contaYoutube.invalido
-          ? 'Conexão expirada. Toque para reconectar.'
-          : 'Toque para conectar sua conta YouTube.',
-        rota: '/settings/integracoes',
-      };
+  const descritorSpotify: IntegracaoDescritor =
+    !spotifyConectado && !temCredencialSpotify
+      ? {
+          slug: 'spotify',
+          nome: 'Spotify',
+          icone: Music,
+          corIcone: colors.green,
+          estado: 'sem_credencial',
+          statusTexto:
+            'Depende de um código seu do Spotify. Toque para ver como criar.',
+          rota: ROTA_CREDENCIAIS,
+        }
+      : spotifyConectado
+        ? {
+            slug: 'spotify',
+            nome: 'Spotify',
+            icone: Music,
+            corIcone: colors.green,
+            estado: 'conectado',
+            statusTexto: textoUltimaSync(
+              contaSpotify.ultimaConexao > 0 ? contaSpotify.ultimaConexao : null
+            ),
+            rota: '/settings/integracoes',
+          }
+        : {
+            slug: 'spotify',
+            nome: 'Spotify',
+            icone: Music,
+            corIcone: colors.green,
+            estado: 'desconectado',
+            statusTexto: contaSpotify.invalido
+              ? 'Conexão expirada. Toque para reconectar.'
+              : 'Toque para conectar sua conta Spotify.',
+            rota: '/settings/integracoes',
+          };
+  const descritorYoutube: IntegracaoDescritor =
+    !youtubeConectado && !temCredencialGoogle
+      ? {
+          slug: 'youtube',
+          nome: 'YouTube',
+          icone: Video,
+          corIcone: colors.red,
+          estado: 'sem_credencial',
+          statusTexto:
+            'Depende do mesmo código do Google. Toque para ver como criar.',
+          rota: ROTA_CREDENCIAIS,
+        }
+      : youtubeConectado
+        ? {
+            slug: 'youtube',
+            nome: 'YouTube',
+            icone: Video,
+            corIcone: colors.red,
+            estado: 'conectado',
+            statusTexto: textoUltimaSync(
+              contaYoutube.ultimaConexao > 0 ? contaYoutube.ultimaConexao : null
+            ),
+            rota: '/settings/integracoes',
+          }
+        : {
+            slug: 'youtube',
+            nome: 'YouTube',
+            icone: Video,
+            corIcone: colors.red,
+            estado: 'desconectado',
+            statusTexto: contaYoutube.invalido
+              ? 'Conexão expirada. Toque para reconectar.'
+              : 'Toque para conectar sua conta YouTube.',
+            rota: '/settings/integracoes',
+          };
   // R-INT-5-GOOGLE-DRIVE-BACKUP-AUTO: Drive deixa de ser placeholder. O
   // upload reusa o OAuth Google (mesmo store do Calendar) + o ZIP de
   // backup local. Estado:
@@ -622,67 +678,79 @@ export function IntegracoesScreen() {
   //     backup automatico (default OFF). O scope drive.file e' concedido
   //     no consentimento, mas o upload runtime aguarda o registro do scope
   //     no Cloud Console (passo humano R-SEC-1).
-  const descritorDrive: IntegracaoDescritor = algumGoogleConectado
-    ? {
-        slug: 'google_drive',
-        nome: 'Google Drive',
-        icone: Cloud,
-        corIcone: colors.yellow,
-        estado: 'conectado',
-        // AUDIT-P2-3: linha composta -- resumo real (N backups, MB,
-        // ultimo envio) MAIS o estado do agendamento semanal. Antes o
-        // ramo do toggle so aparecia quando driveResumo era null, e
-        // carregarDriveResumo sempre resolve (o catch devolve resumo
-        // vazio honesto): na pratica o estado do automatico nunca
-        // chegava a tela. Enquanto R-SEC-1 nao fecha, o texto do estado
-        // ligado nao pode afirmar que o envio acontece.
-        statusTexto: [
-          driveResumo?.texto,
-          // AUDIT-P2-3: a frase do estado ligado deriva do runtime, nao e
-          // fixa. "aguardando autorizacao" so vale enquanto NENHUM upload
-          // aconteceu; assim que houver um, driveResumo.ultimoUploadMs
-          // deixa de ser null e a linha para de se contradizer com o
-          // proprio resumo ao lado ("Ultimo envio: ha 2 dias · ...
-          // aguardando autorizacao"). Sem esta condicao, fechar o
-          // bloqueio do Google exigiria lembrar de voltar aqui trocar a
-          // string -- e ninguem lembraria.
-          driveBackupToggle
-            ? !driveResumo?.ultimoUploadMs
-              ? 'Automático semanal ligado, aguardando autorização no Google.'
-              : 'Automático semanal ligado.'
-            : 'Automático semanal desligado. Ligue em Contas Google.',
-        ]
-          .filter((p): p is string => typeof p === 'string' && p.length > 0)
-          .join(' · '),
-        rota: '/settings/contas-google',
-        acoes: [
-          {
-            slug: 'fazer_agora',
-            rotulo: driveUploadando ? 'Enviando…' : 'Fazer agora',
-            onPress: () => {
-              void fazerBackupAgora();
-            },
-            ocupado: driveUploadando,
-          },
-          {
-            slug: 'restaurar',
-            rotulo: driveRestaurando ? 'Restaurando…' : 'Restaurar',
-            onPress: () => {
-              void restaurarBackup();
-            },
-            ocupado: driveRestaurando,
-          },
-        ],
-      }
-    : {
-        slug: 'google_drive',
-        nome: 'Google Drive',
-        icone: Cloud,
-        corIcone: colors.yellow,
-        estado: 'desconectado',
-        statusTexto: 'Conecte uma conta Google para o backup na nuvem.',
-        rota: '/settings/contas-google',
-      };
+  const descritorDrive: IntegracaoDescritor =
+    !algumGoogleConectado && !temCredencialGoogle
+      ? {
+          slug: 'google_drive',
+          nome: 'Google Drive',
+          icone: Cloud,
+          corIcone: colors.yellow,
+          estado: 'sem_credencial',
+          statusTexto:
+            'Depende do mesmo código do Google. Toque para ver como criar.',
+          rota: ROTA_CREDENCIAIS,
+        }
+      : algumGoogleConectado
+        ? {
+            slug: 'google_drive',
+            nome: 'Google Drive',
+            icone: Cloud,
+            corIcone: colors.yellow,
+            estado: 'conectado',
+            // AUDIT-P2-3: linha composta -- resumo real (N backups, MB,
+            // ultimo envio) MAIS o estado do agendamento semanal. Antes o
+            // ramo do toggle so aparecia quando driveResumo era null, e
+            // carregarDriveResumo sempre resolve (o catch devolve resumo
+            // vazio honesto): na pratica o estado do automatico nunca
+            // chegava a tela. Enquanto R-SEC-1 nao fecha, o texto do estado
+            // ligado nao pode afirmar que o envio acontece.
+            statusTexto: [
+              driveResumo?.texto,
+              // AUDIT-P2-3: a frase do estado ligado deriva do runtime, nao e
+              // fixa. "aguardando autorizacao" so vale enquanto NENHUM upload
+              // aconteceu; assim que houver um, driveResumo.ultimoUploadMs
+              // deixa de ser null e a linha para de se contradizer com o
+              // proprio resumo ao lado ("Ultimo envio: ha 2 dias · ...
+              // aguardando autorizacao"). Sem esta condicao, fechar o
+              // bloqueio do Google exigiria lembrar de voltar aqui trocar a
+              // string -- e ninguem lembraria.
+              driveBackupToggle
+                ? !driveResumo?.ultimoUploadMs
+                  ? 'Automático semanal ligado, aguardando autorização no Google.'
+                  : 'Automático semanal ligado.'
+                : 'Automático semanal desligado. Ligue em Contas Google.',
+            ]
+              .filter((p): p is string => typeof p === 'string' && p.length > 0)
+              .join(' · '),
+            rota: '/settings/contas-google',
+            acoes: [
+              {
+                slug: 'fazer_agora',
+                rotulo: driveUploadando ? 'Enviando…' : 'Fazer agora',
+                onPress: () => {
+                  void fazerBackupAgora();
+                },
+                ocupado: driveUploadando,
+              },
+              {
+                slug: 'restaurar',
+                rotulo: driveRestaurando ? 'Restaurando…' : 'Restaurar',
+                onPress: () => {
+                  void restaurarBackup();
+                },
+                ocupado: driveRestaurando,
+              },
+            ],
+          }
+        : {
+            slug: 'google_drive',
+            nome: 'Google Drive',
+            icone: Cloud,
+            corIcone: colors.yellow,
+            estado: 'desconectado',
+            statusTexto: 'Conecte uma conta Google para o backup na nuvem.',
+            rota: '/settings/contas-google',
+          };
 
   const descritores: IntegracaoDescritor[] = [
     descritorHC,
@@ -726,6 +794,23 @@ export function IntegracoesScreen() {
           Conecte serviços externos para enriquecer o Recap e o acompanhamento
           de saúde física.
         </Text>
+
+        {descritores.some((d) => d.estado === 'sem_credencial') ? (
+          <Text
+            style={{
+              color: colors.muted,
+              fontFamily: 'JetBrainsMono_400Regular',
+              fontSize: 13,
+              lineHeight: 20,
+              paddingBottom: spacing.sm,
+            }}
+            accessibilityLabel="aviso credencial propria"
+          >
+            Algumas delas pedem um código próprio, que você cria no site da
+            empresa, e por isso começam desligadas. O restante do aplicativo
+            funciona por inteiro sem esses códigos.
+          </Text>
+        ) : null}
 
         {descritores.map((d) => (
           <CardIntegracao
