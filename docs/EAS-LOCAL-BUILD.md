@@ -163,10 +163,13 @@ instalados e quer o mesmo binário que o EAS Cloud produziria.
   imprimir `17.x`.
 - **Android SDK 35** com `platform-tools`, `platforms;android-35`,
   `platforms;android-34`, `build-tools;35.0.0`, `build-tools;34.0.0`.
-  Caminho típico em `~/Android/Sdk` (Linux).
+  Caminho canônico em `~/Android/sdk` (Linux), com `s` minúsculo. A
+  caixa é significativa em ext4: `~/Android/Sdk` é outro diretório, e
+  como o `run.sh` resolve `${ANDROID_HOME:-$HOME/Android/sdk}`, o valor
+  exportado aqui tem precedência sobre o default correto do script.
 - Variáveis exportadas:
   ```bash
-  export ANDROID_HOME=~/Android/Sdk
+  export ANDROID_HOME=~/Android/sdk
   export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0
   ```
 - `eas-cli` ≥ 18 (`npm i -g eas-cli`).

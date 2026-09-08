@@ -60,12 +60,12 @@ refresh em menos de 1 segundo, sem build de Android Studio.
 | `./install.sh` | Setup do projeto: confere Node 20+, instala deps com `--legacy-peer-deps`, configura hooks, cria `pessoas.config.ts`, valida com smoke. |
 | `./install-dev.sh` | Setup do desktop em uma passada: pede sudo só uma vez, instala ADB, scrcpy, Android cmdline-tools, system image e emulador. Configura `~/.zshrc` com `ANDROID_HOME` e PATH. Cria AVD `ouroboros-test` otimizado por hardware (cores, RAM, GPU host, KVM) e snapshot inicial pra boot <10s. Default sem flags instala tudo. `--skip-emulator` para só ADB+scrcpy. |
 | `./run.sh` | Inicia Metro com QR. Flags: `--clear` (limpa cache), `--tunnel` (ngrok), `--web` (Chrome desktop, zero conflito com celular), `--emulator` (sobe AVD `ouroboros-test` antes do Metro), `--mirror` (abre janela scrcpy do device conectado em paralelo). |
-| `./scripts/start-emulator.sh` | Inicia emulador `ouroboros-test` com flags de performance (`-gpu host`, `-accel auto`, snapshot). `--headless` para sem janela, `--cold` para ignorar snapshot. |
+| `./scripts/start-emulator.sh` | Inicia emulador `ouroboros-test` com flags de performance (`-accel auto`, snapshot) e GPU adaptativa: `host` com janela, `swiftshader_indirect` em headless, que sobrevive melhor ao snapshot. Espera o boot por até 180s. `--headless` para sem janela, `--cold` para ignorar snapshot. |
 | `./scripts/mirror-device.sh` | Abre `scrcpy` espelhando celular físico ou emulador. Latência <50ms. |
 | `./uninstall.sh` | Apaga `node_modules`, `.expo`, caches. Não toca em `.git`, código, `pessoas.config.ts` nem no Vault. |
 | `./scripts/smoke.sh` | Roda anonimato + dados de teste + typecheck + lint + tests. Usado pelo pre-push. |
 | `./scripts/check_anonimato.sh` | Valida Regra −1: zero atribuição de autoria, zero nomes reais hardcoded. Roda no pre-commit. |
-| `./scripts/adb-wireless.sh` | Habilita ADB sem cabo após pareamento USB inicial. Gerado pelo `install-dev.sh`. |
+| `./scripts/adb-wireless.sh` | Habilita ADB sem cabo após pareamento USB inicial. Versionado no repositório; o `install-dev.sh` apenas garante a permissão de execução. |
 
 ## Política de validação visual (3 níveis)
 
