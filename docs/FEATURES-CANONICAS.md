@@ -3,6 +3,15 @@
 Mapa funcional consolidado do projeto. **Fonte de verdade única
 sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 
+> **Decisões de produto P1/P5/P6 (2026-09-08) — sem mudança de feature.**
+> Entrega de documento e de gate: reescrita do enquadramento em
+> `docs/CONTEXTO.md` §1, promoção da tese de acessibilidade para
+> `docs/ACESSIBILIDADE.md`, ADR-0029 de público-alvo, aviso de copyright no
+> `LICENSE` com a isenção correspondente no gate de anonimato, e registro do
+> ternário de duas pessoas como padrão congelado. Nenhuma feature visível ao
+> usuário foi introduzida, modificada ou removida. Este mapa permanece
+> intocado.
+
 > **R-AUDIT-CI-GATES (2026-07-11) — sem mudança de feature.** Sprint de
 > infra pura (CI, scripts de gate, hooks): não introduz, modifica nem
 > remove nenhuma feature visível ao usuário. Decisão registrada
@@ -27,6 +36,11 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 > - **`useNomeDe('ambos')` ramificado**: retorna "Casal" para
 >   `tipoCompanhia==='casal'`, "Todos" para `'amigos'`, fallback
 >   "Ambos".
+> - **Companhia com três valores até a interface** (P3): `sozinho`,
+>   `casal` e `amigos` chegam inteiros a `useSettings`, ao frontmatter
+>   de `_estado/settings-<device>.md` e ao snapshot de backup. O
+>   literal `duo` saiu do domínio e sobrevive apenas como leitura
+>   tolerante do que já está gravado em disco.
 > - **Saves resilientes**: cada feature ganha `try/catch + timeout
 >   10s` no caller + helper canônico `vaultUriJoin` no writer (impede
 >   loader infinito + URI corruption).
@@ -64,11 +78,12 @@ sobre o que o app faz** (assumindo o roadmap M21–M41 fechado).
 |---|---|---|
 | Onboarding (multi-frame) | M03 + M22 + M23 + ADR-0022 | Nomes + fotos das pessoas → escolha da pasta do Vault (sugestão default `/sdcard/Documents/Ouroboros/` ou picker SAF, ADR-0022) → confirmação |
 | Seed opcional no onboarding | R-HOME-4e | Frame penúltimo (antes de "Tudo pronto") oferece plantar o 1º card real da Tela Hoje — mini humor (slider 1-5) ou mini tarefa — via `saveHumor` / `criarTarefa`. Botão "Pular" bem visível; não força. Combate o cold start já na 1ª abertura |
-| Modo solo / duo (casal) / amigos | M03 + M29 | Definido no onboarding e ajustável em Settings |
+| Modo sozinho / casal / amigos | M03 + M29 + P3 | Definido no onboarding e ajustável em Settings. Desde a P3 (2026-09-08) os **três** valores chegam à interface: `useSettings.pessoa.tipoCompanhia` deixou de colapsar casal e amigos em `duo`. Leitura tolerante — arquivo `.md` e backup gravados com `duo` continuam legíveis e são lidos como `casal`, e o BootHook de reconciliação restaura `amigos` a partir do onboarding |
+| Superfície de casal ramificada por companhia | P2 | Nada é removido: quem tem companhia continua com o app inteiro. Em modo sozinho somem o chip da segunda pessoa (diário emocional, eventos, humor, scanner), o bloco "Com quem" dos eventos, o item "Ciclo" quando `pessoa_a` se declarou masculino, e o rodapé de privacidade passa a dizer "Ninguém vê além de você". Entre amigos, "Para o casal" vira "Para todos" e o rodapé, "Ninguém vê além de vocês". Travado por `tests/produto/solo-sem-vazamento.test.tsx`, que varre a árvore renderizada e tem controle positivo em modo casal |
 | Identidade dinâmica | M03 + M28 | `pessoa_a` / `pessoa_b` com nome + foto + cor (purple `#bd93f9` / pink `#ff79c6`) persistido em SecureStore |
 | `useNomeDe(pessoa)` hook | M28 | Hook reativo canônico, todo lugar consome (zero hardcode "Pessoa A") |
 | Editar nomes/fotos | M15 + M29 | Settings → "Editar nomes e fotos" |
-| Adicionar segunda pessoa | M15 + M29 | Solo → duo via Settings |
+| Adicionar segunda pessoa | M15 + M29 + P3 | Sozinho → casal ou amigos via Settings. A tela pergunta "Vocês são…" (Casal / Amigos) como o onboarding, em vez de presumir casal, e escreve pelo store canônico `useOnboarding` — antes escrevia só em `useSettings`, e a reconciliação do boot seguinte desfazia a adição |
 
 ### 1.1 Marca — ícone, splash e logo in-app — R-BRAND-1-LOGO (2026-07-13)
 
@@ -642,6 +657,47 @@ Armadilha registrada em `docs/ARMADILHAS-RUNTIME.md` como A49.
   continua entregando o detalhe rico de HC entregue em Q17.
 - Componente: `src/components/screens/IntegracoesScreen.tsx`
   + wrapper em `app/integracoes.tsx`.
+
+### 3.9 Credenciais Próprias — P4 (2026-09-08)
+
+- Rota `/settings/credenciais`, alcançável por Configurações → Pessoa →
+  **Credenciais próprias**. É onde a pessoa cadastra o `client_id` do
+  Google e o do Spotify que ela mesma criou.
+- **Por que existe.** Agenda, backup no Drive, YouTube e Spotify falam
+  com servidores de terceiros, e esses terceiros limitam quantas pessoas
+  podem usar o mesmo código: o consent screen do Google está em modo
+  Testing com allowlist, e o Development mode do Spotify tem teto de
+  cinco contas. Enquanto o código do dono ia embutido no pacote, quem
+  instalava de fora da lista via três itens visíveis do menu falharem
+  sem explicação no primeiro uso.
+- **Onde o valor mora.** SecureStore do próprio aparelho, pela store
+  `src/lib/stores/credenciais.ts` (chave `ouroboros.credenciais.v1`).
+  Fora do pacote e fora do git: não entra no APK, não vai para o Vault,
+  não entra em backup e sai junto na desinstalação. Não guardamos
+  `client_secret` — os dois fluxos são PKCE, onde o `client_id` é
+  público por desenho.
+- **`env.json` deixou de ser dependência de build.** O import estático
+  saiu de `src/lib/services/googleAuthFlow.ts` e de
+  `src/lib/integracoes/spotify/oauth.ts`; a leitura passou a ser em
+  runtime e tolerante à ausência. Clone limpo empacota e sobe sem
+  `env.json` nenhum, o que também remove a origem das armadilhas A39 e
+  A43. Guardado por `tests/config/credencial-fora-do-bundle.test.ts`.
+- **Estado novo no hub.** `EstadoIntegracao` ganhou `sem_credencial`,
+  rótulo "Sem código", cor neutra (`muted`, nunca vermelho: é escolha
+  pendente, não defeito). Os quatro cards que dependem de terceiro
+  nascem nele e navegam para `/settings/credenciais` em vez de
+  convidarem a uma conexão que o servidor recusaria. Saúde Física fica
+  de fora: fala com o provedor do próprio Android.
+- **A Agenda ramifica junto.** Sem código do Google, o estado vazio de
+  `/agenda` troca "Conectar conta Google" por "Ver como criar o código",
+  e explica o motivo antes de a pessoa esbarrar na recusa.
+- **O núcleo não depende de nada disso**: Vault, humor, diário, tarefas,
+  contadores, marcos, treinos, Recap, mídia, leitura de texto em imagem
+  no aparelho, Conexão Saúde, compartilhamento e backup em ZIP
+  funcionam sem credencial nenhuma, e nenhuma tela de núcleo menciona o
+  assunto — também travado por teste.
+- Passo a passo para criar cada código: [`OAUTH-SETUP.md`](OAUTH-SETUP.md)
+  e [`SETUP-SPOTIFY.md`](SETUP-SPOTIFY.md).
 
 ## 4. Exercícios — M13 (Telas 02, 07, 08)
 
@@ -1424,8 +1480,8 @@ data que o usuário não configurou nem data inexistente.
 
 - **Som e vibração** (M29 v2): mestre `geral` + 3 contextuais
   (`despertar` / `conquista` / `botões`). Geral off silencia tudo.
-- **Pessoa**: vault compartilhado on/off, editar nomes/fotos,
-  reinicializar pasta do Vault, adicionar segunda pessoa.
+- **Pessoa**: vault compartilhado on/off, editar nomes/fotos, **cores das
+  pessoas**, reinicializar pasta do Vault, adicionar segunda pessoa.
 - **Opcionais**: 5 toggles default ON (Tarefas, Alarmes, Contadores,
   Ciclo, Widget). Eram 6 até 2026-09-05: o interruptor "Calendário de
   conquistas" saiu em `AUDIT-P2-5` por ser resíduo da consolidação do §7
@@ -1478,6 +1534,42 @@ data que o usuário não configurou nem data inexistente.
       **CC BY 4.0** das trilhas do Recap, com link para a licença — a obrigação
       de licença passa a ser satisfeita dentro do app, e não só no
       `assets/sounds/recap-musicas/CREDITS.md`.
+
+### 11.1 Cores das pessoas — P7 (2026-09-08)
+
+Sub-tela `/settings/cores-pessoa`. A cor que identifica cada pessoa —
+avatar, nome, borda que separa um registro do outro — deixou de ser fixa em
+código e virou escolha de quem instala. `#bd93f9` para `pessoa_a` e
+`#ff79c6` para `pessoa_b` continuam sendo o **default**, declarado em
+`src/config/pessoas.config.ts`; a escolha vive em
+`src/lib/stores/coresPessoa.ts` (SecureStore), fora do Vault e fora do git.
+Quem não mexe segue com a identidade visual do projeto.
+
+Por que existe: para um público sensível a estímulo visual, cor imposta é o
+aplicativo decidindo sozinho algo que deveria ser escolha. O eixo de
+acessibilidade do projeto é **controle**, não conformidade.
+
+**A troca é medida, e cor que reprova é recusada.** `src/lib/a11y/corPessoa.ts`
+avalia em três frentes: contra as superfícies de tela (4,5:1, porque a cor é
+usada como texto), contra `bgElev` (3:1, piso de elemento não textual, onde
+ela é borda e ícone) e a inicial escura escrita dentro do avatar sobre a cor
+(4,5:1). Os dois defaults passam nas três. A recusa mora no store, não só na
+tela, e o valor guardado é remedido na hidratação — cor que não passa mais
+volta ao default.
+
+Ao recusar, o texto diz **a razão obtida, a razão mínima e o que ficaria
+difícil de ler**, e sugere um caminho ("uma cor um pouco mais clara costuma
+resolver"). "Cor inválida" seco está proibido: não há erro de quem escolheu.
+
+Na tela: seis atalhos de cor da própria paleta (todos aprovados por teste,
+para não oferecer o que o aplicativo recusaria em seguida), campo para
+escrever qualquer outro código, e "Voltar ao padrão" quando há escolha
+própria. Trocar a cor **não** altera nenhum registro já gravado; a cor de
+`ambos` acompanha a de `pessoa_a`, como sempre acompanhou. O widget da tela
+inicial recebe um empurrão para repintar na hora.
+
+Consumo em código: `corPessoa()` (síncrono) ou `useCorPessoa()` (reativo).
+`corDe()` do config passou a significar apenas o default.
 
 ## 12. Widgets Homescreen Android
 
@@ -1827,7 +1919,10 @@ Todos os paths abaixo são pós-H2 (ADR-0023 layout-por-tipo).
   Calendar opt-in com escopo mínimo).
 - **Vault local** — sincronização via Syncthing P2P.
 - **PT-BR sentence case + acentuação completa** em UI.
-- **Estética Dracula** — paleta hex fixa.
+- **Estética Dracula** — paleta hex fixa. Exceção desde 2026-09-08 (P7): a
+  cor que identifica cada **pessoa** é default trocável em Configurações,
+  com piso de contraste obrigatório. Os 14 tokens seguem fixos, e não há
+  tema claro.
 - **JetBrains Mono** font única, pesos 400/500.
 - **ADR-0010** — física acima de tempo, silêncio visual,
   hierarquia por contraste.

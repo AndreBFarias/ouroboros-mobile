@@ -1,10 +1,23 @@
 # Ouroboros Mobile
 
-App Android pessoal para captura ativa em Vault Obsidian compartilhado
-entre duas pessoas. Mobile escreve `.md`; o pipeline desktop
+Aplicativo Android para registrar humor, diário, tarefas, treinos, marcos
+e memórias em um Vault de arquivos Markdown que fica no seu aparelho.
+Nasceu para um casal neurodivergente e hoje é comunitário: software livre
+sob GPL-3.0, sem custo, sem telemetria e sem conta obrigatória. Usar
+sozinho é o padrão; usar em dupla é escolha feita no onboarding.
+
+O eixo de acessibilidade é **controle** — quanto o aplicativo deixa você
+decidir sobre estímulo, previsibilidade e linguagem. O que já está
+cumprido e o que ainda não está estão em
+[`docs/ACESSIBILIDADE.md`](docs/ACESSIBILIDADE.md); o público e a forma de
+distribuição, na
+[ADR-0029](docs/ADRs/0029-publico-alvo-e-distribuicao.md).
+
+O aplicativo escreve `.md`; o pipeline desktop
 [`protocolo-ouroboros`](https://github.com/[REDACTED]/protocolo-ouroboros)
-processa. Construído com Expo + React Native, sem rede de saída,
-estética premium nativa desde o dia um.
+processa depois, para quem quiser essa ponta. Construído com Expo +
+React Native, sem rede de saída no núcleo, estética premium nativa desde o
+dia um.
 
 ## Marca
 
@@ -23,8 +36,9 @@ um único SVG-fonte. "Protocolo Ouroboros" é o nome do produto.
 ## Status
 
 Pré-1.0 em desenvolvimento. Distribuição manual: APK assinado instalado
-diretamente nos celulares, sem Play Store e sem auto-update. Cada release
-é distribuição deliberada. Veja [`docs/RELEASE.md`](docs/RELEASE.md) para o
+diretamente no aparelho, sem Play Store e sem auto-update — estado
+corrente, e não postura: retomar o registro em loja é decisão separada,
+posterior à fila técnica. Cada release é distribuição deliberada. Veja [`docs/RELEASE.md`](docs/RELEASE.md) para o
 pipeline completo (build EAS production → AAB → APK universal → tag git).
 
 ## Stack

@@ -32,3 +32,4 @@ com referência "Supersedes ADR-NNNN" no cabeçalho.
 | 0026 | Tela Hoje foco em ação (Decisão D1 = Opção C) | Aceito | R-HOME-1 (M-HOJE-PRIORIDADE-RECORRENCIA, Onda R Fase 2) |
 | 0027 | Limite de bundle Hermes revisado (10,5 MB) | Aceito | R-ADR-LIMITE-BUNDLE-V2 |
 | 0028 | Card "Vocês" reintroduz estado do casal na Home (revisão parcial de ADR-0026/D1) | Aceito | R-HOME-4a |
+| 0029 | Público-alvo e distribuição: aplicativo comunitário, não ferramenta particular | Aceito | Decisão de produto P1 (2026-09-08) |
