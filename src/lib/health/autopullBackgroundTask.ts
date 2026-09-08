@@ -4,13 +4,18 @@
 // Esta sprint adiciona execucao do autopull HC com o app FECHADO, opt-in
 // via featureToggles.hcAutopullBackground (default false; custo de bateria).
 //
-// GATE DE BUILD NATIVO: expo-task-manager + expo-background-task NAO estao
-// instalados no momento desta sprint. Background e' codigo nativo
-// (WorkManager no Android) e exige rebuild do dev-client/APK -- nao pega via
-// OTA/Metro. Para nao quebrar o bundle/smoke atual (que roda sem a lib), o
-// carregamento dos modulos nativos e' LAZY e GUARDED: usamos require dinamico
-// dentro de try/catch. Se o modulo nativo estiver ausente, cada funcao vira
-// no-op silencioso (mesma defesa do requireOptionalNativeModule da bridge HC).
+// GATE DE BUILD NATIVO. Correcao de 2026-09-08 (INT-HC-2, risco R9): as duas
+// libs ESTAO declaradas e instaladas -- expo-background-task ~1.0.10 e
+// expo-task-manager ~14.0.9 no package.json. O texto anterior dizia que nao
+// estavam, e quem lesse concluiria que a feature esta desligada por falta de
+// dependencia, o que e' falso.
+//
+// O que continua verdadeiro: background e' codigo nativo (WorkManager no
+// Android) e exige prebuild/rebuild do dev-client ou do APK -- nao pega via
+// OTA/Metro. Em runtime SEM o binario nativo (Jest, web, Expo Go sem
+// prebuild) o require do modulo lanca, e por isso o carregamento e' LAZY e
+// GUARDED, dentro de try/catch: sem o nativo, cada funcao vira no-op
+// silencioso (mesma defesa do requireOptionalNativeModule da bridge HC).
 //
 // Decisao de lib: expo-background-task (WorkManager, recomendado SDK 53+),
 // NAO expo-background-fetch (deprecada no SDK 53+).

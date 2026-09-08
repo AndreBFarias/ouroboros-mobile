@@ -25,13 +25,29 @@
 //   5. Multiplas pesagens no mesmo dia: fica a ultima leitura do dia
 //      (maior `time`), que e o snapshot mais recente daquele dia.
 //
+// INT-HC-2-JANELA-RETROATIVA (2026-09-08), guarda de dado do usuario:
+// escreverMedida grava o ARQUIVO INTEIRO (writeVaultFile sem merge) e
+// este puxador so conhece peso e gordura. Escrever direto apagaria
+// cintura, quadril, fotos e reflexao que a pessoa digitou naquele mesmo
+// dia. Por isso o puxador le, para cada dia que vai escrever, o registro
+// que ja esta no Vault e mescla: o que vem do HC sobrescreve apenas os
+// campos que o HC conhece. Com a sobreposicao da janela o dia e'
+// reescrito mais vezes, entao a guarda e' obrigatoria, nao precaucao.
+//
+// O arquivo do dia sao DUAS metades, e a guarda cobre as duas: o
+// frontmatter e o corpo do markdown. O corpo e' prosa livre que a pessoa
+// pode ter digitado direto no .md (nenhuma tela do app escreve ali
+// hoje), e devolve-lo ao writer e' o que impede que cada rodada de
+// autopull o apague. Por isso a leitura e' lerMedidaDoDia, que devolve
+// meta e corpo, e nao listarMedidas, que devolve so' o frontmatter.
+//
 // Erros: o puxador NAO propaga excecao para o scheduler. Captura
 // internamente e retorna {novos: 0, erro: mensagem}. Scheduler
 // preserva ultimaSync nesse caso, garantindo ponto de retomada.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { readRecords } from '../../../../modules/health-connect/src';
-import { escreverMedida } from '@/lib/vault/medidas';
+import { escreverMedida, lerMedidaDoDia } from '@/lib/vault/medidas';
 import { useSettings } from '@/lib/stores/settings';
 import { useVault } from '@/lib/stores/vault';
 import { isoToDataLocalYmd, startOfTodayLocal } from '@/lib/datetime/local';
@@ -201,18 +217,32 @@ export const puxadorMedidas: Puxador = {
         // MedidasSchema exige campos opcionais mas o registro precisa
         // fazer sentido; o acumulador so existe se passou pelos filtros.
         if (acc.peso === undefined && acc.gordura === undefined) continue;
+        // Merge sobre o registro do dia, quando existe: preserva as
+        // medidas geometricas, as fotos, a reflexao e o autor original
+        // (o arquivo do dia nao tem componente de pessoa, entao carimbar
+        // a pessoa ativa por cima trocaria a autoria alheia). Le so' os
+        // dias que esta rodada escreve -- sao poucos, e e' o mesmo
+        // arquivo que a escrita logo abaixo vai substituir.
+        //
+        // Dia sem arquivo, ilegivel ou malformado devolve null e a
+        // escrita segue sem merge: perder a leitura do HC seria pior que
+        // perder a mesclagem (mesma tolerancia de lerSlugsExistentes em
+        // puxadores/sleep.ts).
+        const base = await lerMedidaDoDia(vaultRoot, data);
         const meta: Medida = {
-          tipo: 'medidas',
-          data,
-          autor,
-          fotos: [],
+          ...(base?.meta ?? { tipo: 'medidas', data, autor, fotos: [] }),
           ...(acc.peso !== undefined ? { peso: acc.peso } : {}),
           ...(acc.gordura !== undefined ? { gordura: acc.gordura } : {}),
         };
         // R-INT-3-HC-AUTOPULL-WRITEBACK-GUARD: pularSyncHC evita o loop
         // HC -> Vault -> HC. O dado veio do HC; reinjetar via write-back
         // duplicaria (insertRecords da bridge nao dedupa).
-        await escreverMedida(vaultRoot, meta, '', { pularSyncHC: true });
+        //
+        // O corpo lido volta inteiro para o writer. Passar '' aqui era o
+        // furo da guarda: apagava a prosa do dia a cada rodada.
+        await escreverMedida(vaultRoot, meta, base?.body ?? '', {
+          pularSyncHC: true,
+        });
         escritos += 1;
       }
 

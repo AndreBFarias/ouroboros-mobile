@@ -11,6 +11,8 @@
 //  10. Vault root null -> {novos: 0, erro: vault_root_indisponivel}.
 //  11. Multiplas pesagens no mesmo dia -> fica a ultima (maior time).
 //  12. Peso invalido (<=0) e gordura fora de 0..100 sao filtrados.
+//  14. Merge INT-HC-2: peso do HC nao apaga o que a pessoa digitou no
+//      mesmo dia, nem no frontmatter nem no corpo do markdown.
 //
 // Mocka a bridge nativa e o writer vault/medidas. Usa store real para
 // useSettings e useVault (fiel ao runtime, mesma estrategia de passos).
@@ -18,6 +20,7 @@
 // Comentarios sem acento.
 const mockReadRecords = jest.fn();
 const mockEscreverMedida = jest.fn();
+const mockLerMedidaDoDia = jest.fn();
 
 jest.mock('../../../../modules/health-connect/src', () => ({
   __esModule: true,
@@ -27,6 +30,12 @@ jest.mock('../../../../modules/health-connect/src', () => ({
 jest.mock('@/lib/vault/medidas', () => ({
   __esModule: true,
   escreverMedida: (...args: unknown[]) => mockEscreverMedida(...args),
+  // INT-HC-2: o puxador passou a ler o dia que vai escrever antes de
+  // escrever (guarda de dado do usuario). Aqui o Vault esta vazio, entao
+  // o merge e' no-op e os cenarios 1-13 seguem medindo o que mediam. O
+  // merge do frontmatter esta no cenario 14; o do corpo do markdown
+  // exige o circuito real e vive em puxadores/medidas-corpo-preservado.
+  lerMedidaDoDia: (...args: unknown[]) => mockLerMedidaDoDia(...args),
 }));
 
 import { puxadorMedidas } from '@/lib/health/puxadores/medidas';
@@ -52,6 +61,7 @@ beforeEach(() => {
     uri: 'content://test/vault/markdown/medidas-x.md',
     rel: 'markdown/medidas-x.md',
   });
+  mockLerMedidaDoDia.mockResolvedValue(null);
   useVault.setState({ vaultRoot: VAULT_ROOT });
   useSettings.setState({
     pessoa: {
@@ -359,6 +369,58 @@ describe('puxadorMedidas', () => {
     const [, , body, opts] = mockEscreverMedida.mock.calls[0];
     expect(body).toBe('');
     expect(opts).toEqual({ pularSyncHC: true });
+    jest.useRealTimers();
+  });
+
+  // INT-HC-2-JANELA-RETROATIVA: escreverMedida grava o objeto inteiro,
+  // entao o puxador precisa mesclar sobre o registro do dia em vez de
+  // substitui-lo. Sem isso, um peso do HC apagaria as medidas
+  // geometricas, as fotos e a reflexao daquele dia.
+  it('cenario 14: merge preserva medidas manuais do mesmo dia', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-22T15:00:00.000Z'));
+    mockLerMedidaDoDia.mockResolvedValue({
+      meta: {
+        tipo: 'medidas',
+        data: '2026-05-21',
+        autor: 'pessoa_b',
+        cintura: 78,
+        fotos: ['jpg/medidas-2026-05-21-frente.jpg'],
+        reflexao: 'Semana de rotina estável.',
+      },
+      body: 'Medi em jejum, antes do café.',
+    });
+    mockPorTipo(
+      [
+        {
+          time: '2026-05-21T13:00:00.000Z',
+          weight: { inKilograms: 72.5 },
+          metadata: { id: 'w1' },
+        },
+      ],
+      []
+    );
+    const r = await puxadorMedidas.puxar({
+      since: '2026-05-19T00:00:00.000Z',
+      pageSize: 1000,
+    });
+    expect(r.novos).toBe(1);
+    const meta = mockEscreverMedida.mock.calls[0][1];
+    expect(meta).toMatchObject({
+      tipo: 'medidas',
+      data: '2026-05-21',
+      // Autoria original preservada: o arquivo do dia nao tem componente
+      // de pessoa, entao carimbar a pessoa ativa trocaria o autor.
+      autor: 'pessoa_b',
+      cintura: 78,
+      reflexao: 'Semana de rotina estável.',
+      peso: 72.5,
+    });
+    expect(meta.fotos).toEqual(['jpg/medidas-2026-05-21-frente.jpg']);
+    // O corpo lido volta ao writer no lugar da string vazia.
+    expect(mockEscreverMedida.mock.calls[0][2]).toBe(
+      'Medi em jejum, antes do café.'
+    );
     jest.useRealTimers();
   });
 
