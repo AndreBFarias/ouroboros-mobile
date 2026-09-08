@@ -9,7 +9,8 @@
 //     de frequencia).
 //   - Medias de humor: null quando lista vazia, 2 casas decimais quando
 //     ha registros.
-//   - countPorTipo mapeia todos os tipos canonicos.
+//   - countPorTipo mapeia todos os tipos canonicos (as duas chaves de
+//     treino tem suite propria em calcular-treino.test.ts).
 //   - streaksAtuais inclui apenas contadores com dias >= 1.
 //
 // Comentarios sem acento.
@@ -223,6 +224,12 @@ describe('stats/calcular: vault vazio', () => {
       evento_negativo: 0,
       contador: 0,
       tarefa_concluida: 0,
+      // EXE-3: as duas chaves de treino entraram no agregado. Este
+      // toEqual e' proposital -- e' o unico caso que trava o CONJUNTO de
+      // chaves, e nao um valor solto; chave nova sem passar por aqui
+      // significa chave nao declarada no contrato.
+      treino_sessao: 0,
+      treino_minutos: 0,
     });
   });
 

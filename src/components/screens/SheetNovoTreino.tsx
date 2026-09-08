@@ -9,8 +9,9 @@
 //  - Botao Salvar verde.
 //
 // Edicao (`inicial` != null) preserva a rotina, duracao, lista; o
-// caller pode passar `slugOverride` ao salvar para preservar o slug
-// do .md original. Em criacao novo arquivo deriva slug da rotina.
+// caller passa `relOriginal` (o path relativo que veio da listagem) e a
+// sessao e' reescrita exatamente onde esta. Em criacao o path novo e'
+// derivado de data + hora + slug da rotina (EXE-1).
 //
 // Comentarios sem acento (convencao shell/CI).
 import {
@@ -46,9 +47,11 @@ import type {
 export interface SheetNovoTreinoProps {
   // Quando null = criacao; quando preenchido = edicao com pre-fill.
   inicial: TreinoSessao | null;
-  // Path relativo do .md original (ex: 'treinos/2026-04-23-rotina-a.md').
-  // Caller fornece em edicao para preservar slug.
-  slugOriginal?: string;
+  // EXE-1: path relativo do .md original, como veio da listagem (ex:
+  // 'treinos/2026-04-23-0712-rotina-a.md'). Caller fornece em edicao
+  // para que o save reescreva o arquivo existente em vez de criar
+  // outro. Vale tambem para arquivo em formato legado, ainda sem hora.
+  relOriginal?: string;
   // Q11.b: snapshot derivado de uma RotinaMeta via sessaoFromRotina,
   // usado para pre-preencher o form em criacao quando o usuario escolhe
   // uma rotina como template. Em edicao (inicial != null) e' ignorado:
@@ -64,7 +67,7 @@ export interface SheetNovoTreinoProps {
 
 export function SheetNovoTreino({
   inicial,
-  slugOriginal,
+  relOriginal,
   rotinaSnapshot,
   onAbrirSeletorRotina,
   onSalvo,
@@ -236,16 +239,9 @@ export function SheetNovoTreino({
           observacoes.trim().length > 0 ? observacoes.trim() : undefined,
       };
 
-      // Em edicao, preserva slug original (extraido do path).
-      const slugOverride = slugOriginal
-        ? slugOriginal
-            .split('/')
-            .pop()
-            ?.replace(/\.md$/, '')
-            ?.replace(/^\d{4}-\d{2}-\d{2}-/, '')
-        : undefined;
-
-      await saveTreino({ meta, vaultRoot, slugOverride });
+      // Em edicao, escreve exatamente onde o arquivo esta. Sem recorte
+      // de slug: o path e' a identidade, nao algo derivavel do conteudo.
+      await saveTreino({ meta, vaultRoot, relOverride: relOriginal });
       haptics.success();
       toast.show('Treino salvo.', 'success');
       onSalvo();
@@ -265,7 +261,7 @@ export function SheetNovoTreino({
     exercicios,
     observacoes,
     inicial,
-    slugOriginal,
+    relOriginal,
     toast,
     onSalvo,
   ]);

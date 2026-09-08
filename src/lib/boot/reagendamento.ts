@@ -2,40 +2,41 @@
 // idempotente no início do app faz `BOOT_HOOKS.push(suaFuncao)` em
 // seu proprio modulo (CONTRACT seções 1.7 e 5.4).
 //
-// Lista canonica dos 17 hooks empurrados NESTE arquivo, na ordem real
+// Lista canonica dos 18 hooks empurrados NESTE arquivo, na ordem real
 // do BOOT_HOOKS.push no fim dele. Manter esta lista sincronizada com o
 // push: o cabecalho ficou defasado ate a AUDIT-P1-1A (dizia "5 hooks" e
 // enumerava 6, com 15 registrados de fato).
 //
 //   1.  M11 migrarDraftsParaTreinoSessao (sempre, idempotente)
-//   2.  M11 verificarMarcosAuto (uma vez por dia)
-//   3.  M30 migrarLembretesParaAlarmes (uma vez, antes do reagendar)
-//   4.  M30 apagarChannelsLegadosUmaVez (uma vez por instalacao)
-//   5.  M16 reagendarAlarmes (sempre, idempotente)
-//   6.  M17 limparLixeiraExpirada (uma vez por dia)
-//   7.  M20 atualizarWidgetHomescreen (sempre, com rate-limit interno)
-//   8.  M15 reagendarLembretes (sempre, idempotente)
-//   9.  M39 migrarAssetsLegacyParaMedia (idempotente, depende de vault)
-//   10. M37.1.2 migrarCacheAgendaJsonParaMd (uma vez por instalacao)
-//   11. H2/ADR-0023 migrarVaultLayoutPorTipo (uma vez por instalacao)
-//   12. AUDIT-T2 migrarArquivosCanonicosParaDeviceId (uma vez)
-//   13. M38 atualizarDeviceIndex (sempre, idempotente)
-//   14. AUDIT-T1-BUGS B1 limparArquivosWritingOrfaos (sempre)
-//   15. V4.0.2 reconciliarTipoCompanhia (sempre, so stores em memoria)
-//   16. AUDIT-P2-4 statsAgregadasHook (sempre; escreve os 4 periodos)
-//   17. AUDIT-P1-1A sincronizarWidgetTodoBootHook (sempre, idempotente)
+//   2.  EXE-1 migrarTreinosParaPathComHora (uma vez por instalacao)
+//   3.  M11 verificarMarcosAuto (uma vez por dia)
+//   4.  M30 migrarLembretesParaAlarmes (uma vez, antes do reagendar)
+//   5.  M30 apagarChannelsLegadosUmaVez (uma vez por instalacao)
+//   6.  M16 reagendarAlarmes (sempre, idempotente)
+//   7.  M17 limparLixeiraExpirada (uma vez por dia)
+//   8.  M20 atualizarWidgetHomescreen (sempre, com rate-limit interno)
+//   9.  M15 reagendarLembretes (sempre, idempotente)
+//   10. M39 migrarAssetsLegacyParaMedia (idempotente, depende de vault)
+//   11. M37.1.2 migrarCacheAgendaJsonParaMd (uma vez por instalacao)
+//   12. H2/ADR-0023 migrarVaultLayoutPorTipo (uma vez por instalacao)
+//   13. AUDIT-T2 migrarArquivosCanonicosParaDeviceId (uma vez)
+//   14. M38 atualizarDeviceIndex (sempre, idempotente)
+//   15. AUDIT-T1-BUGS B1 limparArquivosWritingOrfaos (sempre)
+//   16. V4.0.2 reconciliarTipoCompanhia (sempre, so stores em memoria)
+//   17. AUDIT-P2-4 statsAgregadasHook (sempre; escreve os 4 periodos)
+//   18. AUDIT-P1-1A sincronizarWidgetTodoBootHook (sempre, idempotente)
 //
 // ATENCAO (AUDIT-P2-4, 2026-09-05): a lista acima NAO e o conteudo de
 // BOOT_HOOKS em runtime, e nunca foi. Dois hooks se registram de fora
 // deste arquivo e nunca entraram na enumeracao:
-//   18. limparDuplicatasAgendaUmaVez (src/lib/boot/
+//   19. limparDuplicatasAgendaUmaVez (src/lib/boot/
 //       limparDuplicatasAgenda.ts, no fim do proprio modulo)
-//   19. sanearEstadoTextoPuroUmaVez (src/lib/boot/
+//   20. sanearEstadoTextoPuroUmaVez (src/lib/boot/
 //       sanearEstadoTextoPuro.ts, idem)
 // Os dois modulos entram por import de side-effect em app/_layout.tsx,
 // depois do import deste arquivo -- por isso caem no fim da fila, nessa
-// ordem. Em runtime sao 19 hooks. Os testes que importam somente este
-// modulo enxergam 17, porque o grafo de modulos deles nao carrega os
+// ordem. Em runtime sao 20 hooks. Os testes que importam somente este
+// modulo enxergam 18, porque o grafo de modulos deles nao carrega os
 // outros dois arquivos. Quem for conferir contagem precisa dizer de
 // qual dos dois numeros esta falando.
 //
@@ -106,6 +107,17 @@ const migrarDraftsHook: BootHook = async () => {
   const { migrarDraftsParaTreinoSessao } =
     await import('@/lib/treinos/migrarDraftsParaTreinoSessao');
   await migrarDraftsParaTreinoSessao();
+};
+
+// EXE-1 (2026-09-08): renomeia sessoes de treino do formato legado
+// (sem hora) para o formato com hora. Roda DEPOIS de migrarDraftsHook
+// (que ainda grava sessao nova a partir de draft) e ANTES de
+// marcosAutoHook, que conta treinos e precisa contar o estado ja
+// consolidado. Idempotente via useSessao.flags.treinosPathHoraMigrado.
+const migrarTreinosPathHoraHook: BootHook = async () => {
+  const { migrarTreinosParaPathComHora } =
+    await import('@/lib/boot/migrarTreinosParaPathComHora');
+  await migrarTreinosParaPathComHora();
 };
 
 const marcosAutoHook: BootHook = async () => {
@@ -346,6 +358,9 @@ const sincronizarWidgetTodoHook: BootHook = async () => {
 
 BOOT_HOOKS.push(
   migrarDraftsHook,
+  // EXE-1: consolida o formato do nome das sessoes antes de qualquer
+  // leitura que conte treinos.
+  migrarTreinosPathHoraHook,
   marcosAutoHook,
   // M30: migracao + limpeza de channels legados rodam ANTES do
   // reagendar para que alarmes pre-cadastrados (humor, medicacao,

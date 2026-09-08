@@ -9,6 +9,7 @@
 //  - Crises sao ordenadas por intensidade desc.
 //  - Tarefas pendentes (feito=false) sao ignoradas.
 //  - Numeros agregados batem com a soma das listas filtradas.
+//  - EXE-3: sessoesTreino, o detalhe por tras do numero do card.
 //
 // Comentarios sem acento (convencao shell/CI).
 import { agregarRecap, resolverPeriodo } from '@/lib/hooks/useRecap';
@@ -104,11 +105,12 @@ function contador(slug: string, inicio: string, recorde = 0): Contador {
   };
 }
 
-function treino(data: string, duracao = 30): TreinoSessao {
+function treino(data: string, duracao = 30, rotina?: string): TreinoSessao {
   return {
     tipo: 'treino_sessao',
     data,
     autor: 'pessoa_a',
+    ...(rotina != null ? { rotina } : {}),
     duracao_min: duracao,
     exercicios: [{ nome: 'agachamento', series: 3, reps: 10 }],
   };
@@ -423,5 +425,97 @@ describe('agregarRecap', () => {
     expect(data.tarefasConcluidas).toEqual([]);
     expect(data.numeros.registros).toBe(0);
     expect(data.numeros.fotos).toBe(0);
+  });
+});
+
+// EXE-3 -- o numero do card "Treinos" passa a ter lista atras dele.
+//
+// Ate aqui /recap-lista?tipo=treinos devolvia [] com um comentario
+// prometendo uma sprint futura: o card dizia "2 treinos" e o toque abria
+// "Nenhum item neste periodo". A lista sai do MESMO treinosFiltrados que
+// produz numeros.treinos, e e' isso que estes casos travam -- se alguem
+// recalcular o periodo por fora, os dois numeros deixam de ser o mesmo.
+describe('agregarRecap: sessoesTreino (drill-down do card Treinos)', () => {
+  const agora = new Date('2026-05-04T20:00:00-03:00');
+  const range = resolverPeriodo('semana', agora);
+
+  function comTreinos(treinos: TreinoSessao[]) {
+    return agregarRecap({
+      humor: [],
+      diarios: [],
+      eventos: [],
+      marcos: [],
+      contadores: [],
+      treinos,
+      tarefas: [],
+      de: range.de,
+      ate: range.ate,
+      agora,
+    });
+  }
+
+  it('tem exatamente o mesmo tamanho que numeros.treinos', () => {
+    const data = comTreinos([
+      treino('2026-05-03T07:00:00-03:00', 45, 'Rotina A'),
+      treino('2026-05-01T19:00:00-03:00', 60, 'Rotina B'),
+      // Fora da semana: nao entra nem no numero nem na lista.
+      treino('2026-03-10T18:00:00-03:00', 30, 'Rotina C'),
+    ]);
+    expect(data.numeros.treinos).toBe(2);
+    expect(data.sessoesTreino.length).toBe(data.numeros.treinos);
+  });
+
+  it('ordena por data desc, como o resto do Recap', () => {
+    const data = comTreinos([
+      treino('2026-05-01T19:00:00-03:00', 60, 'Rotina B'),
+      treino('2026-05-03T07:00:00-03:00', 45, 'Rotina A'),
+    ]);
+    expect(data.sessoesTreino.map((s) => s.rotulo)).toEqual([
+      'Rotina A',
+      'Rotina B',
+    ]);
+  });
+
+  it('carrega rotulo e duracao para a linha da lista', () => {
+    const data = comTreinos([treino('2026-05-03T07:00:00-03:00', 45, 'Rotina A')]);
+    expect(data.sessoesTreino[0]).toMatchObject({
+      rotulo: 'Rotina A',
+      duracao_min: 45,
+      data: '2026-05-03T07:00:00-03:00',
+    });
+  });
+
+  it("sessao sem rotina cai em 'Treino', nao em 'Treino livre'", () => {
+    // 'Treino livre' e' nome de rotina REAL (ROTINA_TREINO_LIVRE em
+    // treinos/treinoLivre.ts). Usa-lo como fallback misturaria na mesma
+    // lista sessao livre de verdade com sessao sem nome.
+    const data = comTreinos([treino('2026-05-03T07:00:00-03:00', 45)]);
+    expect(data.sessoesTreino[0]?.rotulo).toBe('Treino');
+  });
+
+  it('id e deterministico e distingue duas sessoes do mesmo dia e da mesma rotina', () => {
+    // O caso da EXE-1: mesma rotina, mesmo dia, horas diferentes. Como o
+    // id vira `key` de lista em /recap-lista, id repetido faria o React
+    // renderizar UMA linha para DUAS sessoes -- o numero do card e a
+    // contagem de linhas divergiriam de novo, agora na direcao oposta.
+    const sessoes = [
+      treino('2026-05-03T06:05:00-03:00', 40, 'Rotina A'),
+      treino('2026-05-03T19:40:00-03:00', 55, 'Rotina A'),
+    ];
+    const a = comTreinos(sessoes);
+    const b = comTreinos(sessoes);
+    const ids = a.sessoesTreino.map((s) => s.id);
+    expect(new Set(ids).size).toBe(2);
+    expect(ids).toEqual(b.sessoesTreino.map((s) => s.id));
+    expect(ids).toEqual([
+      'treino:2026-05-03T19:40:00-03:00:rotina-a',
+      'treino:2026-05-03T06:05:00-03:00:rotina-a',
+    ]);
+  });
+
+  it('sem treino no periodo devolve lista vazia, coerente com o zero do card', () => {
+    const data = comTreinos([treino('2026-03-10T18:00:00-03:00', 30, 'Rotina C')]);
+    expect(data.numeros.treinos).toBe(0);
+    expect(data.sessoesTreino).toEqual([]);
   });
 });

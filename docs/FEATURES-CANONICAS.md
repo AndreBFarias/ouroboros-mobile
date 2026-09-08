@@ -304,6 +304,76 @@ pausa e um spec de pivô Skia é redigido antes de qualquer sprint seguinte.
 - Atalho ghost "Cadastrar exercícios na Galeria" no empty state
   (M11.1) navega para `/exercicios`.
 
+**EXE-1 (2026-09-08): cada sessão é um arquivo, inclusive duas no
+mesmo dia.** Até esta sprint a identidade de uma sessão no disco era
+`(dia, slug da rotina)`: a mesma rotina executada de manhã e à noite
+gravava o mesmo `treinos/YYYY-MM-DD-<slug>.md`, e a segunda execução
+truncava a primeira sem erro, sem lixeira e sem versão anterior — o
+contador dizia 1. Sessões livres (sem rotina) do mesmo dia colapsavam
+todas no fallback `treino`. Mudança observável:
+
+- O nome do arquivo passa a carregar a hora:
+  `treinos/YYYY-MM-DD-HHmm-<slug>.md`. Duas sessões da mesma rotina no
+  mesmo dia agora contam **duas** — no card de saúde do Recap, no
+  número de sessões, no marco automático de três treinos na semana e no
+  histórico por rotina. Resolução é de minuto: duas sessões gravadas no
+  mesmo minuto continuam colidindo, resíduo aceito e registrado no
+  cabeçalho de `src/lib/vault/paths.ts`.
+- Editar e excluir passam a mirar o arquivo que a listagem devolveu, e
+  não um path remontado a partir do conteúdo. Renomear a rotina de uma
+  sessão antiga deixa de desalinhar a exclusão.
+- Um rename one-shot no boot (`migrarTreinosParaPathComHora`) alinha as
+  sessões já gravadas, uma vez por instalação. Ele **não recupera
+  sessão perdida**: o que foi sobrescrito antes desta sprint não existe
+  mais em lugar nenhum do app. A migração renomeia o que existe, com
+  contagem idêntica antes e depois; colisão ganha sufixo `-2` e nada é
+  apagado sem o destino existir. Sessão em formato antigo continua
+  visível mesmo antes de o rename rodar.
+
+**EXE-2 (2026-09-08): marcar exercícios num dia produz um treino, não
+um por exercício.** Cada toque em "Adicionar a treino livre" no detalhe
+do exercício criava um rascunho próprio em `treinos/draft/`, nomeado
+pelo slug do exercício, e no boot seguinte cada rascunho virava uma
+sessão de 30 minutos fixos. Cinco exercícios marcados num dia apareciam
+como "5 sessões — 150 minutos" no Recap e disparavam o marco automático
+"Três treinos nesta semana." sem que ninguém tivesse treinado três
+vezes. Mudança observável:
+
+- O toque grava direto **uma** sessão do dia, por pessoa, com rotina
+  "Treino livre". O segundo exercício do mesmo dia entra na mesma
+  sessão; o registro aparece na hora, sem esperar o próximo boot.
+- A duração deixa de ser inventada: é o tempo decorrido desde o início
+  da sessão, entre 1 e 240 minutos. Na criação marca 1 minuto.
+- Séries e repetições entram como 1×1, que é o mínimo que o schema
+  aceita e o que de fato se sabe no toque. A sessão é editável pela
+  Tela 10, onde os valores reais entram.
+- Os rascunhos que ficaram no disco continuam sendo migrados no boot, e
+  passam a colapsar por dia: os rascunhos de um mesmo dia e de uma
+  mesma pessoa viram uma sessão só, com a união dos exercícios, e os 30
+  minutos passam a ser estimativa da sessão inteira. A migração
+  converge na sessão do dia que já existir, então rodá-la de novo não
+  cria uma segunda.
+
+**EXE-3 (2026-09-08): o treino passa a existir para quem conta e para
+quem clica.** O agregado canônico de estatísticas do Vault
+(`_estado/stats-<período>-<deviceId>.md`, o arquivo que o repositório
+irmão lê) não tinha chave nenhuma de treino, e o writer nem lia a pasta
+`treinos/`. Como o campo é um record aberto, nada acusava: era um número
+que **nunca existia**, não um número errado. Mudança observável:
+
+- O `countPorTipo` do agregado ganha `treino_sessao` (quantas sessões no
+  período) e `treino_minutos` (soma das durações). Chaves aditivas:
+  arquivo escrito por versão anterior continua válido, e quem lê versão
+  antiga simplesmente não as encontra. As duas ficam registradas em
+  `docs/CONTRACT-MOBILE-BACKEND.md` §5.28.
+- Como o recálculo acontece uma vez por boot, o número de treinos do
+  agregado só reflete uma sessão registrada agora no **próximo** boot do
+  app — o mesmo comportamento que já valia para humor, diário e tarefas.
+- No Recap, o card "Treinos" da seção Números deixa de ser um número sem
+  lista atrás: o toque abre as sessões do período, cada uma com o nome da
+  rotina e a duração, e a linha leva para Saúde Física. Antes, o card
+  dizia "2 treinos" e o toque abria "Nenhum item neste período".
+
 ### 3.2 Evolução Corporal (renomeada de "Marcos" em L1)
 - Subseção "Evolução corporal" no topo: faixa horizontal de cards
   mensais com foto frontal + peso + delta vs medida anterior. Tap
@@ -468,6 +538,39 @@ Frase relativa PT-BR ("há 3h", "há 2 dias", "agora mesmo") via helper
 canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
 `haRelativoDeIso`), prefix-free e reutilizável.
 
+### 3.7.3 Janela retroativa do autopull — INT-HC-2 (2026-09-08)
+
+Mudança de comportamento observável: dado de saúde que antes se perdia
+passa a chegar ao Vault. Nada de novo na interface.
+
+- **Cada rodada relê os últimos dias, não só o intervalo desde a última
+  sincronização.** A janela de leitura recua 48 horas da marca anterior e
+  encosta na meia-noite local, então um dia dentro da janela está sempre
+  coberto do primeiro ao último minuto. Vale para os cinco puxadores de
+  uma vez, porque a janela é montada no orquestrador.
+- **O que passa a ser preservado.** Registro que a barreira do dia em
+  curso descarta (passos e medidas só gravam dias encerrados) entra na
+  rodada do dia seguinte. Registro que o aplicativo da pulseira publica
+  com atraso — o filtro do Health Connect é pelo tempo do registro, não
+  pelo de inserção — entra na rodada seguinte em vez de ficar fora de
+  alcance. Efeito medido em mesa: o total diário de passos deixa de sair
+  truncado, e a sessão de sono publicada horas depois do despertar deixa
+  de sumir.
+- **A barreira do dia em curso continua valendo.** Passos e medidas
+  seguem escrevendo apenas dias encerrados; a sobreposição é o que torna
+  essa barreira inofensiva.
+- **Guarda de dado digitado à mão.** O puxador de medidas passa a mesclar
+  sobre o registro do dia em vez de substituí-lo: peso e gordura vindos
+  do Health Connect não apagam mais cintura, quadril, fotos, reflexão nem
+  a autoria do registro que a pessoa preencheu naquele mesmo dia.
+- **Sem efeito sobre peso.** A sonda do aparelho de 2026-09-08 mostrou
+  que o aplicativo da pulseira não tem permissão de escrita de peso e que
+  o único registro de peso no Health Connect é antigo e de outra origem.
+  Esta mudança não faz peso aparecer; a composição corporal continua
+  dependendo do caminho por leitura de captura de tela (decisão D1).
+
+Armadilha registrada em `docs/ARMADILHAS-RUNTIME.md` como A49.
+
 ### 3.8 Hub de Integrações — R-INT-1 (2026-05-16), estendido por R-INT-4 (2026-05-17) e R-INT-5 (Drive)
 
 - Rota canônica `/integracoes` agrega todos os serviços externos
@@ -546,6 +649,32 @@ canônico novo `lib/datetime/haRelativo.ts` (`haRelativoDeMs`,
 - Cadastro: nome + GIF/foto opcional + grupo muscular +
   descrição.
 - Detalhe: histórico de uso + estatísticas.
+- Detalhe: "Adicionar a treino livre" registra o exercício na sessão de
+  treino livre de hoje — uma por pessoa e por dia — e confirma com
+  "Adicionado ao treino de hoje." (EXE-2, 2026-09-08; ver §3.1).
+
+**EXE-3B (2026-09-08): o gráfico de carga deixa de nascer vazio.** O
+arquivo do exercício sempre teve um campo de histórico, a tela sempre
+desenhou o sparkline com ele, e nada nunca escrevia ali: "Sem histórico"
+era estado permanente, mesmo para quem registrava o exercício toda
+semana. Mudança observável:
+
+- Registrar uma sessão de treino grava carga, séries e repetições no
+  arquivo de cada exercício **cadastrado** que a sessão cita. A linha
+  "Última vez: DD/MM, X kg, SxR" e o ponto no sparkline aparecem no
+  mesmo instante, sem esperar boot nenhum.
+- O casamento é por nome: "Agachamento Búlgaro" na sessão encontra o
+  exercício `agachamento-bulgaro` da galeria, tolerando acento e caixa.
+  Nome digitado à mão que não corresponde a exercício cadastrado é
+  ignorado em silêncio — é uso legítimo, não erro.
+- Salvar a mesma sessão de novo (edição) **substitui** o ponto daquele
+  dia em vez de acrescentar outro, e o histórico fica sempre em ordem
+  cronológica.
+- Exercício sem carga (peso corporal) grava 0 kg e o gráfico mostra a
+  série de zeros pelo que ela é. Não há carga inventada.
+- Sessões antigas, gravadas antes desta sprint, **não** são
+  reprocessadas: o histórico começa a acumular a partir do primeiro
+  registro novo. O que já estava no Vault continua intacto.
 
 ## 4.5 Rotinas — Q11.a+b+c (Onda Q) + R-ROT-2 (Onda R, escopo expandido)
 
@@ -776,7 +905,10 @@ malformados são silenciosamente ignorados (mesmo padrão de
     preservando o período do Recap (R-RECAP-2 revalidou 100% e
     padronizou accessibilityLabel sem acento — `<count> <tipo> no periodo`).
     Tap em "fotos" redireciona para `/galeria?filtro=foto`
-    (R-CROSS-FLOW-AUDIT).
+    (R-CROSS-FLOW-AUDIT). Tap em "treinos" (EXE-3, 2026-09-08) abre as
+    sessões do período — nome da rotina e duração em cada linha, com
+    destino Saúde Física; a lista sai do mesmo filtro que produziu o
+    número, então card e lista dizem sempre a mesma coisa.
 - Seções integrativas adicionais (calculadas no container, injetadas
   por prop, render condicional próprio — ocultam-se sem dado):
   - **Saúde essa semana** (R-INT-3-HC-RECAP-CARD) — passos, treinos,

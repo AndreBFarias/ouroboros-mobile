@@ -115,6 +115,13 @@ export type PermissaoKey = keyof PermissoesPedidasState;
 //     e idempotente por construcao (reaplicar subtrairia mais um dia de
 //     um recorde ja correto), entao a flag e o unico guarda -- por isso
 //     ela sobe mesmo quando nenhum arquivo precisou de correcao.
+//   - treinosPathHoraMigrado (EXE-1 2026-09-08): indica se a rotina
+//     one-shot ja renomeou as sessoes de treino do formato legado
+//     'treinos/YYYY-MM-DD-<slug>.md' para o formato com hora
+//     'treinos/YYYY-MM-DD-HHmm-<slug>.md'. Default false DE PROPOSITO:
+//     sao exatamente as instalacoes que tem sessoes no formato antigo.
+//     A flag so' sobe quando a migracao termina sem nenhum ignorado,
+//     mesmo criterio da AUDIT-P1-5 para vaultLayoutMigrado.
 //   - estadoTextoPuroSaneado (AUDIT-P4-8 2026-09-05): indica se a
 //     rotina one-shot ja reescreveu os .md de _estado deste device sem
 //     os campos sensiveis que versoes anteriores espelhavam (nomes e
@@ -133,6 +140,7 @@ export interface FlagsBootState {
   recordesContadoresSaneados: boolean;
   duplicatasAgendaLimpas: boolean;
   estadoTextoPuroSaneado: boolean;
+  treinosPathHoraMigrado: boolean;
 }
 
 export type FlagBootKey = keyof FlagsBootState;
@@ -181,6 +189,7 @@ const FLAGS_VAZIAS: FlagsBootState = {
   recordesContadoresSaneados: false,
   duplicatasAgendaLimpas: false,
   estadoTextoPuroSaneado: false,
+  treinosPathHoraMigrado: false,
 };
 
 const DEFAULT_STATE: Omit<
@@ -327,7 +336,7 @@ export const useSessao = create<SessaoState>()(
       // /saude-fisica; /(tabs) -> /). Sprint L1 renomeou /memoria
       // para /saude-fisica; ultimaRota=/memoria persistido pre-L1
       // e' migrado abaixo na v3.
-      version: 8,
+      version: 9,
       migrate: (state: any, version: number) => {
         if (version < 2 && state && typeof state.ultimaRota === 'string') {
           if (state.ultimaRota.startsWith('/(tabs)/')) {
@@ -412,6 +421,18 @@ export const useSessao = create<SessaoState>()(
           state.flags.duplicatasAgendaLimpas === undefined
         ) {
           state.flags.duplicatasAgendaLimpas = false;
+        }
+        // EXE-1 (2026-09-08): garante treinosPathHoraMigrado em estados
+        // anteriores. Default false DE PROPOSITO: sao exatamente as
+        // instalacoes que carregam sessoes de treino no formato legado,
+        // e o rename precisa rodar uma vez.
+        if (
+          version < 9 &&
+          state &&
+          state.flags &&
+          state.flags.treinosPathHoraMigrado === undefined
+        ) {
+          state.flags.treinosPathHoraMigrado = false;
         }
         return state;
       },

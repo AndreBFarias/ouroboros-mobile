@@ -168,6 +168,11 @@ export const EstadoSessaoSchema = z.object({
     // anteriores espelhavam. Optional pelo mesmo motivo das duas
     // acima; ausente equivale a false.
     estadoTextoPuroSaneado: z.boolean().optional(),
+    // EXE-1 (2026-09-08): rename one-shot das sessoes de treino para o
+    // path com hora. Optional pelo mesmo motivo das tres acima: sessoes
+    // espelhadas antes desta sprint nao carregam a chave, e ausente
+    // equivale a false.
+    treinosPathHoraMigrado: z.boolean().optional(),
   }),
   atualizadoEm: IsoDatetime,
 });
@@ -316,7 +321,20 @@ export const EstadoStatsAgregadasSchema = z.object({
   // Contagem por tipo de registro dentro do periodo. Chaves canonicas:
   // 'humor' | 'diario_gatilho' | 'diario_conquista' | 'diario_reflexao' |
   // 'marco' | 'evento_positivo' | 'evento_negativo' | 'contador' |
-  // 'tarefa_concluida'.
+  // 'tarefa_concluida' | 'treino_sessao' | 'treino_minutos'.
+  //
+  // EXE-3 (2026-09-08): as duas chaves de treino entraram aqui. Leitura
+  // obrigatoria para quem consome este arquivo:
+  //   - 'treino_sessao'  -> quantidade de sessoes no periodo (cardinalidade).
+  //   - 'treino_minutos' -> SOMA de duracao_min no periodo. NAO e'
+  //     cardinalidade, apesar de morar num record chamado "count". O campo
+  //     de topo proprio seria mais honesto, mas exigiria subir
+  //     ESTADO_SCHEMA_VERSION e migrar todo stats-*.md ja escrito; a
+  //     escolha foi registrar a semantica em vez de pagar a migracao.
+  //
+  // O schema segue record aberto: instalacao antiga cujo stats-*.md nao
+  // tem as chaves novas continua valida, e leitor antigo ignora o que nao
+  // conhece. Chave nova aqui e' sempre aditiva.
   countPorTipo: z.record(z.string(), z.number().int().min(0)),
   // Streaks atuais (slug -> dias). Inclui contadores que tem dias >= 1.
   // Sort por slug ASC para determinismo no .md final.
